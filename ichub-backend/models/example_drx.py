@@ -1,7 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) Lisa Dräxlmaier GmbH
+# Copyright (c) DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -29,32 +30,77 @@ from typing import Any, Dict, Optional
 from sqlmodel import Field, SQLModel, Column
 from sqlalchemy.types import JSON
 
-
 class BusinessPartner(SQLModel, table=True):
+    """A Catena-X partner with whom to exchange data"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
+    """Technical identifier of the business partner"""
+
     name: str = Field(index=True)
-    bpn: str = Field(min_length=16, max_length=16, index=True)
+    """The (display) name of the business partner"""
+
+    bpnl: str = Field(min_length=16, max_length=16, index=True)
+    """The Catena-X Business Partner Number (BPNL) of the business partner"""
 
 class DataExchangeAgreement(SQLModel, table=True):
+    """A contractual (or other) relationship to a partner where specific data is exchange or a specific Catena-X use-case is performed"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
+    """Technical identifier of the data exchange agreement"""
+
     name: str = Field(index=True)
+    """A speaking name identifying the data exchange agreement"""
+
     business_partner: BusinessPartner = Field(index=True)
-    default_edc: Optional[str] = Field(default=None)
+    """Reference to the business partner with whom the data exchange agreement is made"""
+
+    default_edc_url: Optional[str] = Field(default=None)
+    """The URL of the primary/default EDC of the partner for this data exchange agreement"""
 
 class EnablementServiceStack(SQLModel, table=True):
+    """An instance/installation of the `Enablement services` stack
+    
+    The `Enablement services` stack is a set of services that are used to enable standardized exchange of data between partners.
+    For this implementation, it need to consist at least of an Eclipse Dataspace Connector (EDC) and a Digital Twin Registry (DTR)."""
+
     id: Optional[int] = Field(default=None, primary_key=True)
+    """Technical identifier of the enablement service stack"""
+
     name: str = Field(index=True)
+    """A speaking name identifying the enablement service stack
+
+    Examples: `Jupiter-1`, `Mars-2`, ..."""
+
     settings: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSON))
+    """Technical connect information (and other settings) for interacting with the services of the stack
+
+    Idea: for the moment could be a generic JSON with key/value pairs - on a long term could be explicit fields - depending on future implementation    
+    """
 
 class Twin(SQLModel, table=True):
+    """A digital twin in the Catena-X ecosystem"""
+
     id: Optional[int] = Field(default=None, primary_key=True)
+    """Technical identifier of the twin"""
+
     catenax_id: uuid.UUID = Field(default_factory=uuid.uuid4, unique=True, index=True)
+    """The unique business key for the digital twin in the Catena-X ecosystem - known as `Global ID` or `Catena-X ID`"""
+
     dtr_aas_id: uuid.UUID = Field(default_factory=uuid.uuid4, unique=True)
+    """The unique (technical) identifier of the digital twin in the Digital Twin Registry (DTR)"""
+
     data_exchange_agreement: DataExchangeAgreement = Field(index=True)
-    asset_class: str
+    """The data exchange agreement under which the twin is created"""
+
     created_date: datetime = Field(default_factory=datetime.now, index=True)
+    """The date and time when the twin was created"""
+
     modified_date: datetime = Field(default_factory=datetime.now, index=True)
+    """The date and time when the twin was last modified"""
+
     custom_data: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
+
+    asset_class: str # TODO: was needed in older release as being part of the shortId in the DTR shell, maybe no longer needed
 
 class TwinAspect(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
