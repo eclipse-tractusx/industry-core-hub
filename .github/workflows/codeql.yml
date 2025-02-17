@@ -23,12 +23,21 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "ichub-backend/**"
-      - "ichub-frontend/**"
+      - "ichub-backend/**/*.py"
+      - "ichub-frontend/**/*.py"
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.md"
+      - "**/*.txt"
   pull_request:
     paths:
-      - "ichub-backend/**"
-      - "ichub-frontend/**"
+      - "ichub-backend/**/*.py"
+      - "ichub-frontend/**/*.py"
+    paths-ignore:
+      - "**/*.yml"
+      - "**/*.yaml"
+      - "**/*.md"
+      - "**/*.txt"
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
