@@ -22,15 +22,13 @@ name: "CodeQL"
 on:
   push:
     branches: ["main"]
-    paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
-      - "**/.github/**"
+    paths:
+      - "ichub-backend"
+      - "ichub-frontend"
   pull_request:
     paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
-      - "**/.github/**"
+      - "ichub-backend"
+      - "ichub-frontend"
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
@@ -47,6 +45,12 @@ jobs:
 
     strategy:
       fail-fast: false
+      matrix:
+        language: ["python"] # Define languages here
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby', 'swift' ]
+        # Use only 'java' to analyze code written in Java, Kotlin or both
+        # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
+        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
       - name: Checkout repository
@@ -56,7 +60,7 @@ jobs:
       - name: Initialize CodeQL
         uses: github/codeql-action/init@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
         with:
-          languages: "python"
+          languages: ${{ matrix.language }}
           # If you wish to specify custom queries, you can do so here or in a config file
           # By default, queries listed here will override any specified in a config file
           # Prefix the list here with "+" to use these queries and those in the config file
@@ -83,4 +87,5 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
         with:
-          category: "/language:python"
+          category: "/language:${{matrix.language}}"
+          fail-on: error
