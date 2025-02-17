@@ -25,6 +25,7 @@ on:
     paths:
       - "ichub-backend/**/*.py"
       - "ichub-frontend/**/*.py"
+    paths-ignore:
       - "**/*.yml"
       - "**/*.yaml"
       - "**/*.md"
