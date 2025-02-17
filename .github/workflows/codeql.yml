@@ -89,5 +89,5 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
         with:
-          category: "/language:${{matrix.language}}"
+          category: "/language:python"
           fail-on: error
