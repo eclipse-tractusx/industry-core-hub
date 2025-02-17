@@ -23,12 +23,12 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "ichub-backend"
-      - "ichub-frontend"
+      - "ichub-backend/**"
+      - "ichub-frontend/**"
   pull_request:
-    paths-ignore:
-      - "ichub-backend"
-      - "ichub-frontend"
+    paths:
+      - "ichub-backend/**"
+      - "ichub-frontend/**"
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
