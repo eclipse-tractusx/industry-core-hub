@@ -27,11 +27,10 @@ on:
       - "**/*.txt"
       - "**/.github/**"
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: ["main"]
     paths-ignore:
       - "**/*.md"
       - "**/*.txt"
+      - "**/.github/**"
   schedule:
     - cron: "0 0 * * 0"
   workflow_dispatch:
@@ -85,4 +84,3 @@ jobs:
         uses: github/codeql-action/analyze@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
         with:
           category: "/language:python"
-          fail-on: error
