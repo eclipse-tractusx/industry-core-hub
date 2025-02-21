@@ -1,0 +1,113 @@
+###############################################################
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+name: "Eclipse DASH IP Check"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-dependencies-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        folder: [ichub-backend]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+    
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+            python-version: '3.10'
+
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv ${{ matrix.folder }}/venv
+          source ${{ matrix.folder }}/venv/bin/activate
+          echo "VIRTUAL_ENV=${{ matrix.folder }}/venv" >> $GITHUB_ENV
+          echo "PATH=${{ matrix.folder }}/venv/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install dependencies in isolated environment
+        run: |
+          source ${{ matrix.folder }}/venv/bin/activate
+          if [ -f ${{ matrix.folder }}/requirements.txt ]; then
+            pip install -r ${{ matrix.folder }}/requirements.txt
+          else
+            echo "No requirements.txt found in ${{ matrix.folder }}, skipping..."
+          fi
+
+      - name: List packages
+        run: |
+            source ${{ matrix.folder }}/venv/bin/activate
+            pip list --format=freeze | grep -Pv "^(pip|setuptools|wheel|virtualenv|distlib|pkg_resources)" | awk -F'==' '{print "pypi/pypi/-/" $1 "/" $2}' | awk '!seen[$0]++' > ${{ matrix.folder }}/PACKAGE
+
+      - name: Generate Dependencies file
+        run: |
+            curl -L --output ./org.eclipse.dash.licenses-1.1.1.jar 'https://repo.eclipse.org/service/local/artifact/maven/redirect?r=dash-licenses&g=org.eclipse.dash&a=org.eclipse.dash.licenses&v=LATEST'
+            
+            if [[ "${{ matrix.folder }}" == "ichub-backend" ]]; then
+                DEP_FILE="DEPENDENCIES_IC-BACKEND"
+            elif [[ "${{ matrix.folder }}" == "tractusx_sdk/dataspace" ]]; then
+                DEP_FILE="DEPENDENCIES_TX_DATASPACE_SDK"
+            else
+                DEP_FILE="DEPENDENCIES_TX_INDUSTRY_SDK"
+            fi
+
+            echo "DEP_FILE=$DEP_FILE" >> $GITHUB_ENV
+
+            java -jar ./org.eclipse.dash.licenses-1.1.1.jar ${{ matrix.folder }}/PACKAGE -project automotive.tractusx -summary $DEP_FILE || true
+
+      - name: Check if dependencies were changed
+        id: dependencies-changed
+        run: |
+            if git diff --exit-code $DEP_FILE; then
+                echo "changed=false" >> $GITHUB_OUTPUT
+            else
+                echo "changed=true" >> $GITHUB_OUTPUT
+                echo "Change the $DEP_FILE with this new dependencies"
+                cat $DEP_FILE
+                exit 1
+            fi
+
+      - name: Check for restricted dependencies
+        run: |
+            restricted=$(grep 'restricted' $DEP_FILE || true)
+            if [[ -n "$restricted" ]]; then
+                echo "The following dependencies are restricted: $restricted"
+                exit 1
+            fi
+
+      - name: Upload $DEP_FILE file
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+            path: $DEP_FILE
+
