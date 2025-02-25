@@ -1,9 +1,0 @@
-pypi/pypi/-/Requests/2.32.3, Apache-2.0 AND MIT AND Apache-2.0, approved, #14884
-pypi/pypi/-/fastapi/0.111.1, MIT AND Apache-2.0, approved, #14863
-pypi/pypi/-/fastapi_keycloak_middleware/1.1.0, MIT, approved, clearlydefined
-pypi/pypi/-/httpx/0.23.1, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined
-pypi/pypi/-/pydantic-core/2.16.3, MIT, approved, #13053
-pypi/pypi/-/pydantic/2.6.3, MIT, approved, #13069
-pypi/pypi/-/pytest/8.1.1, MIT, approved, #19365
-pypi/pypi/-/sqlmodel/0.0.22, MIT, approved, clearlydefined
-pypi/pypi/-/uvicorn/0.30.3, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined
