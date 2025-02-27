@@ -96,3 +96,119 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Get the database host
+*/}}
+{{- define "industry-core-hub.postgresql.host" -}}
+{{- if .Values.postgresql.enabled }}
+{{- (include "industry-core-hub.fullname" .) -}}
+{{- else -}}
+{{- .Values.externalDatabase.host -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database port
+*/}}
+{{- define "industry-core-hub.postgresql.port" -}}
+{{- if .Values.postgresql.enabled }}
+{{- .Values.postgresql.auth.port -}}
+{{- else -}}
+{{- .Values.externalDatabase.port -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database name
+*/}}
+{{- define "industry-core-hub.postgresql.fullname" -}}
+{{- if .Values.postgresql.fullnameOverride -}}
+{{- .Values.postgresql.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "postgresql" .Values.postgresql.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database username
+*/}}
+{{- define "industry-core-hub.postgresql.ichubUser" -}}
+{{- if .Values.postgresql.enabled }}
+{{- .Values.postgresql.auth.ichubUser -}}
+{{- else -}}
+{{- .Values.externalDatabase.ichubUser -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database secret name
+*/}}
+{{- define "industry-core-hub.postgresql.secretName" -}}
+{{- if .Values.postgresql.enabled }}
+{{- if .Values.postgresql.auth.existingSecret }}
+{{- .Values.postgresql.auth.existingSecret -}}
+{{- else -}}
+{{- include "industry-core-hub.postgresql.fullname" . -}}
+{{- end -}}
+{{- else -}}
+{{- if .Values.externalDatabase.existingSecret }}
+{{- .Values.externalDatabase.existingSecret -}}
+{{- else -}}
+{{- printf "%s-external-db" (include "industry-core-hub.postgresql.fullname" .) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database name
+*/}}
+{{- define "industry-core-hub.postgresql.databaseName" -}}
+{{- if .Values.postgresql.enabled }}
+{{- .Values.postgresql.auth.database -}}
+{{- else -}}
+{{- .Values.externalDatabase.database -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Get the database secret key
+*/}}
+{{- define "industry-core-hub.postgresql.ichub.secretKey" -}}
+{{- if .Values.postgresql.enabled }}
+{{- print "ichub-password" -}}
+{{- else -}}
+{{- .Values.externalDatabase.existingIchubSecretKey -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return true if a secret object should be created for external database
+*/}}
+{{- define "industry-core-hub.externalDatabase.createSecret" -}}
+{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecret) }}
+    {{- true -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the postgresql URL
+*/}}
+{{- define "industry-core-hub.postgresql.url" -}}
+{{- $host := include "industry-core-hub.database.host" . -}}
+{{- $port := include "industry-core-hub.database.port" . -}}
+{{- $name := include "industry-core-hub.database.name" . -}}
+{{- printf "postgresql://%s:%s/%s" $host $port $name -}}
+{{- end -}}
+
+{{/*
+Get the postgres configmap name
+*/}}
+{{- define "industry-core-hub.postgresql.configmap" -}}
+{{- printf "%s-cm-postgres" .Release.Name -}}
+{{- end -}}

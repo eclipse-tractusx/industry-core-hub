@@ -18,18 +18,25 @@
 *
 * SPDX-License-Identifier: Apache-2.0
 */}}
+
+{{- if .Values.postgresql.enabled -}}
 apiVersion: v1
-kind: Pod
+kind: ConfigMap
 metadata:
-  name: "{{ include "industry-core-hub.fullname.backend" . }}-test-connection"
+  name: {{ include "industry-core-hub.postgresql.configmap" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
-  annotations:
-    "helm.sh/hook": test
-spec:
-  containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "industry-core-hub.fullname.backend" . }}:{{ .Values.backend.service.port }}']
-  restartPolicy: Never
+data:
+  01-init-db-user.sh: |
+    postgresql_create_ichub_user() {
+      local -r escaped_password="${ICHUB_PASSWORD//\'/\'\'}"
+      info "Creating user ichub"
+      export PGPASSWORD="$POSTGRES_PASSWORD"
+      echo "CREATE USER ichub WITH PASSWORD '${escaped_password}';" | psql -U postgres
+    }
+    postgresql_create_ichub_user
+  02-init-db.sql: |
+    CREATE SCHEMA ichub;
+    ALTER SCHEMA ichub OWNER TO ichub;
+{{- end -}}

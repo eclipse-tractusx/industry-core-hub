@@ -27,3 +27,8 @@ description: A Helm chart for Eclipse Tractus-X - Industry Core Hub
 home: https://github.com/eclipse-tractusx/industry-core-hub
 sources:
   - https://github.com/eclipse-tractusx/industry-core-hub
+dependencies:
+  - condition: postgresql.enabled
+    name: postgresql
+    repository: https://charts.bitnami.com/bitnami
+    version: 12.x.x

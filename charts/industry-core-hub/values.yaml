@@ -157,6 +157,64 @@ backend:
       memory: 512Mi
       ephemeral-storage: "2Gi"
 
+# -- PostgreSQL chart configuration
+postgresql:
+  # -- Switch to enable or disable the PostgreSQL helm chart
+  enabled: true
+  fullnameOverride: ""
+  nameOverride: ""
+  auth:
+    # -- Database name
+    database: "ichub-postgres"
+    # -- Database port number
+    port: 5432
+    # -- Secret containing the passwords for root usernames postgres and non-root usernames repl_user and ichub.
+    existingSecret: "ichub-postgres-secret"
+    # -- Password for the root username 'postgres' (will be stored in a secret if existingSecret is not provided)
+    password: ""
+    # -- Non-root username for ichub.
+    ichubUser: "ichub"
+    # -- Password for the non-root username 'ichub'. Secret-key 'ichub-password'.
+    ichubPassword: ""
+  audit:
+    pgAuditLog: "write, ddl"
+    logLinePrefix: "%m %u %d "
+  primary:
+    # -- Extended PostgreSQL Primary configuration (increase of max_connections recommended - default is 100)
+    extendedConfiguration: ""
+    initdb:
+      scriptsConfigMap: "{{ .Release.Name }}-cm-postgres"
+    extraEnvVars:
+      - name: "ICHUB_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "{{ .Values.auth.existingSecret }}"
+            key: "ichub-password"
+    persistence:
+      # -- Enable persistent storage
+      enabled: true
+      # -- Size of persistent volume
+      size: 10Gi
+      # -- StorageClass name (use default if not specified)
+      storageClass: ""
+
+# -- External database configuration (used when postgresql.enabled is false)
+externalDatabase:
+  # -- External PostgreSQL host
+  host: ""
+  # -- External PostgreSQL port
+  port: 5432
+  # -- External PostgreSQL database name
+  database: "postgres"
+  # -- External PostgreSQL username for ichub user
+  ichubUser: "ichub"
+  # -- External PostgreSQL password for ichub user
+  ichubPassword: ""
+  # -- Existing secret containing database password
+  existingSecret: ""
+  # -- Key in the existing secret that contains database password for ichub user
+  existingIchubSecretKey: "ichub-password"
+
 # [node selector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector) to constrain pods to nodes
 nodeSelector: {}
 
