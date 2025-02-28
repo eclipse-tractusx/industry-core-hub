@@ -98,7 +98,7 @@ tractusx-connector:
       transferProxyTokenEncryptionAesKey: tokenEncryptionAesKey
 
 vault:
-  enabled: false
+  enabled: true
   nameOverride: edc-ichub-provider-vault
   serviceAccount:
     # Specifies whether a service account should be created
