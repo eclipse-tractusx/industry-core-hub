@@ -1,0 +1,229 @@
+tractusx-connector:
+  enabled: true
+  participant:
+    id: BPNL00000003CRHK
+
+  iatp:
+    # Decentralized IDentifier
+    id: "<path:industry-core-hub/data/wallet#id>"
+    trustedIssuers: # array [] that needs to be expand but likely like (sorry unconfirmed on how this is done, as I also would need to check)
+      - "<path:industry-core-hub/data/wallet#trustedIssuers"
+    sts:
+      dim:
+        url: "<path:industry-core-hub/data/wallet#dim.url>"
+      oauth:
+        token_url: "<path:industry-core-hub/data/wallet#token.url>"
+        client:
+          id: "<path:industry-core-hub/data/wallet#clientId>"
+          secret_alias: client-secret
+
+  controlplane:
+    enabled: true
+    endpoints:
+      # -- default api for health checks, should not be added to any ingress
+      default:
+        # -- port for incoming api calls
+        port: 8080
+        # -- path for incoming api calls
+        path: /api
+      # -- data management api, used by internal users, can be added to an ingress and must not be internet facing
+      management:
+        # -- port for incoming api calls
+        port: 8081
+        # -- path for incoming api calls
+        path: /management
+        # -- authentication key, must be attached to each 'X-Api-Key' request header
+        authKey: <path:industry-core-hub/data/edc#authKey>
+      # -- control api, used for internal control calls. can be added to the internal ingress, but should probably not
+      control:
+        # -- port for incoming api calls
+        port: 8083
+        # -- path for incoming api calls
+        path: /control
+      # -- ids api, used for inter connector communication and must be internet facing
+      protocol:
+        # -- port for incoming api calls
+        port: 8084
+        # -- path for incoming api calls
+        path: /api/v1/dsp≤
+      # -- metrics api, used for appli<cation metrics, must not be internet facing
+      metrics:
+        # -- port for incoming api calls
+        port: 9090
+        # -- path for incoming api calls
+        path: /metrics
+
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "ichub-edc-provider.int.catena-x.net"
+       # -- Additional ingress annotations to add
+        annotations: {}
+        # -- EDC endpoints exposed by this ingress resource
+        endpoints:
+          - default
+          - management
+          - control
+          - protocol
+          - metrics
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-provider-controlplane"
+  dataplane:
+    enabled: true
+    endpoints:
+      default:
+        port: 8080
+        path: /api
+      public:
+        port: 8081
+        path: /api/public
+      control:
+        port: 8084
+        path: /api/dataplane/control
+      proxy:
+        port: 8186
+        path: /proxy
+        authKey: <path:industry-core-hub/data/edc#authKey>
+      metrics:
+        port: 9090
+        path: /metrics
+
+    token:
+      refresh:
+        expiry_seconds: 300
+        expiry_tolerance_seconds: 10
+        # optional URL that can be provided where clients go to refresh tokens.
+        refresh_endpoint:
+      signer:
+        # alias under which the private key is stored in the vault (JWK or PEM format)
+        privatekey_alias: signer_privatekey
+      verifier:
+        # alias under which the public key is stored in the vault, that belongs to the private key ("privatekey_alias", JWK or PEM format)
+        publickey_alias: verifier_publickey
+
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "ichub-edc-provider"
+        # -- Additional ingress annotations to add
+               # -- Additional ingress annotations to add
+        annotations: {}
+        # -- EDC endpoints exposed by this ingress resource
+        endpoints:
+          - public
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-provider-dataplane"
+        ## Adds [cert-manager](https://cert-manager.io/docs/) annotations to the ingress resource
+        certManager:
+          # -- If preset enables certificate generation via cert-manager namespace scoped issuer
+          issuer: ""
+          # -- If preset enables certificate generation via cert-manager cluster-wide issuer
+          clusterIssuer: ""
+
+  postgresql:
+    auth:
+      database: edc
+      username: <path:industry-core-hub/data/db#username>
+      postgresPassword: <path:industry-core-hub/data/db#password>
+      password: <path:industry-core-hub/data/db#password>
+    username: <path:industry-core-hub/data/db#username>
+    password: <path:industry-core-hub/data/db#password>
+
+  vault:
+    fullnameOverride: "vault"
+    hashicorp:
+      url: https://vault.core.catena-x.net
+      token: 
+      paths:
+        secret: <path:digital-product-pass/data/int/edc/vault#vault.hashicorp.api.secret.path>
+        health: /v1/sys/health
+
+vault:
+  enabled: true
+  nameOverride: edc-provider-vault
+  injector:
+    enabled: false
+  server:
+    postStart:
+      - sh
+      - -c
+      - |-
+        {
+        sleep 5
+        /bin/vault kv put secret/client-secret content=<path:industry-core-hub/data/wallet#clientSecret>
+        /bin/vault kv put secret/aesKey content=<path:industry-core-hub/data/wallet#aesKey>
+        }
+    dev:
+      enabled: true
+      devRootToken: root
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      annotations:
+        # uncomment the following line for tls
+        
+        # nginx.ingress.kubernetes.io/proxy-body-size: 50m
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      hosts:
+      - host: "ichub-provider-vault.int.catena-x.net"
+        paths:
+          - path: "/"
+            pathType: "ImplementationSpecific"
+      tls:
+        - secretName: "ichub-provider-vault.tx.test-tls"
+          hosts:
+            - "ichub-provider-vault.int.catena-x.net"
+
+dtr:
+  postgresql:
+    auth:
+      password: <path:industry-core-hub/data/dtr#password>
+      existingSecret: ichub-dataprovider-secret-dtr-postgres-init
+  registry:
+    host: ichub-dtr.int.catena-x.net
+    ingress:
+      enabled: true
+
+storage:
+  enabled: true
+  nameOverride: ichub-dataprovider-submodelserver
+  ingress:
+    enabled: true
+    ingressClassName: ""
+    annotations:
+      # uncomment the following line for tls
+      
+      # nginx.ingress.kubernetes.io/proxy-body-size: 50m
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+    - host: "ichub-data-service.int.catena-x.net"
+      paths:
+        - path: "/"
+          pathType: "ImplementationSpecific"
+    tls:
+      - secretName: "submodel-server.tx.test-tls"
+        hosts:
+          - "ichub-data-service.int.catena-x.net"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 1024Mi
