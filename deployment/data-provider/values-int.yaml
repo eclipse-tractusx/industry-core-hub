@@ -133,7 +133,7 @@ vault:
           hosts:
             - "ichub-provider-vault.int.catena-x.net"
 
-dtr:
+digital-twin-registry:
   postgresql:
     auth:
       password: <path:industry-core-hub/data/dtr#password>
@@ -143,7 +143,7 @@ dtr:
     ingress:
       enabled: true
 
-storage:
+simple-data-backend:
   enabled: true
   nameOverride: ichub-dataprovider-submodelserver
   ingress:

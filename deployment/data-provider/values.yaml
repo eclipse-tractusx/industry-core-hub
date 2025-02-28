@@ -100,7 +100,7 @@ edc:
     password: *postgrespass
     jdbcUrl: "jdbc:postgresql://{{ .Release.Name }}-edc-postgresql:5432/edc"
 
-dtr:
+digital-twin-registry:
   enabled: true
   enableKeycloak: false
 
@@ -126,7 +126,7 @@ dtr:
       initialDelaySeconds: 60
       periodSeconds: 10
 
-storage:
+simple-data-backend:
   enabled: true
   image:
     tag: "main"
