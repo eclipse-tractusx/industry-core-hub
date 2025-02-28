@@ -84,6 +84,7 @@ edc:
       transferProxyTokenSignerPrivateKey: changeme
       transferProxyTokenSignerPublicKey: changeme
       transferProxyTokenEncryptionAesKey: aesKey
+    
 
   postgresql:
     nameOverride: edc-postgresql
@@ -132,3 +133,4 @@ simple-data-backend:
     tag: "main"
   ingress:
     enabled: false
+    
