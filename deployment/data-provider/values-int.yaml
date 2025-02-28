@@ -137,7 +137,9 @@ vault:
             - "ichub-provider-vault.int.catena-x.net"
 
 digital-twin-registry:
+  nameOverride: ichub-dtr
   postgresql:
+    nameOverride: ichub-dtr-db
     auth:
       password: <path:industry-core-hub/data/dtr#password>
       existingSecret: ichub-dataprovider-secret-dtr-postgres-init
