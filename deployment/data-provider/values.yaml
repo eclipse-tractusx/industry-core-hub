@@ -35,7 +35,7 @@ dataplaneUrl: ""  # Override the edc dataplane public url
 secrets:
   edc-wallet-secret: changeme
 
-edc:
+tractusx-connector:
   enabled: true
   install:
     postgresql: true

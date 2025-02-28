@@ -1,6 +1,4 @@
 tractusx-connector:
-  install:
-    vault: false
   enabled: true
   participant:
     id: BPNL00000003CRHK
@@ -147,6 +145,10 @@ digital-twin-registry:
     host: ichub-dtr.int.catena-x.net
     ingress:
       enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      tls: true
+      urlPrefix: /
 
 simple-data-backend:
   enabled: true
