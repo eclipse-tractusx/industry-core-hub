@@ -75,6 +75,8 @@ tractusx-connector:
         publickey_alias: changeme
 
   vault:
+    nameOverride: edc-dataprovider-vault
+    fullnameOverride: edc-dataprovider-vault
     hashicorp:
       url: http://{{ .Release.Name }}-edc-provider-vault:8200
       token: "root"
@@ -131,4 +133,24 @@ simple-data-backend:
     tag: "main"
   ingress:
     enabled: false
-    
+
+vault:
+  enabled: true
+  nameOverride: edc-provider-vault
+  injector:
+    enabled: false
+  server:
+    postStart:
+      - sh
+      - -c
+      - |-
+        {
+        sleep 5
+        /bin/vault kv put secret/client-secret content=kEmH7QRPWhKfy8f+x0pFMw==
+        /bin/vault kv put secret/aesKey content=YWVzX2VuY2tleV90ZXN0Cg==
+        }
+    dev:
+      enabled: true
+      devRootToken: root
+    ingress:
+      enabled: true
