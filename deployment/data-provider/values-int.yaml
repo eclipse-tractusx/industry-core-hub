@@ -90,17 +90,16 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
     hashicorp:
-      url: https://vault.core.catena-x.net
-      token: 
-      paths:
-        secret: <path:digital-product-pass/data/int/edc/vault#vault.hashicorp.api.secret.path>
-        health: /v1/sys/health
+      url: http://edc-ichub-provider-vault:8200
+    secretNames:
+      transferProxyTokenSignerPrivateKey: tokenSignerPrivateKey
+      transferProxyTokenSignerPublicKey: tokenSignerPublicKey
+      transferProxyTokenEncryptionAesKey: tokenEncryptionAesKey
 
 vault:
   enabled: true
-  nameOverride: edc-provider-vault
+  nameOverride: edc-ichub-provider-vault
   injector:
     enabled: false
   server:
