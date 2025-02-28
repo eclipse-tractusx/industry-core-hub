@@ -1,3 +1,6 @@
+secrets:
+  client-secret: <path:industry-core-hub/data/wallet#clientSecret>
+
 tractusx-connector:
   enabled: true
   participant:
@@ -15,7 +18,7 @@ tractusx-connector:
         token_url: "<path:industry-core-hub/data/wallet#token.url>"
         client:
           id: "<path:industry-core-hub/data/wallet#clientId>"
-          secret_alias: client-secret
+          # content from the wallet secret, caution on pasting real secrets here!
 
   controlplane:
     enabled: true
@@ -106,15 +109,6 @@ vault:
   injector:
     enabled: false
   server:
-    postStart:
-      - sh
-      - -c
-      - |-
-        {
-        sleep 5
-        /bin/vault kv put secret/client-secret content=<path:industry-core-hub/data/wallet#clientSecret>
-        /bin/vault kv put secret/aesKey content=<path:industry-core-hub/data/wallet#aesKey>
-        }
     dev:
       enabled: true
       devRootToken: root
