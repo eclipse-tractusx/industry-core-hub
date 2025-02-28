@@ -51,10 +51,10 @@ tractusx-connector:
     token:
       signer:
         # alias under which the private key is stored in the vault (JWK or PEM format)
-        privatekey_alias: signer_privatekey
+        privatekey_alias: tokenSignerPrivateKey
       verifier:
         # alias under which the public key is stored in the vault, that belongs to the private key ("privatekey_alias", JWK or PEM format)
-        publickey_alias: verifier_publickey
+        publickey_alias: tokenSignerPublicKey
 
     ## Ingress declaration to expose the network service.
     ingresses:
@@ -94,7 +94,7 @@ tractusx-connector:
 
   vault:
     hashicorp:
-      url: http://edc-ichub-provider-vault:8200
+      url: http://{{ .Release.Name }}-edc-provider-vault:8200
     secretNames:
       transferProxyTokenSignerPrivateKey: tokenSignerPrivateKey
       transferProxyTokenSignerPublicKey: tokenSignerPublicKey
@@ -102,8 +102,8 @@ tractusx-connector:
 
 vault:
   enabled: true
-  nameOverride: edc-dataprovider-vault
-  fullnameOverride: edc-dataprovider-vault
+  nameOverride: edc-provider-vault
+  fullnameOverride: edc-provider-vault
   injector:
     enabled: false
   server:

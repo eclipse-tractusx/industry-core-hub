@@ -4,6 +4,9 @@ This chart includes EDC, Digital Twin Registry and a Submodel Server.
 The Submodel Server images is based on an older Catena-X demo (catenax at home) since this is what we were using in our
 testing environments.
 
+
+-> values-int.yaml -> in 
+
 ## Prerequisites
 
 - Running Kubernetes cluster
