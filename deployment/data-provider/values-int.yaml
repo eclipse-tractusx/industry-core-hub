@@ -1,4 +1,6 @@
 tractusx-connector:
+  install:
+    vault: false
   enabled: true
   participant:
     id: BPNL00000003CRHK
