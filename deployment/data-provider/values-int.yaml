@@ -142,7 +142,7 @@ digital-twin-registry:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
       tls: true
-      urlPrefix: /
+      urlPrefix: ""
 
 simple-data-backend:
   enabled: true
