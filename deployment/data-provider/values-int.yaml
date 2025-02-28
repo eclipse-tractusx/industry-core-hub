@@ -20,54 +20,18 @@ tractusx-connector:
   controlplane:
     enabled: true
     endpoints:
-      # -- default api for health checks, should not be added to any ingress
-      default:
-        # -- port for incoming api calls
-        port: 8080
-        # -- path for incoming api calls
-        path: /api
-      # -- data management api, used by internal users, can be added to an ingress and must not be internet facing
       management:
-        # -- port for incoming api calls
-        port: 8081
-        # -- path for incoming api calls
-        path: /management
         # -- authentication key, must be attached to each 'X-Api-Key' request header
         authKey: <path:industry-core-hub/data/edc#authKey>
-      # -- control api, used for internal control calls. can be added to the internal ingress, but should probably not
-      control:
-        # -- port for incoming api calls
-        port: 8083
-        # -- path for incoming api calls
-        path: /control
-      # -- ids api, used for inter connector communication and must be internet facing
-      protocol:
-        # -- port for incoming api calls
-        port: 8084
-        # -- path for incoming api calls
-        path: /api/v1/dsp≤
-      # -- metrics api, used for appli<cation metrics, must not be internet facing
-      metrics:
-        # -- port for incoming api calls
-        port: 9090
-        # -- path for incoming api calls
-        path: /metrics
-
+    bdrs:
+      server:
+        url: https://bpn-did-resolution-service.int.catena-x.net/api/directory
     ## Ingress declaration to expose the network service.
     ingresses:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
         hostname: "ichub-edc-provider.int.catena-x.net"
-       # -- Additional ingress annotations to add
-        annotations: {}
-        # -- EDC endpoints exposed by this ingress resource
-        endpoints:
-          - default
-          - management
-          - control
-          - protocol
-          - metrics
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
         # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
@@ -79,29 +43,9 @@ tractusx-connector:
   dataplane:
     enabled: true
     endpoints:
-      default:
-        port: 8080
-        path: /api
-      public:
-        port: 8081
-        path: /api/public
-      control:
-        port: 8084
-        path: /api/dataplane/control
       proxy:
-        port: 8186
-        path: /proxy
         authKey: <path:industry-core-hub/data/edc#authKey>
-      metrics:
-        port: 9090
-        path: /metrics
-
     token:
-      refresh:
-        expiry_seconds: 300
-        expiry_tolerance_seconds: 10
-        # optional URL that can be provided where clients go to refresh tokens.
-        refresh_endpoint:
       signer:
         # alias under which the private key is stored in the vault (JWK or PEM format)
         privatekey_alias: signer_privatekey
