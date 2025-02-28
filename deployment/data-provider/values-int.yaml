@@ -104,9 +104,6 @@ vault:
   enabled: true
   nameOverride: edc-dataprovider-vault
   fullnameOverride: edc-dataprovider-vault
-  serviceAccount:
-    # Specifies whether a service account should be created
-    create: false
   injector:
     enabled: false
   server:
