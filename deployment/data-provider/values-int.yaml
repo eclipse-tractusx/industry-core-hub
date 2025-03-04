@@ -39,7 +39,7 @@ tractusx-connector:
         className: "nginx"
         annotations:
         # Add annotations for the ingress, e.g.:
-          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+          cert-manager.io/cluster-issuer: letsencrypt-prod
         endpoints:
           - default
           - management
@@ -75,7 +75,7 @@ tractusx-connector:
                # -- Additional ingress annotations to add
         annotations:
         # Add annotations for the ingress, e.g.:
-          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+          cert-manager.io/cluster-issuer: letsencrypt-prod
         # -- EDC endpoints exposed by this ingress resource
         endpoints:
           - public
@@ -141,7 +141,7 @@ digital-twin-registry:
       className: nginx
       annotations:
         # Add annotations for the ingress, e.g.:
-        cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+        cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/rewrite-target: /$2
         nginx.ingress.kubernetes.io/use-regex: "true"
         nginx.ingress.kubernetes.io/enable-cors: "true"
@@ -158,7 +158,7 @@ simple-data-backend:
       # uncomment the following line for tls
       
       # nginx.ingress.kubernetes.io/proxy-body-size: 50m
-      cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+      cert-manager.io/cluster-issuer: letsencrypt-prod
     hosts:
     - host: "storage-ichub.int.catena-x.net"
       paths:
