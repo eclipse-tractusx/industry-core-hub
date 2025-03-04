@@ -131,11 +131,6 @@ digital-twin-registry:
       annotations:
         # Add annotations for the ingress, e.g.:
         cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
-        nginx.ingress.kubernetes.io/use-regex: "true"
-        nginx.ingress.kubernetes.io/enable-cors: "true"
-        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-        nginx.ingress.kubernetes.io/x-forwarded-prefix: /semantics/registry
 
 simple-data-backend:
   enabled: true
