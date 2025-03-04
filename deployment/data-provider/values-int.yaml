@@ -133,7 +133,7 @@ digital-twin-registry:
       password: <path:industry-core-hub/data/dtr#password>
       existingSecret: ichub-dataprovider-secret-dtr-postgres-init
   registry:
-    host: ichub-dtr.int.catena-x.net
+    host: dtr-ichub.int.catena-x.net
     ingress:
       enabled: true
       tls: true
@@ -160,14 +160,14 @@ simple-data-backend:
       # nginx.ingress.kubernetes.io/proxy-body-size: 50m
       cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
     hosts:
-    - host: "ichub-data-service.int.catena-x.net"
+    - host: "storage-ichub.int.catena-x.net"
       paths:
         - path: "/"
           pathType: "ImplementationSpecific"
     tls:
       - secretName: "submodel-server.tx.test-tls"
         hosts:
-          - "ichub-data-service.int.catena-x.net"
+          - "storage-ichub.int.catena-x.net"
   resources:
     limits:
       cpu: 500m
