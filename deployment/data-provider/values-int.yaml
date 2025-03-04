@@ -126,7 +126,7 @@ digital-twin-registry:
     ingress:
       enabled: true
       tls: true
-      urlPrefix: /
+      urlPrefix: ""
       className: nginx
       annotations:
         # Add annotations for the ingress, e.g.:
