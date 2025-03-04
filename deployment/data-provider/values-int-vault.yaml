@@ -93,16 +93,15 @@ tractusx-connector:
     password: <path:industry-core-hub/data/db#password>
 
   vault:
-    fullnameOverride: "vault"
     hashicorp:
-      url: <path:industry-core-hub/data/vault#url>
-      token:  <path:industry-core-hub/data/vault#token>
-      paths:
-        secret: <path:industry-core-hub/data/vault#secretPath>
-        health: /v1/sys/health
+      url: http://{{ .Release.Name }}-edc-provider-vault:8200
+    secretNames:
+      transferProxyTokenSignerPrivateKey: tokenSignerPrivateKey
+      transferProxyTokenSignerPublicKey: tokenSignerPublicKey
+      transferProxyTokenEncryptionAesKey: tokenEncryptionAesKey
 
 vault:
-  enabled: false
+  enabled: true
   nameOverride: edc-provider-vault
   fullnameOverride: edc-provider-vault
   injector:
