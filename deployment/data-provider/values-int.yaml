@@ -37,6 +37,9 @@ tractusx-connector:
         hostname: "edc-provider-ichub.int.catena-x.net"
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
+        annotations:
+        # Add annotations for the ingress, e.g.:
+          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
         endpoints:
           - default
           - management
@@ -70,7 +73,9 @@ tractusx-connector:
         hostname: "edc-provider-ichub.int.catena-x.net"
         # -- Additional ingress annotations to add
                # -- Additional ingress annotations to add
-        annotations: {}
+        annotations:
+        # Add annotations for the ingress, e.g.:
+          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
         # -- EDC endpoints exposed by this ingress resource
         endpoints:
           - public
