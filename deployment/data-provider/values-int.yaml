@@ -37,6 +37,12 @@ tractusx-connector:
         hostname: "edc-provider-cplane.int.catena-x.net"
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
+        endpoints:
+          - default
+          - management
+          - control
+          - protocol
+          - metrics
         # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
         tls:
           # -- Enables TLS on the ingress resource
