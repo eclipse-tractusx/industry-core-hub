@@ -61,7 +61,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "ichub-edc-provider"
+        hostname: "ichub-edc-provider.int.catena-x.net"
         # -- Additional ingress annotations to add
                # -- Additional ingress annotations to add
         annotations: {}
@@ -126,11 +126,16 @@ digital-twin-registry:
     ingress:
       enabled: true
       tls: true
-      urlPrefix: "/"
+      urlPrefix: /semantics/registry
       className: nginx
       annotations:
         # Add annotations for the ingress, e.g.:
         cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: /semantics/registry
 
 simple-data-backend:
   enabled: true
