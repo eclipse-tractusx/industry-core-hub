@@ -27,14 +27,6 @@ version: 0.1.3
 appVersion: 0.0.1
 
 dependencies:
-  - name: digital-twin-registry
-    version: 0.5.2
-    repository: https://eclipse-tractusx.github.io/charts/dev
-    condition: digital-twin-registry.enabled
-  - name: simple-data-backend
-    repository: https://eclipse-tractusx.github.io/charts/dev
-    version: 0.1.0
-    condition: simple-data-backend.enabled
   - name: tractusx-connector
     repository: https://eclipse-tractusx.github.io/charts/dev
     version: 0.8.0
