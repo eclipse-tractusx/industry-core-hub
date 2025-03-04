@@ -1,0 +1,126 @@
+secrets:
+  client-secret: <path:industry-core-hub/data/wallet#clientSecret>
+
+tractusx-connector:
+  enabled: true
+  participant:
+    id: BPNL00000003CRHK
+
+  iatp:
+    # Decentralized IDentifier
+    id: "<path:industry-core-hub/data/wallet#id>"
+    trustedIssuers: # array [] that needs to be expand but likely like (sorry unconfirmed on how this is done, as I also would need to check)
+      - "<path:industry-core-hub/data/wallet#trustedIssuers"
+    sts:
+      dim:
+        url: "<path:industry-core-hub/data/wallet#dim.url>"
+      oauth:
+        token_url: "<path:industry-core-hub/data/wallet#token.url>"
+        client:
+          id: "<path:industry-core-hub/data/wallet#clientId>"
+          # content from the wallet secret, caution on pasting real secrets here!
+
+  controlplane:
+    enabled: true
+    endpoints:
+      management:
+        # -- authentication key, must be attached to each 'X-Api-Key' request header
+        authKey: <path:industry-core-hub/data/edc#authKey>
+    bdrs:
+      server:
+        url: https://bpn-did-resolution-service.int.catena-x.net/api/directory
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "edc-consumer-ichub.int.catena-x.net"
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        annotations:
+        # Add annotations for the ingress, e.g.:
+          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+        endpoints:
+          - default
+          - management
+          - control
+          - protocol
+          - metrics
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-consumer-controlplane"
+  dataplane:
+    enabled: true
+    endpoints:
+      proxy:
+        authKey: <path:industry-core-hub/data/edc#authKey>
+    token:
+      signer:
+        # alias under which the private key is stored in the vault (JWK or PEM format)
+        privatekey_alias: tokenSignerPrivateKey
+      verifier:
+        # alias under which the public key is stored in the vault, that belongs to the private key ("privatekey_alias", JWK or PEM format)
+        publickey_alias: tokenSignerPublicKey
+
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "edc-consumer-ichub.int.catena-x.net"
+        # -- Additional ingress annotations to add
+               # -- Additional ingress annotations to add
+        annotations:
+        # Add annotations for the ingress, e.g.:
+          cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+        # -- EDC endpoints exposed by this ingress resource
+        endpoints:
+          - public
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-consumer-dataplane"
+        ## Adds [cert-manager](https://cert-manager.io/docs/) annotations to the ingress resource
+        certManager:
+          # -- If preset enables certificate generation via cert-manager namespace scoped issuer
+          issuer: ""
+          # -- If preset enables certificate generation via cert-manager cluster-wide issuer
+          clusterIssuer: ""
+
+  postgresql:
+    auth:
+      database: edc
+      username: <path:industry-core-hub/data/db#username>
+      postgresPassword: <path:industry-core-hub/data/db#password>
+      password: <path:industry-core-hub/data/db#password>
+    username: <path:industry-core-hub/data/db#username>
+    password: <path:industry-core-hub/data/db#password>
+
+  vault:
+    fullnameOverride: "vault"
+    hashicorp:
+      url: <path:industry-core-hub/data/vault#url>
+      token:  <path:industry-core-hub/data/vault#token>
+      paths:
+        secret: <path:industry-core-hub/data/vault#secretPath>
+        health: /v1/sys/health
+
+vault:
+  enabled: false
+  nameOverride: edc-provider-vault
+  fullnameOverride: edc-provider-vault
+  injector:
+    enabled: false
+  server:
+    dev:
+      enabled: true
+      devRootToken: root
+    ingress:
+      enabled: false
