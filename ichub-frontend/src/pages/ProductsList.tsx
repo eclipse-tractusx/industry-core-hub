@@ -23,7 +23,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import carPartsData from "../tests/payloads/sample-data.json";
-import { CardDecision  } from '@catena-x/portal-shared-components';
+import { ProductCard } from '../components/ProductCard';
 import { PartInstance } from "../types/product";
 
 const ProductsList = () => {
@@ -43,15 +43,15 @@ const ProductsList = () => {
   
 
   return (
-    <CardDecision 
-      onClick = {(itemId:any) =>handleButtonClick(itemId)}
+    <ProductCard 
+      onClick = {(itemId:any) => handleButtonClick(itemId)}
       items={carParts.map((part) => ({
-          appId: part.uuid,
-          provider: part.Category,
-          name: part.Name,
-          status: part.Status,
-          statusText: part.Status
+          uuid:part.uuid,
+          name:part.name,
+          class:part.class,
+          status:part.status
         }))}
+
         />
      
   );

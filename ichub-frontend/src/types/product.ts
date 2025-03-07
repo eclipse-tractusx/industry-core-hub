@@ -21,16 +21,11 @@
 ********************************************************************************/
 
 export interface PartInstance {
-    uuid: string;
-    PartInstanceID: string;
-    Name: string;
-    Status: string;
-    SingleLevelBom: string;
-    Manufacturer: string;
-    Material: string;
-    WeightKg: number;
-    Category: string;
-    Description: string;
-    Image: string;
-    Provider:string
+    uuid: string,
+    name: string,
+    status: string,
+    manufacturer: string,
+    class: string,
+    description: string,
+    image: string
 }

@@ -294,12 +294,28 @@ body{
   border: 2px solid #5fb9ff42!important;
 }
 
+.product-cards .product-card:hover {
+  border: 2px solid rgba(1, 86, 255, 0.829)!important;
+}
+.product-cards .product-card{
+  background: black !important;
+  border-radius: 8px!important;
+  border: none!important;
+  box-shadow: 0 0 12px rgb(1, 40, 119);
+  border: 1px solid #5fb9ff42!important;
+}
+.product-cards .MuiChip-icon{
+  color: black!important;
+}
 .productDetail, .cx-card__decision--item .cx-card__decision--button {
   background: black !important;
   border-radius: 8px!important;
   border: none!important;
   box-shadow: 0 0 10px rgb(1,32,96);
   border: 2px solid #5fb9ff42!important;
+}
+.MuiChip-icon{
+  color: black!important;
 }
 
 .cx-card__decision *, 

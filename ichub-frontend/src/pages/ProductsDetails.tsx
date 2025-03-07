@@ -68,7 +68,7 @@ const ProductsDetails = () => {
   };
 
   const handleDownload = () => {
-    const fileName = part.Name.toLowerCase().replace(/\s+/g, "-") + ".txt";
+    const fileName = part.name.toLowerCase().replace(/\s+/g, "-") + ".txt";
     const blob = new Blob([part.uuid], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -84,8 +84,8 @@ const ProductsDetails = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: part.Name,
-          text: `Check out this part: ${part.Name} (UUID: ${part.uuid})`,
+          title: part.name,
+          text: `Check out this part: ${part.name} (UUID: ${part.uuid})`,
           url: window.location.href
         });
       } catch (error) {
@@ -119,7 +119,7 @@ const ProductsDetails = () => {
     )}
     <div className="productDetail">
       <div className="flex flex-content-between m-3">
-        {getStatusTag(part.Status)}
+        {getStatusTag(part.status)}
         <Button size="small"
           onClick={() => console.log("DCM v2.0 button")}
           style={{
@@ -160,53 +160,38 @@ const ProductsDetails = () => {
         <div>
           <div className="my-5 flex flex-content-between px-3">
             <div className="title-subtitle">
-              <Typography variant="h2">{part.Name}</Typography>
-              <Typography variant="caption1">{part.Category}</Typography>
+              <Typography variant="h2">{part.name}</Typography>
+              <Typography variant="caption1">{part.class}</Typography>
             </div>
           </div>
 
           <div className="ml-3">
             <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>🔢 Part Instance ID:</Typography>
-              <Typography variant="body2">{part.PartInstanceID}</Typography>
-            </div>
-            <div className="flex mb-1">
               <Typography variant="label2" style={{ marginRight: "5px" }}>🏭 Manufacturer:</Typography>
-              <Typography variant="body2">{part.Manufacturer}</Typography>
+              <Typography variant="body2">{part.manufacturer}</Typography>
             </div>
             <div className="flex mb-1">
               <Typography variant="label2" style={{ marginRight: "5px" }}>📌 Status:</Typography>
-              <Typography variant="body2">{part.Status}</Typography>
-            </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>🔩 Material:</Typography>
-              <Typography variant="body2">{part.Material}</Typography>
+              <Typography variant="body2">{part.status}</Typography>
             </div>
             <div className="flex mb-1">
               <Typography variant="label2" style={{ marginRight: "5px" }}>📂 Category:</Typography>
-              <Typography variant="body2">{part.Category}</Typography>
-            </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>⚖️ Weight:</Typography>
-              <Typography variant="body2">{part.WeightKg} kg</Typography>
-            </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>📊 Single Level Bom:</Typography>
-              <Typography variant="body2">{part.SingleLevelBom} kg</Typography>
+              <Typography variant="body2">{part.class}</Typography>
             </div>
             <div className="flex mb-1">
               <Typography variant="label2" style={{ marginRight: "5px" }}>📝 Description:</Typography>
-              <Typography variant="body2">{part.Description} kg</Typography>
+              <Typography variant="body2">{part.description}</Typography>
             </div>
           </div>
         </div>
         <div className="my-auto">
-          <img src={part.Image} alt={part.Name} className="img-fluid my-auto" />
+          <img src={part.image} alt={part.name} className="img-fluid my-auto" />
           <div className="mt-3">
+            <span>Shared With:</span>
             <ul>
               <li className="flex">
                 <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                <Typography variant="label2" style={{ marginRight: "5px" }}>Relationship 1:</Typography>
+                <Typography variant="label2" style={{ marginRight: "5px" }}></Typography>
                 <Typography variant="body2">PI-702</Typography>
               </li>
               <li className="flex">

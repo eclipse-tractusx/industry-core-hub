@@ -20,13 +20,14 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+import PersonIcon from '@mui/icons-material/Person'
 import { type Palette, useTheme } from '@mui/material'
 import MuiChip from '@mui/material/Chip'
 
 export enum StatusVariants {
-  registerd = 'registerd',
-  shared = 'shared',
-  draft = 'draft',
+  registered = 'Registered',
+  shared = 'Shared',
+  draft = 'Draft',
 }
 export interface CardChipProps {
   status?: StatusVariants
@@ -36,32 +37,39 @@ export interface CardChipProps {
 interface ChipStyle {
   color: keyof Palette['chip']
   backgroundColor: keyof Palette['chip']
+  border: keyof Palette['chip']
 }
 
 const statusStyles: Record<StatusVariants | 'default', ChipStyle> = {
-  [StatusVariants.registerd]: {
-    color: 'release',
-    backgroundColor: 'bgRelease',
+  [StatusVariants.registered]: {
+    color: 'registered',
+    backgroundColor: 'black',
+    border: 'bgRegistered',
   },
   [StatusVariants.shared]: {
-    color: 'active',
-    backgroundColor: 'bgActive',
+    color: 'black',
+    backgroundColor: 'warning',
+    border: 'none',
   },
   [StatusVariants.draft]: {
-    color: 'inactive',
-    backgroundColor: 'bgInactive',
+    color: 'bgDefault',
+    backgroundColor: 'none',
+    border: 'borderDraft',
   },
   default: {
     color: 'default',
     backgroundColor: 'bgDefault',
-  },
+    border: 'none',
+  }
 }
 
 export const CardChip = ({ status, statusText }: CardChipProps) => {
   const theme = useTheme()
-  const { color, backgroundColor }: ChipStyle =
-    statusStyles[(status?.toLowerCase() as StatusVariants) ?? 'default'] ||
-    statusStyles.default
+
+  // Ensure the status is valid; otherwise, use 'default'
+  const statusKey = status && statusStyles[status] ? status : 'default'
+
+  const { color, backgroundColor, border } = statusStyles[statusKey]
 
   return (
     <MuiChip
@@ -70,10 +78,11 @@ export const CardChip = ({ status, statusText }: CardChipProps) => {
       sx={{
         color: theme.palette.chip[color],
         backgroundColor: theme.palette.chip[backgroundColor],
-        borderRadius: '15px',
-        border: 'none',
+        borderRadius: '4px',
+        border: theme.palette.chip[border],
         height: '28px',
       }}
+      icon={statusKey==StatusVariants.shared?<PersonIcon sx={{color: '#000000', fontSize: '18px'}}/>:null}
     />
   )
 }
