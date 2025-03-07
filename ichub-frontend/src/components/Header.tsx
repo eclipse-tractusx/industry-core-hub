@@ -45,14 +45,16 @@ const Header = () => {
       items={[
         { href: '/', title: 'Industry Core Hub' },
       ]}
-    >
-      <a href="/">
-        <img
-          src="/eclipse-tractus-x-logo.png"
-          alt="Eclipse Tractus-X logo"
-          style={{ display: 'inline-block', height: '40px', width: '170px' }}
-        />
-      </a>
+    > 
+      <div className='main-logo-wrapper'>
+        <a href="/" className="main-logo-link">
+          <img
+            src="/241117_Tractus_X_Logo_RGB_Light_Version.png"
+            alt="Eclipse Tractus-X logo"
+            className='main-logo'
+          />
+        </a>
+      </div>
       <div>
         <IconButton aria-label="user-menu" onClick={handleMenuOpen}>
           <PersonIcon />

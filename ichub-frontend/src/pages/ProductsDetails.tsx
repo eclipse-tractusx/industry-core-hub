@@ -22,8 +22,9 @@
 
 import React from "react";
 import { useParams } from "react-router-dom";
-import carPartsData from "../data/sample-data.json";
-import { DropdownMenu, StatusTag, Button, Icon, Typography, PageNotifications } from '@catena-x/portal-shared-components';
+import carPartsData from "../tests/payloads/sample-data.json";
+import instanceData from "../tests/payloads/instance-data.json";
+import { DropdownMenu, StatusTag, Button, Icon, Typography, PageNotifications, Table } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS, PRODUCT_OPTIONS } from "../types/common";
 import JsonViewerDialog from "../components/JsonViewerDialog";
 
@@ -102,34 +103,58 @@ const ProductsDetails = () => {
         return <StatusTag color="confirmed" label="Registered" variant="filled" />;
       case PRODUCT_STATUS.DRAFT:
         return <StatusTag color="declined" label="Draft" variant="filled" />;
-      case PRODUCT_STATUS.PENDING:
-        return <StatusTag color="pending" label="Pending" variant="filled" />;
+      case PRODUCT_STATUS.SHARED:
+        return <StatusTag color="warning" label="Shared" variant="filled" />;
       default:
         return null;
     }
   };
 
   return (
+    <div className="productWrapper">
+    {notification && (
+      <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
+        <PageNotifications open severity="success" showIcon title="Copy successful" />
+      </div>
+    )}
     <div className="productDetail">
-      {notification && (
-        <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
-          <PageNotifications open severity="success" showIcon title="Copy successful" />
-        </div>
-      )}
-      <div className="flex flex-content-between mx-3">
+      <div className="flex flex-content-between m-3">
         {getStatusTag(part.Status)}
         <Button size="small"
           onClick={() => console.log("DCM v2.0 button")}
           style={{
-            backgroundColor: "purple",
+            backgroundColor: "rgba(77, 77, 77, 0.56)",
             height: "32px",
             boxSizing: "border-box",
             borderRadius: "6px",
             fontSize: "0.8125rem"
-          }}>
-          <Icon fontSize="16" iconName="Edit" />
-          Edit
+          }} 
+          endIcon={<Icon fontSize="16" iconName="Edit" />}>
+          
+          <span className="update-button-content">UPDATE</span>
+          
         </Button>
+        <DropdownMenu
+              buttonSx={{
+                'padding': '10px 10px',
+                'border': '1px solid #b4b4b4!important',
+                'font-size': '14px',
+              }}
+              buttonText="Share"
+              startIcon={<Icon fontSize="16" iconName="IosShare" />}
+            >
+              <div className="flex flex-column">
+                <Button className="dropdown-button" color="secondary" size="small" onClick={handleCopy} className="share-dropdown-btn" startIcon={<Icon fontSize="16" iconName="ContentCopy" />}>
+                  <span className="dropdown-button-content">{PRODUCT_OPTIONS.COPY}</span>
+                </Button>
+                <Button className="dropdown-button" color="secondary" size="small" onClick={handleDownload} className="share-dropdown-btn" startIcon={<Icon fontSize="16" iconName="FileDownload" />}>
+                  <span className="dropdown-button-content">{PRODUCT_OPTIONS.DOWNLOAD}</span>
+                </Button>
+                <Button className="dropdown-button" color="secondary" size="small" onClick={handleShare} className="share-dropdown-btn" startIcon={<Icon fontSize="16" iconName="IosShare" />}>
+                  <span className="dropdown-button-content">{PRODUCT_OPTIONS.SHARE}</span>
+                </Button>
+              </div>
+            </DropdownMenu>
       </div>
       <div className="grid-70-30" style={{ marginBottom: "7%" }}>
         <div>
@@ -138,32 +163,9 @@ const ProductsDetails = () => {
               <Typography variant="h2">{part.Name}</Typography>
               <Typography variant="caption1">{part.Category}</Typography>
             </div>
-            <DropdownMenu
-              buttonSx={{
-                'padding': '10px 10px',
-                'border': '1px solid #b4b4b4!important',
-                'font-size': '14px',
-              }}
-              buttonText="Share"
-            >
-              <div className="flex flex-column">
-                <Button color="secondary" size="small" onClick={handleCopy} className="share-dropdown-btn">
-                  <Icon fontSize="16" iconName="ContentCopy" />
-                  {PRODUCT_OPTIONS.COPY}
-                </Button>
-                <Button color="secondary" size="small" onClick={handleDownload} className="share-dropdown-btn">
-                  <Icon fontSize="16" iconName="FileDownload" />
-                  {PRODUCT_OPTIONS.DOWNLOAD}
-                </Button>
-                <Button color="secondary" size="small" onClick={handleShare} className="share-dropdown-btn">
-                  <Icon fontSize="16" iconName="IosShare" />
-                  {PRODUCT_OPTIONS.SHARE}
-                </Button>
-              </div>
-            </DropdownMenu>
           </div>
 
-          <div>
+          <div className="ml-3">
             <div className="flex mb-1">
               <Typography variant="label2" style={{ marginRight: "5px" }}>🔢 Part Instance ID:</Typography>
               <Typography variant="body2">{part.PartInstanceID}</Typography>
@@ -228,33 +230,93 @@ const ProductsDetails = () => {
       </div>
 
       <div className="flex m-5">
-        <Button color="success" size="large" onClick={() => console.log("Add button")} fullWidth={true} style={{ padding: "5px" }}>
+        <Button className="submodel-button" variant="outlined" color="primary" size="large" onClick={handleOpenDialog} fullWidth={true} style={{ padding: "10px" }}>
+          <span className="submodel-button-content">DIGITAL PRODUCT PASSPORT v5.0.0</span>
+          <Icon fontSize="16" iconName="OpenInNew" />
+        </Button>
+      </div>
+      <div className="flex m-5 flex-content-between flex-gap-5">
+        <Button className="submodel-button" variant="outlined" color="primary" size="large" onClick={() => console.log("PCF v3.0 button")} fullWidth={true} style={{ padding: "10px" }}>
+          <span className="submodel-button-content">PCF v3.0.0</span>
+          <Icon fontSize="16" iconName="OpenInNew" />
+        </Button>
+        <Button className="submodel-button" variant="outlined" color="primary" size="large" onClick={() => console.log("DPP v2.0 button")} fullWidth={true} style={{ padding: "10px" }}>
+          <span className="submodel-button-content">TRANSMISSION PASS v2.0.0</span>
+          <Icon fontSize="16" iconName="OpenInNew" />
+        </Button>
+        <Button className="submodel-button" variant="outlined"color="primary" size="large" fullWidth={true} style={{ padding: "10px" }}>
+          <span className="submodel-button-content">DCM v2.0.0</span>
+          <Icon fontSize="16" iconName="OpenInNew" />
+        </Button>
+      </div>
+      <div className="flex m-5">
+        <Button className="submodel-button" color="success" size="small" onClick={() => console.log("Add button")} fullWidth={true} style={{ padding: "5px" }}>
           <Icon fontSize="18" iconName="Add" />
         </Button>
       </div>
 
-      <div className="flex m-5 flex-content-between flex-gap-5">
-        <Button color="primary" size="large" onClick={() => console.log("PCF v3.0 button")} fullWidth={true} style={{ padding: "10px" }}>
-          <Icon fontSize="16" iconName="Add" />
-          PCF v3.0
-        </Button>
-        <Button color="primary" size="large" onClick={() => console.log("DPP v2.0 button")} fullWidth={true} style={{ padding: "10px" }}>
-          <Icon fontSize="16" iconName="Add" />
-          DPP v2.0
-        </Button>
-        <Button color="primary" size="large" onClick={handleOpenDialog} fullWidth={true} style={{ padding: "10px" }}>
-          <Icon fontSize="16" iconName="Add" />
-          DCM v2.0
-        </Button>
-      </div>
-      <div className="flex m-5">
-        <Button color="error" size="large" onClick={() => console.log("Transmission Passport v5.0")} fullWidth={true} style={{ padding: "10px" }}>
-          <Icon fontSize="16" iconName="Add" />
-          Transmission Passport v5.0
-        </Button>
-      </div>
-
       <JsonViewerDialog open={dialogOpen} onClose={handleCloseDialog} carJsonData={part}/>
+    </div>
+    <div className="product-table-wrapper">
+    <Table
+      className="product-table"
+      columnHeadersBackgroundColor="#fff"
+      getRowId={(row) => row.uuid} 
+      columns={[
+        {
+          field: 'uuid',  
+          flex: 3,
+          headerName: 'uuid'
+        },
+        {
+          field: 'partInstanceId',
+          flex: 3,
+          headerName: 'Part Instance ID'
+        },
+        {
+          field: 'submodels',
+          flex: 1,
+          headerName: 'Submodels'
+        },
+        {
+          field: 'status',
+          flex: 1,
+          headerName: 'Status'
+        },
+        {
+          field: 'type',
+          flex: 1,
+          headerName: 'Type'
+        },
+        {
+          field: 'created',
+          flex: 1,
+          headerName: 'Created'
+        },
+        {
+          field: 'updated',
+          flex: 2,
+          headerName: 'Updated'
+        },
+        {
+          field: 'manufacturer',
+          flex: 2,
+          headerName: 'Manufacturer'
+        }
+      ]}
+      disableColumnMenu
+      disableColumnSelector
+      disableDensitySelector
+      hasBorder
+      hideFooter
+      noRowsMsg="No rows"
+      rowHeight={50}
+      rows={instanceData}
+      searchPlaceholder="Search by username"
+      title="Instance Products"
+      toolbarVariant="basic"
+    />
+    </div>
     </div>
   );
 }

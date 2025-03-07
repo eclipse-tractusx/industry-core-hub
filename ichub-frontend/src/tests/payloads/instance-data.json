@@ -1,0 +1,52 @@
+[
+    {
+        "uuid": "urn:uuid:a3f91b6e-4d6f-45d5-b2a5-8e74298fbe01",
+        "partInstanceId": "PGA00000000000000002321450BXYZ",
+        "submodels": 3,
+        "status": "Built",
+        "type": "Instance",
+        "created": "05-02-2025 14:21:45.1234",
+        "updated": "06-03-2025 09:45:32.5678",
+        "manufacturer": "BPNL501TG00870AS0"
+    },
+    {
+        "uuid": "urn:uuid:c1e2f3a4-5678-49d0-81a2-b3456789cdef",
+        "partInstanceId": "PGA00000000000000002321450CD21",
+        "submodels": 1,
+        "status": "Engineered",
+        "type": "Batch",
+        "created": "10-02-2025 09:32:11.4321",
+        "updated": "11-03-2025 16:20:50.7890",
+        "manufacturer": "BPNL501TG00870AS0"
+    },
+    {
+        "uuid": "urn:uuid:7d8a9b0c-1234-4d5e-98f7-6b54321cde90",
+        "partInstanceId": "PGA00000000000000002321450EFG3",
+        "submodels": 2,
+        "status": "Planned",
+        "type": "JIS",
+        "created": "15-02-2025 17:45:20.0987",
+        "updated": "16-03-2025 11:10:40.6543",
+        "manufacturer": "BPNL501TG00870AS0"
+    },
+    {
+        "uuid": "urn:uuid:45a67bc8-d90e-4321-8765-1f2e3d4c5b6a",
+        "partInstanceId": "PGA00000000000000002321450HIJ4",
+        "submodels": 0,
+        "status": "Specified",
+        "type": "Instance",
+        "created": "20-02-2025 08:10:05.7654",
+        "updated": "",
+        "manufacturer": "BPNL501TG00870AS0"
+    },
+    {
+        "uuid": "urn:uuid:23b4a5c6-d7e8-490f-9102-3d4c5b6a7f8e",
+        "partInstanceId": "PGA00000000000000002321450KLM5",
+        "submodels": 4,
+        "status": "Built",
+        "type": "Batch",
+        "created": "25-02-2025 12:34:56.7891",
+        "updated": "28-03-2025 14:20:30.9876",
+        "manufacturer": "BPNL501TG00870AS0"
+    }
+]

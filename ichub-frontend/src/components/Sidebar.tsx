@@ -24,52 +24,52 @@ import { Menu } from '@catena-x/portal-shared-components';
 
 const Sidebar = () => {
   return (
-    <Menu
-      items={[
-        {
-          children: [
-            { href: '/', title: 'Bosch' },
-            { href: '/', title: 'MagnaFlow' },
-            { href: '/', title: 'Brembo' },
-            { href: '/', title: 'Pirelli' },
-            { href: '/', title: 'Monroe' },
-            { href: '/', title: 'Valeo' }
-          ],
-          href: '/',
-          title: 'Brands'
-        },
-        {
-          children: [
-            { href: '/', title: 'Turbochargers' },
-            { href: '/', title: 'Suspension Parts' },
-            { href: '/', title: 'Brake Pads' },
-            { href: '/', title: 'Engine Blocks' }
-          ],
-          href: '/',
-          title: 'Categories'
-        },
-        {
-          children: [
-            { href: '/', title: 'BASF' },
-            { href: '/', title: 'BMW' },
-            { href: '/', title: 'BOSCH' },
-            { href: '/', title: 'Mercedes-Benz' },
-            { href: '/', title: 'Volkswagen' },
-          ],
-          href: '/',
-          title: 'Shared with'
-        },
-        {
-          children: [
-            { href: '/', title: 'Draft' },
-            { href: '/', title: 'Pending' },
-            { href: '/', title: 'Registered' }
-          ],
-          href: '/',
-          title: 'Status'
-        },
-      ]}
-    />
+      <Menu
+        items={[
+          {
+            children: [
+              { href: '/', title: 'Bosch' },
+              { href: '/', title: 'MagnaFlow' },
+              { href: '/', title: 'Brembo' },
+              { href: '/', title: 'Pirelli' },
+              { href: '/', title: 'Monroe' },
+              { href: '/', title: 'Valeo' }
+            ],
+            href: '/',
+            title: 'Brands'
+          },
+          {
+            children: [
+              { href: '/', title: 'Turbochargers' },
+              { href: '/', title: 'Suspension Parts' },
+              { href: '/', title: 'Brake Pads' },
+              { href: '/', title: 'Engine Blocks' }
+            ],
+            href: '/',
+            title: 'Categories'
+          },
+          {
+            children: [
+              { href: '/', title: 'BASF' },
+              { href: '/', title: 'BMW' },
+              { href: '/', title: 'BOSCH' },
+              { href: '/', title: 'Mercedes-Benz' },
+              { href: '/', title: 'Volkswagen' },
+            ],
+            href: '/',
+            title: 'Shared with'
+          },
+          {
+            children: [
+              { href: '/', title: 'Draft' },
+              { href: '/', title: 'Pending' },
+              { href: '/', title: 'Registered' }
+            ],
+            href: '/',
+            title: 'Status'
+          },
+        ]}
+        />
   )
 }
 

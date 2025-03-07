@@ -27,7 +27,7 @@ import Sidebar from '../components/Sidebar';
 
 function MainLayout() {
   return (
-    <main>
+    <main className="contentWrapper">
       <Header />
       <div className="pageWrapper d-lg-flex">
         <aside className="sidebarArea shadow bg-white" id="sidebarArea">
