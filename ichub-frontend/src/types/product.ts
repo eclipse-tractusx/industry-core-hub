@@ -25,6 +25,7 @@ export interface PartInstance {
     name: string,
     status: string,
     manufacturer: string,
+    manufacturerPartId: string,
     class: string,
     description: string,
     image: string

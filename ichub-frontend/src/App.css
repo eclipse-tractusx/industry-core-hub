@@ -253,6 +253,7 @@ body{
   height: 100%;
 }
 
+
 .productDetail {
   padding: 20px;
   width: 100%;
@@ -297,6 +298,15 @@ body{
 .product-cards .product-card:hover {
   border: 2px solid rgba(1, 86, 255, 0.829)!important;
 }
+.productDetail .product-card{
+  background: black !important;
+  border-radius: 8px!important;
+  border: none!important;
+  box-shadow: 0 0 12px rgb(1, 40, 119);
+  border: 1px solid #5fb9ff42!important;
+  padding: 20px;
+}
+
 .product-cards .product-card{
   background: black !important;
   border-radius: 8px!important;
@@ -360,11 +370,17 @@ div[role="presentation"] > div.MuiPaper-root.MuiPopover-paper.MuiMenu-paper butt
 .cx-card__decision--button:hover {
   border: 2px solid rgba(1, 86, 255, 0.829)!important;
 }
-
+/*
 .grid-70-30{
   display: grid;
   grid-template-columns: 70% 30%;
   gap: 10px;
+}
+*/
+
+.product-image{
+  max-height: 250px;
+  border-radius: 25px;
 }
 
 .img-fluid {

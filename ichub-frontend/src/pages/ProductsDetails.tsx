@@ -27,6 +27,7 @@ import instanceData from "../tests/payloads/instance-data.json";
 import { DropdownMenu, StatusTag, Button, Icon, Typography, PageNotifications, Table } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS, PRODUCT_OPTIONS } from "../types/common";
 import JsonViewerDialog from "../components/JsonViewerDialog";
+import { Grid2 } from '@mui/material';
 
 const ProductsDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -100,9 +101,9 @@ const ProductsDetails = () => {
   const getStatusTag = (status: string) => {
     switch (status.toLowerCase()) {
       case PRODUCT_STATUS.REGISTERED:
-        return <StatusTag color="confirmed" label="Registered" variant="filled" />;
+        return <StatusTag color="confirmed" label="Registered" variant="outlined" />;
       case PRODUCT_STATUS.DRAFT:
-        return <StatusTag color="declined" label="Draft" variant="filled" />;
+        return <StatusTag color="info" label="Draft" variant="outline" />;
       case PRODUCT_STATUS.SHARED:
         return <StatusTag color="warning" label="Shared" variant="filled" />;
       default:
@@ -112,6 +113,7 @@ const ProductsDetails = () => {
 
   return (
     <div className="productWrapper">
+      
     {notification && (
       <div style={{ maxWidth: '300px', marginLeft: 'auto' }}>
         <PageNotifications open severity="success" showIcon title="Copy successful" />
@@ -156,63 +158,75 @@ const ProductsDetails = () => {
               </div>
             </DropdownMenu>
       </div>
-      <div className="grid-70-30" style={{ marginBottom: "7%" }}>
-        <div>
-          <div className="my-5 flex flex-content-between px-3">
+      <Grid2 container spacing={1} direction="row"   sx={{
+    justifyContent: "space-between",
+    alignItems: "top",
+  }}>
+        <Grid2 size={5}>
+          <Grid2 className="my-5 flex flex-content-between px-3">
             <div className="title-subtitle">
               <Typography variant="h2">{part.name}</Typography>
               <Typography variant="caption1">{part.class}</Typography>
             </div>
-          </div>
+          </Grid2>
 
-          <div className="ml-3">
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>🏭 Manufacturer:</Typography>
-              <Typography variant="body2">{part.manufacturer}</Typography>
+          <Grid2 className="ml-3 product-card">
+            <div className="mb-2">
+              <Typography variant="label3">Manufacturer</Typography>
+              <Typography variant="body1">{part.manufacturer}</Typography>
             </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>📌 Status:</Typography>
-              <Typography variant="body2">{part.status}</Typography>
+            <div className="mt-2 mb-2">
+              <Typography variant="label3">Manufacturer Part Id</Typography>
+              <Typography variant="body1">{part.manufacturerPartId}</Typography>
             </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>📂 Category:</Typography>
-              <Typography variant="body2">{part.class}</Typography>
-            </div>
-            <div className="flex mb-1">
-              <Typography variant="label2" style={{ marginRight: "5px" }}>📝 Description:</Typography>
+            <div className="mb-2" style={{margin: '30px 0px 10px 0'}}>
+              <Typography variant="label4">Description</Typography>
               <Typography variant="body2">{part.description}</Typography>
             </div>
-          </div>
-        </div>
-        <div className="my-auto">
-          <img src={part.image} alt={part.name} className="img-fluid my-auto" />
+            <div className="flex flex-content-between">
+            <div className="mr-2">
+              <Typography variant="label4">Created</Typography>
+              <Typography variant="body2">{part.created}</Typography>
+            </div>
+            <div className="ml-2">
+              <Typography variant="label4">Updated</Typography>
+              <Typography variant="body2">{part.created}</Typography>
+            </div>
+            </div>
+          </Grid2>
+        </Grid2>
+        <Grid2 size={{lg: 3, md: 6, sm: 6}}>
+          <img src={part.image} alt={part.name} className="product-image img-fluid my-auto" />
           <div className="mt-3">
-            <span>Shared With:</span>
-            <ul>
+          <div className="mt-2 mb-2 flex flex-items-center">
+              <Typography variant="label4">{part.uuid}</Typography>
+            </div>
+            <h2>Shared With:</h2>
+            <ul className="mt-3">
               <li className="flex">
                 <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                <Typography variant="label2" style={{ marginRight: "5px" }}></Typography>
-                <Typography variant="body2">PI-702</Typography>
+                <Typography variant="label2" style={{ marginRight: "5px" }}>Volkswagen AG -</Typography>
+                <Typography variant="body2">BPNL42621500AS61</Typography>
               </li>
               <li className="flex">
                 <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                <Typography variant="label2" style={{ marginRight: "5px" }}>Relationship 2:</Typography>
-                <Typography variant="body2">PI-244</Typography>
+                <Typography variant="label2" style={{ marginRight: "5px" }}>BMW Racing Gmbh -</Typography>
+                <Typography variant="body2">BPNL3A4T8A5621S3</Typography>
               </li>
               <li className="flex">
                 <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                <Typography variant="label2" style={{ marginRight: "5px" }}>Relationship 3:</Typography>
-                <Typography variant="body2">PI-089</Typography>
+                <Typography variant="label2" style={{ marginRight: "5px" }}>John the Recycler KG - </Typography>
+                <Typography variant="body2">BPNL5ASD5428800A</Typography>
               </li>
               <li className="flex">
-                <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                <Typography variant="label2" style={{ marginRight: "5px" }}>Relationship 4:</Typography>
-                <Typography variant="body2">PI-011</Typography>
+                <Icon fontSize="16" iconName="Launch" className="my-auto mr-1" />
+                <a href="">512 more</a>
+  
               </li>
             </ul>
           </div>
-        </div>
-      </div>
+        </Grid2>
+      </Grid2>
 
       <div className="flex m-5">
         <Button className="submodel-button" variant="outlined" color="primary" size="large" onClick={handleOpenDialog} fullWidth={true} style={{ padding: "10px" }}>
@@ -246,7 +260,9 @@ const ProductsDetails = () => {
     <Table
       className="product-table"
       columnHeadersBackgroundColor="#fff"
-      getRowId={(row) => row.uuid} 
+      getRowId={(row) => row.uuid}
+
+      rowsCount="5 of 52.0213 Digital Twins"
       columns={[
         {
           field: 'uuid',  
@@ -297,7 +313,8 @@ const ProductsDetails = () => {
       noRowsMsg="No rows"
       rowHeight={50}
       rows={instanceData}
-      searchPlaceholder="Search by username"
+      
+      searchPlaceholder=""
       title="Instance Products"
       toolbarVariant="basic"
     />

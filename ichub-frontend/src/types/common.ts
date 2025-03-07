@@ -23,7 +23,7 @@
 export enum PRODUCT_STATUS {
     REGISTERED = "registered",
     DRAFT = "draft",
-    SHARED = "Shared with partner",
+    SHARED = "shared",
   }
 
 export enum PRODUCT_OPTIONS {

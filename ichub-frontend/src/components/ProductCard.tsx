@@ -207,7 +207,7 @@ export const ProductCard = ({
                     borderRadius: "8px",
                     borderTopLeftRadius: "0",
                     borderTopRightRadius: "0",
-                    background: "rgba(36, 36, 46, 0.56)",
+                    background: "rgba(35, 35, 38, 0.76)",
                     width: "100%",
                     ":hover": {
                       background: "linear-gradient(180deg, rgba(1,32,96,0.8323704481792717) 0%, rgba(5,107,153,0.5690651260504201) 100%)"

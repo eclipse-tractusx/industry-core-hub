@@ -177,8 +177,8 @@ export const paletteDefinitions = {
     contrastText: '#975B27',
   },
   confirmed: {
-    main: '#E2F6C7',
-    contrastText: '#5C8D45',
+    main: '#ffffff',
+    contrastText: '#ffffff',
   },
   declined: {
     main: '#FEE7E2',
@@ -211,113 +211,103 @@ export const paletteDefinitions = {
 const palette = createPalette(paletteDefinitions)
 
 export const typographyDefinitions = {
-  fontFamily: getFontFamily('LibreFranklin'),
+  fontFamily: getFontFamily('Manrope'),
   htmlFontSize: 16,
   allVariants: {
     color: palette.text.primary,
   },
   h1: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
     fontSize: 56,
     lineHeight: 68 / 56,
     letterSpacing: 0,
   },
   h2: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
     fontSize: 36,
     lineHeight: 44 / 36,
     letterSpacing: 0,
   },
   h3: {
-    fontFamily: getFontFamily('LibreFranklin-SemiBold'),
     fontSize: 24,
     lineHeight: 36 / 24,
     letterSpacing: 0,
   },
   h4: {
-    fontFamily: getFontFamily('LibreFranklin-SemiBold'),
     fontSize: 18,
     lineHeight: 28 / 18,
     letterSpacing: 0,
   },
   h5: {
-    fontFamily: getFontFamily('LibreFranklin-SemiBold'),
     fontSize: 16,
     lineHeight: 24 / 16,
     letterSpacing: 0,
   },
   body1: {
-    fontFamily: getFontFamily('LibreFranklin-Light'),
     fontSize: 18,
     lineHeight: 28 / 18,
     letterSpacing: 0,
   },
   body2: {
-    fontFamily: getFontFamily('LibreFranklin-Light'),
     fontSize: 16,
     lineHeight: 24 / 16,
     letterSpacing: 0,
   },
   body3: {
-    fontFamily: getFontFamily('LibreFranklin-Light'),
     fontSize: 14,
     lineHeight: 20 / 14,
     letterSpacing: 0,
   },
   label1: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
     fontSize: 18,
     lineHeight: 28 / 18,
     letterSpacing: 0,
   },
   label2: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
+    fontSize: 16,
+    lineHeight: 24 / 16,
+    letterSpacing: 0
+  },
+  boldLabel: {
     fontSize: 16,
     lineHeight: 24 / 16,
     letterSpacing: 0,
+    fontWeight: 'bold',
   },
   label3: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
     fontSize: 14,
     lineHeight: 20 / 14,
     letterSpacing: 0,
+    fontWeight: 'bold'
   },
   label4: {
-    fontFamily: getFontFamily('LibreFranklin-Medium'),
     fontSize: 12,
     lineHeight: 16 / 12,
     letterSpacing: 0,
   },
   label5: {
-    fontFamily: getFontFamily('LibreFranklin-SemiBold'),
     fontSize: 11,
     lineHeight: 16 / 11,
     letterSpacing: 0,
     color: palette.text.secondary,
   },
   caption1: {
-    fontFamily: getFontFamily('LibreFranklin'),
     fontSize: 18,
     lineHeight: 28 / 18,
     letterSpacing: 0,
     color: palette.text.tertiary,
   },
   caption2: {
-    fontFamily: getFontFamily('LibreFranklin'),
     fontSize: 16,
     lineHeight: 24 / 16,
     letterSpacing: 0,
     color: palette.text.tertiary,
   },
   caption3: {
-    fontFamily: getFontFamily('LibreFranklin'),
     fontSize: 14,
     lineHeight: 20 / 14,
     letterSpacing: 0,
     color: palette.text.tertiary,
   },
   helper: {
-    fontFamily: getFontFamily('LibreFranklin'),
     fontSize: 12,
     lineHeight: 16 / 12,
     letterSpacing: 0,
@@ -534,7 +524,6 @@ export const theme = createTheme({
           overflow: 'hidden',
         },
         columnHeaders: {
-          fontFamily: getFontFamily('LibreFranklin-SemiBold'),
           backgroundColor: palette.background.background03,
         },
         columnHeader: {
@@ -565,7 +554,7 @@ export const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 6,
+          borderRadius: '8px',
         },
       },
       variants: [
@@ -608,6 +597,15 @@ export const theme = createTheme({
         {
           props: {
             color: 'label',
+          },
+          style: {
+            backgroundColor: palette.label.main,
+            color: palette.label.contrastText,
+          },
+        },
+        {
+          props: {
+            color: 'registered',
           },
           style: {
             backgroundColor: palette.label.main,
