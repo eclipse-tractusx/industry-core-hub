@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+@use 'variables' as *;
+
 @mixin center-flex {
     display: flex;
     align-items: center;
@@ -36,9 +38,9 @@
 }
 
 @mixin space-shadow-strong {
-    box-shadow: 0 0 12px rgb(1, 40, 119);
+    box-shadow: 0 0 12px $brand-blue;
 }
 
 @mixin space-shadow-light {
-    box-shadow: 0 0 10px rgb(1, 40, 119);
+    box-shadow: 0 0 10px $brand-blue;
 }
