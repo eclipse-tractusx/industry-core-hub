@@ -20,13 +20,12 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import './App.css';
-import './assets/styles/main.scss';
+@use 'config/variables' as *;
 
-import AppRoutes from "./routes";
+@use 'components';
+@use 'pages';
+@use 'layout';
 
-function App() {
-  return <AppRoutes />;
+* {
+    font-family: 'Manrope';
 }
-
-export default App

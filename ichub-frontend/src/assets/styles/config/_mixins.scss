@@ -20,13 +20,25 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import './App.css';
-import './assets/styles/main.scss';
+@mixin center-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
 
-import AppRoutes from "./routes";
 
-function App() {
-  return <AppRoutes />;
+@mixin space-title-h2-font {
+    font-size: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 10px;
 }
 
-export default App
+@mixin space-shadow-strong {
+    box-shadow: 0 0 12px rgb(1, 40, 119);
+}
+
+@mixin space-shadow-light {
+    box-shadow: 0 0 10px rgb(1, 40, 119);
+}

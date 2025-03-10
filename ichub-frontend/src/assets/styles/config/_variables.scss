@@ -20,13 +20,25 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import './App.css';
-import './assets/styles/main.scss';
+// Dark mode
+$darkmode-bg: #000000;
+$darkmode-text: #FFFFFF;
 
-import AppRoutes from "./routes";
+// Gradient background
+$gradient-start: rgba(1, 32, 96, 0.83);
+$gradient-end: rgba(5, 107, 153, 0.57);
+$blue-gradient-bg: linear-gradient(180deg, $gradient-start 0%, $gradient-end 100%);
 
-function App() {
-  return <AppRoutes />;
-}
+// Brand colors
+$brand-primary: rgb(1, 32, 96);
+$brand-text: #f8f9fa;
+$brand-secondary-text: #d3d3d3;
+$brand-shadow: rgba(255, 255, 255, 0.50);
+$brand-border: rgba(1, 86, 255, 0.83);
+$brand-card-border: rgba(95, 185, 255, 0.26);
+$brand-card-hover-border: rgba(1, 86, 255, 0.83);
+$brand-orange-hover: rgba(255, 165, 0, 0.83);
 
-export default App
+// Dropdown button
+$dropdown-hover-bg: #7cb0b0;
+

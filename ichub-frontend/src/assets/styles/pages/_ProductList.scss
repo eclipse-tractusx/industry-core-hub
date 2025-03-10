@@ -20,13 +20,21 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import './App.css';
-import './assets/styles/main.scss';
+@use '../config/variables' as *;
+@use '../config/mixins';
 
-import AppRoutes from "./routes";
-
-function App() {
-  return <AppRoutes />;
+.product-catalog{
+    
+    .title{
+        @include mixins.center-flex;
+        margin: 20px 0px;
+    }
+    .text{
+        @include mixins.space-title-h2-font;
+        color: $darkmode-text;
+        padding: 5px 80px;
+        text-align: center;
+        background: rgba($brand-primary, 0.3);
+        @include mixins.space-shadow-strong;
+    }
 }
-
-export default App

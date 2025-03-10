@@ -253,7 +253,10 @@ body{
   height: 100%;
 }
 
-
+.product-catalog-title-text{
+  color: white!important;
+  
+}
 .productDetail {
   padding: 20px;
   width: 100%;

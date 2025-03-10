@@ -18,13 +18,14 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import carPartsData from "../tests/payloads/sample-data.json";
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard } from "../components/ProductCard";
 import { PartInstance } from "../types/product";
+import { Grid2, Typography } from "@mui/material";
 
 const ProductsList = () => {
   const [carParts, setCarParts] = useState<PartInstance[]>([]);
@@ -37,24 +38,29 @@ const ProductsList = () => {
 
   const handleButtonClick = (itemId: string) => {
     console.log(itemId);
-    navigate(`/product/${itemId}`);  // Navigate to the details page
+    navigate(`/product/${itemId}`); // Navigate to the details page
   };
 
-  
-
   return (
-    <ProductCard 
-      onClick = {(itemId:any) => handleButtonClick(itemId)}
-      items={carParts.map((part) => ({
-          uuid:part.uuid,
-          name:part.name,
-          class:part.class,
-          status:part.status
-        }))}
-
+    <Grid2 className="product-catalog" container spacing={1} direction="row">
+      <Grid2 className="title flex flex-content-center">
+        <Typography className="text">
+          Catalog Parts
+        </Typography>
+      </Grid2>
+      <Grid2 className="flex flex-content-center">
+        <ProductCard
+          onClick={(itemId: any) => handleButtonClick(itemId)}
+          items={carParts.map((part) => ({
+            uuid: part.uuid,
+            name: part.name,
+            class: part.class,
+            status: part.status,
+          }))}
         />
-     
+      </Grid2>
+    </Grid2>
   );
-}
+};
 
-export default ProductsList
+export default ProductsList;
