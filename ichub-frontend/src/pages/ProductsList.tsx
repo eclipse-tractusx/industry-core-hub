@@ -23,7 +23,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import carPartsData from "../tests/payloads/sample-data.json";
-import { ProductCard } from "../components/ProductCard";
+import { ProductCard } from "../components/general/ProductCard";
 import { PartInstance } from "../types/product";
 import { Grid2, Typography } from "@mui/material";
 
@@ -44,9 +44,9 @@ const ProductsList = () => {
   return (
     <Grid2 className="product-catalog" container spacing={1} direction="row">
       <Grid2 className="title flex flex-content-center">
-        <Typography className="text">
+        <span className="text">
           Catalog Parts
-        </Typography>
+        </span>
       </Grid2>
       <Grid2 className="flex flex-content-center">
         <ProductCard

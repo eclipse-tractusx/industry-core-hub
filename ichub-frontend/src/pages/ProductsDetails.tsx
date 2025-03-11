@@ -26,7 +26,7 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import instanceData from "../tests/payloads/instance-data.json";
 import { DropdownMenu, StatusTag, Button, Icon, Typography, PageNotifications, Table } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS, PRODUCT_OPTIONS } from "../types/common";
-import JsonViewerDialog from "../components/JsonViewerDialog";
+import JsonViewerDialog from "../components/general/JsonViewerDialog";
 import { Grid2 } from '@mui/material';
 
 const ProductsDetails = () => {

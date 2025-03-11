@@ -23,7 +23,7 @@
 import { useState } from 'react';
 import { Button, Dialog, DialogHeader, DialogContent, Icon } from '@catena-x/portal-shared-components';
 
-import { JsonViewerDialogProps } from '../types/jsonViewer';
+import { JsonViewerDialogProps } from '../../types/jsonViewer';
 
 const JsonViewerDialog = ({ open, onClose, carJsonData }: JsonViewerDialogProps) => {
     const [copied, setCopied] = useState(false);

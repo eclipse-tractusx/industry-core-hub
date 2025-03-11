@@ -31,8 +31,6 @@
   --brand-text: #f8f9fa;
   --brand-secondary-text: #d3d3d3;
   --brand-shadow: #ffffff80;
-}
-body{
   font-family: "Manrope", sans-serif!important;
   font-optical-sizing: auto;
   font-style: normal;
@@ -225,7 +223,7 @@ body{
 
 .contentWrapper{
   background: black;
-  background-image: url('/stars-background.png') !important;
+  background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('/stars-background.png') !important;
 }
 
 /* Content area styling */
