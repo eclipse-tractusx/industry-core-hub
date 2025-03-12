@@ -5,7 +5,7 @@ Pygments==2.19.1
 SQLAlchemy==2.0.38
 annotated-types==0.7.0
 anyio==4.8.0
-certifi==2023.7.22
+certifi==2024.7.4
 cffi==1.17.1
 charset-normalizer==3.4.1
 click==8.1.8
