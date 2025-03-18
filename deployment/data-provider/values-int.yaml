@@ -17,9 +17,9 @@ tractusx-connector:
       oauth:
         token_url: "<path:industry-core-hub/data/wallet#token.url>"
         client:
-          id: "<path:industry-core-hub/data/wallet#clientId2>"
+          id: "<path:industry-core-hub/data/wallet#clientId>"
           # content from the wallet secret, caution on pasting real secrets here!
-          secret_alias: client-provider-secret
+          secret_alias: client-secret
 
   controlplane:
     enabled: true
