@@ -4,13 +4,13 @@ secrets:
 tractusx-connector:
   enabled: true
   participant:
-    id: BPNL00000003CRHK
+    id: <path:industry-core-hub/data/edc#bpn>
 
   iatp:
     # Decentralized IDentifier
     id: "<path:industry-core-hub/data/wallet#id>"
     trustedIssuers: # array [] that needs to be expand but likely like (sorry unconfirmed on how this is done, as I also would need to check)
-      - "<path:industry-core-hub/data/wallet#trustedIssuers"
+      - "<path:industry-core-hub/data/wallet#trustedIssuers>"
     sts:
       dim:
         url: "<path:industry-core-hub/data/wallet#dim.url>"
