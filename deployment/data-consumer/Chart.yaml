@@ -29,7 +29,7 @@ appVersion: 0.0.1
 dependencies:
   - name: tractusx-connector
     repository: https://eclipse-tractusx.github.io/charts/dev
-    version: 0.7.6
+    version: 0.9.0
     condition: tractusx-connector.enabled
   - name: vault
     version: 0.20.0
