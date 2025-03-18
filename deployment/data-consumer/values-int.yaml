@@ -34,7 +34,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-consumer-ichub.int.catena-x.net"
+        hostname: "edc-consumer-ichub-control.int.catena-x.net"
         # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
         className: "nginx"
         annotations:
@@ -70,7 +70,7 @@ tractusx-connector:
       ## Public / Internet facing Ingress
       - enabled: true
         # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
-        hostname: "edc-consumer-ichub.int.catena-x.net"
+        hostname: "edc-consumer-ichub-dataplane.int.catena-x.net"
         # -- Additional ingress annotations to add
                # -- Additional ingress annotations to add
         annotations:
