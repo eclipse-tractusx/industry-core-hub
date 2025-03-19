@@ -35,7 +35,7 @@ helm uninstall dataprovider
 
 For Configuration of digital twin registry see [sldt-digital-twin-registry/tree/main/charts/registry](https://github.com/eclipse-tractusx/sldt-digital-twin-registry/tree/main/charts/registry)
 
-Configuration of EDC see [tractusx-edc/tree/main/charts/tractusx-connecto](https://github.com/eclipse-tractusx/tractusx-edc/tree/main/charts/tractusx-connector)
+Configuration of EDC see [tractusx-edc/tree/main/charts/tractusx-connector](https://github.com/eclipse-tractusx/tractusx-edc/tree/main/charts/tractusx-connector)
 
 EDC requires connection to HashiCorp Vault and Manage Identity Wallet. These have to be configured for the dataprovider to be operative. 
 
