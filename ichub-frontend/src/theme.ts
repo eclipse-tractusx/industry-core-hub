@@ -20,9 +20,179 @@
 import { createTheme } from '@mui/material/styles'
 // Needs to use like this to overwrite data grid styles
 // https://mui.com/components/data-grid/getting-started/#typescript
-import type {} from '@mui/x-data-grid/themeAugmentation'
-import createPalette from '@mui/material/styles/createPalette'
+import createPalette, { PaletteColorOptions } from '@mui/material/styles/createPalette'
 import createTypography from '@mui/material/styles/createTypography'
+
+declare module '@mui/material/styles' {
+  
+  interface TypeBackground {
+    background01: string;
+    background02: string;
+    background03: string;
+  }
+
+  interface TypeText {
+    tertiary: string;
+  }
+
+  interface PaletteColor {
+    shadow: string;
+  }
+
+  interface ColorType {
+    main: string;
+    contrastText: string;
+  }
+  
+  interface TextStyle {
+    fontSize: number;
+    lineHeight: number;
+    letterSpacing: number;
+    fontWeight?: string;
+    fontFamily?: string;
+    color?: string;
+  }
+  
+  interface Palette {
+    border: {
+      border01: string;
+      border02: string;
+      border03: string;
+      border04: string;
+    };
+
+    danger: {
+      danger: string;
+      dangerHover: string;
+      dangerBadge: string;
+    };
+
+    textField: {
+      placeholderText: string;
+      helperText: string;
+      background: string;
+      backgroundHover: string;
+    };
+
+    background: TypeBackground;
+
+    primary: PaletteColor;
+    
+    pending: ColorType;
+    confirmed: ColorType;
+    declined: ColorType;
+    label: ColorType;
+    deleted: ColorType;
+
+    text: TypeText;
+
+    chip: {
+      release: string;
+      active: string;
+      inactive: string;
+      created: string;
+      inReview: string;
+      enabled: string;
+      default: string;
+      bgRelease: string;
+      bgActive: string;
+      bgInactive: string;
+      bgCreated: string;
+      bgInReview: string;
+      bgEnabled: string;
+      bgDefault: string;
+      warning: string;
+      registered: string;
+      bgRegistered: string;
+      borderDraft: string;
+      black: string;
+      none: string;
+    };
+
+    typography: {
+      label1: TextStyle;
+      label2: TextStyle;
+      label3: TextStyle;
+      label4: TextStyle;
+      label5: TextStyle;
+      caption1: TextStyle;
+      caption2: TextStyle;
+      caption3: TextStyle;
+      boldLabel: TextStyle;
+      helper: TextStyle;
+    };
+  }
+
+  interface PaletteOptions {
+    border?: {
+      border01?: string;
+      border02?: string;
+      border03?: string;
+      border04?: string;
+    };
+
+    danger: {
+      danger?: string;
+      dangerHover?: string;
+      dangerBadge?: string;
+    };
+
+    textField: {
+      placeholderText?: string;
+      helperText?: string;
+      background?: string;
+      backgroundHover?: string;
+    };
+
+    background?:  Partial<TypeBackground>;
+
+    primary?: PaletteColorOptions;
+
+    pending?: ColorType;
+    confirmed?: ColorType;
+    declined?: ColorType;
+    label?: ColorType;
+    deleted?: ColorType;
+
+    text?: Partial<TypeText>;
+
+    chip: {
+      release: string;
+      active: string;
+      inactive: string;
+      created: string;
+      inReview: string;
+      enabled: string;
+      default: string;
+      bgRelease: string;
+      bgActive: string;
+      bgInactive: string;
+      bgCreated: string;
+      bgInReview: string;
+      bgEnabled: string;
+      bgDefault: string;
+      warning: string;
+      registered: string;
+      bgRegistered: string;
+      borderDraft: string;
+      black: string;
+      none: string;
+    };
+    
+    typography: {
+      label1: TextStyle;
+      label2: TextStyle;
+      label3: TextStyle;
+      label4: TextStyle;
+      label5: TextStyle;
+      caption1: TextStyle;
+      caption2: TextStyle;
+      caption3: TextStyle;
+      boldLabel: TextStyle;
+      helper: TextStyle;
+    };
+  }
+}
 
 const getFontFamily = (name: string): string =>
   [
@@ -87,7 +257,7 @@ export const paletteDefinitions = {
   success: {
     main: '#00aa55',
   },
-  icon: {
+  icon: {  // not used
     icon01: '#939393',
     icon02: '#B6B6B6',
     icon03: '#333333',
@@ -127,19 +297,7 @@ export const paletteDefinitions = {
   },
   background: {
     background01: '#F9F9F9',
-    background02: '#F3F3F3',
     background03: '#E9E9E9',
-    background04: '#F4FBFD',
-    background05: '#F5F9EE',
-    background06: '#FFF7EC',
-    background07: '#F5F5F5',
-    background08: '#FFF6FF',
-    background09: '#EDF0F4',
-    background10: '#303030F2',
-    background11: '#EDEFF2',
-    background12: '#8E8E8E1A',
-    background13: '#DFE4EA',
-    background14: '#303030',
   },
   textField: {
     placeholderText: '#8D8D8D',
@@ -153,7 +311,7 @@ export const paletteDefinitions = {
     tertiary: '#888888',
     quaternary: '#A2A2A2',
   },
-  accent: {
+  accent: { // not used
     accent01: '#4D73D5',
     accent02: '#F2F3FB',
     accent03: '#676BC6',
@@ -167,7 +325,7 @@ export const paletteDefinitions = {
     accent11: '#337B89',
     accent12: '#2B4078',
   },
-  selected: {
+  selected: { // not used
     hover: 'rgba(15, 113, 203, 0.05)',
     focus: 'rgba(15, 113, 203, 0.15)',
     active: 'rgba(15, 113, 203, 0.2)',
@@ -206,6 +364,7 @@ export const paletteDefinitions = {
     white: '#f9f9f9',
     yellow: '#f5f9ee',
   },
+  typography: {}
 }
 
 const palette = createPalette(paletteDefinitions)
