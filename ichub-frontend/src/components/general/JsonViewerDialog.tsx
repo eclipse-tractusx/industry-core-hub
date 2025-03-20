@@ -27,8 +27,8 @@ import { JsonViewerDialogProps } from '../../types/jsonViewer';
 
 const JsonViewerDialog = ({ open, onClose, carJsonData }: JsonViewerDialogProps) => {
     const [copied, setCopied] = useState(false);
-    const title = carJsonData?.Name ? `${carJsonData.Name} JSON data` : "DCM JSON Data";
-    const description = carJsonData?.Description ? `${carJsonData.Description}` : "";
+    const title = carJsonData?.name ? `${carJsonData.name} JSON data` : "DCM JSON Data";
+    const description = carJsonData?.description ? `${carJsonData.description}` : "";
 
     const handleCopy = () => {
         const json_string = JSON.stringify(carJsonData, null, 2);

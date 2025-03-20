@@ -21,7 +21,6 @@
 ********************************************************************************/
 
 import { useMemo, useState } from 'react';
-import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -242,7 +241,7 @@ export default function EnhancedTable() {
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const handleRequestSort = (
-    event: React.MouseEvent<unknown>,
+    _event: React.MouseEvent<unknown>,
     property: keyof InstanceProduct,
   ) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -259,7 +258,7 @@ export default function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
+  const handleClick = (_event: React.MouseEvent<unknown>, id: number) => {
     const selectedIndex = selected.indexOf(id);
     let newSelected: readonly number[] = [];
 
@@ -278,7 +277,7 @@ export default function EnhancedTable() {
     setSelected(newSelected);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 
