@@ -39,7 +39,6 @@ const ShareDropdown = ({ handleCopy, handleDownload, handleShare }: ShareDropdow
         'font-size': '14px',
         }}
         buttonText="Share"
-        startIcon={<Icon fontSize="16" iconName="IosShare" />}
     >
         <Grid2 container direction="column">
         <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" onClick={handleCopy} startIcon={<Icon fontSize="16" iconName="ContentCopy" />}>
