@@ -47,3 +47,11 @@ After the installation, a Post-Install Helm Hook will be started which initiates
 
 Test data set and upload script are stored in [resources/](resources) and provided to the hook as config map.  
 A custom config map can be used to provided e.g. `testdataConfigMap: my-custom-testdata-configmap`.
+
+## NOTICE
+
+This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+
+- SPDX-License-Identifier: CC-BY-4.0
+- SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
+- Source URL: https://github.com/eclipse-tractusx/tractusx-sdk
