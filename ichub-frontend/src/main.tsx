@@ -23,7 +23,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { SharedThemeProvider } from '@catena-x/portal-shared-components'
-import { theme } from './theme'
+import { theme } from './theme/theme.ts'
 import { ThemeProvider } from '@mui/material/styles';
 
 import App from './App.tsx'

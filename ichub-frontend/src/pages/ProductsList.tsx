@@ -26,6 +26,7 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { ProductCard } from "../components/general/ProductCard";
 import { PartInstance } from "../types/product";
 import { Grid2 } from "@mui/material";
+import { StatusVariants } from "../components/general/CardChip";
 
 const ProductsList = () => {
   const [carParts, setCarParts] = useState<PartInstance[]>([]);
@@ -33,11 +34,25 @@ const ProductsList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setCarParts(carPartsData);
+    const mappedCarParts = carPartsData.map((part) => ({
+      ...part,
+      status: part.status as StatusVariants,
+    }));
+    setCarParts(mappedCarParts);
   }, []);
 
   const handleButtonClick = (itemId: string) => {
     navigate(`/product/${itemId}`); // Navigate to the details page
+  };
+
+  const handleShare = (itemId: string) => {
+    console.log('Sharing item with id:', itemId);
+    // Share logic
+  };
+
+  const handleMore = (itemId: string) => {
+    console.log('More options for item with id:', itemId);
+    // More options logic
   };
 
   return (
@@ -50,11 +65,13 @@ const ProductsList = () => {
       <Grid2 className="flex flex-content-center">
         <ProductCard
           onClick={(itemId: any) => handleButtonClick(itemId)}
+          onShare={handleShare}
+          onMore={handleMore}
           items={carParts.map((part) => ({
             uuid: part.uuid,
             name: part.name,
             class: part.class,
-            status: part.status,
+            status: part.status as StatusVariants,
           }))}
         />
       </Grid2>

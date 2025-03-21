@@ -17,11 +17,12 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { createTheme } from '@mui/material/styles'
-// Needs to use like this to overwrite data grid styles
-// https://mui.com/components/data-grid/getting-started/#typescript
-import createPalette, { PaletteColorOptions } from '@mui/material/styles/createPalette'
-import createTypography from '@mui/material/styles/createTypography'
+import { createTheme } from "@mui/material/styles";
+import createPalette, { PaletteColorOptions } from "@mui/material/styles/createPalette";
+import createTypography from "@mui/material/styles/createTypography";
+
+import {paletteDefinitions} from './palette'
+import {typographyDefinitions} from './typography'
 
 declare module '@mui/material/styles' {
   
@@ -36,7 +37,10 @@ declare module '@mui/material/styles' {
   }
 
   interface PaletteColor {
-    shadow: string;
+    shadow?: string;
+  }
+  interface SimplePaletteColorOptions {
+    shadow?: string;
   }
 
   interface ColorType {
@@ -108,19 +112,6 @@ declare module '@mui/material/styles' {
       black: string;
       none: string;
     };
-
-    typography: {
-      label1: TextStyle;
-      label2: TextStyle;
-      label3: TextStyle;
-      label4: TextStyle;
-      label5: TextStyle;
-      caption1: TextStyle;
-      caption2: TextStyle;
-      caption3: TextStyle;
-      boldLabel: TextStyle;
-      helper: TextStyle;
-    };
   }
 
   interface PaletteOptions {
@@ -178,37 +169,58 @@ declare module '@mui/material/styles' {
       black: string;
       none: string;
     };
-    
-    typography: {
-      label1: TextStyle;
-      label2: TextStyle;
-      label3: TextStyle;
-      label4: TextStyle;
-      label5: TextStyle;
-      caption1: TextStyle;
-      caption2: TextStyle;
-      caption3: TextStyle;
-      boldLabel: TextStyle;
-      helper: TextStyle;
-    };
+  }
+
+  interface TypographyVariants {
+    body1: TextStyle;
+    body2: TextStyle;
+    body3: TextStyle;
+    label1: TextStyle;
+    label2: TextStyle;
+    label3: TextStyle;
+    label4: TextStyle;
+    label5: TextStyle;
+    caption1: TextStyle;
+    caption2: TextStyle;
+    caption3: TextStyle;
+    boldLabel: TextStyle;
+    helper: TextStyle;
+  }
+
+  interface TypographyVariantsOptions {
+    body1: TextStyle;
+    body2: TextStyle;
+    body3: TextStyle;
+    label1: TextStyle;
+    label2: TextStyle;
+    label3: TextStyle;
+    label4: TextStyle;
+    label5: TextStyle;
+    caption1: TextStyle;
+    caption2: TextStyle;
+    caption3: TextStyle;
+    boldLabel: TextStyle;
+    helper: TextStyle;
   }
 }
 
-const getFontFamily = (name: string): string =>
-  [
-    '"Manrope"',
-    `"${name}"`,
-    '-apple-system',
-    'BlinkMacSystemFont',
-    '"Segoe UI"',
-    'Roboto',
-    '"Helvetica Neue"',
-    'Arial',
-    'sans-serif',
-    '"Apple Color Emoji"',
-    '"Segoe UI Emoji"',
-    '"Segoe UI Symbol"',
-  ].join(',')
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    body1: true;
+    body2: true;
+    body3: true;
+    label1: true;
+    label2: true;
+    label3: true;
+    label4: true;
+    label5: true;
+    caption1: true;
+    caption2: true;
+    caption3: true;
+    boldLabel: true;
+    helper: true;
+  }
+}
 
 const breakpoints = {
   xs: 0,
@@ -218,265 +230,7 @@ const breakpoints = {
   xl: 1312,
 }
 
-export const paletteDefinitions = {
-  common: {
-    white: '#fff',
-    black: '#000',
-  },
-  primary: {
-    main: 'rgb(1,32,96)',
-    dark: 'black',
-    contrastText: '#fff',
-    shadow: 'rgba(15, 113, 203, 0.4)',
-  },
-  secondary: {
-    main: '#eaf1fe',
-    dark: '#d4e3fe',
-    contrastText: '#0f71cb',
-  },
-  brand: {
-    brand01: '#FFA600',
-    brand02: '#B3CB2D',
-  },
-  action: {
-    active: '#939393',
-    disabled: '#ADADAD',
-    disabledBackground: '#EAEAEA',
-  },
-  danger: {
-    danger: '#D91E18',
-    dangerHover: '#E5231D',
-    dangerBadge: '#FB6540',
-  },
-  support: {
-    success: '#00AA55',
-    error: '#D91E18',
-    info: '#676BC6',
-    warning: '#FFA600',
-  },
-  success: {
-    main: '#00aa55',
-  },
-  icon: {  // not used
-    icon01: '#939393',
-    icon02: '#B6B6B6',
-    icon03: '#333333',
-  },
-  border: {
-    border01: '#DCDCDC',
-    border02: '#B6B6B6',
-    border03: '#989898',
-    border04: '#0F71CB',
-  },
-  chip: {
-    release: '#0D61AE',
-    active: '#88982D',
-    inactive: '#D91E18',
-    created: '#8f8013',
-    inReview: '#8f8013',
-    enabled: '#007877',
-    default: '#888888',
-    bgRelease: '#EAF1FE',
-    bgActive: '#F0F5D5',
-    bgInactive: '#FFF7FF',
-    bgCreated: '#f5efd5',
-    bgInReview: '#f5efd5',
-    bgEnabled: '#DEEEEF',
-    bgDefault: '#c7c5c5',
-    warning: '#FFA600',
-    registered: 'rgb(255, 255, 255)',
-    bgRegistered: '2px solid rgba(40, 104, 255, 1)',
-    borderDraft: '1px solid rgba(246, 246, 246, 0.66)',
-    black: "#000000",
-    none: 'none'
-  },
-  stepper: {
-    stepDone: '#B3CB2D',
-    stepCurrent: '#FFA600',
-    stepUpcoming: '#EAEAEA',
-  },
-  background: {
-    background01: '#F9F9F9',
-    background03: '#E9E9E9',
-  },
-  textField: {
-    placeholderText: '#8D8D8D',
-    helperText: '#717171',
-    background: '#F7F7F7',
-    backgroundHover: '#ECECEC',
-  },
-  text: {
-    primary: '#111111',
-    secondary: '#252525',
-    tertiary: '#888888',
-    quaternary: '#A2A2A2',
-  },
-  accent: { // not used
-    accent01: '#4D73D5',
-    accent02: '#F2F3FB',
-    accent03: '#676BC6',
-    accent04: '#E1F1FF',
-    accent05: '#FFEBCC',
-    accent06: '#5E3416',
-    accent07: '#88982D',
-    accent08: '#F0F5D5',
-    accent09: '#FDB943',
-    accent10: '#428C5B',
-    accent11: '#337B89',
-    accent12: '#2B4078',
-  },
-  selected: { // not used
-    hover: 'rgba(15, 113, 203, 0.05)',
-    focus: 'rgba(15, 113, 203, 0.15)',
-    active: 'rgba(15, 113, 203, 0.2)',
-  },
-  pending: {
-    main: '#FFECBD',
-    contrastText: '#975B27',
-  },
-  confirmed: {
-    main: '#ffffff',
-    contrastText: '#ffffff',
-  },
-  declined: {
-    main: '#FEE7E2',
-    contrastText: '#FF532F',
-  },
-  label: {
-    main: '#F2F3FB',
-    contrastText: '#676BC6',
-  },
-  deleted: {
-    main: '#eaeaea',
-    contrastText: '#adadad',
-  },
-  info: {
-    main: '#F2F3FB',
-    contrastText: '#676BC6',
-  },
-  warning: {
-    main: '#ffa602',
-    contrastText: '#ffff',
-  },
-  buttons: {
-    darkGrey: '#e1e1e1',
-    lightGrey: '#f3f3f3',
-    white: '#f9f9f9',
-    yellow: '#f5f9ee',
-  },
-  typography: {}
-}
-
 const palette = createPalette(paletteDefinitions)
-
-export const typographyDefinitions = {
-  fontFamily: getFontFamily('Manrope'),
-  htmlFontSize: 16,
-  allVariants: {
-    color: palette.text.primary,
-  },
-  h1: {
-    fontSize: 56,
-    lineHeight: 68 / 56,
-    letterSpacing: 0,
-  },
-  h2: {
-    fontSize: 36,
-    lineHeight: 44 / 36,
-    letterSpacing: 0,
-  },
-  h3: {
-    fontSize: 24,
-    lineHeight: 36 / 24,
-    letterSpacing: 0,
-  },
-  h4: {
-    fontSize: 18,
-    lineHeight: 28 / 18,
-    letterSpacing: 0,
-  },
-  h5: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-    letterSpacing: 0,
-  },
-  body1: {
-    fontSize: 18,
-    lineHeight: 28 / 18,
-    letterSpacing: 0,
-  },
-  body2: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-    letterSpacing: 0,
-  },
-  body3: {
-    fontSize: 14,
-    lineHeight: 20 / 14,
-    letterSpacing: 0,
-  },
-  label1: {
-    fontSize: 18,
-    lineHeight: 28 / 18,
-    letterSpacing: 0,
-  },
-  label2: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-    letterSpacing: 0
-  },
-  boldLabel: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-    letterSpacing: 0,
-    fontWeight: 'bold',
-  },
-  label3: {
-    fontSize: 14,
-    lineHeight: 20 / 14,
-    letterSpacing: 0,
-    fontWeight: 'bold'
-  },
-  label4: {
-    fontSize: 12,
-    lineHeight: 16 / 12,
-    letterSpacing: 0,
-  },
-  label5: {
-    fontSize: 11,
-    lineHeight: 16 / 11,
-    letterSpacing: 0,
-    color: palette.text.secondary,
-  },
-  caption1: {
-    fontSize: 18,
-    lineHeight: 28 / 18,
-    letterSpacing: 0,
-    color: palette.text.tertiary,
-  },
-  caption2: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-    letterSpacing: 0,
-    color: palette.text.tertiary,
-  },
-  caption3: {
-    fontSize: 14,
-    lineHeight: 20 / 14,
-    letterSpacing: 0,
-    color: palette.text.tertiary,
-  },
-  helper: {
-    fontSize: 12,
-    lineHeight: 16 / 12,
-    letterSpacing: 0,
-    color: palette.text.tertiary,
-  },
-  button: {
-    fontSize: 16,
-    lineHeight: 24 / 16,
-  },
-}
 
 const typography = createTypography(palette, typographyDefinitions)
 
@@ -875,7 +629,7 @@ export const theme = createTheme({
     MuiSvgIcon: {
       variants: [
         {
-          props: { color: 'default' },
+          props: { color: 'primary' },
           style: { color: palette.text.primary },
         },
         {
@@ -889,34 +643,6 @@ export const theme = createTheme({
         {
           props: { color: 'warning' },
           style: { color: palette.warning.main },
-        },
-        {
-          props: { fontSize: '8' },
-          style: { fontSize: typography.pxToRem(8) },
-        },
-        {
-          props: { fontSize: '10' },
-          style: { fontSize: typography.pxToRem(10) },
-        },
-        {
-          props: { fontSize: '12' },
-          style: { fontSize: typography.pxToRem(12) },
-        },
-        {
-          props: { fontSize: '14' },
-          style: { fontSize: typography.pxToRem(14) },
-        },
-        {
-          props: { fontSize: '16' },
-          style: { fontSize: typography.pxToRem(16) },
-        },
-        {
-          props: { fontSize: '18' },
-          style: { fontSize: typography.pxToRem(18) },
-        },
-        {
-          props: { fontSize: '20' },
-          style: { fontSize: typography.pxToRem(20) },
         },
       ],
     },
