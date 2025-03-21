@@ -23,18 +23,15 @@
 # Stage 1: Build the React app
 FROM node:23-alpine AS builder
 
-# Set the working directory
-WORKDIR /app
-
-# Install necessary dependencies
-RUN apk add --no-cache python3 make g++ jq
-
 # Copy package files and install dependencies
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+RUN yarn install --frozen-lockfile --ignore-scripts
 
 # Copy the rest of the source code
-COPY . .
+COPY . /app
+
+# Set the working directory
+WORKDIR /app
 
 # Build the application
 RUN yarn build
@@ -53,23 +50,25 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 USER root
 
 # Rename index.html to index.html.reference, to be used by env variables inject script
-RUN mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.html.reference
-
 # Create symlink for tmp for index.html to enable readOnlyRootFilesystem
-RUN ln -s /tmp/index.html /usr/share/nginx/html/index.html
+RUN mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.html.reference \
+    && ln -s /tmp/index.html /usr/share/nginx/html/index.html
 
 # Add env variables inject script and mark as executable
-COPY ./scripts/inject-dynamic-env.sh /docker-entrypoint.d/00-inject-dynamic-env.sh
-RUN chmod +x /docker-entrypoint.d/00-inject-dynamic-env.sh
-
 # Make nginx owner of /usr/share/nginx/html/ and change to nginx user
-RUN chown -R 101:101 /usr/share/nginx/html/
+COPY ./scripts/inject-dynamic-env.sh /docker-entrypoint.d/00-inject-dynamic-env.sh
+RUN chmod +x /docker-entrypoint.d/00-inject-dynamic-env.sh \ 
+    && chown -R 101:101 /usr/share/nginx/html/
 
 # Change to nginx user
 USER 101
 
 # Expose port 80
 EXPOSE 80
+
+# Healthcheck to verify Nginx is running
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+  CMD wget --spider -q http://localhost || exit 1
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
