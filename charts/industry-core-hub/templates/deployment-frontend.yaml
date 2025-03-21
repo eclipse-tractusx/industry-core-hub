@@ -18,11 +18,12 @@
 *
 * SPDX-License-Identifier: Apache-2.0
 */}}
-{{ if .Values.backend.enabled }}
+
+{{ if .Values.frontend.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "industry-core-hub.fullname.backend" . }}
+  name: {{ include "industry-core-hub.fullname.frontend" . }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
 spec:
@@ -34,52 +35,41 @@ spec:
       {{- include "industry-core-hub.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.backend.podAnnotations }}
+      {{- with .Values.frontend.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
         {{- include "industry-core-hub.labels" . | nindent 8 }}
-        {{- with .Values.backend.podLabels }}
+        {{- with .Values.frontend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with .Values.backend.image.pullSecrets }}
+      {{- with .Values.frontend.image.pullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       securityContext:
-        {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+        {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
       automountServiceAccountToken: false
       containers:
-        - name: {{ include "industry-core-hub.fullname.backend" . }}
+        - name: {{ include "industry-core-hub.fullname.frontend" . }}
           securityContext:
-            {{- toYaml .Values.backend.securityContext | nindent 12 }}
-          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+            {{- toYaml .Values.frontend.securityContext | nindent 12 }}
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.backend.service.port }}
+              containerPort: {{ .Values.frontend.service.port }}
               protocol: TCP
           env:
-            - name: DATABASE__HOST
-              value: {{ include "industry-core-hub.postgresql.host" . }}
-            - name: DATABASE_PORT
-              value: {{ include "industry-core-hub.postgresql.port" . | quote }}
-            - name: DATABASE_NAME
-              value: {{ include "industry-core-hub.postgresql.databaseName" . }}
-            - name: DATABASE_USER
-              value: {{ include "industry-core-hub.postgresql.ichubUser" . }}
-            - name: DATABASE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "industry-core-hub.postgresql.secretName" . }}
-                  key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
-          {{- if .Values.backend.healthChecks.startup.enabled }}
+            - name: ICHUB_BACKEND_URL
+              value: "{{ .Values.frontend.env.ichubBackendUrl }}"
+          {{- if .Values.frontend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:
-              path: {{ .Values.backend.healthChecks.startup.path }}
-              port: {{ .Values.backend.service.port }}
+              path: {{ .Values.frontend.healthChecks.startup.path }}
+              port: {{ .Values.frontend.service.port }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
@@ -87,11 +77,11 @@ spec:
             successThreshold: {{ .Values.startupProbe.successThreshold }}
             failureThreshold: {{ .Values.startupProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.backend.healthChecks.liveness.enabled }}
+          {{- if .Values.frontend.healthChecks.liveness.enabled }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.backend.healthChecks.liveness.path }}
-              port: {{ .Values.backend.service.port }}
+              path: {{ .Values.frontend.healthChecks.liveness.path }}
+              port: {{ .Values.frontend.service.port }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
@@ -99,11 +89,11 @@ spec:
             successThreshold: {{ .Values.livenessProbe.successThreshold }}
             failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           {{- end }}
-          {{- if .Values.backend.healthChecks.readiness.enabled }}
+          {{- if .Values.frontend.healthChecks.readiness.enabled }}
           readinessProbe:
             httpGet:
-              path: {{ .Values.backend.healthChecks.readiness.path }}
-              port: {{ .Values.backend.service.port }}
+              path: {{ .Values.frontend.healthChecks.readiness.path }}
+              port: {{ .Values.frontend.service.port }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
@@ -111,35 +101,21 @@ spec:
             successThreshold: {{ .Values.readinessProbe.successThreshold }}
             failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           {{- end }}
-          {{- with .Values.backend.resources }}
+          {{- with .Values.frontend.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            - name: data-volume
-              mountPath: /dataspace-sdk/data
-            - name: logs-volume
-              mountPath: /dataspace-sdk/logs
-            {{- if .Values.backend.additionalVolumeMounts }}
-            {{- toYaml .Values.backend.additionalVolumeMounts | nindent 12 }}
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.frontend.additionalVolumeMounts }}
+            {{- toYaml .Values.frontend.additionalVolumeMounts | nindent 12 }}
             {{- end }}
       volumes:
-        - name: data-volume
-        {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-pvc-data-backend
-        {{- else }}
+        - name: tmp
           emptyDir: {}
-        {{- end }}
-        - name: logs-volume
-        {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.logs.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-pvc-logs-backend
-        {{- else }}
-          emptyDir: {}
-        {{- end }}
-        {{- if .Values.backend.additionalVolumes }}
-        {{- toYaml .Values.backend.additionalVolumes | nindent 8 }}
+        {{- if .Values.frontend.additionalVolumes }}
+        {{- toYaml .Values.frontend.additionalVolumes | nindent 8 }}
         {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

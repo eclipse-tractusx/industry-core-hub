@@ -51,6 +51,14 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 
+{{- define "industry-core-hub.fullname.frontend" -}}
+{{- if .Values.frontend.name }}
+{{- .Values.frontend.name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-frontend" (include "industry-core-hub.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}
@@ -82,7 +90,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Backend Selector labels
 */}}
 {{- define "industry-core-hub.backend.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "industry-core-hub.name" . }}-backend
+app.kubernetes.io/name: {{ include "industry-core-hub.fullname.backend" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Backend Selector labels
+*/}}
+{{- define "industry-core-hub.frontend.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "industry-core-hub.fullname.frontend" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 

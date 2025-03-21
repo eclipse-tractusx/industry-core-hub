@@ -19,7 +19,7 @@
 * SPDX-License-Identifier: Apache-2.0
 */}}
 
-{{- if and .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
+{{- if and .Values.backend.enabled .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

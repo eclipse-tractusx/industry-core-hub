@@ -19,6 +19,7 @@
 * SPDX-License-Identifier: Apache-2.0
 */}}
 
+{{ if .Values.backend.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -31,4 +32,5 @@ spec:
       targetPort: {{ .Values.backend.service.targetPort }}
       protocol: TCP
       name: http
-  selector: {{ include "industry-core-hub.selectorLabels" . | nindent 4 }}
+  selector: {{ include "industry-core-hub.frontend.selectorLabels" . | nindent 4 }}
+{{- end }}
