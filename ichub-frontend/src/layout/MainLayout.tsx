@@ -28,18 +28,16 @@ import Sidebar from '../components/general/Sidebar';
 
 function MainLayout() {
   return (
-    <Grid2 container direction="column" className="contentWrapper">
-      <Grid2 className="headerWrapper">
+    <Grid2 container className="contentWrapper">
+      <Grid2 size={12} className="headerArea">
         <Header/>
       </Grid2>
-      <Grid2 container className="pageWrapper" spacing={2}>
-        <Grid2 size={{xl: 2, lg: 4, md: 5, sm: 12, xs: 12}} className="sidebarArea">
+      <Grid2 size={{xl: 2, lg: 4, md: 5, sm: 12, xs: 12}} className="sidebarArea">
           <Sidebar />
         </Grid2>
         <Grid2 size={{xl: 10, lg: 8, md: 7, sm: 12, xs: 12}} className="contentArea">
           <Outlet />
         </Grid2>
-      </Grid2>
     </Grid2>
   );
 };

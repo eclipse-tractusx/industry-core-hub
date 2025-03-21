@@ -26,7 +26,7 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { StatusTag, Button, Icon } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS } from "../types/common";
 import JsonViewerDialog from "../components/general/JsonViewerDialog";
-import { Grid2 } from '@mui/material';
+import { Container, Grid2 } from '@mui/material';
 import InstanceProductsTable from "../components/product-detail/InstanceProductsTable";
 import PageNotification from "../components/general/PageNotification";
 import ShareDropdown from "../components/product-detail/ShareDropdown";
@@ -120,16 +120,16 @@ const ProductsDetails = () => {
       <PageNotification notification={notification} />
       
       <Grid2 container direction="column" className="productDetail">
-        <Grid2 container spacing={2} className="mb-5" justifyContent={{ md: "space-between", sm: "center" }} alignItems="center" direction={{ sm: "column", md: "row" }}>
-          <Grid2 size={{md: 3, sm: 12}} display="flex" justifyContent="center">
+        <Grid2 container spacing={2} className="mb-5">
+          <Grid2 size={{lg: 4, md: 6, sm: 6}} display="flex" justifyContent="start">
             {getStatusTag(part.status)}
           </Grid2>
-          <Grid2 size={{md: 3, sm: 12}} display="flex" justifyContent="center">
+          <Grid2 size={{lg: 4, md: 6, sm: 6}} display="flex" justifyContent={{ lg: "center", md: "end", sm: "end" }}>
             <Button size="small" onClick={() => console.log("DCM v2.0 button")} className="update-button" endIcon={<Icon fontSize="16" iconName="Edit" />}>            
                 <span className="update-button-content">UPDATE</span>            
             </Button>
           </Grid2>
-          <Grid2 size={{md: 3, sm: 12}} display="flex" justifyContent="center">
+          <Grid2 size={{lg: 4, md: 12, sm: 12}} display="flex" justifyContent="end">
             <ShareDropdown handleCopy={handleCopy} handleDownload={handleDownload} handleShare={handleShare} />
           </Grid2>
         </Grid2>
@@ -154,9 +154,11 @@ const ProductsDetails = () => {
 
         </Grid2>
 
-        <JsonViewerDialog open={dialogOpen} onClose={handleCloseDialog} carJsonData={part}/>
+        <Grid2 size={12} className='product-table-wrapper'>
+          <InstanceProductsTable />
+        </Grid2>
 
-        <InstanceProductsTable />
+        <JsonViewerDialog open={dialogOpen} onClose={handleCloseDialog} carJsonData={part}/>
       </Grid2>
     </>
   );

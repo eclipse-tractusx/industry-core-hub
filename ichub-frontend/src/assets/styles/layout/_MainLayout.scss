@@ -29,7 +29,7 @@
     url('/stars-background.png') !important;
 }
 
-.headerWrapper{
+.headerArea{
   position: sticky;
   top: 0;
   z-index: 1100;
@@ -46,10 +46,10 @@
 }
 
 .main-logo {
-    height: 30px;
-  
-    @media (min-width: 626px) {
-      height: 50px;
-    }
-  }
+  height: 50px;
+}
+
+.small-logo {
+  height: 35px;
+}
   

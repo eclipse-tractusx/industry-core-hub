@@ -37,6 +37,10 @@
         @include mixins.rounded-bordered;
         @include mixins.space-shadow($brand-blue);
         padding: 20px;
+        
+        .MuiBox-root, .MuiGrid2-root {
+            margin: 10px 0;
+        }
     }
   
     &, 
@@ -76,19 +80,15 @@
         margin: 20px 0;
     }
   
-    .product-card {
-        .MuiBox-root,
-        .MuiGrid2-root {
-            margin: 10px 0;
-        }
-    }
-  
     .add-on-buttons button {
         padding: 10px;
     }
 
     .product-image{
+        display: block;
         max-height: 250px;
+        max-width: 100%;
+        height: auto;
         border-radius: 25px;
     }
 
@@ -135,6 +135,15 @@ div[role="presentation"] {
             background-color: $brand-orange;
             color: $brand-dark;
             font-weight: 600;
+        }
+
+        svg {
+            fill: $brand-text;
+        }
+
+        p {
+            color: $brand-text;
+            margin-left: 10px;
         }
     }
 }

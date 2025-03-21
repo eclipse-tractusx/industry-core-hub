@@ -148,8 +148,6 @@ export default function PrimarySearchAppBar() {
         <IconButton
           size="large"
           aria-label="account of current user"
-          aria-controls="primary-search-account-menu"
-          aria-haspopup="true"
         >
           <AccountCircle />
         </IconButton>
@@ -162,15 +160,28 @@ export default function PrimarySearchAppBar() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" className={`ichub-header ${scrolled ? "scrolled" : ""}`}>
         <Toolbar>
-          <a href="/">
-            <img
-              src="/241117_Tractus_X_Logo_RGB_Light_Version.png"
-              alt="Eclipse Tractus-X logo"
-              className='main-logo'
-            />
-          </a>
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+            <a href="/">
+              <img
+                src="/241117_Tractus_X_Logo_Only_RGB.png"
+                alt="Eclipse Tractus-X logo"
+                className='small-logo'
+              />
+            </a>
+          </Box>
+          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+            <a href="/">
+              <img
+                src="/241117_Tractus_X_Logo_RGB_Light_Version.png"
+                alt="Eclipse Tractus-X logo"
+                className='main-logo'
+              />
+            </a>
+          </Box>
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
-            <h2>Industry Core Hub</h2>
+            <Typography variant="h2" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' } }}>
+              Industry Core Hub
+            </Typography>
           </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
             <IconButton size="large" aria-label="show 4 new mails">
