@@ -26,7 +26,7 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { StatusTag, Button, Icon } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS } from "../types/common";
 import JsonViewerDialog from "../components/general/JsonViewerDialog";
-import { Container, Grid2 } from '@mui/material';
+import { Grid2 } from '@mui/material';
 import InstanceProductsTable from "../components/product-detail/InstanceProductsTable";
 import PageNotification from "../components/general/PageNotification";
 import ShareDropdown from "../components/product-detail/ShareDropdown";
@@ -107,9 +107,9 @@ const ProductsDetails = () => {
       case PRODUCT_STATUS.REGISTERED:
         return <StatusTag color="confirmed" label="Registered" variant="outlined" />;
       case PRODUCT_STATUS.DRAFT:
-        return <StatusTag color="info" label="Draft" variant="outline" />;
+        return <StatusTag color="label" label="Draft" variant="outlined" />;
       case PRODUCT_STATUS.SHARED:
-        return <StatusTag color="warning" label="Shared" variant="filled" />;
+        return <StatusTag color="pending" label="Shared" variant="filled" />;
       default:
         return null;
     }
