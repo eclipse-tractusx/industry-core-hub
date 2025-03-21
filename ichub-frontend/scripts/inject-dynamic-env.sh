@@ -1,3 +1,5 @@
+#!/bin/sh
+
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Frontend
 #
@@ -20,23 +22,19 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-server {
-    listen 80;
-    server_name localhost;
+source_file=/usr/share/nginx/html/index.html.reference
+target_file=/tmp/index.html
 
-    location / {
-        root /usr/share/nginx/html;
-        index index.html;
-        try_files $uri $uri/index.html /index.html;
-    }
+# List of environment variables to be replaced
+# (They should be set and match the ones in index.html)
+# Sequence is irrelevant
+vars=" \
+REQUIRE_HTTPS_URL_PATTERN \
+ICHUB_ASSETS_URL \
+ICHUB_BACKEND_URL \
+"
 
-    error_page 404 /index.html;
+# Execute envsubst with the defined variables
+envsubst "$(printf '${%s} ' $vars)" < "$source_file" > "$target_file"
 
-    # Here we should specify the backend service
-    # location /api/ {
-    #     proxy_pass http://backend:5000/;  
-    #     proxy_set_header Host $host;
-    #     proxy_set_header X-Real-IP $remote_addr;
-    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    # }
-}
+echo "Variables injected correctly in $target_file"

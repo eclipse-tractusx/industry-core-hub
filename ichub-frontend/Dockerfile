@@ -21,7 +21,7 @@
 #################################################################################
 
 # Stage 1: Build the React app
-FROM node:23-alpine as builder
+FROM node:23-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -39,17 +39,34 @@ COPY . .
 # Build the application
 RUN yarn build
 
+
 # Stage 2: Serve the app with Nginx
-FROM nginx:alpine
-
-# Set the working directory
-WORKDIR /usr/share/nginx/html
-
-# Copy built files from the builder stage
-COPY --from=builder /app/dist ./
+FROM nginxinc/nginx-unprivileged:alpine
 
 # Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy built files from the builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Change to root user
+USER root
+
+# Rename index.html to index.html.reference, to be used by env variables inject script
+RUN mv /usr/share/nginx/html/index.html /usr/share/nginx/html/index.html.reference
+
+# Create symlink for tmp for index.html to enable readOnlyRootFilesystem
+RUN ln -s /tmp/index.html /usr/share/nginx/html/index.html
+
+# Add env variables inject script and mark as executable
+COPY ./scripts/inject-dynamic-env.sh /docker-entrypoint.d/00-inject-dynamic-env.sh
+RUN chmod +x /docker-entrypoint.d/00-inject-dynamic-env.sh
+
+# Make nginx owner of /usr/share/nginx/html/ and change to nginx user
+RUN chown -R 101:101 /usr/share/nginx/html/
+
+# Change to nginx user
+USER 101
 
 # Expose port 80
 EXPOSE 80
