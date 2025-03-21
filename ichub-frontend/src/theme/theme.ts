@@ -222,6 +222,16 @@ declare module '@mui/material/Typography' {
   }
 }
 
+declare module '@mui/material/Chip' {
+  interface ChipPropsColorOverrides {
+    pending: true;
+    confirmed: true;
+    declined: true;
+    label: true;
+    registered: true;
+  }
+}
+
 const breakpoints = {
   xs: 0,
   sm: 375,
@@ -426,41 +436,6 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           color: palette.common.white,
-        },
-      },
-    },
-    MuiDataGrid: {
-      styleOverrides: {
-        root: {
-          border: `1px solid ${palette.border.border01}`,
-          borderRadius: 24,
-          overflow: 'hidden',
-        },
-        columnHeaders: {
-          backgroundColor: palette.background.background03,
-        },
-        columnHeader: {
-          padding: '0 32px',
-        },
-        columnSeparator: {
-          display: 'none',
-        },
-        row: {
-          '&.MuiDataGrid-row--lastVisible .MuiDataGrid-cell': {
-            borderColor: palette.border.border01,
-          },
-        },
-        cell: {
-          padding: '16px 32px',
-          borderColor: palette.border.border01,
-        },
-        columnHeaderCheckbox: {
-          width: '64px !important',
-          minWidth: '64px !important',
-          maxWidth: '64px !important',
-          paddingLeft: '10px !important',
-          paddingRight: '10px !important',
-          height: '76px !important',
         },
       },
     },
