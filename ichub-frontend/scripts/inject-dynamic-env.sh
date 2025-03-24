@@ -30,7 +30,6 @@ target_file=/tmp/index.html
 # Sequence is irrelevant
 vars=" \
 REQUIRE_HTTPS_URL_PATTERN \
-ICHUB_ASSETS_URL \
 ICHUB_BACKEND_URL \
 "
 
