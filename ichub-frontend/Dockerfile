@@ -24,8 +24,8 @@
 FROM node:23-alpine AS builder
 
 # Copy package files and install dependencies
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --ignore-scripts
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
 
 # Copy the rest of the source code
 COPY . /app
@@ -34,7 +34,7 @@ COPY . /app
 WORKDIR /app
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 
 # Stage 2: Serve the app with Nginx
