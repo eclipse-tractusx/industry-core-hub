@@ -33,7 +33,18 @@ REQUIRE_HTTPS_URL_PATTERN \
 ICHUB_BACKEND_URL \
 "
 
-# Execute envsubst with the defined variables
-envsubst "$(printf '${%s} ' $vars)" < "$source_file" > "$target_file"
+# base sed command: output source file and remove javascript comments
+sed_command="cat ${source_file} | sed -e \"s@^\\\s*//.*@@g\""
+
+set -- $vars
+while [ -n "$1" ]; do
+  var=$1
+  # add a replace expression for each variable
+  sed_command="${sed_command} -e \"s@${var}:\s*\\\".*\\\"@${var}: \\\"\${${var}}\\\"@g\""
+  shift
+done
+
+# execute the built replace command and write to target file
+echo ${sed_command} | sh > ${target_file}
 
 echo "Variables injected correctly in $target_file"
