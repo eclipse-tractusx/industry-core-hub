@@ -25,7 +25,7 @@ FROM node:23-alpine AS builder
 
 # Copy package files and install dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts
+RUN npm ci --ignore-scripts
 
 # Copy the rest of the source code
 COPY . /app
