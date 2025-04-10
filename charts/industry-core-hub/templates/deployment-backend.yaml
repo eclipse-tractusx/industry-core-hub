@@ -59,7 +59,7 @@ spec:
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.backend.service.port }}
+              containerPort: {{ .Values.backend.service.portContainer }}
               protocol: TCP
           env:
             - name: DATABASE__HOST
@@ -79,7 +79,7 @@ spec:
           startupProbe:
             httpGet:
               path: {{ .Values.backend.healthChecks.startup.path }}
-              port: {{ .Values.backend.service.port }}
+              port: {{ .Values.backend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
@@ -91,7 +91,7 @@ spec:
           livenessProbe:
             httpGet:
               path: {{ .Values.backend.healthChecks.liveness.path }}
-              port: {{ .Values.backend.service.port }}
+              port: {{ .Values.backend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
@@ -103,7 +103,7 @@ spec:
           readinessProbe:
             httpGet:
               path: {{ .Values.backend.healthChecks.readiness.path }}
-              port: {{ .Values.backend.service.port }}
+              port: {{ .Values.backend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}

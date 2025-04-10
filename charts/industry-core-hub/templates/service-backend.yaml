@@ -28,8 +28,8 @@ metadata:
 spec:
   type: {{ .Values.backend.service.type }}
   ports:
-    - port: {{ .Values.backend.service.port }}
-      targetPort: {{ .Values.backend.service.targetPort }}
+    - port: {{ .Values.backend.service.portService }}
+      targetPort: {{ .Values.backend.service.portContainer }}
       protocol: TCP
       name: http
   selector: {{ include "industry-core-hub.frontend.selectorLabels" . | nindent 4 }}

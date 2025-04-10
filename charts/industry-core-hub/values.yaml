@@ -29,7 +29,7 @@ replicaCount: 1
 
 # -- Backend configuration
 backend:
-  enabled: false
+  enabled: true
   name: "industry-core-hub-backend"
   image:
     repository: "ichub-backend"
@@ -38,13 +38,13 @@ backend:
     tag: ""
     # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
     pullSecrets: []
-  
+
   service:
     # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
     type: ClusterIP
-    port: 80
-    targetPort: 8000
-  
+    portService: 8000
+    portContainer: 8000
+
   podAnnotations: {}
 
   podLabels: {}
@@ -59,7 +59,7 @@ backend:
     readiness:
       enabled: false
       path: "/"
-  
+
   # -- ingress declaration to expose the industry-core-hub-backend service
   ingress:
     enabled: false
@@ -86,7 +86,7 @@ backend:
             backend:
               service: "backend"
               port: 8000
-  
+
   # -- The [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod) defines privilege and access control settings for a Pod within the deployment
   podSecurityContext:
     seccompProfile:
@@ -117,7 +117,7 @@ backend:
     runAsUser: 10000
     # -- The owner for volumes and any files created within volumes will belong to this guid
     runAsGroup: 10001
-  
+
   # -- specifies additional volume mounts for the backend deployment
   additionalVolumeMounts: []
 
@@ -142,7 +142,7 @@ backend:
       enabled: true
       # -- Storage size for logs
       size: 1Gi
-      # -- Access mode for logs volume  
+      # -- Access mode for logs volume
       accessMode: ReadWriteOnce
       # -- Storage class for logs volume
       storageClass: "standard"
@@ -171,13 +171,13 @@ frontend:
   env:
     # -- industry-core-hub backend base URL
     ichubBackendUrl: ""
-  
+
   service:
     # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
     type: ClusterIP
-    port: 80
-    targetPort: 8000
-  
+    portService: 8080
+    portContainer: 8080
+
   podAnnotations: {}
 
   podLabels: {}
@@ -192,7 +192,7 @@ frontend:
     readiness:
       enabled: true
       path: "/"
-  
+
   # -- ingress declaration to expose the industry-core-hub-backend service
   ingress:
     enabled: false
@@ -219,7 +219,7 @@ frontend:
             backend:
               service: "frontend"
               port: 8080
-  
+
   # -- The [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod) defines privilege and access control settings for a Pod within the deployment
   podSecurityContext:
     seccompProfile:
@@ -250,13 +250,13 @@ frontend:
     runAsUser: 10000
     # -- The owner for volumes and any files created within volumes will belong to this guid
     runAsGroup: 10001
-  
+
   # -- specifies additional volume mounts for the backend deployment
   additionalVolumeMounts: []
 
   # -- additional volume claims for the containers
   additionalVolumes: []
-  
+
   # @url: https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-resource-requests-and-limits
   # -- Review the default resource limits as this should a conscious choice.
   resources:

@@ -204,15 +204,6 @@ Get the database secret key
 {{- end -}}
 
 {{/*
-Return true if a secret object should be created for external database
-*/}}
-{{- define "industry-core-hub.externalDatabase.createSecret" -}}
-{{- if and (not .Values.postgresql.enabled) (not .Values.externalDatabase.existingSecret) }}
-    {{- true -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Return the postgresql URL
 */}}
 {{- define "industry-core-hub.postgresql.url" -}}

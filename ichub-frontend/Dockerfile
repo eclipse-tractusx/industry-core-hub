@@ -63,12 +63,12 @@ RUN chmod +x /docker-entrypoint.d/00-inject-dynamic-env.sh \
 # Change to nginx user
 USER 101
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 # Healthcheck to verify Nginx is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD wget --spider -q http://localhost || exit 1
+  CMD wget --spider -q http://localhost:8080 || exit 1
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

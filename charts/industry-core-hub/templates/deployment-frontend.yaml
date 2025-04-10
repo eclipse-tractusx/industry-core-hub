@@ -60,7 +60,7 @@ spec:
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.frontend.service.port }}
+              containerPort: {{ .Values.frontend.service.portContainer }}
               protocol: TCP
           env:
             - name: ICHUB_BACKEND_URL
@@ -69,7 +69,7 @@ spec:
           startupProbe:
             httpGet:
               path: {{ .Values.frontend.healthChecks.startup.path }}
-              port: {{ .Values.frontend.service.port }}
+              port: {{ .Values.frontend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.startupProbe.periodSeconds }}
@@ -81,7 +81,7 @@ spec:
           livenessProbe:
             httpGet:
               path: {{ .Values.frontend.healthChecks.liveness.path }}
-              port: {{ .Values.frontend.service.port }}
+              port: {{ .Values.frontend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
@@ -93,7 +93,7 @@ spec:
           readinessProbe:
             httpGet:
               path: {{ .Values.frontend.healthChecks.readiness.path }}
-              port: {{ .Values.frontend.service.port }}
+              port: {{ .Values.frontend.service.portContainer }}
               scheme: HTTP
             initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
