@@ -50,26 +50,29 @@ paths:
         - in: path
           name: id
           required: true
+          schema:
+            type: string
       responses:
         "200": # status code
           description: A JSON array of products
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/ProductsMetadata'
     delete:
       summary: Delete a product base an id
       parameters:
         - in: path
           name: id
+          required: true
+          schema:
+            type: string
       responses:
         "200": # status code
           description: A JSON array of products
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/ProductsMetadata'
   /shell:
     post:
@@ -86,43 +89,330 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 $ref: '#/components/schemas/ProductsMetadata'
 
 components:
   schemas:
-    BPN:
-      type: string
-    ProductsMetadata:
+    batch_overview:
       type: object
       properties:
-        title:
+        manufacturer_id:
           type: string
+        manufacturer_part_id:
+          type: string
+        batch_id:
+          type: string
+        customer_part_ids:
+          type: json
+    batch_overview_partner_parts:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        batch_id:
+          type: string
+        customer_part_id:
+          type: string
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+    batch_shared_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        batch_id:
+          type: string
+        customer_part_ids:
+          type: json
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        business_partner_name:
+          type: string
+        data_exchange_agreement:
+          type: string
+        edc_usage_policy_id:
+          type: string
+        enablement_service_stack:
+          type: string
+        dtr_registered:
+          type: boolean
         status:
-          type: string
-          enum: [SHARED, REGISTERED, DRAFT]
-        unique_id:
-          type: string
-        category:
-          type: string
-    ProductsAllInfo:
+          type: smallint
+        registration_mode:
+          type: smallint
+    batch_twins_aspects:
       type: object
       properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        batch_id:
+          type: string
+        customer_part_ids:
+          type: json
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        dtr_registered:
+          type: boolean
         name:
           type: string
-        unique_id:
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    catalog_part_overview:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_ids:
+          type: json
+    catalog_part_overview_with_partners:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+    catalog_part_shared_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_ids:
+          type: json
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        business_partner_name:
+          type: string
+        data_exchange_agreement:
+          type: string
+        edc_usage_policy_id:
+          type: string
+        enablement_service_stack:
+          type: string
+        dtr_registered:
+          type: boolean
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    catalog_part_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_ids:
+          type: json
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        dtr_registered:
+          type: boolean
+        name:
           type: string
         status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    data_exchange_agreements:
+      type: object
+      properties:
+        business_partner:
           type: string
-          enum: [SHARED, REGISTERED, DRAFT]
-        bpnl:
+        data_exchange_agreements:
           type: string
-        description:
+        semantic_id:
           type: string
-        category:
+        edc_usage_policy_id:
           type: string
-        manufacturerPartId:
+    jis_part_overview:
+      type: object
+      properties:
+        manufacturer_id:
           type: string
-        country_origin:
+        manufacturer_part_id:
           type: string
-    
+        customer_part_id:
+          type: string
+        jis_number:
+          type: string
+        parent_order_number:
+          type: string
+        jis_call_date:
+          type: timestamp
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+    jis_part_shared_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        jis_number:
+          type: string
+        parent_order_number:
+          type: string
+        jis_call_date:
+          type: timestamp
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        data_exchange_agreement:
+          type: string
+        edc_usage_policy_id:
+          type: string
+        name:
+          type: string
+        dtr_registered:
+          type: boolean
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    jis_part_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        jis_number:
+          type: string
+        parent_order_number:
+          type: string
+        jis_call_date:
+          type: timestamp
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        name:
+          type: string
+        dtr_registered:
+          type: boolean
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    serialized_part_overview:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        part_instance_id:
+          type: string
+        van:
+          type: string
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+    serialized_part_shared_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        part_instance_id:
+          type: string
+        van:
+          type: string
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        data_exchange_agreement:
+          type: string
+        edc_usage_policy_id:
+          type: string
+        name:
+          type: string
+        dtr_registered:
+          type: boolean
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
+    serialized_part_twins_aspects:
+      type: object
+      properties:
+        manufacturer_id:
+          type: string
+        manufacturer_part_id:
+          type: string
+        customer_part_id:
+          type: string
+        part_instance_id:
+          type: string
+        van:
+          type: string
+        external_subject_id:
+          type: string
+        business_partner:
+          type: string
+        catenax_id:
+          type: uuid
+        semantic_id:
+          type: string
+        name:
+          type: string
+        dtr_registered:
+          type: boolean
+        status:
+          type: smallint
+        registration_mode:
+          type: smallint
