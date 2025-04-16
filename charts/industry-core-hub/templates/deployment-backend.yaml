@@ -24,14 +24,14 @@ kind: Deployment
 metadata:
   name: {{ include "industry-core-hub.fullname.backend" . }}
   labels:
-    {{- include "industry-core-hub.labels" . | nindent 4 }}
+    {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   strategy:
     {{- toYaml .Values.updateStrategy | nindent 4 }}
   selector:
     matchLabels:
-      {{- include "industry-core-hub.selectorLabels" . | nindent 6 }}
+      {{- include "industry-core-hub.backend.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.backend.podAnnotations }}
@@ -39,7 +39,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "industry-core-hub.labels" . | nindent 8 }}
+        {{- include "industry-core-hub.backend.labels" . | nindent 8 }}
         {{- with .Values.backend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
