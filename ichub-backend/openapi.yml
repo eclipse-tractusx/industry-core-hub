@@ -31,65 +31,47 @@ servers:
     description: Backend
 
 paths:
-  /shells:
+  /catalogs:
     get:
-      summary: Returns a list of all the products that user can see.
+      summary: Returns a list of catalogs part that user with specific BPN can see and the Public ones.
+      parameters:
+        - in: header
+          name: Edc-Bpn
+          required: false
+          schema:
+            type: string
       responses:
-        "200": # status code
-          description: A JSON array of products
+        "200":
+          description: A Catalogs Part List
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ProductsMetadata'
-  /shell/{id}:
+                  $ref: '#/components/schemas/catalog_part_overview'
+  /catalog/{manufacturer_id}:
     get:
-      summary: Returns a product base an id
+      summary: Returns a list of serialized parts base on a catalogs manufacturer id
       parameters:
         - in: path
-          name: id
+          name: manufacturer_id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Edc-Bpn
           required: true
           schema:
             type: string
       responses:
-        "200": # status code
-          description: A JSON array of products
+        "200":
+          description: A Serialized Part List
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductsMetadata'
-    delete:
-      summary: Delete a product base an id
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200": # status code
-          description: A JSON array of products
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductsMetadata'
-  /shell:
-    post:
-      summary: Create a product
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProductsAllInfo'
-      responses:
-        "200": # status code
-          description: A JSON array of products
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductsMetadata'
+                type: array
+                items:
+                  $ref: '#/components/schemas/serialized_part_overview'
 
 components:
   schemas:
@@ -103,7 +85,7 @@ components:
         batch_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
     batch_overview_partner_parts:
       type: object
       properties:
@@ -129,9 +111,10 @@ components:
         batch_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         business_partner_name:
@@ -145,9 +128,15 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     batch_twins_aspects:
       type: object
       properties:
@@ -158,9 +147,10 @@ components:
         batch_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         dtr_registered:
@@ -168,9 +158,15 @@ components:
         name:
           type: string
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     catalog_part_overview:
       type: object
       properties:
@@ -179,7 +175,7 @@ components:
         manufacturer_part_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
     catalog_part_overview_with_partners:
       type: object
       properties:
@@ -201,9 +197,10 @@ components:
         manufacturer_part_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         business_partner_name:
@@ -217,9 +214,15 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     catalog_part_twins_aspects:
       type: object
       properties:
@@ -228,9 +231,10 @@ components:
         manufacturer_part_id:
           type: string
         customer_part_ids:
-          type: json
+          type: object
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         dtr_registered:
@@ -238,9 +242,15 @@ components:
         name:
           type: string
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     data_exchange_agreements:
       type: object
       properties:
@@ -266,7 +276,9 @@ components:
         parent_order_number:
           type: string
         jis_call_date:
-          type: timestamp
+          type: integer
+          format: int64
+          description: timestamp
         external_subject_id:
           type: string
         business_partner:
@@ -285,13 +297,16 @@ components:
         parent_order_number:
           type: string
         jis_call_date:
-          type: timestamp
+          type: integer
+          format: int64
+          description: timestamp
         external_subject_id:
           type: string
         business_partner:
           type: string
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         data_exchange_agreement:
@@ -303,9 +318,15 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     jis_part_twins_aspects:
       type: object
       properties:
@@ -320,13 +341,16 @@ components:
         parent_order_number:
           type: string
         jis_call_date:
-          type: timestamp
+          type: integer
+          format: int64
+          description: timestamp
         external_subject_id:
           type: string
         business_partner:
           type: string
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         name:
@@ -334,9 +358,15 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     serialized_part_overview:
       type: object
       properties:
@@ -372,7 +402,8 @@ components:
         business_partner:
           type: string
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         data_exchange_agreement:
@@ -384,9 +415,15 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
     serialized_part_twins_aspects:
       type: object
       properties:
@@ -405,7 +442,8 @@ components:
         business_partner:
           type: string
         catenax_id:
-          type: uuid
+          type: string
+          format: uuid
         semantic_id:
           type: string
         name:
@@ -413,6 +451,12 @@ components:
         dtr_registered:
           type: boolean
         status:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
         registration_mode:
-          type: smallint
+          type: integer
+          description: smallint
+          minimum: -32768
+          maximum: 32767
