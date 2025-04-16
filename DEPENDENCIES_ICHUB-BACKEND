@@ -30,7 +30,9 @@ pypi/pypi/-/markdown-it-py/3.0.0, MIT, approved, clearlydefined
 pypi/pypi/-/mdurl/0.1.2, MIT, approved, clearlydefined
 pypi/pypi/-/packaging/24.1, Apache-2.0 AND BSD-3-Clause, approved, clearlydefined
 pypi/pypi/-/pluggy/1.5.0, MIT, approved, clearlydefined
+pypi/pypi/-/psycopg2-binary/2.9.10, LGPL-3.0-or-later WITH openvpn-openssl-exception, restricted, clearlydefined
 pypi/pypi/-/pycparser/2.22, LGPL-2.0-or-later AND BSD-3-Clause, approved, #14636
+pypi/pypi/-/pydantic-settings/2.2.1, MIT, approved, clearlydefined
 pypi/pypi/-/pydantic/2.6.3, MIT, approved, #13069
 pypi/pypi/-/pydantic_core/2.16.3, MIT, approved, clearlydefined
 pypi/pypi/-/pyproject_hooks/1.2.0, MIT, approved, clearlydefined
@@ -51,6 +53,7 @@ pypi/pypi/-/starlette/0.40.0, BSD-2-Clause AND BSD-3-Clause, approved, clearlyde
 pypi/pypi/-/tomli/2.0.1, MIT, approved, #7824
 pypi/pypi/-/tractusx_sdk/0.0.2, Apache-2.0 AND CC-BY-4.0, approved, #20505
 pypi/pypi/-/typer/0.15.1, MIT, approved, clearlydefined
+pypi/pypi/-/typing-inspection/0.4.0, MIT, approved, clearlydefined
 pypi/pypi/-/typing_extensions/4.12.2, Python-2.0, approved, #19383
 pypi/pypi/-/urllib3/2.3.0, MIT AND Python-2.0 AND MPL-2.0, approved, #19863
 pypi/pypi/-/uvicorn/0.30.3, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined
