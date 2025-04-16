@@ -33,6 +33,7 @@ import logging
 import yaml
 import uvicorn
 import urllib3
+import os
 
 from pathlib import Path
 ## Import paths
@@ -62,8 +63,11 @@ logging.captureWarnings(True)
 ## Create Logging Folder
 op.make_dir("logs")
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Load the logging config file
-with open('./config/logging.yml', 'rt') as f:
+logging_config_path = os.path.join(BASE_DIR, './config/logging.yml')
+with open(logging_config_path, 'rt') as f:
     log_config = yaml.safe_load(f.read())
     date = op.get_filedate()
     op.make_dir(dir_name="logs/"+date)
@@ -71,7 +75,8 @@ with open('./config/logging.yml', 'rt') as f:
     config.dictConfig(log_config)
 
 # Load the configuation for the application
-with open('./config/configuration.yml', 'rt') as f:
+app_config_path = os.path.join(BASE_DIR, './config/configuration.yml')
+with open(app_config_path, 'rt') as f:
     # Read the yaml configuration
     app_configuration = yaml.safe_load(f.read())
     

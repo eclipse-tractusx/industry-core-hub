@@ -63,4 +63,4 @@ USER 1000:3000
 EXPOSE 8000
 
 ## Execute the application
-CMD ["python3","./main.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python3","-m", "ichub_backend.main", "--host", "0.0.0.0", "--port", "8000"]

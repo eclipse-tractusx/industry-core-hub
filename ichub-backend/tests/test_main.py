@@ -23,7 +23,7 @@
 import pytest
 import importlib
 from fastapi.testclient import TestClient
-main = importlib.import_module("ichub-backend.main")
+main = importlib.import_module("ichub_backend.main")
 
 # Set test_mode to True before running tests to skip uvicorn.run
 def set_test_mode():
