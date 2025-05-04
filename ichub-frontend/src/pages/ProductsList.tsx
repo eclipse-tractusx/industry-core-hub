@@ -26,10 +26,10 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { ProductCard } from "../components/general/ProductCard";
 import { PartInstance } from "../types/product";
 import TablePagination from '@mui/material/TablePagination';
-import { AppBar, Typography, IconButton,Grid2 } from '@mui/material';
+import { Typography, IconButton,Grid2 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import Sidebar from '../Features/CatalogManagement/components/sideBar/SideBar';
+import Sidebar from '../features/CatalogManagement/components/sideBar/SideBar';
 import {Drawer} from '../shared/hooks/drawer';
 
 
