@@ -27,11 +27,11 @@ import { StatusTag, Button, Icon } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS } from "../types/common";
 import JsonViewerDialog from "../components/general/JsonViewerDialog";
 import Grid2 from '@mui/material/Grid2';
-import InstanceProductsTable from "../CatalogManagement/components/product-detail/InstanceProductsTable";
+import InstanceProductsTable from "../features/CatalogManagement/components/product-detail/InstanceProductsTable";
 import PageNotification from "../components/general/PageNotification";
-import ShareDropdown from "../CatalogManagement/components/product-detail/ShareDropdown";
-import ProductButton from "../CatalogManagement/components/product-detail/ProductButton";
-import ProductData from "../CatalogManagement/components/product-detail/ProductData";
+import ShareDropdown from "../features/CatalogManagement/components/product-detail/ShareDropdown";
+import ProductButton from "../features/CatalogManagement/components/product-detail/ProductButton";
+import ProductData from "../features/CatalogManagement/components/product-detail/ProductData";
 
 const ProductsDetails = () => {
   const { id } = useParams<{ id: string }>();

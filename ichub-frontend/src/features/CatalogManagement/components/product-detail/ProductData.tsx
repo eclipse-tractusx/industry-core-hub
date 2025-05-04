@@ -22,7 +22,7 @@
 
 import { Box, Grid2 } from '@mui/material'
 import { Icon, Typography } from '@catena-x/portal-shared-components';
-import { PartInstance } from '../../../types/product.ts';
+import { PartInstance } from '../../../../types/product.ts';
 
 interface ProductDataProps {
     part: PartInstance;
