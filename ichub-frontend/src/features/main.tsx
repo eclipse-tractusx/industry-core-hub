@@ -20,37 +20,17 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { JSX } from "react";
-import { Box } from "@mui/material";
-import { NavLink } from 'react-router-dom';
 
-type SidebarItem = {
-  icon: JSX.Element;
-  path: string;
-};
+import {
+  Storefront,
+  Category,
+  People,
+  Assignment
+} from '@mui/icons-material';
 
-const Sidebar = ({ items }: { items: SidebarItem[] }) => {
-
-  return (
-    <Box className="sidebarContainer">
-      {/* Barra de Iconos */}
-      <Box className="iconBar">
-        {items.map((item, index) => (
-          <NavLink
-            to={item.path}
-            key={index}
-            className={({ isActive }) =>
-              `iconButton ${isActive ? "active" : ""}`
-            }
-          >
-            {item.icon}
-          </NavLink>
-        ))}
-      </Box>
-
-      {/* Contenido del Sidebar */}
-    </Box>
-  );
-};
-
-export default Sidebar
+export const features = [
+  { icon: <Storefront />, path: '/catalog' },
+  { icon: <Category />, path: '/categories' },
+  { icon: <People />, path: '/shared' },
+  { icon: <Assignment />, path: '/status' }
+];
