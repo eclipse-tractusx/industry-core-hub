@@ -29,7 +29,7 @@ import TablePagination from '@mui/material/TablePagination';
 import { Typography, IconButton,Grid2 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import Sidebar from '../features/CatalogManagement/components/sideBar/SideBar';
+import Sidebar from '../CatalogManagement/components/side-bar/SideBar';
 import {Drawer} from '../shared/hooks/drawer';
 
 

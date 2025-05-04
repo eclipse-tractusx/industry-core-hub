@@ -40,8 +40,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 
-import instanceData from "../../../../tests/payloads/instance-data.json";
-import { InstanceProduct } from '../../../../types/instanceProduct';
+import instanceData from "../../../tests/payloads/instance-data.json";
+import { InstanceProduct } from '../../../types/instanceProduct';
 
 const rows = instanceData;
 
