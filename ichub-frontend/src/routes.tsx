@@ -21,20 +21,29 @@
 ********************************************************************************/
 
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import MainLayout from './layouts/MainLayout';
 import ProductsList from './pages/ProductsList';
 import ProductsDetails from './pages/ProductsDetails';
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
-     <Routes>
-        <Route path="/" element={<MainLayout />} >
-          <Route index element={<ProductsList />} />
-          <Route path="/product/:id" element={<ProductsDetails />} />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {/* Default route redirects to /catalog */}
+          <Route index element={<Navigate to="/catalog" replace />} />
+
+          {/* Sidebar-linked routes */}
+          <Route path="catalog" element={<ProductsList />} />
+          <Route path="categories" element={<div>Categories Page</div>} />
+          <Route path="shared" element={<div>Shared Page</div>} />
+          <Route path="status" element={<div>Status Page</div>} />
+
+          {/* Example dynamic route */}
+          <Route path="product/:id" element={<ProductsDetails />} />
         </Route>
       </Routes>
     </BrowserRouter>
-  );    
+  );
 }

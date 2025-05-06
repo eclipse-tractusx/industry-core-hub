@@ -26,10 +26,10 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { ProductCard } from "../components/general/ProductCard";
 import { PartInstance } from "../types/product";
 import TablePagination from '@mui/material/TablePagination';
-import { AppBar, Typography, IconButton,Grid2 } from '@mui/material';
+import { Typography, IconButton,Grid2 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import Sidebar from '../Features/CatalogManagement/components/sideBar/SideBar';
+import Sidebar from '../features/CatalogManagement/components/side-bar/SideBar';
 import {Drawer} from '../shared/hooks/drawer';
 
 
@@ -135,7 +135,7 @@ const ProductsList = () => {
             status: part.status,
           }))}
         />
-          </Main>
+      </Main>
       </Grid2>
       <Grid2 size={{ md: 12}}  className="flex flex-content-center pagination-text">
         <TablePagination

@@ -24,18 +24,28 @@ import { Outlet } from "react-router-dom";
 import Grid2 from '@mui/material/Grid2';
 import Header from '../components/general/Header';
 import Sidebar from '../components/general/Sidebar';
+import { features } from '../features/main';
+
 
 function MainLayout() {
   return (
-    <Grid2 container direction="column" className="contentWrapper">
-      <Grid2 size={{md:12, xs: 12}}>
-        <Header/>
+    <Grid2 container className="contentWrapper">
+      <Grid2
+        style={{
+          position: 'sticky',
+          top: 0,
+          left: 0,
+          width: '100%',
+          zIndex: 1100,
+        }}
+      >
+        <Header />
       </Grid2>
-      <Grid2 container className="pageWrapper" spacing={0}>
-        <Grid2  className="sidebarArea">
-          <Sidebar />
+      <Grid2 container direction="row">
+        <Grid2 size={1}>
+          <Sidebar items={features} />
         </Grid2>
-        <Grid2 size={{md:11, xs: 12}} className="contentArea flex flex-content-center" >
+        <Grid2 size={11}>
           <Outlet />
         </Grid2>
       </Grid2>
