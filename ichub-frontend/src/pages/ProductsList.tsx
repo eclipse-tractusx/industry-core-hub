@@ -135,7 +135,7 @@ const ProductsList = () => {
             status: part.status,
           }))}
         />
-          </Main>
+      </Main>
       </Grid2>
       <Grid2 size={{ md: 12}}  className="flex flex-content-center pagination-text">
         <TablePagination
