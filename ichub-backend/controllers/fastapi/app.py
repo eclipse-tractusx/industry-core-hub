@@ -25,7 +25,10 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import FastAPI, HTTPException, Request
+import json
+import base64
+
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
@@ -154,16 +157,38 @@ def _submodel_dispatcher_get_submodel_content(semantic_id: str, global_id: UUID,
     except SubmodelNotSharedWithBusinessPartnerError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     
-@app.get("/dtr-facade/shell-descriptors/{aas_id_b64}", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
-async def dtr_facade_get_shell_descriptor(aas_id_b64: str, request: Request) -> Dict[str, Any]:
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aas_id_b64}", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_shell_descriptor(enablement_service_stack_id: int, aas_id_b64: str, request: Request) -> Dict[str, Any]:
     """
     Get the shell descriptor for a given AAS ID.
     """
     edc_bpn = request.headers.get("Edc-Bpn")
     
     try:
-        return dtr_facade_service.get_shell_descriptor(aas_id_b64, edc_bpn)
+        return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, aas_id_b64, edc_bpn)
     except TwinNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except NotAuthorizedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
+    
+@app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
+async def dtr_facade_lookup_shells(
+    request: Request,
+    enablement_service_stack_id: int,
+    asset_ids: Optional[List[str]] = Query(alias="assetIds", description="List of asset IDs to lookup (format: base64 encoded JSON with 'name' and 'value' keys)", default=None),
+) -> Dict[str, Any]:
+    """
+    Lookup shells for a given enablement service stack ID.
+    """
+    edc_bpn = request.headers.get("Edc-Bpn")
+    
+    search_params = {}
+    if asset_ids:
+        for asset_id in asset_ids:
+            try:
+                decoded_asset_id = json.loads(base64.b64decode(asset_id).decode('utf-8'))
+                search_params[decoded_asset_id["name"]] = decoded_asset_id["value"]
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                raise HTTPException(status_code=400, detail=f"Invalid asset ID format: {asset_id}") from e
+
+    return dtr_facade_service.lookup_shells(enablement_service_stack_id, search_params, edc_bpn)

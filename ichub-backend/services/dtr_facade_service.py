@@ -51,7 +51,7 @@ class DTRFacadeService:
         self.control_plane_url = control_plane_url
         self.data_plane_url = data_plane_url
 
-    def get_shell_descriptor(self, aas_id_b64: str, edc_bpn: Optional[str] = None) -> Dict[str, Any]:
+    def get_shell_descriptor(self, enablement_service_stack_id: int, aas_id_b64: str, edc_bpn: Optional[str] = None) -> Dict[str, Any]:
         """
         Get the shell descriptor for a given AAS ID.
         """
@@ -66,11 +66,11 @@ class DTRFacadeService:
         specific_asset_ids: List[Dict[str, Any]] = []
 
         with RepositoryManagerFactory.create() as repos:
-            db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_aspects=True)
+            db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_aspects=True, include_registrations=True)
             
-            if db_twin is None:
+            if db_twin is None or not db_twin.has_registration(enablement_service_stack_id):
                 raise TwinNotFoundError(f"Shell descriptor {aas_id} not found.")
-            
+
             result["globalAssetId"] = db_twin.global_id.urn
 
             db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id)
@@ -170,6 +170,107 @@ class DTRFacadeService:
 
 
         return result
+
+    def lookup_shells(self, enablement_service_stack_id: int, search_params: Dict[str, Any], edc_bpn: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Lookup shells based on the provided search parameters.
+        """
+        print(search_params)
+        print(edc_bpn)
+
+        search_catalog_parts = True
+        search_serilized_parts = True
+        search_jis_parts = True
+        search_batches = True
+
+        global_id = None
+        manufacturer_id = None
+        manufacturer_part_id = None
+        customer_part_id = None
+        intrinsic_id = None
+        batch_id = None
+        part_instance_id = None
+        van = None
+        jis_number = None
+        parent_order_number = None
+        jis_call_date = None
+
+        for name, value in search_params.items():
+            if name == "globalAssetId":
+                global_id = UUID(value)
+            elif name == "manufacturerId":
+                manufacturer_id = value
+            elif name == "manufacturerPartId":
+                manufacturer_part_id = value
+            elif name == "customerPartId":
+                customer_part_id = value
+            elif name == "intrinsicId":
+                intrinsic_id = value
+            elif name == "batchId":
+                search_catalog_parts = False
+                search_jis_parts = False
+                search_serilized_parts = False
+                batch_id = value
+            elif name == "partInstanceId":
+                search_batches = False
+                search_catalog_parts = False
+                search_jis_parts = False
+                part_instance_id = value
+            elif name == "van":
+                search_batches = False
+                search_catalog_parts = False
+                search_jis_parts = False
+                van = value
+            elif name == "jisNumber":
+                search_batches = False
+                search_catalog_parts = False
+                search_serilized_parts = False
+                jis_number = value
+            elif name == "parentOrderNumber":
+                search_batches = False
+                search_catalog_parts = False
+                search_serilized_parts = False
+                parent_order_number = value
+            elif name == "jisCallDate":
+                search_batches = False
+                search_catalog_parts = False
+                search_serilized_parts = False
+                jis_call_date = value
+
+        result: List[UUID] = []
+        with RepositoryManagerFactory.create() as repos:
+            if search_catalog_parts:
+                db_twins = repos.twin_repository.find_catalog_part_twins(
+                    manufacturer_id = manufacturer_id,
+                    manufacturer_part_id = manufacturer_part_id,
+                    global_id = global_id,
+                    include_registrations=True
+                )
+
+                for db_twin in db_twins:
+                    if not db_twin.has_registration(enablement_service_stack_id):
+                        continue
+
+                    if edc_bpn is not None or customer_part_id is not None:
+                        db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id, join_partner_catalog_parts=True)
+
+                        if edc_bpn is not None:
+                            db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_bpnl(edc_bpn)
+                            if not db_partner_catalog_part:
+                                continue
+
+                        if customer_part_id is not None:
+                            db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_customer_part_id(customer_part_id)
+                            if not db_partner_catalog_part:
+                                continue
+
+                    result.append(db_twin.aas_id) 
+
+
+        return {
+            "paging_metadata": {},
+            "result": [aas_id.urn for aas_id in result]
+        }
 
     def _generate_asset_id(self, db_twin, db_twin_aspect) -> str:
         """
