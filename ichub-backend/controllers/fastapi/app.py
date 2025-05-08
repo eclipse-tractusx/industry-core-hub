@@ -156,26 +156,67 @@ def _submodel_dispatcher_get_submodel_content(semantic_id: str, global_id: UUID,
     # If the requestor has no access to the twin return a respective 403
     except SubmodelNotSharedWithBusinessPartnerError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
+
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
+    description="Returns all Asset Administration Shell Descriptors",
+    response_model=Dict[str, Any],
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_shell_descriptors(
+    # TODO: Define explicit result schema to match the DTR API specs
+    enablement_service_stack_id: int,
+    request: Request,
+    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=None),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
+    asset_kind: Optional[str] = Query(
+        alias="assetKind",
+        description="The Asset's kind (Instance or Type)",
+        enum=["Instance", "NotApplicable", "Type"],  # List of allowed values,
+        default=None
+    ),
+    asset_type: Optional[str] = Query(
+        alias="assetType",
+        description="The Asset's type (UTF8-BASE64-URL-encoded)",
+        regex="^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+        default=None
+    ),
+) -> Dict[str, Any]:
+    return {
+        "pagingMetadata": {
+            "cursor": "123"
+        },
+        "result": []
+    }
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
+    description="Returns a specific Asset Administration Shell Descriptor",
+    response_model=Dict[str, Any],
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_shell_descriptor(enablement_service_stack_id: int, aasIdentifier: str, request: Request) -> Dict[str, Any]:
+    # TODO: Define explicit result schema to match the DTR API specs
     
-@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aas_id_b64}", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
-async def dtr_facade_get_shell_descriptor(enablement_service_stack_id: int, aas_id_b64: str, request: Request) -> Dict[str, Any]:
     """
     Get the shell descriptor for a given AAS ID.
     """
     edc_bpn = request.headers.get("Edc-Bpn")
     
     try:
-        return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, aas_id_b64, edc_bpn)
+        return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, aasIdentifier, edc_bpn)
     except TwinNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except NotAuthorizedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     
-@app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
+@app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",
+    description="Returns a list of Asset Administration Shell ids linked to specific Asset identifiers",
+    response_model=Dict[str, Any],
+    tags=["Digital Twin Registry Facade"])
 async def dtr_facade_lookup_shells(
     request: Request,
     enablement_service_stack_id: int,
-    asset_ids: Optional[List[str]] = Query(alias="assetIds", description="List of asset IDs to lookup (format: base64 encoded JSON with 'name' and 'value' keys)", default=None),
+    asset_ids: Optional[List[str]] = Query(alias="assetIds", description="A list of specific Asset identifiers", default=None),
+    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=None),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
 ) -> Dict[str, Any]:
     """
     Lookup shells for a given enablement service stack ID.
