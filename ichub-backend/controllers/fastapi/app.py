@@ -32,6 +32,7 @@ from services.submodel_dispatcher_service import SubmodelDispatcherService, Subm
 from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
+from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
@@ -52,6 +53,10 @@ tags_metadata = [
     {
         "name": "Submodel Dispatcher",
         "description": "Internal API called by EDC Data Planes in order the deliver data of of the internall used Submodel Service"
+    },
+    {
+        "name": "Digital Twin Registry Facade",
+        "description": "DTR compatible API provided directly out of the Industry Core Hub Backend. No separate DTR service is needed"
     }
 ]
 
@@ -61,6 +66,7 @@ part_management_service = PartManagementService()
 partner_management_service = PartnerManagementService()
 twin_management_service = TwinManagementService()
 submodel_dispatcher_service = SubmodelDispatcherService()
+dtr_facade_service = DTRFacadeService()
 
 @app.get("/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}", response_model=CatalogPartRead, tags=["Part Management"])
 async def part_management_get_catalog_part(manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartRead]:
@@ -146,4 +152,18 @@ def _submodel_dispatcher_get_submodel_content(semantic_id: str, global_id: UUID,
     
     # If the requestor has no access to the twin return a respective 403
     except SubmodelNotSharedWithBusinessPartnerError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+    
+@app.get("/dtr-facade/shell-descriptors/{aas_id_b64}", response_model=Dict[str, Any], tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_shell_descriptor(aas_id_b64: str, request: Request) -> Dict[str, Any]:
+    """
+    Get the shell descriptor for a given AAS ID.
+    """
+    edc_bpn = request.headers.get("Edc-Bpn")
+    
+    try:
+        return dtr_facade_service.get_shell_descriptor(aas_id_b64, edc_bpn)
+    except TwinNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except NotAuthorizedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e

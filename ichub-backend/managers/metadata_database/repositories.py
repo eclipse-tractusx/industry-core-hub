@@ -125,6 +125,25 @@ class CatalogPartRepository(BaseRepository[CatalogPart]):
             CatalogPart.manufacturer_part_id == manufacturer_part_id)
         return self._session.scalars(stmt).first()
 
+    def get_by_twin_id(
+        self,
+        twin_id: int,
+        join_legal_entity: bool = False,
+        join_partner_catalog_parts: bool = False
+    ) -> Optional[CatalogPart]:
+        
+        stmt = select(CatalogPart)
+        
+        if join_legal_entity:
+            stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+
+        if join_partner_catalog_parts:
+            subquery = select(PartnerCatalogPart).join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id).where(PartnerCatalogPart.catalog_part_id == CatalogPart.id).subquery()
+            stmt = stmt.join(subquery, subquery.c.catalog_part_id == CatalogPart.id, isouter=True)
+
+        stmt = stmt.where(CatalogPart.twin_id == twin_id)
+        return self._session.scalars(stmt).first()
+
     def find_by_manufacturer_id_manufacturer_part_id(self, manufacturer_id: Optional[str], manufacturer_part_id: Optional[str], join_partner_catalog_parts : bool = False) -> List[CatalogPart]:
         stmt = select(CatalogPart).distinct()
 
@@ -188,6 +207,20 @@ class TwinRepository(BaseRepository[Twin]):
             Twin.global_id == global_id)
         return self._session.scalars(stmt).first()
     
+    def find_by_dtr_aas_id(self,
+        dtr_aas_id: UUID,
+        include_data_exchange_agreements: bool = False,
+        include_aspects: bool = False,
+        include_registrations: bool = False) -> Optional[Twin]:
+       
+        stmt = select(Twin).where(
+            Twin.aas_id == dtr_aas_id)
+
+        stmt = self._apply_subquery_filters(stmt, include_data_exchange_agreements, include_aspects, include_registrations)
+
+
+        return self._session.scalars(stmt).first()
+
     def find_catalog_part_twins(self,
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,
