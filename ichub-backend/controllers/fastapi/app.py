@@ -35,7 +35,7 @@ from services.submodel_dispatcher_service import SubmodelDispatcherService, Subm
 from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
-from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError
+from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
@@ -181,12 +181,10 @@ async def dtr_facade_get_shell_descriptors(
         default=None
     ),
 ) -> Dict[str, Any]:
-    return {
-        "pagingMetadata": {
-            "cursor": "123"
-        },
-        "result": []
-    }
+    return dtr_facade_service.get_shell_descriptors(
+        enablement_service_stack_id,
+        edc_bpn=request.headers.get("Edc-Bpn"),
+        limit=limit)
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
     description="Returns a specific Asset Administration Shell Descriptor",
@@ -202,7 +200,7 @@ async def dtr_facade_get_shell_descriptor(enablement_service_stack_id: int, aasI
     
     try:
         return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, aasIdentifier, edc_bpn)
-    except TwinNotFoundError as e:
+    except (TwinNotFoundError, NotValidTwinError) as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except NotAuthorizedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e

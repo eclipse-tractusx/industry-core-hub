@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlmodel import SQLModel, Session, select
+from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
@@ -220,6 +220,26 @@ class TwinRepository(BaseRepository[Twin]):
 
 
         return self._session.scalars(stmt).first()
+
+    def find_by_enablement_service_stack_id(self,
+        enablement_service_stack_id: int,
+        include_data_exchange_agreements: bool = False,
+        include_aspects: bool = False,
+        include_registrations: bool = False,
+        limit: int = 50,
+        offset: int = 0) -> List[Twin]:
+        
+        stmt = select(Twin).join(
+            TwinRegistration, TwinRegistration.twin_id == Twin.id
+        ).where(
+            TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+        ).order_by(desc(Twin.created_date)  # type: ignore
+        ).offset(offset).limit(limit)
+
+        stmt = self._apply_subquery_filters(stmt, include_data_exchange_agreements, include_aspects, include_registrations)
+
+
+        return self._session.scalars(stmt).all()
 
     def find_catalog_part_twins(self,
             manufacturer_id: Optional[str] = None,

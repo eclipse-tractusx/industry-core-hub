@@ -28,7 +28,8 @@ from base64 import b64decode
 from urllib.parse import quote
 
 from services.twin_management_service import TwinManagementService
-from managers.metadata_database.manager import RepositoryManagerFactory
+from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
+from models.metadata_database.models import Twin
 from tools.submodel_type_util import SubmodelType, get_submodel_type
 
 class TwinNotFoundError(ValueError):
@@ -41,6 +42,11 @@ class NotAuthorizedError(ValueError):
     Exception raised when a requested twin is not authorized for the specified business partner.
     """
 
+class NotValidTwinError(ValueError):
+    """
+    Exception raised when a requested twin is not valid (i.e. it is not attached to any part)
+    """
+
 class DTRFacadeService:
     """
     Service class for managing DTR facade operations.
@@ -50,6 +56,35 @@ class DTRFacadeService:
         self.twin_management_service = TwinManagementService()
         self.control_plane_url = control_plane_url
         self.data_plane_url = data_plane_url
+
+    def get_shell_descriptors(self, enablement_service_stack_id: int, edc_bpn: Optional[str] = None, limit: int = 50) -> Dict[str, Any]:
+        """
+        Get shell descriptors for a given enablement service stack ID.
+        """
+        result: List[Dict[str, Any]] = []
+
+        with RepositoryManagerFactory.create() as repos:
+            db_twins = repos.twin_repository.find_by_enablement_service_stack_id(enablement_service_stack_id, limit=limit, include_aspects=True)
+
+            for db_twin in db_twins:
+                shell_descriptor = {
+                    "id": db_twin.aas_id.urn,
+                    "assetType": "AssetType"
+                }
+                try:
+                    self._fill_shell_descriptor(repos, db_twin, shell_descriptor, edc_bpn)
+                except (NotAuthorizedError, NotValidTwinError):
+                    # Skip twins that are not authorized for the given business partner
+                    continue
+
+                result.append(shell_descriptor)
+
+        return {
+            "paging_metadata": {
+                "cursor": "foo"
+            },
+            "result": result
+        }
 
     def get_shell_descriptor(self, enablement_service_stack_id: int, aas_id_b64: str, edc_bpn: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -63,111 +98,13 @@ class DTRFacadeService:
             "assetType": "AssetType"
         }
 
-        specific_asset_ids: List[Dict[str, Any]] = []
-
         with RepositoryManagerFactory.create() as repos:
             db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_aspects=True, include_registrations=True)
             
             if db_twin is None or not db_twin.has_registration(enablement_service_stack_id):
                 raise TwinNotFoundError(f"Shell descriptor {aas_id} not found.")
-
-            result["globalAssetId"] = db_twin.global_id.urn
-
-            db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id)
-            if db_catalog_part:
-
-                # Called from a partner => check if the catalog part is shared with the partner
-                if edc_bpn:
-                    db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_bpnl(edc_bpn)
-
-                    # Not found => then the partner has no access to the twin
-                    if not db_partner_catalog_part:
-                        raise NotAuthorizedError(f"Catalog part with AAS ID {aas_id} not shared with business partner {edc_bpn}.")
-                    
-                    db_partner_catalog_parts = [db_partner_catalog_part]
-                else:
-                    db_partner_catalog_parts = db_catalog_part.partner_catalog_parts
-
-                
-                result["assetKind"] = "Type"
-                self._add_specific_asset_id(
-                    specific_asset_ids,
-                    "manufacturerPartId",
-                    db_catalog_part.manufacturer_part_id,
-                    "PUBLIC_READABLE"
-                )
-                
-                for db_partner_catalog_part in db_partner_catalog_parts:
-                    self._add_specific_asset_id(
-                        specific_asset_ids,
-                        "digitalTwinType",
-                        "PartType",
-                        db_partner_catalog_part.business_partner.bpnl
-                    )
-                    
-                    self._add_specific_asset_id(
-                        specific_asset_ids,
-                        "manufacturerId",
-                        db_catalog_part.legal_entity.bpnl,
-                        db_partner_catalog_part.business_partner.bpnl
-                    )
-
-                    self._add_specific_asset_id(
-                        specific_asset_ids,
-                        "customerPartId",
-                        db_partner_catalog_part.customer_part_id,
-                        db_partner_catalog_part.business_partner.bpnl
-                    )
-
-                submodel_descriptors: List[Dict[str, Any]] = []
-                for db_twin_aspect in db_twin.twin_aspects:
-                    semandic_id = db_twin_aspect.semantic_id
-                    submodel_type_data = get_submodel_type(semandic_id)
-                    asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
-
-                    entry = {
-                        "id": db_twin_aspect.submodel_id.urn,
-                        "idShort": submodel_type_data.id_short,
-                        "semanticId": {
-                            "type": "ExternalReference",
-                            "keys": [{
-                                "type": "GlobalReference",
-                                "value": semandic_id
-                            }]
-                        },
-                        "supplementalSemanticId": [],
-                        "description": [],
-                        "displayName": [],
-                        "endpoints": [{
-                            "interface": "SUBMODEL-3.0",
-                            "protocolInformation": {
-                                "href": f"{self.data_plane_url}/api/public/{quote(semandic_id)}/{str(db_twin.global_id)}/submodel",
-                                "endpointProtocol": "HTTP",
-                                "endpointProtocolVersion": [
-                                "1.1"
-                                ],
-                                "subprotocol": "DSP",
-                                "subprotocolBody": f"id={asset_id};dspEndpoint={self.control_plane_url}",
-                                "subprotocolBodyEncoding": "plain",
-                                "securityAttributes": [
-                                {
-                                    "type": "NONE",
-                                    "key": "NONE",
-                                    "value": "NONE"
-                                }
-                                ]
-                            }
-                            }
-                        ],                        
-                    }
-                                            
-                    submodel_descriptors.append(entry)
-                
-
-                result["specificAssetIds"] = specific_asset_ids
-                if submodel_descriptors:
-                    result["submodelDescriptors"] = submodel_descriptors
-
+            
+            self._fill_shell_descriptor(repos, db_twin, result, edc_bpn)
 
         return result
 
@@ -271,6 +208,106 @@ class DTRFacadeService:
             "paging_metadata": {},
             "result": [aas_id.urn for aas_id in result]
         }
+
+    def _fill_shell_descriptor(self, repos: RepositoryManager, db_twin: Twin, shell_descriptor: Dict[str, Any], edc_bpn: Optional[str] = None) -> None:
+        shell_descriptor["globalAssetId"] = db_twin.global_id.urn
+        specific_asset_ids: List[Dict[str, Any]] = []
+
+        db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id)
+        if db_catalog_part:
+
+            # Called from a partner => check if the catalog part is shared with the partner
+            if edc_bpn:
+                db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_bpnl(edc_bpn)
+
+                # Not found => then the partner has no access to the twin
+                if not db_partner_catalog_part:
+                    raise NotAuthorizedError(f"Catalog part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}.")
+                
+                db_partner_catalog_parts = [db_partner_catalog_part]
+            else:
+                db_partner_catalog_parts = db_catalog_part.partner_catalog_parts
+
+            
+            shell_descriptor["assetKind"] = "Type"
+            self._add_specific_asset_id(
+                specific_asset_ids,
+                "manufacturerPartId",
+                db_catalog_part.manufacturer_part_id,
+                "PUBLIC_READABLE"
+            )
+            
+            for db_partner_catalog_part in db_partner_catalog_parts:
+                self._add_specific_asset_id(
+                    specific_asset_ids,
+                    "digitalTwinType",
+                    "PartType",
+                    db_partner_catalog_part.business_partner.bpnl
+                )
+                
+                self._add_specific_asset_id(
+                    specific_asset_ids,
+                    "manufacturerId",
+                    db_catalog_part.legal_entity.bpnl,
+                    db_partner_catalog_part.business_partner.bpnl
+                )
+
+                self._add_specific_asset_id(
+                    specific_asset_ids,
+                    "customerPartId",
+                    db_partner_catalog_part.customer_part_id,
+                    db_partner_catalog_part.business_partner.bpnl
+                )
+
+            submodel_descriptors: List[Dict[str, Any]] = []
+            for db_twin_aspect in db_twin.twin_aspects:
+                semandic_id = db_twin_aspect.semantic_id
+                submodel_type_data = get_submodel_type(semandic_id)
+                asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
+
+                entry = {
+                    "id": db_twin_aspect.submodel_id.urn,
+                    "idShort": submodel_type_data.id_short,
+                    "semanticId": {
+                        "type": "ExternalReference",
+                        "keys": [{
+                            "type": "GlobalReference",
+                            "value": semandic_id
+                        }]
+                    },
+                    "supplementalSemanticId": [],
+                    "description": [],
+                    "displayName": [],
+                    "endpoints": [{
+                        "interface": "SUBMODEL-3.0",
+                        "protocolInformation": {
+                            "href": f"{self.data_plane_url}/api/public/{quote(semandic_id)}/{str(db_twin.global_id)}/submodel",
+                            "endpointProtocol": "HTTP",
+                            "endpointProtocolVersion": [
+                            "1.1"
+                            ],
+                            "subprotocol": "DSP",
+                            "subprotocolBody": f"id={asset_id};dspEndpoint={self.control_plane_url}",
+                            "subprotocolBodyEncoding": "plain",
+                            "securityAttributes": [
+                            {
+                                "type": "NONE",
+                                "key": "NONE",
+                                "value": "NONE"
+                            }
+                            ]
+                        }
+                        }
+                    ],                        
+                }
+                                        
+                submodel_descriptors.append(entry)
+        else:
+            raise NotValidTwinError(f"Shell descriptor {db_twin.aas_id} is not attached to a part.")
+
+        shell_descriptor["specificAssetIds"] = specific_asset_ids
+        if submodel_descriptors:
+            shell_descriptor["submodelDescriptors"] = submodel_descriptors
 
     def _generate_asset_id(self, db_twin, db_twin_aspect) -> str:
         """
