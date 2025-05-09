@@ -21,6 +21,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+"""
+This module defines the database models for the Industrial Core Database,
+representing entities and relationships within the Catena-X ecosystem.
+These models are designed to interact with a PostgreSQL database using
+SQLAlchemy and SQLModel.
+"""
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -29,6 +35,21 @@ from sqlmodel import Field, SQLModel, Relationship
 from sqlalchemy import Column, JSON, UniqueConstraint
 
 class LegalEntity(SQLModel, table=True):
+    """
+    Holds information about the company offering the parts. 
+    Mainly holds the BPN information. 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the legal entity.
+        bpnl (str): The Business Partner Number Legal (BPNL) of the legal entity. 
+
+    Relationships:
+        catalog_parts (List["CatalogPart"]):  A list of catalog parts offered by this legal entity.
+        enablement_service_stacks (List["EnablementServiceStack"]): A list of enablement service stacks associated with this legal entity.
+
+    Table Name:
+        legal_entity
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     bpnl: str = Field(index=True, unique=True, description="The BPNL of the legal entity.")
 
@@ -40,6 +61,22 @@ class LegalEntity(SQLModel, table=True):
 
 
 class BusinessPartner(SQLModel, table=True):
+    """
+    Represents an external partner organization (organization with who data will be exchanged). 
+    Mainly holds the BPN information. 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the business partner.
+        name (str): The name of the business partner. 
+        bpnl (str): The Business Partner Number Legal (BPNL) of the business partner. 
+
+    Relationships:
+        partner_catalog_parts (List["PartnerCatalogPart"]): A list of partner catalog parts associated with this business partner.
+        data_exchange_agreements (List["DataExchangeAgreement"]): A list of data exchange agreements involving this business partner.
+
+    Table Name:
+        business_partner
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the business partner.")
     bpnl: str = Field(index=True, unique=True, description="The BPNL of the business partner.")
@@ -52,6 +89,34 @@ class BusinessPartner(SQLModel, table=True):
 
 
 class Twin(SQLModel, table=True):
+    """
+    Represents a digital twin in the Catena-X ecosystem. 
+    A twin is the digital representation of a part (type or instance level). 
+    On system level it will related to a shell descriptor within the digital twin registry. 
+    It is linked to all the part tables by means of foreign keys in those tables. 
+    It is also linked to twin_exchange that enables the relation between a twin and a data_exchange_agreement. 
+    It is also linked to twin_aspect that relates the twin with a twin_aspect_registration. 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the twin.
+        global_id (UUID): The global ID (aka. Catena-X ID) of the twin. Could be automatically generated. 
+        aas_id (UUID): The AAS ID of the twin. Could be automatically generated. 
+        created_date (datetime): The creation date of the twin. The date fields could be auto-created at insert time by the DB. 
+        modified_date (datetime): The last modification date of the twin. The date fields could be auto-created at insert time by the DB. 
+        asset_class (Optional[str]): The asset class of the twin. This field is used at DRÄXLMAIER but might not be necessary in IC-Hub. It could be removed them from the table if no necessary.
+        additional_context (Optional[str]): Additional context for the twin. This field is used at DRÄXLMAIER but might not be necessary in IC-Hub. It could be removed them from the table if no necessary.
+
+    Relationships:
+        catalog_parts (List["CatalogPart"]): A list of catalog parts associated with this twin.
+        serialized_parts (List["SerializedPart"]): A list of serialized parts associated with this twin.
+        jis_parts (List["JISPart"]): A list of JIS parts associated with this twin.
+        twin_aspects (List["TwinAspect"]): A list of twin aspects associated with this twin.
+        twin_exchanges (List["TwinExchange"]): A list of twin exchanges associated with this twin.
+        twin_registrations (List["TwinRegistration"]): A list of twin registrations associated with this twin.
+
+    Table Name:
+        twin
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     global_id: UUID = Field(default_factory=uuid4, unique=True, description="The global ID (aka. Catena-X ID) of the twin.")
     aas_id: UUID = Field(default_factory=uuid4, unique=True, description="The AAS ID of the twin.")
@@ -72,6 +137,34 @@ class Twin(SQLModel, table=True):
 
 
 class CatalogPart(SQLModel, table=True):
+    """
+    Represents details about a part of type 'catalog part'. 
+    A catalog part is the representation of a part on the “plan” or “engineering” level (model, reference …). 
+    It’s something that the supplier company CAN produce and/or deliver. 
+    In contradiction when producing part we speak of instance level parts. 
+    There are three types: Instance or SerialPart, BatchPart and JISPart. 
+    This table holds information about the id assigned by the manufacturer to the part (manufacturer_part_id). 
+    It also links this table to the legal_entity via foreign key legal_entity_id. 
+    When data about the catalog part itself should be offered via Catena-X,
+    this table also relates to the twin table through foreign key (twin_id). 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the catalog part.
+        manufacturer_part_id (str): The manufacturer part ID. 
+        legal_entity_id (int): The ID of the associated legal entity. 
+        twin_id (Optional[int]): The ID of the associated twin. 
+        category (Optional[str]): The category of the catalog part.
+        bpns (Optional[str]): The optional site information (BPNS) of the catalog part. It is a link to a 'site information' of a business partner (s at the end).
+
+    Relationships:
+        legal_entity (LegalEntity): The legal entity that offers this catalog part.
+        twin (Optional[Twin]): The digital twin associated with this catalog part.
+        partner_catalog_parts (List["PartnerCatalogPart"]):  A list of partner catalog parts that reference this catalog part.
+        batches (List["Batch"]): A list of batches associated with this catalog part.
+
+    Table Name:
+        catalog_part
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     manufacturer_part_id: str = Field(index=True, unique=True, description="The manufacturer part ID.")
     legal_entity_id: int = Field(foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
@@ -103,6 +196,32 @@ class CatalogPart(SQLModel, table=True):
 
 
 class PartnerCatalogPart(SQLModel, table=True):
+    """
+    Represents a customer relationship of a catalog part to a partner –
+    meaning that a given catalog part is potentially sold/delivered to a specific business partner. 
+    It is linked to catalog_part and business_partner through foreign keys
+    (catalog_part_id and business_part_id respectively). 
+    Single instance level parts (serialized, and JIS parts) refer to this table. 
+    The part number under which the partner/customer know the part is stored in the customer_part_id. 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the partner catalog part.
+        business_partner_id (int): The ID of the associated business partner. 
+        catalog_part_id (int): The ID of the associated catalog part. 
+        customer_part_id (str): The customer part ID. It is the naming/numbering given by a customer to a part. It‘s neccessary for suppliers to know under which number a customer knows a part.
+
+    Relationships:
+        business_partner (BusinessPartner): The business partner in this relationship.
+        catalog_part (CatalogPart): The catalog part in this relationship.
+        serialized_parts (List["SerializedPart"]): A list of serialized parts that reference this relationship.
+        jis_parts (List["JISPart"]): A list of JIS parts that reference this relationship.
+
+    Table Name:
+        partner_catalog_part
+
+    Composite Constraints:
+        UniqueConstraint:  Ensures that the combination of business_partner_id and catalog_part_id is unique. 
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     business_partner_id: int = Field(foreign_key="business_partner.id", description="The ID of the associated business partner.")
     catalog_part_id: int = Field(foreign_key="catalog_part.id", description="The ID of the associated catalog part.")
@@ -123,6 +242,27 @@ class PartnerCatalogPart(SQLModel, table=True):
 
 
 class SerializedPart(SQLModel, table=True):
+    """
+    Represents details about a part of type serial part. 
+    This represents a specific single part (component, piece, module …). 
+    This table holds information about the id assigned by the manufacturer to the instance or serial part (part_instance_id). 
+    It also links this table to the partner_catalog_part and the twin tables through
+    foreign keys (partner_catalog_part _id and twin_id respectively). 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the serialized part.
+        partner_catalog_part_id (int): The ID of the associated partner catalog part. 
+        part_instance_id (str): The part instance ID. 
+        van (Optional[str]): The optional VAN (Vehicle Assembly Number). This is the vehicle number given by the Industry Core KIT.
+        twin_id (int): The ID of the associated twin. 
+
+    Relationships:
+        partner_catalog_part (PartnerCatalogPart): The partner catalog part this serial part is related to.
+        twin (Twin): The digital twin associated with this serial part.
+
+    Table Name:
+        serialized_part
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     partner_catalog_part_id: int = Field(foreign_key="partner_catalog_part.id", description="The ID of the associated partner catalog part.")
     part_instance_id: str = Field(index=True, unique=True, description="The part instance ID.")
@@ -137,6 +277,27 @@ class SerializedPart(SQLModel, table=True):
 
 
 class JISPart(SQLModel, table=True):
+    """
+    Represents details about a part of type 'Just In Sequence part'. 
+    This table holds information about the id assigned by the manufacturer to the JIS part (jis_number). 
+    It also links this table to the partner_catalog_part and the twin tables through
+    foreign keys (partner_catalog_part _id and twin_id respectively). 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the JIS part.
+        partner_catalog_part_id (int): The ID of the associated partner catalog part. 
+        jis_number (str): The JIS number. 
+        parent_order_number (Optional[str]): The parent order number. 
+        jis_call_date (Optional[datetime]): The JIS call date. 
+        twin_id (int): The ID of the associated twin. 
+
+    Relationships:
+        partner_catalog_part (PartnerCatalogPart): The partner catalog part this JIS part is related to.
+        twin (Twin): The digital twin associated with this JIS part.
+
+    Table Name:
+        jis_part
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     partner_catalog_part_id: int = Field(foreign_key="partner_catalog_part.id", description="The ID of the associated partner catalog part.")
     jis_number: str = Field(index=True, unique=True, description="The JIS number.")
@@ -150,7 +311,35 @@ class JISPart(SQLModel, table=True):
 
     __tablename__ = "jis_part"
 
+
 class Batch(SQLModel, table=True):
+    """
+    Represents details about a Batch production.
+    This represents either a group of parts that were produced as a batch (several instances grouped)
+    or something that cannot be counted by piece (e.g., liquids that just have a volume).
+    This table holds information about the id assigned by the manufacturer to the batch (batch_id).
+    It also links this table to the partner_catalog_part and the twin tables through foreign keys
+    (partner_catalog_part _id and twin_id respectively). Batches are instance level parts. 
+	Other than serialized part and JIS part they can be shared with multiple partners. 
+	But each batch can have it‘s own (sub-)list of partners it‘s shared with. 
+	Thus we cannot re-use the partner_catalog_part relation of the associated catalog_part.
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the batch.
+        batch_id (str): The batch ID.
+        catalog_part_id (int): The ID of the associated catalog part (foreign key to catalog_part).
+
+    Relationships:
+        catalog_part (CatalogPart): The catalog part associated with this batch.
+        batch_business_partners (List["BatchBusinessPartner"]): The business partners associated with this batch.
+
+    Table Name:
+        batch
+
+    Composite Constraints:
+        UniqueConstraint: Ensures that the combination of catalog_part_id and batch_id is unique.
+
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     batch_id: str = Field(index=True, unique=True, description="The batch ID.")
     catalog_part_id: int = Field(foreign_key="catalog_part.id", description="The ID of the associated catalog part.")
@@ -166,7 +355,26 @@ class Batch(SQLModel, table=True):
 
     __tablename__ = "batch"
 
+
 class BatchBusinessPartner(SQLModel, table=True):
+    """
+    Represents the relation between a batch and a business_partner.
+    It is linked to batch and business_partner through foreign keys (batch_id and business_partner_id respectively).
+    This is the mapping of a batch part to a business partner indicating that (parts of) this batch are sold/delivered to that partner..
+
+    Attributes:
+        batch_id (str): The batch ID (foreign key to batch).
+        business_partner_id (int): The ID of the associated business partner (foreign key to business_partner).
+
+    Relationships:
+        business_partner (BusinessPartner): The business partner associated with this relation.
+        batch (Batch): The batch associated with this relation.
+
+    Table Name:
+        batch_business_partner
+
+    
+    """
     batch_id: str = Field(foreign_key="batch.id", description="The batch ID.", primary_key=True)
     business_partner_id: int = Field(foreign_key="business_partner.id", description="The ID of the associated business partner.", primary_key=True)
 
@@ -176,7 +384,30 @@ class BatchBusinessPartner(SQLModel, table=True):
 
     __tablename__ = "batch_business_partner"
 
+
 class DataExchangeAgreement(SQLModel, table=True):
+    """
+    Gives name to a formal agreement and relates it with a business partner.
+    The agreement will usually be the digital counterpart of a real-life contractual relationship
+    between a supplier and customer about the production and/or delivery of parts.
+    It links the data exchange_agreement to a business_partner through a foreign key (business_partner_id).
+    This table is also linked to twin_exchange to relate the agreement with a twin_id.
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the data exchange agreement.
+        name (str): The name of the data exchange agreement.
+        business_partner_id (int): The ID of the associated business partner (foreign key to business_partner).
+
+    Relationships:
+        business_partner (BusinessPartner): The business partner associated with this agreement.
+        data_exchange_contracts (List["DataExchangeContract"]): The contracts associated with this agreement.
+        twin_exchanges (List["TwinExchange"]): The twin exchanges associated with this agreement.
+
+    Table Name:
+        data_exchange_agreement
+
+    
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the data exchange agreement.")
     business_partner_id: int = Field(foreign_key="business_partner.id", description="The ID of the associated business partner.")
@@ -190,6 +421,23 @@ class DataExchangeAgreement(SQLModel, table=True):
 
 
 class DataExchangeContract(SQLModel, table=True):
+    """
+    Represents a formal contract with a business partner through an agreement.
+    It is linked with a data_exchange_agreement through a foreign key (data_exchange_agreement_id).
+
+    Attributes:
+        data_exchange_agreement_id (int): The ID of the associated data exchange agreement (foreign key).
+        semantic_id (str): The semantic ID of the contract. At a later time we will need to included editors in the frontend for that. 
+			The semantic ID refers to one from the types defined here: eclipse-tractusx/sldt-semantic-models: sldt-semantic-models 
+        edc_usage_policy_id (str): The EDC usage policy ID.
+
+    Relationships:
+        data_exchange_agreement (DataExchangeAgreement): The data exchange agreement associated with this contract.
+
+    Table Name:
+        data_exchange_contract
+
+    """
     data_exchange_agreement_id: int = Field(foreign_key="data_exchange_agreement.id", primary_key=True, description="The ID of the associated data exchange agreement.")
     semantic_id: str = Field(primary_key=True, description="The semantic ID of the contract.")
     edc_usage_policy_id: str = Field(description="The EDC usage policy ID.")
@@ -201,6 +449,31 @@ class DataExchangeContract(SQLModel, table=True):
 
 
 class EnablementServiceStack(SQLModel, table=True):
+    """
+    An instance/installation of the `Enablement services` stack.
+    The `Enablement services` stack is a set of services that are used to enable standardized exchange of data between partners.
+    For this implementation, it needs to consist at least of an Eclipse Dataspace Connector (EDC)
+    and a Digital Twin Registry (DTR) connection.
+    It is linked to legal_entity through a foreign key (legal_entity_id) depicting that the EDC and DTR
+    are related to the respective (company-owned) BPNL of the data provider 
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the enablement service stack.
+        name (str): The name of the enablement service stack.
+        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON. 
+			In the future could contain all necessary config to connect to the DTR/EDC/Submodel service. 
+			For the moment we only have one DTR/EDC/Submodel service and it will be statically provided.
+        legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
+
+    Relationships:
+        legal_entity (LegalEntity): The legal entity associated with this service stack.
+        twin_aspect_registrations (List["TwinAspectRegistration"]): The twin aspect registrations associated with this service stack.
+        twin_registrations (List["TwinRegistration"]): The twin registrations associated with this service stack.
+
+    Table Name:
+        enablement_service_stack
+
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the enablement service stack.")
     connection_settings: Optional[Dict[str, Any]] = Field(
@@ -218,6 +491,25 @@ class EnablementServiceStack(SQLModel, table=True):
 
 
 class TwinAspect(SQLModel, table=True):
+    """
+    Represents an aspect (document) associated to a certain twin.
+    It holds information about the submodel (id) and semantics (id).
+    It is linked to twin through a foreign key (twin_id).
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the twin aspect.
+        submodel_id (UUID): The submodel ID. Like aas_id the submodel_id can be auto-generated.		
+        semantic_id (str): The semantic ID. Semantic_id will need to come from the frontend (or API caller)
+        twin_id (int): The ID of the associated twin (foreign key to twin).
+
+    Relationships:
+        twin (Twin): The twin associated with this aspect.
+        twin_aspect_registrations (List["TwinAspectRegistration"]): The registrations associated with this twin aspect.
+
+    Table Name:
+        twin_aspect
+
+    """
     id: Optional[int] = Field(default=None, primary_key=True)
     submodel_id: UUID = Field(default_factory=UUID, unique=True, description="The submodel ID.")
     semantic_id: str = Field(description="The semantic ID.")
@@ -238,6 +530,30 @@ class TwinAspect(SQLModel, table=True):
 
 
 class TwinAspectRegistration(SQLModel, table=True):
+    """
+    Represents the relation between a twin_aspect and an enablement_service_stack
+    through their ids (twin_aspect_id and enablement_service_stack_id).
+    It holds information about the status, the registration mode and creation and update dates.
+
+    Attributes:
+        twin_aspect_id (int): The ID of the associated twin aspect (foreign key to twin_aspect).
+        enablement_service_stack_id (int): The ID of the associated enablement service stack (foreign key).
+        status (int): The status of the registration.
+			It‘s actually the status for all 3 services DTR/EDC/Submodel Service (number). It will be set by the system internally.
+        registration_mode (int): The registration mode. It indicates asset bundling (yes or no). 
+			In the first version, there is no asset bundling. Later provided by the API caller
+        created_date (datetime): The creation date of the registration. Auto-generated in the DB.
+        modified_date (datetime): The last modification date of the registration. Auto-generated in the DB.
+
+    Relationships:
+        twin_aspect (TwinAspect): The twin aspect being registered.
+        enablement_service_stack (EnablementServiceStack): The enablement service stack used for registration.
+
+    Table Name:
+        twin_aspect_registration
+
+   
+    """
     twin_aspect_id: int = Field(foreign_key="twin_aspect.id", primary_key=True, description="The ID of the associated twin aspect.")
     enablement_service_stack_id: int = Field(foreign_key="enablement_service_stack.id", primary_key=True, description="The ID of the associated enablement service stack.")
     status: int = Field(default=0, description="The status of the registration.") # TODO: Use Enum for status
@@ -253,6 +569,26 @@ class TwinAspectRegistration(SQLModel, table=True):
 
 
 class TwinExchange(SQLModel, table=True):
+    """
+    Represents the relation between a twin and a data_exchange_agreement.
+    It is indicating that documents/aspects attached to this twin are shared with the respective business part
+    via (an) EDC asset(s) and related EDC contract definition(s).
+    It is linked to twin and data_exchange_agreement through foreign keys
+    (twin_id and data_exchange_agreement_id).
+
+    Attributes:
+        twin_id (int): The ID of the associated twin (foreign key to twin).
+        data_exchange_agreement_id (int): The ID of the associated data exchange agreement (foreign key).
+
+    Relationships:
+        twin (Twin): The twin involved in the exchange.
+        data_exchange_agreement (DataExchangeAgreement): The data exchange agreement governing the exchange.
+
+    Table Name:
+        twin_exchange
+
+    
+    """
     twin_id: int = Field(foreign_key="twin.id", primary_key=True, description="The ID of the associated twin.")
     data_exchange_agreement_id: int = Field(foreign_key="data_exchange_agreement.id", primary_key=True, description="The ID of the associated data exchange agreement.")
 
@@ -264,7 +600,25 @@ class TwinExchange(SQLModel, table=True):
 
 
 class TwinRegistration(SQLModel, table=True):
-    twin_id: int = Field(foreign_key="twin.id", primary_key=True, description="The ID of the associated twin.")
+    """
+    Represents the relation between s twin and an enablement_service_stack
+    through their ids (twin_id and enablement_service_stack_id).
+    It also indicates if the twin is registered in the DTR using a boolean (dtr_registered).
+
+    Attributes:
+        twin_id (int): The ID of the associated twin (foreign key to twin).
+        enablement_service_stack_id (int): The ID of the associated enablement service stack (foreign key).
+        dtr_registered (bool): Whether the twin is registered in the DTR.
+
+    Relationships:
+        twin (Twin): The twin being registered.
+        enablement_service_stack (EnablementServiceStack): The enablement service stack used for registration.
+
+    Table Name:
+        twin_registration
+
+    """
+   twin_id: int = Field(foreign_key="twin.id", primary_key=True, description="The ID of the associated twin.")
     enablement_service_stack_id: int = Field(foreign_key="enablement_service_stack.id", primary_key=True, description="The ID of the associated enablement service stack.")
     dtr_registered: bool = Field(default=False, description="Whether the twin is registered in the DTR.")
 
