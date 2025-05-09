@@ -311,6 +311,19 @@ class TwinExchangeRepository(BaseRepository[TwinExchange]):
         )
         self.create(twin_exchange)
         return twin_exchange
+    
+    def find_by_global_id_business_partner_number(self, global_id: UUID, business_partner_number: str) -> Optional[TwinExchange]:
+        stmt = select(TwinExchange).join(
+            Twin, TwinExchange.twin_id == Twin.id
+        ).join(
+            DataExchangeAgreement, TwinExchange.data_exchange_agreement_id == DataExchangeAgreement.id
+        ).join(
+            BusinessPartner, BusinessPartner.id == DataExchangeAgreement.business_partner_id
+        ).where(
+            Twin.global_id == global_id,
+            BusinessPartner.bpnl == business_partner_number
+        )
+        return self._session.scalars(stmt).first()  
 
 class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
     def get_by_twin_id_enablement_service_stack_id(self, twin_id: int, enablement_service_stack_id: int) -> Optional[TwinRegistration]:
