@@ -175,7 +175,7 @@ async def dtr_facade_get_shell_descriptors(
     # TODO: Define explicit result schema to match the DTR API specs
     enablement_service_stack_id: int,
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
-    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=50),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
     asset_kind: Optional[str] = Query(
         alias="assetKind",
@@ -217,7 +217,7 @@ async def dtr_facade_lookup_shells(
     enablement_service_stack_id: int,
     asset_ids: Optional[List[str]] = Query(alias="assetIds", description="A list of specific Asset identifiers", default=None),
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
-    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=None),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
 ) -> Dict[str, Any]:
 

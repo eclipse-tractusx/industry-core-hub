@@ -63,24 +63,31 @@ class DTRFacadeService:
         result: List[Dict[str, Any]] = []
 
         with RepositoryManagerFactory.create() as repos:
+            ##########################
+            ### Catalog Part Twins ###
+            ##########################
             db_twins = repos.twin_repository.find_catalog_part_twins(
                 enablement_service_stack_id=enablement_service_stack_id,
                 business_partner_number=edc_bpn,
                 include_aspects=True,
                 limit=limit
             )
+            # Reduce the (remaining) limit by the number of twins already fetched
+            limit = limit - len(db_twins)
+
             for db_twin in db_twins:
                 shell_descriptor = {
                     "id": db_twin.aas_id.urn,
                     "assetType": "AssetType"
                 }
-                try:
-                    self._fill_shell_descriptor(repos, db_twin, shell_descriptor, edc_bpn)
-                except (NotAuthorizedError, NotValidTwinError):
-                    # Skip twins that are not authorized for the given business partner
-                    continue
+                self._fill_shell_descriptor(repos, db_twin, shell_descriptor, edc_bpn)
 
                 result.append(shell_descriptor)
+            
+            ###########################
+            ### Serlized Part Twins ###
+            ###########################
+            # TODO: Implement the logic for serialized part twins (and later others)
 
         return {
             "paging_metadata": {
@@ -213,7 +220,11 @@ class DTRFacadeService:
         shell_descriptor["globalAssetId"] = db_twin.global_id.urn
         specific_asset_ids: List[Dict[str, Any]] = []
 
-        db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id)
+        # Get a potential catalog part either from the twin entity or load it from the database
+        if db_twin.catalog_part:
+            db_catalog_part = db_twin.catalog_part
+        else:
+            db_catalog_part = repos.catalog_part_repository.get_by_twin_id(db_twin.id)
         if db_catalog_part:
 
             # Called from a partner => check if the catalog part is shared with the partner
