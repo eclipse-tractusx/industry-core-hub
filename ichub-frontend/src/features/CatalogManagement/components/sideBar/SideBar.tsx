@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <Divider />
       <List>
         {['SubMenu 1', 'SubMenu 2', 'SubMenu 3', 'SubMenu 4'].map((text, index) => (
-          <ListItem button key={text} className='list-item'>
+          <ListItem key={text} className='list-item'>
             <ListItemIcon>
               {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
             </ListItemIcon>

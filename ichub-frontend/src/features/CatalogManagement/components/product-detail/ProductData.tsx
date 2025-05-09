@@ -22,7 +22,7 @@
 
 import { Box, Grid2 } from '@mui/material'
 import { Icon, Typography } from '@catena-x/portal-shared-components';
-import { PartInstance } from '../../types/product';
+import { PartInstance } from '../../../../types/product';
 
 interface ProductDataProps {
     part: PartInstance;
@@ -30,8 +30,8 @@ interface ProductDataProps {
   
 const ProductData = ({ part }: ProductDataProps) => {
   return (
-    <Grid2 container justifyContent="space-between" className="mb-5">
-        <Grid2 size={{lg: 4, md: 12}}>
+    <Grid2 container justifyContent="space-between" className="mb-5" spacing={8}>
+        <Grid2 size={{lg: 6, md: 12, sm: 12}}>
             <Grid2 className="title-subtitle">
                 <Typography variant="h2">{part.name}</Typography>
                 <Typography variant="caption1">{part.class}</Typography>
@@ -62,9 +62,9 @@ const ProductData = ({ part }: ProductDataProps) => {
                 </Grid2>
             </Grid2>
         </Grid2>
-        <Grid2 size={{lg: 4, md: 12}} alignContent="right" alignItems="right">
-            <img src={part.image} alt={part.name} className="product-image img-fluid my-auto" />
-            <Box>
+        <Grid2 size={{lg: 6, md: 12, sm: 12}}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                <img src={part.image} alt={part.name} className="product-image" />
                 <Typography variant="label4">{part.uuid}</Typography>
             </Box>
             <h2 className="mt-4">Shared With:</h2>

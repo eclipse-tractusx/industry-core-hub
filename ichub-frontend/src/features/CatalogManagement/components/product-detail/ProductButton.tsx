@@ -31,7 +31,7 @@ interface ProductButtonProps {
 
 const ProductButton = ({ gridSize, buttonText, onClick }: ProductButtonProps) => {
   return (
-    <Grid2 size={gridSize || { md: 6, xs: 12 }}>
+    <Grid2 size={gridSize ?? { md: 6, xs: 12 }}>
       <Button className="submodel-button" variant="outlined" color="primary" size="large" fullWidth={true} onClick={onClick}>
         <span className="submodel-button-content">{buttonText}</span>
         <Icon fontSize="16" iconName="OpenInNew" />
