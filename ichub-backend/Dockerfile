@@ -49,6 +49,7 @@ VOLUME ./data ./logs
 ## Create the directories
 RUN mkdir -p ./logs
 RUN mkdir -p ./data
+RUN mkdir -p ./data/submodels
 
 ## Update user permissions
 RUN chown -R 1000:3000 /dataspace-sdk && chmod -R 775 /dataspace-sdk/
