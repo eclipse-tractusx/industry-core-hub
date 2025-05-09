@@ -24,7 +24,6 @@
 
 from typing import Any, Dict, List, Optional
 from uuid import UUID
-from base64 import b64decode
 from urllib.parse import quote
 
 from services.twin_management_service import TwinManagementService
@@ -64,8 +63,12 @@ class DTRFacadeService:
         result: List[Dict[str, Any]] = []
 
         with RepositoryManagerFactory.create() as repos:
-            db_twins = repos.twin_repository.find_by_enablement_service_stack_id(enablement_service_stack_id, limit=limit, include_aspects=True)
-
+            db_twins = repos.twin_repository.find_catalog_part_twins(
+                enablement_service_stack_id=enablement_service_stack_id,
+                business_partner_number=edc_bpn,
+                include_aspects=True,
+                limit=limit
+            )
             for db_twin in db_twins:
                 shell_descriptor = {
                     "id": db_twin.aas_id.urn,
@@ -86,13 +89,10 @@ class DTRFacadeService:
             "result": result
         }
 
-    def get_shell_descriptor(self, enablement_service_stack_id: int, aas_id_b64: str, edc_bpn: Optional[str] = None) -> Dict[str, Any]:
+    def get_shell_descriptor(self, enablement_service_stack_id: int, aas_id: UUID, edc_bpn: Optional[str] = None) -> Dict[str, Any]:
         """
         Get the shell descriptor for a given AAS ID.
         """
-        # Decode the base64-encoded AAS ID
-        aas_id = UUID(b64decode(aas_id_b64).decode('utf-8'))
-
         result = {
             "id": aas_id.urn,
             "assetType": "AssetType"

@@ -25,10 +25,9 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-import json
-import base64
+from base64 import b64decode
 
-from fastapi import FastAPI, HTTPException, Request, Query, Header
+from fastapi import FastAPI, Request, Query, Header
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
@@ -39,6 +38,8 @@ from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, Tw
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
+
+from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
 
 tags_metadata = [
     {
@@ -166,7 +167,6 @@ async def submodel_not_shared_with_business_partner_exception_handler(request: R
         content={"detail": str(exc)}
     )
 
-
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
     description="Returns all Asset Administration Shell Descriptors",
     response_model=Dict[str, Any],
@@ -174,8 +174,8 @@ async def submodel_not_shared_with_business_partner_exception_handler(request: R
 async def dtr_facade_get_shell_descriptors(
     # TODO: Define explicit result schema to match the DTR API specs
     enablement_service_stack_id: int,
-    request: Request,
-    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=None),
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+    limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=50),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
     asset_kind: Optional[str] = Query(
         alias="assetKind",
@@ -190,53 +190,68 @@ async def dtr_facade_get_shell_descriptors(
         default=None
     ),
 ) -> Dict[str, Any]:
+    
     return dtr_facade_service.get_shell_descriptors(
         enablement_service_stack_id,
-        edc_bpn=request.headers.get("Edc-Bpn"),
+        edc_bpn=edc_bpn,
         limit=limit)
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
     description="Returns a specific Asset Administration Shell Descriptor",
     response_model=Dict[str, Any],
     tags=["Digital Twin Registry Facade"])
-async def dtr_facade_get_shell_descriptor(enablement_service_stack_id: int, aasIdentifier: str, request: Request) -> Dict[str, Any]:
+async def dtr_facade_get_shell_descriptor(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+) -> Dict[str, Any]:
     # TODO: Define explicit result schema to match the DTR API specs
     
-    """
-    Get the shell descriptor for a given AAS ID.
-    """
-    edc_bpn = request.headers.get("Edc-Bpn")
-    
-    try:
-        return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, aasIdentifier, edc_bpn)
-    except (TwinNotFoundError, NotValidTwinError) as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except NotAuthorizedError as e:
-        raise HTTPException(status_code=403, detail=str(e)) from e
+    return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
     
 @app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",
     description="Returns a list of Asset Administration Shell ids linked to specific Asset identifiers",
     response_model=Dict[str, Any],
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_lookup_shells(
-    request: Request,
     enablement_service_stack_id: int,
     asset_ids: Optional[List[str]] = Query(alias="assetIds", description="A list of specific Asset identifiers", default=None),
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
     limit: Optional[int] = Query(ge=1, description="The maximum number of elements in the response array", default=None),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
 ) -> Dict[str, Any]:
-    """
-    Lookup shells for a given enablement service stack ID.
-    """
-    edc_bpn = request.headers.get("Edc-Bpn")
-    
-    search_params = {}
-    if asset_ids:
-        for asset_id in asset_ids:
-            try:
-                decoded_asset_id = json.loads(base64.b64decode(asset_id).decode('utf-8'))
-                search_params[decoded_asset_id["name"]] = decoded_asset_id["value"]
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                raise HTTPException(status_code=400, detail=f"Invalid asset ID format: {asset_id}") from e
 
-    return dtr_facade_service.lookup_shells(enablement_service_stack_id, search_params, edc_bpn)
+    return dtr_facade_service.lookup_shells(enablement_service_stack_id, parse_json_list_parameter(asset_ids), edc_bpn)
+
+@app.exception_handler(NotAuthorizedError)
+async def not_authorized_exception_handler(request: Request, exc: NotAuthorizedError) -> JSONResponse:
+    """
+    Custom exception handler for NotAuthorizedError.
+    Returns a 403 Forbidden response with the error message.
+    """
+    return JSONResponse(
+        status_code=403,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(TwinNotFoundError)
+async def twin_not_found_exception_handler(request: Request, exc: TwinNotFoundError) -> JSONResponse:
+    """
+    Custom exception handler for TwinNotFoundError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(NotValidTwinError)
+async def not_valid_twin_exception_handler(request: Request, exc: NotValidTwinError) -> JSONResponse:
+    """
+    Custom exception handler for NotValidTwinError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )

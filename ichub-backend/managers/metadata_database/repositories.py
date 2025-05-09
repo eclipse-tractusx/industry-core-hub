@@ -221,33 +221,17 @@ class TwinRepository(BaseRepository[Twin]):
 
         return self._session.scalars(stmt).first()
 
-    def find_by_enablement_service_stack_id(self,
-        enablement_service_stack_id: int,
-        include_data_exchange_agreements: bool = False,
-        include_aspects: bool = False,
-        include_registrations: bool = False,
-        limit: int = 50,
-        offset: int = 0) -> List[Twin]:
-        
-        stmt = select(Twin).join(
-            TwinRegistration, TwinRegistration.twin_id == Twin.id
-        ).where(
-            TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
-        ).order_by(desc(Twin.created_date)  # type: ignore
-        ).offset(offset).limit(limit)
-
-        stmt = self._apply_subquery_filters(stmt, include_data_exchange_agreements, include_aspects, include_registrations)
-
-
-        return self._session.scalars(stmt).all()
-
     def find_catalog_part_twins(self,
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,
             global_id: Optional[UUID] = None,
+            enablement_service_stack_id: Optional[int] = None,
+            business_partner_number: Optional[str] = None,
             include_data_exchange_agreements: bool = False,
             include_aspects: bool = False,
-            include_registrations: bool = False) -> List[Twin]:
+            include_registrations: bool = False,
+            limit: int = 50,
+            offset: int = 0) -> List[Twin]:
         
         stmt = select(Twin).join(
             CatalogPart, CatalogPart.twin_id == Twin.id).join(
@@ -264,6 +248,27 @@ class TwinRepository(BaseRepository[Twin]):
 
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
+
+        if enablement_service_stack_id:
+            stmt = stmt.join(
+                TwinRegistration, TwinRegistration.twin_id == Twin.id
+            ).where(
+                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+            )
+
+        if business_partner_number:
+            subquery = (
+                select(PartnerCatalogPart.catalog_part_id)
+                .join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id)
+                .where(BusinessPartner.bpnl == business_partner_number)
+                .subquery()
+            )
+            stmt = stmt.join(
+                subquery, subquery.c.catalog_part_id == CatalogPart.id
+            )
+
+        if limit > 0 or offset > 0:
+            stmt = stmt.limit(limit).offset(offset).order_by(desc(Twin.created_date))
 
         return self._session.scalars(stmt).all()
     
