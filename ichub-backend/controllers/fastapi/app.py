@@ -28,7 +28,7 @@ from uuid import UUID
 import json
 import base64
 
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, HTTPException, Request, Query, Header
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
@@ -126,36 +126,45 @@ async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreat
     return twin_management_service.create_twin_aspect(twin_aspect_create)
 
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
-async def submodel_dispatcher_get_submodel_content(semantic_id: str, global_id: UUID, request: Request) -> Dict[str, Any]:
-    return _submodel_dispatcher_get_submodel_content(semantic_id, global_id, request)
+async def submodel_dispatcher_get_submodel_content(
+    semantic_id: str,
+    global_id: UUID,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
+    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
+    ) -> Dict[str, Any]:
+
+    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
     
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
-async def submodel_dispatcher_get_submodel_content_submodel(semantic_id: str, global_id: UUID, request: Request) -> Dict[str, Any]:
-    return _submodel_dispatcher_get_submodel_content(semantic_id, global_id, request)
+async def submodel_dispatcher_get_submodel_content_submodel(
+    semantic_id: str,
+    global_id: UUID,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
+    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
+    ) -> Dict[str, Any]:
+
+    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
 
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
-async def submodel_dispatcher_get_submodel_content_submodel_value(semantic_id: str, global_id: UUID, request: Request) -> Dict[str, Any]:
-    return _submodel_dispatcher_get_submodel_content(semantic_id, global_id, request)
+async def submodel_dispatcher_get_submodel_content_submodel_value(
+    semantic_id: str,
+    global_id: UUID,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
+    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
+    ) -> Dict[str, Any]:
 
-def _submodel_dispatcher_get_submodel_content(semantic_id: str, global_id: UUID, request: Request) -> Dict[str, Any]:
+    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
+
+@app.exception_handler(SubmodelNotSharedWithBusinessPartnerError)
+async def submodel_not_shared_with_business_partner_exception_handler(request: Request, exc: SubmodelNotSharedWithBusinessPartnerError) -> JSONResponse:
     """
-    Dispatch a submodel to the appropriate service or endpoint.
+    Custom exception handler for SubmodelNotSharedWithBusinessPartnerError.
+    Returns a 403 Forbidden response with the error message.
     """
-    # Extract the headers we get from the EDC Data Plane
-    edc_bpn = request.headers.get("Edc-Bpn")
-    edc_contract_agreement_id = request.headers.get("Edc-Contract-Agreement-Id")
-
-    # ... and check if both are present
-    if not edc_bpn or not edc_contract_agreement_id:
-        raise HTTPException(status_code=400, detail="Missing required headers: Edc-Bpn and Edc-Contract-Agreement-Id")
-
-    # Get the submodel content (including the security check)
-    try:
-        return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
-    
-    # If the requestor has no access to the twin return a respective 403
-    except SubmodelNotSharedWithBusinessPartnerError as e:
-        raise HTTPException(status_code=403, detail=str(e)) from e
+    return JSONResponse(
+        status_code=403,
+        content={"detail": str(exc)}
+    )
 
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
