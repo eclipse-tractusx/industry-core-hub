@@ -66,15 +66,15 @@ spec:
             {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.Version) }}
             pathType: {{ .pathType }}
             {{- end }}
-            frontend:
+            backend:
               {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.Version }}
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ .frontend.port }}
+                  number: {{ .backend.port }}
               {{- else }}
               serviceName: {{ $fullName }}
-              servicePort: {{ .frontend.port }}
+              servicePort: {{ .backend.port }}
               {{- end }}
           {{- end }}
     {{- end }}

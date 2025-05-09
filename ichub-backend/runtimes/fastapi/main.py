@@ -21,8 +21,41 @@
 #################################################################################
 import uvicorn
 from controllers.fastapi import app as api
+from tractusx_sdk.dataspace.tools.utils import get_arguments
+from config.log_manager import LoggingManager
+from tractusx_sdk.dataspace.managers import AuthManager
+from tractusx_sdk.dataspace.services import EdcService
 
 app = api
 
-if __name__ == "__main__":
-    uvicorn.run("runtimes.fastapi.main:api", reload=True)
+## In memory storage/management services
+edc_service: EdcService
+
+## In memory authentication manager service
+auth_manager: AuthManager
+
+
+def start():
+    ## Load in memory data storages and authentication manager
+    global edc_service, auth_manager, logger
+    
+    # Initialize the server environment and get the comand line arguments
+    args = get_arguments()
+
+    # Configure the logging confiuration depending on the configuration stated
+    logger = LoggingManager.get_logger('staging')
+    if(args.debug):
+        logger = LoggingManager.get_logger('development')
+    
+    ## Start storage and edc communication service
+    edc_service = EdcService()
+
+    ## Start the authentication manager
+    auth_manager = AuthManager()
+    
+    ## Once initial checks and configurations are done here is the place where it shall be included
+    logger.info("[INIT] Application Startup Initialization Completed!")
+
+    # Only start the Uvicorn server if not in test mode
+    if not args.test_mode:
+        uvicorn.run(app, host=args.host, port=args.port, log_level=("debug" if args.debug else "info"))

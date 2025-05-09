@@ -24,17 +24,11 @@ from config.log_manager import LoggingManager
 from config.config_manager import ConfigManager
 from database import connect_and_test
 
-from fastapi import FastAPI, HTTPException, Request
-
 ## FAST API example for keycloak
-from fastapi_keycloak_middleware import CheckPermissions
-from fastapi_keycloak_middleware import get_user
+# from fastapi_keycloak_middleware import CheckPermissions
+# from fastapi_keycloak_middleware import get_user
 import sys
-import argparse
-from logging import config
-import logging
-import yaml
-import uvicorn
+from logging import captureWarnings
 import urllib3
 
 from pathlib import Path
@@ -42,25 +36,10 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
-## Import Library Packeges
-from tractusx_sdk.dataspace.tools import op
-from tractusx_sdk.dataspace.tools import HttpTools
-from tractusx_sdk.dataspace.managers import AuthManager
-from tractusx_sdk.dataspace.services import EdcService
-from tractusx_sdk.industry.services import AasService
-
-## Declare Global Variables
-app_configuration:dict
-log_config:dict
-
-## In memory storage/management services
-edc_service: EdcService
-
-## In memory authentication manager service
-auth_manager: AuthManager
+from runtimes.fastapi import start
 
 urllib3.disable_warnings()
-logging.captureWarnings(True)
+captureWarnings(True)
 
 # Load the logging config
 LoggingManager.init_logging()
@@ -73,74 +52,6 @@ ConfigManager.load_config()
 # if it the database connection is invalid or databse is not available
 # it will raise an exception and the application will not start
 # connect_and_test()
-    
-# Add the previous folder structure to the system path to import the utilities
-app = FastAPI(title="main")
-
-@app.get("/example")
-async def api_call(request: Request):
-    """
-    Example documentation
-
-    Returns:
-        response: :obj:`__insert response here__`
-    """
-    try:
-        ## Check if the api key is present and if it is authenticated
-        if(not auth_manager.is_authenticated(request=request)):
-            return HttpTools.get_not_authorized()
-        ## Standard way to know if user is calling or the EDC.
-        
-        ## DO LOGIC HERE!!!
-        return None
-    
-    except Exception as e:
-        logger.exception(str(e))
-        return HttpTools.get_error_response(
-            status=500,
-            message="It was not possible to execute the request!"
-        )
-
-def start():
-    ## Load in memory data storages and authentication manager
-    global edc_service, auth_manager, logger
-    
-    # Initialize the server environment and get the comand line arguments
-    args = get_arguments()
-
-    # Configure the logging confiuration depending on the configuration stated
-    logger = LoggingManager.get_logger('staging')
-    if(args.debug):
-        logger = LoggingManager.get_logger('development')
-    
-    ## Start storage and edc communication service
-    edc_service = EdcService()
-
-    ## Start the authentication manager
-    auth_manager = AuthManager()
-    
-    ## Once initial checks and configurations are done here is the place where it shall be included
-    logger.info("[INIT] Application Startup Initialization Completed!")
-
-    # Only start the Uvicorn server if not in test mode
-    if not args.test_mode:
-        uvicorn.run(app, host=args.host, port=args.port, log_level=("debug" if args.debug else "info"))        
-    
-def get_arguments():
-    
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--test-mode', action='store_true', help="Run in test mode (skips uvicorn.run())", required=False)
-    
-    parser.add_argument("--debug", default=False, action="store_true", help="Enable and disable the debug", required=False)
-    
-    parser.add_argument("--port", default=8080, help="The server port where it will be available", type=int, required=False,)
-    
-    parser.add_argument("--host", default="localhost", help="The server host where it will be available", type=str, required=False)
-    
-    args = parser.parse_args()
-    return args
-
 
 if __name__ == "__main__":
     print("\nEclipse Tractus-X Industry Core Hub\n")
