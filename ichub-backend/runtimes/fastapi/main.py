@@ -24,12 +24,8 @@ from controllers.fastapi import app as api
 from tractusx_sdk.dataspace.tools.utils import get_arguments
 from config.log_manager import LoggingManager
 from tractusx_sdk.dataspace.managers import AuthManager
-from tractusx_sdk.dataspace.services import EdcService
 
 app = api
-
-## In memory storage/management services
-edc_service: EdcService
 
 ## In memory authentication manager service
 auth_manager: AuthManager
@@ -46,9 +42,6 @@ def start():
     logger = LoggingManager.get_logger('staging')
     if(args.debug):
         logger = LoggingManager.get_logger('development')
-    
-    ## Start storage and edc communication service
-    edc_service = EdcService()
 
     ## Start the authentication manager
     auth_manager = AuthManager()

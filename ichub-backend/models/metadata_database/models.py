@@ -632,7 +632,7 @@ class TwinRegistration(SQLModel, table=True):
         twin_registration
 
     """
-   twin_id: int = Field(foreign_key="twin.id", primary_key=True, description="The ID of the associated twin.")
+    twin_id: int = Field(foreign_key="twin.id", primary_key=True, description="The ID of the associated twin.")
     enablement_service_stack_id: int = Field(foreign_key="enablement_service_stack.id", primary_key=True, description="The ID of the associated enablement service stack.")
     dtr_registered: bool = Field(default=False, description="Whether the twin is registered in the DTR.")
 
