@@ -33,7 +33,7 @@ from pydantic import BaseModel
 
 from services.twin_management_service import TwinManagementService
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from models.services.dtr_facade import DtrPagingDictResponse, DtrPagingUuidResponse, DtrPagingMetadata
+from models.services.dtr_facade import DtrPagingDictResponse, DtrPagingStrResponse, DtrPagingMetadata
 from models.metadata_database.models import Twin
 from tools.submodel_type_util import SubmodelType, get_submodel_type
 
@@ -102,7 +102,7 @@ class DTRFacadeService:
         self.control_plane_url = control_plane_url
         self.data_plane_url = data_plane_url
 
-    def get_shell_descriptors(
+    def get_all_asset_administration_shell_descriptors(
             self,
             enablement_service_stack_id: int,
             edc_bpn: Optional[str] = None,
@@ -163,7 +163,7 @@ class DTRFacadeService:
             return DtrPagingDictResponse(
                 paging_metadata=DtrPagingMetadata(), result=result)
 
-    def get_shell_descriptor(self,
+    def get_asset_administration_shell_descriptor_by_id(self,
                              enablement_service_stack_id: int,
                              aas_id: UUID,
                              edc_bpn: Optional[str] = None) -> Dict[str, Any]:
@@ -185,18 +185,18 @@ class DTRFacadeService:
 
         return result
 
-    def lookup_shells(self,
+    def get_all_asset_administration_shell_ids_by_asset_link(self,
                       enablement_service_stack_id: int,
                       search_params: Dict[str, Any],
                       edc_bpn: Optional[str] = None,
                       limit: int = 50,
-                      cursor_str: Optional[str] = None) -> DtrPagingUuidResponse:
+                      cursor_str: Optional[str] = None) -> DtrPagingStrResponse:
         """
         Lookup shells based on the provided search parameters.
         """
         # Without search parameters, return an empty result
         if not search_params:
-            return DtrPagingUuidResponse(
+            return DtrPagingStrResponse(
                 paging_metadata=DtrPagingMetadata(), result=[])
 
         cursor: Optional[DtrPagingCursor] = DtrPagingCursor.from_base64_json(
@@ -262,7 +262,7 @@ class DTRFacadeService:
                 jis_call_date = value
 
         last_twin_created_date = None
-        result: List[UUID] = []
+        result: List[str] = []
         with RepositoryManagerFactory.create() as repos:
             if search_catalog_parts and (not cursor or cursor.type == CursorTypeEnum.CP):
                 db_twins = repos.twin_repository.find_catalog_part_twins(
@@ -279,26 +279,50 @@ class DTRFacadeService:
                     limit = limit - len(db_twins)
                     for db_twin in db_twins:
                         last_twin_created_date = db_twin.created_date
-                        result.append(db_twin.aas_id)
+                        result.append(db_twin.aas_id.urn)
 
                     if limit <= 0:
                         cursor = DtrPagingCursor(type=CursorTypeEnum.CP,
                                                 timestamp=last_twin_created_date)
-                        return DtrPagingUuidResponse(
+                        return DtrPagingStrResponse(
                             paging_metadata=DtrPagingMetadata(
                                 cursor=cursor.to_base64_json()),
                             result=result)
                     
 
 
-        return DtrPagingUuidResponse(
+        return DtrPagingStrResponse(
             paging_metadata=DtrPagingMetadata(), result=result)
+
+    def get_all_asset_links_by_id(self,
+                             enablement_service_stack_id: int,
+                             aas_id: UUID,
+                             edc_bpn: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content.
+        """
+        shell_descriptor = {}
+        with RepositoryManagerFactory.create() as repos:
+            db_twin = repos.twin_repository.find_by_dtr_aas_id(
+                aas_id, include_aspects=True, include_registrations=True)
+
+            if db_twin is None or not db_twin.has_registration(
+                    enablement_service_stack_id):
+                raise TwinNotFoundError(
+                    f"Shell descriptor {aas_id} not found.")
+
+            self._fill_shell_descriptor(repos, db_twin, shell_descriptor, edc_bpn)
+
+        return shell_descriptor["specificAssetIds"]
+        
+        
 
     def _fill_shell_descriptor(self,
                                repos: RepositoryManager,
                                db_twin: Twin,
                                shell_descriptor: Dict[str, Any],
-                               edc_bpn: Optional[str] = None) -> None:
+                               edc_bpn: Optional[str] = None,
+                               include_submodel_descriptors: bool = False) -> None:
         shell_descriptor["globalAssetId"] = db_twin.global_id.urn
         specific_asset_ids: List[Dict[str, Any]] = []
 
@@ -347,50 +371,51 @@ class DTRFacadeService:
                     db_partner_catalog_part.business_partner.bpnl)
 
             submodel_descriptors: List[Dict[str, Any]] = []
-            for db_twin_aspect in db_twin.twin_aspects:
-                semandic_id = db_twin_aspect.semantic_id
-                submodel_type_data = get_submodel_type(semandic_id)
-                asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
+            if include_submodel_descriptors:
+                for db_twin_aspect in db_twin.twin_aspects:
+                    semandic_id = db_twin_aspect.semantic_id
+                    submodel_type_data = get_submodel_type(semandic_id)
+                    asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
 
-                entry = {
-                    "id":
-                    db_twin_aspect.submodel_id.urn,
-                    "idShort":
-                    submodel_type_data.id_short,
-                    "semanticId": {
-                        "type": "ExternalReference",
-                        "keys": [{
-                            "type": "GlobalReference",
-                            "value": semandic_id
-                        }]
-                    },
-                    "supplementalSemanticId": [],
-                    "description": [],
-                    "displayName": [],
-                    "endpoints": [{
-                        "interface": "SUBMODEL-3.0",
-                        "protocolInformation": {
-                            "href":
-                            f"{self.data_plane_url}/api/public/{quote(semandic_id)}/{str(db_twin.global_id)}/submodel",
-                            "endpointProtocol":
-                            "HTTP",
-                            "endpointProtocolVersion": ["1.1"],
-                            "subprotocol":
-                            "DSP",
-                            "subprotocolBody":
-                            f"id={asset_id};dspEndpoint={self.control_plane_url}",
-                            "subprotocolBodyEncoding":
-                            "plain",
-                            "securityAttributes": [{
-                                "type": "NONE",
-                                "key": "NONE",
-                                "value": "NONE"
+                    entry = {
+                        "id":
+                        db_twin_aspect.submodel_id.urn,
+                        "idShort":
+                        submodel_type_data.id_short,
+                        "semanticId": {
+                            "type": "ExternalReference",
+                            "keys": [{
+                                "type": "GlobalReference",
+                                "value": semandic_id
                             }]
-                        }
-                    }],
-                }
+                        },
+                        "supplementalSemanticId": [],
+                        "description": [],
+                        "displayName": [],
+                        "endpoints": [{
+                            "interface": "SUBMODEL-3.0",
+                            "protocolInformation": {
+                                "href":
+                                f"{self.data_plane_url}/api/public/{quote(semandic_id)}/{str(db_twin.global_id)}/submodel",
+                                "endpointProtocol":
+                                "HTTP",
+                                "endpointProtocolVersion": ["1.1"],
+                                "subprotocol":
+                                "DSP",
+                                "subprotocolBody":
+                                f"id={asset_id};dspEndpoint={self.control_plane_url}",
+                                "subprotocolBodyEncoding":
+                                "plain",
+                                "securityAttributes": [{
+                                    "type": "NONE",
+                                    "key": "NONE",
+                                    "value": "NONE"
+                                }]
+                            }
+                        }],
+                    }
 
-                submodel_descriptors.append(entry)
+                    submodel_descriptors.append(entry)
         else:
             raise NotValidTwinError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."

@@ -48,8 +48,8 @@ class DtrPagingDictResponse(DtrPagingResponseBase):
                                     default=[])
 
 
-class DtrPagingUuidResponse(DtrPagingResponseBase):
+class DtrPagingStrResponse(DtrPagingResponseBase):
     """DTR Paging Response Model."""
 
-    result: List[UUID] = Field(description="The result of the DTR query.",
+    result: List[str] = Field(description="The result of the DTR query.",
                                     default=[])
