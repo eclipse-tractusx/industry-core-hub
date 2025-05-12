@@ -22,43 +22,34 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .dtr_facade import (
-    DtrPagingDictResponse,
-    DtrPagingUuidResponse,
-    DtrPagingMetadata
-)
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+from pydantic import BaseModel, Field
 
-from .part_management import (
-    CatalogPartRead,
-    CatalogPartCreate,
-    CatalogPartDelete,
-    CatalogPartQuery,
-    PartnerCatalogPartCreate,
-    PartnerCatalogPartDelete,
-    BatchRead,
-    BatchCreate,
-    BatchDelete,
-    BatchQuery,
-    SerializedPartRead,
-    SerializedPartCreate,
-    SerializedPartDelete,
-    SerializedPartQuery,
-    JISPartRead,
-    JISPartCreate,
-    JISPartDelete,
-    JISPartQuery
-)
 
-from .partner_management import (
-    BusinessPartnerRead,
-    DataExchangeContractRead,
-    DataExchangeContractCreate,
-    DataExchangeAgreementCreate,
-    DataExchangeAgreementRead
-)
+class DtrPagingMetadata(BaseModel):
+    """DTR Paging Metadata Model."""
 
-from .twin_management import (
-    TwinAspectRegistrationStatus, TwinsAspectRegistrationMode,
-    TwinAspectRegistration, TwinAspectRead, TwinAspectCreate, TwinRead,
-    TwinCreateBase, CatalogPartTwinCreate, CatalogPartTwinDetailsRead,
-    BatchTwinCreate, JISPartTwinCreate, SerializedPartTwinCreate)
+    cursor: Optional[str] = Field(
+        description="The cursor for the next page of results.", default=None)
+
+class DtrPagingResponseBase(BaseModel):
+    """DTR Paging Response Base Model."""
+
+    paging_metadata: Optional[DtrPagingMetadata] = Field(
+        description="The paging metadata for the response.", default=None)
+
+
+class DtrPagingDictResponse(DtrPagingResponseBase):
+    """DTR Paging Response Model."""
+
+    result: List[Dict[str,
+                      Any]] = Field(description="The result of the DTR query.",
+                                    default=[])
+
+
+class DtrPagingUuidResponse(DtrPagingResponseBase):
+    """DTR Paging Response Model."""
+
+    result: List[UUID] = Field(description="The result of the DTR query.",
+                                    default=[])

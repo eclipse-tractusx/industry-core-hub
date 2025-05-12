@@ -230,6 +230,8 @@ class TwinRepository(BaseRepository[Twin]):
             include_data_exchange_agreements: bool = False,
             include_aspects: bool = False,
             include_registrations: bool = False,
+            min_incl_created_date: Optional[datetime] = None,
+            max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
             offset: int = 0) -> List[Twin]:
         
@@ -266,6 +268,12 @@ class TwinRepository(BaseRepository[Twin]):
             stmt = stmt.join(
                 subquery, subquery.c.catalog_part_id == CatalogPart.id
             )
+
+        if min_incl_created_date:
+            stmt = stmt.where(Twin.created_date >= min_incl_created_date)
+
+        if max_excl_created_date:
+            stmt = stmt.where(Twin.created_date < max_excl_created_date)
 
         if limit > 0 or offset > 0:
             stmt = stmt.limit(limit).offset(offset).order_by(desc(Twin.created_date))

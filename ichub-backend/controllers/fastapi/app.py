@@ -25,8 +25,6 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from base64 import b64decode
-
 from fastapi import FastAPI, Request, Query, Header
 from fastapi.responses import JSONResponse
 
@@ -35,6 +33,7 @@ from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
 from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
+from models.services.dtr_facade import DtrPagingDictResponse, DtrPagingUuidResponse
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
@@ -180,7 +179,7 @@ async def invalid_semantic_id_exception_handler(
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
     description="Returns all Asset Administration Shell Descriptors",
-    response_model=Dict[str, Any],
+    response_model=DtrPagingDictResponse,
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_get_shell_descriptors(
     # TODO: Define explicit result schema to match the DTR API specs
@@ -200,12 +199,13 @@ async def dtr_facade_get_shell_descriptors(
         regex="^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
         default=None
     ),
-) -> Dict[str, Any]:
-    
+) -> DtrPagingDictResponse:
+
     return dtr_facade_service.get_shell_descriptors(
         enablement_service_stack_id,
         edc_bpn=edc_bpn,
-        limit=limit)
+        limit=limit,
+        cursor_str=cursor)
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
     description="Returns a specific Asset Administration Shell Descriptor",
@@ -217,12 +217,12 @@ async def dtr_facade_get_shell_descriptor(
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
 ) -> Dict[str, Any]:
     # TODO: Define explicit result schema to match the DTR API specs
-    
+
     return dtr_facade_service.get_shell_descriptor(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
-    
+
 @app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",
     description="Returns a list of Asset Administration Shell ids linked to specific Asset identifiers",
-    response_model=Dict[str, Any],
+    response_model=DtrPagingUuidResponse,
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_lookup_shells(
     enablement_service_stack_id: int,
@@ -230,7 +230,7 @@ async def dtr_facade_lookup_shells(
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
     limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
-) -> Dict[str, Any]:
+) -> DtrPagingUuidResponse:
 
     return dtr_facade_service.lookup_shells(enablement_service_stack_id, parse_json_list_parameter(asset_ids), edc_bpn)
 
