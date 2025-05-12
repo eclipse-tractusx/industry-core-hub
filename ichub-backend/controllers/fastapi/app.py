@@ -232,7 +232,12 @@ async def dtr_facade_lookup_shells(
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
 ) -> DtrPagingUuidResponse:
 
-    return dtr_facade_service.lookup_shells(enablement_service_stack_id, parse_json_list_parameter(asset_ids), edc_bpn)
+    return dtr_facade_service.lookup_shells(
+        enablement_service_stack_id=enablement_service_stack_id,
+        search_params=parse_json_list_parameter(asset_ids),
+        edc_bpn=edc_bpn,
+        limit=limit,
+        cursor_str=cursor)
 
 @app.exception_handler(NotAuthorizedError)
 async def not_authorized_exception_handler(request: Request, exc: NotAuthorizedError) -> JSONResponse:

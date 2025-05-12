@@ -38,6 +38,7 @@ def parse_json_list_parameter(list_param: Optional[List[str]], key_name: str = "
                 result[decoded_param[key_name]] = decoded_param[value_name]
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 raise HTTPException(status_code=400, detail=f"Invalid parameter format: {param_entry}") from e
+    return result
 
 def parse_base64_uuid(base64_uuid: str) -> UUID:
     try:

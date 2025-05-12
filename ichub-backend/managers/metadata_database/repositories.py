@@ -225,6 +225,7 @@ class TwinRepository(BaseRepository[Twin]):
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,
             global_id: Optional[UUID] = None,
+            customer_part_id: Optional[str] = None,
             enablement_service_stack_id: Optional[int] = None,
             business_partner_number: Optional[str] = None,
             include_data_exchange_agreements: bool = False,
@@ -235,6 +236,7 @@ class TwinRepository(BaseRepository[Twin]):
             limit: int = 50,
             offset: int = 0) -> List[Twin]:
         
+
         stmt = select(Twin).join(
             CatalogPart, CatalogPart.twin_id == Twin.id).join(
             LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id
@@ -258,13 +260,19 @@ class TwinRepository(BaseRepository[Twin]):
                 TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
             )
 
-        if business_partner_number:
-            subquery = (
+        if business_partner_number or customer_part_id:
+            subquery_stmt = (
                 select(PartnerCatalogPart.catalog_part_id)
                 .join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id)
-                .where(BusinessPartner.bpnl == business_partner_number)
-                .subquery()
             )
+            if business_partner_number:
+                subquery_stmt = subquery_stmt.where(BusinessPartner.bpnl == business_partner_number)
+
+            if customer_part_id:
+                subquery_stmt = subquery_stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+            subquery = subquery_stmt.subquery()
+
             stmt = stmt.join(
                 subquery, subquery.c.catalog_part_id == CatalogPart.id
             )

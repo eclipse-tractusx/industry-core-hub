@@ -114,7 +114,6 @@ class DTRFacadeService:
         result: List[Dict[str, Any]] = []
         cursor: Optional[DtrPagingCursor] = DtrPagingCursor.from_base64_json(
             cursor_str) if cursor_str else None
-        print(cursor)
 
         last_twin_created_date = None
 
@@ -122,6 +121,8 @@ class DTRFacadeService:
             ##########################
             ### Catalog Part Twins ###
             ##########################
+            last_twin_created_date = None
+
             if not cursor or cursor.type == CursorTypeEnum.CP:
                 db_twins = repos.twin_repository.find_catalog_part_twins(
                     enablement_service_stack_id=enablement_service_stack_id,
@@ -133,7 +134,6 @@ class DTRFacadeService:
 
                 if db_twins:
                     limit = limit - len(db_twins)
-                    last_twin_created_date = None
 
                     for db_twin in db_twins:
                         shell_descriptor = {
@@ -160,12 +160,8 @@ class DTRFacadeService:
             ###########################
             # TODO: Implement the logic for serialized part twins (and later others)
 
-            cursor = DtrPagingCursor(type=CursorTypeEnum.CP,
-                                     timestamp=last_twin_created_date)
-
-            return DtrPagingDictResponse(paging_metadata=DtrPagingMetadata(
-                cursor=cursor.to_base64_json()),
-                                         result=result)
+            return DtrPagingDictResponse(
+                paging_metadata=DtrPagingMetadata(), result=result)
 
     def get_shell_descriptor(self,
                              enablement_service_stack_id: int,
@@ -192,12 +188,19 @@ class DTRFacadeService:
     def lookup_shells(self,
                       enablement_service_stack_id: int,
                       search_params: Dict[str, Any],
-                      edc_bpn: Optional[str] = None) -> DtrPagingUuidResponse:
+                      edc_bpn: Optional[str] = None,
+                      limit: int = 50,
+                      cursor_str: Optional[str] = None) -> DtrPagingUuidResponse:
         """
         Lookup shells based on the provided search parameters.
         """
-        print(search_params)
-        print(edc_bpn)
+        # Without search parameters, return an empty result
+        if not search_params:
+            return DtrPagingUuidResponse(
+                paging_metadata=DtrPagingMetadata(), result=[])
+
+        cursor: Optional[DtrPagingCursor] = DtrPagingCursor.from_base64_json(
+            cursor_str) if cursor_str else None
 
         search_catalog_parts = True
         search_serilized_parts = True
@@ -258,40 +261,38 @@ class DTRFacadeService:
                 search_serilized_parts = False
                 jis_call_date = value
 
+        last_twin_created_date = None
         result: List[UUID] = []
         with RepositoryManagerFactory.create() as repos:
-            if search_catalog_parts:
+            if search_catalog_parts and (not cursor or cursor.type == CursorTypeEnum.CP):
                 db_twins = repos.twin_repository.find_catalog_part_twins(
+                    enablement_service_stack_id=enablement_service_stack_id,
+                    business_partner_number=edc_bpn,
+                    customer_part_id=customer_part_id,
                     manufacturer_id=manufacturer_id,
                     manufacturer_part_id=manufacturer_part_id,
                     global_id=global_id,
-                    include_registrations=True)
+                    max_excl_created_date=cursor.timestamp if cursor else None,
+                    limit=limit)
 
-                for db_twin in db_twins:
-                    if not db_twin.has_registration(
-                            enablement_service_stack_id):
-                        continue
+                if db_twins:
+                    limit = limit - len(db_twins)
+                    for db_twin in db_twins:
+                        last_twin_created_date = db_twin.created_date
+                        result.append(db_twin.aas_id)
 
-                    if edc_bpn is not None or customer_part_id is not None:
-                        db_catalog_part = repos.catalog_part_repository.get_by_twin_id(
-                            db_twin.id, join_partner_catalog_parts=True)
+                    if limit <= 0:
+                        cursor = DtrPagingCursor(type=CursorTypeEnum.CP,
+                                                timestamp=last_twin_created_date)
+                        return DtrPagingUuidResponse(
+                            paging_metadata=DtrPagingMetadata(
+                                cursor=cursor.to_base64_json()),
+                            result=result)
+                    
 
-                        if edc_bpn is not None:
-                            db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_bpnl(
-                                edc_bpn)
-                            if not db_partner_catalog_part:
-                                continue
-
-                        if customer_part_id is not None:
-                            db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_customer_part_id(
-                                customer_part_id)
-                            if not db_partner_catalog_part:
-                                continue
-
-                    result.append(db_twin.aas_id)
 
         return DtrPagingUuidResponse(
-            paging_metadata=DtrPagingMetadata(cursor="foo"), result=result)
+            paging_metadata=DtrPagingMetadata(), result=result)
 
     def _fill_shell_descriptor(self,
                                repos: RepositoryManager,
