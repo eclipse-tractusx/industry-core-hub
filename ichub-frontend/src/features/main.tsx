@@ -21,26 +21,16 @@
 ********************************************************************************/
 
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
-import ProductsList from './pages/ProductsList';
-import ProductsDetails from './pages/ProductsDetails';
-
-export default function AppRoutes() {
-  return (
-    <BrowserRouter>
-     <Routes>
-        <Route path="/" element={<MainLayout />} >
-          <Route index element={<ProductsList />} />
-          <Route path="/product/:id" element={<ProductsDetails />} />
-
-          {/* Here we must change the elements as we go along as we develop */}
-          <Route path="/catalog" element={<ProductsList />} />
-          <Route path="/categories" element={<ProductsList />} />
-          <Route path="/shared" element={<ProductsList />} />
-          <Route path="/status" element={<ProductsList />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );    
-}
+import {
+    Storefront,
+    Category,
+    People,
+    Assignment
+  } from '@mui/icons-material';
+  
+  export const features = [
+    { icon: <Storefront />, path: '/catalog' },
+    { icon: <Category />, path: '/categories' },
+    { icon: <People />, path: '/shared' },
+    { icon: <Assignment />, path: '/status' }
+  ];

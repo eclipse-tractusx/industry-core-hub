@@ -26,10 +26,11 @@ import carPartsData from "../tests/payloads/sample-data.json";
 import { ProductCard } from "../components/general/ProductCard";
 import { PartInstance } from "../types/product";
 import TablePagination from '@mui/material/TablePagination';
-import { AppBar, Typography, IconButton,Grid2 } from '@mui/material';
+import { Typography, IconButton,Grid2 } from '@mui/material';
+import { StatusVariants } from "../components/general/CardChip";
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
-import Sidebar from '../Features/CatalogManagement/components/sideBar/SideBar';
+import Sidebar from '../features/CatalogManagement/components/sideBar/SideBar';
 import {Drawer} from '../shared/hooks/drawer';
 import ShareDialog from "../components/general/ShareDialog";
 
@@ -64,11 +65,9 @@ const ProductsList = () => {
       }),
     })
   );
-  
-
 
   const handleChangePage = (
-    event: React.MouseEvent<HTMLButtonElement> | null,
+    _event: React.MouseEvent<HTMLButtonElement> | null,
     newPage: number,
   ) => {
     setPage(newPage);
@@ -77,7 +76,7 @@ const ProductsList = () => {
   useEffect(() => {
     const mappedCarParts = carPartsData.map((part) => ({
       ...part,
-      status: part.status ,
+      status: part.status as StatusVariants,
     }));
     setCarParts(mappedCarParts);
     // Define the async function inside useEffect
@@ -107,6 +106,11 @@ const ProductsList = () => {
       console.warn('Part not found for UUID:', uuid);
     }
   };
+  
+  const handleMore = (itemId: string) => {
+    console.log('More options for item with id:', itemId);
+    // More options logic
+  };
 
   const visibleRows = useMemo(
     () => {
@@ -122,32 +126,25 @@ const ProductsList = () => {
     </Grid2>
     <Grid2 size={{md: isOpen ? 10 : 12}} className={ `${isOpen} ? 'padding-twenty  product-catalog flex flex-content-center' : ' product-catalog flex flex-content-center'`} container spacing={1}>
       <Grid2 size={{ md:12}} className="flex flex-content-center" >
-          <Typography className="text" open={isOpen}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={openDrawer}
-            edge="start"
-            sx={{ mr: 2, ...(isOpen && { display: 'none' }) }}
-          >
-            <MenuIcon />
-          </IconButton>Catalog Parts &nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+        <IconButton color="primary" aria-label="open drawer" onClick={openDrawer} edge="start" sx={{ mr: 2, ...(isOpen && { display: 'none' }) }} >
+          <MenuIcon />
+        </IconButton>
+        <Typography className="text">
+          Catalog Parts
         </Typography>
       </Grid2>
-    
-
-     
 
       <Grid2 className="flex flex-content-center"  size={{ md: 12 }}>
       <Main open={isOpen}>
         <ProductCard
           onClick={(itemId: any) => handleButtonClick(itemId)}
           onShare={(itemId: any) => handleShareDialog(itemId)}
+          onMore={handleMore}
           items={visibleRows.map((part) => ({
             uuid: part.uuid,
             name: part.name,
             class: part.class,
-            status: part.status,
+            status: part.status as StatusVariants,
           }))}
         />
           </Main>

@@ -38,14 +38,14 @@ const PREVIOUS_BPNLS = [
 ];
 
 const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
-  const title = partData?.name || "Part name not obtained";
+  const title = partData?.name ?? "Part name not obtained";
 
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleBpnlChange = (event: any, value: string | null) => {
-    setBpnl(value || '');
+  const handleBpnlChange = (_event: any, value: string | null) => {
+    setBpnl(value ??'');
     setError(false);
     setSuccessMessage('');
   };

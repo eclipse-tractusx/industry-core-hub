@@ -27,6 +27,7 @@ from typing import Dict, Any
 
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
 from managers.metadata_database.manager import RepositoryManagerFactory
+from tools.submodel_type_util import get_submodel_type
 
 class SubmodelNotSharedWithBusinessPartnerError(ValueError):
     """
@@ -37,19 +38,19 @@ class SubmodelDispatcherService:
     """
     Service class for managing submodel dispatching.
     """
-    
+
     def __init__(self):
         # TODO: Deal with the proper config => Submodel Service is normally a singleton
         self.submodel_service_manager = SubmodelServiceManager()
 
-    def get_submodel_content(self,
-        edc_bpn: str,
-        edc_contract_agreement_id: str,
-        semantic_id: str,
-        global_id: UUID) -> Dict[str, Any]:
+    def get_submodel_content(self, edc_bpn: str,
+                             edc_contract_agreement_id: str, semantic_id: str,
+                             global_id: UUID) -> Dict[str, Any]:
         """
         Dispatch a submodel to the appropriate service or endpoint.
         """
+
+        get_submodel_type(semantic_id)  # Validate the semantic ID
 
         # This implementation just checks if the twin where the submodel belongs to is shared with the business partner
         # via any data exchange agreement.
@@ -61,10 +62,13 @@ class SubmodelDispatcherService:
         with RepositoryManagerFactory.create() as repos:
             db_twin_exchange = repos.twin_exchange_repository.find_by_global_id_business_partner_number(
                 global_id, edc_bpn)
-            
+
             # We found no "share" for the part => raise an error
             if not db_twin_exchange:
-                raise SubmodelNotSharedWithBusinessPartnerError(f"Requested twin with global ID {global_id} not shared with business partner {edc_bpn}.")
-            
+                raise SubmodelNotSharedWithBusinessPartnerError(
+                    f"Requested twin with global ID {global_id} not shared with business partner {edc_bpn}."
+                )
+
             # Call the submodel service manager to get the submodel content from the submodel service
-            return self.submodel_service_manager.get_twin_aspect_document(global_id, semantic_id)
+            return self.submodel_service_manager.get_twin_aspect_document(
+                global_id, semantic_id)

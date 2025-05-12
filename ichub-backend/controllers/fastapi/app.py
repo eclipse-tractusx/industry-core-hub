@@ -38,6 +38,7 @@ from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, Tw
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
+from tools.submodel_type_util import InvalidSemanticIdError
 
 from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
 
@@ -135,7 +136,7 @@ async def submodel_dispatcher_get_submodel_content(
     ) -> Dict[str, Any]:
 
     return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
-    
+
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
 async def submodel_dispatcher_get_submodel_content_submodel(
     semantic_id: str,
@@ -157,15 +158,25 @@ async def submodel_dispatcher_get_submodel_content_submodel_value(
     return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
 
 @app.exception_handler(SubmodelNotSharedWithBusinessPartnerError)
-async def submodel_not_shared_with_business_partner_exception_handler(request: Request, exc: SubmodelNotSharedWithBusinessPartnerError) -> JSONResponse:
+async def submodel_not_shared_with_business_partner_exception_handler(
+        request: Request,
+        exc: SubmodelNotSharedWithBusinessPartnerError) -> JSONResponse:
     """
     Custom exception handler for SubmodelNotSharedWithBusinessPartnerError.
     Returns a 403 Forbidden response with the error message.
     """
-    return JSONResponse(
-        status_code=403,
-        content={"detail": str(exc)}
-    )
+    return JSONResponse(status_code=403, content={"detail": str(exc)})
+
+@app.exception_handler(InvalidSemanticIdError)
+async def invalid_semantic_id_exception_handler(
+        request: Request,
+        exc: InvalidSemanticIdError) -> JSONResponse:
+    """
+    Custom exception handler for InvalidSemanticIdError.
+    Returns a 400 Bad Request with the error message.
+    """
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
     description="Returns all Asset Administration Shell Descriptors",

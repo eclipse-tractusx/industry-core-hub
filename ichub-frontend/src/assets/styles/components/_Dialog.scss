@@ -24,7 +24,6 @@
 @use '../config/mixins';
 
 .custom-dialog .MuiPaper-root {
-    //border-radius: 10px;
     @include mixins.rounded-bordered;
     @include mixins.space-shadow($brand-blue);
 

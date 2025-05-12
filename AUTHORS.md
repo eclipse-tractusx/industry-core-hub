@@ -15,3 +15,4 @@ The following people (in alphabetical order) have [contributed to this repositor
 | Koichi Hokonohara | Full-Stack Engineer | Senior Researcher | Fujitsu Ltd | [@hokonohara](https://github.com/hokonohara) |
 | Sonam Aggarwal | Frontend Engineer | Senior Consultant | Capgemini | [@sonama](https://github.com/sonama) |
 | Iñaki Paz | Architect | Innovation Project Manager | LKS Next - Spain | [@inakipaz](https://github.com/inakipaz) |
+| Felix Larrinaga | Architect | Lecturer Researcher | Mondragon Unibertsitatea - Spain | [@flarrinaga](https://github.com/flarrinaga) |
