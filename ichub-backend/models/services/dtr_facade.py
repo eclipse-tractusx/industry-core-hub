@@ -22,32 +22,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from typing import List
+from pydantic import Field
 
+from tractusx_sdk.industry.models.aas.v3 import PaginatedResponse
 
-class DtrPagingMetadata(BaseModel):
-    """DTR Paging Metadata Model."""
-
-    cursor: Optional[str] = Field(
-        description="The cursor for the next page of results.", default=None)
-
-class DtrPagingResponseBase(BaseModel):
-    """DTR Paging Response Base Model."""
-
-    paging_metadata: Optional[DtrPagingMetadata] = Field(
-        description="The paging metadata for the response.", default=None)
-
-
-class DtrPagingDictResponse(DtrPagingResponseBase):
-    """DTR Paging Response Model."""
-
-    result: List[Dict[str,
-                      Any]] = Field(description="The result of the DTR query.",
-                                    default=[])
-
-
-class DtrPagingStrResponse(DtrPagingResponseBase):
+class DtrPagingStrResponse(PaginatedResponse):
     """DTR Paging Response Model."""
 
     result: List[str] = Field(description="The result of the DTR query.",

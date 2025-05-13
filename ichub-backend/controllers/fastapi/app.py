@@ -33,13 +33,15 @@ from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
 from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
-from models.services.dtr_facade import DtrPagingDictResponse, DtrPagingStrResponse
+from models.services.dtr_facade import DtrPagingStrResponse
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
 from tools.submodel_type_util import InvalidSemanticIdError
 
 from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
+
+from tractusx_sdk.industry.models.aas.v3 import GetAllShellDescriptorsResponse, ShellDescriptor, SpecificAssetId
 
 tags_metadata = [
     {
@@ -162,7 +164,7 @@ async def invalid_semantic_id_exception_handler(
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
     operation_id="GetAllAssetAdministrationShellDescriptors",
     description="Returns all Asset Administration Shell Descriptors",
-    response_model=DtrPagingDictResponse,
+    response_model=GetAllShellDescriptorsResponse,
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_get_all_asset_administration_shell_descriptors(
     # TODO: Define explicit result schema to match the DTR API specs
@@ -182,7 +184,7 @@ async def dtr_facade_get_all_asset_administration_shell_descriptors(
         regex="^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
         default=None
     ),
-) -> DtrPagingDictResponse:
+) -> GetAllShellDescriptorsResponse:
 
     return dtr_facade_service.get_all_asset_administration_shell_descriptors(
         enablement_service_stack_id,
@@ -193,14 +195,13 @@ async def dtr_facade_get_all_asset_administration_shell_descriptors(
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
     operation_id="GetAssetAdministrationShellDescriptorById",
     description="Returns a specific Asset Administration Shell Descriptor",
-    response_model=Dict[str, Any],
+    response_model=ShellDescriptor,
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_get_asset_administration_shell_descriptor_by_id(
     enablement_service_stack_id: int,
     aasIdentifier: str,
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
-) -> Dict[str, Any]:
-    # TODO: Define explicit result schema to match the DTR API specs
+) -> ShellDescriptor:
 
     return dtr_facade_service.get_asset_administration_shell_descriptor_by_id(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
 
@@ -227,13 +228,13 @@ async def dtr_facade_get_all_asset_administration_shell_ids_by_asset_link(
 @app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells/{aasIdentifier}",
     operation_id="GetAllAssetLinksById",
     description="Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content",
-    response_model=List[Dict[str, Any]],
+    response_model=List[SpecificAssetId],
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_get_all_asset_links_by_id(
     enablement_service_stack_id: int,
     aasIdentifier: str,
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
-) -> List[Dict[str, Any]]:
+) -> List[SpecificAssetId]:
     
     return dtr_facade_service.get_all_asset_links_by_id(
         enablement_service_stack_id=enablement_service_stack_id,

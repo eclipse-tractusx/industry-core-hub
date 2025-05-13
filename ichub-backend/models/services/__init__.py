@@ -23,9 +23,7 @@
 #################################################################################
 
 from .dtr_facade import (
-    DtrPagingDictResponse,
     DtrPagingStrResponse,
-    DtrPagingMetadata
 )
 
 from .part_management import (
