@@ -24,7 +24,7 @@
 
 from .dtr_facade import (
     DtrPagingDictResponse,
-    DtrPagingUuidResponse,
+    DtrPagingStrResponse,
     DtrPagingMetadata
 )
 
