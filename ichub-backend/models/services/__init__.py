@@ -58,7 +58,16 @@ from .partner_management import (
 )
 
 from .twin_management import (
-    TwinAspectRegistrationStatus, TwinsAspectRegistrationMode,
-    TwinAspectRegistration, TwinAspectRead, TwinAspectCreate, TwinRead,
-    TwinCreateBase, CatalogPartTwinCreate, CatalogPartTwinDetailsRead,
-    BatchTwinCreate, JISPartTwinCreate, SerializedPartTwinCreate)
+    TwinAspectRegistrationStatus,
+    TwinsAspectRegistrationMode,
+    TwinAspectRegistration,
+    TwinAspectRead,
+    TwinAspectCreate,
+    TwinRead,
+    TwinCreateBase,
+    CatalogPartTwinCreate,
+    CatalogPartTwinDetailsRead,
+    BatchTwinCreate,
+    JISPartTwinCreate,
+    SerializedPartTwinCreate
+)
