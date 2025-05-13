@@ -76,7 +76,7 @@ jobs:
       - name: List packages
         run: |
             source ${{ matrix.folder }}/venv/bin/activate
-            pip list --format=freeze | grep -Pv "^(pip|setuptools|wheel|virtualenv|distlib|pkg_resources)" | awk -F'==' '{print "pypi/pypi/-/" $1 "/" $2}' | awk '!seen[$0]++' > ${{ matrix.folder }}/PACKAGE
+            pip list --format=freeze | awk -F'==' '{print "pypi/pypi/-/" $1 "/" $2}' | awk '!seen[$0]++' > ${{ matrix.folder }}/PACKAGE
 
       - name: Generate Dependencies file
         run: |
