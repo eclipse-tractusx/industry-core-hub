@@ -135,14 +135,6 @@ class Twin(SQLModel, table=True):
 
     __tablename__ = "twin"
 
-    def has_registration(self, enablement_service_stack_id: int) -> bool:
-        """Check if the twin has a registration with the given enablement service stack ID."""
-        for registration in self.twin_registrations:
-            if registration.enablement_service_stack_id == enablement_service_stack_id:
-                return registration.dtr_registered
-        return False
-
-
 class CatalogPart(SQLModel, table=True):
     """
     Represents details about a part of type 'catalog part'. 
@@ -200,14 +192,6 @@ class CatalogPart(SQLModel, table=True):
             if partner_catalog_part.business_partner.bpnl == bpnl:
                 return partner_catalog_part
         return None
-
-    def find_partner_catalog_part_by_customer_part_id(self, customer_part_id: str) -> Optional["PartnerCatalogPart"]:
-        """Find the partner catalog part for a given business partner."""
-        for partner_catalog_part in self.partner_catalog_parts:
-            if partner_catalog_part.customer_part_id == customer_part_id:
-                return partner_catalog_part
-        return None
-
 
 class PartnerCatalogPart(SQLModel, table=True):
     """

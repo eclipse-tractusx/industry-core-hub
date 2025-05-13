@@ -174,13 +174,32 @@ class LegalEntityRepository(BaseRepository[LegalEntity]):
         return self._session.scalars(stmt).first()
 
 class PartnerCatalogPartRepository(BaseRepository[PartnerCatalogPart]):
-    pass
+
+    def create_new(self, catalog_part_id: int, business_partner_id: int, customer_part_id: str) -> PartnerCatalogPart:
+        """Create a new PartnerCatalogPart instance."""
+        partner_catalog_part = PartnerCatalogPart(
+            catalog_part_id=catalog_part_id,
+            business_partner_id=business_partner_id,
+            customer_part_id=customer_part_id,
+        )
+        self.create(partner_catalog_part)
+        return partner_catalog_part
 
 class EnablementServiceStackRepository(BaseRepository[EnablementServiceStack]):
-    def get_by_name(self, name: str) -> Optional[EnablementServiceStack]:
+    def get_by_name(self, name: str, join_legal_entity: bool = False) -> Optional[EnablementServiceStack]:
         stmt = select(EnablementServiceStack).where(
             EnablementServiceStack.name == name)  # type: ignore
+        
+        if join_legal_entity:
+            stmt = stmt.join(LegalEntity, LegalEntity.id == EnablementServiceStack.legal_entity_id)
+
         return self._session.scalars(stmt).first()
+    
+    def find_by_legal_entity_bpnl(self, legal_entity_bpnl: str) -> List[EnablementServiceStack]:
+        stmt = select(EnablementServiceStack).join(
+            LegalEntity, LegalEntity.id == EnablementServiceStack.legal_entity_id).where(
+            LegalEntity.bpnl == legal_entity_bpnl)
+        return self._session.scalars(stmt).all()
 
 class TwinRepository(BaseRepository[Twin]):
     def create_new(self, global_id: UUID = None, dtr_aas_id: UUID = None):
@@ -225,18 +244,17 @@ class TwinRepository(BaseRepository[Twin]):
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,
             global_id: Optional[UUID] = None,
-            customer_part_id: Optional[str] = None,
             enablement_service_stack_id: Optional[int] = None,
             business_partner_number: Optional[str] = None,
-            include_data_exchange_agreements: bool = False,
-            include_aspects: bool = False,
-            include_registrations: bool = False,
+            customer_part_id: Optional[str] = None,
             min_incl_created_date: Optional[datetime] = None,
             max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
-            offset: int = 0) -> List[Twin]:
+            offset: int = 0,
+            include_data_exchange_agreements: bool = False,
+            include_aspects: bool = False,
+            include_registrations: bool = False) -> List[Twin]:
         
-
         stmt = select(Twin).join(
             CatalogPart, CatalogPart.twin_id == Twin.id).join(
             LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id
