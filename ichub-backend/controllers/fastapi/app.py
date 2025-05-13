@@ -126,27 +126,9 @@ async def twin_management_share_catalog_part_twin(catalog_part_twin_share: Catal
 async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
     return twin_management_service.create_twin_aspect(twin_aspect_create)
 
-@app.get("/submodel-dispatcher/{semantic_id}/{global_id}", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
-async def submodel_dispatcher_get_submodel_content(
-    semantic_id: str,
-    global_id: UUID,
-    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
-    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
-    ) -> Dict[str, Any]:
-
-    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
-
-@app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
-async def submodel_dispatcher_get_submodel_content_submodel(
-    semantic_id: str,
-    global_id: UUID,
-    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
-    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
-    ) -> Dict[str, Any]:
-
-    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
-
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
+@app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
+@app.get("/submodel-dispatcher/{semantic_id}/{global_id}", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
 async def submodel_dispatcher_get_submodel_content_submodel_value(
     semantic_id: str,
     global_id: UUID,
