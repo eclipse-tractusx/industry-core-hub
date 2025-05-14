@@ -224,12 +224,16 @@ async def dtr_facade_get_all_submodel_descriptors_through_superpath(
     enablement_service_stack_id: int,
     aasIdentifier: str,
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
 ) -> GetSubmodelDescriptorsByAssResponse:
 
     return dtr_facade_service.get_all_submodel_descriptors_through_superpath(
         enablement_service_stack_id=enablement_service_stack_id,
         aas_id=parse_base64_uuid(aasIdentifier),
-        edc_bpn=edc_bpn)
+        edc_bpn=edc_bpn,
+        limit=limit,
+        cursor_str=cursor)
 
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",

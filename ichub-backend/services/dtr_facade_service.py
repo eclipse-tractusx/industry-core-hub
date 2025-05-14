@@ -231,8 +231,36 @@ class DTRFacadeService:
                 edc_bpn,
                 include_specific_asset_ids=False,
                 include_submodel_descriptors=True)
-            
-        return GetSubmodelDescriptorsByAssResponse(result=shell_descriptor.submodel_descriptors)
+        
+        submodel_descriptors = shell_descriptor.submodel_descriptors
+        if not submodel_descriptors:
+            return GetSubmodelDescriptorsByAssResponse(result=[])
+        
+        ## Implementation of paging based on the result list ##
+        # (maybe this should be extracted to a generic utility function??)
+
+        # Consistency check for cursor_str
+        if cursor_str:
+            try:
+                start = int(cursor_str)
+                if start < 0 or start > len(submodel_descriptors):
+                    return GetSubmodelDescriptorsByAssResponse(result=[])
+            except (ValueError, TypeError):
+                return GetSubmodelDescriptorsByAssResponse(result=[])
+        else:
+            start = 0
+
+        end = start + limit if limit else len(submodel_descriptors)
+        paged_descriptors = submodel_descriptors[start:end]
+
+        paging_metadata = None
+        if end < len(submodel_descriptors):
+            paging_metadata = PagingMetadata(cursor=str(end))
+
+        return GetSubmodelDescriptorsByAssResponse(
+            result=paged_descriptors,
+            paging_metadata=paging_metadata
+        )
 
     def get_all_asset_administration_shell_ids_by_asset_link(self,
                       enablement_service_stack_id: int,
