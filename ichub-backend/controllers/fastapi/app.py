@@ -42,7 +42,7 @@ from tools.submodel_type_util import InvalidSemanticIdError
 
 from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
 
-from tractusx_sdk.industry.models.aas.v3 import GetAllShellDescriptorsResponse, ShellDescriptor, SpecificAssetId
+from tractusx_sdk.industry.models.aas.v3 import GetAllShellDescriptorsResponse, GetSubmodelDescriptorsByAssResponse, ShellDescriptor, SpecificAssetId
 
 tags_metadata = [
     {
@@ -214,6 +214,23 @@ async def dtr_facade_get_asset_administration_shell_descriptor_by_id(
 ) -> ShellDescriptor:
 
     return dtr_facade_service.get_asset_administration_shell_descriptor_by_id(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}/submodel-descriptors",
+    operation_id="GetAllSubmodelDescriptorsThroughSuperpath",
+    description="Returns all Submodel Descriptors",
+    response_model=GetSubmodelDescriptorsByAssResponse,
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_all_submodel_descriptors_through_superpath(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+) -> GetSubmodelDescriptorsByAssResponse:
+
+    return dtr_facade_service.get_all_submodel_descriptors_through_superpath(
+        enablement_service_stack_id=enablement_service_stack_id,
+        aas_id=parse_base64_uuid(aasIdentifier),
+        edc_bpn=edc_bpn)
+
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",
     operation_id="GetAllAssetAdministrationShellIdsByAssetLink",

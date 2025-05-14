@@ -21,27 +21,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+import base64
 
-from typing import Dict, List, Optional
-import json
-from tools.base64_util import decode_base64
-from uuid import UUID
+def encode_base64(input_str: str) -> str:
+    """Encodes a string to a base64-encoded string."""
+    return base64.b64encode(input_str.encode('utf-8')).decode('utf-8')
 
-from fastapi import HTTPException
-
-def parse_json_list_parameter(list_param: Optional[List[str]], key_name: str = "name", value_name: str = "value") -> Dict[str, str]:
-    result = {}
-    if list_param:
-        for param_entry in list_param:
-            try:
-                decoded_param = json.loads(decode_base64(param_entry))
-                result[decoded_param[key_name]] = decoded_param[value_name]
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                raise HTTPException(status_code=400, detail=f"Invalid parameter format: {param_entry}") from e
-    return result
-
-def parse_base64_uuid(base64_uuid: str) -> UUID:
-    try:
-        return UUID(decode_base64(base64_uuid))
-    except (ValueError, TypeError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid base64 UUID format: {base64_uuid}") from e
+def decode_base64(encoded_str: str) -> str:
+    """Decodes a base64-encoded string back to a regular string."""
+    return base64.b64decode(encoded_str.encode('utf-8')).decode('utf-8')

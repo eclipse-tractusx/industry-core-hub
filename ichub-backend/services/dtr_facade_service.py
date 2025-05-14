@@ -22,7 +22,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from base64 import b64encode, b64decode
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -33,13 +32,16 @@ from pydantic import BaseModel
 from services.twin_management_service import TwinManagementService
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.services.dtr_facade import DtrPagingStrResponse
-from models.metadata_database.models import Twin
+from models.services.twin_management import TwinAspectRegistrationStatus
+from models.metadata_database.models import Twin, TwinAspect
 from tools.submodel_type_util import get_submodel_type
+from tools.base64_util import decode_base64, encode_base64
 
 from tractusx_sdk.industry.models.aas.v3 import (
     AssetKind,
     Endpoint,
     GetAllShellDescriptorsResponse,
+    GetSubmodelDescriptorsByAssResponse,
     PagingMetadata,
     ProtocolInformation,
     ProtocolInformationSecurityAttributes,
@@ -90,19 +92,14 @@ class DtrPagingCursor(BaseModel):
         """
         Convert the cursor to a base64-encoded JSON string.
         """
-        json_str = self.model_dump_json()
-        json_bytes = json_str.encode("utf-8")
-        base64_bytes = b64encode(json_bytes)
-        return base64_bytes.decode("utf-8")
+        return encode_base64(self.model_dump_json())
 
     @staticmethod
     def from_base64_json(base64_str: str) -> "DtrPagingCursor":
         """
         Create a DtrPagingCursor instance from a base64-encoded JSON string.
         """
-        json_bytes = b64decode(base64_str.encode("utf-8"))
-        json_str = json_bytes.decode("utf-8")
-        return DtrPagingCursor.model_validate_json(json_str)
+        return DtrPagingCursor.model_validate_json(decode_base64(base64_str))
 
 
 class DTRFacadeService:
@@ -158,6 +155,7 @@ class DTRFacadeService:
                         self._fill_shell_descriptor(repos, db_twin,
                                                     shell_descriptor,
                                                     edc_bpn,
+                                                    include_specific_asset_ids=True,
                                                     include_submodel_descriptors=True)
 
                         result.append(shell_descriptor)
@@ -205,9 +203,36 @@ class DTRFacadeService:
                 db_twin,
                 shell_descriptor,
                 edc_bpn,
+                include_specific_asset_ids=True,
                 include_submodel_descriptors=True)
 
         return shell_descriptor
+
+    def get_all_submodel_descriptors_through_superpath(
+            self,
+            enablement_service_stack_id: int,
+            aas_id: UUID,
+            edc_bpn: Optional[str] = None,
+            limit: Optional[int] = None,
+            cursor_str: Optional[str] = None) -> GetSubmodelDescriptorsByAssResponse:
+        """
+        Get all submodel descriptors for a given AAS ID.
+        """
+        with RepositoryManagerFactory.create() as repos:
+            db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_registrations=True)
+            if not db_twin or not db_twin.has_registration(enablement_service_stack_id):
+                raise TwinNotFoundError(f"Shell descriptor {aas_id} not found.")
+
+            shell_descriptor = ShellDescriptor(id=aas_id.urn)
+            self._fill_shell_descriptor(
+                repos,
+                db_twin,
+                shell_descriptor,
+                edc_bpn,
+                include_specific_asset_ids=False,
+                include_submodel_descriptors=True)
+            
+        return GetSubmodelDescriptorsByAssResponse(result=shell_descriptor.submodel_descriptors)
 
     def get_all_asset_administration_shell_ids_by_asset_link(self,
                       enablement_service_stack_id: int,
@@ -340,6 +365,7 @@ class DTRFacadeService:
                                db_twin: Twin,
                                shell_descriptor: ShellDescriptor,
                                edc_bpn: Optional[str] = None,
+                               include_specific_asset_ids: bool = False,
                                include_submodel_descriptors: bool = False) -> None:
         
         shell_descriptor.global_asset_id = db_twin.global_id.urn
@@ -351,6 +377,9 @@ class DTRFacadeService:
         else:
             db_catalog_part = repos.catalog_part_repository.get_by_twin_id(
                 db_twin.id)
+            # TODO: For some reason this is never called; maybe sqlmodel does lazy loading here
+            # if not: partner catalog part details are not loaded
+        
         if db_catalog_part:
 
             # Called from a partner => check if the catalog part is shared with the partner
@@ -369,74 +398,44 @@ class DTRFacadeService:
                 db_partner_catalog_parts = db_catalog_part.partner_catalog_parts
 
             shell_descriptor.asset_kind = AssetKind.TYPE
-            self._add_specific_asset_id(specific_asset_ids,
-                                        "manufacturerPartId",
-                                        db_catalog_part.manufacturer_part_id,
-                                        "PUBLIC_READABLE")
+            
+            if include_specific_asset_ids:
+                self._add_specific_asset_id(specific_asset_ids,
+                                            "manufacturerPartId",
+                                            db_catalog_part.manufacturer_part_id,
+                                            "PUBLIC_READABLE")
 
-            for db_partner_catalog_part in db_partner_catalog_parts:
-                self._add_specific_asset_id(
-                    specific_asset_ids, "digitalTwinType", "PartType",
-                    db_partner_catalog_part.business_partner.bpnl)
+                for db_partner_catalog_part in db_partner_catalog_parts:
+                    self._add_specific_asset_id(
+                        specific_asset_ids, "digitalTwinType", "PartType",
+                        db_partner_catalog_part.business_partner.bpnl)
 
-                self._add_specific_asset_id(
-                    specific_asset_ids, "manufacturerId",
-                    db_catalog_part.legal_entity.bpnl,
-                    db_partner_catalog_part.business_partner.bpnl)
+                    self._add_specific_asset_id(
+                        specific_asset_ids, "manufacturerId",
+                        db_catalog_part.legal_entity.bpnl,
+                        db_partner_catalog_part.business_partner.bpnl)
 
-                self._add_specific_asset_id(
-                    specific_asset_ids, "customerPartId",
-                    db_partner_catalog_part.customer_part_id,
-                    db_partner_catalog_part.business_partner.bpnl)
+                    self._add_specific_asset_id(
+                        specific_asset_ids, "customerPartId",
+                        db_partner_catalog_part.customer_part_id,
+                        db_partner_catalog_part.business_partner.bpnl)
+
+                    shell_descriptor.specific_asset_ids = specific_asset_ids
 
             submodel_descriptors: List[SubModelDescriptor] = []
             if include_submodel_descriptors:
                 for db_twin_aspect in db_twin.twin_aspects:
-                    semandic_id = db_twin_aspect.semantic_id
-                    submodel_type_data = get_submodel_type(semandic_id)
-                    asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
-
-                    endpoint = Endpoint(
-                        interface="SUBMODEL-3.0",
-                        protocolInformation=ProtocolInformation(
-                            href=f"{self.data_plane_url}/api/public/{str(db_twin.global_id)}/submodel",
-                            endpointProtocol="HTTP",
-                            endpointProtocolVersion=["1.1"],
-                            subprotocol="DSP",
-                            subprotocolBody=f"id={asset_id};dspEndpoint={self.control_plane_url}",
-                            subprotocolBodyEncoding="plain",
-                            securityAttributes=[
-                                ProtocolInformationSecurityAttributes(
-                                    type=ProtocolInformationSecurityAttributesTypes.NONE,
-                                    key="NONE",
-                                    value="NONE"
-                                )]
-                        )
-                    )
-
-                    submodel_descriptor = SubModelDescriptor(
-                        id=db_twin_aspect.submodel_id.urn,
-                        idShort=submodel_type_data.id_short,
-                        semanticId=Reference(
-                            type=ReferenceTypes.EXTERNAL_REFERENCE,
-                            keys=[ReferenceKey(
-                                type=ReferenceKeyTypes.GLOBAL_REFERENCE,
-                                value=semandic_id
-                            )]
-                        ),
-                        endpoints=[endpoint],
-                    )
-                    submodel_descriptors.append(submodel_descriptor)
+                    submodel_descriptors.append(self._create_submodel_descriptor(
+                        db_twin, db_twin_aspect))
         else:
             raise NotValidTwinError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."
             )
 
-        shell_descriptor.specific_asset_ids = specific_asset_ids
         if submodel_descriptors:
             shell_descriptor.submodel_descriptors = submodel_descriptors
 
-    def _generate_asset_id(self, db_twin, db_twin_aspect) -> str:
+    def _generate_asset_id(self, db_twin: Twin, db_twin_aspect: TwinAspect) -> str:
         """
         Generate an asset ID based on the twin and aspect information.
         """
@@ -462,3 +461,39 @@ class DTRFacadeService:
                 )]
             )
         specific_asset_ids.append(specific_asset_id)
+
+    def _create_submodel_descriptor(self, db_twin: Twin, db_twin_aspect: TwinAspect) -> SubModelDescriptor:
+        semandic_id = db_twin_aspect.semantic_id
+        submodel_type_data = get_submodel_type(semandic_id)
+        asset_id = self._generate_asset_id(db_twin, db_twin_aspect)
+
+        endpoint = Endpoint(
+            interface="SUBMODEL-3.0",
+            protocolInformation=ProtocolInformation(
+                href=f"{self.data_plane_url}/api/public/{str(db_twin.global_id)}/submodel",
+                endpointProtocol="HTTP",
+                endpointProtocolVersion=["1.1"],
+                subprotocol="DSP",
+                subprotocolBody=f"id={asset_id};dspEndpoint={self.control_plane_url}",
+                subprotocolBodyEncoding="plain",
+                securityAttributes=[
+                    ProtocolInformationSecurityAttributes(
+                        type=ProtocolInformationSecurityAttributesTypes.NONE,
+                        key="NONE",
+                        value="NONE"
+                    )]
+            )
+        )
+
+        return SubModelDescriptor(
+            id=db_twin_aspect.submodel_id.urn,
+            idShort=submodel_type_data.id_short,
+            semanticId=Reference(
+                type=ReferenceTypes.EXTERNAL_REFERENCE,
+                keys=[ReferenceKey(
+                    type=ReferenceKeyTypes.GLOBAL_REFERENCE,
+                    value=semandic_id
+                )]
+            ),
+            endpoints=[endpoint],
+        )
