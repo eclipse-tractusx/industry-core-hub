@@ -32,6 +32,7 @@ from services.submodel_dispatcher_service import SubmodelDispatcherService, Subm
 from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
+from services.part_sharing_shortcut_service import PartSharingShortcutService
 from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
 from models.services.dtr_facade import DtrPagingStrResponse
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
@@ -71,6 +72,7 @@ app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_ta
 part_management_service = PartManagementService()
 partner_management_service = PartnerManagementService()
 twin_management_service = TwinManagementService()
+part_sharing_shortcut_service = PartSharingShortcutService()
 submodel_dispatcher_service = SubmodelDispatcherService()
 dtr_facade_service = DTRFacadeService()
 
@@ -127,6 +129,14 @@ async def twin_management_share_catalog_part_twin(catalog_part_twin_share: Catal
 @app.post("/twin-management/twin-aspect", response_model=TwinAspectRead, tags=["Twin Management"])
 async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
     return twin_management_service.create_twin_aspect(twin_aspect_create)
+
+@app.post("/share/catalog-part", response_model=CatalogPartTwinDetailsRead, tags=["Twin Management"])
+async def twin_management_create_part_sharing_shortcut(catalog_part_twin_share: CatalogPartTwinShare,
+    auto_generate_part_type_information_submodel:bool = True) -> CatalogPartTwinDetailsRead:
+    return part_sharing_shortcut_service.create_catalog_part_sharing_shortcut(
+        catalog_part_twin_share,
+        auto_generate_part_type_information=auto_generate_part_type_information_submodel
+    )
 
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])
 @app.get("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], tags=["Submodel Dispatcher"])

@@ -32,7 +32,6 @@ from models.services.partner_management import BusinessPartnerRead
 class CatalogPartBase(BaseModel):
     manufacturer_id: str = Field(alias="manufacturerId", description="The BPNL (manufactuer ID) of the part to register.")
     manufacturer_part_id: str = Field(alias="manufacturerPartId", description="The manufacturer part ID of the part.")
-    category: Optional[str] = Field(description="The category of the part.", default=None)
 
 class PartnerCatalogPartBase(BaseModel):
     customer_part_id: str = Field(alias="customerPartId", description="The customer part ID for partner specific mapping of the catalog part.")
@@ -40,9 +39,10 @@ class PartnerCatalogPartBase(BaseModel):
 
 class CatalogPartRead(CatalogPartBase):
     customer_part_ids: Optional[Dict[str, BusinessPartnerRead]] = Field(alias="customerPartIds", description="The list of customer part IDs mapped to the respective Business Partners.", default={})
+    category: Optional[str] = Field(description="The category of the part.", default=None)
 
-class CatalogPartCreate(CatalogPartBase):
-    customer_part_ids: Optional[List[PartnerCatalogPartBase]] = Field(alias="customerPartIds", description="An optional list of customer part IDs to business partner name mappings.", default=[])
+class CatalogPartCreate(CatalogPartRead):
+    pass
 
 class CatalogPartDelete(CatalogPartBase):
     pass
