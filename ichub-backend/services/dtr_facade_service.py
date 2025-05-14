@@ -152,7 +152,9 @@ class DTRFacadeService:
                             id=db_twin.aas_id.urn,
                             assetType="AssetType"
                         )
-                        self._fill_shell_descriptor(repos, db_twin,
+                        self._fill_shell_descriptor(repos,
+                                                    db_twin,
+                                                    enablement_service_stack_id,
                                                     shell_descriptor,
                                                     edc_bpn,
                                                     include_specific_asset_ids=True,
@@ -201,6 +203,7 @@ class DTRFacadeService:
             self._fill_shell_descriptor(
                 repos,
                 db_twin,
+                enablement_service_stack_id,
                 shell_descriptor,
                 edc_bpn,
                 include_specific_asset_ids=True,
@@ -227,6 +230,7 @@ class DTRFacadeService:
             self._fill_shell_descriptor(
                 repos,
                 db_twin,
+                enablement_service_stack_id,
                 shell_descriptor,
                 edc_bpn,
                 include_specific_asset_ids=False,
@@ -261,6 +265,40 @@ class DTRFacadeService:
             result=paged_descriptors,
             paging_metadata=paging_metadata
         )
+
+    #GetSubmodelDescriptorByIdThroughSuperpath
+    def get_submodel_descriptor_by_id_through_superpath(self,
+            enablement_service_stack_id: int,
+            aas_id: UUID,
+            submodel_id: UUID,
+            edc_bpn: Optional[str] = None) -> SubModelDescriptor:
+        """
+        Get the submodel descriptor for a given AAS ID and submodel ID.
+        """
+        shell_descriptor = ShellDescriptor(id=aas_id.urn)
+        with RepositoryManagerFactory.create() as repos:
+            db_twin = repos.twin_repository.find_by_dtr_aas_id(
+                aas_id, include_aspects=True, include_registrations=True)
+
+            if db_twin is None or not db_twin.has_registration(
+                    enablement_service_stack_id):
+                raise TwinNotFoundError(
+                    f"Shell descriptor {aas_id} not found.")
+
+            self._fill_shell_descriptor(
+                repos,
+                db_twin,
+                enablement_service_stack_id,
+                shell_descriptor,
+                edc_bpn,
+                include_specific_asset_ids=False,
+                include_submodel_descriptors=True)
+
+        for submodel_descriptor in shell_descriptor.submodel_descriptors:
+            if submodel_descriptor.id == submodel_id.urn:
+                return submodel_descriptor
+
+        raise TwinNotFoundError(f"Submodel descriptor {submodel_id} not found.")
 
     def get_all_asset_administration_shell_ids_by_asset_link(self,
                       enablement_service_stack_id: int,
@@ -384,13 +422,19 @@ class DTRFacadeService:
                 raise TwinNotFoundError(
                     f"Shell descriptor {aas_id} not found.")
 
-            self._fill_shell_descriptor(repos, db_twin, shell_descriptor, edc_bpn)
+            self._fill_shell_descriptor(
+                repos,
+                db_twin,
+                enablement_service_stack_id,
+                shell_descriptor,
+                edc_bpn)
 
         return shell_descriptor.specific_asset_ids
     
     def _fill_shell_descriptor(self,
                                repos: RepositoryManager,
                                db_twin: Twin,
+                               enablement_service_stack_id: int,
                                shell_descriptor: ShellDescriptor,
                                edc_bpn: Optional[str] = None,
                                include_specific_asset_ids: bool = False,
@@ -453,8 +497,11 @@ class DTRFacadeService:
             submodel_descriptors: List[SubModelDescriptor] = []
             if include_submodel_descriptors:
                 for db_twin_aspect in db_twin.twin_aspects:
-                    submodel_descriptors.append(self._create_submodel_descriptor(
-                        db_twin, db_twin_aspect))
+                    db_twin_aspect_registration = db_twin_aspect.find_registration_by_stack_id(
+                        enablement_service_stack_id)
+                    if db_twin_aspect_registration and db_twin_aspect_registration.status == TwinAspectRegistrationStatus.DTR_REGISTERED.value:
+                        submodel_descriptors.append(self._create_submodel_descriptor(
+                            db_twin, db_twin_aspect))
         else:
             raise NotValidTwinError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."
