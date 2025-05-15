@@ -41,8 +41,9 @@ from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspect
 from tools.submodel_type_util import InvalidSemanticIdError
 
 from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
+from tools.base64_util import decode_base64
 
-from tractusx_sdk.industry.models.aas.v3 import GetAllShellDescriptorsResponse, GetSubmodelDescriptorsByAssResponse, ShellDescriptor, SpecificAssetId, SubModelDescriptor
+from tractusx_sdk.industry.models.aas.v3 import AssetKind, GetAllShellDescriptorsResponse, GetSubmodelDescriptorsByAssResponse, ShellDescriptor, SpecificAssetId, SubModelDescriptor
 
 tags_metadata = [
     {
@@ -177,15 +178,13 @@ async def invalid_semantic_id_exception_handler(
     response_model=GetAllShellDescriptorsResponse,
     tags=["Digital Twin Registry Facade"])
 async def dtr_facade_get_all_asset_administration_shell_descriptors(
-    # TODO: Define explicit result schema to match the DTR API specs
     enablement_service_stack_id: int,
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
     limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
-    asset_kind: Optional[str] = Query(
+    asset_kind: Optional[AssetKind] = Query(
         alias="assetKind",
         description="The Asset's kind (Instance or Type)",
-        enum=["Instance", "NotApplicable", "Type"],  # List of allowed values,
         default=None
     ),
     asset_type: Optional[str] = Query(
@@ -199,6 +198,8 @@ async def dtr_facade_get_all_asset_administration_shell_descriptors(
     return dtr_facade_service.get_all_asset_administration_shell_descriptors(
         enablement_service_stack_id,
         edc_bpn=edc_bpn,
+        asset_kind=asset_kind,
+        asset_type=decode_base64(asset_type) if asset_type else None,
         limit=limit,
         cursor_str=cursor)
 

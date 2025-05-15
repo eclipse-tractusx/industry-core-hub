@@ -118,11 +118,16 @@ class DTRFacadeService:
             self,
             enablement_service_stack_id: int,
             edc_bpn: Optional[str] = None,
+            asset_kind: Optional[AssetKind] = None,
+            asset_type: Optional[str] = None,
             limit: int = 50,
             cursor_str: Optional[str] = None) -> GetAllShellDescriptorsResponse:
         """
         Get shell descriptors for a given enablement service stack ID.
         """
+        if asset_type is not None and asset_type != "AssetType":
+            return GetAllShellDescriptorsResponse(result=[])
+
         result: List[ShellDescriptor] = []
         cursor: Optional[DtrPagingCursor] = DtrPagingCursor.from_base64_json(
             cursor_str) if cursor_str else None
@@ -135,7 +140,7 @@ class DTRFacadeService:
             ##########################
             last_twin_created_date = None
 
-            if not cursor or cursor.type == CursorTypeEnum.CP:
+            if (cursor is None or cursor.type == CursorTypeEnum.CP) and (asset_kind is None or asset_kind == AssetKind.TYPE):
                 db_twins = repos.twin_repository.find_catalog_part_twins(
                     enablement_service_stack_id=enablement_service_stack_id,
                     business_partner_number=edc_bpn,
@@ -373,6 +378,9 @@ class DTRFacadeService:
                 search_catalog_parts = False
                 search_serilized_parts = False
                 jis_call_date = value
+            else:
+                # Unknown search parameter
+                return DtrPagingStrResponse(result=[])
 
         last_twin_created_date = None
         result: List[str] = []
