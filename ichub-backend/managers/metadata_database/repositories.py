@@ -355,6 +355,17 @@ class TwinAspectRepository(BaseRepository[TwinAspect]):
 
         return self._session.scalars(stmt).first()
 
+    def get_by_twin_id_submodel_id(self, twin_id: int, submodel_id: UUID, include_registrations: bool = False) -> Optional[TwinAspect]:
+        """Retrieve a TwinAspect by its submodel_id."""
+        stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id).where(TwinAspect.submodel_id == submodel_id)
+
+        if include_registrations:
+            stmt = stmt.join(
+                TwinAspectRegistration, TwinAspectRegistration.twin_aspect_id == TwinAspect.id, isouter=True
+            )
+
+        return self._session.scalars(stmt).first()
+
     def create_new(self, twin_id: int, semantic_id: str, submodel_id: UUID = None) -> TwinAspect:
         """Create a new TwinAspect instance."""
         if not submodel_id:

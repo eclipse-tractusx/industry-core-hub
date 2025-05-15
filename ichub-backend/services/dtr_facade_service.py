@@ -278,7 +278,7 @@ class DTRFacadeService:
         shell_descriptor = ShellDescriptor(id=aas_id.urn)
         with RepositoryManagerFactory.create() as repos:
             db_twin = repos.twin_repository.find_by_dtr_aas_id(
-                aas_id, include_aspects=True, include_registrations=True)
+                aas_id, include_aspects=False, include_registrations=True)
 
             if db_twin is None or not db_twin.has_registration(
                     enablement_service_stack_id):
@@ -292,11 +292,10 @@ class DTRFacadeService:
                 shell_descriptor,
                 edc_bpn,
                 include_specific_asset_ids=False,
-                include_submodel_descriptors=True)
+                include_explicit_submodel_descriptor=submodel_id)
 
-        for submodel_descriptor in shell_descriptor.submodel_descriptors:
-            if submodel_descriptor.id == submodel_id.urn:
-                return submodel_descriptor
+        if len(shell_descriptor.submodel_descriptors):
+            return shell_descriptor.submodel_descriptors[0]
 
         raise TwinNotFoundError(f"Submodel descriptor {submodel_id} not found.")
 
@@ -427,7 +426,8 @@ class DTRFacadeService:
                 db_twin,
                 enablement_service_stack_id,
                 shell_descriptor,
-                edc_bpn)
+                edc_bpn,
+                include_specific_asset_ids=True)
 
         return shell_descriptor.specific_asset_ids
     
@@ -438,7 +438,8 @@ class DTRFacadeService:
                                shell_descriptor: ShellDescriptor,
                                edc_bpn: Optional[str] = None,
                                include_specific_asset_ids: bool = False,
-                               include_submodel_descriptors: bool = False) -> None:
+                               include_submodel_descriptors: bool = False,
+                               include_explicit_submodel_descriptor: Optional[UUID] = None) -> None:
         
         shell_descriptor.global_asset_id = db_twin.global_id.urn
         specific_asset_ids: List[SpecificAssetId] = []
@@ -452,8 +453,13 @@ class DTRFacadeService:
             # TODO: For some reason this is never called; maybe sqlmodel does lazy loading here
             # if not: partner catalog part details are not loaded
         
+        ####################################
+        ### Logic for catalog part twins ###
+        ####################################
         if db_catalog_part:
+            shell_descriptor.asset_kind = AssetKind.TYPE
 
+            # Step 1: deal with partner mappings: when called from partner, indlude only it's data
             # Called from a partner => check if the catalog part is shared with the partner
             if edc_bpn:
                 db_partner_catalog_part = db_catalog_part.find_partner_catalog_part_by_bpnl(
@@ -469,8 +475,7 @@ class DTRFacadeService:
             else:
                 db_partner_catalog_parts = db_catalog_part.partner_catalog_parts
 
-            shell_descriptor.asset_kind = AssetKind.TYPE
-            
+            # Step 2: fill the specific asset IDs
             if include_specific_asset_ids:
                 self._add_specific_asset_id(specific_asset_ids,
                                             "manufacturerPartId",
@@ -493,22 +498,41 @@ class DTRFacadeService:
                         db_partner_catalog_part.business_partner.bpnl)
 
                     shell_descriptor.specific_asset_ids = specific_asset_ids
-
-            submodel_descriptors: List[SubModelDescriptor] = []
-            if include_submodel_descriptors:
-                for db_twin_aspect in db_twin.twin_aspects:
-                    db_twin_aspect_registration = db_twin_aspect.find_registration_by_stack_id(
-                        enablement_service_stack_id)
-                    if db_twin_aspect_registration and db_twin_aspect_registration.status == TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                        submodel_descriptors.append(self._create_submodel_descriptor(
-                            db_twin, db_twin_aspect))
         else:
             raise NotValidTwinError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."
             )
 
-        if submodel_descriptors:
-            shell_descriptor.submodel_descriptors = submodel_descriptors
+        #######################################################
+        ### Sumobdel descriptors (independent of part type) ###
+        #######################################################
+        db_twin_aspects: List[TwinAspect] = []
+        
+        # Case 1: include ALL submodel descriptors
+        # (here it is assume that the twin entity already contains all twin aspects)
+        if include_submodel_descriptors:
+            for db_twin_aspect in db_twin.twin_aspects:
+                if self._check_twin_aspect_registration(enablement_service_stack_id, db_twin_aspect):
+                    db_twin_aspects.append(db_twin_aspect)
+        
+        # Case 2: include only a single submodel descriptor
+        # (here we explicitly load that single one)
+        elif include_explicit_submodel_descriptor is not None:
+            db_twin_aspect = repos.twin_aspect_repository.get_by_twin_id_submodel_id(
+                twin_id=db_twin.id,
+                submodel_id=include_explicit_submodel_descriptor,
+                include_registrations=True)
+            if self._check_twin_aspect_registration(enablement_service_stack_id, db_twin_aspect):
+                db_twin_aspects.append(db_twin_aspect)
+            else:
+                raise TwinNotFoundError(
+                    f"Submodel descriptor {include_explicit_submodel_descriptor} not found."
+                )
+
+        # If valid twin aspects were collected above, add them to the shell descriptor
+        if db_twin_aspects:
+            shell_descriptor.submodel_descriptors = [self._create_submodel_descriptor(
+                db_twin, db_twin_aspect) for db_twin_aspect in db_twin_aspects]
 
     def _generate_asset_id(self, db_twin: Twin, db_twin_aspect: TwinAspect) -> str:
         """
@@ -516,8 +540,8 @@ class DTRFacadeService:
         """
         return "dummy:asset:id"  # Placeholder for actual asset ID generation logic
 
+    @staticmethod
     def _add_specific_asset_id(
-            self,
             specific_asset_ids: List[SpecificAssetId],
             name: str,
             value: str,
@@ -536,6 +560,14 @@ class DTRFacadeService:
                 )]
             )
         specific_asset_ids.append(specific_asset_id)
+
+    @staticmethod
+    def _check_twin_aspect_registration(enablement_service_stack_id: int, db_twin_aspect: Optional[TwinAspect]) -> bool:
+        if not db_twin_aspect:
+            return False
+        
+        db_twin_aspect_registration = db_twin_aspect.find_registration_by_stack_id(enablement_service_stack_id)
+        return db_twin_aspect_registration is not None and db_twin_aspect_registration.status == TwinAspectRegistrationStatus.DTR_REGISTERED.value
 
     def _create_submodel_descriptor(self, db_twin: Twin, db_twin_aspect: TwinAspect) -> SubModelDescriptor:
         semandic_id = db_twin_aspect.semantic_id
