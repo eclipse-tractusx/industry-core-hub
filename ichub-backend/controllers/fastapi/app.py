@@ -25,7 +25,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import FastAPI, Request, Header
+from fastapi import FastAPI, Request, Query, Header
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
@@ -33,10 +33,17 @@ from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
 from services.part_sharing_shortcut_service import PartSharingShortcutService
+from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
+from models.services.dtr_facade import DtrPagingStrResponse
 from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
 from tools.submodel_type_util import InvalidSemanticIdError
+
+from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
+from tools.base64_util import decode_base64
+
+from tractusx_sdk.industry.models.aas.v3 import AssetKind, GetAllShellDescriptorsResponse, GetSubmodelDescriptorsByAssResponse, ShellDescriptor, SpecificAssetId, SubModelDescriptor
 
 tags_metadata = [
     {
@@ -54,6 +61,10 @@ tags_metadata = [
     {
         "name": "Submodel Dispatcher",
         "description": "Internal API called by EDC Data Planes in order the deliver data of of the internall used Submodel Service"
+    },
+    {
+        "name": "Digital Twin Registry Facade",
+        "description": "DTR compatible API provided directly out of the Industry Core Hub Backend. No separate DTR service is needed"
     }
 ]
 
@@ -64,6 +75,7 @@ partner_management_service = PartnerManagementService()
 twin_management_service = TwinManagementService()
 part_sharing_shortcut_service = PartSharingShortcutService()
 submodel_dispatcher_service = SubmodelDispatcherService()
+dtr_facade_service = DTRFacadeService()
 
 @app.get("/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}", response_model=CatalogPartRead, tags=["Part Management"])
 async def part_management_get_catalog_part(manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartRead]:
@@ -158,3 +170,156 @@ async def invalid_semantic_id_exception_handler(
     Returns a 400 Bad Request with the error message.
     """
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",
+    operation_id="GetAllAssetAdministrationShellDescriptors",
+    description="Returns all Asset Administration Shell Descriptors",
+    response_model=GetAllShellDescriptorsResponse,
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_all_asset_administration_shell_descriptors(
+    enablement_service_stack_id: int,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
+    asset_kind: Optional[AssetKind] = Query(
+        alias="assetKind",
+        description="The Asset's kind (Instance or Type)",
+        default=None
+    ),
+    asset_type: Optional[str] = Query(
+        alias="assetType",
+        description="The Asset's type (UTF8-BASE64-URL-encoded)",
+        regex="^[\\x09\\x0A\\x0D\\x20-\\uD7FF\\uE000-\\uFFFD\\U00010000-\\U0010FFFF]*$",
+        default=None
+    ),
+) -> GetAllShellDescriptorsResponse:
+
+    return dtr_facade_service.get_all_asset_administration_shell_descriptors(
+        enablement_service_stack_id,
+        edc_bpn=edc_bpn,
+        asset_kind=asset_kind,
+        asset_type=decode_base64(asset_type) if asset_type else None,
+        limit=limit,
+        cursor_str=cursor)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}",
+    operation_id="GetAssetAdministrationShellDescriptorById",
+    description="Returns a specific Asset Administration Shell Descriptor",
+    response_model=ShellDescriptor,
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_asset_administration_shell_descriptor_by_id(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+) -> ShellDescriptor:
+
+    return dtr_facade_service.get_asset_administration_shell_descriptor_by_id(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}/submodel-descriptors",
+    operation_id="GetAllSubmodelDescriptorsThroughSuperpath",
+    description="Returns all Submodel Descriptors",
+    response_model=GetSubmodelDescriptorsByAssResponse,
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_all_submodel_descriptors_through_superpath(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
+) -> GetSubmodelDescriptorsByAssResponse:
+
+    return dtr_facade_service.get_all_submodel_descriptors_through_superpath(
+        enablement_service_stack_id=enablement_service_stack_id,
+        aas_id=parse_base64_uuid(aasIdentifier),
+        edc_bpn=edc_bpn,
+        limit=limit,
+        cursor_str=cursor)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}/submodel-descriptors/{submodelIdentifier}",
+    operation_id="GetSubmodelDescriptorByIdThroughSuperpath",
+    description="Returns a specific Submodel Descriptor",
+    response_model=SubModelDescriptor,
+    tags=["Digital Twin Registry Facade"])
+async def get_submodel_descriptor_by_id_through_superpath(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    submodelIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None)       
+) -> SubModelDescriptor:
+    
+    return dtr_facade_service.get_submodel_descriptor_by_id_through_superpath(
+        enablement_service_stack_id=enablement_service_stack_id,
+        aas_id=parse_base64_uuid(aasIdentifier),
+        submodel_id=parse_base64_uuid(submodelIdentifier),
+        edc_bpn=edc_bpn)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells",
+    operation_id="GetAllAssetAdministrationShellIdsByAssetLink",
+    description="Returns a list of Asset Administration Shell ids linked to specific Asset identifiers",
+    response_model=DtrPagingStrResponse,
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_all_asset_administration_shell_ids_by_asset_link(
+    enablement_service_stack_id: int,
+    asset_ids: Optional[List[str]] = Query(alias="assetIds", description="A list of specific Asset identifiers", default=None),
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+    limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
+    cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
+) -> DtrPagingStrResponse:
+
+    return dtr_facade_service.get_all_asset_administration_shell_ids_by_asset_link(
+        enablement_service_stack_id=enablement_service_stack_id,
+        search_params=parse_json_list_parameter(asset_ids),
+        edc_bpn=edc_bpn,
+        limit=limit,
+        cursor_str=cursor)
+
+@app.get("/dtr-facade/{enablement_service_stack_id}/lookup/shells/{aasIdentifier}",
+    operation_id="GetAllAssetLinksById",
+    description="Returns a list of specific Asset identifiers based on an Asset Administration Shell id to edit discoverable content",
+    response_model=List[SpecificAssetId],
+    tags=["Digital Twin Registry Facade"])
+async def dtr_facade_get_all_asset_links_by_id(
+    enablement_service_stack_id: int,
+    aasIdentifier: str,
+    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
+) -> List[SpecificAssetId]:
+    
+    return dtr_facade_service.get_all_asset_links_by_id(
+        enablement_service_stack_id=enablement_service_stack_id,
+        aas_id=parse_base64_uuid(aasIdentifier),
+        edc_bpn=edc_bpn)
+
+
+@app.exception_handler(NotAuthorizedError)
+async def not_authorized_exception_handler(request: Request, exc: NotAuthorizedError) -> JSONResponse:
+    """
+    Custom exception handler for NotAuthorizedError.
+    Returns a 403 Forbidden response with the error message.
+    """
+    return JSONResponse(
+        status_code=403,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(TwinNotFoundError)
+async def twin_not_found_exception_handler(request: Request, exc: TwinNotFoundError) -> JSONResponse:
+    """
+    Custom exception handler for TwinNotFoundError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(NotValidTwinError)
+async def not_valid_twin_exception_handler(request: Request, exc: NotValidTwinError) -> JSONResponse:
+    """
+    Custom exception handler for NotValidTwinError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
