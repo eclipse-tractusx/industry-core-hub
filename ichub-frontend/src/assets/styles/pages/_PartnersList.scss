@@ -20,17 +20,16 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+@use '../config/variables' as *;
+@use '../config/mixins';
 
-import {
-    Storefront,
-    Category,
-    People,
-    Assignment
-  } from '@mui/icons-material';
-  
-  export const features = [
-    { icon: <Storefront />, path: '/catalog', disabled: false },
-    { icon: <People />, path: '/shared', disabled: false },
-    { icon: <Category />, path: '/categories', disabled: true },
-    { icon: <Assignment />, path: '/status', disabled: true }
-  ];
+.add-partner-button{
+    border-radius: 8px!important;
+    border-color: green!important;
+    color: $brand-text !important;
+
+    &:hover {
+        background: $green-gradient-bg!important;
+        border-color: $brand-text!important;
+    }
+}

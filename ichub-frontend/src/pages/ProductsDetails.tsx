@@ -23,15 +23,16 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import carPartsData from "../tests/payloads/sample-data.json";
+import sharedPartners from '../tests/payloads/shared-partners.json';
 import { StatusTag, Button, Icon } from '@catena-x/portal-shared-components';
 import { PRODUCT_STATUS } from "../types/common";
-import JsonViewerDialog from "../components/general/JsonViewerDialog";
+import JsonViewerDialog from "../features/catalog-management/components/product-detail/JsonViewerDialog";
 import Grid2 from '@mui/material/Grid2';
-import InstanceProductsTable from "../features/CatalogManagement/components/product-detail/InstanceProductsTable";
+import InstanceProductsTable from "../features/catalog-management/components/product-detail/InstanceProductsTable";
 import PageNotification from "../components/general/PageNotification";
-import ShareDropdown from "../features/CatalogManagement/components/product-detail/ShareDropdown";
-import ProductButton from "../features/CatalogManagement/components/product-detail/ProductButton";
-import ProductData from "../features/CatalogManagement/components/product-detail/ProductData";
+import ShareDropdown from "../features/catalog-management/components/product-detail/ShareDropdown";
+import ProductButton from "../features/catalog-management/components/product-detail/ProductButton";
+import ProductData from "../features/catalog-management/components/product-detail/ProductData";
 import ShareDialog from "../components/general/ShareDialog";
 
 const ProductsDetails = () => {
@@ -127,7 +128,7 @@ const ProductsDetails = () => {
             <ShareDropdown handleCopy={handleCopy} handleDownload={handleDownload} handleShare={handleOpenShareDialog} />
           </Grid2>
         </Grid2>
-        <ProductData part={part} />
+        <ProductData part={part} sharedParts={sharedPartners} />
         <Grid2 container spacing={2} direction="column" className="add-on-buttons">
 
           <ProductButton gridSize={{ sm: 12 }} buttonText="DIGITAL PRODUCT PASSPORT v5.0.0" onClick={handleOpenJsonDialog} />

@@ -20,17 +20,11 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+import { PartnerInstance } from "./partner";
 
-import {
-    Storefront,
-    Category,
-    People,
-    Assignment
-  } from '@mui/icons-material';
-  
-  export const features = [
-    { icon: <Storefront />, path: '/catalog', disabled: false },
-    { icon: <People />, path: '/shared', disabled: false },
-    { icon: <Category />, path: '/categories', disabled: true },
-    { icon: <Assignment />, path: '/status', disabled: true }
-  ];
+export interface PartnerDialogProps {
+    open: boolean;
+    onClose: () => void;
+    onSave?: (partner: { name: string; bpnl: string }) => void;
+    partnerData?: PartnerInstance;
+}

@@ -20,23 +20,20 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { useState } from 'react';
+import Grid2 from '@mui/material/Grid2';
 
-// Type for the hook's return value
-type Drawer = {
-  isOpen: boolean;
-  openDrawer: () => void;
-  closeDrawer: () => void;
-  toggleDrawer: () => void;
-};
+const DoubleSidebarTest = () => {
 
-// The custom hook with TypeScript typing
-export function Drawer(initialState: boolean = false): Drawer {
-  const [isOpen, setIsOpen] = useState<boolean>(initialState);
-
-  const openDrawer = () => setIsOpen(true);
-  const closeDrawer = () => setIsOpen(false);
-  const toggleDrawer = () => setIsOpen(prev => !prev);
-
-  return { isOpen, openDrawer, closeDrawer, toggleDrawer };
+  return (
+    <Grid2 container direction="row">
+        <Grid2 size={2} sx={{backgroundColor: '#056b9991', height: '100vh'}}>
+            <p style={{color: 'white', margin: '20px'}}>Second sidebar</p>
+        </Grid2>
+        <Grid2 size={10} sx={{backgroundColor: '#000f16'}}>
+            <p style={{color: 'white', margin: '20px'}}>Content</p>
+        </Grid2>
+    </Grid2>
+  );
 }
+
+export default DoubleSidebarTest

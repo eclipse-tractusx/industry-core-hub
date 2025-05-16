@@ -39,18 +39,14 @@
     }
 }
 
-.product-cards {
-    .product-card {
-        background: $brand-dark !important;
-        @include mixins.space-shadow($brand-blue);
-        @include mixins.rounded-bordered;
-
-        &:hover {
-            border: 2px solid rgba($brand-light-blue, 0.85) !important;
-        }
+.product-list-pagination {
+    p {
+        color: $brand-text !important;
     }
-
-    .MuiChip-icon {
-        color: $brand-dark !important;
+    button{
+        color: $brand-text !important;
+    }
+    button.Mui-disabled {
+        color: $brand-shadow !important;
     }
 }

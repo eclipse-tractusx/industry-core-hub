@@ -27,6 +27,7 @@ import { NavLink } from 'react-router-dom';
 type SidebarItem = {
   icon: JSX.Element;
   path: string;
+  disabled: boolean;
 };
 
 const Sidebar = ({ items }: { items: SidebarItem[] }) => {
@@ -38,7 +39,7 @@ const Sidebar = ({ items }: { items: SidebarItem[] }) => {
         <NavLink
           to={item.path}
           key={index}
-          className={`iconButton ${index === activeIndex ? "active" : ""}`}
+          className={`iconButton ${index === activeIndex ? "active" : ""} ${item.disabled === true ? "disabled" : ""}`}
           onClick={() => setActiveIndex(index)}
         >
           {item.icon}

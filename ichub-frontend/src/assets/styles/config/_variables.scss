@@ -36,6 +36,11 @@ $opaque-gradient-start: rgb(0, 42, 126);
 $opaque-gradient-end: rgb(0, 108, 167);
 $header-opaque-gradient-bg: linear-gradient(180deg, $opaque-gradient-start 0%, $opaque-gradient-end 100%);
 
+// Green gradient background
+$gradient-green-start: rgba(0, 80, 40, 0.83);
+$gradient-green-end: rgba(0, 180, 100, 0.57);
+$green-gradient-bg: linear-gradient(180deg, $gradient-green-start 0%, $gradient-green-end 100%);
+
 // Brand colors
 $brand-blue: rgb(1, 40, 119);
 $brand-light-blue: rgb(15, 113, 203);
@@ -44,6 +49,7 @@ $brand-dark: rgb(0, 0, 0);
 $brand-primary: rgb(1, 32, 96);
 $brand-orange: rgb(250, 160, 35);
 $brand-gray: rgba(77, 77, 77, 0.56);
+$brand-dark-gray: rgba(35, 35, 38, 0.76);
 $brand-text: rgb(248, 249, 250);
 $brand-shadow: rgba(255, 255, 255, 0.50);
 $brand-border: rgba(1, 86, 255, 0.26);

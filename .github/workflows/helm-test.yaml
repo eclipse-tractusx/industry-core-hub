@@ -41,12 +41,11 @@ on:
         default: "kindest/node:v1.27.3"
         required: false
         type: string
-      # upgrade_from:
-      #   description: "chart version to upgrade from"
-      #   # chart version from 3.1 release as default
-      #   default: "x.x.x"
-      #   required: false
-      #   type: string
+      upgrade_from:
+        description: "chart version to upgrade from"
+        default: "0.1.3"
+        required: false
+        type: string
       helm_version:
         description: "helm version to test (default = latest)"
         default: "latest"
@@ -103,13 +102,12 @@ jobs:
         if: github.event_name != 'pull_request' || steps.list-changed.outputs.changed == 'true'
 
         # Upgrade the released chart version with the locally available chart
-        # default value for event_name != workflow_dispatch
-        # industry-core-hub: we don't have yet a released chart
-      #- name: Run helm upgrade
-      #  run: |
-      #    helm repo add bitnami https://charts.bitnami.com/bitnami
-      #    helm repo add tractusx-dev https://eclipse-tractusx.github.io/charts/dev
-      #    helm install [NAME] tractusx-dev/[CHART] --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }}
-      #    helm dependency update charts/[CHART]
-      #    helm upgrade [NAME] charts/[CHART]
-      #  if: github.event_name != 'pull_request' || steps.list-changed.outputs.changed == 'true'
+      - name: Run helm upgrade
+        run: |
+         helm repo add bitnami https://charts.bitnami.com/bitnami
+         helm repo add runix https://helm.runix.net
+         helm repo add tractusx-dev https://eclipse-tractusx.github.io/charts/dev
+         helm install industry-core-hub tractusx-dev/industry-core-hub --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }}
+         helm dependency update charts/industry-core-hub
+         helm upgrade industry-core-hub charts/industry-core-hub
+        if: github.event_name != 'pull_request' || steps.list-changed.outputs.changed == 'true'

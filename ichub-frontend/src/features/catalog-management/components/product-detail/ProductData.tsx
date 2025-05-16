@@ -24,11 +24,17 @@ import { Box, Grid2 } from '@mui/material'
 import { Icon, Typography } from '@catena-x/portal-shared-components';
 import { PartInstance } from '../../../../types/product';
 
+interface SharedPartner {
+    name: string;
+    bpnl: string;
+}
+
 interface ProductDataProps {
     part: PartInstance;
-  }
-  
-const ProductData = ({ part }: ProductDataProps) => {
+    sharedParts: SharedPartner[];
+}
+
+const ProductData = ({ part, sharedParts }: ProductDataProps) => {
   return (
     <Grid2 container justifyContent="space-between" className="mb-5" spacing={8}>
         <Grid2 size={{lg: 6, md: 12, sm: 12}}>
@@ -67,28 +73,23 @@ const ProductData = ({ part }: ProductDataProps) => {
                 <img src={part.image} alt={part.name} className="product-image" />
                 <Typography variant="label4">{part.uuid}</Typography>
             </Box>
-            <h2 className="mt-4">Shared With:</h2>
-            <ul className="mt-3">
-                <li className="flex">
-                    <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                    <Typography variant="label2" style={{ marginRight: "5px" }}>Volkswagen AG -</Typography>
-                    <Typography variant="body2">BPNL42621500AS61</Typography>
-                </li>
-                <li className="flex">
-                    <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                    <Typography variant="label2" style={{ marginRight: "5px" }}>BMW Racing Gmbh -</Typography>
-                    <Typography variant="body2">BPNL3A4T8A5621S3</Typography>
-                </li>
-                <li className="flex">
-                    <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
-                    <Typography variant="label2" style={{ marginRight: "5px" }}>John the Recycler KG - </Typography>
-                    <Typography variant="body2">BPNL5ASD5428800A</Typography>
-                </li>
-                <li className="flex">
-                    <Icon fontSize="16" iconName="Launch" className="my-auto mr-1" />
+            <Typography variant="h6" className="mt-4">Shared With:</Typography>
+
+            <Box component="ul" sx={{ listStyle: 'none', padding: 0, mt: 2 }}>
+                {(sharedParts ?? []).map(({ name, bpnl }, index) => (
+                    <Box key={index} component="li" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'flex-start', mb: 1.5 }}>
+                        <Icon fontSize="16" iconName="Polyline" className="my-auto mr-1" />
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                        <Typography variant="label2" sx={{ mr: '5px', fontWeight: 'bold' }}> {name} -</Typography>
+                        <Typography variant="body2">{bpnl}</Typography>
+                        </Box>
+                    </Box>
+                ))}
+                <Box component="li" sx={{ display: 'flex', alignItems: 'center', mt: 2 }}>
+                <Icon fontSize="16" iconName="Launch" className="my-auto mr-1" />
                     <a href="">512 more</a>
-                </li>
-            </ul>
+                </Box>
+            </Box>
         </Grid2>
     </Grid2>
   )

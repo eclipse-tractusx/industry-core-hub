@@ -35,6 +35,13 @@
   z-index: 1100;
 }
 
+.sidebarArea {
+  position: sticky;
+  top: 68.8px; // Header height
+  height: calc(100vh - 68.8px);
+  z-index: 1099;
+}
+
 /* Content area styling */
 .contentArea {
   padding: 20px;

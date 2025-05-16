@@ -48,3 +48,95 @@ pgadmin4:
        - secretName: "pgadmin-ichub.int.catena-x.net-tls"
          hosts:
            - "pgadmin-ichub.int.catena-x.net" 
+frontend: 
+  ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+      #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+      #   nginx.ingress.kubernetes.io/use-regex: "true"
+      #   nginx.ingress.kubernetes.io/enable-cors: "true"
+      #   # -- Provide CORS allowed origin.
+      #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
+      # -- Ingress TLS configuration
+      tls:
+       - secretName: "frontend-ichub.int.catena-x.net-tls"
+         hosts:
+           - "frontend-ichub.int.catena-x.net" 
+        # # -- Provide tls secret.
+        # - secretName: ""
+        #   # -- Provide host for tls secret.
+        #   hosts:
+        #     - ""
+      hosts:
+        - host: "frontend-ichub.int.catena-x.net"
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                service: "frontend"
+                port: 8080
+backend:
+  # -- Persistance configuration for the backend
+  persistence:
+    # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)
+    enabled: true
+    data:
+      # -- Enable data persistence
+      enabled: true
+      # -- Storage size for data
+      size: 1Gi
+      # -- Access mode for data volume
+      accessMode: ReadWriteOnce
+      # -- Storage class for data volume
+      storageClass: "default"
+    logs:
+      # -- Enable logs persistence
+      enabled: true
+      # -- Storage size for logs
+      size: 1Gi
+      # -- Access mode for logs volume
+      accessMode: ReadWriteOnce
+      # -- Storage class for logs volume
+      storageClass: "default"
+
+  configuration:
+    authorization:
+      enabled: true
+      apiKey:
+        key: "X-Api-Key"
+        value: <path:industry-core-hub/data/backend#apiKey>
+    # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
+    database:
+      echo: true
+  ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+      #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+      #   nginx.ingress.kubernetes.io/use-regex: "true"
+      #   nginx.ingress.kubernetes.io/enable-cors: "true"
+      #   # -- Provide CORS allowed origin.
+      #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
+      # -- Ingress TLS configuration
+      tls:
+       - secretName: "backend-ichub.int.catena-x.net-tls"
+         hosts:
+           - "backend-ichub.int.catena-x.net" 
+        # # -- Provide tls secret.
+        # - secretName: ""
+        #   # -- Provide host for tls secret.
+        #   hosts:
+        #     - ""
+      hosts:
+      - host: "backend-ichub.int.catena-x.net"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "backend"
+              port: 8000

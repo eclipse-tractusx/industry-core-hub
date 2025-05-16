@@ -20,17 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-
-import {
-    Storefront,
-    Category,
-    People,
-    Assignment
-  } from '@mui/icons-material';
-  
-  export const features = [
-    { icon: <Storefront />, path: '/catalog', disabled: false },
-    { icon: <People />, path: '/shared', disabled: false },
-    { icon: <Category />, path: '/categories', disabled: true },
-    { icon: <Assignment />, path: '/status', disabled: true }
-  ];
+export interface PartnerInstance {
+    bpnl: string,
+    name: string
+}
