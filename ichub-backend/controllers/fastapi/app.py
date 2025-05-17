@@ -25,7 +25,7 @@
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import FastAPI, Request, Query, Header
+from fastapi import FastAPI, Request, Query, Header, Body
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
@@ -35,10 +35,11 @@ from services.twin_management_service import TwinManagementService
 from services.part_sharing_shortcut_service import PartSharingShortcutService
 from services.dtr_facade_service import DTRFacadeService, NotAuthorizedError, TwinNotFoundError, NotValidTwinError
 from models.services.dtr_facade import DtrPagingStrResponse
-from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate, SerializedPartCreate, SerializedPartRead, SerializedPartQuery
+from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate, CatalogPartReadWithStatus, SerializedPartCreate, SerializedPartRead, SerializedPartQuery
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare, SerializedPartTwinCreate, SerializedPartTwinRead, SerializedPartTwinDetailsRead
 from tools.submodel_type_util import InvalidSemanticIdError
+from tools import InvalidUUIDError
 
 from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
 from tools.base64_util import decode_base64
@@ -81,12 +82,12 @@ dtr_facade_service = DTRFacadeService()
 async def part_management_get_catalog_part(manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartRead]:
     return part_management_service.get_catalog_part(manufacturer_id, manufacturer_part_id)
 
-@app.get("/part-management/catalog-part", response_model=List[CatalogPartRead], tags=["Part Management"])
-async def part_management_get_catalog_parts() -> List[CatalogPartRead]:
+@app.get("/part-management/catalog-part", response_model=List[CatalogPartReadWithStatus], tags=["Part Management"])
+async def part_management_get_catalog_parts() -> List[CatalogPartReadWithStatus]:
     return part_management_service.get_catalog_parts()
 
 @app.post("/part-management/catalog-part", response_model=CatalogPartRead, tags=["Part Management"])
-async def part_management_create_catalog_part(catalog_part_create: CatalogPartCreate) -> CatalogPartRead:
+async def part_management_create_catalog_part(catalog_part_create: CatalogPartCreate) -> CatalogPartReadWithStatus:
     return part_management_service.create_catalog_part(catalog_part_create)
 
 @app.get("/part-management/serialized-part", response_model=List[SerializedPartRead], tags=["Part Management"])
@@ -169,11 +170,13 @@ async def twin_management_create_part_sharing_shortcut(catalog_part_twin_share: 
 async def submodel_dispatcher_get_submodel_content_submodel_value(
     semantic_id: str,
     global_id: UUID,
-    edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
-    edc_contract_agreement_id: str = Header(alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
-    ) -> Dict[str, Any]:
-
-    return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
+    edc_bpn: Optional[str] = Header(default=None, alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane"),
+    edc_contract_agreement_id: Optional[str] = Header(default=None, alias="Edc-Contract-Agreement-Id", description="The contract agreement id of the consumer delivered by the EDC Data Plane")
+) -> Dict[str, Any]:
+    try:
+        return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
+    except FileNotFoundError:
+        return JSONResponse(status_code=404, content={"detail": "Submodel not found"})
 
 @app.exception_handler(SubmodelNotSharedWithBusinessPartnerError)
 async def submodel_not_shared_with_business_partner_exception_handler(
@@ -194,6 +197,35 @@ async def invalid_semantic_id_exception_handler(
     Returns a 400 Bad Request with the error message.
     """
     return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+@app.exception_handler(InvalidUUIDError)
+async def invalid_uuid_error_exception_handler(
+    request: Request,
+    exc: InvalidUUIDError) -> JSONResponse:
+    """
+    Custom exception handler for InvalidUUIDError.
+    Returns a 422 Unprocessable Entity with the error message.
+    """
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+@app.post("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", status_code=204, tags=["Submodel Dispatcher"])
+async def submodel_dispatcher_upload_submodel(
+    semantic_id: str,
+    global_id: UUID,
+    submodel_payload: Dict[str, Any] = Body(..., description="The submodel JSON payload")
+) -> None:
+    return submodel_dispatcher_service.upload_submodel( global_id, semantic_id, submodel_payload)
+
+@app.delete("/submodel-dispatcher/{semantic_id}/{global_id}/submodel", status_code=204, tags=["Submodel Dispatcher"])
+async def submodel_dispatcher_delete_submodel(
+    semantic_id: str,
+    global_id: UUID
+) -> None:
+    try:
+        submodel_dispatcher_service.delete_submodel(global_id, semantic_id)
+    except FileNotFoundError:
+        return JSONResponse(status_code=404, content={"detail": "Submodel not found"})
 
 
 @app.get("/dtr-facade/{enablement_service_stack_id}/shell-descriptors",

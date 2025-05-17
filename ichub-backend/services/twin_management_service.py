@@ -23,8 +23,9 @@
 #################################################################################
 
 from typing import Optional, Dict, Any, List
-from uuid import UUID
+from uuid import UUID, uuid4
 
+from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from managers.enablement_services.dtr_manager import DTRManager
 from managers.enablement_services.edc_manager import EDCManager
@@ -49,6 +50,8 @@ from models.services.twin_management import (
 )
 from models.metadata_database.models import Twin
 
+CATALOG_DIGITAL_TWIN_TYPE = "PartType"
+
 class TwinManagementService:
     """
     Service class for managing twin-related operations (CRUD and Twin sharing).
@@ -65,7 +68,7 @@ class TwinManagementService:
             if not db_catalog_parts:
                 raise ValueError("Catalog part not found.")
             else:
-                db_catalog_part = db_catalog_parts[0]
+                db_catalog_part, _ = db_catalog_parts[0]
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => raise error)
@@ -125,7 +128,8 @@ class TwinManagementService:
                     manufacturer_id=create_input.manufacturer_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
                     customer_part_ids=customer_part_ids,
-                    part_category=db_catalog_part.category
+                    part_category=db_catalog_part.category,
+                    digital_twin_type=CATALOG_DIGITAL_TWIN_TYPE
                 )
 
                 db_twin_registration.dtr_registered = True
@@ -185,7 +189,7 @@ class TwinManagementService:
             )
             if not db_catalog_parts:
                 raise ValueError("Catalog part not found.")
-            db_catalog_part = db_catalog_parts[0]
+            db_catalog_part, _ = db_catalog_parts[0]
 
             # Step 2: Retrieve the business partner entity according to the business_partner_name
             # (if not there => raise error)
@@ -342,6 +346,11 @@ class TwinManagementService:
                     name=db_serialized_part.partner_catalog_part.catalog_part.name,
                     category=db_serialized_part.partner_catalog_part.catalog_part.category,
                     bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+                    materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
+                    width=db_serialized_part.partner_catalog_part.catalog_part.width,
+                    height=db_serialized_part.partner_catalog_part.catalog_part.height,
+                    length=db_serialized_part.partner_catalog_part.catalog_part.length,
+                    weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
                     customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
                     businessPartner=BusinessPartnerRead(
                         name=db_serialized_part.partner_catalog_part.business_partner.name,
@@ -381,6 +390,11 @@ class TwinManagementService:
                 name=db_serialized_part.partner_catalog_part.catalog_part.name,
                 category=db_serialized_part.partner_catalog_part.catalog_part.category,
                 bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+                materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
+                width=db_serialized_part.partner_catalog_part.catalog_part.width,
+                height=db_serialized_part.partner_catalog_part.catalog_part.height,
+                length=db_serialized_part.partner_catalog_part.catalog_part.length,
+                weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
                 businessPartner=BusinessPartnerRead(
                     name=db_serialized_part.partner_catalog_part.business_partner.name,
                     bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
@@ -491,9 +505,12 @@ class TwinManagementService:
                 
                 # Step 7a: Register the submodel in the DTR (if necessary)
                 dtr_manager.create_submodel_descriptor(
-                    db_twin.aas_id,
-                    db_twin_aspect.submodel_id,
-                    db_twin_aspect.semantic_id,
+                    global_id=db_twin.global_id,
+                    aas_id=db_twin.aas_id,
+                    submodel_id=db_twin_aspect.submodel_id,
+                    semantic_id=db_twin_aspect.semantic_id,
+                    # TODO: later we should use the asset id from the EDC manager
+                    edc_asset_id=uuid4()
                 )
 
                 # Step 7b: Update the registration status to DTR_REGISTERED
@@ -594,8 +611,17 @@ def _create_dtr_manager(connection_settings: Optional[Dict[str, Any]]) -> DTRMan
     Create a new instance of the DTRManager class.
     """
     # TODO: later we can configure the manager via the connection settings from the DB here
+    # For now we take the values from the config file
+    dtr_hostname = ConfigManager.get_config('digitalTwinRegistry.hostname')
+    dtr_uri = ConfigManager.get_config('digitalTwinRegistry.uri')
+    dtr_lookup_uri = ConfigManager.get_config('digitalTwinRegistry.lookupUri')
+    dtr_api_path = ConfigManager.get_config('digitalTwinRegistry.apiPath')
+    dtr_url = f"{dtr_hostname}{dtr_uri}"
+    dtr_lookup_url = f"{dtr_hostname}{dtr_lookup_uri}"
 
-    return DTRManager()
+    return DTRManager(
+        dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
+        api_path=str(dtr_api_path))
 
 def _create_edc_manager(connection_settings: Optional[Dict[str, Any]]) -> EDCManager:
     """

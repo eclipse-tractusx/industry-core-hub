@@ -1,0 +1,50 @@
+@startuml
+actor User
+participant ProductsList
+participant useState
+participant useEffect
+participant useMemo
+participant navigate as useNavigate
+participant ProductCard
+participant Sidebar
+participant ShareDialog
+participant TablePagination
+
+User -> ProductsList: Render Component
+activate ProductsList
+
+ProductsList -> useState: Initialize states (carParts, shareDialogOpen, etc.)
+ProductsList -> useNavigate: Initialize navigate
+ProductsList -> useEffect: Fetch car parts data
+activate useEffect
+useEffect -> carPartsData: Load sample data
+useEffect -> useState: Set carParts and initialCarParts
+deactivate useEffect
+
+User -> Sidebar: Toggle Sidebar (open/close)
+ProductsList -> Sidebar: Render Sidebar
+
+User -> ProductCard: Interact with product card (onClick, onShare, onMore)
+ProductsList -> ProductCard: Pass visibleRows as items
+activate ProductCard
+ProductCard -> ProductsList: Trigger onClick (handleButtonClick)
+ProductsList -> useNavigate: Navigate to product details
+deactivate ProductCard
+
+User -> TablePagination: Change page
+ProductsList -> useState: Update page state
+
+alt Share dialog triggered
+    ProductCard -> ProductsList: Trigger onShare (handleShareDialog)
+    ProductsList -> ShareDialog: Open ShareDialog with selected part
+    User -> ShareDialog: Interact with ShareDialog
+    ProductsList -> ShareDialog: Close ShareDialog
+end
+
+ProductsList -> useMemo: Calculate visibleRows
+activate useMemo
+useMemo -> useState: Access carParts and page
+deactivate useMemo
+
+deactivate ProductsList
+@enduml

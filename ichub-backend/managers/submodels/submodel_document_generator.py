@@ -47,9 +47,6 @@ class SubmodelDocumentGenerator:
         bpns: Optional[str] = None) -> Dict[str, Any]:
         """Generate part type information for version 1."""
         
-        if not category:
-            category = "Unknown"
-        
         result = {
             "catenaXId": str(global_id),
             "partTypeInformation": {

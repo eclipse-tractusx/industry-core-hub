@@ -105,6 +105,10 @@ Proving the same "motor" of implementation for infinite add-ons of use cases tha
 - **Get onboarded**: [Getting started](https://eclipse-tractusx.github.io/docs/oss/getting-started/). Join the Eclipse Tractus-X open source community as a contributor!
 - Attend the [official community office hours](https://eclipse-tractusx.github.io/community/open-meetings/#Community%20Office%20Hour) and raise your issue!
 
+## Installation
+
+For installing the Industry Core Hub please consult our [Intallation Guide](./INSTALL.md).
+
 
 ### Found a bug?
 

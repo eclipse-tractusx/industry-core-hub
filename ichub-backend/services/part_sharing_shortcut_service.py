@@ -49,7 +49,7 @@ class PartSharingShortcutService:
             if not db_catalog_parts:
                 raise ValueError("Catalog part not found.")
             
-            db_catalog_part = db_catalog_parts[0]
+            db_catalog_part, _ = db_catalog_parts[0]
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => create it with the default name)

@@ -20,8 +20,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from config.config_manager import ConfigManager
-from config.log_manager import LoggingManager
+from managers.config.config_manager import ConfigManager
+from managers.config.log_manager import LoggingManager
 from sqlmodel import SQLModel, create_engine, text
 
 connection_string = ConfigManager.get_config("database.connectionString", default={})

@@ -23,7 +23,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "industry-core-hub.fullname.backend" . }}-config
+  name: {{ .Release.Name }}-config
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
 data:
@@ -36,6 +36,22 @@ data:
     database:
       connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
       echo: {{ .Values.backend.configuration.database.echo }}
+    edc:
+      controlplane:
+        hostname: {{ .Values.backend.configuration.edc.controlplane.hostname | quote }}
+        apikeyheader: {{ .Values.backend.configuration.edc.controlplane.apikeyheader | quote }}
+        apikey: {{ .Values.backend.configuration.edc.controlplane.apikey | quote }}
+        managementpath: {{ .Values.backend.configuration.edc.controlplane.managementpath | quote }}
+        protocolPath: {{ .Values.backend.configuration.edc.controlplane.protocolPath | quote }}
+        catalogPath: {{ .Values.backend.configuration.edc.controlplane.catalogPath | quote }}
+    digitalTwinRegistry:
+      hostname: {{ .Values.backend.configuration.digitalTwinRegistry.hostname | quote }}
+      apiPath: {{ .Values.backend.configuration.digitalTwinRegistry.apiPath | quote }}
+      uri: {{ .Values.backend.configuration.digitalTwinRegistry.uri | quote }}
+      lookup:
+        uri: {{ .Values.backend.configuration.digitalTwinRegistry.lookup.uri | quote }}
+    submodel_service:
+      path: {{ .Values.backend.configuration.submodel_dispatcher.path | quote }}
   logging.yml: |-
     version: 1
     disable_existing_loggers: False

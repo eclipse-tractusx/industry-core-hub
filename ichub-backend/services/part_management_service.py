@@ -23,7 +23,7 @@
 #################################################################################
 
 from typing import Dict, List, Optional
-from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, SerializedPartQuery
+from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, CatalogPartReadWithStatus, SerializedPartQuery
 from models.services.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.models import CatalogPart, Batch, SerializedPart, JISPart, PartnerCatalogPart
@@ -33,11 +33,20 @@ class PartManagementService():
     Service class for managing parts and their relationships in the system.
     """
 
-    def create_catalog_part(self, catalog_part_create: CatalogPartCreate) -> CatalogPartRead:
+    def create_catalog_part(self, catalog_part_create: CatalogPartCreate) -> CatalogPartReadWithStatus:
         """
         Create a new catalog part in the system.
         Optionally also create attached partner catalog parts - i.e. partner specific mappings of the catalog part.
         """
+        # Validate the input data
+        # Validate materials share
+        if catalog_part_create.materials:
+            total_share = sum(material.share for material in catalog_part_create.materials)
+            # We only allow the share to be 0-100%
+            if total_share < 0:
+                raise ValueError("The share of materials can't be lower than 0%.")
+            if total_share > 100:
+                raise ValueError("The total share of materials can't be higher than 100%.")
         with RepositoryManagerFactory.create() as repos:
             
             # First check if the legal entity exists for the given manufacturer ID
@@ -62,13 +71,18 @@ class PartManagementService():
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
 
+            # Create the catalog part in the metadata database
+            db_catalog_part = CatalogPart(
+                legal_entity=db_legal_entity,
+                **catalog_part_create.model_dump(by_alias=False)
+            )
+            
+            repos.catalog_part_repository.create(db_catalog_part)
             # Prepare the result object
-            result = CatalogPartRead(
-                manufacturerId=catalog_part_create.manufacturer_id,
-                manufacturerPartId=catalog_part_create.manufacturer_part_id,
-                name=catalog_part_create.name,
-                category=catalog_part_create.category,
-                bpns=catalog_part_create.bpns)
+            result = CatalogPartReadWithStatus(
+                **catalog_part_create.model_dump(by_alias=True),
+                status=0,  # Default status is draft
+            )
 
             # Check if we already should create some customer part IDs for the given catalog part
             if catalog_part_create.customer_part_ids:
@@ -104,7 +118,8 @@ class PartManagementService():
         name: str,
         category: Optional[str],
         bpns: Optional[str],
-        customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartRead:
+        customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartReadWithStatus:
+          
         """Convenience method to create a catalog part by its IDs."""
 
         partner_catalog_parts = []
@@ -124,7 +139,10 @@ class PartManagementService():
             customerPartIds=partner_catalog_parts
         )
 
-        return self.create_catalog_part(catalog_part_create)
+        # Create the catalog part, and return the catalog saved in the database
+        result_catalog_part_read = self.create_catalog_part(catalog_part_create)
+
+        return result_catalog_part_read
 
 
     def delete_catalog_part(self, catlog_part: CatalogPartDelete) -> None:
@@ -134,27 +152,33 @@ class PartManagementService():
         # Logic to delete a catalog part
         pass
 
-    def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartRead]:
+    def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartReadWithStatus]:
         with RepositoryManagerFactory.create() as repos:
             result = []
             
-            db_catalog_parts: List[CatalogPart] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
+            db_catalog_parts: List[tuple[CatalogPart, int]] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
                 manufacturer_id, manufacturer_part_id, join_partner_catalog_parts=True
             )
             
             if db_catalog_parts:
-                for db_catalog_part in db_catalog_parts:
+                for db_catalog_part, status in db_catalog_parts:
                     result.append(
-                        CatalogPartRead(
+                        CatalogPartReadWithStatus(
                             manufacturerId=db_catalog_part.legal_entity.bpnl,
                             manufacturerPartId=db_catalog_part.manufacturer_part_id,
                             name=db_catalog_part.name,
                             category=db_catalog_part.category,
+                            materials=db_catalog_part.materials,
+                            width=db_catalog_part.width,
+                            height=db_catalog_part.height,
+                            length=db_catalog_part.length,
+                            weight=db_catalog_part.weight,
                             bpns=db_catalog_part.bpns,
                             customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
                                 name=partner_catalog_part.business_partner.name,
                                 bpnl=partner_catalog_part.business_partner.bpnl
-                            ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+                            ) for partner_catalog_part in db_catalog_part.partner_catalog_parts},
+                            status=status,
                         )
                     )
             
@@ -250,7 +274,15 @@ class PartManagementService():
                     name=db_business_partner.name,
                     bpnl=db_business_partner.bpnl
                 ),
-                van=serialized_part_create.van
+                van=serialized_part_create.van,
+                materials=db_catalog_part.materials,
+                width=db_catalog_part.width,
+                height=db_catalog_part.height,
+                length=db_catalog_part.length,
+                weight=db_catalog_part.weight,
+                category=db_catalog_part.category,
+                name=db_catalog_part.name,
+                bpns=db_catalog_part.bpns,
             )
 
 
@@ -293,6 +325,11 @@ class PartManagementService():
                         name=db_serialized_part.partner_catalog_part.catalog_part.name,
                         category=db_serialized_part.partner_catalog_part.catalog_part.category,
                         bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+                        materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
+                        width=db_serialized_part.partner_catalog_part.catalog_part.width,
+                        height=db_serialized_part.partner_catalog_part.catalog_part.height,
+                        length=db_serialized_part.partner_catalog_part.catalog_part.length,
+                        weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
                         partInstanceId=db_serialized_part.part_instance_id,
                         customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
                         businessPartner=BusinessPartnerRead(

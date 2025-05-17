@@ -55,6 +55,26 @@ backend:
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: true
+    # -- EDC (Eclipse Dataspace Connector) configuration
+    edc:
+      controlplane:
+        hostname: "https://connector.control.plane"
+        apikeyheader: "X-Api-Key"
+        apikey: "<<example>>"
+        managementpath: "/management"
+        protocolPath: "/api/v1/dsp"
+        catalogPath: "/catalog"
+    # -- Digital Twin Registry configuration
+    digitalTwinRegistry:
+      hostname: "https://dataprovider-dtr.tx.test"
+      apiPath: "/api/v3"
+      # -- Set this to the urlPrefix defined in your DTR values. [Default value](https://github.com/eclipse-tractusx/sldt-digital-twin-registry/blob/cc9c63c12d96e48050a1b24eca022277075cf6c7/charts/registry/values.yaml#L86)
+      uri: "/semantics/registry"
+      lookup:
+        # -- Same as the uri above
+        uri: "/semantics/registry"
+    submodel_dispatcher:
+      path: "./data/submodels"
 
   podAnnotations: {}
 
@@ -104,11 +124,11 @@ backend:
       # -- Restrict a Container's Syscalls with seccomp
       type: RuntimeDefault
     # -- Runs all processes within a pod with a special uid
-    runAsUser: 1000
+    runAsUser: 10000
     # -- Processes within a pod will belong to this guid
-    runAsGroup: 3000
+    runAsGroup: 10001
     # -- The owner for volumes and any files created within volumes will belong to this guid
-    fsGroup: 3000
+    fsGroup: 10001
 
    # The [container security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) defines privilege and access control settings for a Container within a pod
   securityContext:
@@ -132,17 +152,33 @@ backend:
   # -- specifies volume mounts for the backend deployment
   volumeMounts:
     - name: data-volume
-      mountPath: /dataspace-sdk/data
+      mountPath: /industry-core-hub/data
+      subPath: data
     - name: logs-volume
-      mountPath: /dataspace-sdk/logs
+      mountPath: /industry-core-hub/logs
+      subPath: logs
     - name: backend-config-configmap
-      mountPath: /tmp/config/
-    - name: tmp
-      mountPath: /tmp
+      mountPath: /industry-core-hub/config
+    - name: tmpfs
+      mountPath: /industry-core-hub/tmp
 
-  # -- additional volume claims for the containers
-  additionalVolumes: []
-
+  # -- volume claims for the containers
+  volumes:
+    # -- persist the backend configuration
+    - name: backend-config-configmap
+      configMap:
+        name: "{{ .Release.Name }}-config"
+    # -- persist the backend data directories
+    - name: logs-volume
+      persistentVolumeClaim:
+        claimName: "{{ .Release.Name }}-pvc-logs-backend"
+    - name: data-volume
+      persistentVolumeClaim:
+        claimName: "{{ .Release.Name }}-pvc-data-backend"
+    # -- temporary file system mount
+    - name: tmpfs
+      emptyDir: {}
+      
   # -- Persistance configuration for the backend
   persistence:
     # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)

@@ -23,7 +23,7 @@
 #################################################################################
 
 from uuid import UUID
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
 from managers.metadata_database.manager import RepositoryManagerFactory
@@ -43,8 +43,8 @@ class SubmodelDispatcherService:
         # TODO: Deal with the proper config => Submodel Service is normally a singleton
         self.submodel_service_manager = SubmodelServiceManager()
 
-    def get_submodel_content(self, edc_bpn: str,
-                             edc_contract_agreement_id: str, semantic_id: str,
+    def get_submodel_content(self, edc_bpn: Optional[str],
+                             edc_contract_agreement_id: Optional[str], semantic_id: str,
                              global_id: UUID) -> Dict[str, Any]:
         """
         Dispatch a submodel to the appropriate service or endpoint.
@@ -59,16 +59,43 @@ class SubmodelDispatcherService:
         # Also to be analyzed later: does the contract agreement ID (which the EDC Data Plane provides to us)
         # somehow give us more possibilities of evaluating? (drawback: in this service we should actually
         # avoid calling too many other services - especially not the EDC Control Plane)
-        with RepositoryManagerFactory.create() as repos:
-            db_twin_exchange = repos.twin_exchange_repository.find_by_global_id_business_partner_number(
-                global_id, edc_bpn)
+        # with RepositoryManagerFactory.create() as repos:
+            # db_twin_exchange = repos.twin_exchange_repository.find_by_global_id_business_partner_number(
+            #     global_id, edc_bpn)
 
-            # We found no "share" for the part => raise an error
-            if not db_twin_exchange:
-                raise SubmodelNotSharedWithBusinessPartnerError(
-                    f"Requested twin with global ID {global_id} not shared with business partner {edc_bpn}."
-                )
+            # # We found no "share" for the part => raise an error
+            # if not db_twin_exchange:
+            #     raise SubmodelNotSharedWithBusinessPartnerError(
+            #         f"Requested twin with global ID {global_id} not shared with business partner {edc_bpn}."
+            #     )
 
             # Call the submodel service manager to get the submodel content from the submodel service
-            return self.submodel_service_manager.get_twin_aspect_document(
-                global_id, semantic_id)
+        return self.submodel_service_manager.get_twin_aspect_document(
+            global_id, semantic_id)
+
+    def upload_submodel(self, global_id: UUID, semantic_id: str, submodel_payload: Dict[str, Any]) -> None:
+        """
+        Uploads a submodel to the appropriate submodel service.
+
+        Args:
+            global_id (UUID): The global asset ID.
+            semantic_id (str): The semantic identifier for the submodel.
+            submodel_payload (Dict[str, Any]): The content of the submodel to upload.
+
+        Raises:
+            SubmodelNotSharedWithBusinessPartnerError: If the twin is not shared with the given business partner.
+        """
+        get_submodel_type(semantic_id)  # Validate the semantic ID
+
+        self.submodel_service_manager.upload_twin_aspect_document(global_id, semantic_id, submodel_payload)
+
+    def delete_submodel(self, global_id: UUID, semantic_id: str) -> None:
+        """
+        Deletes a submodel from the submodel service.
+
+        Args:
+            global_id (UUID): The global asset ID.
+            semantic_id (str): The semantic identifier for the submodel.
+        """
+        get_submodel_type(semantic_id)  # Validate the semantic ID
+        self.submodel_service_manager.delete_twin_aspect_document(global_id, semantic_id)

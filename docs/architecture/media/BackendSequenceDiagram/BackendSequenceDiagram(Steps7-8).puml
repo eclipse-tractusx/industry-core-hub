@@ -1,0 +1,24 @@
+@startuml
+
+participant PartSharingShortcutService
+participant EnablementServiceStackRepository
+participant TwinManagementService
+participant TwinRepository
+participant SubmodelDocumentGenerator
+
+
+activate PartSharingShortcutService
+    
+    PartSharingShortcutService -> TwinExchangeRepository: get_by_twin_id_data_exchange_agreement_id()
+    alt Twin exchange not found
+        PartSharingShortcutService -> TwinExchangeRepository: create_new()
+    end
+    alt auto_generate_part_type_information is True
+        PartSharingShortcutService -> SubmodelDocumentGenerator: generate_part_type_information_v1()
+        PartSharingShortcutService -> TwinManagementService: create_twin_aspect()
+    end
+    PartSharingShortcutService -> TwinManagementService: get_catalog_part_twin_details()
+    PartSharingShortcutService -> User: return CatalogPartTwinDetailsRead
+
+deactivate PartSharingShortcutService
+@enduml

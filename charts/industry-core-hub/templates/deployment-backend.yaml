@@ -109,29 +109,6 @@ spec:
           {{- end }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
-      volumes:
-        - name: data-volume
-        {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-pvc-data-backend
-        {{- else }}
-          emptyDir: {}
-        {{- end }}
-        - name: logs-volume
-        {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.logs.enabled }}
-          persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-pvc-logs-backend
-        {{- else }}
-          emptyDir: {}
-        {{- end }}
-        - name: backend-config-configmap
-          configMap:
-            name: {{ include "industry-core-hub.fullname.backend" . }}-config
-        - name: tmp
-          emptyDir: {}
-        {{- if .Values.backend.additionalVolumes }}
-        {{- toYaml .Values.backend.additionalVolumes | nindent 8 }}
-        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -144,4 +121,6 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        {{- tpl (toYaml .Values.backend.volumes | nindent 12) .}}
 {{- end }}

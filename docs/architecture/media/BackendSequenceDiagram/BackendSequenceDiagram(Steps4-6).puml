@@ -1,0 +1,23 @@
+@startuml
+
+participant PartSharingShortcutService
+participant DataExchangeAgreementRepository
+participant PartnerCatalogPartRepository
+participant TwinManagementService
+participant TwinRepository
+
+
+
+activate PartSharingShortcutService
+    PartSharingShortcutService -> DataExchangeAgreementRepository: get_by_business_partner_id()
+    alt Data exchange agreement not found
+        PartSharingShortcutService -> DataExchangeAgreementRepository: create()
+    end
+    PartSharingShortcutService -> PartnerCatalogPartRepository: get_by_catalog_part_id_business_partner_id()
+    alt Partner catalog part not found
+        PartSharingShortcutService -> PartnerCatalogPartRepository: create_new()
+    end
+    PartSharingShortcutService -> TwinManagementService: create_catalog_part_twin()
+    PartSharingShortcutService -> TwinRepository: find_by_global_id()
+deactivate PartSharingShortcutService
+@enduml

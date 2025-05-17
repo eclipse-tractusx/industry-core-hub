@@ -28,4 +28,4 @@ __license__ = "Apache License, Version 2.0"
 
 from .dtr_manager import DTRManager
 from .edc_manager import EDCManager
-from .submodel_service_manager import SubmodelServiceManager
+from .submodel_service_manager import SubmodelServiceManager, InvalidUUIDError

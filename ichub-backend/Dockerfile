@@ -26,9 +26,13 @@ FROM alpine:3.21
 USER root
 
 ## Move all the files from the project to the sdk directory
-COPY ./ /dataspace-sdk
+COPY ./ /industry-core-hub
 
-WORKDIR /dataspace-sdk
+## Create user groups
+RUN addgroup -g 10001 appgroup \
+	&& adduser -u 10000 -g 10001 -h /home/nonroot -D nonroot
+
+WORKDIR /industry-core-hub
 
 ## List the contents of the /backend directory
 RUN ls -la
@@ -39,41 +43,38 @@ RUN apk add python3 py3-pip libpq gettext --no-cache
 ## Install application requirements
 RUN pip3 install --break-system-packages --no-cache-dir -r ./requirements.txt
 
-## Create user groups
-RUN addgroup -g 3000 appgroup \
-	&& adduser -u 1000 -g 3000 -h /home/nonroot -D nonroot
-
 ## Specify the volumes
 VOLUME ./data ./logs
 
 ## Create the directories
 RUN mkdir -p ./logs
 RUN mkdir -p ./data
+RUN mkdir -p ./data/submodels
 
 ## Update user permissions
-RUN chown -R 1000:3000 /dataspace-sdk && chmod -R 775 /dataspace-sdk/
+RUN chown -R 10000:10001 /industry-core-hub && chmod -R 775 /industry-core-hub/
 
 ## Set entrypoint to executable
-RUN chmod +x /dataspace-sdk/entrypoint.sh
+#RUN chmod +x /industry-core-hub/entrypoint.sh
 
 # Rename configuration.yml to configuration.yml.reference, to be used by env variables inject script
 # Create symlink for tmp for configuration.yml to enable readOnlyRootFilesystem
-RUN mv /dataspace-sdk/config/configuration.yml /tmp/configuration.yml.reference \
-    && ln -s /tmp/configuration.yml /dataspace-sdk/config/configuration.yml
+#RUN mv /industry-core-hub/config/configuration.yml /tmp/configuration.yml.reference \
+    #&& ln -s /tmp/configuration.yml /industry-core-hub/config/configuration.yml
 
 # Same for logging.yml, but as we don't need to inject env variables, we can just copy it
 # and create the symlink
-RUN mv /dataspace-sdk/config/logging.yml /tmp/logging.yml \
-    && ln -s /tmp/logging.yml /dataspace-sdk/config/logging.yml
+#RUN mv /industry-core-hub/config/logging.yml /tmp/logging.yml \
+    #&& ln -s /tmp/logging.yml /industry-core-hub/config/logging.yml
 
 ## If necessary to inject documentation do it here:
 # COPY ./resources/docs/* ./resources/docs
 
 ## Choose the user
-USER 1000:3000
+USER 10000:10001 
 
 ## Expose default port
 EXPOSE 8000
 
 ## Execute the application
-CMD ["/dataspace-sdk/entrypoint.sh"]
+CMD ["python3","./main.py", "--host", "0.0.0.0", "--port", "8000"]

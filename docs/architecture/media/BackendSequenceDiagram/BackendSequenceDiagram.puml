@@ -1,0 +1,58 @@
+@startuml
+actor User
+participant PartSharingShortcutService
+participant RepositoryManagerFactory
+participant CatalogPartRepository
+participant EnablementServiceStackRepository
+participant LegalEntityRepository
+participant BusinessPartnerRepository
+participant DataExchangeAgreementRepository
+participant PartnerCatalogPartRepository
+participant TwinManagementService
+participant TwinRepository
+participant TwinExchangeRepository
+participant SubmodelDocumentGenerator
+
+User -> PartSharingShortcutService: create_catalog_part_sharing_shortcut(create_input, auto_generate_part_type_information)
+
+activate PartSharingShortcutService
+PartSharingShortcutService -> RepositoryManagerFactory: create()
+activate RepositoryManagerFactory
+RepositoryManagerFactory -> CatalogPartRepository: find_by_manufacturer_id_manufacturer_part_id()
+deactivate RepositoryManagerFactory
+alt Catalog part not found
+    PartSharingShortcutService -> User: raise ValueError("Catalog part not found")
+    deactivate PartSharingShortcutService
+else Catalog part found
+    PartSharingShortcutService -> EnablementServiceStackRepository: find_by_legal_entity_bpnl()
+    alt Enablement service stack not found
+        PartSharingShortcutService -> LegalEntityRepository: get_by_bpnl()
+        PartSharingShortcutService -> EnablementServiceStackRepository: create()
+    end
+    PartSharingShortcutService -> BusinessPartnerRepository: get_by_bpnl()
+    alt Business partner not found
+        PartSharingShortcutService -> BusinessPartnerRepository: create()
+    end
+    PartSharingShortcutService -> DataExchangeAgreementRepository: get_by_business_partner_id()
+    alt Data exchange agreement not found
+        PartSharingShortcutService -> DataExchangeAgreementRepository: create()
+    end
+    PartSharingShortcutService -> PartnerCatalogPartRepository: get_by_catalog_part_id_business_partner_id()
+    alt Partner catalog part not found
+        PartSharingShortcutService -> PartnerCatalogPartRepository: create_new()
+    end
+    PartSharingShortcutService -> TwinManagementService: create_catalog_part_twin()
+    PartSharingShortcutService -> TwinRepository: find_by_global_id()
+    PartSharingShortcutService -> TwinExchangeRepository: get_by_twin_id_data_exchange_agreement_id()
+    alt Twin exchange not found
+        PartSharingShortcutService -> TwinExchangeRepository: create_new()
+    end
+    alt auto_generate_part_type_information is True
+        PartSharingShortcutService -> SubmodelDocumentGenerator: generate_part_type_information_v1()
+        PartSharingShortcutService -> TwinManagementService: create_twin_aspect()
+    end
+    PartSharingShortcutService -> TwinManagementService: get_catalog_part_twin_details()
+    PartSharingShortcutService -> User: return CatalogPartTwinDetailsRead
+end
+deactivate PartSharingShortcutService
+@enduml

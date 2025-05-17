@@ -20,8 +20,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from config.log_manager import LoggingManager
-from config.config_manager import ConfigManager
+# Import custom logging and configuration modules, and database utility
+from managers.config.log_manager import LoggingManager
+from managers.config.config_manager import ConfigManager
 from database import connect_and_test
 
 ## FAST API example for keycloak
@@ -36,15 +37,17 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
+# Import the startup function for the FastAPI application
 from runtimes.fastapi import start
 
+# Disable SSL warnings from urllib3 and capture warnings into logs
 urllib3.disable_warnings()
 captureWarnings(True)
 
-# Load the logging config
+# Initialize the logging system based on project configuration
 LoggingManager.init_logging()
 
-# Load the configuation for the application
+# Load application-specific configuration settings
 ConfigManager.load_config()
 
 # Test database connection

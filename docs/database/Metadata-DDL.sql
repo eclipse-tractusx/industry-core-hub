@@ -1,11 +1,23 @@
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 16.6
--- Dumped by pg_dump version 17.4
-
--- Started on 2025-05-15 12:34:49
+/********************************************************************************
+* Eclipse Tractus-X - Industry Core Hub                                      
+*                                                                             
+* Copyright (c) 2025 Contributors to the Eclipse Foundation                   
+*                                                                             
+* See the NOTICE file(s) distributed with this work for additional            
+* information regarding copyright ownership.                                  
+*                                                                             
+* This program and the accompanying materials are made available under the    
+* terms of the Apache License, Version 2.0 which is available at              
+* https://www.apache.org/licenses/LICENSE-2.0.                                
+*                                                                             
+* Unless required by applicable law or agreed to in writing, software         
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT   
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the    
+* License for the specific language governing permissions and limitations     
+* under the License.                                                          
+*                                                                             
+* SPDX-License-Identifier: Apache-2.0                                         
+*********************************************************************************/
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -64,7 +76,12 @@ CREATE TABLE public.catalog_part (
     twin_id integer,
 	name character varying NOT NULL,
 	category character varying,
-	bpns character varying
+	bpns character varying,
+    materials json,
+    width json,
+    height json,
+    length json,
+    weight json
 );
 
 CREATE TABLE public.data_exchange_agreement (

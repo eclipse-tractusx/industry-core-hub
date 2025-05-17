@@ -22,7 +22,7 @@
 import uvicorn
 from controllers.fastapi import app as api
 from tractusx_sdk.dataspace.tools.utils import get_arguments
-from config.log_manager import LoggingManager
+from managers.config.log_manager import LoggingManager
 from tractusx_sdk.dataspace.managers import AuthManager
 
 app = api

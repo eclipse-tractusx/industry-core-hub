@@ -37,8 +37,7 @@ class LoggingManager:
             return
 
         if config_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            config_path = os.path.join(base_dir, "config", "logging.yml")
+            config_path = os.path.join(os.getcwd(), "config", "logging.yml")
 
         try:
             date = op.get_filedate()
