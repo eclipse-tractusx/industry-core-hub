@@ -136,7 +136,7 @@ class PartSharingShortcutService:
                 payload = self.submodel_document_generator.generate_part_type_information_v1(
                     global_id=db_twin.global_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
-                    category=db_catalog_part.category,
+                    name=db_catalog_part.name,
                     bpns=db_catalog_part.bpns
                 )
 

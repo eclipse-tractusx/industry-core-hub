@@ -43,7 +43,7 @@ class SubmodelDocumentGenerator:
     def generate_part_type_information_v1(self,
         global_id: UUID,
         manufacturer_part_id: str,
-        category: Optional[str] = None,
+        name: str = None,
         bpns: Optional[str] = None) -> Dict[str, Any]:
         """Generate part type information for version 1."""
         
@@ -54,7 +54,7 @@ class SubmodelDocumentGenerator:
             "catenaXId": str(global_id),
             "partTypeInformation": {
                 "manufacturerPartId" : manufacturer_part_id,
-                "nameAtManufacturer" : category
+                "nameAtManufacturer" : name
             }
         }
 
