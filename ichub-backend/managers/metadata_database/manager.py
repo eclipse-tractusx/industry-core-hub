@@ -36,6 +36,7 @@ class RepositoryManager:
         self._enablement_service_stack_repository = None
         self._legal_entity_repository = None
         self._partner_catalog_part_repository = None
+        self._serialized_part_repository = None
         self._twin_repository = None
         self._twin_aspect_repository = None
         self._twin_aspect_registration_repository = None
@@ -123,6 +124,14 @@ class RepositoryManager:
             self._partner_catalog_part_repository = PartnerCatalogPartRepository(self._session)
         return self._partner_catalog_part_repository
     
+    @property
+    def serialized_part_repository(self):
+        """Lazy initialization of the serialized part repository."""
+        if self._serialized_part_repository is None:
+            from managers.metadata_database.repositories import SerializedPartRepository
+            self._serialized_part_repository = SerializedPartRepository(self._session)
+        return self._serialized_part_repository
+
     @property
     def twin_repository(self):
         """Lazy initialization of the twin repository."""

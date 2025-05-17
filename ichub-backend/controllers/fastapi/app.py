@@ -33,9 +33,9 @@ from services.part_management_service import PartManagementService
 from services.partner_management_service import PartnerManagementService
 from services.twin_management_service import TwinManagementService
 from services.part_sharing_shortcut_service import PartSharingShortcutService
-from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate, CatalogPartReadWithStatus
+from models.services.part_management import CatalogPartBase, CatalogPartRead, CatalogPartCreate, CatalogPartReadWithStatus, SerializedPartCreate, SerializedPartRead, SerializedPartQuery
 from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
-from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare
+from models.services.twin_management import TwinRead, TwinAspectRead, TwinAspectCreate, CatalogPartTwinRead, CatalogPartTwinDetailsRead, CatalogPartTwinCreate, CatalogPartTwinShare, SerializedPartTwinCreate, SerializedPartTwinRead, SerializedPartTwinDetailsRead
 from tools.submodel_type_util import InvalidSemanticIdError
 from tools import InvalidUUIDError
 
@@ -78,6 +78,18 @@ async def part_management_get_catalog_parts() -> List[CatalogPartReadWithStatus]
 async def part_management_create_catalog_part(catalog_part_create: CatalogPartCreate) -> CatalogPartReadWithStatus:
     return part_management_service.create_catalog_part(catalog_part_create)
 
+@app.get("/part-management/serialized-part", response_model=List[SerializedPartRead], tags=["Part Management"])
+async def part_management_get_serialized_parts() -> List[SerializedPartRead]:
+    return part_management_service.get_serialized_parts()
+
+@app.post("/part-management/serialized-part/query", response_model=List[SerializedPartRead], tags=["Part Management"])
+async def part_management_query_serialized_parts(query: SerializedPartQuery) -> List[SerializedPartRead]:
+    return part_management_service.get_serialized_parts(query)
+
+@app.post("/part-management/serialized-part", response_model=SerializedPartRead, tags=["Part Management"])
+async def part_management_create_serialized_part(serialized_part_create: SerializedPartCreate) -> SerializedPartRead:
+    return part_management_service.create_serialized_part(serialized_part_create)
+
 @app.get("/partner-management/business-partner", response_model=List[BusinessPartnerRead], tags=["Partner Management"])
 async def partner_management_get_business_partners() -> List[BusinessPartnerRead]:
     return partner_management_service.list_business_partners()
@@ -98,8 +110,8 @@ async def partner_management_get_data_exchange_agreements(business_partner_numbe
 async def twin_management_get_catalog_part_twins(include_data_exchange_agreements: bool = False) -> List[CatalogPartTwinRead]:
     return twin_management_service.get_catalog_part_twins(include_data_exchange_agreements=include_data_exchange_agreements)
 
-@app.get("/twin-management/catalog-part-twin/{global_id}", response_model=List[CatalogPartTwinDetailsRead], tags=["Twin Management"])
-async def twin_management_get_catalog_part_twin(global_id: UUID) -> List[CatalogPartTwinDetailsRead]:
+@app.get("/twin-management/catalog-part-twin/{global_id}", response_model=Optional[CatalogPartTwinDetailsRead], tags=["Twin Management"])
+async def twin_management_get_catalog_part_twin(global_id: UUID) -> Optional[CatalogPartTwinDetailsRead]:
     return twin_management_service.get_catalog_part_twin_details(global_id)
 
 @app.post("/twin-management/catalog-part-twin", response_model=TwinRead, tags=["Twin Management"])
@@ -115,6 +127,18 @@ async def twin_management_share_catalog_part_twin(catalog_part_twin_share: Catal
         return JSONResponse(status_code=201, content={"description":"Catalog part twin shared successfully"})
     else:
         return JSONResponse(status_code=204, content={"description":"Catalog part twin already shared"})
+
+@app.get("/twin-management/serialized-part-twin", response_model=List[SerializedPartTwinRead], tags=["Twin Management"])
+async def twin_management_get_serialized_part_twins(include_data_exchange_agreements: bool = False) -> List[SerializedPartTwinRead]:
+    return twin_management_service.get_serialized_part_twins(include_data_exchange_agreements=include_data_exchange_agreements)
+
+@app.get("/twin-management/serialized-part-twin/{global_id}", response_model=Optional[SerializedPartTwinDetailsRead], tags=["Twin Management"])
+async def twin_management_get_serialized_part_twin(global_id: UUID) -> Optional[SerializedPartTwinDetailsRead]:
+    return twin_management_service.get_serialized_part_twin_details(global_id)
+
+@app.post("/twin-management/serialized-part-twin", response_model=TwinRead, tags=["Twin Management"])
+async def twin_management_create_serialized_part_twin(serialized_part_twin_create: SerializedPartTwinCreate) -> TwinRead:
+    return twin_management_service.create_serialized_part_twin(serialized_part_twin_create)
 
 @app.post("/twin-management/twin-aspect", response_model=TwinAspectRead, tags=["Twin Management"])
 async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:

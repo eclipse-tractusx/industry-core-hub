@@ -35,7 +35,7 @@ from tractusx_sdk.industry.models.aas.v3 import (
     ProtocolInformation,
     ProtocolInformationSecurityAttributes,
 )
-from typing import Dict
+from typing import Dict, Optional
 from uuid import UUID
 from urllib import parse
 
@@ -161,6 +161,29 @@ class DTRManager:
         if isinstance(res, Result):
             raise Exception("Error creating shell descriptor", res.to_json_string())
         return res
+
+    def create_shell_descriptor_serialized_part(self,
+        aas_id: UUID,
+        global_id: UUID,
+        manufacturer_id: str,
+        manufacturer_part_id: str,
+        customer_part_id: str,
+        part_instance_id: str,
+        van: Optional[str],
+        business_partner_number: str,
+        part_category: str):
+        """
+        Registers a twin in the DTR.
+        """
+        print("===============================")
+        print("==== Digital Twin Registry ====")
+        print("===============================")
+        print(f"Registering twin with global_id={global_id}, aas_id={aas_id}, "
+              f"manufacturer_id={manufacturer_id}, manufacturer_part_id={manufacturer_part_id}, "
+              f"customer_part_id={customer_part_id}, part_instance_id={part_instance_id}, "
+              f"van={van}, part_category={part_category}, "
+              f"business_partner_number={business_partner_number}")
+        print()
 
     def create_submodel_descriptor(
         self,
