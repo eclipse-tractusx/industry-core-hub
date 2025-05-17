@@ -135,8 +135,8 @@ tractusx-connector:
 
 vault:
   enabled: false
-  nameOverride: edc-provider-vault
-  fullnameOverride: edc-provider-vault
+  nameOverride: edc-consumer-vault
+  fullnameOverride: edc-consumer-vault
   injector:
     enabled: false
   server:
