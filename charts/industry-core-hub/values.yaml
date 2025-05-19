@@ -356,7 +356,7 @@ postgresql:
     initdb:
       scriptsConfigMap: "{{ .Release.Name }}-cm-postgres"
     extraEnvVars:
-      - name: "ICHUB_PASSWORD"
+      - name: "DATABASE_PASSWORD"
         valueFrom:
           secretKeyRef:
             name: "{{ .Values.auth.existingSecret }}"

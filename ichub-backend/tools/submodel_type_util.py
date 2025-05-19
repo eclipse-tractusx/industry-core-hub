@@ -25,14 +25,12 @@
 from dataclasses import dataclass
 import re
 
-REG_EX_SEMANTIC_ID = re.compile('^(([^:]+):)*(\d(.\d)*)#(\w*)$')
-
+REG_EX_SEMANTIC_ID = re.compile(r'^(([^:]+):)*(\d+(?:\.\d+){1,2})#([\w\-]+)$')
 
 class InvalidSemanticIdError(ValueError):
     """
     Exception raised when the semantic ID is invalid.
     """
-
 
 @dataclass
 class SubmodelType():
@@ -42,13 +40,11 @@ class SubmodelType():
     version: str
     namespace_prefix: str
 
-
-
 def get_submodel_type(semantic_id: str) -> SubmodelType:
     try:
         match: re.Match = REG_EX_SEMANTIC_ID.fullmatch(semantic_id)
 
-        name = match.group(5)
+        name = match.group(4)
         id_short = name[0].lower() + name[1:]
         version = match.group(3)
         namespace_prefix = match.group(2)

@@ -20,27 +20,14 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-authorization:
-  enabled: true
-  apiKey: 
-    key: "X-Api-Key"
-    value: <<example>>
-database:
-  connectionString: "postgresql://user:password@localhost:5432/mydatabase"
-  echo: true
-edc:
-  controlplane:
-    hostname: https://connector.control.plane
-    apikeyheader: X-Api-Key
-    apikey: <<example>>
-    managementpath: /management
-    protocolPath: /api/v1/dsp
-    catalogPath: /catalog
-digitalTwinRegistry:
-  hostname: https://dataprovider-dtr.tx.test
-  apiPath: /api/v3
-  uri: /semantics/registry
-  lookup:
-    uri: /semantics/registry
-submodel_service:
-  path: "./data/submodels"
+import os, re
+
+def substitute_env_vars(string: str) -> str:
+    pattern = re.compile(r"\$(\w+)|\$\{(\w+)\}")
+    def replace_var(match):
+        var_name = match.group(1) or match.group(2)
+        value = os.getenv(var_name)
+        if value is None:
+            raise RuntimeError(f"Environment variable '{var_name}' is not set")
+        return value
+    return pattern.sub(replace_var, string)

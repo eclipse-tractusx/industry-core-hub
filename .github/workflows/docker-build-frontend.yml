@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-name: Build - Docker image (SemVer)
+name: Build - Docker image Frontend (SemVer)
 
 on:
   push:
@@ -42,10 +42,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - image: tractusx/industry-core-hub-backend
-            dockerfile: ./ichub-backend/Dockerfile
-            dockernotice: ./ichub-backend/docker-notice-ichub-backend.md
-            context: ./ichub-backend/
+          - image: tractusx/industry-core-hub-frontend
+            dockerfile: ./ichub-frontend/Dockerfile
+            dockernotice: ./ichub-frontend/docker-notice-ichub-frontend.md
+            context: ./ichub-frontend/
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

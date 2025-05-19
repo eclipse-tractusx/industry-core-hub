@@ -196,6 +196,7 @@ class CatalogPart(SQLModel, table=True):
     legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
     twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description="The ID of the associated twin.")
     name: str = Field(default="", description="The name of the catalog part at the manufacturer.")
+    description: Optional[str] = Field(default=None, description="The description of the catalog part.")
     category: Optional[str] = Field(default=None, description="The category of the catalog part.")
     bpns: Optional[str] = Field(default=None, description="The optional site information (BPNS) of the catalog part.")
     materials: List[Material] = Field(default_factory=list, sa_column=Column(JSON), description="List of materials, e.g. [{'name':'aluminum','share':'20'}]")
@@ -209,6 +210,7 @@ class CatalogPart(SQLModel, table=True):
     twin: Optional[Twin] = Relationship(back_populates="catalog_part")
     partner_catalog_parts: List["PartnerCatalogPart"] = Relationship(back_populates="catalog_part")
     batches: List["Batch"] = Relationship(back_populates="catalog_part")
+    
 
     __table_args__ = (
         UniqueConstraint("legal_entity_id", "manufacturer_part_id", name="uk_catalog_part_legal_entity_id_manufacturer_part_id"),

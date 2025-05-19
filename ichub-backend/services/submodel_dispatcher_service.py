@@ -26,7 +26,6 @@ from uuid import UUID
 from typing import Dict, Any, Optional
 
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
-from managers.metadata_database.manager import RepositoryManagerFactory
 from tools.submodel_type_util import get_submodel_type
 
 class SubmodelNotSharedWithBusinessPartnerError(ValueError):

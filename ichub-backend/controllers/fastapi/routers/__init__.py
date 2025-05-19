@@ -20,27 +20,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-authorization:
-  enabled: true
-  apiKey: 
-    key: "X-Api-Key"
-    value: <<example>>
-database:
-  connectionString: "postgresql://user:password@localhost:5432/mydatabase"
-  echo: true
-edc:
-  controlplane:
-    hostname: https://connector.control.plane
-    apikeyheader: X-Api-Key
-    apikey: <<example>>
-    managementpath: /management
-    protocolPath: /api/v1/dsp
-    catalogPath: /catalog
-digitalTwinRegistry:
-  hostname: https://dataprovider-dtr.tx.test
-  apiPath: /api/v3
-  uri: /semantics/registry
-  lookup:
-    uri: /semantics/registry
-submodel_service:
-  path: "./data/submodels"
+# Package-level variables
+__author__ = 'Eclipse Tractus-X Contributors'
+__license__ = "Apache License, Version 2.0"

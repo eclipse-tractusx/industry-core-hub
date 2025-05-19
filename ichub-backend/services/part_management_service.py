@@ -23,10 +23,13 @@
 #################################################################################
 
 from typing import Dict, List, Optional
-from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, CatalogPartReadWithStatus, SerializedPartQuery
+from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, SimpleCatalogPartReadWithStatus, CatalogPartReadWithStatus, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, SerializedPartQuery, SimpleSerializedPartRead
 from models.services.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory
-from models.metadata_database.models import CatalogPart, Batch, SerializedPart, JISPart, PartnerCatalogPart
+from models.metadata_database.models import CatalogPart, Batch, LegalEntity, SerializedPart, JISPart, PartnerCatalogPart
+from managers.config.log_manager import LoggingManager
+
+logger = LoggingManager.get_logger(__name__)
 
 class PartManagementService():
     """
@@ -52,8 +55,16 @@ class PartManagementService():
             # First check if the legal entity exists for the given manufacturer ID
             db_legal_entity = repos.legal_entity_repository.get_by_bpnl(catalog_part_create.manufacturer_id)
             if not db_legal_entity:
-                raise ValueError(f"Legal Entity with manufacturer BPNL '{catalog_part_create.manufacturer_id}' does not exist. Please create it first.")
-
+                logger.warning(f"Legal Entity with manufacturer BPNL '{catalog_part_create.manufacturer_id}' not found. Creating a new one!")
+                db_legal_entity = repos.legal_entity_repository.create(
+                    LegalEntity(bpnl=catalog_part_create.manufacturer_id)
+                )
+                repos.legal_entity_repository.commit()
+            
+            if not db_legal_entity:
+                raise ValueError(f"Failed to create or retrieve the legal entity '{catalog_part_create.manufacturer_id}'")
+            
+            # Check if the business partner exists for the given manufacturer ID
             # Check if the catalog part already exists
             db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
                 db_legal_entity.id, catalog_part_create.manufacturer_part_id
@@ -61,23 +72,14 @@ class PartManagementService():
             if db_catalog_part:
                 raise ValueError("Catalog part already exists.")
             else:
-                # Create the catalog part in the metadata database
+                # Create the catalog part in the metadata database, using legal_entity_id as foreign key
                 db_catalog_part = CatalogPart(
-                    manufacturer_part_id=catalog_part_create.manufacturer_part_id,
-                    legal_entity=db_legal_entity,
-                    name=catalog_part_create.name,
-                    category=catalog_part_create.category,
-                    bpns=catalog_part_create.bpns
+                    legal_entity_id=db_legal_entity.id,
+                    **catalog_part_create.model_dump(by_alias=False)
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
-
-            # Create the catalog part in the metadata database
-            db_catalog_part = CatalogPart(
-                legal_entity=db_legal_entity,
-                **catalog_part_create.model_dump(by_alias=False)
-            )
-            
-            repos.catalog_part_repository.create(db_catalog_part)
+                repos.catalog_part_repository.commit()
+                
             # Prepare the result object
             result = CatalogPartReadWithStatus(
                 **catalog_part_create.model_dump(by_alias=True),
@@ -152,6 +154,29 @@ class PartManagementService():
         # Logic to delete a catalog part
         pass
 
+    def get_simple_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[SimpleCatalogPartReadWithStatus]:
+        with RepositoryManagerFactory.create() as repos:
+            result = []
+            
+            db_catalog_parts: List[tuple[CatalogPart, int]] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
+                manufacturer_id, manufacturer_part_id, join_partner_catalog_parts=True
+            )
+            
+            if db_catalog_parts:
+                for db_catalog_part, status in db_catalog_parts:
+                    result.append(
+                        SimpleCatalogPartReadWithStatus(
+                            manufacturerId=db_catalog_part.legal_entity.bpnl,
+                            manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                            name=db_catalog_part.name,
+                            category=db_catalog_part.category,
+                            bpns=db_catalog_part.bpns,
+                            status=status
+                        )
+                    )
+            
+            return result
+
     def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartReadWithStatus]:
         with RepositoryManagerFactory.create() as repos:
             result = []
@@ -168,23 +193,25 @@ class PartManagementService():
                             manufacturerPartId=db_catalog_part.manufacturer_part_id,
                             name=db_catalog_part.name,
                             category=db_catalog_part.category,
+                            bpns=db_catalog_part.bpns,
                             materials=db_catalog_part.materials,
                             width=db_catalog_part.width,
                             height=db_catalog_part.height,
                             length=db_catalog_part.length,
                             weight=db_catalog_part.weight,
-                            bpns=db_catalog_part.bpns,
+                            description=db_catalog_part.description,
                             customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
-                                name=partner_catalog_part.business_partner.name,
-                                bpnl=partner_catalog_part.business_partner.bpnl
-                            ) for partner_catalog_part in db_catalog_part.partner_catalog_parts},
-                            status=status,
+                                 name=partner_catalog_part.business_partner.name,
+                                 bpnl=partner_catalog_part.business_partner.bpnl
+                             ) for partner_catalog_part in db_catalog_part.partner_catalog_parts},
+                            status=status
                         )
                     )
             
             return result
-
-    def get_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartRead]:
+    
+    
+    def get_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartReadWithStatus]:
         """
         Retrieve a catalog part from the system.
         """
@@ -275,14 +302,15 @@ class PartManagementService():
                     bpnl=db_business_partner.bpnl
                 ),
                 van=serialized_part_create.van,
+                name=db_catalog_part.name,
+                description=db_catalog_part.description,
+                category=db_catalog_part.category,
+                bpns=db_catalog_part.bpns,
                 materials=db_catalog_part.materials,
                 width=db_catalog_part.width,
                 height=db_catalog_part.height,
                 length=db_catalog_part.length,
                 weight=db_catalog_part.weight,
-                category=db_catalog_part.category,
-                name=db_catalog_part.name,
-                bpns=db_catalog_part.bpns,
             )
 
 
@@ -302,7 +330,7 @@ class PartManagementService():
         # Logic to retrieve a serialized part
         pass
 
-    def get_serialized_parts(self, query: SerializedPartQuery = SerializedPartQuery()) -> List[SerializedPartRead]:
+    def get_simple_serialized_parts(self, query: SerializedPartQuery = SerializedPartQuery()) -> List[SimpleSerializedPartRead]:
         """
         Retrieves serialized parts from the system according to given parameters.
         """
@@ -319,17 +347,12 @@ class PartManagementService():
             result = []
             for db_serialized_part in db_serialized_parts:
                 result.append(
-                    SerializedPartRead(
+                    SimpleSerializedPartRead(
                         manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
                         manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
                         name=db_serialized_part.partner_catalog_part.catalog_part.name,
                         category=db_serialized_part.partner_catalog_part.catalog_part.category,
                         bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-                        materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
-                        width=db_serialized_part.partner_catalog_part.catalog_part.width,
-                        height=db_serialized_part.partner_catalog_part.catalog_part.height,
-                        length=db_serialized_part.partner_catalog_part.catalog_part.length,
-                        weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
                         partInstanceId=db_serialized_part.part_instance_id,
                         customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
                         businessPartner=BusinessPartnerRead(

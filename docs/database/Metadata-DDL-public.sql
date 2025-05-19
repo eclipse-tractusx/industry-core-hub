@@ -77,6 +77,7 @@ CREATE TABLE public.catalog_part (
 	name character varying NOT NULL,
 	category character varying,
 	bpns character varying,
+    description character varying,
     materials json,
     width json,
     height json,

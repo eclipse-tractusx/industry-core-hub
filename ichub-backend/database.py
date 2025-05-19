@@ -23,8 +23,13 @@
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from sqlmodel import SQLModel, create_engine, text
+from tools import env_tools
 
-connection_string = ConfigManager.get_config("database.connectionString", default={})
+base_dsn = ConfigManager.get_config("database.connectionString", default={})
+
+# Substitute the environment variables in the connection string if available
+connection_string = env_tools.substitute_env_vars(string=base_dsn) 
+
 db_echo = ConfigManager.get_config("database.echo", default={False})
 
 engine = create_engine(str(connection_string), echo=db_echo)
