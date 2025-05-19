@@ -22,6 +22,8 @@ The desired Catena-X component architecture for the Industry Core Hub is shown i
 
 ![Abstract Level Arch](./media/Abstract%20Level%20Arch.svg)
 
+The Industry Core Hub will act as a middleware layer that orchestrates interactions between applications and Tractus-X components, enabling organizations to implement dataspace connectivity without deep expertise in each component.
+
 ### High level requirements
 
 Based on the new abstraction requirement described above the following capabilities should be provided for data providers and data consumers in the dataspace.
@@ -55,13 +57,38 @@ An EDC and DTR service should be part of the application, but it should also be 
 - It should be scalable for multiple applications scenarios
 - It should be keepen generic for any data retrival
 
-
 ### Quality goals
 
+- Reduce complexity of Eclipse Tractus-X adoption
 - Enable a quicker and easier adoption/implementation of the data space for use cases.
 - Enable a quicker and easier adoption/implementation of AAS standards for use cases.
-- Provide a framework for automotive parts registration and integration in Catena-X use cases.
-- Provide scalability for up to 1000 users.
+- Create stable, scalable backend SDK for use case applications
+- Enable 1,000 users goal of Catena-X for 2025 (Scalability)
+- Provide simple application for small and medium companies
+- Allow new applications to build on stable dataspace foundation
+- Create technical foundation for enablement services
+- Establish industry core stack
+- Enable compatible KIT add-ons that extend functionality  
+ 
+### Standards Implementation
+
+| Standard ID   | Name                                                    | Description                                    |
+|---------------|---------------------------------------------------------|------------------------------------------------|
+| CX-0001       | EDC Discovery API                                       | Standardized API for discovering EDC endpoints |
+| CX-0002       | Digital Twins in Catena-X                               | Implementation of digital twin concepts        |
+| CX-0003       | SAMM Aspect Meta Model                                  | Semantic aspect meta model                     |
+| CX-0018       | Dataspace Connectivity                                  | Standards for connecting to the dataspace      |
+| CX-00126      | Industry Core: Part Type                                | Industry Core part type definitions            |
+| CX-00127      | Industry Core: Part Instance                            | Industry Core part instance definitions        |
+
+### Technology Stack
+
+| Component     | Technology                                             | 
+|---------------|--------------------------------------------------------|
+| Backend       | Python, FAST API                                       | 
+| Frontend      | React.js, Material UI, Portal Shared Components        | 
+| Database      | PostgreSQL                                             | 
+| Deployment      | Helm Charts, Docker containers                       | 
 
 ### Stakeholders
 

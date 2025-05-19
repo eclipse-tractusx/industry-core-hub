@@ -30,7 +30,7 @@ metadata:
 data:
   01-init-db-user.sh: |
     postgresql_create_ichub_user() {
-      local -r escaped_password="${ICHUB_PASSWORD//\'/\'\'}"
+      local -r escaped_password="${DATABASE_PASSWORD//\'/\'\'}"
       info "Creating user ichub"
       export PGPASSWORD="$POSTGRES_PASSWORD"
       echo "CREATE USER ichub WITH PASSWORD '${escaped_password}';" | psql -U postgres
@@ -39,4 +39,10 @@ data:
   02-init-db.sql: |
     CREATE SCHEMA ichub;
     ALTER SCHEMA ichub OWNER TO ichub;
+    GRANT USAGE ON SCHEMA public TO ichub;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ichub;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ichub;
+
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ichub;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ichub;
 {{- end -}}

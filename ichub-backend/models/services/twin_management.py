@@ -28,7 +28,7 @@ from uuid import UUID
 from typing import Dict, Optional, List, Any
 from pydantic import BaseModel, Field
 
-from models.services.part_management import CatalogPartBase, CatalogPartRead, BatchCreate, SerializedPartCreate, JISPartCreate
+from models.services.part_management import CatalogPartBase, BusinessPartnerRead, CatalogPartRead, BatchCreate, SerializedPartCreate, JISPartCreate
 from models.services.partner_management import DataExchangeAgreementRead
 
 class TwinAspectRegistrationStatus(enum.Enum):
@@ -111,6 +111,7 @@ class CatalogPartTwinDetailsRead(CatalogPartTwinRead, TwinDetailsReadBase):
 
 class CatalogPartTwinShare(CatalogPartBase):
     business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")
+    customer_part_ids: Optional[Dict[str, BusinessPartnerRead]] = Field(alias="customerPartIds", description="The list of customer part IDs mapped to the respective Business Partners.", default={})
 
 class BatchTwinCreate(BatchCreate, TwinCreateBase):
     pass

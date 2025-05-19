@@ -1,0 +1,32 @@
+@startuml
+actor User
+participant PartSharingShortcutService
+participant RepositoryManagerFactory
+participant CatalogPartRepository
+participant EnablementServiceStackRepository
+participant LegalEntityRepository
+participant BusinessPartnerRepository
+
+
+User -> PartSharingShortcutService: create_catalog_part_sharing_shortcut(create_input, auto_generate_part_type_information)
+
+activate PartSharingShortcutService
+PartSharingShortcutService -> RepositoryManagerFactory: create()
+activate RepositoryManagerFactory
+RepositoryManagerFactory -> CatalogPartRepository: find_by_manufacturer_id_manufacturer_part_id()
+deactivate RepositoryManagerFactory
+alt Catalog part not found
+    PartSharingShortcutService -> User: raise ValueError("Catalog part not found")
+    deactivate PartSharingShortcutService
+else Catalog part found
+    PartSharingShortcutService -> EnablementServiceStackRepository: find_by_legal_entity_bpnl()
+    alt Enablement service stack not found
+        PartSharingShortcutService -> LegalEntityRepository: get_by_bpnl()
+        PartSharingShortcutService -> EnablementServiceStackRepository: create()
+    end
+    PartSharingShortcutService -> BusinessPartnerRepository: get_by_bpnl()
+    alt Business partner not found
+        PartSharingShortcutService -> BusinessPartnerRepository: create()
+    end
+deactivate PartSharingShortcutService
+@enduml

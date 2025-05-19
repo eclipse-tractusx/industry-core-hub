@@ -49,7 +49,7 @@ class PartSharingShortcutService:
             if not db_catalog_parts:
                 raise ValueError("Catalog part not found.")
             
-            db_catalog_part = db_catalog_parts[0]
+            db_catalog_part, _ = db_catalog_parts[0]
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => create it with the default name)
@@ -136,7 +136,7 @@ class PartSharingShortcutService:
                 payload = self.submodel_document_generator.generate_part_type_information_v1(
                     global_id=db_twin.global_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
-                    category=db_catalog_part.category,
+                    name=db_catalog_part.name,
                     bpns=db_catalog_part.bpns
                 )
 

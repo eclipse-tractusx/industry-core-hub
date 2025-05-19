@@ -22,8 +22,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+from sqlalchemy import case
 from sqlmodel import SQLModel, Session, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, aliased
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
@@ -134,8 +135,32 @@ class CatalogPartRepository(BaseRepository[CatalogPart]):
             CatalogPart.manufacturer_part_id == manufacturer_part_id)
         return self._session.scalars(stmt).first()
 
-    def find_by_manufacturer_id_manufacturer_part_id(self, manufacturer_id: Optional[str], manufacturer_part_id: Optional[str], join_partner_catalog_parts : bool = False) -> List[CatalogPart]:
-        stmt = select(CatalogPart).distinct()
+    def find_by_manufacturer_id_manufacturer_part_id(self, manufacturer_id: Optional[str], manufacturer_part_id: Optional[str], join_partner_catalog_parts : bool = False) -> List[tuple[CatalogPart, int]]:
+        """
+        Find catalog parts by manufacturer ID and manufacturer part ID.
+        If manufacturer ID is not provided, all catalog parts are returned.
+        If manufacturer part ID is not provided, all catalog parts with the given manufacturer ID are returned.
+        
+        The result is a list of tuples, where each tuple contains the CatalogPart object and its status.
+        """
+
+        # Case to determine the status of the catalog part
+        status_expr = case(
+            # 0: no twin at all (draft)
+            (CatalogPart.twin_id.is_(None), 0),
+            # 1: twin exists, but not yet DTR-registered (pending)
+            (TwinRegistration.dtr_registered.is_(False), 1),
+            # 2: DTR-registered but not yet in any TwinExchange row (registered)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_(None)), 2),
+            # 3: DTR-registered AND appears in TwinExchange (shared)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_not(None)), 3),
+            else_=0
+        ).label("status")
+
+        stmt = select(CatalogPart, status_expr).distinct(CatalogPart.id)
+
+        stmt = stmt.outerjoin(TwinRegistration, TwinRegistration.twin_id == CatalogPart.twin_id)
+        stmt = stmt.outerjoin(TwinExchange, TwinExchange.twin_id == CatalogPart.twin_id)
 
         if manufacturer_id:
             stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id).where(LegalEntity.bpnl == manufacturer_id)

@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from config.log_manager import LoggingManager
+from managers.config.log_manager import LoggingManager
 
 import os
 import yaml
@@ -40,8 +40,7 @@ class ConfigManager:
             return cls._config
 
         if config_path is None:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            config_path = os.path.join(base_dir, "config", "configuration.yml")
+            config_path = os.path.join(os.getcwd(), "config", "configuration.yml")
 
         try:
             with open(config_path, "r") as f:

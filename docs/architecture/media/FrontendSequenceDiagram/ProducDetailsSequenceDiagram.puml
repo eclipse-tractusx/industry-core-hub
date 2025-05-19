@@ -1,0 +1,64 @@
+@startuml
+actor User
+participant ProductsDetails
+participant useParams
+participant useState
+participant carPartsData
+participant PageNotification
+participant ShareDropdown
+participant ProductData
+participant ProductButton
+participant InstanceProductsTable
+participant JsonViewerDialog
+participant ShareDialog
+
+User -> ProductsDetails: Render Component
+activate ProductsDetails
+
+ProductsDetails -> useParams: Retrieve product ID
+ProductsDetails -> carPartsData: Find part by ID
+alt Part not found
+    ProductsDetails -> User: Display "Product not found"
+    deactivate ProductsDetails
+else Part found
+    ProductsDetails -> useState: Initialize states (jsonDialogOpen, shareDialogOpen, notification)
+    User -> PageNotification: View notifications
+    ProductsDetails -> PageNotification: Render notification
+
+    User -> ShareDropdown: Interact with ShareDropdown (Copy, Download, Share)
+    activate ShareDropdown
+    ShareDropdown -> ProductsDetails: Trigger handleCopy
+    ProductsDetails -> Clipboard: Copy part UUID
+    alt Copy success
+        ProductsDetails -> useState: Set success notification
+    else Copy failed
+        ProductsDetails -> useState: Set error notification
+    end
+    ShareDropdown -> ProductsDetails: Trigger handleDownload
+    ProductsDetails -> Browser: Download part UUID as file
+    ShareDropdown -> ProductsDetails: Trigger handleOpenShareDialog
+    ProductsDetails -> ShareDialog: Open ShareDialog
+    deactivate ShareDropdown
+
+    User -> ShareDialog: Interact with ShareDialog
+    activate ShareDialog
+    ShareDialog -> ProductsDetails: Trigger handleCloseShareDialog
+    ProductsDetails -> ShareDialog: Close ShareDialog
+    deactivate ShareDialog
+
+    User -> ProductButton: Click "DIGITAL PRODUCT PASSPORT v5.0.0"
+    ProductsDetails -> JsonViewerDialog: Open JSON Viewer
+    activate JsonViewerDialog
+    User -> JsonViewerDialog: Close JSON Viewer
+    JsonViewerDialog -> ProductsDetails: Trigger handleCloseJsonDialog
+    deactivate JsonViewerDialog
+
+    User -> ProductButton: Click other buttons (e.g., PCF, TRANSMISSION PASS)
+    ProductsDetails -> Console: Log button actions
+
+    User -> InstanceProductsTable: View instance products
+    ProductsDetails -> InstanceProductsTable: Render table
+end
+
+deactivate ProductsDetails
+@enduml

@@ -23,29 +23,49 @@
 #################################################################################
 
 from typing import Dict, List, Optional
-from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead
+from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead,SimpleCatalogPartReadWithStatus, JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, CatalogPartReadWithStatus
 from models.services.partner_management import BusinessPartnerRead
 from managers.metadata_database.repositories import CatalogPartRepository, BusinessPartnerRepository, LegalEntityRepository, PartnerCatalogPartRepository
 from managers.metadata_database.manager import RepositoryManager, RepositoryManagerFactory
-from models.metadata_database.models import CatalogPart, Batch, SerializedPart, JISPart, PartnerCatalogPart
+from models.metadata_database.models import CatalogPart, Batch, LegalEntity, SerializedPart, JISPart, PartnerCatalogPart
+from managers.config.log_manager import LoggingManager
+
+logger = LoggingManager.get_logger(__name__)
 
 class PartManagementService():
     """
     Service class for managing parts and their relationships in the system.
     """
 
-    def create_catalog_part(self, catalog_part_create: CatalogPartCreate) -> CatalogPartRead:
+    def create_catalog_part(self, catalog_part_create: CatalogPartCreate) -> CatalogPartReadWithStatus:
         """
         Create a new catalog part in the system.
         Optionally also create attached partner catalog parts - i.e. partner specific mappings of the catalog part.
         """
+        # Validate the input data
+        # Validate materials share
+        if catalog_part_create.materials:
+            total_share = sum(material.share for material in catalog_part_create.materials)
+            # We only allow the share to be 0-100%
+            if total_share < 0:
+                raise ValueError("The share of materials can't be lower than 0%.")
+            if total_share > 100:
+                raise ValueError("The total share of materials can't be higher than 100%.")
         with RepositoryManagerFactory.create() as repos:
             
             # First check if the legal entity exists for the given manufacturer ID
             db_legal_entity = repos.legal_entity_repository.get_by_bpnl(catalog_part_create.manufacturer_id)
             if not db_legal_entity:
-                raise ValueError(f"Legal Entity with manufacturer BPNL '{catalog_part_create.manufacturer_id}' does not exist. Please create it first.")
-
+                logger.warning(f"Legal Entity with manufacturer BPNL '{catalog_part_create.manufacturer_id}' not found. Creating a new one!")
+                db_legal_entity = repos.legal_entity_repository.create(
+                    LegalEntity(bpnl=catalog_part_create.manufacturer_id)
+                )
+                repos.legal_entity_repository.commit()
+            
+            if not db_legal_entity:
+                raise ValueError(f"Failed to create or retrieve the legal entity '{catalog_part_create.manufacturer_id}'")
+            
+            # Check if the business partner exists for the given manufacturer ID
             # Check if the catalog part already exists
             db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
                 db_legal_entity.id, catalog_part_create.manufacturer_part_id
@@ -53,19 +73,19 @@ class PartManagementService():
             if db_catalog_part:
                 raise ValueError("Catalog part already exists.")
             else:
-                # Create the catalog part in the metadata database
+                # Create the catalog part in the metadata database, using legal_entity_id as foreign key
                 db_catalog_part = CatalogPart(
-                    manufacturer_part_id=catalog_part_create.manufacturer_part_id,
-                    legal_entity=db_legal_entity,
-                    category=catalog_part_create.category,
+                    legal_entity_id=db_legal_entity.id,
+                    **catalog_part_create.model_dump(by_alias=False)
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
-
+                repos.catalog_part_repository.commit()
+                
             # Prepare the result object
-            result = CatalogPartRead(
-                manufacturerId=catalog_part_create.manufacturer_id,
-                manufacturerPartId=catalog_part_create.manufacturer_part_id,
-                category=catalog_part_create.category)
+            result = CatalogPartReadWithStatus(
+                **catalog_part_create.model_dump(by_alias=True),
+                status=0,  # Default status is draft
+            )
 
             # Check if we already should create some customer part IDs for the given catalog part
             if catalog_part_create.customer_part_ids:
@@ -98,8 +118,11 @@ class PartManagementService():
     def create_catalog_part_by_ids(self,
         manufacturer_id: str,
         manufacturer_part_id: str,
+        name: str,
         category: Optional[str],
-        customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartRead:
+        customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartReadWithStatus:
+        bpns: Optional[str]
+          
         """Convenience method to create a catalog part by its IDs."""
 
         partner_catalog_parts = []
@@ -113,11 +136,16 @@ class PartManagementService():
         catalog_part_create = CatalogPartCreate(
             manufacturerId=manufacturer_id,
             manufacturerPartId=manufacturer_part_id,
+            name=name,
             category=category,
+            bpns=bpns,
             customerPartIds=partner_catalog_parts
         )
 
-        return self.create_catalog_part(catalog_part_create)
+        # Create the catalog part, and return the catalog saved in the database
+        result_catalog_part_read = self.create_catalog_part(catalog_part_create)
+
+        return result_catalog_part_read
 
 
     def delete_catalog_part(self, catlog_part: CatalogPartDelete) -> None:
@@ -127,31 +155,64 @@ class PartManagementService():
         # Logic to delete a catalog part
         pass
 
-    def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartRead]:
+    def get_simple_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[SimpleCatalogPartReadWithStatus]:
         with RepositoryManagerFactory.create() as repos:
             result = []
             
-            db_catalog_parts: List[CatalogPart] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
+            db_catalog_parts: List[tuple[CatalogPart, int]] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
                 manufacturer_id, manufacturer_part_id, join_partner_catalog_parts=True
             )
             
             if db_catalog_parts:
-                for db_catalog_part in db_catalog_parts:
+                for db_catalog_part, status in db_catalog_parts:
                     result.append(
-                        CatalogPartRead(
+                        SimpleCatalogPartReadWithStatus(
                             manufacturerId=db_catalog_part.legal_entity.bpnl,
                             manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                            name=db_catalog_part.name,
                             category=db_catalog_part.category,
-                            customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
-                                name=partner_catalog_part.business_partner.name,
-                                bpnl=partner_catalog_part.business_partner.bpnl
-                            ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+                            bpns=db_catalog_part.bpns,
+                            status=status
                         )
                     )
             
             return result
 
-    def get_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartRead]:
+    def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartReadWithStatus]:
+        with RepositoryManagerFactory.create() as repos:
+            result = []
+            
+            db_catalog_parts: List[tuple[CatalogPart, int]] = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
+                manufacturer_id, manufacturer_part_id, join_partner_catalog_parts=True
+            )
+            
+            if db_catalog_parts:
+                for db_catalog_part, status in db_catalog_parts:
+                    result.append(
+                        CatalogPartReadWithStatus(
+                            manufacturerId=db_catalog_part.legal_entity.bpnl,
+                            manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                            name=db_catalog_part.name,
+                            category=db_catalog_part.category,
+                            bpns=db_catalog_part.bpns,
+                            materials=db_catalog_part.materials,
+                            width=db_catalog_part.width,
+                            height=db_catalog_part.height,
+                            length=db_catalog_part.length,
+                            weight=db_catalog_part.weight,
+                            description=db_catalog_part.description,
+                            customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
+                                 name=partner_catalog_part.business_partner.name,
+                                 bpnl=partner_catalog_part.business_partner.bpnl
+                             ) for partner_catalog_part in db_catalog_part.partner_catalog_parts},
+                            status=status
+                        )
+                    )
+            
+            return result
+    
+    
+    def get_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str) -> Optional[CatalogPartReadWithStatus]:
         """
         Retrieve a catalog part from the system.
         """
