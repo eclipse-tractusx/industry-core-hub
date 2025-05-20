@@ -52,6 +52,7 @@ backend:
       apiKey:
         key: "X-Api-Key"
         value: "<<example>>"
+    bpnl: BPNL000000000000
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: true
@@ -178,7 +179,7 @@ backend:
     # -- temporary file system mount
     - name: tmpfs
       emptyDir: {}
-      
+
   # -- Persistance configuration for the backend
   persistence:
     # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)

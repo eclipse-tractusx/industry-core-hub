@@ -22,6 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Header, Body
 from fastapi.responses import JSONResponse
 
@@ -29,6 +30,7 @@ from services.submodel_dispatcher_service import SubmodelNotSharedWithBusinessPa
 
 from tools.submodel_type_util import InvalidSemanticIdError
 from tools import InvalidUUIDError
+from migrations.startup_handler import on_startup
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -63,7 +65,19 @@ tags_metadata = [
     }
 ]
 
-app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event for the FastAPI application.
+    This is where you can perform startup and shutdown tasks.
+    """
+    # Perform startup tasks here
+    on_startup()
+    yield
+    # Perform shutdown tasks here
+    pass
+
+app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", lifespan=lifespan, openapi_tags=tags_metadata)
 
 ## Include here all the routers for the application.
 app.include_router(part_management.router)

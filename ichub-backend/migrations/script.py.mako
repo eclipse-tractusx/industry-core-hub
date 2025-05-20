@@ -20,28 +20,32 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-authorization:
-  enabled: true
-  apiKey: 
-    key: "X-Api-Key"
-    value: <<example>>
-bpnl: BPNL000000000000
-database:
-  connectionString: "postgresql://user:password@localhost:5432/mydatabase"
-  echo: true
-edc:
-  controlplane:
-    hostname: https://connector.control.plane
-    apikeyheader: X-Api-Key
-    apikey: <<example>>
-    managementpath: /management
-    protocolPath: /api/v1/dsp
-    catalogPath: /catalog
-digitalTwinRegistry:
-  hostname: https://dataprovider-dtr.tx.test
-  apiPath: /api/v3
-  uri: /semantics/registry
-  lookup:
-    uri: /semantics/registry
-submodel_service:
-  path: "./data/submodels"
+"""${message}
+
+Revision ID: ${up_revision}
+Revises: ${down_revision | comma,n}
+Create Date: ${create_date}
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+import sqlmodel
+${imports if imports else ""}
+
+# revision identifiers, used by Alembic.
+revision: str = ${repr(up_revision)}
+down_revision: Union[str, None] = ${repr(down_revision)}
+branch_labels: Union[str, Sequence[str], None] = ${repr(branch_labels)}
+depends_on: Union[str, Sequence[str], None] = ${repr(depends_on)}
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+    ${upgrades if upgrades else "pass"}
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+    ${downgrades if downgrades else "pass"}

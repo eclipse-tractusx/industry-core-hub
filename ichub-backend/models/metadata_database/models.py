@@ -34,9 +34,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from pydantic import BaseModel, Field as PydField
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import case, select, exists, Column, JSON, UniqueConstraint, SmallInteger
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import aliased
+from sqlalchemy import Column, JSON, UniqueConstraint, SmallInteger
 
 class Unit(str, Enum):
     mm = "mm"
@@ -137,10 +135,10 @@ class Twin(SQLModel, table=True):
         twin
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    global_id: UUID = Field(default_factory=uuid4, unique=True, description="The global ID (aka. Catena-X ID) of the twin.")
-    aas_id: UUID = Field(default_factory=uuid4, unique=True, description="The AAS ID of the twin.")
-    created_date: datetime = Field(index=True, default_factory=datetime.utcnow, description="The creation date of the twin.")
-    modified_date: datetime = Field(index=True, default_factory=datetime.utcnow, description="The last modification date of the twin.")
+    global_id: UUID = Field(default_factory=uuid4, nullable=False, description="The global ID (aka. Catena-X ID) of the twin.")
+    aas_id: UUID = Field(default_factory=uuid4, nullable=False, description="The AAS ID of the twin.")
+    created_date: datetime = Field(index=True, default_factory=datetime.utcnow, nullable=False, description="The creation date of the twin.")
+    modified_date: datetime = Field(index=True, default_factory=datetime.utcnow, nullable=False, description="The last modification date of the twin.")
     asset_class: Optional[str] = Field(default=None, description="The asset class of the twin.")
     additional_context: Optional[str] = Field(default=None, description="Additional context for the twin.")
 
@@ -296,8 +294,8 @@ class SerializedPart(SQLModel, table=True):
         serialized_part
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    partner_catalog_part_id: int = Field(index=True, foreign_key="partner_catalog_part.id", description="The ID of the associated partner catalog part.")
-    part_instance_id: str = Field(index=True, description="The part instance ID.")
+    partner_catalog_part_id: int = Field(index=True, foreign_key="partner_catalog_part.id", nullable=False, description="The ID of the associated partner catalog part.")
+    part_instance_id: str = Field(index=True, nullable=False, description="The part instance ID.")
     van: Optional[str] = Field(index=True, default=None, description="The optional VAN (Vehicle Assembly Number).")
     twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description="The ID of the associated twin.")
 
@@ -335,8 +333,8 @@ class JISPart(SQLModel, table=True):
         jis_part
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    partner_catalog_part_id: int = Field(index=True, foreign_key="partner_catalog_part.id", description="The ID of the associated partner catalog part.")
-    jis_number: str = Field(index=True, description="The JIS number.")
+    partner_catalog_part_id: int = Field(index=True, foreign_key="partner_catalog_part.id", nullable=False, description="The ID of the associated partner catalog part.")
+    jis_number: str = Field(index=True, nullable=False, description="The JIS number.")
     parent_order_number: Optional[str] = Field(index=True, default=None, description="The parent order number.")
     jis_call_date: Optional[datetime] = Field(index=True, default=None, description="The JIS call date.")
     twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description="The ID of the associated twin.")
@@ -559,9 +557,9 @@ class TwinAspect(SQLModel, table=True):
 
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    submodel_id: UUID = Field(default_factory=uuid4, unique=True, description="The submodel ID.")
-    semantic_id: str = Field(index=True, description="The semantic ID.")
-    twin_id: int = Field(index=True, foreign_key="twin.id", description="The ID of the associated twin.")
+    submodel_id: UUID = Field(default_factory=uuid4, unique=True, nullable=False, description="The submodel ID.")
+    semantic_id: str = Field(index=True, nullable=False, description="The semantic ID.")
+    twin_id: int = Field(index=True, foreign_key="twin.id", nullable=False, description="The ID of the associated twin.")
 
     # Relationships
     twin: Twin = Relationship(back_populates="twin_aspects")

@@ -33,6 +33,7 @@ data:
       apiKey: 
         key: {{ .Values.backend.configuration.authorization.apiKey.key | quote }}
         value: {{ .Values.backend.configuration.authorization.apiKey.value | quote }}
+    bpnl: {{ .Values.backend.configuration.bpnl | quote }}
     database:
       connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
       echo: {{ .Values.backend.configuration.database.echo }}
