@@ -20,44 +20,18 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-@use '../config/variables' as *;
-@use '../config/mixins';
+declare const ENV: Record<string, string>
 
-.product-catalog{
-    
-    .title{
-        @include mixins.center-flex;
-        margin: 20px 0px;
-    }
-    .text{
-        @include mixins.space-title-h2-font;
-        color: $brand-text;
-        padding: 5px 80px;
-        text-align: center;
-        background: rgba($brand-primary, 0.3);
-        @include mixins.space-shadow($brand-blue);
-    }
-}
+export const isRequireHttpsUrlPattern = () =>
+  ENV.REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
-.product-list-pagination {
-    p {
-        color: $brand-text !important;
-    }
-    button{
-        color: $brand-text !important;
-    }
-    button.Mui-disabled {
-        color: $brand-shadow !important;
-    }
-}
+export const getIchubBackendUrl = () => ENV.ICHUB_BACKEND_URL ?? '';
+export const participantId = () => ENV.PARTICIPANT_ID ?? 'BPNL000000000000';
 
-.not-found{
-    &.title{
-        color: $brand-text!important;
-        font-size: 1em;
-    }
-    &.icon{
-        color: $brand-text!important;
-        font-size: 8em;
-    }
-}
+const EnvironmentService = {
+  isRequireHttpsUrlPattern,
+  getIchubBackendUrl,
+  participantId
+};
+
+export default EnvironmentService;

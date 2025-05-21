@@ -257,3 +257,31 @@ Return the postgresql DSN URL
 {{- $sslMode := include "industry-core-hub.postgresql.sslMode" . -}}
 {{- printf "postgresql://%s:$DATABASE_PASSWORD@%s:%s/%s?sslmode=%s" $user $host $port $name $sslMode -}}
 {{- end -}}
+
+{{- define "industry-core-hub.ingressUrl" -}}
+{{- $ingress := .Values.backend.ingress }}
+{{- $host := "" }}
+{{- $path := "/" }}
+{{- $tlsHosts := dict }}
+{{- range $tls := $ingress.tls }}
+  {{- range $tlsHost := $tls.hosts }}
+    {{- $_ := set $tlsHosts $tlsHost true }}
+  {{- end }}
+{{- end }}
+{{- if $ingress.hosts }}
+  {{- $first := index $ingress.hosts 0 }}
+  {{- $host = $first.host }}
+  {{- if and $first.paths (gt (len $first.paths) 0) }}
+    {{- $firstPath := index $first.paths 0 }}
+    {{- if and $firstPath.path (ne $firstPath.path "/") }}
+      {{- $path = $firstPath.path }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $scheme := ternary "https" "http" (hasKey $tlsHosts $host) }}
+{{- if eq $path "/" }}
+  {{- printf "%s://%s" $scheme $host }}
+{{- else }}
+  {{- printf "%s://%s%s" $scheme $host $path }}
+{{- end }}
+{{- end }}

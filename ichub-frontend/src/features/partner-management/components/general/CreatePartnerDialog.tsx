@@ -27,12 +27,14 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { PartnerDialogProps } from '../../../../types/partnerDialogViewer';
+import { createPartner } from '../../api';
 
 const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDialogProps) => {
   const [name, setName] = useState('');
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [apiErrorMessage, setApiErrorMessage] = useState('');
 
   // Load partner data if it exists (edit mode)
   useEffect(() => {
@@ -45,25 +47,61 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
     }
   }, [partnerData, open]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if ((!bpnl.trim()) || (!name.trim())) {
       setError(true);
+      setApiErrorMessage(''); // Clear any previous API error
       return;
     }
+    setError(false); // Clear validation error
+    setApiErrorMessage(''); // Clear previous API error message
 
-    // Here we would make an API call to store the new partner
-    // For demonstration, we will just log the BPNL
-    const partner = { name: name.trim(), bpnl: bpnl.trim() };
-    
-    console.log(`Partner created with name: ${name} and  BPNL: ${bpnl}`);
+    const partnerPayload = { name: name.trim(), bpnl: bpnl.trim() };
 
-    onSave?.(partner);
+    if (partnerData) { // Edit mode
+      // TODO: Implement PUT request for updating partner when API endpoint is defined
+      console.log(`Partner updated (locally) with name: ${name} and BPNL: ${bpnl}`);
+      onSave?.(partnerPayload); // Update local state in parent
+      setSuccessMessage(`Partner ${name} updated successfully [${bpnl}] (local update)`);
+      setTimeout(() => {
+        setSuccessMessage('');
+        onClose();
+      }, 3000);
+    } else { // Create mode
+      try {
+        await createPartner(partnerPayload);
+        
+        console.log(`Partner created via API with name: ${name} and BPNL: ${bpnl}`);
+        onSave?.(partnerPayload); // Call onSave to update the parent component's state
 
-    setSuccessMessage(`Partner ${name} ${partnerData ? 'updated' : 'created'} successfully [${bpnl}]`);
-    setTimeout(() => {
-      setSuccessMessage('');
-      onClose();
-    }, 3000);
+        setSuccessMessage(`Partner ${name} created successfully [${bpnl}]`);
+        setTimeout(() => {
+          setSuccessMessage('');
+          onClose(); // Close dialog on success
+        }, 3000);
+      } catch (axiosError) {
+        console.error('Error creating partner:', axiosError);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let errorMessage = (axiosError as any).message || 'Failed to create partner.';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorResponse = (axiosError as any).response;
+
+        if (errorResponse) {
+          if (errorResponse.status === 422 && errorResponse.data && errorResponse.data.detail && Array.isArray(errorResponse.data.detail) && errorResponse.data.detail.length > 0) {
+            // Attempt to get the specific message (pydantic validation error message) for 422 errors
+            errorMessage = errorResponse.data.detail[0].msg || JSON.stringify(errorResponse.data.detail[0]) || 'Validation failed.';
+          } else if (errorResponse.data && errorResponse.data.message) {
+            // General error message from backend response
+            errorMessage = errorResponse.data.message;
+          } else if (errorResponse.data) {
+            // Fallback if no specific message format is found but data exists
+            errorMessage = JSON.stringify(errorResponse.data);
+          }
+        }
+        
+        setApiErrorMessage(errorMessage);
+      }
+    }
   };
 
   return (
@@ -109,6 +147,11 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
             disabled={!!partnerData} // Disable if editing
           />
         </Box>
+        {apiErrorMessage && (
+          <Box sx={{ mt: 2 }}>
+            <Alert severity="error">{apiErrorMessage}</Alert>
+          </Box>
+        )}
         {successMessage && (
           <Box sx={{ mt: 2 }}>
             <Alert severity="success">{successMessage}</Alert>

@@ -41,6 +41,20 @@
             margin: 10px 0;
         }
     }
+
+    .product-card-details {
+        background: $brand-dark !important;
+        @include mixins.rounded-bordered;
+        @include mixins.space-shadow($brand-blue);
+        padding: 40px;
+        width: 100%;
+        height: 100%;
+        
+        .MuiBox-root, .MuiGrid2-root {
+            margin: 10px 0;
+        }
+    }
+
   
     &, 
     .cx-card__decision--item .cx-card__decision--button {
@@ -76,7 +90,7 @@
     }
   
     .title-subtitle {
-        margin: 20px 0;
+        padding: 20px 0;
     }
   
     .add-on-buttons button {
@@ -176,5 +190,12 @@ div[role="presentation"] {
     &:hover {
         background: $blue-gradient-bg;
         border-color: $brand-text!important;
+    }
+    &:disabled{
+        background-color: $brand-gray;
+        color: $brand-dark;
+        border-color: $brand-gray !important;
+        cursor: not-allowed;
+        opacity: 0.5;
     }
 }

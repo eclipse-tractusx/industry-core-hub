@@ -29,7 +29,10 @@ from services.submodel_dispatcher_service import SubmodelDispatcherService, Subm
 from tools.submodel_type_util import InvalidSemanticIdError
 from tools import InvalidUUIDError
 
-router = APIRouter(prefix="/submodel-dispatcher", tags=["Submodel Dispatcher"])
+from managers.config.config_manager import ConfigManager
+
+path_submodel_dispatcher = ConfigManager.get_config("submodel_dispatcher.apiPath", default="/submodel-dispatcher")
+router = APIRouter(prefix=path_submodel_dispatcher, tags=["Submodel Dispatcher"])
 submodel_dispatcher_service = SubmodelDispatcherService()
 
 @router.get("/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any])

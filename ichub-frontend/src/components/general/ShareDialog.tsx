@@ -20,13 +20,14 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@catena-x/portal-shared-components';
 import { Box, TextField, Autocomplete, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { ProductDetailDialogProps } from '../../types/dialogViewer';
+import { shareCatalogPart } from '../../features/catalog-management/api';
 
 // Sample BPNL data for the autocomplete field
 // After the integration, this data would be fetched from the API
@@ -43,27 +44,71 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [apiErrorMessage, setApiErrorMessage] = useState('');
+
+  useEffect(() => {
+    // Reset fields when dialog opens or partData changes
+    if (open) {
+      setBpnl('');
+      setError(false);
+      setSuccessMessage('');
+      setApiErrorMessage('');
+    }
+  }, [open, partData]);
 
   const handleBpnlChange = (_event: any, value: string | null) => {
     setBpnl(value ??'');
-    setError(false);
-    setSuccessMessage('');
+    setError(false); // Clear validation error on change
+    setApiErrorMessage(''); // Clear API error on change
+    setSuccessMessage(''); // Clear success message on change
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!bpnl.trim()) {
       setError(true);
+      setApiErrorMessage('');
+      return;
+    }
+    setError(false);
+    setApiErrorMessage('');
+
+    if (!partData) {
+      setApiErrorMessage("Part data is not available.");
       return;
     }
 
-    // Here we would make an API call to share the part with the partner
-    // For demonstration, we will just log the BPNL
+    try {
+      await shareCatalogPart(
+        partData.manufacturerId,
+        partData.manufacturerPartId,
+        bpnl.trim()
+      );
+      
+      setSuccessMessage(`Part shared successfully with ${bpnl.trim()}`);
 
-    setSuccessMessage(`Part shared successfully with ${bpnl}`);
-    setTimeout(() => {
-      setSuccessMessage('');
-      onClose();
-    }, 2000);
+      setTimeout(() => {
+        setSuccessMessage('');
+        onClose(); // Close dialog on success
+      }, 2000);
+
+    } catch (axiosError) {
+      console.error('Error sharing part:', axiosError);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let errorMessage = (axiosError as any).message || 'Failed to share part.';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorResponse = (axiosError as any).response;
+
+      if (errorResponse) {
+        if (errorResponse.status === 422 && errorResponse.data && errorResponse.data.detail && Array.isArray(errorResponse.data.detail) && errorResponse.data.detail.length > 0) {
+          errorMessage = errorResponse.data.detail[0].msg || JSON.stringify(errorResponse.data.detail[0]) || 'Validation failed.';
+        } else if (errorResponse.data && errorResponse.data.message) {
+          errorMessage = errorResponse.data.message;
+        } else if (errorResponse.data) {
+          errorMessage = JSON.stringify(errorResponse.data);
+        }
+      }
+      setApiErrorMessage(errorMessage);
+    }
   };
 
   return (
@@ -103,6 +148,11 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
             )}
           />
         </Box>
+        {apiErrorMessage && (
+          <Box sx={{ mt: 2 }}>
+            <Alert severity="error">{apiErrorMessage}</Alert>
+          </Box>
+        )}
         {successMessage && (
           <Box sx={{ mt: 2 }}>
             <Alert severity="success">{successMessage}</Alert>

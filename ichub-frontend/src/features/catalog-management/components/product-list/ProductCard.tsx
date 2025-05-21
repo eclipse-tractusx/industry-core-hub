@@ -24,19 +24,24 @@ import IosShare from "@mui/icons-material/IosShare";
 import MoreVert from "@mui/icons-material/MoreVert";
 import Launch from "@mui/icons-material/Launch";
 import { Box, Typography, IconButton, Button } from "@mui/material";
-import { CardChip, StatusVariants } from "./CardChip";
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import { CardChip } from "./CardChip";
+import { StatusVariants } from "../../../../types/statusVariants";
+import { ErrorNotFound } from "../../../../components/general/ErrorNotFound";
 
 export interface AppContent {
-  uuid?: string;
+  id?: string;
+  manufacturerId: string;
+  manufacturerPartId: string;
   name?: string;
-  class?: string;
+  category?: string;
   status?: StatusVariants;
 }
 
 export interface CardDecisionProps {
   items: AppContent[];
-  onShare: (e: string) => void;
-  onMore: (e: string) => void;
+  onShare: (e1: string, e2: string) => void;
+  onMore: (e1: string, e2: string) => void;
   onClick: (e: string) => void;
 }
 
@@ -54,27 +59,33 @@ export const ProductCard = ({
 
   const handleDecision = (
     e: React.SyntheticEvent,
-    id: string,
+    manufacturerId: string,
+    manufacturerPartId: string,
     type: ButtonEvents
   ) => {
     e.stopPropagation();
-    return type == ButtonEvents.SHARE ? onShare(id) : onMore(id);
+    return type == ButtonEvents.SHARE 
+      ? onShare(manufacturerId, manufacturerPartId) 
+      : onMore(manufacturerId, manufacturerPartId);
   };
 
   return (
     <Box className="custom-cards-list">
+      {items.length === 0 && (
+        <ErrorNotFound icon={ReportProblemIcon} message="No catalog parts available, please check your ichub-backend connection/configuration"/>
+      )}
       {items.map((item) => {
-        const id = item.uuid ?? "";
         const name = item.name ?? "";
+        const productId = item.manufacturerId + "/" + item.manufacturerPartId;
         return (
-          <Box key={id} className="custom-card-box">
+          <Box key={productId} className="custom-card-box">
             <Box
               className="custom-card"
               sx={{
                 height: "220px"
               }}
               onClick={() => {
-                onClick(id);
+                onClick(productId);
               }}
             >
               <Box className="custom-card-header">
@@ -85,7 +96,7 @@ export const ProductCard = ({
                     /* If the item is not in draft, sharing is enabled */
                     <IconButton
                       onClick={(e) => {
-                        handleDecision(e, id, ButtonEvents.SHARE);
+                        handleDecision(e, item.manufacturerId, item.manufacturerPartId, ButtonEvents.SHARE);
                       }}
                     >
                       <IosShare sx={{ color: "white"}} />
@@ -93,7 +104,7 @@ export const ProductCard = ({
                   )}
                   <IconButton
                     onClick={(e) => {
-                      handleDecision(e, id, ButtonEvents.MORE);
+                      handleDecision(e, item.manufacturerId, item.manufacturerPartId, ButtonEvents.MORE);
                     }}
                   >
                     <MoreVert sx={{ color: "rgba(255, 255, 255, 0.68)" }} />
@@ -106,7 +117,7 @@ export const ProductCard = ({
                 </Typography>
                 <br></br>
                 <Typography variant="label2">
-                  {item.class}
+                  {item.category}
                 </Typography>
               </Box>
               <Box className="custom-card-button-box">

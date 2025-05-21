@@ -21,13 +21,14 @@
 ---
 ## For being used in the Integration ArgoCD test environment from the Catena-X Association
 
+participantId : "<path:industry-core-hub/data/edc-provider#bpn>"
+
 postgresql:
   auth:
     ## Root password override
     password: <path:industry-core-hub/data/db#rootPass>
     ## Industry Core User Password
     ichubPassword: <path:industry-core-hub/data/db#ichubPass>
-    
 # -- pgAdmin4 configuration
 pgadmin4:
   enabled: true
@@ -49,15 +50,18 @@ pgadmin4:
          hosts:
            - "pgadmin-ichub.int.catena-x.net" 
 frontend: 
+  env:
+    # -- industry-core-hub backend base URL
+    ichubBackendUrl: "https://backend-ichub.int.catena-x.net"
   ingress:
       enabled: true
       className: "nginx"
       ## Optional annotations when using the nginx ingress class
       annotations:
        cert-manager.io/cluster-issuer: letsencrypt-prod
-      #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-      #   nginx.ingress.kubernetes.io/use-regex: "true"
-      #   nginx.ingress.kubernetes.io/enable-cors: "true"
+       nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+       nginx.ingress.kubernetes.io/use-regex: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
       #   # -- Provide CORS allowed origin.
       #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
       # -- Ingress TLS configuration
@@ -73,7 +77,7 @@ frontend:
       hosts:
         - host: "frontend-ichub.int.catena-x.net"
           paths:
-            - path: /
+            - path: /(.*)
               pathType: ImplementationSpecific
               backend:
                 service: "frontend"
@@ -118,6 +122,9 @@ backend:
         managementpath: "/management"
         protocolPath: "/api/v1/dsp"
         catalogPath: "/catalog"
+      dataplane:
+         hostname: "https://edc-provider-ichub-dataplane.int.catena-x.net"
+         publicPath: "/api/public"
     # -- Digital Twin Registry configuration
     digitalTwinRegistry:
       hostname: "https://dtr-ichub.int.catena-x.net/"
@@ -129,7 +136,7 @@ backend:
         uri: ""
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
-      echo: true
+      echo: false
   ingress:
       enabled: true
       className: "nginx"
@@ -138,9 +145,10 @@ backend:
        cert-manager.io/cluster-issuer: letsencrypt-prod
       #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
       #   nginx.ingress.kubernetes.io/use-regex: "true"
-      #   nginx.ingress.kubernetes.io/enable-cors: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
       #   # -- Provide CORS allowed origin.
-      #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
+       nginx.ingress.kubernetes.io/cors-allow-origin: "https://frontend-ichub.int.catena-x.net, *"
+       nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
       # -- Ingress TLS configuration
       tls:
        - secretName: "backend-ichub.int.catena-x.net-tls"

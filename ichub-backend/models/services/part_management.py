@@ -25,11 +25,27 @@
 from datetime import datetime
 from typing import Dict, Optional, List
 
+import enum
+
 from pydantic import BaseModel, Field
 
 from models.metadata_database.models import Material, Measurement
 from models.services.partner_management import BusinessPartnerRead
+class SharingStatus(enum.Enum):
+    """The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)"""
 
+    DRAFT = 0
+    """The aspect is in draft state and not yet finalized or submitted."""
+
+    PENDING = 1
+    """The aspect is pending approval or processing, twin is created in the database but not yet registered in the DTR"""
+
+    REGISTERED = 2
+    """The aspect has been registered as Digital Twin in the DTR, but not shared."""
+
+    SHARED = 3
+    """The aspect has been shared with a specific partner."""
+ 
 class PartnerRelatedPartReadBase(BaseModel):
     business_partner: BusinessPartnerRead = Field(alias="businessPartner", description="The business partner to whom the part is being offered.")
 
@@ -58,11 +74,10 @@ class CatalogPartRead(SimpleCatalogRead):
     customer_part_ids: Optional[Dict[str, BusinessPartnerRead]] = Field(alias="customerPartIds", description="The list of customer part IDs mapped to the respective Business Partners.", default={})
 
 class CatalogPartReadWithStatus(CatalogPartRead):
-    status: int = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
+    status: SharingStatus = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
 
 class SimpleCatalogPartReadWithStatus(SimpleCatalogRead):
-    status: int = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
-
+    status: SharingStatus = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
 class CatalogPartCreate(CatalogPartRead):
     pass
 

@@ -20,11 +20,46 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+participantId: "BPNL000000000000"
+hostname: "https://ichub-backend.url"
 authorization:
   enabled: true
   apiKey: 
     key: "X-Api-Key"
     value: <<example>>
+agreements:
+  - semanticid: urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation
+    usage:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          LogicalConstraint: odrl:and
+          constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+            - leftOperand: cx-policy:UsagePurpose
+              operator: odrl:eq
+              rightOperand: cx.core.industrycore:1
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          constraints:
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+      prohibition: []
+      obligation: []
 database:
   connectionString: "postgresql://user:password@localhost:5432/mydatabase"
   echo: true
@@ -36,11 +71,51 @@ edc:
     managementpath: /management
     protocolPath: /api/v1/dsp
     catalogPath: /catalog
+  dataplane:
+    hostname: "https://connector.data.plane"
+    publicPath: "/api/public"
 digitalTwinRegistry:
-  hostname: https://dataprovider-dtr.tx.test
+  hostname: https://dtr-ichub.int.catena-x.net
   apiPath: /api/v3
-  uri: /semantics/registry
+  uri: ""
+  asset_config:
+    dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+    # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
   lookup:
-    uri: /semantics/registry
-submodel_service:
+    uri: ""
+  policy:
+    usage:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          LogicalConstraint: odrl:and
+          constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+            - leftOperand: cx-policy:UsagePurpose
+              operator: odrl:eq
+              rightOperand: cx.core.digitalTwinRegistry:1
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          constraints:
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+      prohibition: []
+      obligation: []
+
+submodel_dispatcher:
   path: "./data/submodels"
+  apiPath: /submodel-dispatcher

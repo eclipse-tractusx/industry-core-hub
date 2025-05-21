@@ -36,3 +36,14 @@
     font-optical-sizing: auto;
     font-style: normal;
 }
+
+.add-button{
+    border-radius: 8px!important;
+    border-color: green!important;
+    color: $brand-text !important;
+
+    &:hover {
+        background: $green-gradient-bg!important;
+        border-color: $brand-text!important;
+    }
+}

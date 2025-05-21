@@ -28,6 +28,8 @@ metadata:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
 data:
   configuration.yml: |-
+    participantId: {{ .Values.participantId | quote }}
+    hostname: {{ include "industry-core-hub.ingressUrl" . | quote }}
     authorization:
       enabled: {{ .Values.backend.configuration.authorization.enabled }}
       apiKey: 
@@ -44,14 +46,23 @@ data:
         managementpath: {{ .Values.backend.configuration.edc.controlplane.managementpath | quote }}
         protocolPath: {{ .Values.backend.configuration.edc.controlplane.protocolPath | quote }}
         catalogPath: {{ .Values.backend.configuration.edc.controlplane.catalogPath | quote }}
+      dataplane:
+        hostname: {{ .Values.backend.configuration.edc.dataplane.hostname | quote }}
+        publicPath: {{ .Values.backend.configuration.edc.dataplane.publicPath | quote }}     
     digitalTwinRegistry:
       hostname: {{ .Values.backend.configuration.digitalTwinRegistry.hostname | quote }}
       apiPath: {{ .Values.backend.configuration.digitalTwinRegistry.apiPath | quote }}
       uri: {{ .Values.backend.configuration.digitalTwinRegistry.uri | quote }}
+      asset_config:
+        dct_type: {{ .Values.backend.configuration.digitalTwinRegistry.asset_config.dct_type | quote }}
+        existing_asset_id: {{ .Values.backend.configuration.digitalTwinRegistry.asset_config.existing_asset_id | default nil }}
       lookup:
         uri: {{ .Values.backend.configuration.digitalTwinRegistry.lookup.uri | quote }}
-    submodel_service:
+      policy: {{ .Values.backend.configuration.digitalTwinRegistry.policy | toYaml | nindent 7 }}
+    submodel_dispatcher:
       path: {{ .Values.backend.configuration.submodel_dispatcher.path | quote }}
+      apiPath: {{ .Values.backend.configuration.submodel_dispatcher.apiPath | quote }}
+    agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
   logging.yml: |-
     version: 1
     disable_existing_loggers: False

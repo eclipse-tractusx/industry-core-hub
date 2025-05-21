@@ -28,7 +28,7 @@ from uuid import UUID, uuid4
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from managers.enablement_services.dtr_manager import DTRManager
-from managers.enablement_services.edc_manager import EDCManager
+from managers.enablement_services.connector_manager import ConnectorManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
 from models.services.part_management import SerializedPartQuery
 from models.services.partner_management import BusinessPartnerRead, DataExchangeAgreementRead
@@ -49,6 +49,10 @@ from models.services.twin_management import (
     TwinDetailsReadBase,
 )
 from models.metadata_database.models import Twin
+
+from managers.config.log_manager import LoggingManager
+
+logger = LoggingManager.get_logger(__name__)
 
 CATALOG_DIGITAL_TWIN_TYPE = "PartType"
 
@@ -463,11 +467,27 @@ class TwinManagementService:
                 db_twin_aspect_registration = repo.twin_aspect_registration_repository.create_new(
                     twin_aspect_id=db_twin_aspect.id,
                     enablement_service_stack_id=db_enablement_service_stack.id,
-                    registration_mode=TwinsAspectRegistrationMode.SINGLE.value, # TODO: for the moment no asset bundling; later tbd.
+                    registration_mode=TwinsAspectRegistrationMode.DISPATCHED.value, 
                 )
                 repo.commit()
                 repo.refresh(db_twin_aspect_registration)
                 repo.refresh(db_twin_aspect)
+
+            ## Step 4b: Check if there is created a asset for the digital twin registry.
+            
+            edc_manager = _create_connector_manager(db_enablement_service_stack.connection_settings)
+            dtr_config = ConfigManager.get_config("digitalTwinRegistry")
+            asset_config = dtr_config.get("asset_config")
+            dtr_asset_id, _, _, _ = edc_manager.register_dtr_offer(
+                base_dtr_url=dtr_config.get("hostname"),
+                uri=dtr_config.get("uri"),
+                api_path=dtr_config.get("apiPath"),
+                dtr_policy_config=dtr_config.get("policy"),
+                dct_type=asset_config.get("dct_type"),
+                existing_asset_id=asset_config.get("existing_asset_id", None)
+            )
+            if(not dtr_asset_id):
+                raise Exception("The Digital Twin Registry was not able to be registered, or was not found in the Connector!")
 
             # Step 5: Handle the submodel service
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
@@ -475,7 +495,7 @@ class TwinManagementService:
                 
                 # Step 5a: Upload the payload to the submodel service
                 submodel_service_manager.upload_twin_aspect_document(
-                    db_twin.global_id,
+                    db_twin_aspect.submodel_id,
                     db_twin_aspect.semantic_id,
                     twin_aspect_create.payload
                 )
@@ -486,16 +506,11 @@ class TwinManagementService:
 
             # Step 6: Handle the EDC registration
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
-                edc_manager = _create_edc_manager(db_enablement_service_stack.connection_settings)
                 
-                # Step 6a: Register the aspect as asset in the EDC (if necessary)
-                if db_twin_aspect_registration.registration_mode == TwinsAspectRegistrationMode.SINGLE.value:
-                    edc_manager.register_submodel_asset(
-                        db_twin.global_id,
-                        db_twin_aspect.semantic_id,
-                        db_twin.aas_id,
-                        db_twin_aspect.submodel_id,
-                    )
+                # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
+                asset_id, usage_policy_id, access_policy_id, contract_id = edc_manager.register_submodel_bundle_circular_offer(
+                    semantic_id=db_twin_aspect.semantic_id
+                )
 
                 # Step 6b: Update the registration status to EDC_REGISTERED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.EDC_REGISTERED.value
@@ -506,14 +521,15 @@ class TwinManagementService:
                 dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
                 
                 # Step 7a: Register the submodel in the DTR (if necessary)
-                dtr_manager.create_submodel_descriptor(
-                    global_id=db_twin.global_id,
-                    aas_id=db_twin.aas_id,
-                    submodel_id=db_twin_aspect.submodel_id,
-                    semantic_id=db_twin_aspect.semantic_id,
-                    # TODO: later we should use the asset id from the EDC manager
-                    edc_asset_id=uuid4()
+                try:
+                    dtr_manager.create_submodel_descriptor(
+                        aas_id=db_twin.aas_id,
+                        submodel_id=db_twin_aspect.submodel_id,
+                        semantic_id=db_twin_aspect.semantic_id,
+                        edc_asset_id=asset_id
                 )
+                except Exception as e:
+                    logger.error("It was not possible to create the submodel descriptor")
 
                 # Step 7b: Update the registration status to DTR_REGISTERED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
@@ -625,12 +641,12 @@ def _create_dtr_manager(connection_settings: Optional[Dict[str, Any]]) -> DTRMan
         dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
         api_path=str(dtr_api_path))
 
-def _create_edc_manager(connection_settings: Optional[Dict[str, Any]]) -> EDCManager:
+def _create_connector_manager(connection_settings: Optional[Dict[str, Any]]) -> ConnectorManager:
     """
     Create a new instance of the EDCManager class.
     """
     # TODO: later we can configure the manager via the connection settings from the DB here
-    return EDCManager()
+    return ConnectorManager()
 
 def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
     """

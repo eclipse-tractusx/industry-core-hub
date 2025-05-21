@@ -18,46 +18,29 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@use '../config/variables' as *;
-@use '../config/mixins';
+import { Grid2 } from "@mui/material";
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
-.product-catalog{
-    
-    .title{
-        @include mixins.center-flex;
-        margin: 20px 0px;
-    }
-    .text{
-        @include mixins.space-title-h2-font;
-        color: $brand-text;
-        padding: 5px 80px;
-        text-align: center;
-        background: rgba($brand-primary, 0.3);
-        @include mixins.space-shadow($brand-blue);
-    }
+interface ErrorNotFoundProps {
+  icon?: React.ElementType;
+  message?: string;
 }
 
-.product-list-pagination {
-    p {
-        color: $brand-text !important;
-    }
-    button{
-        color: $brand-text !important;
-    }
-    button.Mui-disabled {
-        color: $brand-shadow !important;
-    }
-}
-
-.not-found{
-    &.title{
-        color: $brand-text!important;
-        font-size: 1em;
-    }
-    &.icon{
-        color: $brand-text!important;
-        font-size: 8em;
-    }
+export const ErrorNotFound = ({
+  icon = ReportProblemIcon,
+  message = "No catalog parts available, please check your ichub-backend connection/configuration.",
+}: ErrorNotFoundProps) => {
+  const IconComponent = icon;
+  return (
+    <Grid2 container display={"flex"} flexDirection={"row"} alignContent={"center"} justifyContent={"center"}>
+      <Grid2>
+        <IconComponent className="not-found icon my-auto mr-1" />
+      </Grid2>
+      <Grid2 className="not-found title">
+        {message}
+      </Grid2>
+    </Grid2>
+  );
 }

@@ -22,14 +22,3 @@
 
 @use '../config/variables' as *;
 @use '../config/mixins';
-
-.add-partner-button{
-    border-radius: 8px!important;
-    border-color: green!important;
-    color: $brand-text !important;
-
-    &:hover {
-        background: $green-gradient-bg!important;
-        border-color: $brand-text!important;
-    }
-}

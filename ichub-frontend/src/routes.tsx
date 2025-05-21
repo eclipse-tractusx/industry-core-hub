@@ -34,7 +34,7 @@ export default function AppRoutes() {
      <Routes>
         <Route path="/" element={<MainLayout />} >
           <Route index element={<ProductsList />} />
-          <Route path="/product/:id" element={<ProductsDetails />} />
+          <Route path="/product/:manufacturerId/:manufacturerPartId" element={<ProductsDetails />} />
 
           {/* Here we must change the elements as we go along as we develop */}
           <Route path="/catalog" element={<ProductsList />} />

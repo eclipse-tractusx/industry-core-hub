@@ -37,28 +37,25 @@ class SubmodelServiceManager:
     logger = LoggingManager.get_logger(__name__)
 
     def __init__(self):
-        submodel_service_path = ConfigManager.get_config("submodel_service.path", default="/data/submodels")
+        submodel_service_path = ConfigManager.get_config("submodel_dispatcher.path", default="/data/submodels")
         if not isinstance(submodel_service_path, str):
             raise ValueError(f"Expected 'submodel_service.path' to be a string, got: {type(submodel_service_path).__name__}")
         self.file_system = SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)
 
-    def upload_twin_aspect_document(self, global_id : UUID, semantic_id: str, payload: Dict[str, Any]):
+    def upload_twin_aspect_document(self, submodel_id : UUID, semantic_id: str, payload: Dict[str, Any]):
         """Upload a submodel to the service."""
         # Implementation for uploading a submodel
-        if not isinstance(global_id, UUID):
+        if not isinstance(submodel_id, UUID):
             try:
-                global_id = UUID(global_id)
+                submodel_id = UUID(submodel_id)
             except ValueError:
-                raise InvalidUUIDError(global_id)
+                raise InvalidUUIDError(submodel_id)
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
         if not self.file_system.exists(sha256_semantic_id):
             self.file_system.create_directory(sha256_semantic_id)
-        self.file_system.write(f"{sha256_semantic_id}/{global_id}.json",payload)
-        self.logger.debug(f"Uploading submodel with Global ID: {global_id}")
-        self.logger.debug(f"Semantic ID: {semantic_id}")
-        self.logger.debug(f"SHA256 Semantic ID: {sha256_semantic_id}")
-        self.logger.debug("Payload: " + str(payload))
-        self.logger.info("Submodel uploaded successfully.")
+        submodel_path = f"{sha256_semantic_id}/{submodel_id}.json"
+        self.file_system.write(submodel_path,payload)
+        self.logger.info(f"Submodel with id=[{submodel_id}] and semanticId=[{semantic_id}] uploaded successfully.")
 
     def get_twin_aspect_document(self, global_id: UUID, semantic_id: str) -> Dict[str, Any]:
         """Get a submodel from the service."""

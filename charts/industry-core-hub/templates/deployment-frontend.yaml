@@ -65,6 +65,8 @@ spec:
           env:
             - name: ICHUB_BACKEND_URL
               value: "{{ .Values.frontend.env.ichubBackendUrl }}"
+            - name: PARTICIPANT_ID
+              value: "{{ .Values.participantId }}"
           {{- if .Values.frontend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:

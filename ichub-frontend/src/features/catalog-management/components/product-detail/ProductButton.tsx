@@ -26,13 +26,22 @@ import { Icon } from '@catena-x/portal-shared-components';
 interface ProductButtonProps {
   gridSize?: { md?: number; xs?: number; lg?: number; sm?: number };
   buttonText: string;
+  disabled?: boolean;
   onClick: () => void;
 }
 
-const ProductButton = ({ gridSize, buttonText, onClick }: ProductButtonProps) => {
+const ProductButton = ({ gridSize, buttonText, onClick, disabled = false }: ProductButtonProps) => {
   return (
     <Grid2 size={gridSize ?? { md: 6, xs: 12 }}>
-      <Button className="submodel-button" variant="outlined" color="primary" size="large" fullWidth={true} onClick={onClick}>
+      <Button
+        className="submodel-button"
+        variant="outlined"
+        color="primary"
+        size="large"
+        fullWidth={true}
+        onClick={onClick}
+        disabled={disabled}
+      >
         <span className="submodel-button-content">{buttonText}</span>
         <Icon fontSize="16" iconName="OpenInNew" />
       </Button>

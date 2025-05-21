@@ -18,12 +18,11 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-import { PartType } from "./product";
-
-export interface ProductDetailDialogProps {
-    open: boolean;
-    onClose: () => void;
-    partData: PartType;  // Use PartInstance interface here
-}
+export enum StatusVariants {
+    registered = 'Registered',
+    pending = 'Pending',
+    shared = 'Shared',
+    draft = 'Draft',
+  }
