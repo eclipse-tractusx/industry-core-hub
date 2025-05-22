@@ -64,7 +64,7 @@ class SharingService:
             # Step 7: Ensure a twin exchange exists between the twin and the data exchange agreement
             self._ensure_twin_exchange(repo, db_twin, db_data_exchange_agreement)
             # Step 8: Create the part twin aspect with part type information
-            self._create_part_twin_aspect(db_twin, db_catalog_part, catalog_part_to_share)
+            self._create_part_twin_aspect(db_twin, db_catalog_part, db_enablement_service_stack, catalog_part_to_share)
             # Step 9: Return the shared part information
             return SharedPartBase(
                 businessPartnerNumber=catalog_part_to_share.business_partner_number,
@@ -156,6 +156,8 @@ class SharingService:
             return { customer_part_id: bp_read }
 
         if partner_catalog_part:
+            # TODO: Very dangerous!!!! We might need to update thousands of twins in the DTR potentially
+            # (in case e.g. there were already instance level parts created for that catalog part)
             logger.warning(f"A provider customer_part_id already exists in the database {partner_catalog_part.customer_part_id}, updating to the provided one {customer_part_id}")
 
         if not customer_part_id:
@@ -207,7 +209,11 @@ class SharingService:
             )
             repo.commit()
 
-    def _create_part_twin_aspect(self, db_twin: Twin, db_catalog_part: CatalogPart, catalog_part_to_share: ShareCatalogPart) -> TwinAspectRead:
+    def _create_part_twin_aspect(self,
+        db_twin: Twin,
+        db_catalog_part: CatalogPart,
+        db_enablement_service_stack: EnablementServiceStack,
+        catalog_part_to_share: ShareCatalogPart) -> TwinAspectRead:
         """
         Create a twin aspect representing the part type information for the catalog part twin.
         """
@@ -217,8 +223,10 @@ class SharingService:
             name=db_catalog_part.name,
             bpns=db_catalog_part.bpns
         )
-        return self.twin_management_service.create_twin_aspect(TwinAspectCreate(
-            globalId=db_twin.global_id,
-            semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
-            payload=payload
-        ))
+        return self.twin_management_service.create_twin_aspect(
+            twin_aspect_create=TwinAspectCreate(
+                globalId=db_twin.global_id,
+                semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
+                payload=payload),
+            enablement_service_stack_name=db_enablement_service_stack.name
+        )
