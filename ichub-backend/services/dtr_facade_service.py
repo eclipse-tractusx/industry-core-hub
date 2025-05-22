@@ -147,9 +147,13 @@ class DTRFacadeService:
                     include_aspects=True,
                     max_excl_created_date=cursor.timestamp if cursor else None,
                     limit=limit)
-                # Reduce the (remaining) limit by the number of twins already fetched
+    
+                # Reset the given cursor => this will allow to process other parts after all catalog parts
+                # have been processed
+                cursor = None 
 
                 if db_twins:
+                    # Reduce the (remaining) limit by the number of twins already fetched
                     limit = limit - len(db_twins)
 
                     for db_twin in db_twins:
@@ -177,10 +181,51 @@ class DTRFacadeService:
                                 cursor=cursor.to_base64_json()),
                             result=result)
 
+
             ###########################
             ### Serlized Part Twins ###
             ###########################
-            # TODO: Implement the logic for serialized part twins (and later others)
+            if (cursor is None or cursor.type == CursorTypeEnum.SP) and (asset_kind is None or asset_kind == AssetKind.INSTANCE):
+
+                db_twins = repos.twin_repository.find_serialized_part_twins(
+                    enablement_service_stack_id=enablement_service_stack_id,
+                    business_partner_number=edc_bpn,
+                    include_aspects=True,
+                    max_excl_created_date=cursor.timestamp if cursor else None,
+                    limit=limit)
+
+                # Reset the given cursor => this will allow to process other parts after all catalog parts
+                # have been processed
+                cursor = None 
+
+                if db_twins:
+                    # Reduce the (remaining) limit by the number of twins already fetched
+                    limit = limit - len(db_twins)
+
+                    for db_twin in db_twins:
+                        shell_descriptor = ShellDescriptor(
+                            id=db_twin.aas_id.urn,
+                            assetType="AssetType"
+                        )
+                        self._fill_shell_descriptor(repos,
+                                                    db_twin,
+                                                    enablement_service_stack_id,
+                                                    shell_descriptor,
+                                                    edc_bpn,
+                                                    include_specific_asset_ids=True,
+                                                    include_submodel_descriptors=True)
+
+                        result.append(shell_descriptor)
+                        last_twin_created_date = db_twin.created_date
+
+                    if limit <= 0:
+                        cursor = DtrPagingCursor(type=CursorTypeEnum.CP,
+                                                timestamp=last_twin_created_date)
+
+                        return GetAllShellDescriptorsResponse(
+                            paging_metadata=PagingMetadata(
+                                cursor=cursor.to_base64_json()),
+                            result=result)
 
             return GetAllShellDescriptorsResponse(result=result)
 
@@ -385,6 +430,8 @@ class DTRFacadeService:
         last_twin_created_date = None
         result: List[str] = []
         with RepositoryManagerFactory.create() as repos:
+            
+            ##### Catalog part search #####
             if search_catalog_parts and (not cursor or cursor.type == CursorTypeEnum.CP):
                 db_twins = repos.twin_repository.find_catalog_part_twins(
                     enablement_service_stack_id=enablement_service_stack_id,
@@ -396,6 +443,9 @@ class DTRFacadeService:
                     max_excl_created_date=cursor.timestamp if cursor else None,
                     limit=limit)
 
+                # Reset the given cursor => this will allow to process other parts after all catalog parts
+                cursor = None
+
                 if db_twins:
                     limit = limit - len(db_twins)
                     for db_twin in db_twins:
@@ -404,6 +454,37 @@ class DTRFacadeService:
 
                     if limit <= 0:
                         cursor = DtrPagingCursor(type=CursorTypeEnum.CP,
+                                                timestamp=last_twin_created_date)
+                        return DtrPagingStrResponse(
+                            paging_metadata=PagingMetadata(
+                                cursor=cursor.to_base64_json()),
+                            result=result)
+
+            ##### Serialized part search #####
+            if search_serilized_parts and (not cursor or cursor.type == CursorTypeEnum.SP):
+                db_twins = repos.twin_repository.find_serialized_part_twins(
+                    enablement_service_stack_id=enablement_service_stack_id,
+                    business_partner_number=edc_bpn,
+                    customer_part_id=customer_part_id,
+                    manufacturer_id=manufacturer_id,
+                    manufacturer_part_id=manufacturer_part_id,
+                    part_instance_id=part_instance_id,
+                    van=van,
+                    global_id=global_id,
+                    max_excl_created_date=cursor.timestamp if cursor else None,
+                    limit=limit)
+
+                # Reset the given cursor => this will allow to process other parts after all catalog parts
+                cursor = None
+
+                if db_twins:
+                    limit = limit - len(db_twins)
+                    for db_twin in db_twins:
+                        last_twin_created_date = db_twin.created_date
+                        result.append(db_twin.aas_id.urn)
+
+                    if limit <= 0:
+                        cursor = DtrPagingCursor(type=CursorTypeEnum.SP,
                                                 timestamp=last_twin_created_date)
                         return DtrPagingStrResponse(
                             paging_metadata=PagingMetadata(
@@ -452,6 +533,9 @@ class DTRFacadeService:
         shell_descriptor.global_asset_id = db_twin.global_id.urn
         specific_asset_ids: List[SpecificAssetId] = []
 
+        ####################################
+        ### Logic for catalog part twins ###
+        ####################################
         # Get a potential catalog part either from the twin entity or load it from the database
         if db_twin.catalog_part:
             db_catalog_part = db_twin.catalog_part
@@ -460,10 +544,7 @@ class DTRFacadeService:
                 db_twin.id)
             # TODO: For some reason this is never called; maybe sqlmodel does lazy loading here
             # if not: partner catalog part details are not loaded
-        
-        ####################################
-        ### Logic for catalog part twins ###
-        ####################################
+
         if db_catalog_part:
             shell_descriptor.asset_kind = AssetKind.TYPE
 
@@ -506,7 +587,74 @@ class DTRFacadeService:
                         db_partner_catalog_part.business_partner.bpnl)
 
                     shell_descriptor.specific_asset_ids = specific_asset_ids
+        
+        print(db_twin)
+
+        #######################################
+        ### Logic for serialized part twins ###
+        #######################################
+        # Get a potential catalog part either from the twin entity or load it from the database
+        if db_twin.serialized_part:
+            db_serialized_part = db_twin.serialized_part
         else:
+            db_serialized_part = repos.serialized_part_repository.get_by_twin_id(
+                twin_id=db_twin.id,
+                join_partner_catalog_part=True,
+                join_legal_entity=True)
+            # TODO: For some reason this is never called; maybe sqlmodel does lazy loading here
+            # if not: partner catalog part details are not loaded
+
+        if db_serialized_part:
+            shell_descriptor.asset_kind = AssetKind.INSTANCE
+
+            db_partner_catalog_part = db_serialized_part.partner_catalog_part
+            db_catalog_part = db_partner_catalog_part.catalog_part
+
+            # Step 1: deal with partner mappings: when called from partner, indlude only it's data
+            # Called from a partner => check if the catalog part is shared with the partner
+            if edc_bpn:
+                # Not found => then the partner has no access to the twin
+                if db_partner_catalog_part.business_partner.bpnl != edc_bpn:
+                    raise NotAuthorizedError(
+                        f"Catalog part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}."
+                    )
+
+            # Step 2: fill the specific asset IDs
+            if include_specific_asset_ids:
+                self._add_specific_asset_id(specific_asset_ids,
+                                            "manufacturerPartId",
+                                            db_catalog_part.manufacturer_part_id,
+                                            "PUBLIC_READABLE")
+
+                self._add_specific_asset_id(
+                    specific_asset_ids, "digitalTwinType", "PartInstance",
+                    db_partner_catalog_part.business_partner.bpnl)
+
+                self._add_specific_asset_id(
+                    specific_asset_ids, "manufacturerId",
+                    db_catalog_part.legal_entity.bpnl,
+                    db_partner_catalog_part.business_partner.bpnl)
+
+                self._add_specific_asset_id(
+                    specific_asset_ids, "customerPartId",
+                    db_partner_catalog_part.customer_part_id,
+                    db_partner_catalog_part.business_partner.bpnl)
+
+                self._add_specific_asset_id(
+                    specific_asset_ids, "partInstanceId",
+                    db_serialized_part.part_instance_id,
+                    db_partner_catalog_part.business_partner.bpnl)
+
+                if db_serialized_part.van:
+                    self._add_specific_asset_id(
+                        specific_asset_ids, "van",
+                        db_serialized_part.van,
+                        db_partner_catalog_part.business_partner.bpnl)
+
+                shell_descriptor.specific_asset_ids = specific_asset_ids
+
+        # Check if ANY part was found
+        if shell_descriptor.asset_kind is None:
             raise NotValidTwinError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."
             )
