@@ -308,7 +308,7 @@ class TwinManagementService:
             if not db_twin_registration.dtr_registered:
                 dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
                 
-                dtr_manager.create_shell_descriptor_serialized_part(
+                dtr_manager.create_or_update_shell_descriptor_serialized_part(
                     global_id=db_twin.global_id,
                     aas_id=db_twin.aas_id,
                     manufacturer_id=create_input.manufacturer_id,

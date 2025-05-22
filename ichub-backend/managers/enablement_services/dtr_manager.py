@@ -272,7 +272,7 @@ class DTRManager:
             raise Exception("Error creating shell descriptor", res.to_json_string())
         return res
 
-    def create_shell_descriptor_serialized_part(self,
+    def create_or_update_shell_descriptor_serialized_part(self,
         aas_id: UUID,
         global_id: UUID,
         manufacturer_id: str,
@@ -281,19 +281,69 @@ class DTRManager:
         part_instance_id: str,
         van: Optional[str],
         business_partner_number: str,
-        part_category: str):
+        part_category: str) -> ShellDescriptor:
         """
-        Registers a twin in the DTR.
+        Registers or updates a serialized part twin in the DTR.
         """
-        print("===============================")
-        print("==== Digital Twin Registry ====")
-        print("===============================")
-        print(f"Registering twin with global_id={global_id}, aas_id={aas_id}, "
-              f"manufacturer_id={manufacturer_id}, manufacturer_part_id={manufacturer_part_id}, "
-              f"customer_part_id={customer_part_id}, part_instance_id={part_instance_id}, "
-              f"van={van}, part_category={part_category}, "
-              f"business_partner_number={business_partner_number}")
-        print()
+        try:
+            existing_shell = self.aas_service.get_asset_administration_shell_descriptor_by_id(aas_id.urn)
+            logger.info(f"Shell with ID {aas_id} already exists and will be updated.")
+            specific_asset_ids = existing_shell.specificAssetIds or []
+            existing_keys = {(id.name, id.value) for id in specific_asset_ids}
+        except Exception:
+            existing_shell = None
+            specific_asset_ids = []
+            existing_keys = set()
+
+        if manufacturer_id and ("manufacturerId", manufacturer_id) not in existing_keys:
+            specific_asset_ids.append(self._add_or_update_asset_id("manufacturerId", manufacturer_id, [business_partner_number], fallback_id=manufacturer_id))
+
+        specific_asset_ids.append(self._add_or_update_asset_id("digitalTwinType", 'Instance', [business_partner_number], fallback_id=manufacturer_id))
+
+        if manufacturer_part_id:
+            specific_manufacturer_part_asset_id = SpecificAssetId(
+                name="manufacturerPartId",
+                value=manufacturer_part_id,
+                externalSubjectId=Reference(
+                    type=ReferenceTypes.EXTERNAL_REFERENCE,
+                    keys=[
+                        ReferenceKey(
+                            type=ReferenceKeyTypes.GLOBAL_REFERENCE, value="PUBLIC_READABLE"
+                        ),
+                    ],
+                ),
+            )  # type: ignore
+            specific_asset_ids.append(specific_manufacturer_part_asset_id)
+
+        key = ("customerPartId", customer_part_id)
+        if key not in existing_keys:
+            specific_customer_part_asset_id = SpecificAssetId(
+                name="customerPartId",
+                value=customer_part_id,
+                externalSubjectId=self._reference_from_bpn_list([business_partner_number]),
+            )
+            specific_asset_ids.append(specific_customer_part_asset_id)
+
+        specific_asset_ids.append(self._add_or_update_asset_id("partInstanceId", part_instance_id, [business_partner_number], fallback_id=manufacturer_id))
+        
+        if van and ("van", van) not in existing_keys:
+            specific_asset_ids.append(self._add_or_update_asset_id("van", van, [business_partner_number], fallback_id=manufacturer_id))
+
+        shell = ShellDescriptor(
+            id=aas_id.urn,
+            globalAssetId=global_id.urn,
+            specificAssetIds=specific_asset_ids,
+        )
+
+        if existing_shell:
+            res = self.aas_service.update_asset_administration_shell_descriptor(shell)
+        else:
+            res = self.aas_service.create_asset_administration_shell_descriptor(shell)
+
+        if isinstance(res, Result):
+            raise Exception("Error creating or updating shell descriptor", res.to_json_string())
+
+        return res
 
     def create_submodel_descriptor(
         self,

@@ -282,6 +282,26 @@ class SerializedPartRepository(BaseRepository[SerializedPart]):
             SerializedPart.part_instance_id == part_instance_id)
         return self._session.scalars(stmt).first()
     
+    def get_by_twin_id(
+        self,
+        twin_id: int,
+        join_legal_entity: bool = False,
+        join_partner_catalog_part: bool = False
+    ) -> Optional[SerializedPart]:
+        
+        stmt = select(SerializedPart)
+        
+        if join_legal_entity or join_partner_catalog_part:
+            stmt = stmt.join(PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id)
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id)
+            stmt = stmt.join(CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id)
+
+        if join_legal_entity:
+            stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+
+        stmt = stmt.where(SerializedPart.twin_id == twin_id)
+        return self._session.scalars(stmt).first()
+
     def find(self,
         manufacturer_id: Optional[str] = None,
         manufacturer_part_id: Optional[str] = None,
@@ -439,6 +459,7 @@ class TwinRepository(BaseRepository[Twin]):
             van: Optional[str] = None,
             business_partner_number: Optional[str] = None,
             global_id: Optional[UUID] = None,
+            enablement_service_stack_id: Optional[int] = None,
             min_incl_created_date: Optional[datetime] = None,
             max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
@@ -473,6 +494,13 @@ class TwinRepository(BaseRepository[Twin]):
 
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
+
+        if enablement_service_stack_id:
+            stmt = stmt.join(
+                TwinRegistration, TwinRegistration.twin_id == Twin.id
+            ).where(
+                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+            )
 
         if business_partner_number:
             stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
