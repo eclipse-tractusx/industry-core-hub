@@ -1,0 +1,40 @@
+meta {
+  name: 3-5 -EDR- Get TransferProcessId
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{your-connector-url}}/management/v2/edrs/request
+  body: json
+  auth: apikey
+}
+
+auth:apikey {
+  key: X-Api-Key
+  value: {{connector-api-key}}
+  placement: header
+}
+
+body:json {
+  {
+      "@context": {
+          "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      },
+      "@type": "QuerySpec",
+      "filterExpression": [
+          {
+              "operandLeft": "contractNegotiationId",
+              "operator": "=",
+              "operandRight": "{{negotiationId2}}"
+          }
+      ]
+  }
+}
+
+tests {
+  let jsonData = res.getBody();
+  // Store the transferProcessId in a collection variable
+  bru.setVar("transferProcessId2", jsonData[0].transferProcessId);
+  
+}

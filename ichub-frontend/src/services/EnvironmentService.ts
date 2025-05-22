@@ -26,12 +26,12 @@ export const isRequireHttpsUrlPattern = () =>
   ENV.REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
 export const getIchubBackendUrl = () => ENV.ICHUB_BACKEND_URL ?? '';
-export const participantId = () => ENV.PARTICIPANT_ID ?? 'BPNL000000000000';
+export const getParticipantId = () => ENV.PARTICIPANT_ID ?? 'BPNL000000000000';
 
 const EnvironmentService = {
   isRequireHttpsUrlPattern,
   getIchubBackendUrl,
-  participantId
+  getParticipantId
 };
 
 export default EnvironmentService;

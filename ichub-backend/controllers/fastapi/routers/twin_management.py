@@ -41,22 +41,12 @@ async def twin_management_get_catalog_part_twins(include_data_exchange_agreement
 
 @router.get("/catalog-part-twin/{global_id}", response_model=List[CatalogPartTwinDetailsRead])
 async def twin_management_get_catalog_part_twin(global_id: UUID) -> List[CatalogPartTwinDetailsRead]:
-    return twin_management_service.get_catalog_part_twin_details(global_id)
+    return twin_management_service.get_catalog_part_twin_details_id(global_id)
+
+@router.get("/catalog-part-twin/{manufacturerId}/{manufacturerPartId}", response_model=List[CatalogPartTwinDetailsRead])
+async def twin_management_get_catalog_part_twin_from_manufacturer(manufacturerId: str, manufacturerPartId: str) -> List[CatalogPartTwinDetailsRead]:
+    return twin_management_service.get_catalog_part_twin_details(manufacturerId, manufacturerPartId)
 
 @router.post("/catalog-part-twin", response_model=TwinRead)
 async def twin_management_create_catalog_part_twin(catalog_part_twin_create: CatalogPartTwinCreate) -> TwinRead:
     return twin_management_service.create_catalog_part_twin(catalog_part_twin_create)
-
-@router.post("/catalog-part-twin/share", responses={
-    201: {"description": "Catalog part twin shared successfully"},
-    204: {"description": "Catalog part twin already shared"}
-})
-async def twin_management_share_catalog_part_twin(catalog_part_twin_share: CatalogPartTwinShare):
-    if twin_management_service.create_catalog_part_twin_share(catalog_part_twin_share):
-        return JSONResponse(status_code=201, content={"description":"Catalog part twin shared successfully"})
-    else:
-        return JSONResponse(status_code=204, content={"description":"Catalog part twin already shared"})
-
-@router.post("/twin-aspect", response_model=TwinAspectRead)
-async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
-    return twin_management_service.create_twin_aspect(twin_aspect_create)

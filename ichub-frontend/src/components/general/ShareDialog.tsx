@@ -27,16 +27,10 @@ import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { ProductDetailDialogProps } from '../../types/dialogViewer';
-import { shareCatalogPart } from '../../features/catalog-management/api';
+import { PartnerInstance } from "../../types/partner";
 
-// Sample BPNL data for the autocomplete field
-// After the integration, this data would be fetched from the API
-const PREVIOUS_BPNLS = [
-  'BPNL0000000001XY',
-  'BPNL0000000002XY',
-  'BPNL0000000003XY',
-  'BPNL0000000004XY',
-];
+import { shareCatalogPart } from '../../features/catalog-management/api';
+import { fetchPartners } from '../../features/partner-management/api';
 
 const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const title = partData?.name ?? "Part name not obtained";
@@ -45,6 +39,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
+  const [partnerBpnlsList, setPartnerBpnlsList] = useState<string[]>([]);
 
   useEffect(() => {
     // Reset fields when dialog opens or partData changes
@@ -53,6 +48,17 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       setError(false);
       setSuccessMessage('');
       setApiErrorMessage('');
+
+      const fetchData = async () => {
+        try {
+          const data = await fetchPartners();          
+          setPartnerBpnlsList(data.map((partner: PartnerInstance) => partner.bpnl));
+        } catch (error) {
+          console.error('Error fetching data:', error);  
+          setPartnerBpnlsList([]);
+        }
+      };
+      fetchData();
     }
   }, [open, partData]);
 
@@ -133,7 +139,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
         <Box sx={{ mt: 2, mx: 'auto', maxWidth: 400 }}>
           <Autocomplete
             freeSolo
-            options={PREVIOUS_BPNLS}
+            options={partnerBpnlsList}
             inputValue={bpnl}
             onInputChange={handleBpnlChange}
             renderInput={(params) => (

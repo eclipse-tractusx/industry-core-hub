@@ -1,0 +1,27 @@
+meta {
+  name: Twin Management Create Twin Aspect
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/twin-management/twin-aspect
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "globalId": "<uuid>",
+    "semanticId": "<string>",
+    "payload": {
+      "laborise71": 55759630.54244819
+    },
+    "submodelId": "<uuid>"
+  }
+}

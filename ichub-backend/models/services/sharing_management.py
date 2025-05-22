@@ -47,3 +47,6 @@ class SharedPartBase(BaseModel):
     shared_at: datetime = Field(alias="sharedAt", description="The date and time when the catalog part was shared.")
     twin: Optional[CatalogPartTwinDetailsRead] = Field(alias="twin", description="The digital twin created for part that was shared.", default=None)
 
+
+class SharedPartner(SharingBase):
+    name: str = Field(description="The unique name of the business partner.")

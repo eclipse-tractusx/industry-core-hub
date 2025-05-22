@@ -202,6 +202,7 @@ npm/npmjs/-/typescript/5.7.3, Apache-2.0 AND MIT, approved, #17432
 npm/npmjs/-/undici-types/6.21.0, MIT, approved, clearlydefined
 npm/npmjs/-/uri-js/4.4.1, BSD-2-Clause, approved, #1086
 npm/npmjs/-/use-sync-external-store/1.5.0, MIT, approved, clearlydefined
+npm/npmjs/-/uuid/11.1.0, MIT, approved, clearlydefined
 npm/npmjs/-/vite/6.3.5, Apache-2.0 AND BSD-2-Clause AND CC0-1.0 AND ISC AND MIT AND MIT AND (BSD-3-Clause AND MIT), approved, #21004
 npm/npmjs/-/void-elements/3.1.0, MIT, approved, clearlydefined
 npm/npmjs/-/which/2.0.2, ISC, approved, clearlydefined

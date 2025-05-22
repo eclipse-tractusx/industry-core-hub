@@ -1,22 +1,27 @@
 [
     {
         "name": "Volkswagen AG",
-        "bpnl": "BPNL4565423555AS"
+        "bpnl": "BPNL4565423555AS",
+        "customerPartId": "BPNL4565423555AS_AUT_527TR"
     },
     {
         "name": "BMW Racing Gmbh",
-        "bpnl": "BPNL0000001023"
+        "bpnl": "BPNL0000001023",
+        "customerPartId": "BPNL0000001023_AUT_527TR"
     },
     {
         "name": "BASF",
-        "bpnl": "BPNL5004654513"
+        "bpnl": "BPNL5004654513",
+        "customerPartId": "BPNL5004654513_AUT_527TR"
     },
     {
         "name": "Mercedes-Benz",
-        "bpnl": "BPNL856ASD9656A"
+        "bpnl": "BPNL856ASD9656A",
+        "customerPartId": "BPNL856ASD9656A_AUT_527TR"
     },
     {
         "name": "BOSCH",
-        "bpnl": "BPNL5470544322"
+        "bpnl": "BPNL5470544322",
+        "customerPartId": "BPNL5470544322_AUT_527TR"
     }
 ]

@@ -25,14 +25,15 @@ from fastapi import APIRouter, Body, Header
 from services.sharing_service import SharingService
 from models.services.sharing_management import (
     SharedPartBase,
-    ShareCatalogPart
+    ShareCatalogPart,
+    SharedPartner
 )
-
+from typing import Optional, List
 router = APIRouter(prefix="/share", tags=["Sharing Functionality"])
-part_sharing_shortcut_service = SharingService()
+part_sharing_service = SharingService()
 
 @router.post("/catalog-part", response_model=SharedPartBase)
-async def twin_management_create_part_sharing_shortcut(catalog_part_to_share: ShareCatalogPart) -> SharedPartBase:
-    return part_sharing_shortcut_service.share_catalog_part(
+async def share_catalog_part(catalog_part_to_share: ShareCatalogPart) -> SharedPartBase:
+    return part_sharing_service.share_catalog_part(
         catalog_part_to_share=catalog_part_to_share
     )

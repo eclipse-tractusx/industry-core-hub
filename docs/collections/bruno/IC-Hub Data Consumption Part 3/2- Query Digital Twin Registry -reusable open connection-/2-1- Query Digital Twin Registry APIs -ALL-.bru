@@ -1,0 +1,42 @@
+meta {
+  name: 2-1- Query Digital Twin Registry APIs -ALL-
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{provider-connector-dataplane-proxy}}/shell-descriptors
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  // Define the URL dynamically using environment/collection variables
+  const url = `${bru.getVar("your-connector-url")}/management/v2/edrs/${bru.getVar("transferProcessId")}/dataaddress?auto_refresh=true`;
+  const apiKey = bru.getVar("connector-api-key"); // Assuming this is where your API key is stored
+  
+  // pm.sendRequest({
+      url: url,
+      method: 'GET',
+      header: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'X-Api-Key', value: apiKey }
+      ]
+  }, function (err, res) {
+      if (err) {
+          console.error('Request error:', err);
+      
+          return;
+      }
+  
+      try {
+          const jsonData = res.json();
+          console.log(jsonData)
+          bru.setVar("jwtToken", jsonData["authorization"]);
+          bru.setVar("provider-connector-dataplane-proxy", jsonData["endpoint"]);
+          console.log("Token and endpoint set successfully.");
+      } catch (parseError) {
+          console.error("Failed to parse JSON response:", parseError);
+      }
+  });
+}

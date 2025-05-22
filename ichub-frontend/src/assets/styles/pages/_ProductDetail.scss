@@ -26,6 +26,10 @@
 .productDetail {
     padding: 20px;
     margin: 20px 50px 30px;
+
+    @media (max-width: 600px) {
+        margin: 0;
+    }
   
     * {
         color: $brand-text !important;
@@ -90,7 +94,7 @@
     }
   
     .title-subtitle {
-        padding: 20px 0;
+        padding: 10px 0px 40px 0px;
     }
   
     .add-on-buttons button {

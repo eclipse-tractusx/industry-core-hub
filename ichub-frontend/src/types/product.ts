@@ -53,7 +53,7 @@ export interface PartType {
   height?: Measurement;
   length?: Measurement;
   weight?: Measurement;
-  customer_part_ids?: Record<string, string>; // e.g., { "CUSTOMER_BPNL_XYZ": "CUST_PART_ID_123" }
+  customerPartIds?: Record<string, { name: string; bpnl: string }>; // e.g., { "CUSTOMER_BPNL_XYZ": { name: "BMW", bpnl: "BPNL00000003CRHK" } }
 }
 
 export type ApiPartData = Omit<PartType, 'status'> & {

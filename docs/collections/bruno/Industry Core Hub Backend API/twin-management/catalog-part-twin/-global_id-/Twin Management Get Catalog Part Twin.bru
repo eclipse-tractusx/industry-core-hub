@@ -1,0 +1,19 @@
+meta {
+  name: Twin Management Get Catalog Part Twin
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/twin-management/catalog-part-twin/:global_id
+  body: none
+  auth: none
+}
+
+params:path {
+  global_id: <uuid>
+}
+
+headers {
+  Accept: application/json
+}

@@ -1,0 +1,17 @@
+meta {
+  name: 3-4 -EDR- -IF FINALIZED- View Agreement
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId2}}
+  body: none
+  auth: apikey
+}
+
+auth:apikey {
+  key: X-Api-Key
+  value: {{connector-api-key}}
+  placement: header
+}
