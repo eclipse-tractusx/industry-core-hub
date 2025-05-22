@@ -1,0 +1,49 @@
+meta {
+  name: 3-2 -EDR- Accept Offer - Select Policy
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{your-connector-url}}/management/v2/edrs
+  body: json
+  auth: apikey
+}
+
+auth:apikey {
+  key: X-Api-Key
+  value: {{connector-api-key}}
+  placement: header
+}
+
+body:json {
+  {
+      "@context": [
+          "https://w3id.org/tractusx/policy/v1.0.0",
+          "http://www.w3.org/ns/odrl.jsonld",
+          {
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          }
+      ],
+      "@type": "ContractRequest",
+      "counterPartyAddress": "{{dsp_endpoint}}",
+      "protocol": "dataspace-protocol-http",
+      "policy": {
+          "@type": "odrl:Offer",
+          "assigner": "{{manufacturer_id}}",
+          "target": "{{offerAssetId2}}",
+          "@id": "{{offerId2}}",
+          "odrl:permission": {{contractPermissions2}},
+          "odrl:prohibition": {{contractProhibitions2}},
+          "odrl:obligation": {{contractObligations2}}
+      }
+  }
+}
+
+tests {
+  test("Body matches string", function () {
+      var jsonData = res.getBody();
+      bru.setVar("negotiationId2", jsonData["@id"]);
+  
+  });
+}

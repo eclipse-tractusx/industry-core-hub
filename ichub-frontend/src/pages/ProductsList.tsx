@@ -26,12 +26,13 @@ import { ProductCard } from "../features/catalog-management/components/product-l
 import { PartType, ApiPartData } from "../types/product";
 import TablePagination from "@mui/material/TablePagination";
 import { Typography, Grid2, Box } from "@mui/material"; // Removed Paper
-import { Button } from "@catena-x/portal-shared-components";
+import { Button, PageSnackbar } from "@catena-x/portal-shared-components";
 import AddIcon from "@mui/icons-material/Add";
 import ShareDialog from "../components/general/ShareDialog";
 import CreateProductListDialog from "../features/partner-management/components/general/CreateProductListDialog";
-import { fetchCatalogParts } from "../features/catalog-management/api";
+import { fetchCatalogParts, registerCatalogPartTwin } from "../features/catalog-management/api";
 import { mapApiPartDataToPartType } from "../features/catalog-management/utils";
+import { CatalogPartTwinCreateType } from "../types/twin";
 
 const ProductsList = () => {
   const [carParts, setCarParts] = useState<PartType[]>([]);
@@ -42,6 +43,10 @@ const ProductsList = () => {
   const rowsPerPage = 10;
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' >('success');
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleChangePage = (
     _event: React.MouseEvent<HTMLButtonElement> | null,
@@ -51,6 +56,7 @@ const ProductsList = () => {
   };
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       const apiData: ApiPartData[] = await fetchCatalogParts();
 
@@ -59,10 +65,14 @@ const ProductsList = () => {
         mapApiPartDataToPartType(part)
       );
 
+      mappedCarParts.reverse(); // Reverse the order of the array
+
       setCarParts(mappedCarParts);
       setInitialCarParts(mappedCarParts);
     } catch (error) {
       console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -107,6 +117,25 @@ const ProductsList = () => {
     // More options logic
   };
 
+  const handleRegisterPart = async (manufacturerId: string, manufacturerPartId: string) => {
+    try {
+      const twinToCreate: CatalogPartTwinCreateType = {
+        manufacturerId,
+        manufacturerPartId,
+      };
+      await registerCatalogPartTwin(twinToCreate);
+      setSnackbarMessage("Part twin registered successfully!");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      fetchData();
+    } catch (error) {
+      console.error("Error registering part twin:", error);
+      setSnackbarMessage("Failed to register part twin!");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
+  };
+
   const visibleRows = useMemo(() => {
     return [...carParts].slice(
       page * rowsPerPage,
@@ -130,6 +159,13 @@ const ProductsList = () => {
 
   return (
     <Box sx={{ p: 3, width: "100%" }}>
+      <PageSnackbar
+        open={snackbarOpen}
+        onCloseNotification={() => setSnackbarOpen(false)}
+        severity={snackbarSeverity}
+        description={snackbarMessage}
+        autoClose={true}
+      />
       <Grid2 container direction="column" alignItems="center" sx={{ mb: 3 }}>
         <Grid2 className="product-catalog title flex flex-content-center">
           <Typography className="text">Catalog Parts</Typography>
@@ -144,6 +180,7 @@ const ProductsList = () => {
             onClick={handleButtonClick}
             onShare={handleShareDialog}
             onMore={handleMore}
+            onRegisterClick={handleRegisterPart}
             items={visibleRows.map((part) => ({
               manufacturerId: part.manufacturerId,
               manufacturerPartId: part.manufacturerPartId,
@@ -151,6 +188,7 @@ const ProductsList = () => {
               category: part.category,
               status: part.status,
             }))}
+            isLoading={isLoading}
           />
         </Grid2>
 

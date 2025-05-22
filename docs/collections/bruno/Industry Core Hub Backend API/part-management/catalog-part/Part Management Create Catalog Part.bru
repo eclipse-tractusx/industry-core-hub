@@ -1,0 +1,49 @@
+meta {
+  name: Part Management Create Catalog Part
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/part-management/catalog-part
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "manufacturerId": "BPNL0000000093Q7",
+    "manufacturerPartId": "AUT_309XJ",
+    "name": "Front Stabilizer Link Arm",
+    "category": "Automotive Suspension Components",
+    "bpns": "BPNS00000672B5KD",
+    "description": "Precision-engineered stabilizer link arm for front suspension systems, ensuring optimal handling and reduced body roll.",
+    "materials":[
+      {
+          "name": "Iron",
+          "share":"10"
+      }
+    ],
+    "width": {
+      "value": 45,
+      "unit": "mm"
+    },
+    "height": {
+      "value": 60,
+      "unit": "mm"
+    },
+    "length": {
+      "value": 320,
+      "unit": "mm"
+    },
+    "weight": {
+      "value": 2.1,
+      "unit": "kg"
+    }
+  }
+}

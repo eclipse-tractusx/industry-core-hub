@@ -43,6 +43,7 @@ import {
   Material,
 } from "../../../../types/product";
 import { mapPartInstanceToApiPartData } from "../../../catalog-management/utils";
+import { getParticipantId } from "../../../../services/EnvironmentService";
 
 // Define props for ProductListDialog
 interface ProductListDialogProps {
@@ -54,23 +55,19 @@ interface ProductListDialogProps {
 
 const initialJsonPlaceholder = JSON.stringify(
   {
-    manufacturerId: "BPNL000000000000",
-    manufacturerPartId: "TX-4003", // Changed example ID
-    name: "Example Part Name",
-    description: "Detailed description of the example part.",
-    category: "example-category",
+    manufacturerPartId: "<<Your Manufacturer Part ID>>",
+    name: "<<Your Part Name>>",
+    description: "<<Your Part Description>>",
+    category: "<<Your Part Category>>",
     materials: [
       { name: "Aluminum", share: 80 },
-      { name: "Rubber", share: 20 },
+      { name: "Rubber", share: 20 }
     ],
-    bpns: "BPNS000000000ZZ", // Example Site BPN
+    bpns: "BPNS0000000000ZZ", // Example Site BPN
     width: { value: 200, unit: Unit.MM },
     height: { value: 100, unit: Unit.MM },
     length: { value: 50, unit: Unit.MM },
-    weight: { value: 5, unit: Unit.KG },
-    customer_part_ids: {
-      BPNL0000000CUSTA: "CUSTA-PART-EXAMPLE",
-    },
+    weight: { value: 5, unit: Unit.KG }
   } as Omit<PartType, "status">, // Use Omit to exclude status from placeholder type
   null,
   2
@@ -120,8 +117,6 @@ const CreateProductListDialog = ({
 
     const errors: string[] = [];
 
-    if (typeof data.manufacturerId !== "string" || !data.manufacturerId)
-      errors.push("manufacturerId (non-empty string) is required.");
     if (typeof data.manufacturerPartId !== "string" || !data.manufacturerPartId)
       errors.push("manufacturerPartId (non-empty string) is required.");
     if (typeof data.name !== "string" || !data.name)
@@ -194,33 +189,9 @@ const CreateProductListDialog = ({
     checkMeasurement(data.length, "length");
     checkMeasurement(data.weight, "weight");
 
-    if (
-      data.customer_part_ids !== undefined &&
-      data.customer_part_ids !== null
-    ) {
-      if (
-        typeof data.customer_part_ids !== "object" ||
-        Array.isArray(data.customer_part_ids)
-      ) {
-        errors.push(
-          "customer_part_ids must be an object (key-value map) if provided."
-        );
-      } else {
-        for (const key in data.customer_part_ids) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          if (typeof (data.customer_part_ids as any)[key] !== "string") {
-            errors.push(
-              `customer_part_ids value for key "${key}" must be a string.`
-            );
-          }
-        }
-      }
-    }
-
     // Check for unexpected properties (optional, for stricter validation)
     const allowedKeys: Set<keyof Omit<PartType, "status">> = new Set([
       // Exclude status
-      "manufacturerId",
       "manufacturerPartId",
       "name",
       "description",
@@ -231,7 +202,6 @@ const CreateProductListDialog = ({
       "height",
       "length",
       "weight",
-      "customer_part_ids",
     ]);
     for (const key in data) {
       if (!allowedKeys.has(key as keyof Omit<PartType, "status">)) {
@@ -281,22 +251,18 @@ const CreateProductListDialog = ({
       return;
     }
 
+    parsedPayload["manufacturerId"] = getParticipantId()
+
     // API call for creating catalog part
     try {
       // POST to /part-management/catalog-part
       await createCatalogPart(
         mapPartInstanceToApiPartData(parsedPayload as PartType)
       );
-      console.log(
-        `Catalog Part created via API with content: ${jsonContent.substring(
-          0,
-          100
-        )}...`
-      );
-      onSave?.({ jsonContent: jsonContent.trim() });
-      setSuccessMessage(`Catalog Part created successfully.`);
+      setSuccessMessage(`Catalog part created successfully.`);
       setTimeout(() => {
         setSuccessMessage("");
+        onSave?.({ jsonContent: jsonContent.trim() });
         onClose();
       }, 3000);
     } catch (axiosError) {
@@ -344,10 +310,19 @@ const CreateProductListDialog = ({
         <CloseIcon />
       </IconButton>
       <DialogContent dividers>
-        <Typography variant="body2" gutterBottom>
+        <Typography variant="body2" gutterBottom sx={{color: "white"}}>
           Use the placeholder below to define the new catalog part. Please
           ensure the JSON is valid.
         </Typography>
+         <TextField
+            label="manufacturerId"
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{ marginBottom: '16px' }}
+            value={getParticipantId()}
+            disabled={true}
+          />
         <Box sx={{ mt: 2, width: "100%" }}>
           <TextField
             label="Catalog Part JSON"

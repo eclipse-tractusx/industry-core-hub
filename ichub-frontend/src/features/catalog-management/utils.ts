@@ -22,6 +22,7 @@
 
 import { StatusVariants } from '../../types/statusVariants';
 import { ApiPartData, PartType } from '../../types/product';
+import { SharedPartner } from '../../types/sharedPartners';
 
 // Helper function to map numeric API status to StatusVariants
 export const mapApiStatusToVariant = (apiStatus: number): StatusVariants => {
@@ -71,4 +72,14 @@ export const mapPartInstanceToApiPartData = (partInstance: PartType): ApiPartDat
     ...rest,
     status: mapVariantToApiStatus(status ?? StatusVariants.draft),
   };
+};
+
+export const mapSharePartCustomerPartIds = (
+  customerPartIds: Record<string, { name: string; bpnl: string }>
+): SharedPartner[] => {
+  return Object.entries(customerPartIds).map(([customerPartId, { name, bpnl }]) => ({
+    name,
+    bpnl,
+    customerPartId,
+  }));
 };

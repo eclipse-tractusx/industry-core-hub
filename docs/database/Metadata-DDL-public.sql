@@ -51,6 +51,7 @@ DROP TABLE IF EXISTS public.business_partner;
 DROP TABLE IF EXISTS public.enablement_service_stack;
 DROP TABLE IF EXISTS public.legal_entity;
 
+
 CREATE TABLE public.batch (
     id integer NOT NULL,
     batch_id character varying NOT NULL,
@@ -470,3 +471,15 @@ ALTER TABLE ONLY public.twin_registration
     ADD CONSTRAINT fk_twin_registration_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 ALTER TABLE ONLY public.twin_registration
     ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+ALTER SEQUENCE public.batch_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.business_partner_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.catalog_part_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.data_exchange_agreement_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.enablement_service_stack_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.jis_part_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.legal_entity_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.part_share_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;

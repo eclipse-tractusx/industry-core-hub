@@ -1,0 +1,19 @@
+meta {
+  name: Partner Management Get Data Exchange Agreements
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/partner-management/business-partner/:business_partner_number/data-exchange-agreement
+  body: none
+  auth: none
+}
+
+params:path {
+  business_partner_number: <string>
+}
+
+headers {
+  Accept: application/json
+}

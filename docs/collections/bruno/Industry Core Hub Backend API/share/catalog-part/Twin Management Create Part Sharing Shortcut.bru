@@ -1,0 +1,38 @@
+meta {
+  name: Twin Management Create Part Sharing Shortcut
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/share/catalog-part?auto_generate_part_type_information_submodel=true
+  body: json
+  auth: none
+}
+
+params:query {
+  auto_generate_part_type_information_submodel: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "manufacturerId": "<string>",
+    "manufacturerPartId": "<string>",
+    "businessPartnerNumber": "<string>",
+    "customerPartIds": {
+      "magnacb": {
+        "name": "<string>",
+        "bpnl": "<string>"
+      },
+      "aute2": {
+        "name": "<string>",
+        "bpnl": "<string>"
+      }
+    }
+  }
+}

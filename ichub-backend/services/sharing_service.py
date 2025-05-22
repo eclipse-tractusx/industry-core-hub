@@ -28,10 +28,11 @@ from managers.submodels.submodel_document_generator import SubmodelDocumentGener
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.services.twin_management import CatalogPartTwinCreate, CatalogPartTwinShare, TwinAspectCreate, CatalogPartTwinDetailsRead, TwinAspectRead
 from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, EnablementServiceStack, CatalogPart, Twin, PartnerCatalogPart
-from models.services.sharing_management import SharedPartBase, ShareCatalogPart
+from models.services.sharing_management import SharedPartBase, ShareCatalogPart, SharedPartner
 from models.services.partner_management import BusinessPartnerRead
 from typing import Dict, Optional, List, Any, Tuple
 
+from uuid import uuid4
 from managers.config.log_manager import LoggingManager
 
 logger = LoggingManager.get_logger(__name__)
@@ -45,6 +46,9 @@ class SharingService:
         self.submodel_document_generator = SubmodelDocumentGenerator()
         self.twin_management_service = TwinManagementService()
 
+    def get_shared_partners(self, manufacturerId:str, manufacturerPartId:str) -> List[SharedPartner]:
+        pass
+    
     def share_catalog_part(self, catalog_part_to_share: ShareCatalogPart) -> SharedPartBase:
         shared_at = datetime.now(timezone.utc)
         with RepositoryManagerFactory.create() as repo:
@@ -52,7 +56,7 @@ class SharingService:
             db_catalog_part = self._get_catalog_part(repo, catalog_part_to_share)
             # Step 2: Get or create the enablement service stack for the manufacturer
             ## Note: this is not used at the moment
-            db_enablement_service_stack = self._get_or_create_enablement_service_stack(repo, catalog_part_to_share)
+            db_enablement_service_stack = self.twin_management_service.get_or_create_enablement_stack(repo, catalog_part_to_share.manufacturer_id)
             # Step 3: Get or create the business partner entity
             db_business_partner = self._get_or_create_business_partner(repo, catalog_part_to_share)
             # Step 4: Get or create the data exchange agreement for the business partner
@@ -70,7 +74,7 @@ class SharingService:
                 businessPartnerNumber=catalog_part_to_share.business_partner_number,
                 customerPartIds=db_partner_catalog_parts,
                 sharedAt=shared_at,
-                twin=self.twin_management_service.get_catalog_part_twin_details(db_twin.global_id)
+                twin=self.twin_management_service.get_catalog_part_twin_details_id(global_id=db_twin.global_id)
             )
 
     def _get_catalog_part(self, repo: RepositoryManager, catalog_part_to_share: ShareCatalogPart) -> CatalogPart:
@@ -88,21 +92,6 @@ class SharingService:
             raise ValueError("Catalog part not found.")
         db_catalog_part, _ = db_catalog_parts[0]
         return db_catalog_part
-
-    def _get_or_create_enablement_service_stack(self, repo: RepositoryManager, catalog_part_to_share: ShareCatalogPart) -> EnablementServiceStack:
-        """
-        Retrieve or create an EnablementServiceStack for the given manufacturer ID.
-        """
-        db_enablement_service_stacks = repo.enablement_service_stack_repository.find_by_legal_entity_bpnl(catalog_part_to_share.manufacturer_id)
-        if not db_enablement_service_stacks:
-            db_legal_entity = repo.legal_entity_repository.get_by_bpnl(catalog_part_to_share.manufacturer_id)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.create(
-                EnablementServiceStack(name='EDC/DTR Default', legal_entity_id=db_legal_entity.id))
-            repo.commit()
-            repo.refresh(db_enablement_service_stack)
-        else:
-            db_enablement_service_stack = db_enablement_service_stacks[0]
-        return db_enablement_service_stack
 
     def _get_or_create_business_partner(self, repo: RepositoryManager, catalog_part_to_share: ShareCatalogPart) -> BusinessPartner:
         """
@@ -221,4 +210,4 @@ class SharingService:
             globalId=db_twin.global_id,
             semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
             payload=payload
-        ))
+        ), manufacturer_id=catalog_part_to_share.manufacturer_id)

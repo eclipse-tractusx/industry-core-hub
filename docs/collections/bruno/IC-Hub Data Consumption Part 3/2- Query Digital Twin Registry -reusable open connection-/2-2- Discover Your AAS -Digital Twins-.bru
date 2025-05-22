@@ -1,0 +1,70 @@
+meta {
+  name: 2-2- Discover Your AAS -Digital Twins-
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{provider-connector-dataplane-proxy}}/lookup/shellsByAssetLink
+  body: json
+  auth: none
+}
+
+body:json {
+  [
+      {
+        "name": "customerPartId",
+        "value": "BPNL00000003CRHK_TX-VST-8821"
+      }
+  ]   
+}
+
+script:pre-request {
+  // Define the URL dynamically using environment/collection variables
+  const url = `${bru.getVar("your-connector-url")}/management/v2/edrs/${bru.getVar("transferProcessId")}/dataaddress?auto_refresh=true`;
+  const apiKey = bru.getVar("connector-api-key"); // Assuming this is where your API key is stored
+  
+  // pm.sendRequest({
+      url: url,
+      method: 'GET',
+      header: [
+          { key: 'Content-Type', value: 'application/json' },
+          { key: 'X-Api-Key', value: apiKey }
+      ]
+  }, function (err, res) {
+      if (err) {
+          console.error('Request error:', err);
+      
+          return;
+      }
+  
+      try {
+          const jsonData = res.json();
+          console.log(jsonData)
+          bru.setVar("jwtToken", jsonData["authorization"]);
+          bru.setVar("provider-connector-dataplane-proxy", jsonData["endpoint"]);
+          console.log("Token and endpoint set successfully.");
+      } catch (parseError) {
+          console.error("Failed to parse JSON response:", parseError);
+      }
+  });
+}
+
+tests {
+  // Parse response JSON
+  let jsonData = res.getBody();
+  
+  // Get the first AAS ID
+  let firstAASId = jsonData.result && jsonData.result.length > 0 ? jsonData.result[0] : null;
+  
+  if (firstAASId) {
+      // Base64 encode
+      let encoded = Buffer.from(firstAASId).toString('base64');
+  
+      // Store in variable
+      bru.setEnvVar("encoded_aas_id", encoded);
+      console.log("Base64-encoded AAS ID:", encoded);
+  } else {
+      console.warn("No AAS ID found in the result array.");
+  }
+}

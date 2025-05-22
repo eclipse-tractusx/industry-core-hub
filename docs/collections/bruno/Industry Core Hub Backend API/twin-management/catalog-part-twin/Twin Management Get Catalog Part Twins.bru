@@ -1,0 +1,19 @@
+meta {
+  name: Twin Management Get Catalog Part Twins
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/twin-management/catalog-part-twin?include_data_exchange_agreements=false
+  body: none
+  auth: none
+}
+
+params:query {
+  include_data_exchange_agreements: false
+}
+
+headers {
+  Accept: application/json
+}

@@ -23,6 +23,7 @@
 export enum PRODUCT_STATUS {
     REGISTERED = "registered",
     DRAFT = "draft",
+    PENDING = "pending",
     SHARED = "shared",
   }
 

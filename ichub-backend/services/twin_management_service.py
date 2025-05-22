@@ -24,9 +24,10 @@
 
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
+import json
 
 from managers.config.config_manager import ConfigManager
-from managers.metadata_database.manager import RepositoryManagerFactory
+from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.enablement_services.dtr_manager import DTRManager
 from managers.enablement_services.connector_manager import ConnectorManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
@@ -48,6 +49,7 @@ from models.services.twin_management import (
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
+from models.metadata_database.models import Twin, EnablementServiceStack
 from models.metadata_database.models import Twin
 
 from managers.config.log_manager import LoggingManager
@@ -61,7 +63,23 @@ class TwinManagementService:
     Service class for managing twin-related operations (CRUD and Twin sharing).
     """
 
-    def create_catalog_part_twin(self, create_input: CatalogPartTwinCreate, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinRead:
+    def get_or_create_enablement_stack(self, repo: RepositoryManager, manufacturer_id: str) -> EnablementServiceStack:
+        """
+        Retrieve or create an EnablementServiceStack for the given manufacturer ID.
+        """
+        
+        db_enablement_service_stacks = repo.enablement_service_stack_repository.find_by_legal_entity_bpnl(legal_entity_bpnl=manufacturer_id)
+        if not db_enablement_service_stacks:
+            db_legal_entity = repo.legal_entity_repository.get_by_bpnl(bpnl=manufacturer_id)
+            db_enablement_service_stack = repo.enablement_service_stack_repository.create(
+                EnablementServiceStack(name=uuid4(), legal_entity_id=db_legal_entity.id))
+            repo.commit()
+            repo.refresh(db_enablement_service_stack)
+        else:
+            db_enablement_service_stack = db_enablement_service_stacks[0]
+        return db_enablement_service_stack
+    
+    def create_catalog_part_twin(self, create_input: CatalogPartTwinCreate) -> TwinRead:
         with RepositoryManagerFactory.create() as repo:
             # Step 1: Retrieve the catalog part entity according to the catalog part data (manufacturer_id, manufacturer_part_id)
             db_catalog_parts = repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
@@ -76,16 +94,7 @@ class TwinManagementService:
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => raise error)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                enablement_service_stack_name,
-                join_legal_entity=True
-            )
-            if not db_enablement_service_stack:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
-
-            # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.legal_entity.bpnl != create_input.manufacturer_id:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
+            db_enablement_service_stack = self.get_or_create_enablement_stack(repo=repo, manufacturer_id=create_input.manufacturer_id)
 
             # Step 3a: Load existing twin metadata from the DB (if there)
             if db_catalog_part.twin_id:
@@ -126,7 +135,7 @@ class TwinManagementService:
                 customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                       for partner_catalog_part in db_catalog_part.partner_catalog_parts}
                 
-                dtr_manager.create_shell_descriptor(
+                dtr_manager.create_or_update_shell_descriptor(
                     global_id=db_twin.global_id,
                     aas_id=db_twin.aas_id,
                     manufacturer_id=create_input.manufacturer_id,
@@ -418,7 +427,7 @@ class TwinManagementService:
             return twin_result
 
 
-    def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinAspectRead:
+    def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate, manufacturer_id:str) -> TwinAspectRead:
         """
         Create a new twin aspect for a give twin.
         """
@@ -432,17 +441,10 @@ class TwinManagementService:
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => raise error)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                enablement_service_stack_name,
-                join_legal_entity=True
-            )
-            if not db_enablement_service_stack:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
-
-            # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.legal_entity.bpnl != db_twin.catalog_part.legal_entity.bpnl:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{db_twin.catalog_part.legal_entity.bpnl}'.")
-
+            # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
+            # (if not there => raise error)
+            db_enablement_service_stack = self.get_or_create_enablement_stack(repo=repo, manufacturer_id=manufacturer_id)
+            
             # Step 3: Retrieve a potentially existing twin aspect entity for the given twin_id and semantic_id
             db_twin_aspect = repo.twin_aspect_repository.get_by_twin_id_semantic_id(
                 db_twin.id,
@@ -549,8 +551,8 @@ class TwinManagementService:
                     )
                 }
             )
-
-    def get_catalog_part_twin_details(self, global_id: UUID) -> Optional[CatalogPartTwinDetailsRead]:
+            
+    def get_catalog_part_twin_details_id(self, global_id:UUID) -> Optional[CatalogPartTwinDetailsRead]:
         with RepositoryManagerFactory.create() as repo:
             db_twins = repo.twin_repository.find_catalog_part_twins(
                 global_id=global_id,
@@ -562,6 +564,25 @@ class TwinManagementService:
                 return None
             
             db_twin = db_twins[0]
+            return self.build_catalog_part_twin_details(db_twin=db_twin)
+    
+    def get_catalog_part_twin_details(self, manufacturerId:str, manufacturerPartId:str) -> Optional[CatalogPartTwinDetailsRead]:
+        with RepositoryManagerFactory.create() as repo:
+            db_twins = repo.twin_repository.find_catalog_part_twins(
+                manufacturer_id=manufacturerId,
+                manufacturer_part_id=manufacturerPartId,
+                include_data_exchange_agreements=True,
+                include_aspects=True,
+                include_registrations=True
+            )
+            if not db_twins:
+                return None
+            
+            db_twin = db_twins[0]
+            return self.build_catalog_part_twin_details(db_twin=db_twin)
+        
+    
+    def build_catalog_part_twin_details(self, db_twin: Twin) -> Optional[CatalogPartTwinDetailsRead]:
             
             db_catalog_part = db_twin.catalog_part
             twin_result = CatalogPartTwinDetailsRead(

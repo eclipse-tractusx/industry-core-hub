@@ -43,7 +43,11 @@ async def twin_management_get_catalog_part_twins(include_data_exchange_agreement
 
 @router.get("/catalog-part-twin/{global_id}", response_model=List[CatalogPartTwinDetailsRead])
 async def twin_management_get_catalog_part_twin(global_id: UUID) -> List[CatalogPartTwinDetailsRead]:
-    return twin_management_service.get_catalog_part_twin_details(global_id)
+    return twin_management_service.get_catalog_part_twin_details_id(global_id)
+
+@router.get("/catalog-part-twin/{manufacturerId}/{manufacturerPartId}", response_model=List[CatalogPartTwinDetailsRead])
+async def twin_management_get_catalog_part_twin_from_manufacturer(manufacturerId: str, manufacturerPartId: str) -> List[CatalogPartTwinDetailsRead]:
+    return twin_management_service.get_catalog_part_twin_details(manufacturerId, manufacturerPartId)
 
 @router.post("/catalog-part-twin", response_model=TwinRead)
 async def twin_management_create_catalog_part_twin(catalog_part_twin_create: CatalogPartTwinCreate) -> TwinRead:

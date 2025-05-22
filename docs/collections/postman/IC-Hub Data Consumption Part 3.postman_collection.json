@@ -1,0 +1,2079 @@
+{
+	"info": {
+		"_postman_id": "12969ba7-5266-4ecd-99c3-feb14a1644e3",
+		"name": "IC-Hub Data Consumption Part 3",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19902752"
+	},
+	"item": [
+		{
+			"name": "1. Connect to Digital Twin Registry (AAS-REST) (one time)",
+			"item": [
+				{
+					"name": "1.1. [DSP] Find Available Digital Twin Registries (AAS-REST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if ( jsonResponse[\"dcat:dataset\"] instanceof Object )",
+									"{",
+									"    pm.collectionVariables.set(\"offerId\", jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"@id\"]);",
+									"    pm.collectionVariables.set(\"offerAssetId\", jsonResponse[\"dcat:dataset\"][\"@id\"]);",
+									"    // extract permissions, probihitions and obligations",
+									"    pm.collectionVariables.set(\"contractPermissions\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:permission\"]));",
+									"    pm.collectionVariables.set(\"contractProhibitions\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:prohibition\"]));",
+									"    pm.collectionVariables.set(\"contractObligations\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:obligation\"]));",
+									"}",
+									"else{",
+									"",
+									"    pm.collectionVariables.set(\"offerId\", jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"@id\"]);",
+									"    pm.collectionVariables.set(\"offerAssetId\", jsonResponse[\"dcat:dataset\"][0][\"@id\"]);",
+									"    // extract permissions, probihitions and obligations",
+									"    pm.collectionVariables.set(\"contractPermissions\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:permission\"]));",
+									"    pm.collectionVariables.set(\"contractProhibitions\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:prohibition\"]));",
+									"    pm.collectionVariables.set(\"contractObligations\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:obligation\"]));",
+									"}",
+									"",
+									"var permissions = pm.collectionVariables.get(\"contractPermissions\");",
+									"var prohibitions = pm.collectionVariables.get(\"contractProhibitions\");",
+									"var obligations = pm.collectionVariables.get(\"contractObligations\");",
+									"",
+									"if (permissions.length == 0)",
+									"    pm.collectionVariables.set(\"contractPermissions\", \"[]\");",
+									"",
+									"if (prohibitions.length == 0)",
+									"    pm.collectionVariables.set(\"contractProhibitions\", \"[]\");",
+									"",
+									"if (obligations.length == 0)",
+									"    pm.collectionVariables.set(\"contractObligations\", \"[]\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"@context\": {\n    \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n    \"odrl\": \"https://www.w3.org/ns/odrl/2/\",\n    \"dct\": \"http://purl.org/dc/terms/\",\n    \"cx-taxo\": \"https://w3id.org/catenax/taxonomy\"\n  },\n  \"@type\": \"edc:CatalogRequest\",\n  \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n  \"counterPartyId\": \"{{provider-bpnl}}\",\n  \"protocol\": \"dataspace-protocol-http\",\n      \"querySpec\": {\n        \"filterExpression\": [\n            {\n                \"operandLeft\": \"'http://purl.org/dc/terms/type'.'@id'\",\n                \"operator\": \"=\",\n                \"operandRight\": \"https://w3id.org/catenax/taxonomy#DigitalTwinRegistry\"\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/catalog/request",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"catalog",
+								"request"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"@context\": {\n    \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n    \"odrl\": \"https://www.w3.org/ns/odrl/2/\",\n    \"dct\": \"http://purl.org/dc/terms/\",\n    \"cx-taxo\": \"https://w3id.org/catenax/taxonomy\"\n  },\n  \"@type\": \"edc:CatalogRequest\",\n  \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n  \"counterPartyId\": \"{{provider-bpnl}}\",\n  \"protocol\": \"dataspace-protocol-http\",\n      \"querySpec\": {\n        \"filterExpression\": [\n            {\n                \"operandLeft\": \"'http://purl.org/dc/terms/type'.'@id'\",\n                \"operator\": \"=\",\n                \"operandRight\": \"https://w3id.org/catenax/taxonomy#DigitalTwinRegistry\"\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/catalog/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"catalog",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:14:35 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "3360"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@id\": \"2bd5f74b-33b4-403d-9757-1fce34b8dcbe\",\n    \"@type\": \"dcat:Catalog\",\n    \"dcat:dataset\": {\n        \"@id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n        \"@type\": \"dcat:Dataset\",\n        \"odrl:hasPolicy\": {\n            \"@id\": \"aWNodWI6Y29udHJhY3Q6X3JScHZ1VE1iX1IwTEVOaVJ6T1RYZw==:aWNodWI6YXNzZXQ6ZHRyOjlmb1VNN3BtU1RycjVMWm54ME5xaVE=:MWY4YzcyMTYtYjAxMy00NmVkLWFjY2UtYjIxNzA3NzVlZDJm\",\n            \"@type\": \"odrl:Offer\",\n            \"odrl:permission\": {\n                \"odrl:action\": {\n                    \"@id\": \"odrl:use\"\n                },\n                \"odrl:constraint\": {\n                    \"odrl:and\": [\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:FrameworkAgreement\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:Membership\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"active\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:UsagePurpose\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"cx.core.digitalTwinRegistry:1\"\n                        }\n                    ]\n                }\n            },\n            \"odrl:prohibition\": [],\n            \"odrl:obligation\": []\n        },\n        \"dcat:distribution\": [\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AzureStorage-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PULL\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AmazonS3-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            }\n        ],\n        \"dct:type\": {\n            \"@id\": \"https://w3id.org/catenax/taxonomy#DigitalTwinRegistry\"\n        },\n        \"https://w3id.org/catenax/ontology/common#version\": \"3.0\",\n        \"id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\"\n    },\n    \"dcat:catalog\": [],\n    \"dcat:distribution\": [],\n    \"dcat:service\": {\n        \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n        \"@type\": \"dcat:DataService\",\n        \"dcat:endpointDescription\": \"dspace:connector\",\n        \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n        \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n    },\n    \"dspace:participantId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"dcat\": \"http://www.w3.org/ns/dcat#\",\n        \"dct\": \"http://purl.org/dc/terms/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\",\n        \"dspace\": \"https://w3id.org/dspace/v0.8/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "1.2 [EDR] Accept Offer & Select Policy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Body matches string\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"negotiationId\", jsonData[\"@id\"]);",
+									"",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/tractusx/policy/v1.0.0\",\n        \"http://www.w3.org/ns/odrl.jsonld\",\n        {\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n        }\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"odrl:Offer\",\n        \"assigner\": \"{{provider-bpnl}}\",\n        \"target\": \"{{offerAssetId}}\",\n        \"@id\": \"{{offerId}}\",\n        \"odrl:permission\": {{contractPermissions}},\n        \"odrl:prohibition\": {{contractProhibitions}},\n        \"odrl:obligation\": {{contractObligations}}\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v2/edrs",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v2",
+								"edrs"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": [\n        \"https://w3id.org/tractusx/policy/v1.0.0\",\n        \"http://www.w3.org/ns/odrl.jsonld\",\n        {\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n        }\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"odrl:Offer\",\n        \"assigner\": \"{{provider-bpnl}}\",\n        \"target\": \"{{offerAssetId}}\",\n        \"@id\": \"{{offerId}}\",\n        \"odrl:permission\": {{contractPermissions}},\n        \"odrl:prohibition\": {{contractProhibitions}},\n        \"odrl:obligation\": {{contractObligations}}\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:36 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "362"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"IdResponse\",\n    \"@id\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n    \"createdAt\": 1747865796567,\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "1.3 [EDR] View Negotiation Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Negotiation status check\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    pm.expect(pm.response.json().state).to.equal(\"FINALIZED\");",
+									"    var jsonData = pm.response.json();",
+									"    if(jsonData[\"state\"] == \"FINALIZED\"){",
+									"        pm.collectionVariables.set(\"contractAgreementId\", jsonData[\"contractAgreementId\"]);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/contractnegotiations/{{negotiationId}}",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"contractnegotiations",
+								"{{negotiationId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractnegotiations/{{negotiationId}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractnegotiations",
+										"{{negotiationId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:43 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "776"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractNegotiation\",\n    \"@id\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n    \"type\": \"CONSUMER\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"state\": \"FINALIZED\",\n    \"counterPartyId\": \"BPNL0000000093Q7\",\n    \"counterPartyAddress\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n    \"callbackAddresses\": {\n        \"@type\": \"CallbackAddress\",\n        \"transactional\": true,\n        \"uri\": \"local://adapter\",\n        \"events\": [\n            \"contract.negotiation\",\n            \"transfer.process\"\n        ]\n    },\n    \"createdAt\": 1747865796567,\n    \"contractAgreementId\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "1.4 [EDR] [IF FINALIZED] View Agreement",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId}}",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"contractagreements",
+								"{{contractAgreementId}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractagreements",
+										"{{contractAgreementId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:50 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1232"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractAgreement\",\n    \"@id\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n    \"assetId\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n    \"policy\": {\n        \"@id\": \"c21365ee-5870-475c-b76e-5e99e969b23a\",\n        \"@type\": \"odrl:Agreement\",\n        \"odrl:permission\": {\n            \"odrl:action\": {\n                \"@id\": \"odrl:use\"\n            },\n            \"odrl:constraint\": {\n                \"odrl:and\": [\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:FrameworkAgreement\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:Membership\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"active\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:UsagePurpose\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"cx.core.digitalTwinRegistry:1\"\n                    }\n                ]\n            }\n        },\n        \"odrl:prohibition\": [],\n        \"odrl:obligation\": [],\n        \"odrl:assignee\": \"BPNL00000003CRHK\",\n        \"odrl:assigner\": \"BPNL0000000093Q7\",\n        \"odrl:target\": {\n            \"@id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\"\n        }\n    },\n    \"contractSigningDate\": 1747865798,\n    \"consumerId\": \"BPNL00000003CRHK\",\n    \"providerId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "1.5 [EDR] Get TransferProcessId",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"// Store the transferProcessId in a collection variable",
+									"pm.collectionVariables.set(\"transferProcessId\", jsonData[0].transferProcessId);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\",\n    \"filterExpression\": [\n        {\n            \"operandLeft\": \"contractNegotiationId\",\n            \"operator\": \"=\",\n            \"operandRight\": \"{{negotiationId}}\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v2/edrs/request",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v2",
+								"edrs",
+								"request"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\",\n    \"filterExpression\": [\n        {\n            \"operandLeft\": \"contractNegotiationId\",\n            \"operator\": \"=\",\n            \"operandRight\": \"{{negotiationId}}\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:55 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "638"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"@id\": \"dc7c26e0-7390-447e-8bf3-f96cebfca679\",\n        \"@type\": \"EndpointDataReferenceEntry\",\n        \"providerId\": \"BPNL0000000093Q7\",\n        \"assetId\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n        \"agreementId\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n        \"transferProcessId\": \"dc7c26e0-7390-447e-8bf3-f96cebfca679\",\n        \"createdAt\": 1747865804539,\n        \"contractNegotiationId\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n        \"@context\": {\n            \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n            \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n            \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n        }\n    }\n]"
+						}
+					]
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Query Digital Twin Registry (reusable open connection)",
+			"item": [
+				{
+					"name": "2.1. Query Digital Twin Registry APIs (ALL)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Define the URL dynamically using environment/collection variables",
+									"const url = `${pm.collectionVariables.get(\"your-connector-url\")}/management/v2/edrs/${pm.collectionVariables.get(\"transferProcessId\")}/dataaddress?auto_refresh=true`;",
+									"const apiKey = pm.collectionVariables.get(\"connector-api-key\"); // Assuming this is where your API key is stored",
+									"",
+									"pm.sendRequest({",
+									"    url: url,",
+									"    method: 'GET',",
+									"    header: [",
+									"        { key: 'Content-Type', value: 'application/json' },",
+									"        { key: 'X-Api-Key', value: apiKey }",
+									"    ]",
+									"}, function (err, res) {",
+									"    if (err) {",
+									"        console.error('Request error:', err);",
+									"    ",
+									"        return;",
+									"    }",
+									"",
+									"    try {",
+									"        const jsonData = res.json();",
+									"        console.log(jsonData)",
+									"        pm.collectionVariables.set(\"jwtToken\", jsonData[\"authorization\"]);",
+									"        pm.collectionVariables.set(\"provider-connector-dataplane-proxy\", jsonData[\"endpoint\"]);",
+									"        console.log(\"Token and endpoint set successfully.\");",
+									"    } catch (parseError) {",
+									"        console.error(\"Failed to parse JSON response:\", parseError);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "headerPrefix",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{provider-connector-dataplane-proxy}}/shell-descriptors",
+							"host": [
+								"{{provider-connector-dataplane-proxy}}"
+							],
+							"path": [
+								"shell-descriptors"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Query Digital Twin Registry APIs",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{provider-connector-dataplane-proxy}}/shell-descriptors",
+									"host": [
+										"{{provider-connector-dataplane-proxy}}"
+									],
+									"path": [
+										"shell-descriptors"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:24:19 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"paging_metadata\": {},\n    \"result\": [\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:d95d62a4-30c2-4c48-914f-7ce2b2b92721\",\n            \"id\": \"urn:uuid:035e8f6e-17f2-41fd-89e3-fea4c6e87157\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-001\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"PART8905_GENX\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:258a4173-8d53-48a0-9a9e-7209f174d9c9\",\n            \"id\": \"urn:uuid:791fa438-55c8-4656-9f20-4b00caa11cef\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"PART8906_REV_A\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:585b466a-d129-4f83-a546-934b3b55d70c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:585b466a-d129-4f83-a546-934b3b55d70c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:54ab0343-c7cd-4109-a6ce-9a408bcb9f23\",\n            \"id\": \"urn:uuid:17873620-3c97-4e43-a5f9-578093c28c9d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"BATTERY_12V_LITHIUM_REV_B\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:bf0622c6-292c-4bc1-99b8-7db0a13d370c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:bf0622c6-292c-4bc1-99b8-7db0a13d370c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:cfba44e5-b05f-4392-ab60-a0b62ceb8ad4\",\n            \"id\": \"urn:uuid:12daecf2-1366-437f-abad-daceec955f7f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TSHIRT_COTTON_CLASSIC_WHITE\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TSHIRT_COTTON_CLASSIC_WHITE\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:5cc9cfde-a9a5-4d82-9c89-5e5cbd1d7f6a/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:5cc9cfde-a9a5-4d82-9c89-5e5cbd1d7f6a\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:06304eb9-fbbe-42e2-934f-096107026e91\",\n            \"id\": \"urn:uuid:cdb9a4a8-cef3-40c9-9161-9baf62faff06\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"AUT_309XK\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_AUT_309XK\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:64a12442-e53d-408b-97ca-077eda12ee15/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:64a12442-e53d-408b-97ca-077eda12ee15\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:ba45a074-340c-493d-a1b8-11f7d039d869\",\n            \"id\": \"urn:uuid:59d1b41d-3a8b-41e5-8a28-e16bcb0b3763\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-4053\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-4053\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:18916a7e-47af-4a0f-a7b2-2977a382903f/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:18916a7e-47af-4a0f-a7b2-2977a382903f\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:85caad00-48d8-499b-8f47-8e85e1ffee7d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-4002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:01872662-5542-4c5b-9256-d9be3575f365\",\n            \"id\": \"urn:uuid:a00329f3-2514-4c58-8884-d9c42e1a08ec\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TZ-4003\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TZ-4003\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:20b502b2-2c83-4d39-b664-2acc878481a9/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:20b502b2-2c83-4d39-b664-2acc878481a9\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:e9eb4e22-8039-4b87-98ae-42be25e1a35f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-8777\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:8b0b74da-e32e-4740-9b32-4a2a9ae86176/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:8b0b74da-e32e-4740-9b32-4a2a9ae86176\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:98b62ad0-928a-4fe4-9d78-337e93e0847d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-567\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:99ea8dab-001e-44fb-be96-c96b373c688c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:99ea8dab-001e-44fb-be96-c96b373c688c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:69b810b1-6259-4584-9b43-5705efe293b8\",\n            \"id\": \"urn:uuid:383e9ade-f8c5-484c-b0bd-b1261e48623f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:0bf48137-5d3b-4576-8b7b-fe9df38ead19\",\n            \"id\": \"urn:uuid:503ba153-0ae0-4058-a80b-4d7143f38fda\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "2.2. Discover Your AAS (Digital Twins)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Define the URL dynamically using environment/collection variables",
+									"const url = `${pm.collectionVariables.get(\"your-connector-url\")}/management/v2/edrs/${pm.collectionVariables.get(\"transferProcessId\")}/dataaddress?auto_refresh=true`;",
+									"const apiKey = pm.collectionVariables.get(\"connector-api-key\"); // Assuming this is where your API key is stored",
+									"",
+									"pm.sendRequest({",
+									"    url: url,",
+									"    method: 'GET',",
+									"    header: [",
+									"        { key: 'Content-Type', value: 'application/json' },",
+									"        { key: 'X-Api-Key', value: apiKey }",
+									"    ]",
+									"}, function (err, res) {",
+									"    if (err) {",
+									"        console.error('Request error:', err);",
+									"    ",
+									"        return;",
+									"    }",
+									"",
+									"    try {",
+									"        const jsonData = res.json();",
+									"        console.log(jsonData)",
+									"        pm.collectionVariables.set(\"jwtToken\", jsonData[\"authorization\"]);",
+									"        pm.collectionVariables.set(\"provider-connector-dataplane-proxy\", jsonData[\"endpoint\"]);",
+									"        console.log(\"Token and endpoint set successfully.\");",
+									"    } catch (parseError) {",
+									"        console.error(\"Failed to parse JSON response:\", parseError);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response JSON",
+									"let jsonData = pm.response.json();",
+									"",
+									"// Get the first AAS ID",
+									"let firstAASId = jsonData.result && jsonData.result.length > 0 ? jsonData.result[0] : null;",
+									"",
+									"if (firstAASId) {",
+									"    // Base64 encode",
+									"    let encoded = Buffer.from(firstAASId).toString('base64');",
+									"",
+									"    // Store in variable",
+									"    pm.environment.set(\"encoded_aas_id\", encoded);",
+									"    console.log(\"Base64-encoded AAS ID:\", encoded);",
+									"} else {",
+									"    console.warn(\"No AAS ID found in the result array.\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "headerPrefix",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n      \"name\": \"customerPartId\",\n      \"value\": \"BPNL00000003CRHK_TX-VST-8821\"\n    }\n]   ",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{provider-connector-dataplane-proxy}}/lookup/shellsByAssetLink",
+							"host": [
+								"{{provider-connector-dataplane-proxy}}"
+							],
+							"path": [
+								"lookup",
+								"shellsByAssetLink"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Discover AAS (Digital Twins)",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\n    {\n      \"name\": \"customerPartId\",\n      \"value\": \"BPNL00000003CRHK_TX-VST-8821\"\n    }\n]   ",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{provider-connector-dataplane-proxy}}/lookup/shellsByAssetLink",
+									"host": [
+										"{{provider-connector-dataplane-proxy}}"
+									],
+									"path": [
+										"lookup",
+										"shellsByAssetLink"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 23:12:40 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "129"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"paging_metadata\": {},\n    \"result\": [\n        \"urn:uuid:503ba153-0ae0-4058-a80b-4d7143f38fda\",\n        \"urn:uuid:cf4f0de7-7702-4e1f-a7fe-802071b398bd\"\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "2.3. Get your AAS",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Define the URL dynamically using environment/collection variables",
+									"const url = `${pm.collectionVariables.get(\"your-connector-url\")}/management/v2/edrs/${pm.collectionVariables.get(\"transferProcessId\")}/dataaddress?auto_refresh=true`;",
+									"const apiKey = pm.collectionVariables.get(\"connector-api-key\"); // Assuming this is where your API key is stored",
+									"",
+									"pm.sendRequest({",
+									"    url: url,",
+									"    method: 'GET',",
+									"    header: [",
+									"        { key: 'Content-Type', value: 'application/json' },",
+									"        { key: 'X-Api-Key', value: apiKey }",
+									"    ]",
+									"}, function (err, res) {",
+									"    if (err) {",
+									"        console.error('Request error:', err);",
+									"    ",
+									"        return;",
+									"    }",
+									"",
+									"    try {",
+									"        const jsonData = res.json();",
+									"        console.log(jsonData)",
+									"        pm.collectionVariables.set(\"jwtToken\", jsonData[\"authorization\"]);",
+									"        pm.collectionVariables.set(\"provider-connector-dataplane-proxy\", jsonData[\"endpoint\"]);",
+									"        console.log(\"Token and endpoint set successfully.\");",
+									"    } catch (parseError) {",
+									"        console.error(\"Failed to parse JSON response:\", parseError);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"",
+									"// 1. Extract manufacturerId",
+									"if (jsonData.specificAssetIds) {",
+									"    let manufacturerId = jsonData.specificAssetIds.find(asset => asset.name === \"manufacturerId\")?.value;",
+									"    if (manufacturerId) {",
+									"        pm.environment.set(\"manufacturer_id\", manufacturerId);",
+									"        console.log(\"Manufacturer ID:\", manufacturerId);",
+									"    }",
+									"}",
+									"",
+									"// 2. Extract subprotocolBody string",
+									"let subprotocolBody = jsonData.submodelDescriptors?.[0]?.endpoints?.[0]?.protocolInformation?.subprotocolBody;",
+									"if (subprotocolBody) {",
+									"    // Extract `id` and `dspEndpoint` using regex",
+									"    let idMatch = subprotocolBody.match(/id=([^;]+)/);",
+									"    let dspMatch = subprotocolBody.match(/dspEndpoint=(.+)$/);",
+									"",
+									"    if (idMatch && idMatch[1]) {",
+									"        pm.environment.set(\"subprotocol_body_id\", idMatch[1]);",
+									"        console.log(\"Subprotocol Body ID:\", idMatch[1]);",
+									"    }",
+									"",
+									"    if (dspMatch && dspMatch[1]) {",
+									"        pm.environment.set(\"dsp_endpoint\", dspMatch[1]);",
+									"        console.log(\"DSP Endpoint:\", dspMatch[1]);",
+									"    }",
+									"}",
+									"",
+									"let href = jsonData.submodelDescriptors?.[0]?.endpoints?.[0]?.protocolInformation?.href;",
+									"if (href) {",
+									"     pm.environment.set(\"href\", href);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "headerPrefix",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{provider-connector-dataplane-proxy}}/shell-descriptors/{{encoded_aas_id}}",
+							"host": [
+								"{{provider-connector-dataplane-proxy}}"
+							],
+							"path": [
+								"shell-descriptors",
+								"{{encoded_aas_id}}"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": null,
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get your AAS",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{provider-connector-dataplane-proxy}}/shell-descriptors/{{encoded_aas_id}}",
+									"host": [
+										"{{provider-connector-dataplane-proxy}}"
+									],
+									"path": [
+										"shell-descriptors",
+										"{{encoded_aas_id}}"
+									],
+									"query": [
+										{
+											"key": "",
+											"value": null,
+											"disabled": true
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 23:12:45 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1792"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"description\": [],\n    \"displayName\": [],\n    \"globalAssetId\": \"urn:uuid:0bf48137-5d3b-4576-8b7b-fe9df38ead19\",\n    \"id\": \"urn:uuid:503ba153-0ae0-4058-a80b-4d7143f38fda\",\n    \"specificAssetIds\": [\n        {\n            \"supplementalSemanticIds\": [],\n            \"name\": \"digitalTwinType\",\n            \"value\": \"PartType\",\n            \"externalSubjectId\": {\n                \"type\": \"ExternalReference\",\n                \"keys\": [\n                    {\n                        \"type\": \"GlobalReference\",\n                        \"value\": \"BPNL00000003CRHK\"\n                    }\n                ]\n            }\n        },\n        {\n            \"supplementalSemanticIds\": [],\n            \"name\": \"manufacturerPartId\",\n            \"value\": \"TX-VST-8821\",\n            \"externalSubjectId\": {\n                \"type\": \"ExternalReference\",\n                \"keys\": [\n                    {\n                        \"type\": \"GlobalReference\",\n                        \"value\": \"BPNL00000003CRHK\"\n                    }\n                ]\n            }\n        },\n        {\n            \"supplementalSemanticIds\": [],\n            \"name\": \"customerPartId\",\n            \"value\": \"BPNL00000003CRHK_TX-VST-8821\",\n            \"externalSubjectId\": {\n                \"type\": \"ExternalReference\",\n                \"keys\": [\n                    {\n                        \"type\": \"GlobalReference\",\n                        \"value\": \"BPNL00000003CRHK\"\n                    }\n                ]\n            }\n        },\n        {\n            \"supplementalSemanticIds\": [],\n            \"name\": \"manufacturerId\",\n            \"value\": \"BPNL0000000093Q7\",\n            \"externalSubjectId\": {\n                \"type\": \"ExternalReference\",\n                \"keys\": [\n                    {\n                        \"type\": \"GlobalReference\",\n                        \"value\": \"BPNL00000003CRHK\"\n                    }\n                ]\n            }\n        }\n    ],\n    \"submodelDescriptors\": [\n        {\n            \"endpoints\": [\n                {\n                    \"interface\": \"SUBMODEL-3.0\",\n                    \"protocolInformation\": {\n                        \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054/submodel\",\n                        \"endpointProtocol\": \"HTTP\",\n                        \"endpointProtocolVersion\": [\n                            \"1.1\"\n                        ],\n                        \"subprotocol\": \"DSP\",\n                        \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                        \"subprotocolBodyEncoding\": \"plain\",\n                        \"securityAttributes\": [\n                            {\n                                \"type\": \"NONE\",\n                                \"key\": \"NONE\",\n                                \"value\": \"NONE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"idShort\": \"partTypeInformation\",\n            \"id\": \"urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054\",\n            \"semanticId\": {\n                \"type\": \"ExternalReference\",\n                \"keys\": [\n                    {\n                        \"type\": \"GlobalReference\",\n                        \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                    }\n                ]\n            },\n            \"supplementalSemanticId\": [],\n            \"description\": [],\n            \"displayName\": []\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "3. Connect to IC-HUB Backend (one time)",
+			"item": [
+				{
+					"name": "3.1. [DSP] Find the Submodel Offer from Digital Twin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonResponse = pm.response.json();",
+									"if ( jsonResponse[\"dcat:dataset\"] instanceof Object )",
+									"{",
+									"    pm.collectionVariables.set(\"offerId2\", jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"@id\"]);",
+									"    pm.collectionVariables.set(\"offerAssetId2\", jsonResponse[\"dcat:dataset\"][\"@id\"]);",
+									"    // extract permissions, probihitions and obligations",
+									"    pm.collectionVariables.set(\"contractPermissions2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:permission\"]));",
+									"    pm.collectionVariables.set(\"contractProhibitions2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:prohibition\"]));",
+									"    pm.collectionVariables.set(\"contractObligations2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][\"odrl:hasPolicy\"][\"odrl:obligation\"]));",
+									"}",
+									"else{",
+									"",
+									"    pm.collectionVariables.set(\"offerId2\", jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"@id\"]);",
+									"    pm.collectionVariables.set(\"offerAssetId2\", jsonResponse[\"dcat:dataset\"][0][\"@id\"]);",
+									"    // extract permissions, probihitions and obligations",
+									"    pm.collectionVariables.set(\"contractPermissions2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:permission\"]));",
+									"    pm.collectionVariables.set(\"contractProhibitions2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:prohibition\"]));",
+									"    pm.collectionVariables.set(\"contractObligations2\", JSON.stringify(jsonResponse[\"dcat:dataset\"][0][\"odrl:hasPolicy\"][\"odrl:obligation\"]));",
+									"}",
+									"",
+									"var permissions = pm.collectionVariables.get(\"contractPermissions2\");",
+									"var prohibitions = pm.collectionVariables.get(\"contractProhibitions2\");",
+									"var obligations = pm.collectionVariables.get(\"contractObligations2\");",
+									"",
+									"if (permissions.length == 0)",
+									"    pm.collectionVariables.set(\"contractPermissions2\", \"[]\");",
+									"",
+									"if (prohibitions.length == 0)",
+									"    pm.collectionVariables.set(\"contractProhibitions2\", \"[]\");",
+									"",
+									"if (obligations.length == 0)",
+									"    pm.collectionVariables.set(\"contractObligations2\", \"[]\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"@context\": {\n    \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n    \"odrl\": \"https://www.w3.org/ns/odrl/2/\",\n    \"dct\": \"http://purl.org/dc/terms/\",\n    \"cx-taxo\": \"https://w3id.org/catenax/taxonomy\"\n  },\n  \"@type\": \"edc:CatalogRequest\",\n  \"counterPartyAddress\": \"{{dsp_endpoint}}\",\n  \"counterPartyId\": \"{{manufacturer_id}}\",\n  \"protocol\": \"dataspace-protocol-http\",\n      \"querySpec\": {\n        \"filterExpression\": [\n            {\n                \"operandLeft\": \"https://w3id.org/edc/v0.0.1/ns/id\",\n                \"operator\": \"=\",\n                \"operandRight\": \"{{subprotocol_body_id}}\"\n            }\n        ]\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/catalog/request",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"catalog",
+								"request"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"@context\": {\n    \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n    \"odrl\": \"https://www.w3.org/ns/odrl/2/\",\n    \"dct\": \"http://purl.org/dc/terms/\",\n    \"cx-taxo\": \"https://w3id.org/catenax/taxonomy\"\n  },\n  \"@type\": \"edc:CatalogRequest\",\n  \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n  \"counterPartyId\": \"{{provider-bpnl}}\",\n  \"protocol\": \"dataspace-protocol-http\",\n      \"querySpec\": {\n        \"filterExpression\": [\n            {\n                \"operandLeft\": \"'http://purl.org/dc/terms/type'.'@id'\",\n                \"operator\": \"=\",\n                \"operandRight\": \"https://w3id.org/catenax/taxonomy#DigitalTwinRegistry\"\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/catalog/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"catalog",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:14:35 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "3360"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@id\": \"2bd5f74b-33b4-403d-9757-1fce34b8dcbe\",\n    \"@type\": \"dcat:Catalog\",\n    \"dcat:dataset\": {\n        \"@id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n        \"@type\": \"dcat:Dataset\",\n        \"odrl:hasPolicy\": {\n            \"@id\": \"aWNodWI6Y29udHJhY3Q6X3JScHZ1VE1iX1IwTEVOaVJ6T1RYZw==:aWNodWI6YXNzZXQ6ZHRyOjlmb1VNN3BtU1RycjVMWm54ME5xaVE=:MWY4YzcyMTYtYjAxMy00NmVkLWFjY2UtYjIxNzA3NzVlZDJm\",\n            \"@type\": \"odrl:Offer\",\n            \"odrl:permission\": {\n                \"odrl:action\": {\n                    \"@id\": \"odrl:use\"\n                },\n                \"odrl:constraint\": {\n                    \"odrl:and\": [\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:FrameworkAgreement\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:Membership\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"active\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:UsagePurpose\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"cx.core.digitalTwinRegistry:1\"\n                        }\n                    ]\n                }\n            },\n            \"odrl:prohibition\": [],\n            \"odrl:obligation\": []\n        },\n        \"dcat:distribution\": [\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AzureStorage-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PULL\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AmazonS3-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            }\n        ],\n        \"dct:type\": {\n            \"@id\": \"https://w3id.org/catenax/taxonomy#DigitalTwinRegistry\"\n        },\n        \"https://w3id.org/catenax/ontology/common#version\": \"3.0\",\n        \"id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\"\n    },\n    \"dcat:catalog\": [],\n    \"dcat:distribution\": [],\n    \"dcat:service\": {\n        \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n        \"@type\": \"dcat:DataService\",\n        \"dcat:endpointDescription\": \"dspace:connector\",\n        \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n        \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n    },\n    \"dspace:participantId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"dcat\": \"http://www.w3.org/ns/dcat#\",\n        \"dct\": \"http://purl.org/dc/terms/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\",\n        \"dspace\": \"https://w3id.org/dspace/v0.8/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    }\n}"
+						},
+						{
+							"name": "3.1. [DSP] Find the Submodel Offer from Digital Twin",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"@context\": {\n    \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n    \"odrl\": \"https://www.w3.org/ns/odrl/2/\",\n    \"dct\": \"http://purl.org/dc/terms/\",\n    \"cx-taxo\": \"https://w3id.org/catenax/taxonomy\"\n  },\n  \"@type\": \"edc:CatalogRequest\",\n  \"counterPartyAddress\": \"{{dsp_endpoint}}\",\n  \"counterPartyId\": \"{{manufacturer_id}}\",\n  \"protocol\": \"dataspace-protocol-http\",\n      \"querySpec\": {\n        \"filterExpression\": [\n            {\n                \"operandLeft\": \"https://w3id.org/edc/v0.0.1/ns/id\",\n                \"operator\": \"=\",\n                \"operandRight\": \"{{subprotocol_body_id}}\"\n            }\n        ]\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/catalog/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"catalog",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:24:11 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "3471"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@id\": \"8ef8d7c9-bde8-4bd4-a22a-724982099719\",\n    \"@type\": \"dcat:Catalog\",\n    \"dcat:dataset\": {\n        \"@id\": \"ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ\",\n        \"@type\": \"dcat:Dataset\",\n        \"odrl:hasPolicy\": {\n            \"@id\": \"aWNodWI6Y29udHJhY3Q6TkQ5M1pINHMtQldqNjI5OEFWMkJEZw==:aWNodWI6YXNzZXQ6MXFncEtpUm9MY3NfUEM2b09Zc0hIUQ==:ZGRkYmJiNjctNGVkZi00OTdhLWFkYjUtNTUyMWI5MGEzNDZl\",\n            \"@type\": \"odrl:Offer\",\n            \"odrl:permission\": {\n                \"odrl:action\": {\n                    \"@id\": \"odrl:use\"\n                },\n                \"odrl:constraint\": {\n                    \"odrl:and\": [\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:FrameworkAgreement\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:Membership\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"active\"\n                        },\n                        {\n                            \"odrl:leftOperand\": {\n                                \"@id\": \"cx-policy:UsagePurpose\"\n                            },\n                            \"odrl:operator\": {\n                                \"@id\": \"odrl:eq\"\n                            },\n                            \"odrl:rightOperand\": \"cx.core.industrycore:1\"\n                        }\n                    ]\n                }\n            },\n            \"odrl:prohibition\": [],\n            \"odrl:obligation\": []\n        },\n        \"dcat:distribution\": [\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AzureStorage-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PULL\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"HttpData-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            },\n            {\n                \"@type\": \"dcat:Distribution\",\n                \"dct:format\": {\n                    \"@id\": \"AmazonS3-PUSH\"\n                },\n                \"dcat:accessService\": {\n                    \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n                    \"@type\": \"dcat:DataService\",\n                    \"dcat:endpointDescription\": \"dspace:connector\",\n                    \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                    \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n                }\n            }\n        ],\n        \"dct:type\": {\n            \"@id\": \"https://w3id.org/catenax/taxonomy#SubmodelBundle\"\n        },\n        \"https://admin-shell.io/aas/3/0/HasSemantics/semanticId\": {\n            \"@id\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n        },\n        \"https://w3id.org/catenax/ontology/common#version\": \"3.0\",\n        \"id\": \"ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ\"\n    },\n    \"dcat:catalog\": [],\n    \"dcat:distribution\": [],\n    \"dcat:service\": {\n        \"@id\": \"12cc8645-b1f9-4937-9b59-7d0c349825cc\",\n        \"@type\": \"dcat:DataService\",\n        \"dcat:endpointDescription\": \"dspace:connector\",\n        \"dcat:endpointUrl\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n        \"dcat:endpointURL\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\"\n    },\n    \"dspace:participantId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"dcat\": \"http://www.w3.org/ns/dcat#\",\n        \"dct\": \"http://purl.org/dc/terms/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\",\n        \"dspace\": \"https://w3id.org/dspace/v0.8/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "3.2 [EDR] Accept Offer & Select Policy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Body matches string\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"negotiationId2\", jsonData[\"@id\"]);",
+									"",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": [\n        \"https://w3id.org/tractusx/policy/v1.0.0\",\n        \"http://www.w3.org/ns/odrl.jsonld\",\n        {\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n        }\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{dsp_endpoint}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"odrl:Offer\",\n        \"assigner\": \"{{manufacturer_id}}\",\n        \"target\": \"{{offerAssetId2}}\",\n        \"@id\": \"{{offerId2}}\",\n        \"odrl:permission\": {{contractPermissions2}},\n        \"odrl:prohibition\": {{contractProhibitions2}},\n        \"odrl:obligation\": {{contractObligations2}}\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v2/edrs",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v2",
+								"edrs"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": [\n        \"https://w3id.org/tractusx/policy/v1.0.0\",\n        \"http://www.w3.org/ns/odrl.jsonld\",\n        {\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n        }\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{provider-connector-url}}/api/v1/dsp\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"odrl:Offer\",\n        \"assigner\": \"{{provider-bpnl}}\",\n        \"target\": \"{{offerAssetId}}\",\n        \"@id\": \"{{offerId}}\",\n        \"odrl:permission\": {{contractPermissions}},\n        \"odrl:prohibition\": {{contractProhibitions}},\n        \"odrl:obligation\": {{contractObligations}}\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:36 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "362"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"IdResponse\",\n    \"@id\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n    \"createdAt\": 1747865796567,\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						},
+						{
+							"name": "3.2 [EDR] Accept Offer & Select Policy",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": [\n        \"https://w3id.org/tractusx/policy/v1.0.0\",\n        \"http://www.w3.org/ns/odrl.jsonld\",\n        {\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n        }\n    ],\n    \"@type\": \"ContractRequest\",\n    \"counterPartyAddress\": \"{{dsp_endpoint}}\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"policy\": {\n        \"@type\": \"odrl:Offer\",\n        \"assigner\": \"{{manufacturer_id}}\",\n        \"target\": \"{{offerAssetId2}}\",\n        \"@id\": \"{{offerId2}}\",\n        \"odrl:permission\": {{contractPermissions2}},\n        \"odrl:prohibition\": {{contractProhibitions2}},\n        \"odrl:obligation\": {{contractObligations2}}\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:24:59 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "362"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"IdResponse\",\n    \"@id\": \"0ae3cc1f-7b90-42e4-8520-bb018561f468\",\n    \"createdAt\": 1747895099932,\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "3.3 [EDR] View Negotiation Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Negotiation status check\", function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    pm.expect(pm.response.json().state).to.equal(\"FINALIZED\");",
+									"    var jsonData = pm.response.json();",
+									"    if(jsonData[\"state\"] == \"FINALIZED\"){",
+									"        pm.collectionVariables.set(\"contractAgreementId2\", jsonData[\"contractAgreementId\"]);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/contractnegotiations/{{negotiationId2}}",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"contractnegotiations",
+								"{{negotiationId2}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractnegotiations/{{negotiationId}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractnegotiations",
+										"{{negotiationId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:43 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "776"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractNegotiation\",\n    \"@id\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n    \"type\": \"CONSUMER\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"state\": \"FINALIZED\",\n    \"counterPartyId\": \"BPNL0000000093Q7\",\n    \"counterPartyAddress\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n    \"callbackAddresses\": {\n        \"@type\": \"CallbackAddress\",\n        \"transactional\": true,\n        \"uri\": \"local://adapter\",\n        \"events\": [\n            \"contract.negotiation\",\n            \"transfer.process\"\n        ]\n    },\n    \"createdAt\": 1747865796567,\n    \"contractAgreementId\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						},
+						{
+							"name": "3.3 [EDR] View Negotiation Status",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractnegotiations/{{negotiationId2}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractnegotiations",
+										"{{negotiationId2}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:25:05 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "776"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractNegotiation\",\n    \"@id\": \"0ae3cc1f-7b90-42e4-8520-bb018561f468\",\n    \"type\": \"CONSUMER\",\n    \"protocol\": \"dataspace-protocol-http\",\n    \"state\": \"FINALIZED\",\n    \"counterPartyId\": \"BPNL0000000093Q7\",\n    \"counterPartyAddress\": \"https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n    \"callbackAddresses\": {\n        \"@type\": \"CallbackAddress\",\n        \"transactional\": true,\n        \"uri\": \"local://adapter\",\n        \"events\": [\n            \"contract.negotiation\",\n            \"transfer.process\"\n        ]\n    },\n    \"createdAt\": 1747895099932,\n    \"contractAgreementId\": \"90e7ea42-ab3c-4f1c-93a6-07c681dce7d4\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "3.4 [EDR] [IF FINALIZED] View Agreement",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId2}}",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v3",
+								"contractagreements",
+								"{{contractAgreementId2}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractagreements",
+										"{{contractAgreementId}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:50 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1232"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractAgreement\",\n    \"@id\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n    \"assetId\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n    \"policy\": {\n        \"@id\": \"c21365ee-5870-475c-b76e-5e99e969b23a\",\n        \"@type\": \"odrl:Agreement\",\n        \"odrl:permission\": {\n            \"odrl:action\": {\n                \"@id\": \"odrl:use\"\n            },\n            \"odrl:constraint\": {\n                \"odrl:and\": [\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:FrameworkAgreement\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:Membership\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"active\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:UsagePurpose\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"cx.core.digitalTwinRegistry:1\"\n                    }\n                ]\n            }\n        },\n        \"odrl:prohibition\": [],\n        \"odrl:obligation\": [],\n        \"odrl:assignee\": \"BPNL00000003CRHK\",\n        \"odrl:assigner\": \"BPNL0000000093Q7\",\n        \"odrl:target\": {\n            \"@id\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\"\n        }\n    },\n    \"contractSigningDate\": 1747865798,\n    \"consumerId\": \"BPNL00000003CRHK\",\n    \"providerId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						},
+						{
+							"name": "3.4 [EDR] [IF FINALIZED] View Agreement",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{your-connector-url}}/management/v3/contractagreements/{{contractAgreementId2}}",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v3",
+										"contractagreements",
+										"{{contractAgreementId2}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:25:08 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1217"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"@type\": \"ContractAgreement\",\n    \"@id\": \"90e7ea42-ab3c-4f1c-93a6-07c681dce7d4\",\n    \"assetId\": \"ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ\",\n    \"policy\": {\n        \"@id\": \"1369d44b-aabb-488c-90db-b89324f08fe0\",\n        \"@type\": \"odrl:Agreement\",\n        \"odrl:permission\": {\n            \"odrl:action\": {\n                \"@id\": \"odrl:use\"\n            },\n            \"odrl:constraint\": {\n                \"odrl:and\": [\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:FrameworkAgreement\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"DataExchangeGovernance:1.0\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:Membership\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"active\"\n                    },\n                    {\n                        \"odrl:leftOperand\": {\n                            \"@id\": \"cx-policy:UsagePurpose\"\n                        },\n                        \"odrl:operator\": {\n                            \"@id\": \"odrl:eq\"\n                        },\n                        \"odrl:rightOperand\": \"cx.core.industrycore:1\"\n                    }\n                ]\n            }\n        },\n        \"odrl:prohibition\": [],\n        \"odrl:obligation\": [],\n        \"odrl:assignee\": \"BPNL00000003CRHK\",\n        \"odrl:assigner\": \"BPNL0000000093Q7\",\n        \"odrl:target\": {\n            \"@id\": \"ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ\"\n        }\n    },\n    \"contractSigningDate\": 1747895101,\n    \"consumerId\": \"BPNL00000003CRHK\",\n    \"providerId\": \"BPNL0000000093Q7\",\n    \"@context\": {\n        \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n        \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n        \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n        \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "3.5 [EDR] Get TransferProcessId",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"// Store the transferProcessId in a collection variable",
+									"pm.collectionVariables.set(\"transferProcessId2\", jsonData[0].transferProcessId);",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\",\n    \"filterExpression\": [\n        {\n            \"operandLeft\": \"contractNegotiationId\",\n            \"operator\": \"=\",\n            \"operandRight\": \"{{negotiationId2}}\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{your-connector-url}}/management/v2/edrs/request",
+							"host": [
+								"{{your-connector-url}}"
+							],
+							"path": [
+								"management",
+								"v2",
+								"edrs",
+								"request"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Success response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\",\n    \"filterExpression\": [\n        {\n            \"operandLeft\": \"contractNegotiationId\",\n            \"operator\": \"=\",\n            \"operandRight\": \"{{negotiationId}}\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:16:55 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "638"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"@id\": \"dc7c26e0-7390-447e-8bf3-f96cebfca679\",\n        \"@type\": \"EndpointDataReferenceEntry\",\n        \"providerId\": \"BPNL0000000093Q7\",\n        \"assetId\": \"ichub:asset:dtr:9foUM7pmSTrr5LZnx0NqiQ\",\n        \"agreementId\": \"ed3eb4de-5f69-49fe-9827-eb87d093e559\",\n        \"transferProcessId\": \"dc7c26e0-7390-447e-8bf3-f96cebfca679\",\n        \"createdAt\": 1747865804539,\n        \"contractNegotiationId\": \"83437577-4e7a-4242-a60c-3545b03e4b7a\",\n        \"@context\": {\n            \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n            \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n            \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n        }\n    }\n]"
+						},
+						{
+							"name": "3.5 [EDR] Get TransferProcessId",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"@context\": {\n        \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\"\n    },\n    \"@type\": \"QuerySpec\",\n    \"filterExpression\": [\n        {\n            \"operandLeft\": \"contractNegotiationId\",\n            \"operator\": \"=\",\n            \"operandRight\": \"{{negotiationId2}}\"\n        }\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{your-connector-url}}/management/v2/edrs/request",
+									"host": [
+										"{{your-connector-url}}"
+									],
+									"path": [
+										"management",
+										"v2",
+										"edrs",
+										"request"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:25:12 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "634"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"@id\": \"36fc16b5-6f36-49a5-ab67-7d039771221c\",\n        \"@type\": \"EndpointDataReferenceEntry\",\n        \"providerId\": \"BPNL0000000093Q7\",\n        \"assetId\": \"ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ\",\n        \"agreementId\": \"90e7ea42-ab3c-4f1c-93a6-07c681dce7d4\",\n        \"transferProcessId\": \"36fc16b5-6f36-49a5-ab67-7d039771221c\",\n        \"createdAt\": 1747895106993,\n        \"contractNegotiationId\": \"0ae3cc1f-7b90-42e4-8520-bb018561f468\",\n        \"@context\": {\n            \"tx\": \"https://w3id.org/tractusx/v0.0.1/ns/\",\n            \"tx-auth\": \"https://w3id.org/tractusx/auth/\",\n            \"cx-policy\": \"https://w3id.org/catenax/policy/\",\n            \"@vocab\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"edc\": \"https://w3id.org/edc/v0.0.1/ns/\",\n            \"odrl\": \"http://www.w3.org/ns/odrl/2/\"\n        }\n    }\n]"
+						}
+					]
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Get Data (reusable open connection)",
+			"item": [
+				{
+					"name": "4.1. Call HREF",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Define the URL dynamically using environment/collection variables",
+									"const url = `${pm.collectionVariables.get(\"your-connector-url\")}/management/v2/edrs/${pm.collectionVariables.get(\"transferProcessId2\")}/dataaddress?auto_refresh=true`;",
+									"const apiKey = pm.collectionVariables.get(\"connector-api-key\"); // Assuming this is where your API key is stored",
+									"",
+									"pm.sendRequest({",
+									"    url: url,",
+									"    method: 'GET',",
+									"    header: [",
+									"        { key: 'Content-Type', value: 'application/json' },",
+									"        { key: 'X-Api-Key', value: apiKey }",
+									"    ]",
+									"}, function (err, res) {",
+									"    if (err) {",
+									"        console.error('Request error:', err);",
+									"    ",
+									"        return;",
+									"    }",
+									"",
+									"    try {",
+									"        const jsonData = res.json();",
+									"        console.log(jsonData)",
+									"        pm.collectionVariables.set(\"jwtToken2\", jsonData[\"authorization\"]);",
+									"        pm.collectionVariables.set(\"provider-connector-dataplane-proxy2\", jsonData[\"endpoint\"]);",
+									"        console.log(\"Token and endpoint set successfully.\");",
+									"    } catch (parseError) {",
+									"        console.error(\"Failed to parse JSON response:\", parseError);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "headerPrefix",
+									"value": "",
+									"type": "string"
+								},
+								{
+									"key": "addTokenTo",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{href}}",
+							"host": [
+								"{{href}}"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Query Digital Twin Registry APIs",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{provider-connector-dataplane-proxy}}/shell-descriptors",
+									"host": [
+										"{{provider-connector-dataplane-proxy}}"
+									],
+									"path": [
+										"shell-descriptors"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Wed, 21 May 2025 22:24:19 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"paging_metadata\": {},\n    \"result\": [\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:d95d62a4-30c2-4c48-914f-7ce2b2b92721\",\n            \"id\": \"urn:uuid:035e8f6e-17f2-41fd-89e3-fea4c6e87157\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-001\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"PART8905_GENX\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:258a4173-8d53-48a0-9a9e-7209f174d9c9\",\n            \"id\": \"urn:uuid:791fa438-55c8-4656-9f20-4b00caa11cef\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"PART8906_REV_A\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:585b466a-d129-4f83-a546-934b3b55d70c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:585b466a-d129-4f83-a546-934b3b55d70c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:54ab0343-c7cd-4109-a6ce-9a408bcb9f23\",\n            \"id\": \"urn:uuid:17873620-3c97-4e43-a5f9-578093c28c9d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"BATTERY_12V_LITHIUM_REV_B\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"CUST-PART-2025-EXMNF-002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:bf0622c6-292c-4bc1-99b8-7db0a13d370c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:bf0622c6-292c-4bc1-99b8-7db0a13d370c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:cfba44e5-b05f-4392-ab60-a0b62ceb8ad4\",\n            \"id\": \"urn:uuid:12daecf2-1366-437f-abad-daceec955f7f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TSHIRT_COTTON_CLASSIC_WHITE\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TSHIRT_COTTON_CLASSIC_WHITE\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:5cc9cfde-a9a5-4d82-9c89-5e5cbd1d7f6a/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:5cc9cfde-a9a5-4d82-9c89-5e5cbd1d7f6a\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:06304eb9-fbbe-42e2-934f-096107026e91\",\n            \"id\": \"urn:uuid:cdb9a4a8-cef3-40c9-9161-9baf62faff06\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"AUT_309XK\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_AUT_309XK\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:64a12442-e53d-408b-97ca-077eda12ee15/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:64a12442-e53d-408b-97ca-077eda12ee15\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:ba45a074-340c-493d-a1b8-11f7d039d869\",\n            \"id\": \"urn:uuid:59d1b41d-3a8b-41e5-8a28-e16bcb0b3763\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-4053\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-4053\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:18916a7e-47af-4a0f-a7b2-2977a382903f/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:18916a7e-47af-4a0f-a7b2-2977a382903f\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:85caad00-48d8-499b-8f47-8e85e1ffee7d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-4002\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:01872662-5542-4c5b-9256-d9be3575f365\",\n            \"id\": \"urn:uuid:a00329f3-2514-4c58-8884-d9c42e1a08ec\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TZ-4003\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TZ-4003\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:20b502b2-2c83-4d39-b664-2acc878481a9/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:20b502b2-2c83-4d39-b664-2acc878481a9\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:e9eb4e22-8039-4b87-98ae-42be25e1a35f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-8777\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:8b0b74da-e32e-4740-9b32-4a2a9ae86176/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:8b0b74da-e32e-4740-9b32-4a2a9ae86176\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"id\": \"urn:uuid:98b62ad0-928a-4fe4-9d78-337e93e0847d\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-567\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"PUBLIC_READABLE\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:99ea8dab-001e-44fb-be96-c96b373c688c/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:99ea8dab-001e-44fb-be96-c96b373c688c\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:69b810b1-6259-4584-9b43-5705efe293b8\",\n            \"id\": \"urn:uuid:383e9ade-f8c5-484c-b0bd-b1261e48623f\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": []\n        },\n        {\n            \"description\": [],\n            \"displayName\": [],\n            \"globalAssetId\": \"urn:uuid:0bf48137-5d3b-4576-8b7b-fe9df38ead19\",\n            \"id\": \"urn:uuid:503ba153-0ae0-4058-a80b-4d7143f38fda\",\n            \"specificAssetIds\": [\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"customerPartId\",\n                    \"value\": \"BPNL00000003CRHK_TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerId\",\n                    \"value\": \"BPNL0000000093Q7\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"manufacturerPartId\",\n                    \"value\": \"TX-VST-8821\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                },\n                {\n                    \"supplementalSemanticIds\": [],\n                    \"name\": \"digitalTwinType\",\n                    \"value\": \"PartType\",\n                    \"externalSubjectId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"BPNL00000003CRHK\"\n                            }\n                        ]\n                    }\n                }\n            ],\n            \"submodelDescriptors\": [\n                {\n                    \"endpoints\": [\n                        {\n                            \"interface\": \"SUBMODEL-3.0\",\n                            \"protocolInformation\": {\n                                \"href\": \"https://edc-provider-ichub-dataplane.int.catena-x.net/api/public/urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054/submodel\",\n                                \"endpointProtocol\": \"HTTP\",\n                                \"endpointProtocolVersion\": [\n                                    \"1.1\"\n                                ],\n                                \"subprotocol\": \"DSP\",\n                                \"subprotocolBody\": \"id=ichub:asset:1qgpKiRoLcs_PC6oOYsHHQ;dspEndpoint=https://edc-provider-ichub-control.int.catena-x.net/api/v1/dsp\",\n                                \"subprotocolBodyEncoding\": \"plain\",\n                                \"securityAttributes\": [\n                                    {\n                                        \"type\": \"NONE\",\n                                        \"key\": \"NONE\",\n                                        \"value\": \"NONE\"\n                                    }\n                                ]\n                            }\n                        }\n                    ],\n                    \"idShort\": \"partTypeInformation\",\n                    \"id\": \"urn:uuid:9e0083e5-f108-4990-aadd-904403a5d054\",\n                    \"semanticId\": {\n                        \"type\": \"ExternalReference\",\n                        \"keys\": [\n                            {\n                                \"type\": \"GlobalReference\",\n                                \"value\": \"urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation\"\n                            }\n                        ]\n                    },\n                    \"supplementalSemanticId\": [],\n                    \"description\": [],\n                    \"displayName\": []\n                }\n            ]\n        }\n    ]\n}"
+						},
+						{
+							"name": "2.1. Query Digital Twin Registry APIs (ALL)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{href}}",
+									"host": [
+										"{{href}}"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Thu, 22 May 2025 06:26:43 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								},
+								{
+									"key": "Content-Length",
+									"value": "251"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Strict-Transport-Security",
+									"value": "max-age=31536000; includeSubDomains"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"catenaXId\": \"0bf48137-5d3b-4576-8b7b-fe9df38ead19\",\n    \"partTypeInformation\": {\n        \"manufacturerPartId\": \"TX-VST-8821\",\n        \"nameAtManufacturer\": \"Vibration Sensor Mount\"\n    },\n    \"partSitesInformationAsPlanned\": [\n        {\n            \"catenaXsiteId\": \"BPNS0000DE00001\",\n            \"function\": \"production\"\n        }\n    ]\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{connector-api-key}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "X-Api-Key",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "provider-connector-url",
+			"value": "https://edc-provider-ichub-control.int.catena-x.net",
+			"type": "string"
+		},
+		{
+			"key": "provider-bpnl",
+			"value": "BPNL0000000093Q7",
+			"type": "string"
+		},
+		{
+			"key": "your-connector-url",
+			"value": "https://edc-consumer-ichub-control.int.catena-x.net",
+			"type": "string"
+		},
+		{
+			"key": "your-bpnl",
+			"value": "BPNL00000003CRHK",
+			"type": "string"
+		},
+		{
+			"key": "connector-api-key",
+			"value": "ACA176440A8BDD3954FCEC3552BF8985AFB75608A57B9121EA809791854AAA2BEDBF85333572E8DECE9537D69697D6BA28EA26174085242CB536B7877E219CAC",
+			"type": "string"
+		},
+		{
+			"key": "offerId",
+			"value": ""
+		},
+		{
+			"key": "offerAssetId",
+			"value": ""
+		},
+		{
+			"key": "contractPermissions",
+			"value": ""
+		},
+		{
+			"key": "contractProhibitions",
+			"value": ""
+		},
+		{
+			"key": "contractObligations",
+			"value": ""
+		},
+		{
+			"key": "negotiationId",
+			"value": ""
+		},
+		{
+			"key": "contractAgreementId",
+			"value": ""
+		},
+		{
+			"key": "transferProcessId",
+			"value": ""
+		},
+		{
+			"key": "jwtToken",
+			"value": ""
+		},
+		{
+			"key": "provider-connector-dataplane-proxy",
+			"value": ""
+		},
+		{
+			"key": "offerId2",
+			"value": ""
+		},
+		{
+			"key": "offerAssetId2",
+			"value": ""
+		},
+		{
+			"key": "contractPermissions2",
+			"value": ""
+		},
+		{
+			"key": "contractProhibitions2",
+			"value": ""
+		},
+		{
+			"key": "contractObligations2",
+			"value": ""
+		},
+		{
+			"key": "negotiationId2",
+			"value": ""
+		},
+		{
+			"key": "contractAgreementId2",
+			"value": ""
+		},
+		{
+			"key": "transferProcessId2",
+			"value": ""
+		},
+		{
+			"key": "jwtToken2",
+			"value": ""
+		},
+		{
+			"key": "provider-connector-dataplane-proxy2",
+			"value": ""
+		}
+	]
+}

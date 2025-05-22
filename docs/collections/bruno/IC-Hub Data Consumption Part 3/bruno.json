@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "IC-Hub Data Consumption Part 3",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
