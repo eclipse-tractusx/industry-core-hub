@@ -164,7 +164,7 @@ class DTRManager:
         )
 
         if existing_shell:
-            res = self.aas_service.update_asset_administration_shell_descriptor(shell)
+            res = self.aas_service.update_asset_administration_shell_descriptor(shell, bpn=manufacturer_id)
         else:
             res = self.aas_service.create_asset_administration_shell_descriptor(shell)
 
