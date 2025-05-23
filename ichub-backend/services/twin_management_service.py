@@ -248,12 +248,17 @@ class TwinManagementService:
                 return True
             else:
                 return False
-
+    
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate, manufacturer_id:str) -> TwinAspectRead:
         """
         Create a new twin aspect for a give twin.
         """
 
+        # TODO: in the future we need to remove the manufacturer id as a param and instead (re-)active the respective 
+        # out-commented property in the input object 
+        # (reason: there could be more than one enablement service stack for a manufacturer id - e.g. for supporting different
+        #  Tractus-X versions in parallel)
+        
         with RepositoryManagerFactory.create() as repo:
             
             # Step 1: Retrieve the twin entity according to the global_id
