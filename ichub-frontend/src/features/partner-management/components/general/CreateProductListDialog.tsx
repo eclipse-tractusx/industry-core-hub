@@ -117,8 +117,11 @@ const CreateProductListDialog = ({
 
     const errors: string[] = [];
 
-    if (typeof data.manufacturerPartId !== "string" || !data.manufacturerPartId)
+    if (typeof data.manufacturerPartId !== "string" || !data.manufacturerPartId) {
       errors.push("manufacturerPartId (non-empty string) is required.");
+    } else if (/\s/.test(data.manufacturerPartId)) {
+      errors.push("manufacturerPartId must not contain spaces.");
+    }
     if (typeof data.name !== "string" || !data.name)
       errors.push("name (non-empty string) is required.");
 
