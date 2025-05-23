@@ -28,7 +28,7 @@ from uuid import UUID
 from typing import Dict, Optional, List, Any
 from pydantic import BaseModel, Field
 
-from models.services.part_management import CatalogPartBase, BusinessPartnerRead, CatalogPartRead, BatchCreate, SerializedPartCreate, JISPartCreate
+from models.services.part_management import CatalogPartBase, BusinessPartnerRead, CatalogPartRead, BatchCreate, SerializedPartBase, SerializedPartRead, JISPartCreate
 from models.services.partner_management import DataExchangeAgreementRead
 
 class TwinAspectRegistrationStatus(enum.Enum):
@@ -119,5 +119,11 @@ class BatchTwinCreate(BatchCreate, TwinCreateBase):
 class JISPartTwinCreate(JISPartCreate, TwinCreateBase):
     pass
 
-class SerializedPartTwinCreate(SerializedPartCreate, TwinCreateBase):
+class SerializedPartTwinCreate(SerializedPartBase, TwinCreateBase):
     pass
+
+class SerializedPartTwinRead(SerializedPartRead, TwinRead):
+    """Represents a serialized part twin within the Digital Twin Registry."""
+
+class SerializedPartTwinDetailsRead(SerializedPartTwinRead, TwinDetailsReadBase):
+    """Represents the details of a serialized part twin within the Digital Twin Registry."""
