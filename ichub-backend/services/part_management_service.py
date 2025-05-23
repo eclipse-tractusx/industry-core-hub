@@ -23,10 +23,9 @@
 #################################################################################
 
 from typing import Dict, List, Optional
-from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead, SimpleCatalogPartReadWithStatus,JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, CatalogPartReadWithStatus
+from models.services.part_management import BatchCreate, BatchRead, CatalogPartCreate, CatalogPartDelete, CatalogPartRead,  SimpleCatalogPartReadWithStatus, CatalogPartReadWithStatus,JISPartCreate, JISPartDelete, JISPartRead, PartnerCatalogPartBase, PartnerCatalogPartCreate, PartnerCatalogPartDelete, SerializedPartCreate, SerializedPartDelete, SerializedPartRead, SerializedPartQuery, SimpleSerializedPartRead
 from models.services.partner_management import BusinessPartnerRead
-from managers.metadata_database.repositories import CatalogPartRepository, BusinessPartnerRepository, LegalEntityRepository, PartnerCatalogPartRepository
-from managers.metadata_database.manager import RepositoryManager, RepositoryManagerFactory
+from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.models import CatalogPart, Batch, LegalEntity, SerializedPart, JISPart, PartnerCatalogPart
 from managers.config.log_manager import LoggingManager
 
@@ -120,8 +119,8 @@ class PartManagementService():
         manufacturer_part_id: str,
         name: str,
         category: Optional[str],
+        bpns: Optional[str],
         customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartReadWithStatus:
-        bpns: Optional[str]
           
         """Convenience method to create a catalog part by its IDs."""
 
@@ -255,9 +254,65 @@ class PartManagementService():
         """
         Create a new serialized part in the system.
         """
-        
-        # Logic to create a serialized part
-        pass
+        with RepositoryManagerFactory.create() as repos:
+            
+            # Get the business partner by BPNL from the metadata database
+            db_business_partner = repos.business_partner_repository.get_by_bpnl(serialized_part_create.business_partner_number)
+            if not db_business_partner:
+                raise ValueError(f"Business partner with BPNL '{serialized_part_create.business_partner_number}' does not exist. Please create it first.")
+
+            # Check if the legal entity exists for the given manufacturer ID
+            db_legal_entity = repos.legal_entity_repository.get_by_bpnl(serialized_part_create.manufacturer_id)
+            if not db_legal_entity:
+                raise ValueError(f"Legal Entity with manufacturer BPNL '{serialized_part_create.manufacturer_id}' does not exist. Please create it first.")
+
+            # Check if the corresponding catalog part already exists
+            db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
+                db_legal_entity.id, serialized_part_create.manufacturer_part_id
+            )
+            if not db_catalog_part:
+                raise ValueError("Corresponding catalog part not existing.")
+
+            # Get the partner catalog part for the given catalog part and business partner
+            db_partner_catalog_part = repos.partner_catalog_part_repository.get_by_catalog_part_id_business_partner_id(
+                db_catalog_part.id, db_business_partner.id
+            )
+            if not db_partner_catalog_part:
+                raise ValueError("No partner catalog part found for the given catalog part and business partner.")
+
+            # Check if the serialized part already exists
+            db_serialized_part = repos.serialized_part_repository.get_by_partner_catalog_part_id_part_instance_id(
+                db_partner_catalog_part.id, serialized_part_create.part_instance_id
+            )
+            if not db_serialized_part:
+                # Create the serialized part in the metadata database
+                db_serialized_part = repos.serialized_part_repository.create_new(
+                    partner_catalog_part_id=db_partner_catalog_part.id,
+                    part_instance_id=serialized_part_create.part_instance_id,
+                    van=serialized_part_create.van,
+                )
+            
+            return SerializedPartRead(
+                manufacturerId=serialized_part_create.manufacturer_id,
+                manufacturerPartId=serialized_part_create.manufacturer_part_id,
+                partInstanceId=serialized_part_create.part_instance_id,
+                customerPartId=db_partner_catalog_part.customer_part_id,
+                businessPartner=BusinessPartnerRead(
+                    name=db_business_partner.name,
+                    bpnl=db_business_partner.bpnl
+                ),
+                van=serialized_part_create.van,
+                name=db_catalog_part.name,
+                description=db_catalog_part.description,
+                category=db_catalog_part.category,
+                bpns=db_catalog_part.bpns,
+                materials=db_catalog_part.materials,
+                width=db_catalog_part.width,
+                height=db_catalog_part.height,
+                length=db_catalog_part.length,
+                weight=db_catalog_part.weight,
+            )
+
 
     def delete_serialized_part(self, serialized_part: SerializedPartDelete) -> None:
         """
@@ -275,13 +330,39 @@ class PartManagementService():
         # Logic to retrieve a serialized part
         pass
 
-    def get_serialized_parts(self, manufacturer_id: str = None, manufacturer_part_id: str = None, part_instance_id: str = None) -> List[SerializedPartRead]:
+    def get_simple_serialized_parts(self, query: SerializedPartQuery = SerializedPartQuery()) -> List[SimpleSerializedPartRead]:
         """
         Retrieves serialized parts from the system according to given parameters.
         """
-        
-        # Logic to retrieve all serialized parts
-        pass
+        with RepositoryManagerFactory.create() as repos:
+            db_serialized_parts: List[SerializedPart] = repos.serialized_part_repository.find(
+                manufacturer_id=query.manufacturer_id,
+                manufacturer_part_id=query.manufacturer_part_id,
+                part_instance_id=query.part_instance_id,
+                business_partner_number=query.business_partner_number,
+                customer_part_id=query.customer_part_id,
+                van=query.van
+            )
+
+            result = []
+            for db_serialized_part in db_serialized_parts:
+                result.append(
+                    SimpleSerializedPartRead(
+                        manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
+                        manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
+                        name=db_serialized_part.partner_catalog_part.catalog_part.name,
+                        category=db_serialized_part.partner_catalog_part.catalog_part.category,
+                        bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+                        partInstanceId=db_serialized_part.part_instance_id,
+                        customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
+                        businessPartner=BusinessPartnerRead(
+                            name=db_serialized_part.partner_catalog_part.business_partner.name,
+                            bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+                        ),
+                        van=db_serialized_part.van
+                    )
+                )
+            return result
 
     def create_jis_part(self, jis_part_create: JISPartCreate) -> JISPartRead:
         """
