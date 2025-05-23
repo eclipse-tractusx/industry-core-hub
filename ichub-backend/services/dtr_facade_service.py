@@ -587,9 +587,7 @@ class DTRFacadeService:
                         db_partner_catalog_part.business_partner.bpnl)
 
                     shell_descriptor.specific_asset_ids = specific_asset_ids
-        
-        print(db_twin)
-
+     
         #######################################
         ### Logic for serialized part twins ###
         #######################################
