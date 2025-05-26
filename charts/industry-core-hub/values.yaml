@@ -90,6 +90,10 @@ backend:
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: false
+    # Configuration for the logger settings
+    logger:
+     # Possible values: WARNING, INFO, DEBUG
+      level: "INFO"
     # -- EDC (Eclipse Dataspace Connector) configuration
     submodel_dispatcher:
       path: "./data/submodels"
