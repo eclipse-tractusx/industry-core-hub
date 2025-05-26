@@ -42,6 +42,9 @@ tractusx-connector:
           # content from the wallet secret, caution on pasting real secrets here!
 
   controlplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       management:
@@ -74,6 +77,9 @@ tractusx-connector:
           # -- If present overwrites the default secret name
           secretName: "tls-secret-consumer-controlplane"
   dataplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       proxy:
@@ -135,8 +141,8 @@ tractusx-connector:
 
 vault:
   enabled: false
-  nameOverride: edc-provider-vault
-  fullnameOverride: edc-provider-vault
+  nameOverride: edc-consumer-vault
+  fullnameOverride: edc-consumer-vault
   injector:
     enabled: false
   server:

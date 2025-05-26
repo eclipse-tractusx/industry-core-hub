@@ -1,9 +1,16 @@
+[![Contributors][contributors-shield]][contributors-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Apache 2.0 License][license-shield]][license-url-code]
+[![CC-BY-4.0][license-shield-non-code]][license-url-non-code]
+[![Latest Release][release-shield]][release-url]
+
+[![Tractus-X ](https://img.shields.io/pypi/v/tractusx-sdk?style=for-the-badge&label=Tractus-X%20SDK)](https://github.com/eclipse-tractusx/tractusx-sdk)
+
 # Industry Core Hub
 
 <p align="center">
   <img src="./docs/media/IndustryCoreHubLogo.png" alt="Industry Core Logo" width="250"/>
 </p>
-
 
 A decentral lightweight, **plug and play data provision & consumption orchestrator** of the:
 
@@ -140,3 +147,14 @@ This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses
 - SPDX-License-Identifier: CC-BY-4.0
 - SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
 - Source URL: https://github.com/eclipse-tractusx/industry-core-hub
+
+[contributors-shield]: https://img.shields.io/github/contributors/eclipse-tractusx/industry-core-hub.svg?style=for-the-badge
+[contributors-url]: https://github.com/eclipse-tractusx/industry-core-hub/graphs/contributors
+[stars-shield]: https://img.shields.io/github/stars/eclipse-tractusx/industry-core-hub.svg?style=for-the-badge
+[stars-url]: https://github.com/eclipse-tractusx/industry-core-hub/stargazers
+[license-shield]: https://img.shields.io/github/license/eclipse-tractusx/industry-core-hub.svg?style=for-the-badge
+[license-url-code]: https://github.com/eclipse-tractusx/industry-core-hub/blob/main/LICENSE
+[license-shield-non-code]: https://img.shields.io/badge/NON--CODE%20LICENSE-CC--BY--4.0-8A2BE2?style=for-the-badge
+[license-url-non-code]: https://github.com/eclipse-tractusx/industry-core-hub/blob/main/LICENSE_non-code
+[release-shield]: https://img.shields.io/github/v/release/eclipse-tractusx/industry-core-hub.svg?style=for-the-badge
+[release-url]: https://github.com/eclipse-tractusx/industry-core-hub/releases
