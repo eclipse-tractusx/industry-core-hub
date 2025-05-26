@@ -25,7 +25,7 @@
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
 import json
-
+from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.enablement_services.dtr_manager import DTRManager
@@ -62,6 +62,9 @@ class TwinManagementService:
     """
     Service class for managing twin-related operations (CRUD and Twin sharing).
     """
+    
+    def __init__(self):
+        self.submodel_document_generator = SubmodelDocumentGenerator()
 
     def get_or_create_enablement_stack(self, repo: RepositoryManager, manufacturer_id: str) -> EnablementServiceStack:
         """
@@ -129,24 +132,33 @@ class TwinManagementService:
             # (if True => we can skip the operation from here on => nothing to do)
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
-            if not db_twin_registration.dtr_registered:
-                dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
-                
-                customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
-                                      for partner_catalog_part in db_catalog_part.partner_catalog_parts}
-                
-                dtr_manager.create_or_update_shell_descriptor(
-                    global_id=db_twin.global_id,
-                    aas_id=db_twin.aas_id,
-                    manufacturer_id=create_input.manufacturer_id,
-                    manufacturer_part_id=create_input.manufacturer_part_id,
-                    customer_part_ids=customer_part_ids,
-                    part_category=db_catalog_part.category,
-                    digital_twin_type=CATALOG_DIGITAL_TWIN_TYPE
-                )
+            
+            dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
+            
+            customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
+                                    for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+            
+            dtr_manager.create_or_update_shell_descriptor(
+                global_id=db_twin.global_id,
+                aas_id=db_twin.aas_id,
+                manufacturer_id=create_input.manufacturer_id,
+                manufacturer_part_id=create_input.manufacturer_part_id,
+                customer_part_ids=customer_part_ids,
+                part_category=db_catalog_part.category,
+                digital_twin_type=CATALOG_DIGITAL_TWIN_TYPE
+            )
 
-                db_twin_registration.dtr_registered = True
-
+            db_twin_registration.dtr_registered = True
+            
+            ## Create submodel when registering
+            self.create_twin_aspect_and_submodel(
+                global_id=db_twin.global_id,
+                manufacturer_part_id=create_input.manufacturer_part_id,
+                name=db_catalog_part.name,
+                bpns=db_catalog_part.bpns,
+                manufacturer_id=create_input.manufacturer_id
+            )
+            
             return TwinRead(
                 globalId=db_twin.global_id,
                 dtrAasId=db_twin.aas_id,
@@ -427,6 +439,23 @@ class TwinManagementService:
             return twin_result
 
 
+    
+    def create_twin_aspect_and_submodel(self, global_id: str, manufacturer_part_id: str, name: str, bpns: str, manufacturer_id: str) -> TwinAspectRead:
+        """
+        Create a twin aspect representing part type information for the catalog part twin.
+        """
+        payload = self.submodel_document_generator.generate_part_type_information_v1(
+            global_id=global_id,
+            manufacturer_part_id=manufacturer_part_id,
+            name=name,
+            bpns=bpns
+        )
+        return self.create_twin_aspect(TwinAspectCreate(
+            globalId=global_id,
+            semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
+            payload=payload
+        ), manufacturer_id=manufacturer_id)
+        
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate, manufacturer_id:str) -> TwinAspectRead:
         """
         Create a new twin aspect for a give twin.

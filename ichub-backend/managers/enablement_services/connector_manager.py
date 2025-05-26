@@ -267,7 +267,7 @@ class ConnectorManager:
         contract_id:str = self.generate_contract_id(asset_id=asset_id, usage_policy_id=usage_policy_id, access_policy_id=access_policy_id)
         existing_contract = self.edc_service.contract_definitions.get_by_id(oid=contract_id)
         if existing_contract.status_code == 200:
-            logger.info(f"Contract with ID {contract_id} already exists.")
+            logger.debug(f"Contract with ID {contract_id} already exists.")
             return contract_id
         
         contract_response = self.create_contract(

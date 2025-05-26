@@ -5,6 +5,48 @@ Further information can be found on the [README.md](README.md) file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.0] - 2025-05-26
+
+### Added
+
+- Improve layout stability, restructure UI, and add full partners view with CRUD operations ([#214](https://github.com/eclipse-tractusx/industry-core-hub/pull/214))
+- Add "name" attribute to Catalog Part to support frontend rendering ([#224](https://github.com/eclipse-tractusx/industry-core-hub/pull/224))
+- Add status, materials, and dimensions to CatalogPart; refactor model construction and indexing ([#226](https://github.com/eclipse-tractusx/industry-core-hub/pull/226))
+- Add dynamic volume configuration and clean up Helm chart dependencies for E2E stability ([#231](https://github.com/eclipse-tractusx/industry-core-hub/pull/231))
+- Refactor microservices FastAPI structure with routers and add health API; fix semantic ID startup bug ([#235](https://github.com/eclipse-tractusx/industry-core-hub/pull/235))
+- Integrate backend endpoints with frontend for catalog parts and business partners ([#238](https://github.com/eclipse-tractusx/industry-core-hub/pull/238))
+- Refactor sharing functionality with improved requests, digital twin registry, and submodel dispatching ([#239](https://github.com/eclipse-tractusx/industry-core-hub/pull/239))
+- Add structured product view with materials pie chart and physical characteristics ([#242](https://github.com/eclipse-tractusx/industry-core-hub/pull/242))
+- Add register button for catalog parts with response snackbar and tooltip enhancements ([#244](https://github.com/eclipse-tractusx/industry-core-hub/pull/244))
+- Added new EDC 0.10.0 compatibility and DTR 0.8.0 ([#218](https://github.com/eclipse-tractusx/industry-core-hub/pull/218))
+
+### Fixed
+
+- Enable local Kubernetes deployment by setting `storageClass` to "standard" ([#215](https://github.com/eclipse-tractusx/industry-core-hub/pull/215))
+- Sync Python models with SQL schema and add missing constraints/indexes ([#223](https://github.com/eclipse-tractusx/industry-core-hub/pull/223))
+- Fix metadata DB bugs, and improve Submodel Service Manager ([#228](https://github.com/eclipse-tractusx/industry-core-hub/pull/228))
+- Add delete method and fix upload logic for submodels; update Helm charts ([#229](https://github.com/eclipse-tractusx/industry-core-hub/pull/229))
+- Fixed Dockerfile image generation ([#230](https://github.com/eclipse-tractusx/industry-core-hub/pull/230))
+- Correct volume name resolution issues for consistency in deployment ([#232](https://github.com/eclipse-tractusx/industry-core-hub/pull/232))
+- Fix config map and improve configuration injection mechanism for backend charts ([#233](https://github.com/eclipse-tractusx/industry-core-hub/pull/233))
+- Update database schemas and stabilize database secret resolution ([#234](https://github.com/eclipse-tractusx/industry-core-hub/pull/234))
+- Fix `libxml2` vulnerabilities ([#236](https://github.com/eclipse-tractusx/industry-core-hub/pull/236))
+- Fix catalog part relationships, add description field, and update APIs for filtering ([#237](https://github.com/eclipse-tractusx/industry-core-hub/pull/237))
+- Add loading spinner in catalog parts to prevent premature error message display ([#243](https://github.com/eclipse-tractusx/industry-core-hub/pull/243))
+- Improve catalog pagination, disable partner edit/delete buttons, add success messages, and enhance share dropdown and table ([#245](https://github.com/eclipse-tractusx/industry-core-hub/pull/245))
+- Fixed bug regarding registration and then sharing ([#251](https://github.com/eclipse-tractusx/industry-core-hub/pull/251)
+
+
+### Changed
+
+- Set CORS headers in INT values.yaml to enable frontend requests and local testing ([#240](https://github.com/eclipse-tractusx/industry-core-hub/pull/240))
+- Add `*` in CORS origin for testing in `values-int.yaml` ([#241](https://github.com/eclipse-tractusx/industry-core-hub/pull/241))
+
+### Documentation
+
+- Add installation guide for Industry Core Hub (TRG 1.02) ([#220](https://github.com/eclipse-tractusx/industry-core-hub/pull/220))
+- Complete initial architecture documentation with images and explanations ([#222](https://github.com/eclipse-tractusx/industry-core-hub/pull/222))
+
 ## [0.0.2] - 2025-05-14
 
 ### Added

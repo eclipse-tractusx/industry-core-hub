@@ -20,34 +20,37 @@
 ###############################################################
 ---
 secrets:
-  client-secret: <path:industry-core-hub/data/wallet#clientSecret>
+  client-secret: <path:industry-core-hub/data/walletProvider#clientSecret>
 
 tractusx-connector:
   enabled: true
   participant:
-    id: <path:industry-core-hub/data/edc#bpn>
+    id: <path:industry-core-hub/data/edcProvider#bpn>
 
   iatp:
     # Decentralized IDentifier
-    id: "<path:industry-core-hub/data/wallet#id>"
+    id: "<path:industry-core-hub/data/walletProvider#id>"
     trustedIssuers: # array [] that needs to be expand but likely like (sorry unconfirmed on how this is done, as I also would need to check)
-      - "<path:industry-core-hub/data/wallet#trustedIssuers>"
+      - "<path:industry-core-hub/data/walletProvider#trustedIssuers>"
     sts:
       dim:
-        url: "<path:industry-core-hub/data/wallet#dim.url>"
+        url: "<path:industry-core-hub/data/walletProvider#dim.url>"
       oauth:
-        token_url: "<path:industry-core-hub/data/wallet#token.url>"
+        token_url: "<path:industry-core-hub/data/walletProvider#token.url>"
         client:
-          id: "<path:industry-core-hub/data/wallet#clientId>"
+          id: "<path:industry-core-hub/data/walletProvider#clientId>"
           # content from the wallet secret, caution on pasting real secrets here!
-          secret_alias: client-secret
+          secret_alias: client-provider-secret
 
   controlplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       management:
         # -- authentication key, must be attached to each 'X-Api-Key' request header
-        authKey: <path:industry-core-hub/data/edc#authKey>
+        authKey: <path:industry-core-hub/data/edcProvider#authKey>
     bdrs:
       server:
         url: https://bpn-did-resolution-service.int.catena-x.net/api/directory
@@ -75,10 +78,13 @@ tractusx-connector:
           # -- If present overwrites the default secret name
           secretName: "tls-secret-provider-controlplane"
   dataplane:
+    env:
+      EDC_DCP_V08_FORCED: true
+      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       proxy:
-        authKey: <path:industry-core-hub/data/edc#authKey>
+        authKey: <path:industry-core-hub/data/edcProvider#authKey>
     token:
       signer:
         # alias under which the private key is stored in the vault (JWK or PEM format)
@@ -134,41 +140,32 @@ tractusx-connector:
         secret: <path:industry-core-hub/data/vault#secretPath>
         health: /v1/sys/health
 
-vault:
-  enabled: false
-  nameOverride: edc-provider-vault
-  fullnameOverride: edc-provider-vault
-  injector:
-    enabled: false
-  server:
-    dev:
-      enabled: true
-      devRootToken: root
-    ingress:
-      enabled: false
 
 digital-twin-registry:
-  nameOverride: ichub-dtr
-  postgresql:
-    nameOverride: ichub-dtr-db
-    auth:
-      password: <path:industry-core-hub/data/dtr#password>
-      existingSecret: ichub-dataprovider-secret-dtr-postgres-init
+  enabled: true
   registry:
     host: dtr-ichub.int.catena-x.net
     ingress:
       enabled: true
-      tls: true
-      urlPrefix: /semantics/registry
+      tls: 
+        enabled: true
+        secretName: tls-secret-registry-certificate-secret
+      urlPrefix: ""
       className: nginx
+      rules:
+        - host:
+          http:
+            paths:
+              - path: /
       annotations:
-        # Add annotations for the ingress, e.g.:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
-        nginx.ingress.kubernetes.io/use-regex: "true"
-        nginx.ingress.kubernetes.io/enable-cors: "true"
-        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-        nginx.ingress.kubernetes.io/x-forwarded-prefix: /semantics/registry
+        kubernetes.io/ingress.class: nginx
+        cert-manager.io/cluster-issuer: "letsencrypt-prod"
+        nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+  
+  postgresql:
+    auth:
+      password: "<path:industry-core-hub/data/dtr#password>"
 
 simple-data-backend:
   enabled: true
@@ -197,3 +194,6 @@ simple-data-backend:
     requests:
       cpu: 500m
       memory: 1024Mi
+      
+vault:
+  enabled: false

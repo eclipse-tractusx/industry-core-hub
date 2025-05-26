@@ -24,7 +24,6 @@
 
 from .twin_management_service import TwinManagementService
 from datetime import datetime, timezone
-from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.services.twin_management import CatalogPartTwinCreate, CatalogPartTwinShare, TwinAspectCreate, CatalogPartTwinDetailsRead, TwinAspectRead
 from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, EnablementServiceStack, CatalogPart, Twin, PartnerCatalogPart
@@ -43,7 +42,6 @@ class SharingService:
     """
 
     def __init__(self):
-        self.submodel_document_generator = SubmodelDocumentGenerator()
         self.twin_management_service = TwinManagementService()
 
     def get_shared_partners(self, manufacturerId:str, manufacturerPartId:str) -> List[SharedPartner]:
@@ -67,8 +65,14 @@ class SharingService:
             db_twin = self._create_and_get_twin(repo, catalog_part_to_share)
             # Step 7: Ensure a twin exchange exists between the twin and the data exchange agreement
             self._ensure_twin_exchange(repo, db_twin, db_data_exchange_agreement)
-            # Step 8: Create the part twin aspect with part type information
-            self._create_part_twin_aspect(db_twin, db_catalog_part, catalog_part_to_share)
+            # Step 8: Create the part twin aspect with part type information (if already not created)
+            self.twin_management_service.create_twin_aspect_and_submodel(
+                global_id=db_twin.global_id,
+                manufacturer_part_id=catalog_part_to_share.manufacturer_part_id,
+                name=db_catalog_part.name,
+                bpns=db_catalog_part.bpns,
+                manufacturer_id=catalog_part_to_share.manufacturer_id
+            )
             # Step 9: Return the shared part information
             return SharedPartBase(
                 businessPartnerNumber=catalog_part_to_share.business_partner_number,
@@ -141,15 +145,15 @@ class SharingService:
             catalog_part_id=db_catalog_part.id
         )
 
-        if partner_catalog_part and partner_catalog_part.customer_part_id == customer_part_id:
-            return { customer_part_id: bp_read }
-
-        if partner_catalog_part:
-            logger.warning(f"A provider customer_part_id already exists in the database {partner_catalog_part.customer_part_id}, updating to the provided one {customer_part_id}")
-
         if not customer_part_id:
             customer_part_id = db_business_partner.bpnl + "_" + db_catalog_part.manufacturer_part_id
 
+        if partner_catalog_part and partner_catalog_part.customer_part_id == customer_part_id:
+            return { customer_part_id: bp_read }
+        
+        if partner_catalog_part:
+            logger.warning(f"A provider customer_part_id already exists in the database {partner_catalog_part.customer_part_id}, updating to the provided one {customer_part_id}")
+        
         self._create_or_update_partner_catalog_part(
             repo=repo,
             customer_part_id=customer_part_id,
@@ -195,19 +199,3 @@ class SharingService:
                 data_exchange_agreement_id=db_data_exchange_agreement.id
             )
             repo.commit()
-
-    def _create_part_twin_aspect(self, db_twin: Twin, db_catalog_part: CatalogPart, catalog_part_to_share: ShareCatalogPart) -> TwinAspectRead:
-        """
-        Create a twin aspect representing the part type information for the catalog part twin.
-        """
-        payload = self.submodel_document_generator.generate_part_type_information_v1(
-            global_id=db_twin.global_id,
-            manufacturer_part_id=catalog_part_to_share.manufacturer_part_id,
-            name=db_catalog_part.name,
-            bpns=db_catalog_part.bpns
-        )
-        return self.twin_management_service.create_twin_aspect(TwinAspectCreate(
-            globalId=db_twin.global_id,
-            semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
-            payload=payload
-        ), manufacturer_id=catalog_part_to_share.manufacturer_id)
