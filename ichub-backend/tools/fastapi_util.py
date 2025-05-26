@@ -22,50 +22,26 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .dtr_facade import (
-    DtrPagingStrResponse,
-)
+from typing import Dict, List, Optional
+import json
+from tools.base64_util import decode_base64
+from uuid import UUID
 
-from .part_management import (
-    CatalogPartRead,
-    CatalogPartCreate,
-    CatalogPartDelete,
-    CatalogPartQuery,
-    PartnerCatalogPartCreate,
-    PartnerCatalogPartDelete,
-    BatchRead,
-    BatchCreate,
-    BatchDelete,
-    BatchQuery,
-    SerializedPartRead,
-    SerializedPartCreate,
-    SerializedPartDelete,
-    SerializedPartQuery,
-    JISPartRead,
-    JISPartCreate,
-    JISPartDelete,
-    JISPartQuery
-)
+from fastapi import HTTPException
 
-from .partner_management import (
-    BusinessPartnerRead,
-    DataExchangeContractRead,
-    DataExchangeContractCreate,
-    DataExchangeAgreementCreate,
-    DataExchangeAgreementRead
-)
+def parse_json_list_parameter(list_param: Optional[List[str]], key_name: str = "name", value_name: str = "value") -> Dict[str, str]:
+    result = {}
+    if list_param:
+        for param_entry in list_param:
+            try:
+                decoded_param = json.loads(decode_base64(param_entry))
+                result[decoded_param[key_name]] = decoded_param[value_name]
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                raise HTTPException(status_code=400, detail=f"Invalid parameter format: {param_entry}") from e
+    return result
 
-from .twin_management import (
-    TwinAspectRegistrationStatus,
-    TwinsAspectRegistrationMode,
-    TwinAspectRegistration,
-    TwinAspectRead,
-    TwinAspectCreate,
-    TwinRead,
-    TwinCreateBase,
-    CatalogPartTwinCreate,
-    CatalogPartTwinDetailsRead,
-    BatchTwinCreate,
-    JISPartTwinCreate,
-    SerializedPartTwinCreate
-)
+def parse_base64_uuid(base64_uuid: str) -> UUID:
+    try:
+        return UUID(decode_base64(base64_uuid))
+    except (ValueError, TypeError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 UUID format: {base64_uuid}") from e

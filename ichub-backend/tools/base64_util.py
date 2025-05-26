@@ -21,51 +21,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
+import base64
 
-from .dtr_facade import (
-    DtrPagingStrResponse,
-)
+def encode_base64(input_str: str) -> str:
+    """Encodes a string to a base64-encoded string."""
+    return base64.b64encode(input_str.encode('utf-8')).decode('utf-8')
 
-from .part_management import (
-    CatalogPartRead,
-    CatalogPartCreate,
-    CatalogPartDelete,
-    CatalogPartQuery,
-    PartnerCatalogPartCreate,
-    PartnerCatalogPartDelete,
-    BatchRead,
-    BatchCreate,
-    BatchDelete,
-    BatchQuery,
-    SerializedPartRead,
-    SerializedPartCreate,
-    SerializedPartDelete,
-    SerializedPartQuery,
-    JISPartRead,
-    JISPartCreate,
-    JISPartDelete,
-    JISPartQuery
-)
-
-from .partner_management import (
-    BusinessPartnerRead,
-    DataExchangeContractRead,
-    DataExchangeContractCreate,
-    DataExchangeAgreementCreate,
-    DataExchangeAgreementRead
-)
-
-from .twin_management import (
-    TwinAspectRegistrationStatus,
-    TwinsAspectRegistrationMode,
-    TwinAspectRegistration,
-    TwinAspectRead,
-    TwinAspectCreate,
-    TwinRead,
-    TwinCreateBase,
-    CatalogPartTwinCreate,
-    CatalogPartTwinDetailsRead,
-    BatchTwinCreate,
-    JISPartTwinCreate,
-    SerializedPartTwinCreate
-)
+def decode_base64(encoded_str: str) -> str:
+    """Decodes a base64-encoded string back to a regular string."""
+    return base64.b64decode(encoded_str.encode('utf-8')).decode('utf-8')

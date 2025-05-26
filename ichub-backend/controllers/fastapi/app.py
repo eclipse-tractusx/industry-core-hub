@@ -22,10 +22,11 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import FastAPI, Request, Header, Body
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from services.submodel_dispatcher_service import SubmodelNotSharedWithBusinessPartnerError
+from services.dtr_facade_service import NotAuthorizedError, TwinNotFoundError, NotValidTwinError
 
 from tools.submodel_type_util import InvalidSemanticIdError
 from tools import InvalidUUIDError
@@ -33,6 +34,7 @@ from tools import InvalidUUIDError
 from tractusx_sdk.dataspace.tools import op
 
 from .routers import (
+    dtr_facade,
     part_management,
     partner_management,
     twin_management,
@@ -60,12 +62,17 @@ tags_metadata = [
     {
         "name": "Submodel Dispatcher",
         "description": "Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service"
+    },
+    {
+        "name": "Digital Twin Registry Facade",
+        "description": "DTR compatible API provided directly out of the Industry Core Hub Backend. No separate DTR service is needed"
     }
 ]
 
 app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata)
 
 ## Include here all the routers for the application.
+app.include_router(dtr_facade.router)
 app.include_router(part_management.router)
 app.include_router(partner_management.router)
 app.include_router(twin_management.router)
@@ -101,6 +108,39 @@ async def invalid_uuid_error_exception_handler(
     Returns a 422 Unprocessable Entity with the error message.
     """
     return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+@app.exception_handler(NotAuthorizedError)
+async def not_authorized_exception_handler(request: Request, exc: NotAuthorizedError) -> JSONResponse:
+    """
+    Custom exception handler for NotAuthorizedError.
+    Returns a 403 Forbidden response with the error message.
+    """
+    return JSONResponse(
+        status_code=403,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(TwinNotFoundError)
+async def twin_not_found_exception_handler(request: Request, exc: TwinNotFoundError) -> JSONResponse:
+    """
+    Custom exception handler for TwinNotFoundError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
+
+@app.exception_handler(NotValidTwinError)
+async def not_valid_twin_exception_handler(request: Request, exc: NotValidTwinError) -> JSONResponse:
+    """
+    Custom exception handler for NotValidTwinError.
+    Returns a 404 Not Found response with the error message.
+    """
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
 
 
 @app.get("/health")

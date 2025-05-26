@@ -23,7 +23,7 @@
 #################################################################################
 
 from sqlalchemy import case
-from sqlmodel import SQLModel, Session, select
+from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload, aliased
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
@@ -36,6 +36,7 @@ from models.metadata_database.models import (
     EnablementServiceStack,
     LegalEntity,
     PartnerCatalogPart,
+    SerializedPart,
     Twin,
     TwinAspect,
     TwinAspectRegistration,
@@ -137,6 +138,25 @@ class CatalogPartRepository(BaseRepository[CatalogPart]):
         stmt = select(CatalogPart).where(
             CatalogPart.legal_entity_id == legal_entity_id).where(
             CatalogPart.manufacturer_part_id == manufacturer_part_id)
+        return self._session.scalars(stmt).first()
+
+    def get_by_twin_id(
+        self,
+        twin_id: int,
+        join_legal_entity: bool = False,
+        join_partner_catalog_parts: bool = False
+    ) -> Optional[CatalogPart]:
+        
+        stmt = select(CatalogPart)
+        
+        if join_legal_entity:
+            stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+
+        if join_partner_catalog_parts:
+            subquery = select(PartnerCatalogPart).join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id).where(PartnerCatalogPart.catalog_part_id == CatalogPart.id).subquery()
+            stmt = stmt.join(subquery, subquery.c.catalog_part_id == CatalogPart.id, isouter=True)
+
+        stmt = stmt.where(CatalogPart.twin_id == twin_id)
         return self._session.scalars(stmt).first()
 
     def find_by_manufacturer_id_manufacturer_part_id(self, manufacturer_id: Optional[str], manufacturer_part_id: Optional[str], join_partner_catalog_parts : bool = False) -> List[tuple[CatalogPart, int]]:
@@ -255,6 +275,77 @@ class EnablementServiceStackRepository(BaseRepository[EnablementServiceStack]):
             LegalEntity.bpnl == legal_entity_bpnl)
         return self._session.scalars(stmt).all()
 
+class SerializedPartRepository(BaseRepository[SerializedPart]):
+    def get_by_partner_catalog_part_id_part_instance_id(self, partner_catalog_part_id: int, part_instance_id: str) -> Optional[SerializedPart]:
+        stmt = select(SerializedPart).where(
+            SerializedPart.partner_catalog_part_id == partner_catalog_part_id).where(
+            SerializedPart.part_instance_id == part_instance_id)
+        return self._session.scalars(stmt).first()
+    
+    def get_by_twin_id(
+        self,
+        twin_id: int,
+        join_legal_entity: bool = False,
+        join_partner_catalog_part: bool = False
+    ) -> Optional[SerializedPart]:
+        
+        stmt = select(SerializedPart)
+        
+        if join_legal_entity or join_partner_catalog_part:
+            stmt = stmt.join(PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id)
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id)
+            stmt = stmt.join(CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id)
+
+        if join_legal_entity:
+            stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+
+        stmt = stmt.where(SerializedPart.twin_id == twin_id)
+        return self._session.scalars(stmt).first()
+
+    def find(self,
+        manufacturer_id: Optional[str] = None,
+        manufacturer_part_id: Optional[str] = None,
+        business_partner_number: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        part_instance_id: Optional[str] = None,
+        van: Optional[str] = None) -> List[SerializedPart]:
+        
+        stmt = select(SerializedPart).join(
+            PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id).join(
+            CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id).join(
+            LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+
+        if business_partner_number:
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
+                ).where(BusinessPartner.bpnl == business_partner_number)
+        
+        if manufacturer_id:
+            stmt = stmt.where(LegalEntity.bpnl == manufacturer_id)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(CatalogPart.manufacturer_part_id == manufacturer_part_id)
+        
+        if part_instance_id:
+            stmt = stmt.where(SerializedPart.part_instance_id == part_instance_id)
+
+        if van:
+            stmt = stmt.where(SerializedPart.van == van)
+
+        if customer_part_id:
+            stmt = stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+        return self._session.scalars(stmt).all()
+
+    def create_new(self, partner_catalog_part_id: int, part_instance_id: str, van: Optional[str]) -> SerializedPart:
+        """Create a new SerializedPart instance."""
+        serialized_part = SerializedPart(
+            partner_catalog_part_id=partner_catalog_part_id,
+            part_instance_id=part_instance_id,
+            van=van
+        )
+        self.create(serialized_part)
+        return serialized_part
+
 class TwinRepository(BaseRepository[Twin]):
     def create_new(self, global_id: UUID = None, dtr_aas_id: UUID = None):
         """Create a new Twin instance with the given global_id and dtr_aas_id."""
@@ -280,10 +371,31 @@ class TwinRepository(BaseRepository[Twin]):
             Twin.global_id == global_id)
         return self._session.scalars(stmt).first()
     
+    def find_by_dtr_aas_id(self,
+        dtr_aas_id: UUID,
+        include_data_exchange_agreements: bool = False,
+        include_aspects: bool = False,
+        include_registrations: bool = False) -> Optional[Twin]:
+       
+        stmt = select(Twin).where(
+            Twin.aas_id == dtr_aas_id)
+
+        stmt = self._apply_subquery_filters(stmt, include_data_exchange_agreements, include_aspects, include_registrations)
+
+
+        return self._session.scalars(stmt).first()
+
     def find_catalog_part_twins(self,
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,
             global_id: Optional[UUID] = None,
+            enablement_service_stack_id: Optional[int] = None,
+            business_partner_number: Optional[str] = None,
+            customer_part_id: Optional[str] = None,
+            min_incl_created_date: Optional[datetime] = None,
+            max_excl_created_date: Optional[datetime] = None,
+            limit: int = 50,
+            offset: int = 0,
             include_data_exchange_agreements: bool = False,
             include_aspects: bool = False,
             include_registrations: bool = False) -> List[Twin]:
@@ -304,8 +416,111 @@ class TwinRepository(BaseRepository[Twin]):
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
 
+        if enablement_service_stack_id:
+            stmt = stmt.join(
+                TwinRegistration, TwinRegistration.twin_id == Twin.id
+            ).where(
+                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+            )
+
+        if business_partner_number or customer_part_id:
+            subquery_stmt = (
+                select(PartnerCatalogPart.catalog_part_id)
+                .join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id)
+            )
+            if business_partner_number:
+                subquery_stmt = subquery_stmt.where(BusinessPartner.bpnl == business_partner_number)
+
+            if customer_part_id:
+                subquery_stmt = subquery_stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+            subquery = subquery_stmt.subquery()
+
+            stmt = stmt.join(
+                subquery, subquery.c.catalog_part_id == CatalogPart.id
+            )
+
+        if min_incl_created_date:
+            stmt = stmt.where(Twin.created_date >= min_incl_created_date)
+
+        if max_excl_created_date:
+            stmt = stmt.where(Twin.created_date < max_excl_created_date)
+
+        if limit > 0 or offset > 0:
+            stmt = stmt.limit(limit).offset(offset).order_by(desc(Twin.created_date))
+
         return self._session.scalars(stmt).all()
     
+    def find_serialized_part_twins(self,
+            manufacturer_id: Optional[str] = None,
+            manufacturer_part_id: Optional[str] = None,
+            customer_part_id: Optional[str] = None,
+            part_instance_id: Optional[str] = None,
+            van: Optional[str] = None,
+            business_partner_number: Optional[str] = None,
+            global_id: Optional[UUID] = None,
+            enablement_service_stack_id: Optional[int] = None,
+            min_incl_created_date: Optional[datetime] = None,
+            max_excl_created_date: Optional[datetime] = None,
+            limit: int = 50,
+            offset: int = 0,
+            include_data_exchange_agreements: bool = False,
+            include_aspects: bool = False,
+            include_registrations: bool = False) -> List[Twin]:
+        
+        stmt = select(Twin).join(
+            SerializedPart, SerializedPart.twin_id == Twin.id).join(
+            PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id).join(
+            CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id).join(
+            LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id
+        ).distinct()
+
+        stmt = self._apply_subquery_filters(stmt, include_data_exchange_agreements, include_aspects, include_registrations)
+
+        if manufacturer_id:
+            stmt = stmt.where(LegalEntity.bpnl == manufacturer_id)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(CatalogPart.manufacturer_part_id == manufacturer_part_id)
+
+        if customer_part_id:
+            stmt = stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+        if part_instance_id:
+            stmt = stmt.where(SerializedPart.part_instance_id == part_instance_id)
+
+        if van:
+            stmt = stmt.where(SerializedPart.van == van)
+
+        if global_id:
+            stmt = stmt.where(Twin.global_id == global_id)
+
+        if enablement_service_stack_id:
+            stmt = stmt.join(
+                TwinRegistration, TwinRegistration.twin_id == Twin.id
+            ).where(
+                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+            )
+
+        if business_partner_number:
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
+                ).where(BusinessPartner.bpnl == business_partner_number)
+
+        if min_incl_created_date:
+            stmt = stmt.where(Twin.created_date >= min_incl_created_date)
+
+        if max_excl_created_date:
+            stmt = stmt.where(Twin.created_date < max_excl_created_date)
+
+        if limit or offset:
+            stmt = stmt.order_by(desc(Twin.created_date))
+            if offset:
+                stmt = stmt.offset(offset)
+            if limit:
+                stmt = stmt.limit(limit)
+
+        return self._session.scalars(stmt).all()
+
     @staticmethod
     def _apply_subquery_filters(stmt, include_data_exchange_agreements: bool, include_aspects: bool, include_registrations: bool):
         if include_data_exchange_agreements:
@@ -333,6 +548,17 @@ class TwinAspectRepository(BaseRepository[TwinAspect]):
     def get_by_twin_id_semantic_id(self, twin_id: int, semantic_id: str, include_registrations: bool = False) -> Optional[TwinAspect]:
         """Retrieve a TwinAspect by its submodel_id."""
         stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id).where(TwinAspect.semantic_id == semantic_id)
+
+        if include_registrations:
+            stmt = stmt.join(
+                TwinAspectRegistration, TwinAspectRegistration.twin_aspect_id == TwinAspect.id, isouter=True
+            )
+
+        return self._session.scalars(stmt).first()
+
+    def get_by_twin_id_submodel_id(self, twin_id: int, submodel_id: UUID, include_registrations: bool = False) -> Optional[TwinAspect]:
+        """Retrieve a TwinAspect by its submodel_id."""
+        stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id).where(TwinAspect.submodel_id == submodel_id)
 
         if include_registrations:
             stmt = stmt.join(

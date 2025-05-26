@@ -22,50 +22,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .dtr_facade import (
-    DtrPagingStrResponse,
-)
+from typing import List
+from pydantic import Field
 
-from .part_management import (
-    CatalogPartRead,
-    CatalogPartCreate,
-    CatalogPartDelete,
-    CatalogPartQuery,
-    PartnerCatalogPartCreate,
-    PartnerCatalogPartDelete,
-    BatchRead,
-    BatchCreate,
-    BatchDelete,
-    BatchQuery,
-    SerializedPartRead,
-    SerializedPartCreate,
-    SerializedPartDelete,
-    SerializedPartQuery,
-    JISPartRead,
-    JISPartCreate,
-    JISPartDelete,
-    JISPartQuery
-)
+from tractusx_sdk.industry.models.aas.v3 import PaginatedResponse
 
-from .partner_management import (
-    BusinessPartnerRead,
-    DataExchangeContractRead,
-    DataExchangeContractCreate,
-    DataExchangeAgreementCreate,
-    DataExchangeAgreementRead
-)
+class DtrPagingStrResponse(PaginatedResponse):
+    """DTR Paging Response Model."""
 
-from .twin_management import (
-    TwinAspectRegistrationStatus,
-    TwinsAspectRegistrationMode,
-    TwinAspectRegistration,
-    TwinAspectRead,
-    TwinAspectCreate,
-    TwinRead,
-    TwinCreateBase,
-    CatalogPartTwinCreate,
-    CatalogPartTwinDetailsRead,
-    BatchTwinCreate,
-    JISPartTwinCreate,
-    SerializedPartTwinCreate
-)
+    result: List[str] = Field(description="The result of the DTR query.",
+                                    default=[])

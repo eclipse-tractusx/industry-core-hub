@@ -24,7 +24,7 @@ from fastapi import APIRouter
 from typing import List, Optional
 
 from services.part_management_service import PartManagementService
-from models.services.part_management import CatalogPartRead, CatalogPartCreate, CatalogPartReadWithStatus,SimpleCatalogPartReadWithStatus
+from models.services.part_management import CatalogPartRead, CatalogPartCreate, CatalogPartReadWithStatus, SimpleCatalogPartReadWithStatus, SerializedPartCreate, SerializedPartRead, SerializedPartQuery, SimpleSerializedPartRead
 
 router = APIRouter(prefix="/part-management", tags=["Part Management"])
 part_management_service = PartManagementService()
@@ -41,3 +41,15 @@ async def part_management_get_catalog_parts() -> List[SimpleCatalogPartReadWithS
 @router.post("/catalog-part", response_model=CatalogPartReadWithStatus)
 async def part_management_create_catalog_part(catalog_part_create: CatalogPartCreate) -> CatalogPartReadWithStatus:
     return part_management_service.create_catalog_part(catalog_part_create)
+
+@router.get("/serialized-part", response_model=List[SimpleSerializedPartRead])
+async def part_management_get_serialized_parts() -> List[SimpleSerializedPartRead]:
+    return part_management_service.get_simple_serialized_parts()
+
+@router.post("/serialized-part/query", response_model=List[SimpleSerializedPartRead])
+async def part_management_query_serialized_parts(query: SerializedPartQuery) -> List[SimpleSerializedPartRead]:
+    return part_management_service.get_simple_serialized_parts(query)
+
+@router.post("/serialized-part", response_model=SerializedPartRead)
+async def part_management_create_serialized_part(serialized_part_create: SerializedPartCreate) -> SerializedPartRead:
+    return part_management_service.create_serialized_part(serialized_part_create)
