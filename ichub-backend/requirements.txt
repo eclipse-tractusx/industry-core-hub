@@ -39,7 +39,7 @@ python-dotenv==1.1.0
 python-keycloak==4.7.3
 python-multipart==0.0.20
 PyYAML==6.0.2
-requests==2.32.3
+requests==2.32.4
 requests-toolbelt==1.0.0
 rfc3986==1.5.0
 rich==14.0.0
