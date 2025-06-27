@@ -31,7 +31,8 @@ from pydantic import BaseModel, Field
 
 from models.metadata_database.models import Material, Measurement
 from models.services.partner_management import BusinessPartnerRead
-class SharingStatus(enum.Enum):
+
+class SharingStatus(enum.IntEnum):
     """The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)"""
 
     DRAFT = 0
@@ -45,37 +46,44 @@ class SharingStatus(enum.Enum):
 
     SHARED = 3
     """The aspect has been shared with a specific partner."""
- 
+
+class StatusBase(BaseModel):
+    status: SharingStatus = Field(description="The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)")
+
+class PartnerRelatedPartReadBase(BaseModel):
+    business_partner: BusinessPartnerRead = Field(alias="businessPartner", description="The business partner to whom the part is being offered.")
+
+class PartnerRelatedPartCreateBase(BaseModel):
+    business_partner_number: str = Field(alias="businessPartnerNumber", description="The unique BPNL of the business partner.")
+
 class CatalogPartBase(BaseModel):
     manufacturer_id: str = Field(alias="manufacturerId", description="The BPNL (manufactuer ID) of the part to register.")
     manufacturer_part_id: str = Field(alias="manufacturerPartId", description="The manufacturer part ID of the part.")
 
-class PartnerCatalogPartBase(BaseModel):
+class PartnerCatalogPartBase(PartnerRelatedPartCreateBase):
     customer_part_id: str = Field(alias="customerPartId", description="The customer part ID for partner specific mapping of the catalog part.")
-    business_partner_name: str = Field(alias="businessPartnerName", description="The unique name of the business partner to map the catalog part to.")
 
-class SimpleCatalogRead(CatalogPartBase):
+class CatalogPartRead(CatalogPartBase):
     name: str = Field(description="The name of the part.")
     category: Optional[str] = Field(description="The category of the part.", default=None)
     bpns: Optional[str] = Field(description="The site number (BPNS) the part is attached to.", default=None)
     
-class CatalogPartRead(SimpleCatalogRead):
+class CatalogPartReadWithStatus(CatalogPartRead, StatusBase):
+    """Simple catalog part read model with status information."""
+
+class CatalogPartDetailsRead(CatalogPartRead):
     description: Optional[str] = Field(description="The decription of the part.", default=None)
-    materials: List[Material] = Field(description="List of materials, e.g. [{'name':'aluminum','share':'20'}]", default=[])
-    bpns: Optional[str] = Field(description="The site number (BPNS) the part is attached to.", default=None)
+    materials: Optional[List[Material]] = Field(description="List of materials, e.g. [{'name':'aluminum','share':'20'}]", default=[])
     width: Optional[Measurement] = Field(description="The width of the part.", default=None)
     height: Optional[Measurement] = Field(description="The height of the part.", default=None)
     length: Optional[Measurement] = Field(description="The length of the part.", default=None)
     weight: Optional[Measurement] = Field(description="The weight of the part.", default=None)
     customer_part_ids: Optional[Dict[str, BusinessPartnerRead]] = Field(alias="customerPartIds", description="The list of customer part IDs mapped to the respective Business Partners.", default={})
 
-class CatalogPartReadWithStatus(CatalogPartRead):
-    status: SharingStatus = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
+class CatalogPartDetailsReadWithStatus(CatalogPartDetailsRead, StatusBase):
+    """Catalog part read model with status information."""
 
-class SimpleCatalogPartReadWithStatus(SimpleCatalogRead):
-    status: SharingStatus = Field(description="The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)")
-
-class CatalogPartCreate(CatalogPartRead):
+class CatalogPartCreate(CatalogPartDetailsRead):
     pass
 
 class CatalogPartDelete(CatalogPartBase):
@@ -91,10 +99,14 @@ class PartnerCatalogPartCreate(CatalogPartBase, PartnerCatalogPartBase):
 class PartnerCatalogPartDelete(PartnerCatalogPartCreate):
     pass
 
+class PartnerCatalogPartQuery(CatalogPartQuery):
+    business_partner_number: Optional[str] = Field(alias="businessPartnerNumber", description="The unique BPNL of the business partner.", default=None)
+    customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
+
 class BatchBase(BaseModel):
     batch_id: str = Field(alias="batchId", description="The batch ID of the part.")
 
-class BatchRead(CatalogPartRead, BatchBase):
+class BatchRead(CatalogPartDetailsRead, BatchBase):
     pass
 
 class BatchCreate(CatalogPartCreate, BatchBase):  
@@ -108,20 +120,22 @@ class BatchQuery(CatalogPartQuery):
 
 class SerializedPartBase(CatalogPartBase):
     part_instance_id: str = Field(alias="partInstanceId", description="The part instance ID of the serialized part.")
+
+class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase):
     customer_part_id: str = Field(alias="customerPartId", description="The customer part ID of the part.")
-
-class SerializedPartRead(SerializedPartBase):
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
-    business_partner: BusinessPartnerRead = Field(alias="businessPartner", description="The business partner to whom the part is being offered.")
 
-class SerializedPartCreate(SerializedPartBase):
+class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
+    pass
+
+class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
-    business_partner_name: str = Field(alias="businessPartnerName", description="The unique name of the business partner to map the catalog part to.")
+    customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.")
 
-class SerializedPartDelete(SerializedPartBase):
-    business_partner_name: str = Field(alias="businessPartnerName", description="The unique name of the business partner to map the catalog part to.")
+class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
+    pass
 
-class SerializedPartQuery(CatalogPartQuery):
+class SerializedPartQuery(PartnerCatalogPartQuery):
     part_instance_id: Optional[str] = Field(alias="partInstanceId", description="The part instance ID of the serialized part.", default=None)
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
 

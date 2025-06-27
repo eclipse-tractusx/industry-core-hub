@@ -23,14 +23,11 @@
 #################################################################################
 
 from datetime import datetime
-import enum
-from uuid import UUID
-from typing import Dict, Optional, List, Any
+from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
 
-from models.services.part_management import CatalogPartBase, BusinessPartnerRead, CatalogPartRead, BatchCreate, SerializedPartCreate, JISPartCreate
-from models.services.partner_management import DataExchangeAgreementRead
+from models.services.part_management import CatalogPartBase, BusinessPartnerRead
 from models.services.twin_management import CatalogPartTwinDetailsRead
 
 class SharingBase(BaseModel):

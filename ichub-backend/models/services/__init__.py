@@ -23,7 +23,7 @@
 #################################################################################
 
 from .part_management import (
-    CatalogPartRead,
+    CatalogPartDetailsRead,
     CatalogPartCreate,
     CatalogPartDelete,
     CatalogPartQuery,
@@ -33,7 +33,7 @@ from .part_management import (
     BatchCreate,
     BatchDelete,
     BatchQuery,
-    SerializedPartRead,
+    SerializedPartDetailsRead,
     SerializedPartCreate,
     SerializedPartDelete,
     SerializedPartQuery,
