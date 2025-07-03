@@ -1,5 +1,6 @@
 annotated-types==0.7.0
 anyio==4.9.0
+async-property==0.2.2
 build==1.2.2.post1
 certifi==2025.1.31
 cffi==1.17.1
@@ -13,6 +14,7 @@ exceptiongroup==1.2.2
 fastapi==0.115.12
 fastapi-cli==0.0.7
 fastapi-keycloak-middleware==1.2.0
+filelock==3.18.0
 greenlet==3.1.1
 h11==0.16.0
 httpcore==1.0.9
@@ -50,8 +52,9 @@ SQLAlchemy==2.0.40
 sqlmodel==0.0.22
 starlette==0.40.0
 tomli==2.0.1
-tractusx_sdk==0.0.6
+tractusx_sdk==0.1.0
 typer==0.15.2
+typing-inspection==0.4.0
 typing_extensions==4.13.1
 urllib3==2.3.0
 uvicorn==0.30.6
