@@ -23,7 +23,7 @@
 
 import {
     Storefront,
-    Category,
+    FindInPage,
     People,
     Assignment
   } from '@mui/icons-material';
@@ -31,6 +31,6 @@ import {
   export const features = [
     { icon: <Storefront />, path: '/catalog', disabled: false },
     { icon: <People />, path: '/shared', disabled: false },
-    { icon: <Category />, path: '/categories', disabled: false },
+    { icon: <FindInPage />, path: '/discover-parts', disabled: false },
     { icon: <Assignment />, path: '/status', disabled: true }
   ];
