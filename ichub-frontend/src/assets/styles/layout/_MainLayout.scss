@@ -35,7 +35,7 @@
   z-index: 1100;
 }
 
-.sidebarArea {
+.sidebarArea, .parts-discovery-sidebar {
   position: sticky;
   top: 68.8px; // Header height
   height: calc(100vh - 68.8px);

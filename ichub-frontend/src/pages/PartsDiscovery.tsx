@@ -36,10 +36,39 @@ import {
   Paper
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import type { ApiPartData } from '../types/product';
 
 const PartsDiscovery = () => {
   const [partType, setPartType] = useState('Part');
   const [numParts, setNumParts] = useState(10);
+  const [bpnl, setBpnl] = useState('');
+  const [parts, setParts] = useState<ApiPartData[]>([]);
+  
+  const handleSearchClick = async () => {
+    if (!bpnl) {
+      alert('Please enter a partner BPNL');
+      return;
+    }
+
+    try {
+      console.log(`Searching for parts with BPNL: ${bpnl}`);
+      // Here we should call the API to fetch parts based on the BPNL and part type
+      const fakeParts: ApiPartData[] = Array.from({ length: numParts }).map((_, idx) => ({
+        manufacturerId: `MFR-${idx + 1}`,
+        manufacturerPartId: `PART-${idx + 1}`,
+        name: `Part Name ${idx + 1}`,
+        status: 1,
+        description: `Description for part ${idx + 1}`,
+        category: 'Category A',
+        materials: [],
+      }));
+
+      setParts(fakeParts);
+    } catch (error) {
+      console.error('Error al buscar:', error);
+      alert('Error');
+    }
+  };
 
   return (
     <Grid2 container direction="row">
@@ -88,6 +117,8 @@ const PartsDiscovery = () => {
               placeholder="Introduce partner BPNL"
               variant="outlined"
               size="small"
+              value={bpnl}
+              onChange={(e) => setBpnl(e.target.value)}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -127,7 +158,7 @@ const PartsDiscovery = () => {
               color="primary"
               size="large"
               fullWidth={true}
-              onClick={() => {}}
+              onClick={handleSearchClick}
             >
               Search
               <SearchIcon sx={{ marginLeft: 1 }} />
@@ -136,18 +167,31 @@ const PartsDiscovery = () => {
         </Box>
 
         {/* Parts grid */}
-        <Grid2 container spacing={2} justifyContent="center">
-          {Array.from({ length: numParts }).map((_, idx) => (
-            <Box key={idx}>
+        <Grid2 container spacing={2} margin={3} justifyContent="center">
+          {parts.map((part, idx) => (
+            <Grid2 size={{lg: 3, md: 4, sm: 6, xs: 12}} key={idx}>
               <Paper
                 sx={{
-                  width: 80,
-                  height: 80,
+                  padding: 2,
                   border: '1px solid #ccc',
-                  backgroundColor: '#f9f9f9',
+                  backgroundColor: '#f1f1f1',
+                  height: '100%',
                 }}
-              />
-            </Box>
+              >
+                <Typography variant="h6" gutterBottom>{part.name}</Typography>
+                <Typography variant="body2">Manufacturer ID: {part.manufacturerId}</Typography>
+                <Typography variant="body2">Part ID: {part.manufacturerPartId}</Typography>
+                <Typography variant="body2" color={part.status === 1 ? 'green' : 'red'}>
+                  Status: {part.status === 1 ? 'Active' : 'Inactive'}
+                </Typography>
+                {part.description && (
+                  <Typography variant="body2" mt={1}>Description: {part.description}</Typography>
+                )}
+                {part.category && (
+                  <Typography variant="body2">Category: {part.category}</Typography>
+                )}
+              </Paper>
+            </Grid2>
           ))}
         </Grid2>
       </Grid2>

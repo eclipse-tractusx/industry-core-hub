@@ -25,10 +25,10 @@
 
 .parts-discovery-sidebar {
   background-color: #056b9991!important;
-  height: auto;
 
-  @media (min-width: 960px) {
-    height: 100vh;
+  @media (max-width: 960px) {
+    position: static!important;
+    height: auto!important;
   }
   
   span, h6, h4, p {
