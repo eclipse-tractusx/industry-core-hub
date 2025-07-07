@@ -170,31 +170,26 @@ const ProductsDetails = () => {
     <>
       <PageNotification notification={notification} />
 
-      <Grid2 container direction="column" className="productDetail">
-        <Grid2 container spacing={2} className="mb-5">
-          <Grid2 size={{lg: 4, md: 6, sm: 6}} display="flex" justifyContent="start">
-            {getStatusTag(partType.status ?? PRODUCT_STATUS.DRAFT)}
-          </Grid2>
-          <Grid2 size={{lg: 4, md: 6, sm: 6}} display="flex" justifyContent={{ lg: "center", md: "end", sm: "end" }}>
-            <Button size="small" onClick={() => console.log("DCM v2.0 button")} className="update-button" endIcon={<Icon fontSize="16" iconName="Edit" />}>            
-                <span className="update-button-content">UPDATE</span>            
-            </Button>
-          </Grid2>
-          <Grid2 size={{lg: 4, md: 12, sm: 12}} display="flex" justifyContent="end">
-            <ShareDropdown handleCopy={handleCopy} handleDownload={handleDownload} handleShare={handleOpenShareDialog} />
-          </Grid2>
+      <Grid2 container className="productDetail">
+        <Grid2 size={4} display="flex" justifyContent="start">
+          {getStatusTag(partType.status ?? PRODUCT_STATUS.DRAFT)}
         </Grid2>
+        <Grid2 size={4} display="flex" justifyContent="center">
+          <Button size="small" onClick={() => console.log("DCM v2.0 button")} className="update-button" endIcon={<Icon fontSize="16" iconName="Edit" />}>            
+              <span className="update-button-content">UPDATE</span>            
+          </Button>
+        </Grid2>
+        <Grid2 size={4} display="flex" justifyContent="end">
+          <ShareDropdown handleCopy={handleCopy} handleDownload={handleDownload} handleShare={handleOpenShareDialog} />
+        </Grid2>
+
         <ProductData part={partType} sharedParts={sharedPartners} />
-        <Grid2 container spacing={2} direction="column" className="add-on-buttons">
-
+        
+        <Grid2 container size={12} spacing={2}className="add-on-buttons">
           <ProductButton gridSize={{ sm: 12 }} buttonText="MORE INFORMATION" onClick={handleOpenJsonDialog} />
-
-          <Grid2 container spacing={2} justifyContent="center">
-            <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="PCF v3.0.0" onClick={() => console.log("PCF v2.0 button")} />
-            <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DIGITAL PRODUCT PASSPORT v6.0.0" onClick={() => console.log("TRANSMISSION PASS v2.0.0")} />
-            <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DCM v2.0.0" onClick={() => console.log("DPP v2.0 button")} />
-          </Grid2>
-
+          <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="PCF v3.0.0" onClick={() => console.log("PCF v2.0 button")} />
+          <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DIGITAL PRODUCT PASSPORT v6.0.0" onClick={() => console.log("TRANSMISSION PASS v2.0.0")} />
+          <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DCM v2.0.0" onClick={() => console.log("DPP v2.0 button")} />
           <Grid2 size={{ sm: 12 }}>
             <Button className="submodel-button" color="success" size="small" onClick={() => console.log("Add button")} fullWidth={true} style={{ padding: "5px" }}>
               <Icon fontSize="18" iconName="Add" />
