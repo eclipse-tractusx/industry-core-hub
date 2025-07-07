@@ -27,6 +27,7 @@ from tractusx_sdk.dataspace.services.connector.v0_9_0.edc_service import EdcServ
 from tractusx_sdk.dataspace.models.connector.model_factory import ModelFactory
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
+from tools.exceptions import NotFoundError, ExternalAPIError
 import json
 
 from .dtr_manager import DTRManager
@@ -249,7 +250,7 @@ class ConnectorManager:
         policy_entry = next((entry for entry in self.agreements if entry.get("semanticid") == semantic_id), None)
         
         if not policy_entry:
-            raise ValueError(f"No agreement found for semantic ID: {semantic_id}")
+            raise NotFoundError(f"No agreement found for semantic ID: {semantic_id}")
         
         usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
             asset_id=asset_id,
@@ -306,7 +307,7 @@ class ConnectorManager:
         created_contract = self.edc_service.contract_definitions.create(obj=contract)
         
         if created_contract.status_code != 200:
-            raise Exception(f"Failed to create contract {contract_id}. Status code: {created_contract.status_code}")
+            raise ExternalAPIError(f"Failed to create contract {contract_id}. Status code: {created_contract.status_code}")
         
         logger.info(f"Contract {contract_id} created successfully.")
         return created_contract.json()
@@ -364,7 +365,7 @@ class ConnectorManager:
         created_policy = self.edc_service.policies.create(obj=policy)
         
         if created_policy.status_code != 200:
-            raise Exception(f"Failed to create policy {policy_id}. Status code: {created_policy.status_code}")
+            raise ExternalAPIError(f"Failed to create policy {policy_id}. Status code: {created_policy.status_code}")
         
         logger.info(f"Policy {policy_id} created successfully.")
         return created_policy.json()
@@ -521,7 +522,7 @@ class ConnectorManager:
         
         if asset_response.status_code != 200:
             logger.error(asset_response.text)
-            raise Exception(f"Failed to create asset {asset_id}. Status code: {asset_response.status_code}")
+            raise ExternalAPIError(f"Failed to create asset {asset_id}. Status code: {asset_response.status_code}")
 
         return asset_response.json()
     

@@ -24,10 +24,12 @@
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
 from services.submodel_dispatcher_service import SubmodelNotSharedWithBusinessPartnerError
 from services.dtr_facade_service import NotAuthorizedError, TwinNotFoundError, NotValidTwinError
 
+from tools.exceptions import BaseError, ValidationError
 from tools.submodel_type_util import InvalidSemanticIdError
 from tools import InvalidUUIDError
 
@@ -78,6 +80,22 @@ app.include_router(partner_management.router)
 app.include_router(twin_management.router)
 app.include_router(submodel_dispatcher.router)
 app.include_router(sharing_handler.router)
+
+@app.exception_handler(BaseError)
+async def base_error_exception_handler(
+    request: Request,
+    exc: BaseError) -> JSONResponse:
+    """
+    Generic exception handler for all exceptions derived from BaseError.
+    """
+    return JSONResponse(status_code=exc.status_code, content=exc.detail.model_dump())
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """
+    Exception handler for validation errors.
+    """
+    raise ValidationError(exc.errors()[0]["msg"])
 
 @app.exception_handler(SubmodelNotSharedWithBusinessPartnerError)
 async def submodel_not_shared_with_business_partner_exception_handler(

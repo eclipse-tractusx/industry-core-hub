@@ -24,6 +24,7 @@
 
 from typing import Dict, Any, Optional
 from uuid import UUID
+from tools.exceptions import InvalidError
 
 SEM_ID_PART_TYPE_INFORMATION_V1 = "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
 
@@ -37,8 +38,7 @@ class SubmodelDocumentGenerator:
     def generate_document(self, semantic_id, data: Dict[str, Any]) -> Dict[str, Any]:
         if semantic_id == SEM_ID_PART_TYPE_INFORMATION_V1:
             return self.generate_part_type_information_v1(**data)
-        
-        raise ValueError(f"Unsupported semantic ID: {semantic_id}")
+        raise InvalidError(f"Unsupported semantic ID: {semantic_id}")
     
     def generate_part_type_information_v1(self,
         global_id: UUID,
@@ -62,5 +62,4 @@ class SubmodelDocumentGenerator:
                     "function" : "production" # not nice because hardcoded; question is in general if in the future we want to store this in the metdata DB
                 }
             ]
-
         return result

@@ -466,7 +466,8 @@ class TwinRepository(BaseRepository[Twin]):
             offset: int = 0,
             include_data_exchange_agreements: bool = False,
             include_aspects: bool = False,
-            include_registrations: bool = False) -> List[Twin]:
+            include_registrations: bool = False,
+            include_all_partner_catalog_parts: bool = False) -> List[Twin]:
         
         stmt = select(Twin).join(
             SerializedPart, SerializedPart.twin_id == Twin.id).join(
@@ -505,6 +506,12 @@ class TwinRepository(BaseRepository[Twin]):
         if business_partner_number:
             stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
                 ).where(BusinessPartner.bpnl == business_partner_number)
+
+        if include_all_partner_catalog_parts:
+            subquery = select(PartnerCatalogPart).join(
+                BusinessPartner, PartnerCatalogPart.business_partner_id == BusinessPartner.id
+            ).subquery()
+            stmt = stmt.join(subquery, subquery.c.catalog_part_id == CatalogPart.id, isouter=True)            
 
         if min_incl_created_date:
             stmt = stmt.where(Twin.created_date >= min_incl_created_date)

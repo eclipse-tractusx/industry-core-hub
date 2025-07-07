@@ -41,6 +41,7 @@ from urllib import parse
 
 from managers.config.config_manager import ConfigManager
 from tools.aspect_id_tools import extract_aspect_id_name_from_urn_camelcase
+from tools.exceptions import ExternalAPIError, InvalidError
 from urllib.parse import urljoin
 
 import json
@@ -128,6 +129,7 @@ class DTRManager:
         ref = self._reference_from_bpn_list(bpn_list, fallback_id=fallback_id)
         # Create a new SpecificAssetId object with the Reference
         return SpecificAssetId(name=name, value=value, externalSubjectId=ref, supplementalSemanticIds=None)
+    
     def upsert_asset_id(self, manufacturer_id:str, name:str, value:str, bpn_keys:list, specific_asset_ids:list[SpecificAssetId]) -> list[SpecificAssetId]:
         """
         Updates an existing SpecificAssetId in the list with new BPN references if it exists,
@@ -173,6 +175,7 @@ class DTRManager:
             )
         ))
         return specific_asset_ids
+    
     def create_or_update_shell_descriptor(self,
         aas_id: UUID,
         global_id: UUID,
@@ -249,7 +252,7 @@ class DTRManager:
 
         # Raise exception if service returned an error
         if isinstance(res, Result):
-            raise Exception("Error creating or updating shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error creating or updating shell descriptor", res.to_json_string())
 
         return res
         
@@ -333,7 +336,7 @@ class DTRManager:
 
         res = self.aas_service.create_asset_administration_shell_descriptor(shell)
         if isinstance(res, Result):
-            raise Exception("Error creating shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error creating shell descriptor", res.to_json_string())
         return res
 
     def create_or_update_shell_descriptor_serialized_part(self,
@@ -438,7 +441,7 @@ class DTRManager:
 
         parsed_href_url = parse.urlparse(href_url)
         if not (parsed_href_url.scheme == "https" and parsed_href_url.netloc):
-            raise Exception(f"Generated href URL is malformed: {href_url}")
+            raise InvalidError(f"Generated href URL is malformed: {href_url}")
 
         dsp_endpoint_url = (
             f"{self.edc_controlplane_hostname}{self.edc_controlplane_catalog_path}"
@@ -447,7 +450,7 @@ class DTRManager:
         if not (
             parsed_dsp_endpoint_url.scheme == "https" and parsed_dsp_endpoint_url.netloc
         ):
-            raise Exception(
+            raise InvalidError(
                 f"Generated DSP endpoint URL for subprotocolBody is malformed: {dsp_endpoint_url}"
             )
 
@@ -480,7 +483,7 @@ class DTRManager:
         
         res = self.aas_service.create_submodel_descriptor(aas_id.urn, submodel)
         if isinstance(res, Result):
-            raise Exception("Error creating submodels descriptor", res.to_json_string())
+            raise ExternalAPIError("Error creating submodels descriptor", res.to_json_string())
         return res
 
     def get_shell_descriptor_by_id(self, aas_id: UUID) -> ShellDescriptor:
@@ -491,7 +494,7 @@ class DTRManager:
             aas_id.urn
         )
         if isinstance(res, Result):
-            raise Exception("Error retrieving shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error retrieving shell descriptor", res.to_json_string())
         return res
 
     def get_submodel_descriptor_by_id(
@@ -504,7 +507,7 @@ class DTRManager:
             aas_id.urn, submodel_id.urn
         )
         if isinstance(res, Result):
-            raise Exception(
+            raise ExternalAPIError(
                 "Error retrieving submodel descriptor", res.to_json_string()
             )
         return res
@@ -515,7 +518,7 @@ class DTRManager:
         """
         res = self.aas_service.delete_asset_administration_shell_descriptor(aas_id.urn)
         if isinstance(res, Result):
-            raise Exception("Error deleting shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error deleting shell descriptor", res.to_json_string())
 
     def delete_submodel_descriptor(self, aas_id: UUID, submodel_id: UUID) -> None:
         """
@@ -523,7 +526,7 @@ class DTRManager:
         """
         res = self.aas_service.delete_submodel_descriptor(aas_id.urn, submodel_id.urn)
         if isinstance(res, Result):
-            raise Exception("Error deleting submodel descriptor", res.to_json_string())
+            raise ExternalAPIError("Error deleting submodel descriptor", res.to_json_string())
 
 
     def _update_or_append_customer_part_ids(

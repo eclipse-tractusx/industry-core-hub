@@ -30,6 +30,7 @@ from models.metadata_database.models import BusinessPartner, DataExchangeAgreeme
 from models.services.sharing_management import SharedPartBase, ShareCatalogPart, SharedPartner
 from models.services.partner_management import BusinessPartnerRead
 from typing import Dict, Optional, List, Any, Tuple
+from tools.exceptions import NotFoundError
 
 from uuid import uuid4
 from managers.config.log_manager import LoggingManager
@@ -85,7 +86,7 @@ class SharingService:
         """
         Retrieve a catalog part tuple and return the CatalogPart object.
         Raises:
-            ValueError: If no catalog part is found.
+            NotFoundError: If no catalog part is found.
         """
         db_catalog_parts: List[Tuple[CatalogPart, Any]] = repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
             catalog_part_to_share.manufacturer_id,
@@ -93,7 +94,7 @@ class SharingService:
             join_partner_catalog_parts=True
         )
         if not db_catalog_parts:
-            raise ValueError("Catalog part not found.")
+            raise NotFoundError("Catalog part not found.")
         db_catalog_part, _ = db_catalog_parts[0]
         return db_catalog_part
 

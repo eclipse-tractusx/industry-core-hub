@@ -25,19 +25,17 @@ from fastapi.responses import JSONResponse
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from services.submodel_dispatcher_service import SubmodelDispatcherService, SubmodelNotSharedWithBusinessPartnerError
-from tools.submodel_type_util import InvalidSemanticIdError
-from tools import InvalidUUIDError
-
+from services.submodel_dispatcher_service import SubmodelDispatcherService
 from managers.config.config_manager import ConfigManager
+from tools.exceptions import exception_responses
 
 path_submodel_dispatcher = ConfigManager.get_config("submodel_dispatcher.apiPath", default="/submodel-dispatcher")
 router = APIRouter(prefix=path_submodel_dispatcher, tags=["Submodel Dispatcher"])
 submodel_dispatcher_service = SubmodelDispatcherService()
 
-@router.get("/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any])
-@router.get("/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any])
-@router.get("/{semantic_id}/{global_id}", response_model=Dict[str, Any])
+@router.get("/{semantic_id}/{global_id}/submodel/$value", response_model=Dict[str, Any], responses=exception_responses)
+@router.get("/{semantic_id}/{global_id}/submodel", response_model=Dict[str, Any], responses=exception_responses)
+@router.get("/{semantic_id}/{global_id}", response_model=Dict[str, Any], responses=exception_responses)
 async def submodel_dispatcher_get_submodel_content_submodel_value(
     semantic_id: str,
     global_id: UUID,
@@ -48,7 +46,7 @@ async def submodel_dispatcher_get_submodel_content_submodel_value(
     return submodel_dispatcher_service.get_submodel_content(edc_bpn, edc_contract_agreement_id, semantic_id, global_id)
 
 
-@router.post("/{semantic_id}/{global_id}/submodel", status_code=204)
+@router.post("/{semantic_id}/{global_id}/submodel", status_code=204, responses=exception_responses)
 async def submodel_dispatcher_upload_submodel(
     semantic_id: str,
     global_id: UUID,
@@ -56,7 +54,7 @@ async def submodel_dispatcher_upload_submodel(
 ) -> None:
     return submodel_dispatcher_service.upload_submodel( global_id, semantic_id, submodel_payload)
 
-@router.delete("/{semantic_id}/{global_id}/submodel", status_code=204)
+@router.delete("/{semantic_id}/{global_id}/submodel", status_code=204, responses=exception_responses)
 async def submodel_dispatcher_delete_submodel(
     semantic_id: str,
     global_id: UUID

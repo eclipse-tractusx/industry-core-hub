@@ -20,7 +20,94 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-class InvalidUUIDError(Exception):
-    def __init__(self, global_id: str):
-        self.global_id = global_id
-        super().__init__(f"Invalid UUID: {global_id}")
+from pydantic import BaseModel
+
+class ErrorDetail(BaseModel):
+    status: int
+    message: str
+
+exception_responses ={
+        400: {
+            "description": "Invalid input provided. Please check your request and try again.",
+            "model": ErrorDetail
+        },
+        403: {
+            "description": "Access denied. You do not have permission to perform this action.",
+            "model": ErrorDetail
+        },
+        404: {
+            "description": "Catalog not found",
+            "model": ErrorDetail
+        },
+        409: {
+            "description": "Catalog part already exists",
+            "model": ErrorDetail
+        },
+        422: {
+            "description": "Validation Error",
+            "model": ErrorDetail
+        },
+        502: {
+            "description": "Bad Gateway - The server received an invalid response from the upstream server.",
+            "model": ErrorDetail
+        },
+        503: {
+            "description": "Service unavailable. Please try again later.",
+            "model": ErrorDetail
+        }
+    }
+
+class BaseError(Exception):
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.detail = ErrorDetail(status=status_code, message=message)
+        super().__init__(message)
+
+class InvalidError(BaseError):
+    """
+    Exception raised when an invalid value is provided.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=400, message=message)
+
+class NotFoundError(BaseError):
+    """
+    Exception raised when a requested resource is not found.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=404, message=message)
+
+class AlreadyExistsError(BaseError):
+    """
+    Exception raised when a resource already exists.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=409, message=message)
+
+class ValidationError(BaseError):
+    """
+    Exception raised when validation fails.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=422, message=message)
+
+class ExternalAPIError(BaseError):
+    """
+    Exception raised when an external API call fails.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=502, message=message)
+
+class NotAvailableError(BaseError):
+    """
+    Exception raised when a requested resource is not available.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=503, message=message)
+
+class SubmodelNotSharedWithBusinessPartnerError(BaseError):
+    """
+    Exception raised when a requested twin is not shared with the specified business partner.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=403, message=message)

@@ -26,7 +26,7 @@ from hashlib import sha256
 
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
-from tools import InvalidUUIDError
+from tools.exceptions import InvalidError, NotFoundError
 
 from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdapterFactory
 from tractusx_sdk.industry.adapters.submodel_adapters.file_system_adapter import FileSystemAdapter
@@ -49,7 +49,7 @@ class SubmodelServiceManager:
             try:
                 submodel_id = UUID(submodel_id)
             except ValueError:
-                raise InvalidUUIDError(submodel_id)
+                raise InvalidError(f"Invalid UUID: {submodel_id}")
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
         if not self.file_system.exists(sha256_semantic_id):
             self.file_system.create_directory(sha256_semantic_id)
@@ -64,7 +64,7 @@ class SubmodelServiceManager:
             try:
                 global_id = UUID(global_id)
             except ValueError:
-                raise InvalidUUIDError(global_id)
+                raise InvalidError(f"Invalid UUID: {global_id}")
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
         self.logger.info(f"Retrieving submodel with Global ID: {global_id}")
         self.logger.debug(f"Semantic ID: {semantic_id}")
@@ -73,7 +73,7 @@ class SubmodelServiceManager:
         file_path = f"{sha256_semantic_id}/{global_id}.json"
         if not self.file_system.exists(file_path):
             self.logger.error(f"Submodel file not found: {file_path}")
-            raise FileNotFoundError(f"Submodel file not found: {file_path}")
+            raise NotFoundError(f"Submodel file not found: {file_path}")
         content = self.file_system.read(file_path)
         return content
 
@@ -83,7 +83,7 @@ class SubmodelServiceManager:
             try:
                 global_id = UUID(global_id)
             except ValueError:
-                raise InvalidUUIDError(global_id)
+                raise InvalidError(f"Invalid UUID: {global_id}")
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
         self.logger.info(f"Deleting submodel with Global ID: {global_id}")
         self.logger.debug(f"Semantic ID: {semantic_id}")
@@ -95,4 +95,4 @@ class SubmodelServiceManager:
             self.logger.info("Submodel deleted successfully.")
         else:
             self.logger.error(f"Submodel file not found: {file_path}")
-            raise FileNotFoundError(f"Submodel file not found: {file_path}")
+            raise NotFoundError(f"Submodel file not found: {file_path}")

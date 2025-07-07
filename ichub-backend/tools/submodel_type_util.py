@@ -25,12 +25,9 @@
 from dataclasses import dataclass
 import re
 
-REG_EX_SEMANTIC_ID = re.compile(r'^(([^:]+):)*(\d+(?:\.\d+){1,2})#([\w\-]+)$')
+from tools.exceptions import InvalidError
 
-class InvalidSemanticIdError(ValueError):
-    """
-    Exception raised when the semantic ID is invalid.
-    """
+REG_EX_SEMANTIC_ID = re.compile(r'^(([^:]+):)*(\d+(?:\.\d+){1,2})#([\w\-]+)$')
 
 @dataclass
 class SubmodelType():
@@ -49,6 +46,6 @@ def get_submodel_type(semantic_id: str) -> SubmodelType:
         version = match.group(3)
         namespace_prefix = match.group(2)
     except (AttributeError, TypeError) as e:
-        raise InvalidSemanticIdError(f"Invalid semantic ID: {semantic_id}") from e
+        raise InvalidError(f"Invalid semantic ID: {semantic_id}") from e
 
     return SubmodelType(semantic_id, name, id_short, version, namespace_prefix)

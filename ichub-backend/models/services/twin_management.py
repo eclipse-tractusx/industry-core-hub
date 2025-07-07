@@ -28,7 +28,16 @@ from uuid import UUID
 from typing import Dict, Optional, List, Any
 from pydantic import BaseModel, Field
 
-from models.services.part_management import CatalogPartBase, BusinessPartnerRead, CatalogPartRead, BatchCreate, SerializedPartBase, SerializedPartRead, JISPartCreate
+from models.services.part_management import (
+    BatchCreate,
+    BusinessPartnerRead,
+    CatalogPartBase,
+    CatalogPartDetailsRead,
+    JISPartCreate,
+    SerializedPartBase,
+    SerializedPartRead,
+    SerializedPartDetailsRead,
+)
 from models.services.partner_management import DataExchangeAgreementRead
 
 class TwinAspectRegistrationStatus(enum.Enum):
@@ -100,7 +109,7 @@ class TwinDetailsReadBase(BaseModel):
     registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
     aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.", default=None)
 
-class CatalogPartTwinRead(CatalogPartRead, TwinRead):
+class CatalogPartTwinRead(CatalogPartDetailsRead, TwinRead):
     """Represents a catalog part twin within the Digital Twin Registry."""
 
 class CatalogPartTwinCreate(CatalogPartBase, TwinCreateBase):
@@ -125,5 +134,5 @@ class SerializedPartTwinCreate(SerializedPartBase, TwinCreateBase):
 class SerializedPartTwinRead(SerializedPartRead, TwinRead):
     """Represents a serialized part twin within the Digital Twin Registry."""
 
-class SerializedPartTwinDetailsRead(SerializedPartTwinRead, TwinDetailsReadBase):
+class SerializedPartTwinDetailsRead(SerializedPartDetailsRead, TwinRead, TwinDetailsReadBase):
     """Represents the details of a serialized part twin within the Digital Twin Registry."""

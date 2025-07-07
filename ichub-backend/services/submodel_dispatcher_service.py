@@ -28,11 +28,6 @@ from typing import Dict, Any, Optional
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
 from tools.submodel_type_util import get_submodel_type
 
-class SubmodelNotSharedWithBusinessPartnerError(ValueError):
-    """
-    Exception raised when a requested twin is not shared with the specified business partner.
-    """
-
 class SubmodelDispatcherService:
     """
     Service class for managing submodel dispatching.

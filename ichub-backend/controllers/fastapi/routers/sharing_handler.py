@@ -29,10 +29,11 @@ from models.services.sharing_management import (
     SharedPartner
 )
 from typing import Optional, List
+from tools.exceptions import exception_responses
 router = APIRouter(prefix="/share", tags=["Sharing Functionality"])
 part_sharing_service = SharingService()
 
-@router.post("/catalog-part", response_model=SharedPartBase)
+@router.post("/catalog-part", response_model=SharedPartBase, responses=exception_responses)
 async def share_catalog_part(catalog_part_to_share: ShareCatalogPart) -> SharedPartBase:
     return part_sharing_service.share_catalog_part(
         catalog_part_to_share=catalog_part_to_share

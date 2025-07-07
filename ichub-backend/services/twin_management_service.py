@@ -24,7 +24,8 @@
 
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
-import json
+
+
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
@@ -49,10 +50,15 @@ from models.services.twin_management import (
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
-from models.metadata_database.models import Twin, EnablementServiceStack
-from models.metadata_database.models import Twin
+from models.metadata_database.models import (
+    EnablementServiceStack,
+    Twin,
+)
+from tools.exceptions import NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
+
+from services.part_management_service import PartManagementService
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -91,7 +97,7 @@ class TwinManagementService:
                 join_partner_catalog_parts=True
             )
             if not db_catalog_parts:
-                raise ValueError("Catalog part not found.")
+                raise NotFoundError("Catalog part not found.")
             else:
                 db_catalog_part, _ = db_catalog_parts[0]
 
@@ -103,7 +109,7 @@ class TwinManagementService:
             if db_catalog_part.twin_id:
                 db_twin = repo.twin_repository.find_by_id(db_catalog_part.twin_id)
                 if not db_twin:
-                    raise ValueError("Twin not found.")
+                    raise NotFoundError("Twin not found.")
             # Step 3b: If no twin was there, create it now in the DB (generating on demand a new global_id and dtr_aas_id)
             else:
                 db_twin = repo.twin_repository.create_new(
@@ -213,26 +219,26 @@ class TwinManagementService:
                 join_partner_catalog_parts=True
             )
             if not db_catalog_parts:
-                raise ValueError("Catalog part not found.")
+                raise NotFoundError("Catalog part not found.")
             db_catalog_part, _ = db_catalog_parts[0]
 
             # Step 2: Retrieve the business partner entity according to the business_partner_name
             # (if not there => raise error)
             db_business_partner = repo.business_partner_repository.get_by_bpnl(catalog_part_share_input.business_partner_number)
             if not db_business_partner:
-                raise ValueError(f"Business partner with number '{catalog_part_share_input.business_partner_number}' not found.")
+                raise NotFoundError(f"Business partner with number '{catalog_part_share_input.business_partner_number}' not found.")
 
             # Step 3a: Consistency check if there is a twin associated with the catalog part
             if not db_catalog_part.twin_id:
-                raise ValueError("Catalog part has not yet a twin associated.")
+                raise NotFoundError("Catalog part has not yet a twin associated.")
             # Step 3b: Consistency check if there exists a partner catalog part entity for the given catalog part and business partner
             if not db_catalog_part.find_partner_catalog_part_by_bpnl(catalog_part_share_input.business_partner_number):
-                raise ValueError(f"Not customer part ID existing for given business partner '{catalog_part_share_input.business_partner_number}'.")
+                raise NotFoundError(f"Not customer part ID existing for given business partner '{catalog_part_share_input.business_partner_number}'.")
 
             # Step 4: Retrieve the twin entity for the catalog part entity
             db_twin = repo.twin_repository.find_by_id(db_catalog_part.twin_id)
             if not db_twin:
-                raise ValueError("Twin not found.")
+                raise NotFoundError("Twin not found.")
 
             # Step 5: Retrieve the first data exchange agreement entity for the business partner
             # (this will will later be replaced with an explicit mechanism choose a specific data exchange agreement)
@@ -240,7 +246,7 @@ class TwinManagementService:
                 db_business_partner.id
             )
             if not db_data_exchange_agreements:
-                raise ValueError(f"No data exchange agreement found for business partner '{db_business_partner.name}'.")
+                raise NotFoundError(f"No data exchange agreement found for business partner '{db_business_partner.name}'.")
             db_data_exchange_agreement = db_data_exchange_agreements[0] # Get the first one for now
             
             # Step 6: Check if there is already a twin exchange entity for the twin and data exchange agreement and create it if not
@@ -267,7 +273,7 @@ class TwinManagementService:
                 part_instance_id=create_input.part_instance_id,
             )
             if not db_serialized_parts:
-                raise ValueError("Catalog part not found.")
+                raise NotFoundError("Catalog part not found.")
             else:
                 db_serialized_part = db_serialized_parts[0]
 
@@ -278,17 +284,17 @@ class TwinManagementService:
                 join_legal_entity=True
             )
             if not db_enablement_service_stack:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
+                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
 
             # Step 2a: Enablement service stack consistency check
             if db_enablement_service_stack.legal_entity.bpnl != create_input.manufacturer_id:
-                raise ValueError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
+                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
 
             # Step 3a: Load existing twin metadata from the DB (if there)
             if db_serialized_part.twin_id:
                 db_twin = repo.twin_repository.find_by_id(db_serialized_part.twin_id)
                 if not db_twin:
-                    raise ValueError("Twin not found.")
+                    raise NotFoundError("Twin not found.")
             # Step 3b: If no twin was there, create it now in the DB (generating on demand a new global_id and dtr_aas_id)
             else:
                 db_twin = repo.twin_repository.create_new(
@@ -360,34 +366,9 @@ class TwinManagementService:
             
             result = []
             for db_twin in db_twins:
-                db_serialized_part = db_twin.serialized_part
-                twin_result = SerializedPartTwinRead(
-                    globalId=db_twin.global_id,
-                    dtrAasId=db_twin.aas_id,
-                    createdDate=db_twin.created_date,
-                    modifiedDate=db_twin.modified_date,
-                    manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-                    manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-                    name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                    description=db_serialized_part.partner_catalog_part.catalog_part.description,                  
-                    category=db_serialized_part.partner_catalog_part.catalog_part.category,
-                    bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-                    materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
-                    width=db_serialized_part.partner_catalog_part.catalog_part.width,
-                    height=db_serialized_part.partner_catalog_part.catalog_part.height,
-                    length=db_serialized_part.partner_catalog_part.catalog_part.length,
-                    weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
-                    customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
-                    businessPartner=BusinessPartnerRead(
-                        name=db_serialized_part.partner_catalog_part.business_partner.name,
-                        bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
-                    ),
-                    partInstanceId=db_serialized_part.part_instance_id,
-                    van=db_serialized_part.van,
-                )
+                twin_result = TwinManagementService._build_serialized_part_twin(db_twin)
                 if include_data_exchange_agreements:
                     self._fill_shares(db_twin, twin_result)
-
                 result.append(twin_result)
             
             return result
@@ -398,47 +379,22 @@ class TwinManagementService:
                 global_id=global_id,
                 include_data_exchange_agreements=True,
                 include_aspects=True,
-                include_registrations=True
+                include_registrations=True,
+                include_all_partner_catalog_parts=True
             )
             if not db_twins:
                 return None
             
             db_twin = db_twins[0]
             
-            db_serialized_part = db_twin.serialized_part
-            twin_result = SerializedPartTwinDetailsRead(
-                globalId=db_twin.global_id,
-                dtrAasId=db_twin.aas_id,
-                createdDate=db_twin.created_date,
-                modifiedDate=db_twin.modified_date,
-                manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-                manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-                name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                description=db_serialized_part.partner_catalog_part.catalog_part.description,            
-                category=db_serialized_part.partner_catalog_part.catalog_part.category,
-                bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-                materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
-                width=db_serialized_part.partner_catalog_part.catalog_part.width,
-                height=db_serialized_part.partner_catalog_part.catalog_part.height,
-                length=db_serialized_part.partner_catalog_part.catalog_part.length,
-                weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
-                businessPartner=BusinessPartnerRead(
-                    name=db_serialized_part.partner_catalog_part.business_partner.name,
-                    bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
-                ),
-                customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
-                partInstanceId=db_serialized_part.part_instance_id,
-                van=db_serialized_part.van,
-                additionalContext=db_twin.additional_context,
-            )
+            twin_result: SerializedPartTwinDetailsRead = TwinManagementService._build_serialized_part_twin(db_twin, details=True) # type: ignore
 
+            PartManagementService.fill_customer_part_ids(db_twin.serialized_part.partner_catalog_part.catalog_part, twin_result)
             self._fill_shares(db_twin, twin_result)
             self._fill_registrations(db_twin, twin_result)
             self._fill_aspects(db_twin, twin_result)
 
             return twin_result
-
-
     
     def create_twin_aspect_and_submodel(self, global_id: str, manufacturer_part_id: str, name: str, bpns: str, manufacturer_id: str) -> TwinAspectRead:
         """
@@ -466,7 +422,7 @@ class TwinManagementService:
             # Step 1: Retrieve the twin entity according to the global_id
             db_twin = repo.twin_repository.find_by_global_id(twin_aspect_create.global_id)
             if not db_twin:
-                raise ValueError(f"Twin for global ID '{twin_aspect_create.global_id}' not found.")
+                raise NotFoundError(f"Twin for global ID '{twin_aspect_create.global_id}' not found.")
 
             # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
             # (if not there => raise error)
@@ -518,7 +474,7 @@ class TwinManagementService:
                 existing_asset_id=asset_config.get("existing_asset_id", None)
             )
             if(not dtr_asset_id):
-                raise Exception("The Digital Twin Registry was not able to be registered, or was not found in the Connector!")
+                raise NotAvailableError("The Digital Twin Registry was not able to be registered, or was not found in the Connector!")
 
             # Step 5: Handle the submodel service
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
@@ -593,7 +549,7 @@ class TwinManagementService:
                 return None
             
             db_twin = db_twins[0]
-            return self.build_catalog_part_twin_details(db_twin=db_twin)
+            return TwinManagementService._build_catalog_part_twin_details(db_twin=db_twin)
     
     def get_catalog_part_twin_details(self, manufacturerId:str, manufacturerPartId:str) -> Optional[CatalogPartTwinDetailsRead]:
         with RepositoryManagerFactory.create() as repo:
@@ -608,10 +564,10 @@ class TwinManagementService:
                 return None
             
             db_twin = db_twins[0]
-            return self.build_catalog_part_twin_details(db_twin=db_twin)
-        
-    
-    def build_catalog_part_twin_details(self, db_twin: Twin) -> Optional[CatalogPartTwinDetailsRead]:
+            return TwinManagementService._build_catalog_part_twin_details(db_twin=db_twin)
+
+    @staticmethod
+    def _build_catalog_part_twin_details(db_twin: Twin) -> Optional[CatalogPartTwinDetailsRead]:
             
             db_catalog_part = db_twin.catalog_part
             twin_result = CatalogPartTwinDetailsRead(
@@ -631,11 +587,47 @@ class TwinManagementService:
                 ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
             )
 
-            self._fill_shares(db_twin, twin_result)
-            self._fill_registrations(db_twin, twin_result)
-            self._fill_aspects(db_twin, twin_result)
+            TwinManagementService._fill_shares(db_twin, twin_result)
+            TwinManagementService._fill_registrations(db_twin, twin_result)
+            TwinManagementService._fill_aspects(db_twin, twin_result)
 
             return twin_result
+
+    @staticmethod
+    def _build_serialized_part_twin(db_twin: Twin, details: bool = False) -> SerializedPartTwinRead | SerializedPartTwinDetailsRead:
+        db_serialized_part = db_twin.serialized_part
+        base_kwargs = dict(
+            globalId=db_twin.global_id,
+            dtrAasId=db_twin.aas_id,
+            createdDate=db_twin.created_date,
+            modifiedDate=db_twin.modified_date,
+            manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
+            manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
+            name=db_serialized_part.partner_catalog_part.catalog_part.name,
+            category=db_serialized_part.partner_catalog_part.catalog_part.category,
+            bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+            customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
+            businessPartner=BusinessPartnerRead(
+                name=db_serialized_part.partner_catalog_part.business_partner.name,
+                bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+            ),
+            partInstanceId=db_serialized_part.part_instance_id,
+            van=db_serialized_part.van,
+        )
+        if details:
+            details_kwargs = dict(
+                description=db_serialized_part.partner_catalog_part.catalog_part.description,
+                materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
+                width=db_serialized_part.partner_catalog_part.catalog_part.width,
+                height=db_serialized_part.partner_catalog_part.catalog_part.height,
+                length=db_serialized_part.partner_catalog_part.catalog_part.length,
+                weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
+                additionalContext=db_twin.additional_context,
+            )
+            base_kwargs.update(details_kwargs)
+            return SerializedPartTwinDetailsRead(**base_kwargs)
+        else:
+            return SerializedPartTwinRead(**base_kwargs)
 
     @staticmethod
     def _fill_shares(db_twin: Twin, twin_result: TwinRead):
