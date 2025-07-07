@@ -130,6 +130,7 @@ class DTRFacadeService:
             if (cursor is None or cursor.type == CursorTypeEnum.CP) and (asset_kind is None or asset_kind == AssetKind.TYPE):
                 db_twins = repos.twin_repository.find_catalog_part_twins(
                     enablement_service_stack_id=enablement_service_stack_id,
+                    dtr_registered=True,
                     business_partner_number=edc_bpn,
                     include_aspects=True,
                     max_excl_created_date=cursor.timestamp if cursor else None,
@@ -176,6 +177,7 @@ class DTRFacadeService:
 
                 db_twins = repos.twin_repository.find_serialized_part_twins(
                     enablement_service_stack_id=enablement_service_stack_id,
+                    dtr_registered=True,
                     business_partner_number=edc_bpn,
                     include_aspects=True,
                     max_excl_created_date=cursor.timestamp if cursor else None,

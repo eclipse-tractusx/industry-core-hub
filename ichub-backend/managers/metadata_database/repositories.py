@@ -390,6 +390,7 @@ class TwinRepository(BaseRepository[Twin]):
             manufacturer_part_id: Optional[str] = None,
             global_id: Optional[UUID] = None,
             enablement_service_stack_id: Optional[int] = None,
+            dtr_registered: Optional[bool] = None,
             business_partner_number: Optional[str] = None,
             customer_part_id: Optional[str] = None,
             min_incl_created_date: Optional[datetime] = None,
@@ -416,12 +417,20 @@ class TwinRepository(BaseRepository[Twin]):
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
 
-        if enablement_service_stack_id:
+        if enablement_service_stack_id or dtr_registered is not None:
             stmt = stmt.join(
                 TwinRegistration, TwinRegistration.twin_id == Twin.id
-            ).where(
-                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
             )
+            
+            if enablement_service_stack_id is not None:
+                stmt = stmt.where(
+                    TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+                )
+            
+            if dtr_registered is not None:
+                stmt = stmt.where(
+                    TwinRegistration.dtr_registered == dtr_registered
+                )
 
         if business_partner_number or customer_part_id:
             subquery_stmt = (
@@ -460,6 +469,7 @@ class TwinRepository(BaseRepository[Twin]):
             business_partner_number: Optional[str] = None,
             global_id: Optional[UUID] = None,
             enablement_service_stack_id: Optional[int] = None,
+            dtr_registered: Optional[bool] = None,
             min_incl_created_date: Optional[datetime] = None,
             max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
@@ -496,12 +506,20 @@ class TwinRepository(BaseRepository[Twin]):
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
 
-        if enablement_service_stack_id:
+        if enablement_service_stack_id or dtr_registered is not None:
             stmt = stmt.join(
                 TwinRegistration, TwinRegistration.twin_id == Twin.id
-            ).where(
-                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
             )
+            
+            if enablement_service_stack_id is not None:
+                stmt = stmt.where(
+                    TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
+                )
+            
+            if dtr_registered is not None:
+                stmt = stmt.where(
+                    TwinRegistration.dtr_registered == dtr_registered
+                )
 
         if business_partner_number:
             stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
