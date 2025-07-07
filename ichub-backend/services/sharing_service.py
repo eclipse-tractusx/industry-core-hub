@@ -153,6 +153,8 @@ class SharingService:
             return { customer_part_id: bp_read }
         
         if partner_catalog_part:
+            # TODO: Very dangerous!!!! We might need to update thousands of twins in the DTR potentially
+            # (in case e.g. there were already instance level parts created for that catalog part)
             logger.warning(f"A provider customer_part_id already exists in the database {partner_catalog_part.customer_part_id}, updating to the provided one {customer_part_id}")
         
         self._create_or_update_partner_catalog_part(
