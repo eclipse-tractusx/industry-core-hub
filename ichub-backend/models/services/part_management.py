@@ -50,6 +50,9 @@ class SharingStatus(enum.IntEnum):
 class StatusBase(BaseModel):
     status: SharingStatus = Field(description="The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)")
 
+class CustomerPartIdBase(BaseModel):
+    customer_part_id: str = Field(alias="customerPartId", description="The customer part ID for partner specific mapping of the catalog part.")
+
 class PartnerRelatedPartReadBase(BaseModel):
     business_partner: BusinessPartnerRead = Field(alias="businessPartner", description="The business partner to whom the part is being offered.")
 
@@ -60,8 +63,8 @@ class CatalogPartBase(BaseModel):
     manufacturer_id: str = Field(alias="manufacturerId", description="The BPNL (manufactuer ID) of the part to register.")
     manufacturer_part_id: str = Field(alias="manufacturerPartId", description="The manufacturer part ID of the part.")
 
-class PartnerCatalogPartBase(PartnerRelatedPartCreateBase):
-    customer_part_id: str = Field(alias="customerPartId", description="The customer part ID for partner specific mapping of the catalog part.")
+class PartnerCatalogPartBase(PartnerRelatedPartCreateBase, CustomerPartIdBase):
+    pass
 
 class CatalogPartRead(CatalogPartBase):
     name: str = Field(description="The name of the part.")
@@ -99,6 +102,9 @@ class PartnerCatalogPartCreate(CatalogPartBase, PartnerCatalogPartBase):
 class PartnerCatalogPartDelete(PartnerCatalogPartCreate):
     pass
 
+class PartnerCatalogPartRead(PartnerRelatedPartReadBase, CatalogPartRead, CustomerPartIdBase):
+    pass
+
 class PartnerCatalogPartQuery(CatalogPartQuery):
     business_partner_number: Optional[str] = Field(alias="businessPartnerNumber", description="The unique BPNL of the business partner.", default=None)
     customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
@@ -121,8 +127,7 @@ class BatchQuery(CatalogPartQuery):
 class SerializedPartBase(CatalogPartBase):
     part_instance_id: str = Field(alias="partInstanceId", description="The part instance ID of the serialized part.")
 
-class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase):
-    customer_part_id: str = Field(alias="customerPartId", description="The customer part ID of the part.")
+class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase, CustomerPartIdBase):
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
 
 class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
@@ -139,9 +144,8 @@ class SerializedPartQuery(PartnerCatalogPartQuery):
     part_instance_id: Optional[str] = Field(alias="partInstanceId", description="The part instance ID of the serialized part.", default=None)
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
 
-class JISPartBase(CatalogPartBase):
+class JISPartBase(CatalogPartBase, CustomerPartIdBase):
     jis_number: str = Field(alias="jisNumber", description="The JIS number of the JIS part.")
-    customer_part_id: str = Field(alias="customerPartId", description="The customer part ID of the part.")
 
 class JISPartRead(JISPartBase):
     parent_order_number: Optional[str] = Field(alias="parentOrderNumber", description="The parent order number of the JIS part.", default=None)

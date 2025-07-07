@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from models.services.part_management import (
     BatchCreate,
     BatchRead,
@@ -37,6 +37,7 @@ from models.services.part_management import (
     PartnerCatalogPartBase,
     PartnerCatalogPartCreate,
     PartnerCatalogPartDelete,
+    PartnerCatalogPartRead,
     SerializedPartCreate,
     SerializedPartDelete,
     SerializedPartDetailsRead,
@@ -45,7 +46,7 @@ from models.services.part_management import (
     SharingStatus,
 )
 from models.services.partner_management import BusinessPartnerRead
-from managers.metadata_database.manager import RepositoryManagerFactory
+from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.metadata_database.models import (
     CatalogPart,
     LegalEntity,
@@ -278,17 +279,8 @@ class PartManagementService():
             if not db_business_partner:
                 raise NotFoundError(f"Business partner with BPNL '{serialized_part_create.business_partner_number}' does not exist. Please create it first.")
 
-            # Check if the legal entity exists for the given manufacturer ID
-            db_legal_entity = repos.legal_entity_repository.get_by_bpnl(serialized_part_create.manufacturer_id)
-            if not db_legal_entity:
-                raise NotFoundError(f"Legal Entity with manufacturer BPNL '{serialized_part_create.manufacturer_id}' does not exist. Please create it first.")
-
-            # Check if the corresponding catalog part already exists
-            db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
-                db_legal_entity.id, serialized_part_create.manufacturer_part_id
-            )
-            if not db_catalog_part:
-                raise NotFoundError("Corresponding catalog part not existing.")
+            # Find the catalog part by its manufacturer ID and part ID
+            _, db_catalog_part = self._find_catalog_part(repos, serialized_part_create.manufacturer_id, serialized_part_create.manufacturer_part_id)
 
             # Get the partner catalog part for the given catalog part and business partner
             db_partner_catalog_part = repos.partner_catalog_part_repository.get_by_catalog_part_id_business_partner_id(
@@ -407,13 +399,47 @@ class PartManagementService():
         # Logic to retrieve all JIS parts
         pass
 
-    def create_partner_catalog_part_mapping(self, partner_catalog_part_create: PartnerCatalogPartCreate) -> CatalogPartDetailsRead:
+    def create_partner_catalog_part_mapping(self, partner_catalog_part_create: PartnerCatalogPartCreate) -> PartnerCatalogPartRead:
         """
         Create a new partner catalog part in the system.
         """
-        
-        # Logic to create a partner catalog part
-        pass
+        with RepositoryManagerFactory.create() as repos:
+            # Find the catalog part by its manufacturer ID and part ID
+            _, db_catalog_part = self._find_catalog_part(repos, partner_catalog_part_create.manufacturer_id, partner_catalog_part_create.manufacturer_part_id)
+            
+            # Find the given business partner
+            db_business_partner = repos.business_partner_repository.get_by_bpnl(partner_catalog_part_create.business_partner_number)
+            if not db_business_partner:
+                raise NotFoundError(f"Business partner '{partner_catalog_part_create.business_partner_number}' does not exist. Please create it first.")
+
+            # Check if the partner catalog part already exists
+            db_partner_catalog_part = repos.partner_catalog_part_repository.get_by_catalog_part_id_business_partner_id(
+                db_catalog_part.id, db_business_partner.id
+            )
+
+            if db_partner_catalog_part:
+                raise AlreadyExistsError(f"Partner catalog part for catalog part '{partner_catalog_part_create.manufacturer_id}/{partner_catalog_part_create.manufacturer_part_id}' and business partner '{partner_catalog_part_create.business_partner_number}' already exists with customer part ID '{db_partner_catalog_part.customer_part_id}'.")
+            
+            # Create the partner catalog part in the metadata database
+            db_partner_catalog_part = PartnerCatalogPart(
+                business_partner_id=db_business_partner.id,
+                customer_part_id=partner_catalog_part_create.customer_part_id,
+                catalog_part_id=db_catalog_part.id
+            )
+            repos.partner_catalog_part_repository.create(db_partner_catalog_part)
+
+            return PartnerCatalogPartRead(
+                manufacturerId=db_catalog_part.legal_entity.bpnl,
+                manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                name=db_catalog_part.name,
+                category=db_catalog_part.category,
+                bpns=db_catalog_part.bpns,
+                customerPartId=db_partner_catalog_part.customer_part_id,
+                businessPartner=BusinessPartnerRead(
+                    name=db_business_partner.name,
+                    bpnl=db_business_partner.bpnl
+                )
+            )
 
     def delete_partner_catalog_part_mapping(self, partner_catalog_part: PartnerCatalogPartDelete) -> CatalogPartDetailsRead:
         """
@@ -437,3 +463,25 @@ class PartManagementService():
                 bpnl=partner_catalog_part.business_partner.bpnl
             )
         catalog_part.customer_part_ids = customer_part_ids
+
+    @staticmethod
+    def _find_catalog_part(repos: RepositoryManager, 
+        manufacturer_id: str, 
+        manufacturer_part_id: str
+    ) -> Tuple[LegalEntity, CatalogPart]:
+        """
+        Helper method to find a catalog part by its manufacturer ID and part ID.
+        """
+        # Check if the legal entity exists for the given manufacturer ID
+        db_legal_entity = repos.legal_entity_repository.get_by_bpnl(manufacturer_id)
+        if not db_legal_entity:
+            raise NotFoundError(f"Legal Entity with manufacturer BPNL '{manufacturer_id}' does not exist. Please create it first.")
+
+        # Check if the corresponding catalog part already exists
+        db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
+            db_legal_entity.id, manufacturer_part_id
+        )
+        if not db_catalog_part:
+            raise NotFoundError(f"Catalog part {manufacturer_id}/{manufacturer_part_id} not found.")
+
+        return (db_legal_entity, db_catalog_part)

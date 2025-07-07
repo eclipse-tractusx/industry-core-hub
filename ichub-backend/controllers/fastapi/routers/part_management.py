@@ -28,6 +28,8 @@ from models.services.part_management import (
     CatalogPartCreate,
     CatalogPartDetailsReadWithStatus,
     CatalogPartReadWithStatus,
+    PartnerCatalogPartCreate,
+    PartnerCatalogPartRead,
     SerializedPartCreate,
     SerializedPartQuery,
     SerializedPartRead,
@@ -49,6 +51,10 @@ async def part_management_get_catalog_parts() -> List[CatalogPartReadWithStatus]
 @router.post("/catalog-part", response_model=CatalogPartDetailsReadWithStatus, responses=exception_responses)
 async def part_management_create_catalog_part(catalog_part_create: CatalogPartCreate) -> CatalogPartDetailsReadWithStatus:
     return part_management_service.create_catalog_part(catalog_part_create)
+
+@router.post("/catalog-part/create-partner-mapping", response_model=PartnerCatalogPartRead, responses=exception_responses)
+async def part_management_create_partner_mapping(partner_catalog_part_create: PartnerCatalogPartCreate) -> PartnerCatalogPartRead:
+    return part_management_service.create_partner_catalog_part_mapping(partner_catalog_part_create)
 
 @router.get("/serialized-part", response_model=List[SerializedPartRead], responses=exception_responses)
 async def part_management_get_serialized_parts() -> List[SerializedPartRead]:
