@@ -544,7 +544,7 @@ class DTRFacadeService:
                 # Not found => then the partner has no access to the twin
                 if not db_partner_catalog_part:
                     raise NotAuthorizedError(
-                        f"Catalog part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}."
+                        f"Part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}."
                     )
 
                 db_partner_catalog_parts = [db_partner_catalog_part]
@@ -601,7 +601,7 @@ class DTRFacadeService:
                 # Not found => then the partner has no access to the twin
                 if db_partner_catalog_part.business_partner.bpnl != edc_bpn:
                     raise NotAuthorizedError(
-                        f"Catalog part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}."
+                        f"Part with AAS ID {db_twin.aas_id} not shared with business partner {edc_bpn}."
                     )
 
             # Step 2: fill the specific asset IDs
