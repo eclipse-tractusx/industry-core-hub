@@ -26,12 +26,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
-from services.submodel_dispatcher_service import SubmodelNotSharedWithBusinessPartnerError
-from services.dtr_facade_service import NotAuthorizedError, TwinNotFoundError, NotValidTwinError
-
 from tools.exceptions import BaseError, ValidationError
-from tools.submodel_type_util import InvalidSemanticIdError
-from tools import InvalidUUIDError
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -96,70 +91,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     Exception handler for validation errors.
     """
     raise ValidationError(exc.errors()[0]["msg"])
-
-@app.exception_handler(SubmodelNotSharedWithBusinessPartnerError)
-async def submodel_not_shared_with_business_partner_exception_handler(
-        request: Request,
-        exc: SubmodelNotSharedWithBusinessPartnerError) -> JSONResponse:
-    """
-    Custom exception handler for SubmodelNotSharedWithBusinessPartnerError.
-    Returns a 403 Forbidden response with the error message.
-    """
-    return JSONResponse(status_code=403, content={"detail": str(exc)})
-
-@app.exception_handler(InvalidSemanticIdError)
-async def invalid_semantic_id_exception_handler(
-        request: Request,
-        exc: InvalidSemanticIdError) -> JSONResponse:
-    """
-    Custom exception handler for InvalidSemanticIdError.
-    Returns a 400 Bad Request with the error message.
-    """
-    return JSONResponse(status_code=400, content={"detail": str(exc)})
-
-@app.exception_handler(InvalidUUIDError)
-async def invalid_uuid_error_exception_handler(
-    request: Request,
-    exc: InvalidUUIDError) -> JSONResponse:
-    """
-    Custom exception handler for InvalidUUIDError.
-    Returns a 422 Unprocessable Entity with the error message.
-    """
-    return JSONResponse(status_code=422, content={"detail": str(exc)})
-
-@app.exception_handler(NotAuthorizedError)
-async def not_authorized_exception_handler(request: Request, exc: NotAuthorizedError) -> JSONResponse:
-    """
-    Custom exception handler for NotAuthorizedError.
-    Returns a 403 Forbidden response with the error message.
-    """
-    return JSONResponse(
-        status_code=403,
-        content={"detail": str(exc)}
-    )
-
-@app.exception_handler(TwinNotFoundError)
-async def twin_not_found_exception_handler(request: Request, exc: TwinNotFoundError) -> JSONResponse:
-    """
-    Custom exception handler for TwinNotFoundError.
-    Returns a 404 Not Found response with the error message.
-    """
-    return JSONResponse(
-        status_code=404,
-        content={"detail": str(exc)}
-    )
-
-@app.exception_handler(NotValidTwinError)
-async def not_valid_twin_exception_handler(request: Request, exc: NotValidTwinError) -> JSONResponse:
-    """
-    Custom exception handler for NotValidTwinError.
-    Returns a 404 Not Found response with the error message.
-    """
-    return JSONResponse(
-        status_code=404,
-        content={"detail": str(exc)}
-    )
-
 
 @app.get("/health")
 def check_health():

@@ -34,6 +34,8 @@ from managers.metadata_database.manager import RepositoryManagerFactory, Reposit
 from models.services.dtr_facade import DtrPagingStrResponse
 from models.services.twin_management import TwinAspectRegistrationStatus
 from models.metadata_database.models import Twin, TwinAspect
+
+from tools.exceptions import NotAuthorizedError, NotFoundError, ValidationError
 from tools.submodel_type_util import get_submodel_type
 from tools.base64_util import decode_base64, encode_base64
 
@@ -54,21 +56,6 @@ from tractusx_sdk.industry.models.aas.v3 import (
     SpecificAssetId,
     SubModelDescriptor,
 )
-
-class TwinNotFoundError(ValueError):
-    """
-    Exception raised when a requested twin is not found in the database.
-    """
-
-class NotAuthorizedError(ValueError):
-    """
-    Exception raised when a requested twin is not authorized for the specified business partner.
-    """
-
-class NotValidTwinError(ValueError):
-    """
-    Exception raised when a requested twin is not valid (i.e. it is not attached to any part)
-    """
 
 
 class CursorTypeEnum(Enum):
@@ -247,7 +234,7 @@ class DTRFacadeService:
 
             if db_twin is None or not db_twin.has_registration(
                     enablement_service_stack_id):
-                raise TwinNotFoundError(
+                raise NotFoundError(
                     f"Shell descriptor {aas_id} not found.")
 
             self._fill_shell_descriptor(
@@ -274,7 +261,7 @@ class DTRFacadeService:
         with RepositoryManagerFactory.create() as repos:
             db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_registrations=True)
             if not db_twin or not db_twin.has_registration(enablement_service_stack_id):
-                raise TwinNotFoundError(f"Shell descriptor {aas_id} not found.")
+                raise NotFoundError(f"Shell descriptor {aas_id} not found.")
 
             shell_descriptor = ShellDescriptor(id=aas_id.urn)
             self._fill_shell_descriptor(
@@ -332,7 +319,7 @@ class DTRFacadeService:
 
             if db_twin is None or not db_twin.has_registration(
                     enablement_service_stack_id):
-                raise TwinNotFoundError(
+                raise NotFoundError(
                     f"Shell descriptor {aas_id} not found.")
 
             self._fill_shell_descriptor(
@@ -347,7 +334,7 @@ class DTRFacadeService:
         if len(shell_descriptor.submodel_descriptors):
             return shell_descriptor.submodel_descriptors[0]
 
-        raise TwinNotFoundError(f"Submodel descriptor {submodel_id} not found.")
+        raise NotFoundError(f"Submodel descriptor {submodel_id} not found.")
 
     def get_all_asset_administration_shell_ids_by_asset_link(self,
                       enablement_service_stack_id: int,
@@ -507,7 +494,7 @@ class DTRFacadeService:
 
             if db_twin is None or not db_twin.has_registration(
                     enablement_service_stack_id):
-                raise TwinNotFoundError(
+                raise NotFoundError(
                     f"Shell descriptor {aas_id} not found.")
 
             self._fill_shell_descriptor(
@@ -653,7 +640,7 @@ class DTRFacadeService:
 
         # Check if ANY part was found
         if shell_descriptor.asset_kind is None:
-            raise NotValidTwinError(
+            raise ValidationError(
                 f"Shell descriptor {db_twin.aas_id} is not attached to a part."
             )
 
@@ -679,7 +666,7 @@ class DTRFacadeService:
             if self._check_twin_aspect_registration(enablement_service_stack_id, db_twin_aspect):
                 db_twin_aspects.append(db_twin_aspect)
             else:
-                raise TwinNotFoundError(
+                raise NotFoundError(
                     f"Submodel descriptor {include_explicit_submodel_descriptor} not found."
                 )
 
