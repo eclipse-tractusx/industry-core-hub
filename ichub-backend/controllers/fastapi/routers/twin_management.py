@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 from uuid import UUID
@@ -51,8 +51,14 @@ async def twin_management_get_catalog_part_twin_from_manufacturer(manufacturerId
     return twin_management_service.get_catalog_part_twin_details(manufacturerId, manufacturerPartId)
 
 @router.post("/catalog-part-twin", response_model=TwinRead, responses=exception_responses)
-async def twin_management_create_catalog_part_twin(catalog_part_twin_create: CatalogPartTwinCreate) -> TwinRead:
-    return twin_management_service.create_catalog_part_twin(catalog_part_twin_create)
+async def twin_management_create_catalog_part_twin(
+    catalog_part_twin_create: CatalogPartTwinCreate,
+    auto_create_part_type_information: bool = Query(True, alias="autoCreatePartTypeInformation", description="Automatically create part type information submodel if not present.")
+) -> TwinRead:
+    return twin_management_service.create_catalog_part_twin(
+        catalog_part_twin_create,
+        auto_create_part_type_information
+    )
 
 @router.post("/catalog-part-twin/share", responses={
     201: {"description": "Catalog part twin shared successfully"},

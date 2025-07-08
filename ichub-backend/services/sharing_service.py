@@ -24,6 +24,8 @@
 
 from .twin_management_service import TwinManagementService
 from datetime import datetime, timezone
+from uuid import UUID
+from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.services.twin_management import CatalogPartTwinCreate, CatalogPartTwinShare, TwinAspectCreate, CatalogPartTwinDetailsRead, TwinAspectRead
 from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, EnablementServiceStack, CatalogPart, Twin, PartnerCatalogPart
@@ -32,7 +34,7 @@ from models.services.partner_management import BusinessPartnerRead
 from typing import Dict, Optional, List, Any, Tuple
 from tools.exceptions import NotFoundError
 
-from uuid import uuid4
+
 from managers.config.log_manager import LoggingManager
 
 logger = LoggingManager.get_logger(__name__)
@@ -43,6 +45,7 @@ class SharingService:
     """
 
     def __init__(self):
+        self.submodel_document_generator = SubmodelDocumentGenerator()
         self.twin_management_service = TwinManagementService()
 
     def get_shared_partners(self, manufacturerId:str, manufacturerPartId:str) -> List[SharedPartner]:
@@ -67,12 +70,18 @@ class SharingService:
             # Step 7: Ensure a twin exchange exists between the twin and the data exchange agreement
             self._ensure_twin_exchange(repo, db_twin, db_data_exchange_agreement)
             # Step 8: Create the part twin aspect with part type information (if already not created)
-            self.twin_management_service.create_twin_aspect_and_submodel(
+            part_type_info_doc = self._create_part_type_information_aspect_doc(
                 global_id=db_twin.global_id,
                 manufacturer_part_id=catalog_part_to_share.manufacturer_part_id,
                 name=db_catalog_part.name,
                 bpns=db_catalog_part.bpns,
-                manufacturer_id=catalog_part_to_share.manufacturer_id
+            )
+            self.twin_management_service.create_twin_aspect(
+                TwinAspectCreate(
+                    globalId=db_twin.global_id,
+                    semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
+                    payload=part_type_info_doc
+                )
             )
             # Step 9: Return the shared part information
             return SharedPartBase(
@@ -200,3 +209,12 @@ class SharingService:
                 data_exchange_agreement_id=db_data_exchange_agreement.id
             )
             repo.commit()
+
+    def _create_part_type_information_aspect_doc(self, global_id: UUID, manufacturer_part_id: str, name: str, bpns: Optional[str]):
+        return self.submodel_document_generator.generate_part_type_information_v1(
+            global_id=global_id,
+            manufacturer_part_id=manufacturer_part_id,
+            name=name,
+            bpns=bpns
+        )
+
