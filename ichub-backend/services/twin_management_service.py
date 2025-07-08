@@ -671,7 +671,7 @@ class TwinManagementService:
         elif db_twin.serialized_part:
             return db_twin.serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl
         else:
-            raise ValueError("Twin does not have a catalog part or serialized part associated.")
+            raise NotFoundError("Twin does not have a catalog part or serialized part associated.")
     
 def _create_dtr_manager(connection_settings: Optional[Dict[str, Any]]) -> DTRManager:
     """
