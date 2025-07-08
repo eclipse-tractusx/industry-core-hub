@@ -24,7 +24,7 @@
 
 from typing import Dict, List, Optional
 import json
-from tools.base64_util import decode_base64
+from tools.crypt_tools import decode_url_base64
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -34,14 +34,14 @@ def parse_json_list_parameter(list_param: Optional[List[str]], key_name: str = "
     if list_param:
         for param_entry in list_param:
             try:
-                decoded_param = json.loads(decode_base64(param_entry))
+                decoded_param = json.loads(decode_url_base64(param_entry))
                 result[decoded_param[key_name]] = decoded_param[value_name]
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 raise HTTPException(status_code=400, detail=f"Invalid parameter format: {param_entry}") from e
     return result
 
-def parse_base64_uuid(base64_uuid: str) -> UUID:
+def parse_base64_url_uuid(base64_uuid: str) -> UUID:
     try:
-        return UUID(decode_base64(base64_uuid))
+        return UUID(decode_url_base64(base64_uuid))
     except (ValueError, TypeError) as e:
         raise HTTPException(status_code=400, detail=f"Invalid base64 UUID format: {base64_uuid}") from e

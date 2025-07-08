@@ -22,14 +22,14 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Header, Query
+from fastapi import APIRouter, Header, Query, Path
 from typing import List, Optional
 
 from services.dtr_facade_service import DTRFacadeService
 from models.services.dtr_facade import DtrPagingStrResponse
 
-from tools.base64_util import decode_base64
-from tools.fastapi_util import parse_json_list_parameter, parse_base64_uuid
+from tools.crypt_tools import decode_url_base64
+from tools.fastapi_util import parse_json_list_parameter, parse_base64_url_uuid
 
 from tractusx_sdk.industry.models.aas.v3 import AssetKind, GetAllShellDescriptorsResponse, GetSubmodelDescriptorsByAssResponse, ShellDescriptor, SpecificAssetId, SubModelDescriptor
 
@@ -62,7 +62,7 @@ async def dtr_facade_get_all_asset_administration_shell_descriptors(
         enablement_service_stack_id,
         edc_bpn=edc_bpn,
         asset_kind=asset_kind,
-        asset_type=decode_base64(asset_type) if asset_type else None,
+        asset_type=decode_url_base64(asset_type) if asset_type else None,
         limit=limit,
         cursor_str=cursor)
 
@@ -72,11 +72,11 @@ async def dtr_facade_get_all_asset_administration_shell_descriptors(
     response_model=ShellDescriptor)
 async def dtr_facade_get_asset_administration_shell_descriptor_by_id(
     enablement_service_stack_id: int,
-    aasIdentifier: str,
+    aasIdentifier: str = Path(description="The Asset Administration Shell's unique id (UTF8-BASE64-URL-encoded)"),
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
 ) -> ShellDescriptor:
 
-    return dtr_facade_service.get_asset_administration_shell_descriptor_by_id(enablement_service_stack_id, parse_base64_uuid(aasIdentifier), edc_bpn)
+    return dtr_facade_service.get_asset_administration_shell_descriptor_by_id(enablement_service_stack_id, parse_base64_url_uuid(aasIdentifier), edc_bpn)
 
 @router.get("/{enablement_service_stack_id}/shell-descriptors/{aasIdentifier}/submodel-descriptors",
     operation_id="GetAllSubmodelDescriptorsThroughSuperpath",
@@ -84,7 +84,7 @@ async def dtr_facade_get_asset_administration_shell_descriptor_by_id(
     response_model=GetSubmodelDescriptorsByAssResponse)
 async def dtr_facade_get_all_submodel_descriptors_through_superpath(
     enablement_service_stack_id: int,
-    aasIdentifier: str,
+    aasIdentifier: str = Path(description="The Asset Administration Shell's unique id (UTF8-BASE64-URL-encoded)"),
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
     limit: Optional[int] = Query(ge=1, le=100, description="The maximum number of elements in the response array", default=10),
     cursor: Optional[str] = Query(description="A server-generated identifier retrieved from pagingMetadata that specifies from which position the result listing should continue", default=None),
@@ -92,7 +92,7 @@ async def dtr_facade_get_all_submodel_descriptors_through_superpath(
 
     return dtr_facade_service.get_all_submodel_descriptors_through_superpath(
         enablement_service_stack_id=enablement_service_stack_id,
-        aas_id=parse_base64_uuid(aasIdentifier),
+        aas_id=parse_base64_url_uuid(aasIdentifier),
         edc_bpn=edc_bpn,
         limit=limit,
         cursor_str=cursor)
@@ -103,15 +103,15 @@ async def dtr_facade_get_all_submodel_descriptors_through_superpath(
     response_model=SubModelDescriptor)
 async def get_submodel_descriptor_by_id_through_superpath(
     enablement_service_stack_id: int,
-    aasIdentifier: str,
-    submodelIdentifier: str,
+    aasIdentifier: str = Path(description="The Asset Administration Shell's unique id (UTF8-BASE64-URL-encoded)"),
+    submodelIdentifier: str = Path(description="The Submodel’s unique id (UTF8-BASE64-URL-encoded)"),
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None)       
 ) -> SubModelDescriptor:
     
     return dtr_facade_service.get_submodel_descriptor_by_id_through_superpath(
         enablement_service_stack_id=enablement_service_stack_id,
-        aas_id=parse_base64_uuid(aasIdentifier),
-        submodel_id=parse_base64_uuid(submodelIdentifier),
+        aas_id=parse_base64_url_uuid(aasIdentifier),
+        submodel_id=parse_base64_url_uuid(submodelIdentifier),
         edc_bpn=edc_bpn)
 
 @router.get("/{enablement_service_stack_id}/lookup/shells",
@@ -139,11 +139,11 @@ async def dtr_facade_get_all_asset_administration_shell_ids_by_asset_link(
     response_model=List[SpecificAssetId])
 async def dtr_facade_get_all_asset_links_by_id(
     enablement_service_stack_id: int,
-    aasIdentifier: str,
+    aasIdentifier: str = Path(description="The Asset Administration Shell's unique id (UTF8-BASE64-URL-encoded)"),
     edc_bpn: str = Header(alias="Edc-Bpn", description="The BPN of the consumer delivered by the EDC Data Plane", default=None),
 ) -> List[SpecificAssetId]:
     
     return dtr_facade_service.get_all_asset_links_by_id(
         enablement_service_stack_id=enablement_service_stack_id,
-        aas_id=parse_base64_uuid(aasIdentifier),
+        aas_id=parse_base64_url_uuid(aasIdentifier),
         edc_bpn=edc_bpn)

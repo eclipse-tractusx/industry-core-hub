@@ -37,7 +37,7 @@ from models.metadata_database.models import Twin, TwinAspect
 
 from tools.exceptions import NotAuthorizedError, NotFoundError, ValidationError
 from tools.submodel_type_util import get_submodel_type
-from tools.base64_util import decode_base64, encode_base64
+from tools.crypt_tools import decode_url_base64, encode_url_base64
 
 from tractusx_sdk.industry.models.aas.v3 import (
     AssetKind,
@@ -79,14 +79,14 @@ class DtrPagingCursor(BaseModel):
         """
         Convert the cursor to a base64-encoded JSON string.
         """
-        return encode_base64(self.model_dump_json())
+        return encode_url_base64(self.model_dump_json())
 
     @staticmethod
     def from_base64_json(base64_str: str) -> "DtrPagingCursor":
         """
         Create a DtrPagingCursor instance from a base64-encoded JSON string.
         """
-        return DtrPagingCursor.model_validate_json(decode_base64(base64_str))
+        return DtrPagingCursor.model_validate_json(decode_url_base64(base64_str))
 
 
 class DTRFacadeService:
