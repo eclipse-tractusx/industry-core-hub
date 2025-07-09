@@ -546,11 +546,11 @@ class TwinManagementService:
             db_twin = db_twins[0]
             return TwinManagementService._build_catalog_part_twin_details(db_twin=db_twin)
     
-    def get_catalog_part_twin_details(self, manufacturerId:str, manufacturerPartId:str) -> Optional[CatalogPartTwinDetailsRead]:
+    def get_catalog_part_twin_details(self, manufacturer_id:str, manufacturer_part_id:str) -> Optional[CatalogPartTwinDetailsRead]:
         with RepositoryManagerFactory.create() as repo:
             db_twins = repo.twin_repository.find_catalog_part_twins(
-                manufacturer_id=manufacturerId,
-                manufacturer_part_id=manufacturerPartId,
+                manufacturer_id=manufacturer_id,
+                manufacturer_part_id=manufacturer_part_id,
                 include_data_exchange_agreements=True,
                 include_aspects=True,
                 include_registrations=True

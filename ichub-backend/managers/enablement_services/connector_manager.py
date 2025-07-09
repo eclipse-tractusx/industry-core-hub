@@ -452,7 +452,7 @@ class ConnectorManager:
             dct_type=dct_type,
             version=version,
             headers=headers,
-            proxyParams={ 
+            proxy_params={ 
                 "proxyQueryParams": "true",
                 "proxyPath": "true",
                 "proxyMethod": "true",
@@ -466,7 +466,7 @@ class ConnectorManager:
                      dct_type:str, 
                      version:str="3.0", 
                      semantic_id:str=None, 
-                     proxyParams:dict={ 
+                     proxy_params:dict={ 
                                   "proxyQueryParams": "false",
                                   "proxyPath": "true",
                                   "proxyMethod": "true",
@@ -489,8 +489,8 @@ class ConnectorManager:
                 "baseUrl": base_url
             }
         
-        if(proxyParams is not None):
-            data_address.update(proxyParams)
+        if(proxy_params is not None):
+            data_address.update(proxy_params)
         
         if headers is not None:
             for key, value in headers.items():
