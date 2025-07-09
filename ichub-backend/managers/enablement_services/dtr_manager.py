@@ -193,7 +193,7 @@ class DTRManager:
 
         # Prepare containers for asset IDs and key lookup
         specific_asset_ids = []
-        existing_keys = dict()
+        existing_keys = {}
 
         # Try retrieving an existing shell descriptor using the AAS ID and manufacturer BPN
         existing_shell = self.aas_service.get_asset_administration_shell_descriptor_by_id(
