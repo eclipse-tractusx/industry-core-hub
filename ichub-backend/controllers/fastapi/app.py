@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import FastAPI, Request, Header, Body
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
@@ -31,6 +31,7 @@ from tools.exceptions import BaseError, ValidationError
 from tractusx_sdk.dataspace.tools import op
 
 from .routers import (
+    dtr_facade,
     part_management,
     partner_management,
     twin_management,
@@ -58,12 +59,17 @@ tags_metadata = [
     {
         "name": "Submodel Dispatcher",
         "description": "Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service"
+    },
+    {
+        "name": "Digital Twin Registry Facade",
+        "description": "DTR compatible API provided directly out of the Industry Core Hub Backend. No separate DTR service is needed"
     }
 ]
 
 app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata)
 
 ## Include here all the routers for the application.
+app.include_router(dtr_facade.router)
 app.include_router(part_management.router)
 app.include_router(partner_management.router)
 app.include_router(twin_management.router)

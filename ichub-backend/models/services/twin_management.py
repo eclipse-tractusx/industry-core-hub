@@ -109,6 +109,10 @@ class TwinDetailsReadBase(BaseModel):
     registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
     aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.", default=None)
 
+class TwinShareCreateBase(BaseModel):
+    business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")
+    #data_exchange_agreement_name: str = Field(alias="dataExchangeAgreementName", description="The name of the data exchange agreement under which the catalog part is shared.")
+
 class CatalogPartTwinRead(CatalogPartDetailsRead, TwinRead):
     """Represents a catalog part twin within the Digital Twin Registry."""
 
@@ -118,9 +122,8 @@ class CatalogPartTwinCreate(CatalogPartBase, TwinCreateBase):
 class CatalogPartTwinDetailsRead(CatalogPartTwinRead, TwinDetailsReadBase):
     """Represents the details of a catalog part twin within the Digital Twin Registry."""
 
-class CatalogPartTwinShare(CatalogPartBase):
-    business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")
-    customer_part_ids: Optional[Dict[str, BusinessPartnerRead]] = Field(alias="customerPartIds", description="The list of customer part IDs mapped to the respective Business Partners.", default={})
+class CatalogPartTwinShareCreate(CatalogPartBase, TwinShareCreateBase):
+    pass
 
 class BatchTwinCreate(BatchCreate, TwinCreateBase):
     pass
@@ -136,3 +139,8 @@ class SerializedPartTwinRead(SerializedPartRead, TwinRead):
 
 class SerializedPartTwinDetailsRead(SerializedPartDetailsRead, TwinRead, TwinDetailsReadBase):
     """Represents the details of a serialized part twin within the Digital Twin Registry."""
+
+class SerializedPartTwinShareCreate(SerializedPartBase):
+    # Hint: we don't need the TwinShareCreateBase here, because a serialized part has already a link to a single business partner
+    pass
+
