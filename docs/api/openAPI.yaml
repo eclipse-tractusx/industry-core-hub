@@ -1,1 +1,1490 @@
-{"openapi":"3.1.0","info":{"title":"Industry Core Hub Backend API","version":"0.0.1"},"paths":{"/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}":{"get":{"tags":["Part Management"],"summary":"Part Management Get Catalog Part","operationId":"part_management_get_catalog_part_part_management_catalog_part__manufacturer_id___manufacturer_part_id__get","parameters":[{"name":"manufacturer_id","in":"path","required":true,"schema":{"type":"string","title":"Manufacturer Id"}},{"name":"manufacturer_part_id","in":"path","required":true,"schema":{"type":"string","title":"Manufacturer Part Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CatalogPartReadWithStatus"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/part-management/catalog-part":{"get":{"tags":["Part Management"],"summary":"Part Management Get Catalog Parts","operationId":"part_management_get_catalog_parts_part_management_catalog_part_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/SimpleCatalogPartReadWithStatus"},"type":"array","title":"Response Part Management Get Catalog Parts Part Management Catalog Part Get"}}}}}},"post":{"tags":["Part Management"],"summary":"Part Management Create Catalog Part","operationId":"part_management_create_catalog_part_part_management_catalog_part_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CatalogPartCreate"}}},"required":true},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/CatalogPartReadWithStatus"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/partner-management/business-partner":{"get":{"tags":["Partner Management"],"summary":"Partner Management Get Business Partners","operationId":"partner_management_get_business_partners_partner_management_business_partner_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"array","title":"Response Partner Management Get Business Partners Partner Management Business Partner Get"}}}}}},"post":{"tags":["Partner Management"],"summary":"Partner Management Create Business Partner","operationId":"partner_management_create_business_partner_partner_management_business_partner_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/BusinessPartnerCreate"}}},"required":true},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/BusinessPartnerRead"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/partner-management/business-partner/{business_partner_number}":{"get":{"tags":["Partner Management"],"summary":"Partner Management Get Business Partner","operationId":"partner_management_get_business_partner_partner_management_business_partner__business_partner_number__get","parameters":[{"name":"business_partner_number","in":"path","required":true,"schema":{"type":"string","title":"Business Partner Number"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"anyOf":[{"$ref":"#/components/schemas/BusinessPartnerRead"},{"type":"null"}],"title":"Response Partner Management Get Business Partner Partner Management Business Partner  Business Partner Number  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/partner-management/business-partner/{business_partner_number}/data-exchange-agreement":{"get":{"tags":["Partner Management"],"summary":"Partner Management Get Data Exchange Agreements","operationId":"partner_management_get_data_exchange_agreements_partner_management_business_partner__business_partner_number__data_exchange_agreement_get","parameters":[{"name":"business_partner_number","in":"path","required":true,"schema":{"type":"string","title":"Business Partner Number"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/DataExchangeAgreementRead"},"title":"Response Partner Management Get Data Exchange Agreements Partner Management Business Partner  Business Partner Number  Data Exchange Agreement Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/twin-management/catalog-part-twin":{"get":{"tags":["Twin Management"],"summary":"Twin Management Get Catalog Part Twins","operationId":"twin_management_get_catalog_part_twins_twin_management_catalog_part_twin_get","parameters":[{"name":"include_data_exchange_agreements","in":"query","required":false,"schema":{"type":"boolean","default":false,"title":"Include Data Exchange Agreements"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/CatalogPartTwinRead"},"title":"Response Twin Management Get Catalog Part Twins Twin Management Catalog Part Twin Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"post":{"tags":["Twin Management"],"summary":"Twin Management Create Catalog Part Twin","operationId":"twin_management_create_catalog_part_twin_twin_management_catalog_part_twin_post","requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CatalogPartTwinCreate"}}}},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/TwinRead"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/twin-management/catalog-part-twin/{global_id}":{"get":{"tags":["Twin Management"],"summary":"Twin Management Get Catalog Part Twin","operationId":"twin_management_get_catalog_part_twin_twin_management_catalog_part_twin__global_id__get","parameters":[{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/CatalogPartTwinDetailsRead"},"title":"Response Twin Management Get Catalog Part Twin Twin Management Catalog Part Twin  Global Id  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/twin-management/catalog-part-twin/{manufacturerId}/{manufacturerPartId}":{"get":{"tags":["Twin Management"],"summary":"Twin Management Get Catalog Part Twin From Manufacturer","operationId":"twin_management_get_catalog_part_twin_from_manufacturer_twin_management_catalog_part_twin__manufacturerId___manufacturerPartId__get","parameters":[{"name":"manufacturerId","in":"path","required":true,"schema":{"type":"string","title":"Manufacturerid"}},{"name":"manufacturerPartId","in":"path","required":true,"schema":{"type":"string","title":"Manufacturerpartid"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/CatalogPartTwinDetailsRead"},"title":"Response Twin Management Get Catalog Part Twin From Manufacturer Twin Management Catalog Part Twin  Manufacturerid   Manufacturerpartid  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/submodel-dispatcher/{semantic_id}/{global_id}":{"get":{"tags":["Submodel Dispatcher"],"summary":"Submodel Dispatcher Get Submodel Content Submodel Value","operationId":"submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__get","parameters":[{"name":"semantic_id","in":"path","required":true,"schema":{"type":"string","title":"Semantic Id"}},{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}},{"name":"Edc-Bpn","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The BPN of the consumer delivered by the EDC Data Plane","title":"Edc-Bpn"},"description":"The BPN of the consumer delivered by the EDC Data Plane"},{"name":"Edc-Contract-Agreement-Id","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The contract agreement id of the consumer delivered by the EDC Data Plane","title":"Edc-Contract-Agreement-Id"},"description":"The contract agreement id of the consumer delivered by the EDC Data Plane"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"object","additionalProperties":true,"title":"Response Submodel Dispatcher Get Submodel Content Submodel Value Submodel Dispatcher  Semantic Id   Global Id  Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/submodel-dispatcher/{semantic_id}/{global_id}/submodel":{"get":{"tags":["Submodel Dispatcher"],"summary":"Submodel Dispatcher Get Submodel Content Submodel Value","operationId":"submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel_get","parameters":[{"name":"semantic_id","in":"path","required":true,"schema":{"type":"string","title":"Semantic Id"}},{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}},{"name":"Edc-Bpn","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The BPN of the consumer delivered by the EDC Data Plane","title":"Edc-Bpn"},"description":"The BPN of the consumer delivered by the EDC Data Plane"},{"name":"Edc-Contract-Agreement-Id","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The contract agreement id of the consumer delivered by the EDC Data Plane","title":"Edc-Contract-Agreement-Id"},"description":"The contract agreement id of the consumer delivered by the EDC Data Plane"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"object","additionalProperties":true,"title":"Response Submodel Dispatcher Get Submodel Content Submodel Value Submodel Dispatcher  Semantic Id   Global Id  Submodel Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"post":{"tags":["Submodel Dispatcher"],"summary":"Submodel Dispatcher Upload Submodel","operationId":"submodel_dispatcher_upload_submodel_submodel_dispatcher__semantic_id___global_id__submodel_post","parameters":[{"name":"semantic_id","in":"path","required":true,"schema":{"type":"string","title":"Semantic Id"}},{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}}],"requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","additionalProperties":true,"description":"The submodel JSON payload","title":"Submodel Payload"}}}},"responses":{"204":{"description":"Successful Response"},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}},"delete":{"tags":["Submodel Dispatcher"],"summary":"Submodel Dispatcher Delete Submodel","operationId":"submodel_dispatcher_delete_submodel_submodel_dispatcher__semantic_id___global_id__submodel_delete","parameters":[{"name":"semantic_id","in":"path","required":true,"schema":{"type":"string","title":"Semantic Id"}},{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}}],"responses":{"204":{"description":"Successful Response"},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value":{"get":{"tags":["Submodel Dispatcher"],"summary":"Submodel Dispatcher Get Submodel Content Submodel Value","operationId":"submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel__value_get","parameters":[{"name":"semantic_id","in":"path","required":true,"schema":{"type":"string","title":"Semantic Id"}},{"name":"global_id","in":"path","required":true,"schema":{"type":"string","format":"uuid","title":"Global Id"}},{"name":"Edc-Bpn","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The BPN of the consumer delivered by the EDC Data Plane","title":"Edc-Bpn"},"description":"The BPN of the consumer delivered by the EDC Data Plane"},{"name":"Edc-Contract-Agreement-Id","in":"header","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The contract agreement id of the consumer delivered by the EDC Data Plane","title":"Edc-Contract-Agreement-Id"},"description":"The contract agreement id of the consumer delivered by the EDC Data Plane"}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"type":"object","additionalProperties":true,"title":"Response Submodel Dispatcher Get Submodel Content Submodel Value Submodel Dispatcher  Semantic Id   Global Id  Submodel  Value Get"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/share/catalog-part":{"post":{"tags":["Sharing Functionality"],"summary":"Share Catalog Part","operationId":"share_catalog_part_share_catalog_part_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ShareCatalogPart"}}},"required":true},"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/SharedPartBase"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/health":{"get":{"summary":"Check Health","description":"Retrieves health information from the server\n\nReturns:\n    response: :obj:`status, timestamp`","operationId":"check_health_health_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{}}}}}}}},"components":{"schemas":{"BusinessPartnerCreate":{"properties":{"bpnl":{"type":"string","title":"Bpnl","description":"The Catena-X Business Partner Number (BPNL) of the business partner."},"name":{"type":"string","title":"Name","description":"The unique name of the business partner."}},"type":"object","required":["bpnl","name"],"title":"BusinessPartnerCreate"},"BusinessPartnerRead":{"properties":{"name":{"type":"string","title":"Name","description":"The unique name of the business partner."},"bpnl":{"type":"string","title":"Bpnl","description":"The Catena-X Business Partner Number (BPNL) of the business partner."}},"type":"object","required":["name","bpnl"],"title":"BusinessPartnerRead","description":"Represents a partner with a validated name field."},"CatalogPartCreate":{"properties":{"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"name":{"type":"string","title":"Name","description":"The name of the part."},"category":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Category","description":"The category of the part."},"bpns":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Bpns","description":"The site number (BPNS) the part is attached to."},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description","description":"The decription of the part."},"materials":{"items":{"$ref":"#/components/schemas/Material"},"type":"array","title":"Materials","description":"List of materials, e.g. [{'name':'aluminum','share':'20'}]","default":[]},"width":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The width of the part."},"height":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The height of the part."},"length":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The length of the part."},"weight":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The weight of the part."},"customerPartIds":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"object"},{"type":"null"}],"title":"Customerpartids","description":"The list of customer part IDs mapped to the respective Business Partners.","default":{}}},"type":"object","required":["manufacturerId","manufacturerPartId","name"],"title":"CatalogPartCreate"},"CatalogPartReadWithStatus":{"properties":{"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"name":{"type":"string","title":"Name","description":"The name of the part."},"category":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Category","description":"The category of the part."},"bpns":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Bpns","description":"The site number (BPNS) the part is attached to."},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description","description":"The decription of the part."},"materials":{"items":{"$ref":"#/components/schemas/Material"},"type":"array","title":"Materials","description":"List of materials, e.g. [{'name':'aluminum','share':'20'}]","default":[]},"width":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The width of the part."},"height":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The height of the part."},"length":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The length of the part."},"weight":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The weight of the part."},"customerPartIds":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"object"},{"type":"null"}],"title":"Customerpartids","description":"The list of customer part IDs mapped to the respective Business Partners.","default":{}},"status":{"$ref":"#/components/schemas/SharingStatus","description":"The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)"}},"type":"object","required":["manufacturerId","manufacturerPartId","name","status"],"title":"CatalogPartReadWithStatus"},"CatalogPartTwinCreate":{"properties":{"globalId":{"anyOf":[{"type":"string","format":"uuid"},{"type":"null"}],"title":"Globalid","description":"Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically."},"dtrAasId":{"anyOf":[{"type":"string","format":"uuid"},{"type":"null"}],"title":"Dtraasid","description":"Optionally the shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry. If not specified, a new UUID will be created automatically."},"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."}},"type":"object","required":["manufacturerId","manufacturerPartId"],"title":"CatalogPartTwinCreate"},"CatalogPartTwinDetailsRead":{"properties":{"additionalContext":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}],"title":"Additionalcontext","description":"Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps."},"registrations":{"anyOf":[{"additionalProperties":{"type":"boolean"},"type":"object"},{"type":"null"}],"title":"Registrations","description":"A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack."},"aspects":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/TwinAspectRead"},"type":"object"},{"type":"null"}],"title":"Aspects","description":"A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect."},"globalId":{"type":"string","format":"uuid","title":"Globalid","description":"The Catena-X ID / global ID of the digital twin."},"dtrAasId":{"type":"string","format":"uuid","title":"Dtraasid","description":"The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry."},"createdDate":{"type":"string","format":"date-time","title":"Createddate","description":"The date when the digital twin was created."},"modifiedDate":{"type":"string","format":"date-time","title":"Modifieddate","description":"The date when the digital twin was last modified."},"shares":{"anyOf":[{"items":{"$ref":"#/components/schemas/DataExchangeAgreementRead"},"type":"array"},{"type":"null"}],"title":"Shares","description":"A list of data exchange agreements the digital twin is shared via."},"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"name":{"type":"string","title":"Name","description":"The name of the part."},"category":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Category","description":"The category of the part."},"bpns":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Bpns","description":"The site number (BPNS) the part is attached to."},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description","description":"The decription of the part."},"materials":{"items":{"$ref":"#/components/schemas/Material"},"type":"array","title":"Materials","description":"List of materials, e.g. [{'name':'aluminum','share':'20'}]","default":[]},"width":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The width of the part."},"height":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The height of the part."},"length":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The length of the part."},"weight":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The weight of the part."},"customerPartIds":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"object"},{"type":"null"}],"title":"Customerpartids","description":"The list of customer part IDs mapped to the respective Business Partners.","default":{}}},"type":"object","required":["globalId","dtrAasId","createdDate","modifiedDate","manufacturerId","manufacturerPartId","name"],"title":"CatalogPartTwinDetailsRead","description":"Represents the details of a catalog part twin within the Digital Twin Registry."},"CatalogPartTwinRead":{"properties":{"globalId":{"type":"string","format":"uuid","title":"Globalid","description":"The Catena-X ID / global ID of the digital twin."},"dtrAasId":{"type":"string","format":"uuid","title":"Dtraasid","description":"The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry."},"createdDate":{"type":"string","format":"date-time","title":"Createddate","description":"The date when the digital twin was created."},"modifiedDate":{"type":"string","format":"date-time","title":"Modifieddate","description":"The date when the digital twin was last modified."},"shares":{"anyOf":[{"items":{"$ref":"#/components/schemas/DataExchangeAgreementRead"},"type":"array"},{"type":"null"}],"title":"Shares","description":"A list of data exchange agreements the digital twin is shared via."},"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"name":{"type":"string","title":"Name","description":"The name of the part."},"category":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Category","description":"The category of the part."},"bpns":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Bpns","description":"The site number (BPNS) the part is attached to."},"description":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Description","description":"The decription of the part."},"materials":{"items":{"$ref":"#/components/schemas/Material"},"type":"array","title":"Materials","description":"List of materials, e.g. [{'name':'aluminum','share':'20'}]","default":[]},"width":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The width of the part."},"height":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The height of the part."},"length":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The length of the part."},"weight":{"anyOf":[{"$ref":"#/components/schemas/Measurement"},{"type":"null"}],"description":"The weight of the part."},"customerPartIds":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"object"},{"type":"null"}],"title":"Customerpartids","description":"The list of customer part IDs mapped to the respective Business Partners.","default":{}}},"type":"object","required":["globalId","dtrAasId","createdDate","modifiedDate","manufacturerId","manufacturerPartId","name"],"title":"CatalogPartTwinRead","description":"Represents a catalog part twin within the Digital Twin Registry."},"DataExchangeAgreementRead":{"properties":{"businessPartner":{"$ref":"#/components/schemas/BusinessPartnerRead","description":"The business partner to whom the data exchange agreement applies."},"name":{"type":"string","title":"Name","description":"The unique name of the data exchange agreement with the given business partner."},"contracts":{"items":{"$ref":"#/components/schemas/DataExchangeContractRead"},"type":"array","title":"Contracts","description":"The list of data exchange contracts that are part of the agreement.","default":[]}},"type":"object","required":["businessPartner","name"],"title":"DataExchangeAgreementRead","description":"Represents a data exchange agreement between two business partners."},"DataExchangeContractRead":{"properties":{"semanticId":{"type":"string","title":"Semanticid","description":"The semantic ID of the data exchange contract applies to."},"edcUsagePolicyId":{"type":"string","title":"Edcusagepolicyid","description":"The ID of the EDC usage policy for the background generated EDC contract negotion"}},"type":"object","required":["semanticId","edcUsagePolicyId"],"title":"DataExchangeContractRead","description":"Represents document type specific contract terms belonging to a data exchange agreement."},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"Material":{"properties":{"name":{"type":"string","title":"Name","description":"Name of the material"},"share":{"type":"integer","title":"Share","description":"Share of the material in percent. 0-100"}},"type":"object","required":["name","share"],"title":"Material"},"Measurement":{"properties":{"value":{"type":"number","title":"Value","description":"Numeric value of the measurement"},"unit":{"$ref":"#/components/schemas/Unit","description":"Unit of measure"}},"type":"object","required":["value","unit"],"title":"Measurement"},"ShareCatalogPart":{"properties":{"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"businessPartnerNumber":{"type":"string","title":"Businesspartnernumber","description":"The business partner number of the business partner with which the catalog part is shared."},"customerPartId":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Customerpartid","description":"The customer part ID which will be mapped to the respective Business Partner"}},"type":"object","required":["manufacturerId","manufacturerPartId","businessPartnerNumber"],"title":"ShareCatalogPart","description":"Class that stores the information required by request in the sharing functionalit, for catalog parts"},"SharedPartBase":{"properties":{"businessPartnerNumber":{"type":"string","title":"Businesspartnernumber","description":"The business partner number of the business partner with which the catalog part is shared."},"customerPartIds":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/BusinessPartnerRead"},"type":"object"},{"type":"null"}],"title":"Customerpartids","description":"The list of customer part IDs mapped to the respective Business Partners.","default":{}},"sharedAt":{"type":"string","format":"date-time","title":"Sharedat","description":"The date and time when the catalog part was shared."},"twin":{"anyOf":[{"$ref":"#/components/schemas/CatalogPartTwinDetailsRead"},{"type":"null"}],"description":"The digital twin created for part that was shared."}},"type":"object","required":["businessPartnerNumber","sharedAt"],"title":"SharedPartBase"},"SharingStatus":{"type":"integer","enum":[0,1,2,3],"title":"SharingStatus","description":"The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)"},"SimpleCatalogPartReadWithStatus":{"properties":{"manufacturerId":{"type":"string","title":"Manufacturerid","description":"The BPNL (manufactuer ID) of the part to register."},"manufacturerPartId":{"type":"string","title":"Manufacturerpartid","description":"The manufacturer part ID of the part."},"name":{"type":"string","title":"Name","description":"The name of the part."},"category":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Category","description":"The category of the part."},"bpns":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Bpns","description":"The site number (BPNS) the part is attached to."},"status":{"$ref":"#/components/schemas/SharingStatus","description":"The status of the part. (0: draft, 1:pending, 2: registered, 3: shared)"}},"type":"object","required":["manufacturerId","manufacturerPartId","name","status"],"title":"SimpleCatalogPartReadWithStatus"},"TwinAspectRead":{"properties":{"semanticId":{"type":"string","title":"Semanticid","description":"The semantic ID of the aspect determining the structure of the associated payload data."},"submodelId":{"type":"string","format":"uuid","title":"Submodelid","description":"The ID of the submodel descriptor within the DTR shell descriptor for the associated twin."},"registrations":{"anyOf":[{"additionalProperties":{"$ref":"#/components/schemas/TwinAspectRegistration"},"type":"object"},{"type":"null"}],"title":"Registrations","description":"A map of registration information for the aspect in different enablement service stacks. The key is the name of the enablement service stack.","default":{}}},"type":"object","required":["semanticId","submodelId"],"title":"TwinAspectRead"},"TwinAspectRegistration":{"properties":{"enablementServiceStackName":{"type":"string","title":"Enablementservicestackname","description":"The name of the enablement service stack where the twin aspect is registered."},"status":{"$ref":"#/components/schemas/TwinAspectRegistrationStatus","description":"The current status of the aspect registration process."},"mode":{"$ref":"#/components/schemas/TwinsAspectRegistrationMode","description":"The current mode of the aspect registration process."},"createdDate":{"type":"string","format":"date-time","title":"Createddate","description":"The date when the aspect was initially registered."},"modifiedDate":{"type":"string","format":"date-time","title":"Modifieddate","description":"The date when the registration status information last changed."}},"type":"object","required":["enablementServiceStackName","status","mode","createdDate","modifiedDate"],"title":"TwinAspectRegistration","description":"Represents the registration of a twin aspect within an enablement service stack."},"TwinAspectRegistrationStatus":{"type":"integer","enum":[0,1,2,3],"title":"TwinAspectRegistrationStatus","description":"An enumeration of potential status values when a twin aspect is registered within the system"},"TwinRead":{"properties":{"globalId":{"type":"string","format":"uuid","title":"Globalid","description":"The Catena-X ID / global ID of the digital twin."},"dtrAasId":{"type":"string","format":"uuid","title":"Dtraasid","description":"The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry."},"createdDate":{"type":"string","format":"date-time","title":"Createddate","description":"The date when the digital twin was created."},"modifiedDate":{"type":"string","format":"date-time","title":"Modifieddate","description":"The date when the digital twin was last modified."},"shares":{"anyOf":[{"items":{"$ref":"#/components/schemas/DataExchangeAgreementRead"},"type":"array"},{"type":"null"}],"title":"Shares","description":"A list of data exchange agreements the digital twin is shared via."}},"type":"object","required":["globalId","dtrAasId","createdDate","modifiedDate"],"title":"TwinRead","description":"Represents a digital twin within the Digital Twin Registry."},"TwinsAspectRegistrationMode":{"type":"integer","enum":[0,1,2],"title":"TwinsAspectRegistrationMode","description":"An enumeration of potential possibilities how to provide aspects as assets wihtin the Eclipse Dataspace Connector"},"Unit":{"type":"string","enum":["mm","cm","m","g","kg"],"title":"Unit"},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}}},"tags":[{"name":"Part Management","description":"Management of part metadata - including catalog parts, serialized parts, JIS parts and batches"},{"name":"Sharing Functionality","description":"Sharing functionality for catalog part twins - including sharing of parts with business partners and automatic generation of digital twins and submodels"},{"name":"Partner Management","description":"Management of master data around business partners - including business partners, data exchange agreements and contracts"},{"name":"Twin Management","description":"Management of how product information can be managed and shared"},{"name":"Submodel Dispatcher","description":"Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service"}]}
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+openapi: 3.1.0
+info:
+  title: Industry Core Hub Backend API
+  version: 0.0.1
+paths:
+  '/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}':
+    get:
+      tags:
+        - Part Management
+      summary: Part Management Get Catalog Part
+      operationId: >-
+        part_management_get_catalog_part_part_management_catalog_part__manufacturer_id___manufacturer_part_id__get
+      parameters:
+        - name: manufacturer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Id
+        - name: manufacturer_part_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Part Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogPartReadWithStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /part-management/catalog-part:
+    get:
+      tags:
+        - Part Management
+      summary: Part Management Get Catalog Parts
+      operationId: part_management_get_catalog_parts_part_management_catalog_part_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SimpleCatalogPartReadWithStatus'
+                type: array
+                title: >-
+                  Response Part Management Get Catalog Parts Part Management
+                  Catalog Part Get
+    post:
+      tags:
+        - Part Management
+      summary: Part Management Create Catalog Part
+      operationId: part_management_create_catalog_part_part_management_catalog_part_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogPartCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogPartReadWithStatus'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /partner-management/business-partner:
+    get:
+      tags:
+        - Partner Management
+      summary: Partner Management Get Business Partners
+      operationId: >-
+        partner_management_get_business_partners_partner_management_business_partner_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BusinessPartnerRead'
+                type: array
+                title: >-
+                  Response Partner Management Get Business Partners Partner
+                  Management Business Partner Get
+    post:
+      tags:
+        - Partner Management
+      summary: Partner Management Create Business Partner
+      operationId: >-
+        partner_management_create_business_partner_partner_management_business_partner_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessPartnerCreate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/partner-management/business-partner/{business_partner_number}':
+    get:
+      tags:
+        - Partner Management
+      summary: Partner Management Get Business Partner
+      operationId: >-
+        partner_management_get_business_partner_partner_management_business_partner__business_partner_number__get
+      parameters:
+        - name: business_partner_number
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Business Partner Number
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/BusinessPartnerRead'
+                  - type: 'null'
+                title: >-
+                  Response Partner Management Get Business Partner Partner
+                  Management Business Partner  Business Partner Number  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/partner-management/business-partner/{business_partner_number}/data-exchange-agreement':
+    get:
+      tags:
+        - Partner Management
+      summary: Partner Management Get Data Exchange Agreements
+      operationId: >-
+        partner_management_get_data_exchange_agreements_partner_management_business_partner__business_partner_number__data_exchange_agreement_get
+      parameters:
+        - name: business_partner_number
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Business Partner Number
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataExchangeAgreementRead'
+                title: >-
+                  Response Partner Management Get Data Exchange Agreements
+                  Partner Management Business Partner  Business Partner Number 
+                  Data Exchange Agreement Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /twin-management/catalog-part-twin:
+    get:
+      tags:
+        - Twin Management
+      summary: Twin Management Get Catalog Part Twins
+      operationId: >-
+        twin_management_get_catalog_part_twins_twin_management_catalog_part_twin_get
+      parameters:
+        - name: include_data_exchange_agreements
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+            title: Include Data Exchange Agreements
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogPartTwinRead'
+                title: >-
+                  Response Twin Management Get Catalog Part Twins Twin
+                  Management Catalog Part Twin Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+        - Twin Management
+      summary: Twin Management Create Catalog Part Twin
+      operationId: >-
+        twin_management_create_catalog_part_twin_twin_management_catalog_part_twin_post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogPartTwinCreate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TwinRead'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/twin-management/catalog-part-twin/{global_id}':
+    get:
+      tags:
+        - Twin Management
+      summary: Twin Management Get Catalog Part Twin
+      operationId: >-
+        twin_management_get_catalog_part_twin_twin_management_catalog_part_twin__global_id__get
+      parameters:
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
+                title: >-
+                  Response Twin Management Get Catalog Part Twin Twin Management
+                  Catalog Part Twin  Global Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/twin-management/catalog-part-twin/{manufacturerId}/{manufacturerPartId}':
+    get:
+      tags:
+        - Twin Management
+      summary: Twin Management Get Catalog Part Twin From Manufacturer
+      operationId: >-
+        twin_management_get_catalog_part_twin_from_manufacturer_twin_management_catalog_part_twin__manufacturerId___manufacturerPartId__get
+      parameters:
+        - name: manufacturerId
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturerid
+        - name: manufacturerPartId
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturerpartid
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
+                title: >-
+                  Response Twin Management Get Catalog Part Twin From
+                  Manufacturer Twin Management Catalog Part Twin 
+                  Manufacturerid   Manufacturerpartid  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/submodel-dispatcher/{semantic_id}/{global_id}':
+    get:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Get Submodel Content Submodel Value
+      operationId: >-
+        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__get
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+        - name: Edc-Bpn
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: The BPN of the consumer delivered by the EDC Data Plane
+            title: Edc-Bpn
+          description: The BPN of the consumer delivered by the EDC Data Plane
+        - name: Edc-Contract-Agreement-Id
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
+            title: Edc-Contract-Agreement-Id
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: >-
+                  Response Submodel Dispatcher Get Submodel Content Submodel
+                  Value Submodel Dispatcher  Semantic Id   Global Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/submodel-dispatcher/{semantic_id}/{global_id}/submodel':
+    get:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Get Submodel Content Submodel Value
+      operationId: >-
+        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel_get
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+        - name: Edc-Bpn
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: The BPN of the consumer delivered by the EDC Data Plane
+            title: Edc-Bpn
+          description: The BPN of the consumer delivered by the EDC Data Plane
+        - name: Edc-Contract-Agreement-Id
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
+            title: Edc-Contract-Agreement-Id
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: >-
+                  Response Submodel Dispatcher Get Submodel Content Submodel
+                  Value Submodel Dispatcher  Semantic Id   Global Id  Submodel
+                  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Upload Submodel
+      operationId: >-
+        submodel_dispatcher_upload_submodel_submodel_dispatcher__semantic_id___global_id__submodel_post
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: The submodel JSON payload
+              title: Submodel Payload
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Delete Submodel
+      operationId: >-
+        submodel_dispatcher_delete_submodel_submodel_dispatcher__semantic_id___global_id__submodel_delete
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  '/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value':
+    get:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Get Submodel Content Submodel Value
+      operationId: >-
+        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel__value_get
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: global_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Global Id
+        - name: Edc-Bpn
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: The BPN of the consumer delivered by the EDC Data Plane
+            title: Edc-Bpn
+          description: The BPN of the consumer delivered by the EDC Data Plane
+        - name: Edc-Contract-Agreement-Id
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
+            title: Edc-Contract-Agreement-Id
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: >-
+                  Response Submodel Dispatcher Get Submodel Content Submodel
+                  Value Submodel Dispatcher  Semantic Id   Global Id  Submodel 
+                  Value Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /share/catalog-part:
+    post:
+      tags:
+        - Sharing Functionality
+      summary: Share Catalog Part
+      operationId: share_catalog_part_share_catalog_part_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareCatalogPart'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedPartBase'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      summary: Check Health
+      description: |-
+        Retrieves health information from the server
+
+        Returns:
+            response: :obj:`status, timestamp`
+      operationId: check_health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    BusinessPartnerCreate:
+      properties:
+        bpnl:
+          type: string
+          title: Bpnl
+          description: The Catena-X Business Partner Number (BPNL) of the business partner.
+        name:
+          type: string
+          title: Name
+          description: The unique name of the business partner.
+      type: object
+      required:
+        - bpnl
+        - name
+      title: BusinessPartnerCreate
+    BusinessPartnerRead:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The unique name of the business partner.
+        bpnl:
+          type: string
+          title: Bpnl
+          description: The Catena-X Business Partner Number (BPNL) of the business partner.
+      type: object
+      required:
+        - name
+        - bpnl
+      title: BusinessPartnerRead
+      description: Represents a partner with a validated name field.
+    CatalogPartCreate:
+      properties:
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+          description: The decription of the part.
+        materials:
+          items:
+            $ref: '#/components/schemas/Material'
+          type: array
+          title: Materials
+          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          default: []
+        width:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The width of the part.
+        height:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The height of the part.
+        length:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The length of the part.
+        weight:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The weight of the part.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+        - name
+      title: CatalogPartCreate
+    CatalogPartReadWithStatus:
+      properties:
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+          description: The decription of the part.
+        materials:
+          items:
+            $ref: '#/components/schemas/Material'
+          type: array
+          title: Materials
+          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          default: []
+        width:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The width of the part.
+        height:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The height of the part.
+        length:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The length of the part.
+        weight:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The weight of the part.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+        status:
+          $ref: '#/components/schemas/SharingStatus'
+          description: >-
+            The status of the part. (0: draft, 1:pending, 2: registered, 3:
+            shared)
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+        - name
+        - status
+      title: CatalogPartReadWithStatus
+    CatalogPartTwinCreate:
+      properties:
+        globalId:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+          title: Globalid
+          description: >-
+            Optionally the Catena-X ID / global ID of the digital twin to
+            create. If not specified, a new UUID will be created automatically.
+        dtrAasId:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+          title: Dtraasid
+          description: >-
+            Optionally the shell descriptor ID ('AAS ID') of the digital twin in
+            the Digital Twin Registry. If not specified, a new UUID will be
+            created automatically.
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+      title: CatalogPartTwinCreate
+    CatalogPartTwinDetailsRead:
+      properties:
+        additionalContext:
+          anyOf:
+            - additionalProperties: true
+              type: object
+            - type: 'null'
+          title: Additionalcontext
+          description: >-
+            Additional context information about the digital twin. This can
+            include various metadata or properties associated with the twin.
+            Intended for handling twins by third party apps.
+        registrations:
+          anyOf:
+            - additionalProperties:
+                type: boolean
+              type: object
+            - type: 'null'
+          title: Registrations
+          description: >-
+            A map of registration information for the digital twin in different
+            enablement service stacks. The key is the name of the enablement
+            service stack.
+        aspects:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/TwinAspectRead'
+              type: object
+            - type: 'null'
+          title: Aspects
+          description: >-
+            A map of aspect information for the digital twin. The key is the
+            semantic ID of the aspect. The value is a TwinAspectRead object
+            containing details about the aspect.
+        globalId:
+          type: string
+          format: uuid
+          title: Globalid
+          description: The Catena-X ID / global ID of the digital twin.
+        dtrAasId:
+          type: string
+          format: uuid
+          title: Dtraasid
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
+        createdDate:
+          type: string
+          format: date-time
+          title: Createddate
+          description: The date when the digital twin was created.
+        modifiedDate:
+          type: string
+          format: date-time
+          title: Modifieddate
+          description: The date when the digital twin was last modified.
+        shares:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/DataExchangeAgreementRead'
+              type: array
+            - type: 'null'
+          title: Shares
+          description: A list of data exchange agreements the digital twin is shared via.
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+          description: The decription of the part.
+        materials:
+          items:
+            $ref: '#/components/schemas/Material'
+          type: array
+          title: Materials
+          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          default: []
+        width:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The width of the part.
+        height:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The height of the part.
+        length:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The length of the part.
+        weight:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The weight of the part.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+      type: object
+      required:
+        - globalId
+        - dtrAasId
+        - createdDate
+        - modifiedDate
+        - manufacturerId
+        - manufacturerPartId
+        - name
+      title: CatalogPartTwinDetailsRead
+      description: >-
+        Represents the details of a catalog part twin within the Digital Twin
+        Registry.
+    CatalogPartTwinRead:
+      properties:
+        globalId:
+          type: string
+          format: uuid
+          title: Globalid
+          description: The Catena-X ID / global ID of the digital twin.
+        dtrAasId:
+          type: string
+          format: uuid
+          title: Dtraasid
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
+        createdDate:
+          type: string
+          format: date-time
+          title: Createddate
+          description: The date when the digital twin was created.
+        modifiedDate:
+          type: string
+          format: date-time
+          title: Modifieddate
+          description: The date when the digital twin was last modified.
+        shares:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/DataExchangeAgreementRead'
+              type: array
+            - type: 'null'
+          title: Shares
+          description: A list of data exchange agreements the digital twin is shared via.
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+          description: The decription of the part.
+        materials:
+          items:
+            $ref: '#/components/schemas/Material'
+          type: array
+          title: Materials
+          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          default: []
+        width:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The width of the part.
+        height:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The height of the part.
+        length:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The length of the part.
+        weight:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The weight of the part.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+      type: object
+      required:
+        - globalId
+        - dtrAasId
+        - createdDate
+        - modifiedDate
+        - manufacturerId
+        - manufacturerPartId
+        - name
+      title: CatalogPartTwinRead
+      description: Represents a catalog part twin within the Digital Twin Registry.
+    DataExchangeAgreementRead:
+      properties:
+        businessPartner:
+          $ref: '#/components/schemas/BusinessPartnerRead'
+          description: The business partner to whom the data exchange agreement applies.
+        name:
+          type: string
+          title: Name
+          description: >-
+            The unique name of the data exchange agreement with the given
+            business partner.
+        contracts:
+          items:
+            $ref: '#/components/schemas/DataExchangeContractRead'
+          type: array
+          title: Contracts
+          description: The list of data exchange contracts that are part of the agreement.
+          default: []
+      type: object
+      required:
+        - businessPartner
+        - name
+      title: DataExchangeAgreementRead
+      description: Represents a data exchange agreement between two business partners.
+    DataExchangeContractRead:
+      properties:
+        semanticId:
+          type: string
+          title: Semanticid
+          description: The semantic ID of the data exchange contract applies to.
+        edcUsagePolicyId:
+          type: string
+          title: Edcusagepolicyid
+          description: >-
+            The ID of the EDC usage policy for the background generated EDC
+            contract negotion
+      type: object
+      required:
+        - semanticId
+        - edcUsagePolicyId
+      title: DataExchangeContractRead
+      description: >-
+        Represents document type specific contract terms belonging to a data
+        exchange agreement.
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    Material:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Name of the material
+        share:
+          type: integer
+          title: Share
+          description: Share of the material in percent. 0-100
+      type: object
+      required:
+        - name
+        - share
+      title: Material
+    Measurement:
+      properties:
+        value:
+          type: number
+          title: Value
+          description: Numeric value of the measurement
+        unit:
+          $ref: '#/components/schemas/Unit'
+          description: Unit of measure
+      type: object
+      required:
+        - value
+        - unit
+      title: Measurement
+    ShareCatalogPart:
+      properties:
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        businessPartnerNumber:
+          type: string
+          title: Businesspartnernumber
+          description: >-
+            The business partner number of the business partner with which the
+            catalog part is shared.
+        customerPartId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Customerpartid
+          description: >-
+            The customer part ID which will be mapped to the respective Business
+            Partner
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+        - businessPartnerNumber
+      title: ShareCatalogPart
+      description: >-
+        Class that stores the information required by request in the sharing
+        functionalit, for catalog parts
+    SharedPartBase:
+      properties:
+        businessPartnerNumber:
+          type: string
+          title: Businesspartnernumber
+          description: >-
+            The business partner number of the business partner with which the
+            catalog part is shared.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+        sharedAt:
+          type: string
+          format: date-time
+          title: Sharedat
+          description: The date and time when the catalog part was shared.
+        twin:
+          anyOf:
+            - $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
+            - type: 'null'
+          description: The digital twin created for part that was shared.
+      type: object
+      required:
+        - businessPartnerNumber
+        - sharedAt
+      title: SharedPartBase
+    SharingStatus:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+      title: SharingStatus
+      description: 'The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)'
+    SimpleCatalogPartReadWithStatus:
+      properties:
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        status:
+          $ref: '#/components/schemas/SharingStatus'
+          description: >-
+            The status of the part. (0: draft, 1:pending, 2: registered, 3:
+            shared)
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+        - name
+        - status
+      title: SimpleCatalogPartReadWithStatus
+    TwinAspectRead:
+      properties:
+        semanticId:
+          type: string
+          title: Semanticid
+          description: >-
+            The semantic ID of the aspect determining the structure of the
+            associated payload data.
+        submodelId:
+          type: string
+          format: uuid
+          title: Submodelid
+          description: >-
+            The ID of the submodel descriptor within the DTR shell descriptor
+            for the associated twin.
+        registrations:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/TwinAspectRegistration'
+              type: object
+            - type: 'null'
+          title: Registrations
+          description: >-
+            A map of registration information for the aspect in different
+            enablement service stacks. The key is the name of the enablement
+            service stack.
+          default: {}
+      type: object
+      required:
+        - semanticId
+        - submodelId
+      title: TwinAspectRead
+    TwinAspectRegistration:
+      properties:
+        enablementServiceStackName:
+          type: string
+          title: Enablementservicestackname
+          description: >-
+            The name of the enablement service stack where the twin aspect is
+            registered.
+        status:
+          $ref: '#/components/schemas/TwinAspectRegistrationStatus'
+          description: The current status of the aspect registration process.
+        mode:
+          $ref: '#/components/schemas/TwinsAspectRegistrationMode'
+          description: The current mode of the aspect registration process.
+        createdDate:
+          type: string
+          format: date-time
+          title: Createddate
+          description: The date when the aspect was initially registered.
+        modifiedDate:
+          type: string
+          format: date-time
+          title: Modifieddate
+          description: The date when the registration status information last changed.
+      type: object
+      required:
+        - enablementServiceStackName
+        - status
+        - mode
+        - createdDate
+        - modifiedDate
+      title: TwinAspectRegistration
+      description: >-
+        Represents the registration of a twin aspect within an enablement
+        service stack.
+    TwinAspectRegistrationStatus:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+      title: TwinAspectRegistrationStatus
+      description: >-
+        An enumeration of potential status values when a twin aspect is
+        registered within the system
+    TwinRead:
+      properties:
+        globalId:
+          type: string
+          format: uuid
+          title: Globalid
+          description: The Catena-X ID / global ID of the digital twin.
+        dtrAasId:
+          type: string
+          format: uuid
+          title: Dtraasid
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
+        createdDate:
+          type: string
+          format: date-time
+          title: Createddate
+          description: The date when the digital twin was created.
+        modifiedDate:
+          type: string
+          format: date-time
+          title: Modifieddate
+          description: The date when the digital twin was last modified.
+        shares:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/DataExchangeAgreementRead'
+              type: array
+            - type: 'null'
+          title: Shares
+          description: A list of data exchange agreements the digital twin is shared via.
+      type: object
+      required:
+        - globalId
+        - dtrAasId
+        - createdDate
+        - modifiedDate
+      title: TwinRead
+      description: Represents a digital twin within the Digital Twin Registry.
+    TwinsAspectRegistrationMode:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+      title: TwinsAspectRegistrationMode
+      description: >-
+        An enumeration of potential possibilities how to provide aspects as
+        assets wihtin the Eclipse Dataspace Connector
+    Unit:
+      type: string
+      enum:
+        - mm
+        - cm
+        - m
+        - g
+        - kg
+      title: Unit
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
+tags:
+  - name: Part Management
+    description: >-
+      Management of part metadata - including catalog parts, serialized parts,
+      JIS parts and batches
+  - name: Sharing Functionality
+    description: >-
+      Sharing functionality for catalog part twins - including sharing of parts
+      with business partners and automatic generation of digital twins and
+      submodels
+  - name: Partner Management
+    description: >-
+      Management of master data around business partners - including business
+      partners, data exchange agreements and contracts
+  - name: Twin Management
+    description: Management of how product information can be managed and shared
+  - name: Submodel Dispatcher
+    description: >-
+      Internal API called by EDC Data Planes or Admins in order the deliver data
+      of of the internal used Submodel Service
+
