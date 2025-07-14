@@ -24,3 +24,5 @@ repositories:
   - name: "industry-core-hub"
     usage: "Eclipse Tractus-X Industry Core Hub [IC-Hub] - The Tractus-X Use Case Speedway"
     url: "https://github.com/eclipse-tractusx/industry-core-hub"
+openApiSpec:
+  - "https://raw.githubusercontent.com/eclipse-tractusx/industry-core-hub/refs/heads/main/docs/api/openAPI.yaml"
