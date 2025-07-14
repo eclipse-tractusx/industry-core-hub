@@ -135,7 +135,7 @@ class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
 
 class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
     van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
-    customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.")
+    customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
 
 class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
     pass
