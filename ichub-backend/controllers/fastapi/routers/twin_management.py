@@ -42,12 +42,12 @@ twin_management_service = TwinManagementService()
 async def twin_management_get_catalog_part_twins(include_data_exchange_agreements: bool = False) -> List[CatalogPartTwinRead]:
     return twin_management_service.get_catalog_part_twins(include_data_exchange_agreements=include_data_exchange_agreements)
 
-@router.get("/catalog-part-twin/{global_id}", response_model=List[CatalogPartTwinDetailsRead], responses=exception_responses)
-async def twin_management_get_catalog_part_twin(global_id: UUID) -> List[CatalogPartTwinDetailsRead]:
+@router.get("/catalog-part-twin/{global_id}", response_model=Optional[CatalogPartTwinDetailsRead], responses=exception_responses)
+async def twin_management_get_catalog_part_twin(global_id: UUID) -> Optional[CatalogPartTwinDetailsRead]:
     return twin_management_service.get_catalog_part_twin_details_id(global_id)
 
-@router.get("/catalog-part-twin/{manufacturerId}/{manufacturerPartId}", response_model=List[CatalogPartTwinDetailsRead], responses=exception_responses)
-async def twin_management_get_catalog_part_twin_from_manufacturer(manufacturerId: str, manufacturerPartId: str) -> List[CatalogPartTwinDetailsRead]:
+@router.get("/catalog-part-twin/{manufacturerId}/{manufacturerPartId}", response_model=Optional[CatalogPartTwinDetailsRead], responses=exception_responses)
+async def twin_management_get_catalog_part_twin_from_manufacturer(manufacturerId: str, manufacturerPartId: str) -> Optional[CatalogPartTwinDetailsRead]:
     return twin_management_service.get_catalog_part_twin_details(manufacturerId, manufacturerPartId)
 
 @router.post("/catalog-part-twin", response_model=TwinRead, responses=exception_responses)
