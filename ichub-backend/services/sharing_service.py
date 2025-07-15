@@ -27,8 +27,8 @@ from datetime import datetime, timezone
 from uuid import UUID
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from models.services.twin_management import CatalogPartTwinCreate, CatalogPartTwinShare, TwinAspectCreate, CatalogPartTwinDetailsRead, TwinAspectRead
-from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, EnablementServiceStack, CatalogPart, Twin, PartnerCatalogPart
+from models.services.twin_management import CatalogPartTwinCreate
+from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, CatalogPart, Twin, PartnerCatalogPart
 from models.services.sharing_management import SharedPartBase, ShareCatalogPart, SharedPartner
 from models.services.partner_management import BusinessPartnerRead
 from typing import Dict, Optional, List, Any, Tuple

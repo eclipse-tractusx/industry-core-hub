@@ -29,9 +29,9 @@ from services.twin_management_service import TwinManagementService
 from models.services.twin_management import (
     TwinRead, TwinAspectRead, TwinAspectCreate,
     CatalogPartTwinRead, CatalogPartTwinDetailsRead,
-    CatalogPartTwinCreate, CatalogPartTwinShare,
+    CatalogPartTwinCreate, CatalogPartTwinShareCreate,
     SerializedPartTwinRead, SerializedPartTwinDetailsRead,
-    SerializedPartTwinCreate
+    SerializedPartTwinCreate, SerializedPartTwinShareCreate
 )
 from tools.exceptions import exception_responses
 
@@ -65,7 +65,7 @@ async def twin_management_create_catalog_part_twin(
     204: {"description": "Catalog part twin already shared"},
     **exception_responses
 })
-async def twin_management_share_catalog_part_twin(catalog_part_twin_share: CatalogPartTwinShare):
+async def twin_management_share_catalog_part_twin(catalog_part_twin_share: CatalogPartTwinShareCreate):
     if twin_management_service.create_catalog_part_twin_share(catalog_part_twin_share):
         return JSONResponse(status_code=201, content={"description":"Catalog part twin shared successfully"})
     else:
@@ -86,3 +86,14 @@ async def twin_management_create_serialized_part_twin(serialized_part_twin_creat
 @router.post("/twin-aspect", response_model=TwinAspectRead, responses=exception_responses)
 async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
     return twin_management_service.create_twin_aspect(twin_aspect_create)
+
+@router.post("/serialized-part-twin/share", responses={
+    201: {"description": "Catalog part twin shared successfully"},
+    204: {"description": "Catalog part twin already shared"},
+    **exception_responses
+})
+async def twin_management_share_serialized_part_twin(serialized_part_twin_share: SerializedPartTwinShareCreate):
+    if twin_management_service.create_serialized_part_twin_share(serialized_part_twin_share):
+        return JSONResponse(status_code=201, content={"description":"Serialized part twin shared successfully"})
+    else:
+        return JSONResponse(status_code=204, content=None)
