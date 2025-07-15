@@ -38,6 +38,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import type { ApiPartData, PartType } from '../types/product';
 import { ProductCard } from '../features/catalog-management/components/product-list/ProductCard';
 import { mapApiPartDataToPartType } from '../features/catalog-management/utils';
+import InstanceProductsTable from '../features/catalog-management/components/product-detail/InstanceProductsTable';
 
 const PartsDiscovery = () => {
   const [partType, setPartType] = useState('Part');
@@ -175,6 +176,11 @@ const PartsDiscovery = () => {
 
         {/* Parts grid */}
         <Grid2 container spacing={2} margin={3} justifyContent="center">
+        {partType === 'Serialized' ? (
+          <Grid2 size={12} className='product-table-wrapper'>
+            <InstanceProductsTable />
+          </Grid2>
+        ) : (
           <ProductCard
             onClick={() => {}}
             onShare={() => {}}
@@ -190,6 +196,7 @@ const PartsDiscovery = () => {
             isLoading={false}
             isDiscovery={true}
           />
+        )}
         </Grid2>
       </Grid2>
     </Grid2>
