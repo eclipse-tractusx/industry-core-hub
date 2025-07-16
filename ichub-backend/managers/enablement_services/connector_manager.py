@@ -23,8 +23,10 @@
 from uuid import UUID
 from urllib.parse import quote
 from hashlib import sha256
-from tractusx_sdk.dataspace.services.connector.v0_9_0.edc_service import EdcService
-from tractusx_sdk.dataspace.models.connector.model_factory import ModelFactory
+from tractusx_sdk.dataspace.services.connector import ServiceFactory
+from tractusx_sdk.dataspace.services import BaseConnectorService
+from tractusx_sdk.dataspace.models.connector import ModelFactory
+from tractusx_sdk.dataspace.managers.connection import PostgresConnectionManager
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import NotFoundError, ExternalAPIError
@@ -41,7 +43,7 @@ class ConnectorManager:
     connector_version: str
     edc_controlplane_hostname: str
     edc_controlplane_management_api: str
-    edc_service: EdcService
+    connector_service: BaseConnectorService
     api_key_header: str
     api_key: str
     backend_url: str
@@ -51,9 +53,8 @@ class ConnectorManager:
     agreements:list[dict]
     dtr_dct_type:str
     
-    def __init__(self):
+    def __init__(self, connection_manager: PostgresConnectionManager):
 
-        self.connector_version = "v0_9_0"
         self.edc_controlplane_hostname = ConfigManager.get_config(
             "edc.controlplane.hostname"
         )
@@ -89,14 +90,18 @@ class ConnectorManager:
                         self.api_key_header: self.api_key,
                         "Content-Type": "application/json"
         }
-        
-        self.emtpy_policy = self.get_empty_policy_config()
-        
-        
-        self.edc_service = EdcService(base_url=self.edc_controlplane_hostname, 
-                                          dma_path=self.edc_controlplane_management_api,
-                                          headers=edc_headers)
-    
+
+        self.empty_policy = self.get_empty_policy_config()
+        self.connector_service = ServiceFactory.get_connector_service(
+            dataspace_version="jupiter",
+            base_url=self.edc_controlplane_hostname,
+            dma_path=self.edc_controlplane_management_api,
+            headers=edc_headers,
+            connection_manager=connection_manager,
+            logger=logger,
+            verbose=True
+        )
+
     def get_empty_policy_config(self) -> dict:
         """Returns an empty policy template."""
         return {
@@ -218,8 +223,8 @@ class ConnectorManager:
         return usage_policy_id, access_policy_id, contract_id
     
     def get_or_create_usage_and_access_policies(self, policy_config:dict) -> tuple[str, str]:
-        usage_policy = policy_config.get("usage", self.emtpy_policy)
-        access_policy = policy_config.get("access", self.emtpy_policy)
+        usage_policy = policy_config.get("usage", self.empty_policy)
+        access_policy = policy_config.get("access", self.empty_policy)
         
         usage_policy_id=self.get_or_create_policy(
             usage_policy.get("context", {
@@ -267,12 +272,12 @@ class ConnectorManager:
 
     def get_or_create_contract(self, asset_id:str, usage_policy_id:str, access_policy_id:str) -> str:
         contract_id:str = self.generate_contract_id(asset_id=asset_id, usage_policy_id=usage_policy_id, access_policy_id=access_policy_id)
-        existing_contract = self.edc_service.contract_definitions.get_by_id(oid=contract_id)
+        existing_contract = self.connector_service.provider.contract_definitions.get_by_id(oid=contract_id)
         if existing_contract.status_code == 200:
             logger.debug(f"Contract with ID {contract_id} already exists.")
             return contract_id
-        
-        contract_response = self.create_contract(
+
+        contract_response = self.connector_service.provider.create_contract(
             contract_id=contract_id,
             usage_policy_id=usage_policy_id,
             access_policy_id=access_policy_id,
@@ -280,38 +285,6 @@ class ConnectorManager:
         )
         return contract_response.get("@id", contract_id)
 
-    def create_contract(self, contract_id:str, usage_policy_id:str, access_policy_id:str, asset_id:str) -> dict:
-        
-        context =  {
-            "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-        }
-        
-        asset_selector = [
-            {
-                "operandLeft": "https://w3id.org/edc/v0.0.1/ns/id",
-                "operator": "=",
-                "operandRight": asset_id
-            }
-        ]
-        
-        contract = ModelFactory.get_contract_definition_model(
-            context=context,
-            connector_version=self.connector_version,
-            oid=contract_id,
-            assets_selector=asset_selector,
-            contract_policy_id=usage_policy_id,
-            access_policy_id=access_policy_id
-        )
-        
-        # If it doesn't exist, create it
-        logger.info(f"Creating new contract with ID {contract_id}.")
-        created_contract = self.edc_service.contract_definitions.create(obj=contract)
-        
-        if created_contract.status_code != 200:
-            raise ExternalAPIError(f"Failed to create contract {contract_id}. Status code: {created_contract.status_code}")
-        
-        logger.info(f"Contract {contract_id} created successfully.")
-        return created_contract.json()
 
     def generate_policy_id(self, context: dict | list[dict] = {}, permissions: dict | list[dict] = [], prohibitions: dict | list[dict] = [], obligations: dict | list[dict] = []) -> str:
         """Generate a unique policy ID based on the provided context and rules."""
@@ -337,12 +310,12 @@ class ConnectorManager:
         
         """Get or create a policy in the EDC, returning the policy ID."""
         # Check if the policy already exists
-        existing_policy = self.edc_service.policies.get_by_id(oid=policy_id)
+        existing_policy = self.connector_service.provider.policies.get_by_id(oid=policy_id)
         if existing_policy.status_code == 200:
             logger.debug(f"Policy with ID {policy_id} already exists.")
             return policy_id
-        
-        policy_response = self.create_policy(
+
+        policy_response = self.connector_service.provider.create_policy(
             policy_id=policy_id,
             context=context,
             permissions=permissions,
@@ -351,26 +324,6 @@ class ConnectorManager:
         )
         return policy_response.get("@id", policy_id)
     
-    def create_policy(self, policy_id: str, context: dict | list[dict] = {}, permissions: dict | list[dict] = [], prohibitions: dict | list[dict] = [], obligations: dict | list[dict] = []) -> dict:
-        
-        policy = ModelFactory.get_policy_model(
-            connector_version=self.connector_version,
-            oid=policy_id,
-            context=context,
-            permissions=permissions,
-            prohibitions=prohibitions,
-            obligations=obligations
-        )
-        # If it doesn't exist, create it
-        logger.info(f"Creating new policy with ID {policy_id}.")
-        created_policy = self.edc_service.policies.create(obj=policy)
-        
-        if created_policy.status_code != 200:
-            raise ExternalAPIError(f"Failed to create policy {policy_id}. Status code: {created_policy.status_code}")
-        
-        logger.info(f"Policy {policy_id} created successfully.")
-        return created_policy.json()
-    
     
     def get_or_create_dtr_asset(self, dtr_url:str, dct_type:str, existing_asset_id:str=None, headers:dict=None, version:str="3.0") -> str:
         
@@ -378,7 +331,7 @@ class ConnectorManager:
             existing_asset_id = self.generate_dtr_asset_id(dtr_url=dtr_url)
         """Get or create a circular submodel asset."""
         # Check if the asset already exists
-        existing_asset = self.edc_service.assets.get_by_id(oid=existing_asset_id)
+        existing_asset = self.connector_service.provider.assets.get_by_id(oid=existing_asset_id)
         
         if existing_asset.status_code == 200:
             logger.debug(f"[DTR] Asset with ID {existing_asset_id} already exists.")
@@ -394,7 +347,7 @@ class ConnectorManager:
         standard_asset_id = self.generate_asset_id(semantic_id=semantic_id)
         """Get or create a circular submodel asset."""
         # Check if the asset already exists
-        existing_asset = self.edc_service.assets.get_by_id(oid=standard_asset_id)
+        existing_asset = self.connector_service.provider.assets.get_by_id(oid=standard_asset_id)
         
         if existing_asset.status_code == 200:
             logger.debug(f"Asset with ID {standard_asset_id} already exists.")
@@ -435,7 +388,7 @@ class ConnectorManager:
         
     def create_submodel_bundle_asset(self, asset_id: str, base_url: str, semantic_id: str, headers: dict = None):           
         # Create the submodel bundle asset
-        return self.create_asset(
+        return self.connector_service.provider.create_asset(
             asset_id=asset_id,
             base_url=base_url,
             dct_type="cx-taxo:SubmodelBundle",
@@ -446,7 +399,7 @@ class ConnectorManager:
     
     def create_dtr_asset(self, asset_id: str, dtr_url: str, dct_type:str, version:str="3.0", headers: dict = None):           
         # Create the submodel bundle asset
-        return self.create_asset(
+        return self.connector_service.provider.create_asset(
             asset_id=asset_id,
             base_url=dtr_url,
             dct_type=dct_type,
@@ -459,71 +412,3 @@ class ConnectorManager:
                 "proxyBody": "true"
             }
         )
-    
-    def create_asset(self, 
-                     asset_id: str, 
-                     base_url: str, 
-                     dct_type:str, 
-                     version:str="3.0", 
-                     semantic_id:str=None, 
-                     proxy_params:dict={ 
-                                  "proxyQueryParams": "false",
-                                  "proxyPath": "true",
-                                  "proxyMethod": "true",
-                                  "proxyBody": "false"
-                                  }, 
-                     headers:dict=None,
-                     private_properties:dict=None
-                     ):
-        
-        context =  {
-            "edc": "https://w3id.org/edc/v0.0.1/ns/",
-            "cx-common": "https://w3id.org/catenax/ontology/common#",
-            "cx-taxo": "https://w3id.org/catenax/taxonomy#",
-            "dct": "http://purl.org/dc/terms/"
-        }
-
-        data_address = { 
-                TYPE: "DataAddress",
-                "type": "HttpData",
-                "baseUrl": base_url
-            }
-        
-        if(proxy_params is not None):
-            data_address.update(proxy_params)
-        
-        if headers is not None:
-            for key, value in headers.items():
-                data_address["header:"+key] = value
-        
-        properties:dict = {
-                "dct:type": {
-                    "@id": dct_type
-                }
-            }
-
-        
-        if(version is not None):
-            properties["cx-common:version"] = version
-        
-        if(semantic_id is not None):
-            context["aas-semantics"] = "https://admin-shell.io/aas/3/0/HasSemantics/"
-            properties["aas-semantics:semanticId"] = { "@id": semantic_id }
-    
-        asset = ModelFactory.get_asset_model(
-            connector_version=self.connector_version,
-            context=context,
-            oid=asset_id,
-            properties=properties,
-            private_properties=private_properties,
-            data_address=data_address
-        )
-        
-        asset_response = self.edc_service.assets.create(obj=asset)
-        
-        if asset_response.status_code != 200:
-            logger.error(asset_response.text)
-            raise ExternalAPIError(f"Failed to create asset {asset_id}. Status code: {asset_response.status_code}")
-
-        return asset_response.json()
-    
