@@ -24,7 +24,7 @@
 
 from typing import List, Optional
 
-from models.services.partner_management import BusinessPartnerCreate, BusinessPartnerRead, DataExchangeAgreementRead
+from models.services.provider.partner_management import BusinessPartnerCreate, BusinessPartnerRead, DataExchangeAgreementRead
 from models.metadata_database.models import BusinessPartner, DataExchangeAgreement
 from managers.metadata_database.manager import RepositoryManagerFactory
 

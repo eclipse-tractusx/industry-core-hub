@@ -23,8 +23,8 @@
 from fastapi import APIRouter
 from typing import Optional, List
 
-from services.partner_management_service import PartnerManagementService
-from models.services.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
+from services.provider.partner_management_service import PartnerManagementService
+from models.services.provider.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from tools.exceptions import exception_responses
 
 router = APIRouter(prefix="/partner-management", tags=["Partner Management"])

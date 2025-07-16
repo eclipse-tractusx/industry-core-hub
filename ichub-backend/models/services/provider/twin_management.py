@@ -28,7 +28,7 @@ from uuid import UUID
 from typing import Dict, Optional, List, Any
 from pydantic import BaseModel, Field
 
-from models.services.part_management import (
+from models.services.provider.part_management import (
     BatchCreate,
     BusinessPartnerRead,
     CatalogPartBase,
@@ -38,7 +38,7 @@ from models.services.part_management import (
     SerializedPartRead,
     SerializedPartDetailsRead,
 )
-from models.services.partner_management import DataExchangeAgreementRead
+from models.services.provider.partner_management import DataExchangeAgreementRead
 
 class TwinAspectRegistrationStatus(enum.Enum):
     """An enumeration of potential status values when a twin aspect is registered within the system"""

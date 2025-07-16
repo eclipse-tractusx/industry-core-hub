@@ -25,8 +25,8 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional
 from uuid import UUID
 
-from services.twin_management_service import TwinManagementService
-from models.services.twin_management import (
+from services.provider.twin_management_service import TwinManagementService
+from models.services.provider.twin_management import (
     TwinRead, TwinAspectRead, TwinAspectCreate,
     CatalogPartTwinRead, CatalogPartTwinDetailsRead,
     CatalogPartTwinCreate, CatalogPartTwinShare,
