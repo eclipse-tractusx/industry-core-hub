@@ -23,7 +23,7 @@
 #################################################################################
 
 from typing import List, Optional, Tuple
-from models.services.part_management import (
+from models.services.provider.part_management import (
     BatchCreate,
     BatchRead,
     CatalogPartCreate,
@@ -45,7 +45,7 @@ from models.services.part_management import (
     SerializedPartRead,
     SharingStatus,
 )
-from models.services.partner_management import BusinessPartnerRead
+from models.services.provider.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.metadata_database.models import (
     CatalogPart,

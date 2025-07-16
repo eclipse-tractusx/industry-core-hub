@@ -23,8 +23,8 @@
 from fastapi import APIRouter
 from typing import List, Optional
 
-from services.part_management_service import PartManagementService
-from models.services.part_management import (
+from services.provider.part_management_service import PartManagementService
+from models.services.provider.part_management import (
     CatalogPartCreate,
     CatalogPartDetailsReadWithStatus,
     CatalogPartReadWithStatus,

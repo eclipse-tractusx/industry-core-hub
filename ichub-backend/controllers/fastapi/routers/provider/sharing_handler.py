@@ -22,8 +22,8 @@
 
 from fastapi import APIRouter, Body, Header
 
-from services.sharing_service import SharingService
-from models.services.sharing_management import (
+from services.provider.sharing_service import SharingService
+from models.services.provider.sharing_management import (
     SharedPartBase,
     ShareCatalogPart,
     SharedPartner

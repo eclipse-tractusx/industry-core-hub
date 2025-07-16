@@ -32,9 +32,9 @@ from managers.metadata_database.manager import RepositoryManagerFactory, Reposit
 from managers.enablement_services.dtr_manager import DTRManager
 from managers.enablement_services.connector_manager import ConnectorManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
-from models.services.part_management import SerializedPartQuery
-from models.services.partner_management import BusinessPartnerRead, DataExchangeAgreementRead
-from models.services.twin_management import (
+from models.services.provider.part_management import SerializedPartQuery
+from models.services.provider.partner_management import BusinessPartnerRead, DataExchangeAgreementRead
+from models.services.provider.twin_management import (
     CatalogPartTwinRead,
     CatalogPartTwinCreate,
     CatalogPartTwinShare,
@@ -58,7 +58,7 @@ from tools.exceptions import NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
 
-from services.part_management_service import PartManagementService
+from services.provider.part_management_service import PartManagementService
 
 logger = LoggingManager.get_logger(__name__)
 

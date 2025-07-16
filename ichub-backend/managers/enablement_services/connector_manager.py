@@ -25,7 +25,6 @@ from urllib.parse import quote
 from hashlib import sha256
 from tractusx_sdk.dataspace.services.connector import ServiceFactory
 from tractusx_sdk.dataspace.services import BaseConnectorService
-from tractusx_sdk.dataspace.models.connector import ModelFactory
 from tractusx_sdk.dataspace.managers.connection import PostgresConnectionManager
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager

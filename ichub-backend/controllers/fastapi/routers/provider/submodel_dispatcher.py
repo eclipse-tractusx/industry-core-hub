@@ -25,7 +25,7 @@ from fastapi.responses import JSONResponse
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from services.submodel_dispatcher_service import SubmodelDispatcherService
+from services.provider.submodel_dispatcher_service import SubmodelDispatcherService
 from managers.config.config_manager import ConfigManager
 from tools.exceptions import exception_responses
 

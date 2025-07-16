@@ -27,8 +27,8 @@ from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
 
-from models.services.part_management import CatalogPartBase, BusinessPartnerRead
-from models.services.twin_management import CatalogPartTwinDetailsRead
+from models.services.provider.part_management import CatalogPartBase, BusinessPartnerRead
+from models.services.provider.twin_management import CatalogPartTwinDetailsRead
 
 class SharingBase(BaseModel):
     business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")
