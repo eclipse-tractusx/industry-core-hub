@@ -51,7 +51,7 @@ tomli==2.0.1
 tractusx_sdk==0.3.0
 typer==0.15.2
 typing_extensions==4.13.1
-urllib3==2.3.0
+urllib3==2.5.0
 uvicorn==0.30.6
 uvloop==0.21.0
 watchfiles==1.0.4
