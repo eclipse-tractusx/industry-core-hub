@@ -20,20 +20,34 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import Grid2 from '@mui/material/Grid2';
+@use '../config/variables' as *;
+@use '../config/mixins';
 
-const DoubleSidebarTest = () => {
+.parts-discovery-sidebar {
+  background-color: #056b9991!important;
 
-  return (
-    <Grid2 container direction="row">
-        <Grid2 size={2} sx={{backgroundColor: '#056b9991', height: '100vh'}}>
-            <p style={{color: 'white', margin: '20px'}}>Second sidebar</p>
-        </Grid2>
-        <Grid2 size={10} sx={{backgroundColor: '#000f16'}}>
-            <p style={{color: 'white', margin: '20px'}}>Content</p>
-        </Grid2>
-    </Grid2>
-  );
+  @media (max-width: 960px) {
+    position: static!important;
+    height: auto!important;
+  }
+  
+  span, h6, h4, p {
+    color: $brand-text;
+  }
+  span.MuiSlider-root span.MuiSlider-thumb{
+    color: $dropdown-hover-bg;
+  }
 }
 
-export default DoubleSidebarTest
+.parts-discovery-search-button{
+    background: $header-opaque-gradient-bg;
+    color: $brand-text!important;
+    border-color: green;
+    border-radius: 12px!important;
+    
+    &:hover {
+        background: $blue-gradient-bg;
+        border-color: $brand-text!important;
+    }
+}
+  

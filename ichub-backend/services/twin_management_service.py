@@ -564,11 +564,11 @@ class TwinManagementService:
             db_twin = db_twins[0]
             return TwinManagementService._build_catalog_part_twin_details(db_twin=db_twin)
     
-    def get_catalog_part_twin_details(self, manufacturerId:str, manufacturerPartId:str) -> Optional[CatalogPartTwinDetailsRead]:
+    def get_catalog_part_twin_details(self, manufacturer_id:str, manufacturer_part_id:str) -> Optional[CatalogPartTwinDetailsRead]:
         with RepositoryManagerFactory.create() as repo:
             db_twins = repo.twin_repository.find_catalog_part_twins(
-                manufacturer_id=manufacturerId,
-                manufacturer_part_id=manufacturerPartId,
+                manufacturer_id=manufacturer_id,
+                manufacturer_part_id=manufacturer_part_id,
                 include_data_exchange_agreements=True,
                 include_aspects=True,
                 include_registrations=True
@@ -609,34 +609,34 @@ class TwinManagementService:
     @staticmethod
     def _build_serialized_part_twin(db_twin: Twin, details: bool = False) -> SerializedPartTwinRead | SerializedPartTwinDetailsRead:
         db_serialized_part = db_twin.serialized_part
-        base_kwargs = dict(
-            globalId=db_twin.global_id,
-            dtrAasId=db_twin.aas_id,
-            createdDate=db_twin.created_date,
-            modifiedDate=db_twin.modified_date,
-            manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-            manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-            name=db_serialized_part.partner_catalog_part.catalog_part.name,
-            category=db_serialized_part.partner_catalog_part.catalog_part.category,
-            bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-            customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
-            businessPartner=BusinessPartnerRead(
-                name=db_serialized_part.partner_catalog_part.business_partner.name,
-                bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+        base_kwargs = {
+            "globalId": db_twin.global_id,
+            "dtrAasId": db_twin.aas_id,
+            "createdDate": db_twin.created_date,
+            "modifiedDate": db_twin.modified_date,
+            "manufacturerId": db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
+            "manufacturerPartId": db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
+            "name": db_serialized_part.partner_catalog_part.catalog_part.name,
+            "category": db_serialized_part.partner_catalog_part.catalog_part.category,
+            "bpns": db_serialized_part.partner_catalog_part.catalog_part.bpns,
+            "customerPartId": db_serialized_part.partner_catalog_part.customer_part_id,
+            "businessPartner": BusinessPartnerRead(
+            name=db_serialized_part.partner_catalog_part.business_partner.name,
+            bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
             ),
-            partInstanceId=db_serialized_part.part_instance_id,
-            van=db_serialized_part.van,
-        )
+            "partInstanceId": db_serialized_part.part_instance_id,
+            "van": db_serialized_part.van,
+        }
         if details:
-            details_kwargs = dict(
-                description=db_serialized_part.partner_catalog_part.catalog_part.description,
-                materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
-                width=db_serialized_part.partner_catalog_part.catalog_part.width,
-                height=db_serialized_part.partner_catalog_part.catalog_part.height,
-                length=db_serialized_part.partner_catalog_part.catalog_part.length,
-                weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
-                additionalContext=db_twin.additional_context,
-            )
+            details_kwargs = {
+                "description": db_serialized_part.partner_catalog_part.catalog_part.description,
+                "materials": db_serialized_part.partner_catalog_part.catalog_part.materials,
+                "width": db_serialized_part.partner_catalog_part.catalog_part.width,
+                "height": db_serialized_part.partner_catalog_part.catalog_part.height,
+                "length": db_serialized_part.partner_catalog_part.catalog_part.length,
+                "weight": db_serialized_part.partner_catalog_part.catalog_part.weight,
+                "additionalContext": db_twin.additional_context,
+            }
             base_kwargs.update(details_kwargs)
             return SerializedPartTwinDetailsRead(**base_kwargs)
         else:

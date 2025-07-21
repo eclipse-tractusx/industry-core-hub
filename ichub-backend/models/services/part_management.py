@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 
 from models.metadata_database.models import Material, Measurement
 from models.services.partner_management import BusinessPartnerRead
+from tools.constants import PARENT_ORDER_NUMBER_DESCRIPTION, VAN_DESCRIPTION
 
 class SharingStatus(enum.IntEnum):
     """The status of the part. (0: draft, 1: pending, 2: registered, 3: shared)"""
@@ -128,13 +129,13 @@ class SerializedPartBase(CatalogPartBase):
     part_instance_id: str = Field(alias="partInstanceId", description="The part instance ID of the serialized part.")
 
 class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase, CustomerPartIdBase):
-    van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
+    van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
 
 class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
     pass
 
 class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
-    van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
+    van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
     customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
 
 class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
@@ -142,18 +143,18 @@ class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
 
 class SerializedPartQuery(PartnerCatalogPartQuery):
     part_instance_id: Optional[str] = Field(alias="partInstanceId", description="The part instance ID of the serialized part.", default=None)
-    van: Optional[str] = Field(description="The optional VAN (Vehicle Assembly Number) of the serialized part.", default=None)
+    van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
 
 class JISPartBase(CatalogPartBase, CustomerPartIdBase):
     jis_number: str = Field(alias="jisNumber", description="The JIS number of the JIS part.")
 
 class JISPartRead(JISPartBase):
-    parent_order_number: Optional[str] = Field(alias="parentOrderNumber", description="The parent order number of the JIS part.", default=None)
+    parent_order_number: Optional[str] = Field(alias="parentOrderNumber", description=PARENT_ORDER_NUMBER_DESCRIPTION, default=None)
     jis_call_date: Optional[datetime] = Field(alias="jisCallDate", description="The JIS call date of the JIS part.", default=None)
     business_partner: BusinessPartnerRead = Field(alias="businessPartner", description="The business partner to whom the part is being offered.")
 
 class JISPartCreate(JISPartBase):
-    parent_order_number: Optional[str] = Field(description="The parent order number of the JIS part.", default=None)
+    parent_order_number: Optional[str] = Field(description=PARENT_ORDER_NUMBER_DESCRIPTION, default=None)
     jis_call_date: Optional[datetime] = Field(description="The JIS call date of the JIS part.", default=None)
     business_partner_name: str = Field(alias="businessPartnerName", description="The unique name of the business partner to map the catalog part to.")
 
@@ -162,6 +163,6 @@ class JISPartDelete(JISPartBase):
 
 class JISPartQuery(CatalogPartQuery):
     jis_number: Optional[str] = Field(alias="jisNumber", description="The JIS number of the JIS part.", default=None)
-    parent_order_number: Optional[str] = Field(alias="parentOrderNumber", description="The parent order number of the JIS part.", default=None)
+    parent_order_number: Optional[str] = Field(alias="parentOrderNumber", description=PARENT_ORDER_NUMBER_DESCRIPTION, default=None)
     jis_call_date_min: Optional[datetime] = Field(alias="jisCallDate", description="The minimal JIS call date of the JIS part.", default=None)
     jis_call_date_max: Optional[datetime] = Field(alias="jisCallDate", description="The maximal JIS call date of the JIS part.", default=None)

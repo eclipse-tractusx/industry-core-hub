@@ -71,12 +71,7 @@ class PartManagementService():
         # Validate the input data
         # Validate materials share
         if catalog_part_create.materials:
-            total_share = sum(material.share for material in catalog_part_create.materials)
-            # We only allow the share to be 0-100%
-            if total_share < 0:
-                raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
-            if total_share > 100:
-                raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
+            self._manage_share_error(catalog_part_create)
         with RepositoryManagerFactory.create() as repos:
             
             # First check if the legal entity exists for the given manufacturer ID
@@ -117,17 +112,7 @@ class PartManagementService():
             if catalog_part_create.customer_part_ids:
                 for partner_catalog_part_create in catalog_part_create.customer_part_ids:
                     
-                    # We need both the customer part ID and the name of the business partner
-                    if not partner_catalog_part_create.customer_part_id:
-                        raise InvalidError("Customer part ID is required for a customer part mapping.")
-                    
-                    if not partner_catalog_part_create.business_partner_name:
-                        raise InvalidError("Business partner name is required for a customer part mapping.")
-                    
-                    # Resolve the business partner by name from the metadata database
-                    db_business_partner = repos.business_partner_repository.get_by_name(partner_catalog_part_create.business_partner_name)
-                    if not db_business_partner:
-                        raise NotFoundError(f"Business partner '{partner_catalog_part_create.business_partner_name}' does not exist. Please create it first.")
+                    db_business_partner = self._get_business_partner_by_name(partner_catalog_part_create, repos)
 
                     # Create the partner catalog part entry in the metadata database
                     repos.partner_catalog_part_repository.create(PartnerCatalogPart(
@@ -140,6 +125,36 @@ class PartManagementService():
                     result.customer_part_ids[partner_catalog_part_create.customer_part_id] = BusinessPartnerRead(name = db_business_partner.name, bpnl = db_business_partner.bpnl)  
 
             return result
+
+    @staticmethod
+    def _get_business_partner_by_name(partner_catalog_part_create, repos):
+        """
+        Retrieve a business partner entity by its name from the repository.
+        """
+        # We need both the customer part ID and the name of the business partner
+        if not partner_catalog_part_create.customer_part_id:
+            raise InvalidError("Customer part ID is required for a customer part mapping.")
+        if not partner_catalog_part_create.business_partner_name:
+            raise InvalidError("Business partner name is required for a customer part mapping.")
+        # Resolve the business partner by name from the metadata database
+        db_business_partner = repos.business_partner_repository.get_by_name(
+            partner_catalog_part_create.business_partner_name)
+        if not db_business_partner:
+            raise NotFoundError(
+                f"Business partner '{partner_catalog_part_create.business_partner_name}' does not exist. Please create it first.")
+        return db_business_partner
+
+    @staticmethod
+    def _manage_share_error(catalog_part_create):
+        """
+        Validates that the total share of materials in a catalog part is within the allowed range (0% to 100%).
+        """
+        total_share = sum(material.share for material in catalog_part_create.materials)
+        # We only allow the share to be 0-100%
+        if total_share < 0:
+            raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
+        if total_share > 100:
+            raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
 
     def create_catalog_part_by_ids(self,
         manufacturer_id: str,

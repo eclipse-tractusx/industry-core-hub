@@ -148,20 +148,7 @@ class DTRManager:
         for sa_id in specific_asset_ids:
             # Find existing asset ID with matching name and value
             if sa_id.name == name and sa_id.value == value:
-                # Initialize Reference if missing
-                if not sa_id.external_subject_id:
-                    sa_id.external_subject_id = Reference(type=ReferenceTypes.EXTERNAL_REFERENCE, keys=[])
-                # Get existing BPN key values for comparison
-                existing_key_values = {k.value for k in sa_id.external_subject_id.keys}
-                # Normalize supplementalSemanticIds if empty
-                if(len(sa_id.supplemental_semantic_ids) == 0):
-                    sa_id.supplemental_semantic_ids = None
-                # Add new BPN keys that are not already present
-                for bpn in bpn_keys:
-                    if bpn not in existing_key_values:
-                        sa_id.external_subject_id.keys.append(
-                            ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn)
-                        )
+                self._update_existing_asset_id_bpn_keys(bpn_keys, sa_id)
                 # Return updated list after modification
                 return specific_asset_ids
         # Append a new SpecificAssetId if not already in the list
@@ -175,7 +162,31 @@ class DTRManager:
             )
         ))
         return specific_asset_ids
-    
+
+    @staticmethod
+    def _update_existing_asset_id_bpn_keys(bpn_keys, sa_id):
+        """
+        Updates the `external_subject_id` of the given `sa_id` by adding new BPN keys from `bpn_keys` that are not already present.
+
+        If `external_subject_id` is missing, it initializes it as a `Reference` with an empty list of keys.
+        If `supplemental_semantic_ids` is empty, it sets it to `None`.
+        For each BPN key in `bpn_keys`, if it does not already exist in `external_subject_id.keys`, it appends a new `ReferenceKey` of type `GLOBAL_REFERENCE` with the BPN value.
+        """
+        # Initialize Reference if missing
+        if not sa_id.external_subject_id:
+            sa_id.external_subject_id = Reference(type=ReferenceTypes.EXTERNAL_REFERENCE, keys=[])
+        # Get existing BPN key values for comparison
+        existing_key_values = {k.value for k in sa_id.external_subject_id.keys}
+        # Normalize supplementalSemanticIds if empty
+        if len(sa_id.supplemental_semantic_ids) == 0:
+            sa_id.supplemental_semantic_ids = None
+        # Add new BPN keys that are not already present
+        for bpn in bpn_keys:
+            if bpn not in existing_key_values:
+                sa_id.external_subject_id.keys.append(
+                    ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn)
+                )
+
     def create_or_update_shell_descriptor(self,
         aas_id: UUID,
         global_id: UUID,
@@ -193,7 +204,7 @@ class DTRManager:
 
         # Prepare containers for asset IDs and key lookup
         specific_asset_ids = []
-        existing_keys = dict()
+        existing_keys = {}
 
         # Try retrieving an existing shell descriptor using the AAS ID and manufacturer BPN
         existing_shell = self.aas_service.get_asset_administration_shell_descriptor_by_id(

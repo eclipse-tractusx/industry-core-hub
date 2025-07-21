@@ -20,17 +20,28 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+@use "../config/variables" as *;
+@use '../config/mixins';
 
-import {
-    Storefront,
-    FindInPage,
-    People,
-    Assignment
-  } from '@mui/icons-material';
-  
-  export const features = [
-    { icon: <Storefront />, path: '/catalog', disabled: false },
-    { icon: <People />, path: '/shared', disabled: false },
-    { icon: <FindInPage />, path: '/discover-parts', disabled: false },
-    { icon: <Assignment />, path: '/status', disabled: true }
-  ];
+.product-table-wrapper {
+    margin-top: 40px;
+
+    * {
+        color: $brand-text !important;
+    }
+    
+    > div.MuiPaper-root {
+        background: $brand-dark !important;
+        @include mixins.rounded-bordered;
+    }
+
+    tbody {
+        td, th {
+            font-size: 14px;
+        }
+    }
+
+    tr.Mui-selected {
+        background-color: $brand-border !important;
+    }
+}

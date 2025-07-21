@@ -20,15 +20,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from pydantic import BaseModel,  Field
+# ================ CONSTANTS =========================
+TYPE = "@type"
 
-class ParentExample(BaseModel):
-    attr1:str
-    complex_attr1:list = Field(default=[{"odrl:permission":[],"odrl:prohibition":[],"odrl:obligation":[]}] )
-    complex_attr2:dict = Field(default={})
-    
-class ChildExample(ParentExample):
-    attr2:dict|str|int|list|None
-    attr3:str = Field(default="application/json")
-    
-    
+# ================= CONTEXTS =========================
+ODRL_CONTEXT = "http://www.w3.org/ns/odrl/2/"
+CX_POLICY_CONTEXT = "https://w3id.org/catenax/policy/"
+
+# ==================== DESCRIPTIONS =========================
+TWIN_ID_DESCRIPTION = "The ID of the associated twin."
+BUSINESS_PARTNER_ID_DESCRIPTION = "The ID of the associated business partner."
+PARENT_ORDER_NUMBER_DESCRIPTION = "The parent order number of the JIS part."
+VAN_DESCRIPTION = "The optional VAN (Vehicle Assembly Number) of the serialized part."

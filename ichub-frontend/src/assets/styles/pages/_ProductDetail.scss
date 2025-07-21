@@ -108,29 +108,6 @@
         height: auto;
         border-radius: 25px;
     }
-
-    .product-table-wrapper {
-        margin-top: 40px;
-
-        * {
-            color: $brand-text !important;
-        }
-      
-        > div.MuiPaper-root {
-            background: $brand-dark !important;
-            @include mixins.rounded-bordered;
-        }
-
-        tbody {
-            td, th {
-                font-size: 14px;
-            }
-        }
-
-        tr.Mui-selected {
-            background-color: $brand-border !important;
-        }
-    }
       
 }
   

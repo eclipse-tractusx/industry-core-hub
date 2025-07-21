@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from models.services.twin_management import CatalogPartTwinCreate
+from models.services.twin_management import CatalogPartTwinCreate, TwinAspectCreate
 from models.metadata_database.models import BusinessPartner, DataExchangeAgreement, CatalogPart, Twin, PartnerCatalogPart
 from models.services.sharing_management import SharedPartBase, ShareCatalogPart, SharedPartner
 from models.services.partner_management import BusinessPartnerRead
@@ -48,7 +48,7 @@ class SharingService:
         self.submodel_document_generator = SubmodelDocumentGenerator()
         self.twin_management_service = TwinManagementService()
 
-    def get_shared_partners(self, manufacturerId:str, manufacturerPartId:str) -> List[SharedPartner]:
+    def get_shared_partners(self, manufacturer_id:str, manufacturer_part_id:str) -> List[SharedPartner]:
         pass
     
     def share_catalog_part(self, catalog_part_to_share: ShareCatalogPart) -> SharedPartBase:
