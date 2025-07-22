@@ -61,6 +61,16 @@ from tools.exceptions import InvalidError, NotFoundError, AlreadyExistsError
 
 logger = LoggingManager.get_logger(__name__)
 
+# Define constants for deprecated metadata keys
+ICHUB_DESCRIPTION = "ichub::description"
+ICHUB_CATEGORY = "ichub::category"
+ICHUB_BPNS = "ichub::bpns"
+ICHUB_MATERIALS = "ichub::materials"
+ICHUB_WIDTH = "ichub::width"
+ICHUB_HEIGHT = "ichub::height"
+ICHUB_LENGTH = "ichub::length"
+ICHUB_WEIGHT = "ichub::weight"
+
 class PartManagementService():
     """
     Service class for managing parts and their relationships in the system.
@@ -577,10 +587,10 @@ class PartManagementService():
             return
             
         # Sync fields only if they have values
-        if 'category' in extra_metadata and extra_metadata['category']:
-            service_model.category = extra_metadata['category']
-        if 'bpns' in extra_metadata and extra_metadata['bpns']:
-            service_model.bpns = extra_metadata['bpns']
+        if ICHUB_CATEGORY in extra_metadata and extra_metadata[ICHUB_CATEGORY]:
+            service_model.category = extra_metadata[ICHUB_CATEGORY]
+        if ICHUB_BPNS in extra_metadata and extra_metadata[ICHUB_BPNS]:
+            service_model.bpns = extra_metadata[ICHUB_BPNS]
 
     @staticmethod
     def _fill_deprected_metadata_fields_details(extra_metadata: Optional[Dict[str, Any]], service_model: CatalogPartDetailsRead):
@@ -591,19 +601,18 @@ class PartManagementService():
         PartManagementService.fill_deprected_metadata_fields_base(extra_metadata, service_model)
 
         # Sync fields only if they have values
-        if 'description' in extra_metadata and extra_metadata['description']:
-            service_model.description = extra_metadata['description']
-        if 'materials' in extra_metadata and extra_metadata['materials']:
-            service_model.materials = [Material(**m) for m in extra_metadata['materials']]
-        if 'width' in extra_metadata and extra_metadata['width']:
-            service_model.width = Measurement(**extra_metadata['width'])
-        if 'height' in extra_metadata and extra_metadata['height']:
-            service_model.height = Measurement(**extra_metadata['height'])
-        if 'length' in extra_metadata and extra_metadata['length']:
-            service_model.length = Measurement(**extra_metadata['length'])
-        if 'weight' in extra_metadata and extra_metadata['weight']:
-            service_model.weight = Measurement(**extra_metadata['weight'])
-
+        if ICHUB_DESCRIPTION in extra_metadata and extra_metadata[ICHUB_DESCRIPTION]:
+            service_model.description = extra_metadata[ICHUB_DESCRIPTION]
+        if ICHUB_MATERIALS in extra_metadata and extra_metadata[ICHUB_MATERIALS]:
+            service_model.materials = [Material(**m) for m in extra_metadata[ICHUB_MATERIALS]]
+        if ICHUB_WIDTH in extra_metadata and extra_metadata[ICHUB_WIDTH]:
+            service_model.width = Measurement(**extra_metadata[ICHUB_WIDTH])
+        if ICHUB_HEIGHT in extra_metadata and extra_metadata[ICHUB_HEIGHT]:
+            service_model.height = Measurement(**extra_metadata[ICHUB_HEIGHT])
+        if ICHUB_LENGTH in extra_metadata and extra_metadata[ICHUB_LENGTH]:
+            service_model.length = Measurement(**extra_metadata[ICHUB_LENGTH])
+        if ICHUB_WEIGHT in extra_metadata and extra_metadata[ICHUB_WEIGHT]:
+            service_model.weight = Measurement(**extra_metadata[ICHUB_WEIGHT])
 
     @staticmethod
     def _sync_deprecated_metadata_fields(service_model: CatalogPartCreate, extra_metadata: Dict[str, Any]):
@@ -613,20 +622,20 @@ class PartManagementService():
             
         # Sync fields only if they have values
         if service_model.description:
-            extra_metadata["description"] = service_model.description
+            extra_metadata[ICHUB_DESCRIPTION] = service_model.description
         if service_model.category:
-            extra_metadata["category"] = service_model.category
+            extra_metadata[ICHUB_CATEGORY] = service_model.category
         if service_model.bpns:
-            extra_metadata["bpns"] = service_model.bpns
+            extra_metadata[ICHUB_BPNS] = service_model.bpns
         if service_model.materials:
-            extra_metadata["materials"] = [m.model_dump() for m in service_model.materials]
+            extra_metadata[ICHUB_MATERIALS] = [m.model_dump() for m in service_model.materials]
         if service_model.width:
-            extra_metadata["width"] = service_model.width.model_dump()
+            extra_metadata[ICHUB_WIDTH] = service_model.width.model_dump()
         if service_model.height:
-            extra_metadata["height"] = service_model.height.model_dump()
+            extra_metadata[ICHUB_HEIGHT] = service_model.height.model_dump()
         if service_model.length:
-            extra_metadata["length"] = service_model.length.model_dump()
+            extra_metadata[ICHUB_LENGTH] = service_model.length.model_dump()
         if service_model.weight:
-            extra_metadata["weight"] = service_model.weight.model_dump()
-            
+            extra_metadata[ICHUB_WEIGHT] = service_model.weight.model_dump()
+
         return extra_metadata
