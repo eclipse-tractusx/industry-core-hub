@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from models.services.part_management import (
     BatchCreate,
     BatchRead,
@@ -52,11 +52,71 @@ from models.metadata_database.models import (
     LegalEntity,
     SerializedPart,
     PartnerCatalogPart,
+    Material,
+    Measurement,
 )
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import InvalidError, NotFoundError, AlreadyExistsError
 
 logger = LoggingManager.get_logger(__name__)
+
+class MetadataUtils:
+    """Utility class for handling extra_metadata conversions"""
+    
+    @staticmethod
+    def sync_metadata_to_extra(fields: dict, extra_metadata: dict = None) -> dict:
+        """Sync individual fields to extra_metadata"""
+        if extra_metadata is None:
+            extra_metadata = {}
+            
+        # Sync fields only if they have values
+        if 'description' in fields and fields['description']:
+            extra_metadata["description"] = fields['description']
+        if 'category' in fields and fields['category']:
+            extra_metadata["category"] = fields['category']
+        if 'bpns' in fields and fields['bpns']:
+            extra_metadata["bpns"] = fields['bpns']
+        if 'materials' in fields and fields['materials']:
+            extra_metadata["materials"] = [m.dict() for m in fields['materials']]
+        if 'width' in fields and fields['width']:
+            extra_metadata["width"] = fields['width'].dict()
+        if 'height' in fields and fields['height']:
+            extra_metadata["height"] = fields['height'].dict()
+        if 'length' in fields and fields['length']:
+            extra_metadata["length"] = fields['length'].dict()
+        if 'weight' in fields and fields['weight']:
+            extra_metadata["weight"] = fields['weight'].dict()
+            
+        return extra_metadata
+        
+    @staticmethod
+    def extract_from_extra_metadata(extra_metadata: dict) -> dict:
+        """Extract individual fields from extra_metadata"""
+        if not extra_metadata:
+            return {}
+            
+        result = {}
+        
+        if "description" in extra_metadata:
+            result["description"] = extra_metadata["description"]
+        if "category" in extra_metadata:
+            result["category"] = extra_metadata["category"]
+        if "bpns" in extra_metadata:
+            result["bpns"] = extra_metadata["bpns"]
+            
+        # Handle complex types
+        if "materials" in extra_metadata and extra_metadata["materials"]:
+            result["materials"] = [Material(**m) for m in extra_metadata["materials"]]
+        if "width" in extra_metadata and extra_metadata["width"]:
+            result["width"] = Measurement(**extra_metadata["width"])
+        if "height" in extra_metadata and extra_metadata["height"]:
+            result["height"] = Measurement(**extra_metadata["height"])
+        if "length" in extra_metadata and extra_metadata["length"]:
+            result["length"] = Measurement(**extra_metadata["length"])
+        if "weight" in extra_metadata and extra_metadata["weight"]:
+            result["weight"] = Measurement(**extra_metadata["weight"])
+            
+        return result
 
 class PartManagementService():
     """
@@ -94,18 +154,41 @@ class PartManagementService():
             if db_catalog_part:
                 raise AlreadyExistsError("Catalog part already exists.")
             else:
-                # Create the catalog part in the metadata database, using legal_entity_id as foreign key
+                # Extract data from the model
+                part_data = catalog_part_create.model_dump(by_alias=False)
+                
+                # Handle extra_metadata field
+                extra_metadata = {}
+                if 'extra_metadata' in part_data and part_data['extra_metadata']:
+                    extra_metadata = part_data['extra_metadata']
+                    
+                # Use utility method to sync deprecated fields to extra_metadata
+                extra_metadata = MetadataUtils.sync_metadata_to_extra(part_data, extra_metadata)
+                
+                # Create the catalog part in the metadata database, using only the non-deprecated fields
+                # Remove deprecated fields from part_data
+                for field in ['description', 'category', 'bpns', 'materials', 'width', 'height', 'length', 'weight']:
+                    if field in part_data:
+                        del part_data[field]
+                
+                # Create the catalog part with the remaining fields and extra_metadata
                 db_catalog_part = CatalogPart(
                     legal_entity_id=db_legal_entity.id,
-                    **catalog_part_create.model_dump(by_alias=False)
+                    **part_data,
+                    extra_metadata=extra_metadata
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
                 repos.catalog_part_repository.commit()
                 
             # Prepare the result object
+            result_data = catalog_part_create.model_dump(by_alias=True)
+            # Ensure extra_metadata is included in the result
+            if 'extraMetadata' not in result_data or not result_data['extraMetadata']:
+                result_data['extraMetadata'] = extra_metadata
+                
             result = CatalogPartDetailsReadWithStatus(
-                **catalog_part_create.model_dump(by_alias=True),
-                status=0,  # Default status is draft
+                **result_data,
+                status=SharingStatus.DRAFT,  # Default status is draft
             )
 
             # Check if we already should create some customer part IDs for the given catalog part
@@ -206,14 +289,23 @@ class PartManagementService():
             
             if db_catalog_parts:
                 for db_catalog_part, status in db_catalog_parts:
+                    # Extract metadata from extra_metadata using utility method
+                    extra_metadata = db_catalog_part.extra_metadata if hasattr(db_catalog_part, 'extra_metadata') else {}
+                    extracted_fields = MetadataUtils.extract_from_extra_metadata(extra_metadata)
+                    
+                    # Get fields from the extraction
+                    category = extracted_fields.get("category", None)
+                    bpns = extracted_fields.get("bpns", None)
+                        
                     result.append(
                         CatalogPartReadWithStatus(
                             manufacturerId=db_catalog_part.legal_entity.bpnl,
                             manufacturerPartId=db_catalog_part.manufacturer_part_id,
                             name=db_catalog_part.name,
-                            category=db_catalog_part.category,
-                            bpns=db_catalog_part.bpns,
-                            status=status
+                            category=category,
+                            bpns=bpns,
+                            extraMetadata=extra_metadata,
+                            status=SharingStatus(status)
                         )
                     )
             
@@ -233,19 +325,34 @@ class PartManagementService():
             
             db_catalog_part, status = db_catalog_parts[0]  # Assuming we only want the first match
 
+            # Extract metadata from extra_metadata using utility method
+            extra_metadata = db_catalog_part.extra_metadata if hasattr(db_catalog_part, 'extra_metadata') else {}
+            extracted_fields = MetadataUtils.extract_from_extra_metadata(extra_metadata)
+            
+            # Get fields from the extraction
+            description = extracted_fields.get("description", None)
+            category = extracted_fields.get("category", None)
+            bpns = extracted_fields.get("bpns", None)
+            materials = extracted_fields.get("materials", [])
+            width = extracted_fields.get("width", None)
+            height = extracted_fields.get("height", None)
+            length = extracted_fields.get("length", None)
+            weight = extracted_fields.get("weight", None)
+                
             result = CatalogPartDetailsReadWithStatus(
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
-                materials=db_catalog_part.materials,
-                width=db_catalog_part.width,
-                height=db_catalog_part.height,
-                length=db_catalog_part.length,
-                weight=db_catalog_part.weight,
-                description=db_catalog_part.description,
-                status=SharingStatus(status)  # Assuming SharingStatus is an enum or similar type for status
+                category=category,
+                bpns=bpns,
+                materials=materials,
+                width=width,
+                height=height,
+                length=length,
+                weight=weight,
+                description=description,
+                extraMetadata=extra_metadata,
+                status=SharingStatus(status)
             )
 
             PartManagementService.fill_customer_part_ids(db_catalog_part, result)
@@ -347,8 +454,8 @@ class PartManagementService():
                 ),
                 van=serialized_part_create.van,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
+                category=db_catalog_part.extra_metadata.get('category') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None,
+                bpns=db_catalog_part.extra_metadata.get('bpns') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None,
             )
 
 
@@ -467,8 +574,8 @@ class PartManagementService():
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
+                category=db_catalog_part.extra_metadata.get('category') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None,
+                bpns=db_catalog_part.extra_metadata.get('bpns') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None,
                 customerPartId=db_partner_catalog_part.customer_part_id,
                 businessPartner=BusinessPartnerRead(
                     name=db_business_partner.name,
