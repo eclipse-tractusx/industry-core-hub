@@ -189,7 +189,7 @@ class CatalogPart(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     manufacturer_part_id: str = Field(index=True, description="The manufacturer part ID.")
     legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
-    twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description=TWIN_ID_DESCRIPTION)
+    twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description=TWIN_ID_DESCRIPTION, default=None)
     name: str = Field(default="", description="The name of the catalog part at the manufacturer.")
     
     # JSON field that contains all additional metadata
@@ -205,12 +205,6 @@ class CatalogPart(SQLModel, table=True):
     partner_catalog_parts: List["PartnerCatalogPart"] = Relationship(back_populates="catalog_part")
     batches: List["Batch"] = Relationship(back_populates="catalog_part")
     
-    def __init__(self, **data):
-        super().__init__(**data)
-
-        
-
-
     __table_args__ = (
         UniqueConstraint("legal_entity_id", "manufacturer_part_id", name="uk_catalog_part_legal_entity_id_manufacturer_part_id"),
     )
