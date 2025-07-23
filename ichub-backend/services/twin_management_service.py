@@ -42,6 +42,7 @@ from models.services.twin_management import (
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
     SerializedPartTwinShareCreate,
+    SerializedPartTwinUnshareCreate,
     SerializedPartTwinDetailsRead,
     TwinRead,
     TwinAspectCreate,
@@ -422,6 +423,42 @@ class TwinManagementService:
                 db_twin=db_twin,
                 db_business_partner=db_business_partner
             )
+
+    def part_twin_unshare(self, serialized_part_unshare_input: SerializedPartTwinUnshareCreate, enablement_service_stack_name: str = 'EDC/DTR Default') -> bool:
+
+        with RepositoryManagerFactory.create() as repo:
+
+            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
+                enablement_service_stack_name,
+                join_legal_entity=True
+            )
+            if not db_enablement_service_stack:
+                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
+
+            if db_enablement_service_stack.legal_entity.bpnl != serialized_part_unshare_input.manufacturer_id:
+                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{serialized_part_unshare_input.manufacturer_id}'.")
+            
+            dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
+
+            new_shell_descriptor, modified = dtr_manager.remove_bpn_shell_descriptor(
+                aas_id=serialized_part_unshare_input.aas_id,
+                bpns_to_remove=serialized_part_unshare_input.business_partner_number_to_unshare,
+                manufacturer_id=serialized_part_unshare_input.manufacturer_id,
+                asset_id_names_filter=serialized_part_unshare_input.asset_id_names_filter
+            )
+
+            if not modified:
+                logger.info(f"No BPN references were found to remove for shell {serialized_part_unshare_input.aas_id}.")
+                return False
+
+            # If the shell descriptor was modified, update it in the DTR
+            dtr_manager._update_shell_descriptor_with_error_handling(
+                shell_descriptor=new_shell_descriptor,
+                aas_id=serialized_part_unshare_input.aas_id,
+                manufacturer_id=serialized_part_unshare_input.manufacturer_id
+            )
+
+            return True
 
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
         """

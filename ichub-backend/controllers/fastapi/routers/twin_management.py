@@ -31,7 +31,8 @@ from models.services.twin_management import (
     CatalogPartTwinRead, CatalogPartTwinDetailsRead,
     CatalogPartTwinCreate, CatalogPartTwinShareCreate,
     SerializedPartTwinRead, SerializedPartTwinDetailsRead,
-    SerializedPartTwinCreate, SerializedPartTwinShareCreate
+    SerializedPartTwinCreate, SerializedPartTwinShareCreate,
+    SerializedPartTwinUnshareCreate
 )
 from tools.exceptions import exception_responses
 
@@ -95,5 +96,16 @@ async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreat
 async def twin_management_share_serialized_part_twin(serialized_part_twin_share: SerializedPartTwinShareCreate):
     if twin_management_service.create_serialized_part_twin_share(serialized_part_twin_share):
         return JSONResponse(status_code=201, content={"description":"Serialized part twin shared successfully"})
+    else:
+        return JSONResponse(status_code=204, content=None)
+    
+@router.post("/serialized-part-twin/unshare", responses={
+    201: {"description": "Catalog part twin unshared successfully"},
+    204: {"description": "Catalog part twin already unshared"},
+    **exception_responses
+})
+async def twin_management_unshare_serialized_part_twin(serialized_part_twin_unshare: SerializedPartTwinUnshareCreate):
+    if twin_management_service.part_twin_unshare(serialized_part_twin_unshare):
+        return JSONResponse(status_code=201, content={"description":"Serialized part twin unshared successfully"})
     else:
         return JSONResponse(status_code=204, content=None)

@@ -144,3 +144,8 @@ class SerializedPartTwinShareCreate(SerializedPartBase):
     # Hint: we don't need the TwinShareCreateBase here, because a serialized part has already a link to a single business partner
     pass
 
+class SerializedPartTwinUnshareCreate(BaseModel):
+    aas_id: UUID = Field(alias="aasId", description="The AAS ID of the serialized part twin to unshare.")
+    business_partner_number_to_unshare: list[str] = Field(alias="businessPartnerNumberToUnshare", description="The business partner number of the business partner with which the serialized part twin should be unshared.")
+    manufacturer_id: str = Field(alias="manufacturerId", description="The manufacturer ID of the serialized part twin to unshare.")
+    asset_id_names_filter: Optional[List[str]] = Field(alias="assetIdNamesFilter", description="An optional list of asset ID names to filter the serialized part twin unshare operation. If provided, only asset IDs with names in this list will be considered for unsharing.", default=None)
