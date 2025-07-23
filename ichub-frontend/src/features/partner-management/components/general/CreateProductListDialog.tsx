@@ -125,29 +125,33 @@ const CreateProductListDialog = ({
     if (typeof data.name !== "string" || !data.name)
       errors.push("name (non-empty string) is required.");
 
+    const extraMetadata = data.extraMetadata || {};
+
     if (
-      data.description !== undefined &&
-      data.description !== null &&
-      typeof data.description !== "string"
+      extraMetadata["ichub::description"] !== undefined &&
+      extraMetadata["ichub::description"] !== null &&
+      typeof extraMetadata["ichub::description"] !== "string"
     )
       errors.push("description must be a string if provided.");
+
     if (
-      data.category !== undefined &&
-      data.category !== null &&
-      typeof data.category !== "string"
+      extraMetadata["ichub::category"] !== undefined &&
+      extraMetadata["ichub::category"] !== null &&
+      typeof extraMetadata["ichub::category"] !== "string"
     )
       errors.push("category must be a string if provided.");
+
     if (
-      data.bpns !== undefined &&
-      data.bpns !== null &&
-      typeof data.bpns !== "string"
+      extraMetadata["ichub::bpns"] !== undefined &&
+      extraMetadata["ichub::bpns"] !== null &&
+      typeof extraMetadata["ichub::bpns"] !== "string"
     )
       errors.push("bpns must be a string if provided.");
 
-    if (!Array.isArray(data.materials)) {
+    if (!Array.isArray(data.extraMetadata?.["ichub::materials"])) {
       errors.push("materials (array) is required.");
     } else {
-      data.materials.forEach((mat, index) => {
+      data.extraMetadata["ichub::materials"].forEach((mat, index) => {
         if (typeof mat !== "object" || mat === null) {
           errors.push(`materials[${index}] must be an object.`);
         } else {
@@ -187,12 +191,13 @@ const CreateProductListDialog = ({
         );
     };
 
-    checkMeasurement(data.width, "width");
-    checkMeasurement(data.height, "height");
-    checkMeasurement(data.length, "length");
-    checkMeasurement(data.weight, "weight");
+    checkMeasurement(data.extraMetadata?.['ichub::width'], "width");
+    checkMeasurement(data.extraMetadata?.['ichub::height'], "height");
+    checkMeasurement(data.extraMetadata?.['ichub::length'], "length");
+    checkMeasurement(data.extraMetadata?.['ichub::weight'], "weight");
 
     // Check for unexpected properties (optional, for stricter validation)
+    // TODO: needs adjustment when backend API is cleaned up from deprecated fields
     const allowedKeys: Set<keyof Omit<PartType, "status">> = new Set([
       // Exclude status
       "manufacturerPartId",
@@ -205,6 +210,7 @@ const CreateProductListDialog = ({
       "height",
       "length",
       "weight",
+      "extraMetadata",
     ]);
     for (const key in data) {
       if (!allowedKeys.has(key as keyof Omit<PartType, "status">)) {
