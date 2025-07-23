@@ -74,7 +74,7 @@ class SharingService:
                 global_id=db_twin.global_id,
                 manufacturer_part_id=catalog_part_to_share.manufacturer_part_id,
                 name=db_catalog_part.name,
-                bpns=db_catalog_part.bpns,
+                bpns=db_catalog_part.extra_metadata.get('bpns') if db_catalog_part.extra_metadata else None,
             )
             self.twin_management_service.create_twin_aspect(
                 TwinAspectCreate(

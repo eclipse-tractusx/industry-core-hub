@@ -29,6 +29,7 @@ from uuid import UUID, uuid4
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
+from services.part_management_service import PartManagementService
 from managers.enablement_services.dtr_manager import DTRManager
 from managers.enablement_services.connector_manager import ConnectorManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
@@ -83,7 +84,7 @@ class TwinManagementService:
         if not db_enablement_service_stacks:
             db_legal_entity = repo.legal_entity_repository.get_by_bpnl(bpnl=manufacturer_id)
             db_enablement_service_stack = repo.enablement_service_stack_repository.create(
-                EnablementServiceStack(name=uuid4(), legal_entity_id=db_legal_entity.id))
+                EnablementServiceStack(name=str(uuid4()), legal_entity_id=db_legal_entity.id))
             repo.commit()
             repo.refresh(db_enablement_service_stack)
         else:
@@ -152,7 +153,7 @@ class TwinManagementService:
                 manufacturer_id=create_input.manufacturer_id,
                 manufacturer_part_id=create_input.manufacturer_part_id,
                 customer_part_ids=customer_part_ids,
-                part_category=db_catalog_part.category,
+                part_category=db_catalog_part.extra_metadata.get('category') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None,
                 digital_twin_type=CATALOG_DIGITAL_TWIN_TYPE
             )
 
@@ -165,7 +166,7 @@ class TwinManagementService:
                     global_id=db_twin.global_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
                     name=db_catalog_part.name,
-                    bpns=db_catalog_part.bpns
+                    bpns=db_catalog_part.extra_metadata.get('bpns') if hasattr(db_catalog_part, 'extra_metadata') and db_catalog_part.extra_metadata else None
                 )
 
                 self.create_twin_aspect(
@@ -206,13 +207,18 @@ class TwinManagementService:
                     manufacturerId=db_catalog_part.legal_entity.bpnl,
                     manufacturerPartId=db_catalog_part.manufacturer_part_id,
                     name=db_catalog_part.name,
-                    category=db_catalog_part.category,
-                    bpns=db_catalog_part.bpns,
                     customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
                         name=partner_catalog_part.business_partner.name,
                         bpnl=partner_catalog_part.business_partner.bpnl
                     ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
                 )
+
+                # TODO: Deprecated fields - remove later
+                PartManagementService.fill_deprected_metadata_fields_base(
+                    db_catalog_part.extra_metadata,
+                    twin_result
+                )
+
                 if include_data_exchange_agreements:
                     self._fill_shares(db_twin, twin_result)
 
@@ -591,14 +597,15 @@ class TwinManagementService:
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
                 additionalContext=db_twin.additional_context,
                 customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
                     name=partner_catalog_part.business_partner.name,
                     bpnl=partner_catalog_part.business_partner.bpnl
                 ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
             )
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_customer_part_ids(db_catalog_part.extra_metadata, twin_result)
 
             TwinManagementService._fill_shares(db_twin, twin_result)
             TwinManagementService._fill_registrations(db_twin, twin_result)
