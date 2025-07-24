@@ -1,0 +1,503 @@
+{
+  "name": "Industry Core Hub Backend API",
+  "version": "1",
+  "items": [
+    {
+      "type": "folder",
+      "name": "Part Management",
+      "filename": "Part Management",
+      "items": [
+        {
+          "type": "http",
+          "name": "Part Management Create Catalog Part",
+          "filename": "Part Management Create Catalog Part.bru",
+          "seq": 3,
+          "request": {
+            "url": "{{baseUrl}}/part-management/catalog-part",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"manufacturerId\": \"\",\n  \"manufacturerPartId\": \"\",\n  \"customerPartIds\": \"\",\n  \"category\": \"\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Part Management Get Catalog Part",
+          "filename": "Part Management Get Catalog Part.bru",
+          "seq": 1,
+          "request": {
+            "url": "{{baseUrl}}/part-management/catalog-part/:manufacturer_id/:manufacturer_part_id",
+            "method": "GET",
+            "headers": [],
+            "params": [
+              {
+                "name": "manufacturer_id",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              },
+              {
+                "name": "manufacturer_part_id",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Part Management Get Catalog Parts",
+          "filename": "Part Management Get Catalog Parts.bru",
+          "seq": 2,
+          "request": {
+            "url": "{{baseUrl}}/part-management/catalog-part",
+            "method": "GET",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Submodel Dispatcher",
+      "filename": "Submodel Dispatcher",
+      "items": [
+        {
+          "type": "http",
+          "name": "Submodel Dispatcher Get Submodel Content Submodel Value",
+          "filename": "Submodel Dispatcher Get Submodel Content Submodel Value.bru",
+          "seq": 3,
+          "request": {
+            "url": "{{baseUrl}}/submodel-dispatcher/:semantic_id/:global_id/submodel/$value",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "Edc-Bpn",
+                "value": "",
+                "enabled": true
+              },
+              {
+                "name": "Edc-Contract-Agreement-Id",
+                "value": "",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "semantic_id",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              },
+              {
+                "name": "global_id",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Partner Management",
+      "filename": "Partner Management",
+      "items": [
+        {
+          "type": "http",
+          "name": "Partner Management Create Business Partner",
+          "filename": "Partner Management Create Business Partner.bru",
+          "seq": 2,
+          "request": {
+            "url": "{{baseUrl}}/partner-management/business-partner",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"bpnl\": \"\",\n  \"name\": \"\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Partner Management Get Business Partner",
+          "filename": "Partner Management Get Business Partner.bru",
+          "seq": 3,
+          "request": {
+            "url": "{{baseUrl}}/partner-management/business-partner/:business_partner_number",
+            "method": "GET",
+            "headers": [],
+            "params": [
+              {
+                "name": "business_partner_number",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Partner Management Get Business Partners",
+          "filename": "Partner Management Get Business Partners.bru",
+          "seq": 1,
+          "request": {
+            "url": "{{baseUrl}}/partner-management/business-partner",
+            "method": "GET",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Partner Management Get Data Exchange Agreements",
+          "filename": "Partner Management Get Data Exchange Agreements.bru",
+          "seq": 4,
+          "request": {
+            "url": "{{baseUrl}}/partner-management/business-partner/:business_partner_number/data-exchange-agreement",
+            "method": "GET",
+            "headers": [],
+            "params": [
+              {
+                "name": "business_partner_number",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "Twin Management",
+      "filename": "Twin Management",
+      "items": [
+        {
+          "type": "http",
+          "name": "Twin Management Create Catalog Part Twin",
+          "filename": "Twin Management Create Catalog Part Twin.bru",
+          "seq": 2,
+          "request": {
+            "url": "{{baseUrl}}/twin-management/catalog-part-twin",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"globalId\": \"\",\n  \"dtrAasId\": \"\",\n  \"manufacturerId\": \"\",\n  \"manufacturerPartId\": \"\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Twin Management Create Part Sharing Shortcut",
+          "filename": "Twin Management Create Part Sharing Shortcut.bru",
+          "seq": 6,
+          "request": {
+            "url": "{{baseUrl}}/share/catalog-part",
+            "method": "POST",
+            "headers": [],
+            "params": [
+              {
+                "name": "auto_generate_part_type_information_submodel",
+                "value": "",
+                "type": "query",
+                "enabled": false
+              }
+            ],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"manufacturerId\": \"\",\n  \"manufacturerPartId\": \"\",\n  \"businessPartnerNumber\": \"\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Twin Management Create Twin Aspect",
+          "filename": "Twin Management Create Twin Aspect.bru",
+          "seq": 5,
+          "request": {
+            "url": "{{baseUrl}}/twin-management/twin-aspect",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"globalId\": \"\",\n  \"semanticId\": \"\",\n  \"submodelId\": \"\",\n  \"payload\": {}\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Twin Management Get Catalog Part Twin",
+          "filename": "Twin Management Get Catalog Part Twin.bru",
+          "seq": 3,
+          "request": {
+            "url": "{{baseUrl}}/twin-management/catalog-part-twin/:global_id",
+            "method": "GET",
+            "headers": [],
+            "params": [
+              {
+                "name": "global_id",
+                "value": "",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Twin Management Get Catalog Part Twins",
+          "filename": "Twin Management Get Catalog Part Twins.bru",
+          "seq": 1,
+          "request": {
+            "url": "{{baseUrl}}/twin-management/catalog-part-twin",
+            "method": "GET",
+            "headers": [],
+            "params": [
+              {
+                "name": "include_data_exchange_agreements",
+                "value": "",
+                "type": "query",
+                "enabled": false
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Twin Management Share Catalog Part Twin",
+          "filename": "Twin Management Share Catalog Part Twin.bru",
+          "seq": 4,
+          "request": {
+            "url": "{{baseUrl}}/twin-management/catalog-part-twin/share",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"manufacturerId\": \"\",\n  \"manufacturerPartId\": \"\",\n  \"businessPartnerNumber\": \"\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "none"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "environments": [],
+  "root": {
+    "request": {
+      "vars": {
+        "req": [
+          {
+            "name": "baseUrl",
+            "value": "http://localhost:8000/",
+            "enabled": true,
+            "local": false,
+            "uid": "D7O2JFrsxJjNWsl2vC8yU"
+          }
+        ]
+      }
+    }
+  },
+  "brunoConfig": {
+    "version": "1",
+    "name": "Industry Core Hub Backend API",
+    "type": "collection",
+    "ignore": [
+      "node_modules",
+      ".git"
+    ],
+    "size": 0.0028295516967773438,
+    "filesCount": 14
+  }
+}
