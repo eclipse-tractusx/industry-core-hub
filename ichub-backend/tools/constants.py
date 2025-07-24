@@ -32,3 +32,6 @@ TWIN_ID_DESCRIPTION = "The ID of the associated twin."
 BUSINESS_PARTNER_ID_DESCRIPTION = "The ID of the associated business partner."
 PARENT_ORDER_NUMBER_DESCRIPTION = "The parent order number of the JIS part."
 VAN_DESCRIPTION = "The optional VAN (Vehicle Assembly Number) of the serialized part."
+
+# ==================== API VERSIONS =========================
+API_V1 = "v1"
