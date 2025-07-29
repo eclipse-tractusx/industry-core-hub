@@ -93,6 +93,9 @@ class CatalogPartCreate(CatalogPartDetailsRead):
 class CatalogPartDelete(CatalogPartBase):
     pass
 
+class CatalogPartUpdate(CatalogPartCreate):
+    pass
+
 class CatalogPartQuery(BaseModel):
     manufacturer_id: Optional[str] = Field(alias="manufacturerId", description="The BPNL (manufactuer ID) of the part to register.", default=None)
     manufacturer_part_id: Optional[str] = Field(alias="manufacturerPartId", description="The manufacturer part ID of the part.", default=None)
@@ -139,6 +142,9 @@ class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
     customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
 
 class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
+    pass
+
+class SerializedPartUpdate(SerializedPartCreate):
     pass
 
 class SerializedPartQuery(PartnerCatalogPartQuery):
