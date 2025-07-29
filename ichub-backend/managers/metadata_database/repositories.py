@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -351,6 +352,11 @@ class TwinRepository(BaseRepository[Twin]):
     def find_by_global_id(self, global_id: UUID) -> Optional[Twin]:
         stmt = select(Twin).where(
             Twin.global_id == global_id)
+        return self._session.scalars(stmt).first()
+    
+    def find_by_aas_id(self, aas_id: UUID) -> Optional[Twin]:
+        stmt = select(Twin).where(
+            Twin.aas_id == aas_id)
         return self._session.scalars(stmt).first()
     
     def find_catalog_part_twins(self,
