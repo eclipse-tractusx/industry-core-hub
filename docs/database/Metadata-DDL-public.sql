@@ -76,14 +76,7 @@ CREATE TABLE public.catalog_part (
     legal_entity_id integer NOT NULL,
     twin_id integer,
 	name character varying NOT NULL,
-	category character varying,
-	bpns character varying,
-    description character varying,
-    materials json,
-    width json,
-    height json,
-    length json,
-    weight json
+	extra_metadata json
 );
 
 CREATE TABLE public.data_exchange_agreement (
