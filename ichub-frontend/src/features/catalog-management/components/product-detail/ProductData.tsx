@@ -44,7 +44,7 @@ const ProductData = ({ part, sharedParts }: ProductDataProps) => {
         <Grid2 size={12}>
             <Grid2 className="ml-5 title-subtitle">
                 <Typography variant="h2">{part.name}</Typography>
-                <Typography variant="caption1">{part.category}</Typography>
+                <Typography variant="caption1">{part.extraMetadata?.["ichub:category"]}</Typography>
             </Grid2>
         </Grid2>
         
@@ -61,11 +61,11 @@ const ProductData = ({ part, sharedParts }: ProductDataProps) => {
                 </Box>
                 <Box>
                     <Typography variant="label3">Site of Origin (BPNS)</Typography>
-                    <Typography variant="body1">{part.bpns}</Typography>
+                    <Typography variant="body1">{part.extraMetadata?.["ichub:bpns"] ?? "-"}</Typography>
                 </Box>
                 <Box>
                     <Typography variant="label3">Description</Typography>
-                    <Typography variant="body3">{part.description ?? "-"}</Typography>
+                    <Typography variant="body3">{part.extraMetadata?.["ichub:description"] ?? "-"}</Typography>
                 </Box>
                 <Grid2 container>
                     <Grid2 size={{md:6, xs:12}}>
@@ -118,11 +118,11 @@ const ProductData = ({ part, sharedParts }: ProductDataProps) => {
                     {/*chart of materials*/}
                     <Grid2 size={{ md: 8, xs: 12 }}>
                         <Typography variant="label3">Materials:</Typography>
-                        {(part.materials && part.materials.length>0) ? (
+                        {(part.extraMetadata?.["ichub:materials"] && part.extraMetadata["ichub:materials"].length > 0) ? (
                             <PieChart
                                 series={[
                                     {
-                                        data: part.materials.map((material) => ({
+                                        data: part.extraMetadata["ichub:materials"].map((material: { share: any; name: any; }) => ({
                                             value: material.share,
                                             label: material.name,
                                         })),
@@ -153,19 +153,19 @@ const ProductData = ({ part, sharedParts }: ProductDataProps) => {
                     <Grid2 container size={{ md: 4, xs: 12 }} sx={{ marginY: 'auto' }}>
                         <Grid2 size={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                             <Typography variant="label3">Width:</Typography>
-                            <Typography variant="body1">{part.width?.value} {part.width?.unit}</Typography>
+                            <Typography variant="body1">{part.extraMetadata?.["ichub:width"]?.value} {part.extraMetadata?.["ichub:width"]?.unit}</Typography>
                         </Grid2>
                         <Grid2 size={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                             <Typography variant="label3">Height:</Typography>
-                            <Typography variant="body1">{part.height?.value} {part.height?.unit}</Typography>
+                            <Typography variant="body1">{part.extraMetadata?.["ichub:height"]?.value} {part.extraMetadata?.["ichub:height"]?.unit}</Typography>
                         </Grid2>
                         <Grid2 size={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                             <Typography variant="label3">Length:</Typography>
-                            <Typography variant="body1">{part.length?.value} {part.length?.unit}</Typography>
+                            <Typography variant="body1">{part.extraMetadata?.["ichub:length"]?.value} {part.extraMetadata?.["ichub:length"]?.unit}</Typography>
                         </Grid2>
                         <Grid2 size={6} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                             <Typography variant="label3">Weight:</Typography>
-                            <Typography variant="body1">{part.weight?.value} {part.weight?.unit}</Typography>
+                            <Typography variant="body1">{part.extraMetadata?.["ichub:weight"]?.value} {part.extraMetadata?.["ichub:weight"]?.unit}</Typography>
                         </Grid2>
                     </Grid2>
 
