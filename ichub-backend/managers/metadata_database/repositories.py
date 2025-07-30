@@ -31,6 +31,8 @@ from datetime import datetime, timezone
 
 from models.metadata_database.provider.models import (
     BusinessPartner,
+    DtrService,
+    EdcService,
     EnablementServiceStack,
     LegalEntity,
     Twin,
@@ -582,3 +584,13 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         )
         self.create(twin_registration)
         return twin_registration
+
+class EdcServiceRepository(BaseRepository[EdcService]):
+    def get_by_name(self, name: str) -> Optional[EdcService]:
+        stmt = select(EdcService).where(EdcService.name == name)
+        return self._session.scalars(stmt).first()
+
+class DtrServiceRepository(BaseRepository[DtrService]):
+    def get_by_name(self, name: str) -> Optional[DtrService]:
+        stmt = select(DtrService).where(DtrService.name == name)
+        return self._session.scalars(stmt).first()

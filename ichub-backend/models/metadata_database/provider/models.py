@@ -495,26 +495,81 @@ class DataExchangeContract(SQLModel, table=True):
 
     __tablename__ = "data_exchange_contract"
 
+class EdcService(SQLModel, table=True):
+    """
+    Represents an Eclipse Dataspace Connector (EDC) service.
+    It holds information about the EDC service, including its ID, name, and connection settings.
+    It is linked to the enablement_service_stack by a foreign key (enablement_service_stack_id).
+    Also it refers the legal entity under whose BPNL the EDC service is registered.
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the EDC service.
+        name (str): The name of the EDC service.
+        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON.
+        legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
+
+    Relationships:
+        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this EDC service.
+
+    Table Name:
+        edc_service
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True, description="The name of the EDC service.")
+    connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
+    legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
+
+    # Relationships
+    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="edc_service")
+    legal_entity: LegalEntity = Relationship()
+
+    __tablename__ = "edc_service"
+
+
+class DtrService(SQLModel, table=True):
+    """
+    Represents a Digital Twin Registry (DTR) service.
+    It holds information about the DTR service, including its ID, name, and connection settings.
+    It is linked to the enablement_service_stack by a foreign key (enablement_service_stack_id).
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the DTR service.
+        name (str): The name of the DTR service.
+        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON.
+
+    Relationships:
+        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this DTR service.
+
+    Table Name:
+        dtr_service
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True, description="The name of the DTR service.")
+    connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
+
+    # Relationships
+    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="dtr_service")
+
+    __tablename__ = "dtr_service"
+
 
 class EnablementServiceStack(SQLModel, table=True):
     """
     An instance/installation of the `Enablement services` stack.
     The `Enablement services` stack is a set of services that are used to enable standardized exchange of data between partners.
-    For this implementation, it needs to consist at least of an Eclipse Dataspace Connector (EDC)
-    and a Digital Twin Registry (DTR) connection.
-    It is linked to legal_entity through a foreign key (legal_entity_id) depicting that the EDC and DTR
-    are related to the respective (company-owned) BPNL of the data provider 
+    For this implementation, it needs to consist at least of one unique Eclipse Dataspace Connector (EDC)
+    and on (sharable) Digital Twin Registry (DTR) service.
 
     Attributes:
         id (Optional[int]): The unique identifier for the enablement service stack.
         name (str): The name of the enablement service stack.
-        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON. 
-			In the future could contain all necessary config to connect to the DTR/EDC/Submodel service. 
-			For the moment we only have one DTR/EDC/Submodel service and it will be statically provided.
-        legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
+        settings (Optional[Dict[str, Any]]): Any stack specific settings stored as JSON. 
+        edc_service_id (int): The ID of the associated EDC service (foreign key to edc_service).
+        dtr_service_id (int): The ID of the associated DTR service (foreign key to dtr_service).
 
     Relationships:
-        legal_entity (LegalEntity): The legal entity associated with this service stack.
+        edc_service (EdcService): The EDC service associated with this enablement service stack.
+        dtr_service (DtrService): The DTR service associated with this enablement service stack.
         twin_aspect_registrations (List["TwinAspectRegistration"]): The twin aspect registrations associated with this service stack.
         twin_registrations (List["TwinRegistration"]): The twin registrations associated with this service stack.
 
@@ -524,17 +579,18 @@ class EnablementServiceStack(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the enablement service stack.")
-    connection_settings: Optional[Dict[str, Any]] = Field(
+    settings: Optional[Dict[str, Any]] = Field(
         sa_column=Column(JSON),  # Specify JSON column type
-        description="Connection settings stored as JSON"
+        description="Any stack specific settings stored as JSON"
     )
-    legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
+    edc_service_id: int = Field(index=True, unique=True, foreign_key="edc_service.id", description="The ID of the associated legal entity.")
+    dtr_service_id: int = Field(index=True, foreign_key="dtr_service.id", description="The ID of the associated DTR service.")
 
     # Relationships
-    legal_entity: LegalEntity = Relationship(back_populates="enablement_service_stacks")
+    edc_service: EdcService = Relationship(back_populates="enablement_service_stack")
+    dtr_service: DtrService = Relationship(back_populates="enablement_service_stack")
     twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="enablement_service_stack")
     twin_registrations: List["TwinRegistration"] = Relationship(back_populates="enablement_service_stack")
-
 
     __tablename__ = "enablement_service_stack"
 
