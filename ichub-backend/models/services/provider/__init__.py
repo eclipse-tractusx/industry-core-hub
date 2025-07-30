@@ -22,6 +22,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+from .dtr_facade import (
+    DtrPagingStrResponse,
+)
+
 from .part_management import (
     CatalogPartDetailsRead,
     CatalogPartCreate,
@@ -67,4 +71,3 @@ from .twin_management import (
     SerializedPartTwinRead,
     SerializedPartTwinDetailsRead,
 )
-

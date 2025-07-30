@@ -32,6 +32,7 @@ from tools.constants import API_V1
 from tractusx_sdk.dataspace.tools import op
 
 from .routers.provider.api_v1 import (
+    dtr_facade,
     part_management,
     partner_management,
     twin_management,
@@ -66,6 +67,10 @@ tags_metadata = [
     {
         "name": "Open Connection Management",
         "description": "Handles the connections from the consumer modules, for specific services like digital twin registry and data endpoints"
+    },
+    {
+        "name": "Digital Twin Registry Facade",
+        "description": "DTR compatible API provided directly out of the Industry Core Hub Backend. No separate DTR service is needed"
     }
 ]
 
@@ -80,6 +85,7 @@ v1_router.include_router(twin_management.router)
 v1_router.include_router(submodel_dispatcher.router)
 v1_router.include_router(sharing_handler.router)
 v1_router.include_router(connection_management.router)
+v1_router.include_router(dtr_facade.router)
 
 # Include the API version 1 router into the main app
 app.include_router(v1_router)
