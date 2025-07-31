@@ -495,35 +495,37 @@ class DataExchangeContract(SQLModel, table=True):
 
     __tablename__ = "data_exchange_contract"
 
-class EdcService(SQLModel, table=True):
+class ConnectorService(SQLModel, table=True):
     """
-    Represents an Eclipse Dataspace Connector (EDC) service.
-    It holds information about the EDC service, including its ID, name, and connection settings.
+    Represents an Connector service.
+    It holds information about the Connector service, including its ID, name, and connection settings.
     It is linked to the enablement_service_stack by a foreign key (enablement_service_stack_id).
-    Also it refers the legal entity under whose BPNL the EDC service is registered.
+    Also it refers the legal entity under whose BPNL the Connector is registered.
 
     Attributes:
-        id (Optional[int]): The unique identifier for the EDC service.
-        name (str): The name of the EDC service.
+        id (Optional[int]): The unique identifier for the Connector service.
+        name (str): The name of the Connector service.
         connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON.
         legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
 
     Relationships:
-        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this EDC service.
+        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this Connector service.
 
     Table Name:
-        edc_service
+        connector_service
     """
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(index=True, unique=True, description="The name of the EDC service.")
+    name: str = Field(index=True, unique=True, description="The name of the Connector service.")
+    dataspace_version: str = Field(default="jupiter", description="The version of the dataspace release.")
+    dma_path: str = Field(default="/management", description="The path to the Connector management API.")
     connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
     legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
 
     # Relationships
-    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="edc_service")
+    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="connector_service")
     legal_entity: LegalEntity = Relationship()
 
-    __tablename__ = "edc_service"
+    __tablename__ = "connector_service"
 
 
 class DtrService(SQLModel, table=True):
@@ -545,6 +547,7 @@ class DtrService(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the DTR service.")
+    version: str = Field(default="3.0", description="The version of the DTR service.")
     connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
 
     # Relationships
@@ -583,12 +586,13 @@ class EnablementServiceStack(SQLModel, table=True):
         sa_column=Column(JSON),  # Specify JSON column type
         description="Any stack specific settings stored as JSON"
     )
-    edc_service_id: int = Field(index=True, unique=True, foreign_key="edc_service.id", description="The ID of the associated legal entity.")
+    connector_service_id: int = Field(index=True, unique=True, foreign_key="connector_service.id", description="The ID of the associated connector service.")
     dtr_service_id: int = Field(index=True, foreign_key="dtr_service.id", description="The ID of the associated DTR service.")
 
     # Relationships
-    edc_service: EdcService = Relationship(back_populates="enablement_service_stack")
+    connector_service: ConnectorService = Relationship(back_populates="enablement_service_stack")
     dtr_service: DtrService = Relationship(back_populates="enablement_service_stack")
+    
     twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="enablement_service_stack")
     twin_registrations: List["TwinRegistration"] = Relationship(back_populates="enablement_service_stack")
 

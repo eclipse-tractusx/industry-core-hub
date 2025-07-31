@@ -16,19 +16,19 @@ class LegalEntityUpdate(BaseModel):
 class LegalEntityRead(LegalEntityBase):
     pass
 
-class EdcServiceBase(BaseModel):
-    name: str = Field(..., description="Name of the EDC service")
+class ConnectorServiceBase(BaseModel):
+    name: str = Field(..., description="Name of the Connector service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class EdcServiceCreate(EdcServiceBase, BpnlBase):
+class ConnectorServiceCreate(ConnectorServiceBase, BpnlBase):
     pass
 
-class EdcServiceUpdate(BaseModel):
-    name: Optional[str] = Field(None, description="Name of the EDC service")
+class ConnectorServiceUpdate(BaseModel):
+    name: Optional[str] = Field(None, description="Name of the Connector service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class EdcServiceRead(EdcServiceBase):
-    legal_entity: LegalEntityRead = Field(alias="legalEntity", description="The legal entity associated with the EDC service")
+class ConnectorServiceRead(ConnectorServiceBase):
+    legal_entity: LegalEntityRead = Field(alias="legalEntity", description="The legal entity associated with the Connector service")
 
 class DtrServiceBase(BaseModel):
     name: str = Field(..., description="Name of the DTR service")
@@ -57,5 +57,5 @@ class EnablementServiceStackUpdate(BaseModel):
     # Add other updatable fields as needed
 
 class EnablementServiceStackRead(EnablementServiceStackBase):
-    edc_service: EdcServiceRead = Field(alias="edcService", description="The EDC service associated with the stack")
+    connector_service: ConnectorServiceRead = Field(alias="connectorService", description="The Connector service associated with the stack")
     dtr_service: DtrServiceRead = Field(alias="dtrService", description="The DTR service associated with the stack")

@@ -32,9 +32,9 @@ class RepositoryManager:
         self._session = session
         self._business_partner_repository = None
         self._catalog_part_repository = None
+        self._connector_service_repository = None
         self._data_exchange_agreement_repository = None
         self._dtr_service_repository = None
-        self._edc_service_repository = None
         self._enablement_service_stack_repository = None
         self._legal_entity_repository = None
         self._partner_catalog_part_repository = None
@@ -95,6 +95,14 @@ class RepositoryManager:
         return self._catalog_part_repository
 
     @property
+    def connector_service_repository(self):
+        """Lazy initialization of the connector service repository."""
+        if self._connector_service_repository is None:
+            from managers.metadata_database.repositories import ConnectorServiceRepository
+            self._connector_service_repository = ConnectorServiceRepository(self._session)
+        return self._connector_service_repository
+
+    @property
     def data_exchange_agreement_repository(self):
         """Lazy initialization of the data exchange agreement repository."""
         if self._data_exchange_agreement_repository is None:
@@ -109,14 +117,6 @@ class RepositoryManager:
             from managers.metadata_database.repositories import DtrServiceRepository
             self._dtr_service_repository = DtrServiceRepository(self._session)
         return self._dtr_service_repository
-
-    @property
-    def edc_service_repository(self):
-        """Lazy initialization of the EDC service repository."""
-        if self._edc_service_repository is None:
-            from managers.metadata_database.repositories import EdcServiceRepository
-            self._edc_service_repository = EdcServiceRepository(self._session)
-        return self._edc_service_repository
 
     @property
     def enablement_service_stack_repository(self):

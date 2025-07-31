@@ -5,9 +5,9 @@ from models.services.provider.system_management import (
     DtrServiceCreate,
     DtrServiceRead,
     DtrServiceUpdate,
-    EdcServiceCreate,
-    EdcServiceRead,
-    EdcServiceUpdate,
+    ConnectorServiceCreate,
+    ConnectorServiceRead,
+    ConnectorServiceUpdate,
     EnablementServiceStackCreate,
     EnablementServiceStackRead,
     EnablementServiceStackUpdate,
@@ -39,26 +39,26 @@ async def update_enablement_service_stack(stack_id: int, stack_update: Enablemen
 async def delete_enablement_service_stack(stack_id: int):
     return system_management_service.delete_enablement_service_stack(stack_id)
 
-# EDC Service endpoints
-@router.post("/edc-service", response_model=EdcServiceRead)
-async def create_edc_service(edc_create: EdcServiceCreate):
-    return system_management_service.create_edc_service(edc_create)
+# Connector Service endpoints
+@router.post("/connector-service", response_model=ConnectorServiceRead)
+async def create_connector_service(connector_create: ConnectorServiceCreate):
+    return system_management_service.create_connector_service(connector_create)
 
-@router.get("/edc-service", response_model=List[EdcServiceRead])
-async def get_edc_services():
-    return system_management_service.get_edc_services()
+@router.get("/connector-service", response_model=List[ConnectorServiceRead])
+async def get_connector_services():
+    return system_management_service.get_connector_services()
 
-@router.get("/edc-service/{edc_id}", response_model=EdcServiceRead)
-async def get_edc_service(edc_id: int):
-    return system_management_service.get_edc_service(edc_id)
+@router.get("/connector-service/{connector_id}", response_model=ConnectorServiceRead)
+async def get_connector_service(connector_id: int):
+    return system_management_service.get_connector_service(connector_id)
 
-@router.put("/edc-service/{edc_id}", response_model=EdcServiceRead)
-async def update_edc_service(edc_id: int, edc_update: EdcServiceUpdate):
-    return system_management_service.update_edc_service(edc_id, edc_update)
+@router.put("/connector-service/{connector_id}", response_model=ConnectorServiceRead)
+async def update_connector_service(connector_id: int, connector_update: ConnectorServiceUpdate):
+    return system_management_service.update_connector_service(connector_id, connector_update)
 
-@router.delete("/edc-service/{edc_id}", response_model=bool)
-async def delete_edc_service(edc_id: int):
-    return system_management_service.delete_edc_service(edc_id)
+@router.delete("/connector-service/{connector_id}", response_model=bool)
+async def delete_connector_service(connector_id: int):
+    return system_management_service.delete_connector_service(connector_id)
 
 # DTR Service endpoints
 @router.post("/dtr-service", response_model=DtrServiceRead)

@@ -1,11 +1,11 @@
 from typing import List, Optional
 from models.services.provider.system_management import (
+    ConnectorServiceCreate,
+    ConnectorServiceRead,
+    ConnectorServiceUpdate,
     DtrServiceCreate,
     DtrServiceRead,
     DtrServiceUpdate,
-    EdcServiceCreate,
-    EdcServiceRead,
-    EdcServiceUpdate,
     EnablementServiceStackCreate,
     EnablementServiceStackRead,
     EnablementServiceStackUpdate,
@@ -15,8 +15,8 @@ from models.services.provider.system_management import (
 )
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.provider.models import (
+    ConnectorService,
     DtrService,
-    EdcService,
     EnablementServiceStack,
     LegalEntity
 )
@@ -63,72 +63,72 @@ class SystemManagementService:
             except ValueError:
                 return False
 
-    def create_edc_service(self, edc_create: EdcServiceCreate) -> EdcServiceRead:
+    def create_connector_service(self, connector_create: ConnectorServiceCreate) -> ConnectorServiceRead:
         with RepositoryManagerFactory.create() as repo:
-            legal_entity = repo.legal_entity_repository.get_by_bpnl(edc_create.bpnl)
+            legal_entity = repo.legal_entity_repository.get_by_bpnl(connector_create.bpnl)
             if not legal_entity or legal_entity.id is None:
                 raise ValueError("LegalEntity with given BPNL not found or has no ID")
-            db_edc = EdcService(
-                name=edc_create.name,
-                connection_settings=edc_create.connection_settings,
+            db_connector = ConnectorService(
+                name=connector_create.name,
+                connection_settings=connector_create.connection_settings,
                 legal_entity_id=legal_entity.id
             )
-            repo.edc_service_repository.create(db_edc)
+            repo.connector_service_repository.create(db_connector)
             repo.commit()
-            return EdcServiceRead(
-                name=db_edc.name,
-                connection_settings=db_edc.connection_settings,
+            return ConnectorServiceRead(
+                name=db_connector.name,
+                connection_settings=db_connector.connection_settings,
                 legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
             )
 
-    def get_edc_service(self, edc_id: int) -> Optional[EdcServiceRead]:
+    def get_connector_service(self, connector_id: int) -> Optional[ConnectorServiceRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_edc = repo.edc_service_repository.find_by_id(edc_id)
-            if db_edc:
-                legal_entity = repo.legal_entity_repository.find_by_id(db_edc.legal_entity_id)
+            db_connector = repo.connector_service_repository.find_by_id(connector_id)
+            if db_connector:
+                legal_entity = repo.legal_entity_repository.find_by_id(db_connector.legal_entity_id)
                 if legal_entity:
-                    return EdcServiceRead(
-                        name=db_edc.name,
-                        connection_settings=db_edc.connection_settings,
+                    return ConnectorServiceRead(
+                        name=db_connector.name,
+                        connection_settings=db_connector.connection_settings,
                         legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                     )
             return None
 
-    def get_edc_services(self) -> List[EdcServiceRead]:
+    def get_connector_services(self) -> List[ConnectorServiceRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_edcs = repo.edc_service_repository.find_all()
+            db_connectors = repo.connector_service_repository.find_all()
             result = []
-            for edc in db_edcs:
-                legal_entity = repo.legal_entity_repository.find_by_id(edc.legal_entity_id)
+            for connector in db_connectors:
+                legal_entity = repo.legal_entity_repository.find_by_id(connector.legal_entity_id)
                 if legal_entity:
-                    result.append(EdcServiceRead(
-                        name=edc.name,
-                        connection_settings=edc.connection_settings,
+                    result.append(ConnectorServiceRead(
+                        name=connector.name,
+                        connection_settings=connector.connection_settings,
                         legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                     ))
             return result
 
-    def update_edc_service(self, edc_id: int, edc_update: EdcServiceUpdate) -> Optional[EdcServiceRead]:
+    def update_connector_service(self, connector_id: int, connector_update: ConnectorServiceUpdate) -> Optional[ConnectorServiceRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_edc = repo.edc_service_repository.find_by_id(edc_id)
-            if not db_edc:
+            db_connector = repo.connector_service_repository.find_by_id(connector_id)
+            if not db_connector:
                 return None
-            for field, value in edc_update.model_dump(exclude_unset=True).items():
-                setattr(db_edc, field, value)
+            for field, value in connector_update.model_dump(exclude_unset=True).items():
+                setattr(db_connector, field, value)
             repo.commit()
-            legal_entity = repo.legal_entity_repository.find_by_id(db_edc.legal_entity_id)
+            legal_entity = repo.legal_entity_repository.find_by_id(db_connector.legal_entity_id)
             if legal_entity:
-                return EdcServiceRead(
-                    name=db_edc.name,
-                    connection_settings=db_edc.connection_settings,
+                return ConnectorServiceRead(
+                    name=db_connector.name,
+                    connection_settings=db_connector.connection_settings,
                     legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                 )
             return None
 
-    def delete_edc_service(self, edc_id: int) -> bool:
+    def delete_connector_service(self, connector_id: int) -> bool:
         with RepositoryManagerFactory.create() as repo:
             try:
-                repo.edc_service_repository.delete(edc_id)
+                repo.connector_service_repository.delete(connector_id)
                 repo.commit()
                 return True
             except ValueError:
