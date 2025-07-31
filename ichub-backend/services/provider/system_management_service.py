@@ -20,6 +20,9 @@ from models.metadata_database.provider.models import (
     EnablementServiceStack,
     LegalEntity
 )
+from managers.enablement_services.dtr_manager import DTRManager
+from managers.enablement_services.connector_manager import ConnectorManager
+from managers.config.config_manager import ConfigManager
 
 class SystemManagementService:
     """
@@ -27,10 +30,48 @@ class SystemManagementService:
     """
     def create_enablement_service_stack(self, stack_create: EnablementServiceStackCreate) -> EnablementServiceStackRead:
         with RepositoryManagerFactory.create() as repo:
-            db_stack = EnablementServiceStack(**stack_create.model_dump(by_alias=False))
+            db_enablement_service_stacks = repo.enablement_service_stack_repository.get_by_name(stack_create.name)
+            if db_enablement_service_stacks:
+                raise ValueError(f"EnablementServiceStack with name {stack_create.name} already exists.")
+            
+            db_connector_service = repo.connector_service_repository.get_by_name(stack_create.connector_name)
+            if not db_connector_service:
+                raise ValueError(f"ConnectorService with name {stack_create.connector_name} not found.")
+            
+            db_dtr_service = repo.dtr_service_repository.get_by_name(stack_create.dtr_name)
+            if not db_dtr_service:
+                raise ValueError(f"DtrService with name {stack_create.dtr_name} not found.")
+
+            db_stack = EnablementServiceStack(
+                name=stack_create.name,
+                connector_service_id=db_connector_service.id,
+                dtr_service_id=db_dtr_service.id,
+                settings=stack_create.settings)
+            
             repo.enablement_service_stack_repository.create(db_stack)
             repo.commit()
-            return EnablementServiceStackRead.model_validate(db_stack)
+        
+            ## Create a asset in the connector for the digital twin registry.
+            # TODO: will all customers want to have that? Maybe introduce a parameter for that?
+            edc_manager = self.create_connector_manager(db_connector_service)
+            
+            dtr_config = db_dtr_service.connection_settings # Get the DTR connection settings from the DB
+            asset_config = dtr_config.get("asset_config")
+            
+            dtr_asset_id, _, _, _ = edc_manager.register_dtr_offer(
+                base_dtr_url=dtr_config.get("hostname"),
+                uri=dtr_config.get("uri"),
+                api_path=dtr_config.get("apiPath"),
+                dtr_policy_config=dtr_config.get("policy"),
+                dct_type=asset_config.get("dct_type"),
+                existing_asset_id=asset_config.get("existing_asset_id", None)
+            )
+
+            # Update the Connector connection settings with the generated asset id for the DTR
+            db_connector_service.connection_settings["dtr_asset_id"] = dtr_asset_id
+            repo.commit()
+        
+        return EnablementServiceStackRead.model_validate(db_stack)
 
     def get_enablement_service_stack(self, stack_id: int) -> Optional[EnablementServiceStackRead]:
         with RepositoryManagerFactory.create() as repo:
@@ -209,3 +250,35 @@ class SystemManagementService:
                 return True
             except ValueError:
                 return False
+
+    @staticmethod
+    def create_dtr_manager(db_dtr_service: DtrService) -> DTRManager:
+        """
+        Create a new instance of the DTRManager class.
+        """
+        dtr_connection_settings = db_dtr_service.connection_settings
+
+        # TODO: remove the fallback
+        dtr_hostname = dtr_connection_settings.get('hostname') or ConfigManager.get_config('digitalTwinRegistry.hostname')
+        dtr_uri = dtr_connection_settings.get('uri') or ConfigManager.get_config('digitalTwinRegistry.uri')
+        dtr_lookup_uri = dtr_connection_settings.get('lookupUri') or ConfigManager.get_config('digitalTwinRegistry.lookupUri')
+        dtr_api_path = dtr_connection_settings.get('apiPath') or ConfigManager.get_config('digitalTwinRegistry.apiPath')
+        dtr_url = f"{dtr_hostname}{dtr_uri}"
+        dtr_lookup_url = f"{dtr_hostname}{dtr_lookup_uri}"
+
+        # TODO: implement caching
+
+        return DTRManager(
+            dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
+            api_path=str(dtr_api_path))
+
+    @staticmethod
+    def create_connector_manager(db_connector_service: ConnectorService) -> ConnectorManager:
+        """
+        Create a new instance of the EDCManager class.
+        """
+        # TODO: later we can configure the manager via the connection settings from the DB here
+
+        # TODO: implement caching
+
+        return ConnectorManager()

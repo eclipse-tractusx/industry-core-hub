@@ -49,7 +49,7 @@ class EnablementServiceStackBase(BaseModel):
     settings: Optional[Dict[str, Any]] = Field(None, description="Settings for the enablement service stack as JSON")
 
 class EnablementServiceStackCreate(EnablementServiceStackBase):
-    edc_name: str = Field(alias="edcName", description="Name of the EDC service associated with the stack")
+    connector_name: str = Field(alias="connectorName", description="Name of the Connector service associated with the stack")
     dtr_name: str = Field(alias="dtrName", description="Name of the DTR service associated with the stack")
 
 class EnablementServiceStackUpdate(BaseModel):
