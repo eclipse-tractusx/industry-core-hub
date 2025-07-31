@@ -105,39 +105,21 @@ class PartManagementService():
 
             # Check if we already should create some customer part IDs for the given catalog part
             if catalog_part_create.customer_part_ids:
-                for partner_catalog_part_create in catalog_part_create.customer_part_ids:
+                for customer_part_id, business_partner in catalog_part_create.customer_part_ids.items():
                     
-                    db_business_partner = self._get_business_partner_by_name(partner_catalog_part_create, repos)
+                    db_business_partner = repos.business_partner_repository.get_by_bpnl(business_partner.bpnl)
 
                     # Create the partner catalog part entry in the metadata database
                     repos.partner_catalog_part_repository.create(PartnerCatalogPart(
                         business_partner_id=db_business_partner.id,
-                        customer_part_id=partner_catalog_part_create.customer_part_id,
+                        customer_part_id=customer_part_id,
                         catalog_part_id=db_catalog_part.id
                     ))
                     # TODO: error handling (issue: if one customer part ID fails, all should fail???)
 
-                    result.customer_part_ids[partner_catalog_part_create.customer_part_id] = BusinessPartnerRead(name = db_business_partner.name, bpnl = db_business_partner.bpnl)  
+                    result.customer_part_ids = catalog_part_create.customer_part_ids
 
             return result
-
-    @staticmethod
-    def _get_business_partner_by_name(partner_catalog_part_create, repos):
-        """
-        Retrieve a business partner entity by its name from the repository.
-        """
-        # We need both the customer part ID and the name of the business partner
-        if not partner_catalog_part_create.customer_part_id:
-            raise InvalidError("Customer part ID is required for a customer part mapping.")
-        if not partner_catalog_part_create.business_partner_name:
-            raise InvalidError("Business partner name is required for a customer part mapping.")
-        # Resolve the business partner by name from the metadata database
-        db_business_partner = repos.business_partner_repository.get_by_name(
-            partner_catalog_part_create.business_partner_name)
-        if not db_business_partner:
-            raise NotFoundError(
-                f"Business partner '{partner_catalog_part_create.business_partner_name}' does not exist. Please create it first.")
-        return db_business_partner
 
     @staticmethod
     def _manage_share_error(catalog_part_create):
@@ -150,39 +132,6 @@ class PartManagementService():
             raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
         if total_share > 100:
             raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
-
-    def create_catalog_part_by_ids(self,
-        manufacturer_id: str,
-        manufacturer_part_id: str,
-        name: str,
-        category: Optional[str],
-        bpns: Optional[str],
-        customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartDetailsReadWithStatus:
-          
-        """Convenience method to create a catalog part by its IDs."""
-
-        partner_catalog_parts = []
-        for partner_catalog_part in customer_parts:
-            partner_catalog_part = PartnerCatalogPartBase(
-                customerPartId=partner_catalog_part.customer_part_id,
-                businessPartnerName=partner_catalog_part.business_partner_name
-            )
-            partner_catalog_parts.append(partner_catalog_part)
-
-        catalog_part_create = CatalogPartCreate(
-            manufacturerId=manufacturer_id,
-            manufacturerPartId=manufacturer_part_id,
-            name=name,
-            category=category,
-            bpns=bpns,
-            customerPartIds=partner_catalog_parts
-        )
-
-        # Create the catalog part, and return the catalog saved in the database
-        result_catalog_part_read = self.create_catalog_part(catalog_part_create)
-
-        return result_catalog_part_read
-
 
     def delete_catalog_part(self, catlog_part: CatalogPartDelete) -> None:
         """
