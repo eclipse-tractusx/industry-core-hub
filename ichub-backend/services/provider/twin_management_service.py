@@ -23,7 +23,7 @@
 #################################################################################
 
 from typing import Optional, Dict, Any, List
-from uuid import UUID, uuid4
+from uuid import UUID
 
 
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
@@ -48,7 +48,7 @@ from models.services.provider.twin_management import (
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
-from models.metadata_database.provider.models import EnablementServiceStack, Twin
+from models.metadata_database.provider.models import BusinessPartner, Twin
 from tools.exceptions import InvalidError, NotFoundError
 
 from managers.config.log_manager import LoggingManager
@@ -435,7 +435,9 @@ class TwinManagementService:
             # TODO: later the stack needs to be passed as an argument
             db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
                 name=twin_aspect_create.enablement_service_stack_name,
-                join_legal_entity=True
+                join_legal_entity=True,
+                join_connector_service=True,
+                join_dtr_service=True
             )
             if not db_enablement_service_stack:
                 raise NotFoundError(f"Enablement service stack '{twin_aspect_create.enablement_service_stack_name}' not found.")
@@ -682,7 +684,7 @@ class TwinManagementService:
     def _create_twin_exchange(
         repo: RepositoryManager,
         db_twin: Twin,
-        db_business_partner: BusinessPartnerRead
+        db_business_partner: BusinessPartner
     ) -> bool:
             # Step 1: Retrieve the first data exchange agreement entity for the business partner
             # (this will will later be replaced with an explicit mechanism choose a specific data exchange agreement)
