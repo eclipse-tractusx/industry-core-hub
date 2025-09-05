@@ -42,9 +42,6 @@ tractusx-connector:
           # content from the wallet secret, caution on pasting real secrets here!
 
   controlplane:
-    env:
-      EDC_DCP_V08_FORCED: true
-      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       management:
