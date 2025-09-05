@@ -43,9 +43,6 @@ tractusx-connector:
           secret_alias: client-provider-secret
 
   controlplane:
-    env:
-      EDC_DCP_V08_FORCED: true
-      EDC_CATALOG_CACHE_EXECUTION: false
     enabled: true
     endpoints:
       management:
