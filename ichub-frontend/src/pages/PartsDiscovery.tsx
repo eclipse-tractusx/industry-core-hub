@@ -192,6 +192,7 @@ const PartsDiscovery = () => {
   const [loadingStatus, setLoadingStatus] = useState<string>('');
   const [loadingStep, setLoadingStep] = useState<number>(0);
   const [isSearchCompleted, setIsSearchCompleted] = useState<boolean>(false);
+  const [showSearchLoading, setShowSearchLoading] = useState<boolean>(false);
   
   // Pagination loading states
   const [isLoadingNext, setIsLoadingNext] = useState(false);
@@ -354,6 +355,7 @@ const PartsDiscovery = () => {
   // Function to start dynamic loading progress that adapts to actual response time
   const startLoadingProgress = (bpnlValue: string) => {
     setIsLoading(true);
+    setShowSearchLoading(true);
     setIsSearchCompleted(false);
     updateLoadingStatus(1, 'Looking for known Digital Twin Registries in the Cache');
     
@@ -383,22 +385,35 @@ const PartsDiscovery = () => {
     }, 500);
     
     // Return completion function that immediately completes the progress
-    return () => {
+    return (isError = false) => {
       clearInterval(progressInterval);
-      console.log('🏁 Search completion triggered - showing completed state');
-      // Immediately complete all steps when API responds
-      setIsSearchCompleted(true);
-      updateLoadingStatus(5, 'Search completed successfully!');
-      // Show completion state first, then hide the loading
-      setTimeout(() => {
-        console.log('⏰ Hiding loading component');
+      
+      if (isError) {
+        console.log('❌ Search failed - resetting immediately');
+        // For errors, reset immediately without showing completion
         setIsLoading(false);
-        // Reset completion state after loading is hidden
+        setShowSearchLoading(false);
+        setLoadingStatus('');
+        setIsSearchCompleted(false);
+      } else {
+        console.log('🏁 Search completion triggered - showing completed state');
+        // For successful completion, show success state temporarily
+        setIsSearchCompleted(true);
+        updateLoadingStatus(5, 'Search completed successfully!');
+        setIsLoading(false); // Stop the loading immediately
+        
+        // Keep the SearchLoading component visible for 2.5 seconds to show completion
+        // This aligns with the 2-second delay in setHasSearched
         setTimeout(() => {
-          setLoadingStatus('');
-          setIsSearchCompleted(false);
-        }, 100);
-      }, 1500);
+          console.log('⏰ Hiding loading component after showing completion');
+          setShowSearchLoading(false);
+          // Reset completion state after component is hidden
+          setTimeout(() => {
+            setLoadingStatus('');
+            setIsSearchCompleted(false);
+          }, 100);
+        }, 2500); // Show completion state for 2.5 seconds
+      }
     };
   };
 
@@ -448,17 +463,49 @@ const PartsDiscovery = () => {
       
       try {
         const response = await discoverSingleShell(bpnl, singleTwinAasId.trim());
+        console.log('🔍 Single twin API response:', response);
+        
+        // Check if the response indicates an error (like 404)
+        if (response && typeof response === 'object' && 'status' in response && 'error' in response) {
+          const errorResponse = response as { status: number; error: string };
+          console.log('❌ Error response detected:', errorResponse);
+          if (errorResponse.status >= 400) {
+            throw new Error(errorResponse.error || `HTTP ${errorResponse.status} error`);
+          }
+        }
+        
+        // Validate that we have a proper shell descriptor
+        if (!response || !response.shell_descriptor) {
+          console.log('❌ Invalid response structure:', response);
+          throw new Error('Invalid response: No shell descriptor found');
+        }
+        
+        console.log('✅ Valid response, setting single twin result');
         setSingleTwinResult(response);
-        setHasSearched(true);
-      } finally {
-        // Stop the loading progress when API call completes
+        // Delay showing results to allow completion state to be visible
+        setTimeout(() => {
+          setHasSearched(true);
+        }, 2000); // Wait 2 seconds before showing results
+        // Success - show completion state
         stopProgress();
+      } catch (searchError) {
+        console.log('❌ Search error caught:', searchError);
+        // Error during search - reset immediately
+        stopProgress(true);
+        throw searchError;
       }
     } catch (err) {
       let errorMessage = 'Failed to discover digital twin';
       
       if (err instanceof Error) {
-        errorMessage = `Single twin search failed: ${err.message}`;
+        // Handle specific error messages
+        if (err.message.includes('Shell not found')) {
+          errorMessage = `Digital twin not found: The AAS ID "${singleTwinAasId.trim()}" was not found in any Digital Twin Registry for partner "${bpnl}". Please verify the AAS ID is correct.`;
+        } else if (err.message.includes('DTR')) {
+          errorMessage = `Digital Twin Registry error: ${err.message}`;
+        } else {
+          errorMessage = `Single twin search failed: ${err.message}`;
+        }
       } else if (typeof err === 'string') {
         errorMessage = `Single twin search failed: ${err}`;
       } else if (err && typeof err === 'object') {
@@ -466,6 +513,8 @@ const PartsDiscovery = () => {
           const responseData = err.response.data as Record<string, unknown>;
           if (typeof responseData.message === 'string') {
             errorMessage = `Single twin search failed: ${responseData.message}`;
+          } else if (typeof responseData.error === 'string') {
+            errorMessage = `Single twin search failed: ${responseData.error}`;
           }
         } else if ('message' in err) {
           const errWithMessage = err as { message: string };
@@ -474,6 +523,7 @@ const PartsDiscovery = () => {
       }
       
       setError(errorMessage);
+      // Don't set hasSearched = true for single twin errors - keep the form visible
     } finally {
       setIsLoading(false);
       setLoadingStatus('');
@@ -708,9 +758,12 @@ const PartsDiscovery = () => {
       let response;
       try {
         response = await discoverShellsWithCustomQuery(bpnl, querySpec, limit);
-      } finally {
-        // Stop the loading progress when API call completes
+        // Success - show completion state
         stopProgress();
+      } catch (searchError) {
+        // Error during search - reset immediately
+        stopProgress(true);
+        throw searchError;
       }
 
       setCurrentResponse(response);      // Log the full response for debugging
@@ -804,8 +857,10 @@ const PartsDiscovery = () => {
         setTotalPages(Math.ceil(response.shellsFound / limit));
       }
 
-      // Mark that search has been performed successfully
-      setHasSearched(true);
+      // Mark that search has been performed successfully - delay to show completion state
+      setTimeout(() => {
+        setHasSearched(true);
+      }, 2000); // Wait 2 seconds before showing results
 
     } catch (err) {
       console.error('Search error:', err);
@@ -841,6 +896,7 @@ const PartsDiscovery = () => {
       }
       
       setError(errorMessage);
+      setHasSearched(true); // Ensure error is shown by setting hasSearched to true
     } finally {
       setIsLoading(false);
       setLoadingStatus('');
@@ -1327,11 +1383,10 @@ const PartsDiscovery = () => {
                   }}
                 >
                   {/* Show loading component or search form */}
-                  {isLoading ? (
+                  {showSearchLoading ? (
                     <SearchLoading 
                       currentStep={loadingStep} 
                       currentStatus={loadingStatus} 
-                      bpnl={bpnl} 
                       isCompleted={isSearchCompleted}                    />
                   ) : (
                     <Box display="flex" flexDirection="column" gap={4}>
@@ -1555,11 +1610,10 @@ const PartsDiscovery = () => {
                   }}
                 >
                   {/* Show loading component or search form */}
-                  {isLoading ? (
+                  {showSearchLoading ? (
                     <SearchLoading 
                       currentStep={loadingStep} 
                       currentStatus={loadingStatus} 
-                      bpnl={bpnl} 
                       isCompleted={isSearchCompleted}                    />
                   ) : (
                     <Box display="flex" flexDirection="column" gap={4}>
@@ -1778,6 +1832,26 @@ const PartsDiscovery = () => {
                     counterPartyId={selectedPartner?.bpnl || ''} 
                     singleTwinResult={singleTwinResult} 
                   />
+                )}
+                
+                {/* Single Twin Mode Error Display - When search failed */}
+                {!singleTwinResult && searchMode === 'single' && error && (
+                  <Box sx={{ width: '100%', p: 4, display: 'flex', justifyContent: 'center' }}>
+                    <Alert 
+                      severity="error" 
+                      onClose={() => setError(null)} 
+                      sx={{ maxWidth: '600px', width: '100%' }}
+                    >
+                      <Box>
+                        <Typography variant="h6" sx={{ mb: 1 }}>
+                          Digital Twin Not Found
+                        </Typography>
+                        <Typography variant="body2">
+                          {error}
+                        </Typography>
+                      </Box>
+                    </Alert>
+                  </Box>
                 )}
                 
                 {/* View Twin Mode Results - For viewing twins from catalog */}
