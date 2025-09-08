@@ -192,7 +192,6 @@ const PartsDiscovery = () => {
   const [loadingStatus, setLoadingStatus] = useState<string>('');
   const [loadingStep, setLoadingStep] = useState<number>(0);
   const [isSearchCompleted, setIsSearchCompleted] = useState<boolean>(false);
-  const [showSearchLoading, setShowSearchLoading] = useState<boolean>(false);
   
   // Pagination loading states
   const [isLoadingNext, setIsLoadingNext] = useState(false);
@@ -355,7 +354,6 @@ const PartsDiscovery = () => {
   // Function to start dynamic loading progress that adapts to actual response time
   const startLoadingProgress = (bpnlValue: string) => {
     setIsLoading(true);
-    setShowSearchLoading(true);
     setIsSearchCompleted(false);
     updateLoadingStatus(1, 'Looking for known Digital Twin Registries in the Cache');
     
@@ -392,7 +390,6 @@ const PartsDiscovery = () => {
         console.log('❌ Search failed - resetting immediately');
         // For errors, reset immediately without showing completion
         setIsLoading(false);
-        setShowSearchLoading(false);
         setLoadingStatus('');
         setIsSearchCompleted(false);
       } else {
@@ -400,19 +397,16 @@ const PartsDiscovery = () => {
         // For successful completion, show success state temporarily
         setIsSearchCompleted(true);
         updateLoadingStatus(5, 'Search completed successfully!');
-        setIsLoading(false); // Stop the loading immediately
-        
-        // Keep the SearchLoading component visible for 2.5 seconds to show completion
-        // This aligns with the 2-second delay in setHasSearched
+        // Show completion state for 5 seconds so user can definitely see the full progress bar
         setTimeout(() => {
-          console.log('⏰ Hiding loading component after showing completion');
-          setShowSearchLoading(false);
-          // Reset completion state after component is hidden
+          console.log('⏰ Hiding loading component');
+          setIsLoading(false);
+          // Reset completion state after loading is hidden
           setTimeout(() => {
             setLoadingStatus('');
             setIsSearchCompleted(false);
           }, 100);
-        }, 2500); // Show completion state for 2.5 seconds
+        }, 5000); // Increased from 3000ms to 5000ms (5 seconds)
       }
     };
   };
@@ -482,10 +476,7 @@ const PartsDiscovery = () => {
         
         console.log('✅ Valid response, setting single twin result');
         setSingleTwinResult(response);
-        // Delay showing results to allow completion state to be visible
-        setTimeout(() => {
-          setHasSearched(true);
-        }, 2000); // Wait 2 seconds before showing results
+        setHasSearched(true);
         // Success - show completion state
         stopProgress();
       } catch (searchError) {
@@ -857,10 +848,8 @@ const PartsDiscovery = () => {
         setTotalPages(Math.ceil(response.shellsFound / limit));
       }
 
-      // Mark that search has been performed successfully - delay to show completion state
-      setTimeout(() => {
-        setHasSearched(true);
-      }, 2000); // Wait 2 seconds before showing results
+      // Mark that search has been performed successfully
+      setHasSearched(true);
 
     } catch (err) {
       console.error('Search error:', err);
@@ -1383,7 +1372,7 @@ const PartsDiscovery = () => {
                   }}
                 >
                   {/* Show loading component or search form */}
-                  {showSearchLoading ? (
+                  {isLoading ? (
                     <SearchLoading 
                       currentStep={loadingStep} 
                       currentStatus={loadingStatus} 
@@ -1610,7 +1599,7 @@ const PartsDiscovery = () => {
                   }}
                 >
                   {/* Show loading component or search form */}
-                  {showSearchLoading ? (
+                  {isLoading ? (
                     <SearchLoading 
                       currentStep={loadingStep} 
                       currentStatus={loadingStatus} 

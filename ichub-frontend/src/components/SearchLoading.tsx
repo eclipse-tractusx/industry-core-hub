@@ -40,7 +40,6 @@ const SearchLoading = ({ currentStep, currentStatus, isCompleted = false }: Sear
   const [hasShownCache, setHasShownCache] = useState(false);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [, forceUpdate] = useState(0); // Force re-renders for smooth progress
-  const [showCompleted, setShowCompleted] = useState(false);
   
   // Messages that rotate every few seconds
   const rotatingMessages = [
@@ -65,8 +64,8 @@ const SearchLoading = ({ currentStep, currentStatus, isCompleted = false }: Sear
   // Calculate progress - steadily increase to ~95% over time, never restart
   const calculateProgress = () => {
     // Immediately return 100% when completed - this should be instant
-    if (isCompleted || currentStatus.includes('completed') || showCompleted) {
-      console.log('📊 Progress set to 100% - completion detected', { isCompleted, currentStatus, showCompleted });
+    if (isCompleted || currentStatus.includes('completed')) {
+      console.log('📊 Progress set to 100% - completion detected', { isCompleted, currentStatus });
       return 100; 
     }
     
@@ -76,34 +75,8 @@ const SearchLoading = ({ currentStep, currentStatus, isCompleted = false }: Sear
     return baseProgress;
   };
 
-  const isSearchCompleted = isCompleted || currentStatus.includes('completed') || showCompleted;
+  const isSearchCompleted = isCompleted || currentStatus.includes('completed');
   const progressValue = calculateProgress();
-  
-  // Handle completion state transitions
-  useEffect(() => {
-    if (isCompleted || currentStatus.includes('completed')) {
-      console.log('🎯 Completion detected, showing completed state');
-      setShowCompleted(true);
-      
-      // Force immediate update to ensure progress bar jumps to 100%
-      forceUpdate((prev: number) => prev + 1);
-      
-      // Keep the completed state visible for 3 seconds after completion is detected
-      const completionTimer = setTimeout(() => {
-        console.log('⏰ Hiding completed state after display period');
-        setShowCompleted(false);
-      }, 3000);
-      
-      return () => clearTimeout(completionTimer);
-    }
-  }, [isCompleted, currentStatus]);
-  
-  // Reset showCompleted when a new search starts
-  useEffect(() => {
-    if (currentStep === 1 && !isCompleted && !currentStatus.includes('completed')) {
-      setShowCompleted(false);
-    }
-  }, [currentStep, isCompleted, currentStatus]);
   
   // Debug log to track completion state changes - log every render when completed
   useEffect(() => {
@@ -240,7 +213,7 @@ const SearchLoading = ({ currentStep, currentStatus, isCompleted = false }: Sear
 
       <LinearProgress 
         variant="determinate" 
-        value={isSearchCompleted ? 100 : progressValue} 
+        value={progressValue} 
         color={progressColor}
         sx={{ 
           mb: 4, 
@@ -257,7 +230,7 @@ const SearchLoading = ({ currentStep, currentStatus, isCompleted = false }: Sear
                 : 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)', // Blue when loading
             borderRadius: 4,
             transition: isSearchCompleted 
-              ? 'all 0.05s ease-out' // Ultra-fast transition to completion (50ms)
+              ? 'all 0.1s ease-out' // Very fast transition to completion
               : 'transform 0.4s ease-in-out', // Smooth transition for normal progress
             // Add a subtle glow effect when completed
             ...(isSearchCompleted && {
