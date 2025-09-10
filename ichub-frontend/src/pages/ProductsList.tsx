@@ -185,7 +185,7 @@ const ProductsList = () => {
               manufacturerId: part.manufacturerId,
               manufacturerPartId: part.manufacturerPartId,
               name: part.name,
-              category: part.category,
+              category: part.extraMetadata?.["ichub:category"],
               status: part.status,
             }))}
             isLoading={isLoading}
