@@ -47,8 +47,10 @@ export interface CardDecisionProps {
   onMore: (manufacturerId: string, manufacturerPartId: string) => void;
   onRegisterClick: (manufacturerId: string, manufacturerPartId: string) => void;
   items: AppContent[];
-  isLoading: boolean;
-}enum ButtonEvents {
+  isLoading: boolean
+}
+
+export enum ButtonEvents {
   SHARE,
   MORE,
   REGISTER, 

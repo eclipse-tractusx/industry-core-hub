@@ -80,6 +80,9 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       console.log('Setting bpnl to empty');
       setBpnl('');
     }
+    setError(false); // Clear validation error on change
+    setApiErrorMessage(''); // Clear API error on change
+    setSuccessMessage(''); // Clear success message on change
   };
 
   const handleShare = async () => {

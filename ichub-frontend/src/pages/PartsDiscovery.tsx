@@ -48,6 +48,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
+import SearchLoading from '../features/part-discovery/components/SearchLoading';
 import { CatalogPartsDiscovery } from '../features/part-discovery/components/catalog-parts/CatalogPartsDiscovery';
 import PartsDiscoverySidebar from '../features/part-discovery/components/PartsDiscoverySidebar';
 import SerializedPartsTable from '../features/part-discovery/components/SerializedPartsTable';
@@ -149,6 +150,7 @@ const PartsDiscovery = () => {
   const [selectedPartner, setSelectedPartner] = useState<PartnerInstance | null>(null);
   const [availablePartners, setAvailablePartners] = useState<PartnerInstance[]>([]);
   const [isLoadingPartners, setIsLoadingPartners] = useState(false);
+  const [partnersError, setPartnersError] = useState<string | null>(null);
   const [globalAssetId, setGlobalAssetId] = useState('');
   const [customerPartId, setCustomerPartId] = useState('');
   const [manufacturerPartId, setManufacturerPartId] = useState('');
@@ -187,6 +189,26 @@ const PartsDiscovery = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchCompleted, setIsSearchCompleted] = useState<boolean>(false);
+  const [showSearchLoading, setShowSearchLoading] = useState<boolean>(false);
+  const [searchKey, setSearchKey] = useState<number>(0); // Force SearchLoading component reset
+  const completionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // AbortController for cancelling requests
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  // Cleanup timeout and abort controller on component unmount
+  useEffect(() => {
+    const abortController = abortControllerRef.current;
+    return () => {
+      if (completionTimeoutRef.current) {
+        clearTimeout(completionTimeoutRef.current);
+      }
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, []);
   
   // Pagination loading states
   const [isLoadingNext, setIsLoadingNext] = useState(false);
@@ -284,11 +306,15 @@ const PartsDiscovery = () => {
       
       try {
         setIsLoadingPartners(true);
+        setPartnersError(null);
         const partners = await fetchPartners();
         setAvailablePartners(partners);
       } catch (err) {
         console.error('Error loading partners:', err);
-        // Don't show error for partners loading as it's not critical
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load partners. Backend may be unavailable.';
+        setPartnersError(errorMessage);
+        // Set empty array to ensure component remains functional even when backend is down
+        setAvailablePartners([]);
         // Reset the ref on error so it can be retried
         partnersLoadedRef.current = false;
       } finally {
@@ -314,6 +340,94 @@ const PartsDiscovery = () => {
     if (newPartType === 'Catalog') {
       setPartInstanceId('');
     }
+  };
+
+  // Retry loading partners
+  const retryLoadPartners = async () => {
+    partnersLoadedRef.current = false;
+    setPartnersError(null);
+    
+    try {
+      setIsLoadingPartners(true);
+      const partners = await fetchPartners();
+      setAvailablePartners(partners);
+      partnersLoadedRef.current = true;
+    } catch (err) {
+      console.error('Error retrying partners load:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load partners. Backend may be unavailable.';
+      setPartnersError(errorMessage);
+      setAvailablePartners([]);
+    } finally {
+      setIsLoadingPartners(false);
+    }
+  };
+
+  // Function to start loading state
+  const startLoadingProgress = () => {
+    console.log('🚀 Starting new search');
+    
+    // Clear any existing completion timeout
+    if (completionTimeoutRef.current) {
+      console.log('🧹 Clearing existing completion timeout');
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
+    
+    setSearchKey(prev => prev + 1); // Force SearchLoading component to reset
+    setIsLoading(true);
+    setShowSearchLoading(true);
+    setIsSearchCompleted(false);
+    
+    // Return completion function that handles successful or failed completion
+    return (isError: boolean = false) => {
+      if (isError) {
+        console.log('❌ Search failed - resetting immediately');
+        // For errors, reset immediately without showing completion
+        setIsLoading(false);
+        setShowSearchLoading(false);
+        setIsSearchCompleted(false);
+      } else {
+        console.log('🏁 Search completion triggered - showing completed state');
+        // For successful completion, show completion state briefly before changing view
+        setIsLoading(false); // Hide button spinner immediately
+        setIsSearchCompleted(true);
+        
+        // Show completion animation for 200ms, then change to results view
+        completionTimeoutRef.current = setTimeout(() => {
+          console.log('⏰ Transitioning to results view after completion animation');
+          setHasSearched(true); // This triggers the view change to show results
+          setShowSearchLoading(false);
+          // Reset completion state after component is hidden
+          setTimeout(() => {
+            setIsSearchCompleted(false);
+          }, 100);
+          completionTimeoutRef.current = null;
+        }, 200); // Show completion state for 200ms before view change
+      }
+    };
+  };
+
+  // Function to cancel ongoing search
+  const handleCancelSearch = () => {
+    console.log('🚫 Search cancelled by user');
+    
+    // Abort the ongoing request
+    if (abortControllerRef.current) {
+      console.log('🛑 Aborting ongoing request');
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    // Clear completion timeout
+    if (completionTimeoutRef.current) {
+      clearTimeout(completionTimeoutRef.current);
+      completionTimeoutRef.current = null;
+    }
+    
+    // Reset all loading states
+    setIsLoading(false);
+    setShowSearchLoading(false);
+    setIsSearchCompleted(false);
   };
 
   // Helper function to display filters sidebar
@@ -352,15 +466,49 @@ const PartsDiscovery = () => {
       return;
     }
 
-    setIsLoading(true);
     setError(null);
     setSingleTwinResult(null);
     
     try {
-      const response = await discoverSingleShell(bpnl, singleTwinAasId.trim());
-      setSingleTwinResult(response);
-      setHasSearched(true);
+      // Start loading progress and make API call
+      const stopProgress = startLoadingProgress();
+      
+      // Create AbortController for this request
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      
+      try {
+        const response = await discoverSingleShell(bpnl, singleTwinAasId.trim(), abortController.signal);
+        
+        console.log('✅ Valid response, setting single twin result');
+        setSingleTwinResult(response);
+        // Success - trigger completion animation and then view change
+        stopProgress();
+      } catch (searchError) {
+        console.error('❌ Single twin search error:', searchError);
+        
+        // Check if the error is due to cancellation
+        if (searchError instanceof Error && searchError.name === 'AbortError') {
+          console.log('🚫 Request was cancelled');
+          return; // Don't show error or reset state for cancelled requests
+        }
+        
+        // Error - reset immediately
+        stopProgress(true);
+        throw searchError; // Re-throw to be caught by outer catch
+      } finally {
+        // Clear the abort controller reference when request completes
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
     } catch (err) {
+      // Check if the error is due to request cancellation
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('🚫 Single twin search was cancelled by user - no error shown');
+        return; // Don't show error for cancelled requests
+      }
+      
       let errorMessage = 'Failed to discover digital twin';
       
       if (err instanceof Error) {
@@ -380,8 +528,9 @@ const PartsDiscovery = () => {
       }
       
       setError(errorMessage);
+      // Note: stopProgress(true) was already called in the try-catch above
     } finally {
-      setIsLoading(false);
+      // Note: setIsLoading and setShowSearchLoading are now handled by stopProgress
     }
   };
 
@@ -551,7 +700,6 @@ const PartsDiscovery = () => {
       }
     }
 
-    setIsLoading(true);
     setError(null);
     // Reset pagination loading states for new search
     setIsLoadingNext(false);
@@ -605,13 +753,37 @@ const PartsDiscovery = () => {
           value: partInstanceId.trim()
         });
       }
-      
-      // Use custom query for comprehensive search
-      const response = await discoverShellsWithCustomQuery(bpnl, querySpec, limit);
 
-      setCurrentResponse(response);
+      // Start loading progress and make API call
+      const stopProgress = startLoadingProgress();
       
-      // Log the full response for debugging
+      // Create AbortController for this request
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+      
+      let response;
+      try {
+        response = await discoverShellsWithCustomQuery(bpnl, querySpec, limit, undefined, abortController.signal);
+      } catch (apiError) {
+        console.error('❌ Search API error:', apiError);
+        
+        // Check if the error is due to cancellation
+        if (apiError instanceof Error && apiError.name === 'AbortError') {
+          console.log('🚫 Request was cancelled');
+          return; // Don't show error or reset state for cancelled requests
+        }
+        
+        // Error - reset immediately
+        stopProgress(true);
+        throw apiError; // Re-throw to be caught by outer catch
+      } finally {
+        // Clear the abort controller reference when request completes
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+      }
+
+      setCurrentResponse(response);      // Log the full response for debugging
       console.log('API Response:', response);
       
       // Check for any error-like fields in the response object
@@ -641,6 +813,7 @@ const PartsDiscovery = () => {
         } else {
           setError(`Search failed: ${response.error}`);
         }
+        stopProgress(true);
         setIsLoading(false);
         return;
       }
@@ -648,6 +821,7 @@ const PartsDiscovery = () => {
       // Check if no shell descriptors were found
       if (!response.shellDescriptors || response.shellDescriptors.length === 0) {
         setError('No digital twins found for the specified criteria. Please try different search parameters.');
+        stopProgress(true);
         setIsLoading(false);
         return;
       }
@@ -702,11 +876,17 @@ const PartsDiscovery = () => {
         setTotalPages(Math.ceil(response.shellsFound / limit));
       }
 
-      // Mark that search has been performed successfully
-      setHasSearched(true);
+      // Success - trigger completion animation and then view change
+      stopProgress();
 
     } catch (err) {
       console.error('Search error:', err);
+      
+      // Check if the error is due to request cancellation
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('🚫 Search was cancelled by user - no error shown');
+        return; // Don't show error for cancelled requests
+      }
       
       // Extract meaningful error message from different error types
       let errorMessage = 'Error searching for parts. Please try again.';
@@ -739,8 +919,9 @@ const PartsDiscovery = () => {
       }
       
       setError(errorMessage);
+      // Note: stopProgress(true) was already called in the API error handler above
     } finally {
-      setIsLoading(false);
+      // Note: setIsLoading and setShowSearchLoading are now handled by stopProgress
     }
   };
 
@@ -914,6 +1095,7 @@ const PartsDiscovery = () => {
       backgroundAttachment: 'fixed',
       overflow: 'hidden'
     }}>
+      
       {/* Compact Header - shown when search results are displayed */}
       {hasSearched && (
         <Box 
@@ -1146,7 +1328,6 @@ const PartsDiscovery = () => {
               onClick={() => setSearchMode('single')}
             >
               Single Twin
-              <SearchIcon sx={{ marginLeft: 1 }} />
             </Typography>
             </Box>
           </Box>
@@ -1222,8 +1403,38 @@ const PartsDiscovery = () => {
                     }
                   }}
                 >
-                  <Box display="flex" flexDirection="column" gap={4}>
-                    <Autocomplete
+                  {/* Show loading component or search form */}
+                  {showSearchLoading ? (
+                    <SearchLoading 
+                      key={searchKey}
+                      isLoading={isLoading}
+                      isCompleted={isSearchCompleted}
+                      onCancel={handleCancelSearch}
+                    />                  ) : (
+                    <Box display="flex" flexDirection="column" gap={4}>
+                      {/* Partners Loading Error Alert */}
+                      {partnersError && (
+                        <Alert 
+                          severity="warning" 
+                          action={
+                            <Button 
+                              color="inherit" 
+                              size="small" 
+                              onClick={retryLoadPartners}
+                              disabled={isLoadingPartners}
+                            >
+                              Retry
+                            </Button>
+                          }
+                          sx={{ mb: 2 }}
+                        >
+                          <Typography variant="body2">
+                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                          </Typography>
+                        </Alert>
+                      )}
+                      
+                      <Autocomplete
                       freeSolo
                       options={availablePartners}
                       getOptionLabel={(option) => {
@@ -1232,23 +1443,38 @@ const PartsDiscovery = () => {
                       }}
                       value={bpnl}
                       onChange={(_, newValue) => {
-                        if (typeof newValue === 'string') {
-                          // Custom BPNL entered
-                          setBpnl(newValue);
-                          setSelectedPartner(null);
-                        } else if (newValue) {
-                          // Partner selected from dropdown
-                          setBpnl(newValue.bpnl);
-                          setSelectedPartner(newValue);
-                        } else {
-                          // Cleared
+                        try {
+                          if (typeof newValue === 'string') {
+                            // Custom BPNL entered
+                            setBpnl(newValue);
+                            setSelectedPartner(null);
+                          } else if (newValue) {
+                            // Partner selected from dropdown
+                            setBpnl(newValue.bpnl);
+                            setSelectedPartner(newValue);
+                          } else {
+                            // Cleared
+                            setBpnl('');
+                            setSelectedPartner(null);
+                          }
+                        } catch (err) {
+                          console.error('Error in Autocomplete onChange:', err);
+                          // Fallback to safe state
                           setBpnl('');
                           setSelectedPartner(null);
                         }
                       }}
                       onInputChange={(_, newInputValue) => {
-                        setBpnl(newInputValue);
-                        if (!availablePartners.find(p => p.bpnl === newInputValue)) {
+                        try {
+                          setBpnl(newInputValue || '');
+                          // Safely check if partner exists in the array
+                          if (Array.isArray(availablePartners) && !availablePartners.find(p => p?.bpnl === newInputValue)) {
+                            setSelectedPartner(null);
+                          }
+                        } catch (err) {
+                          console.error('Error in Autocomplete onInputChange:', err);
+                          // Fallback to safe state
+                          setBpnl(newInputValue || '');
                           setSelectedPartner(null);
                         }
                       }}
@@ -1342,7 +1568,8 @@ const PartsDiscovery = () => {
                     >
                       {isLoading ? 'Searching...' : 'Start Discovery'}
                     </Button>
-                  </Box>
+                    </Box>
+                  )}
                 </Card>
               </Box>
             )}
@@ -1404,8 +1631,38 @@ const PartsDiscovery = () => {
                     }
                   }}
                 >
-                  <Box display="flex" flexDirection="column" gap={4}>
-                    <Autocomplete
+                  {/* Show loading component or search form */}
+                  {showSearchLoading ? (
+                    <SearchLoading 
+                      key={searchKey}
+                      isLoading={isLoading}
+                      isCompleted={isSearchCompleted}
+                      onCancel={handleCancelSearch}
+                    />                  ) : (
+                    <Box display="flex" flexDirection="column" gap={4}>
+                      {/* Partners Loading Error Alert */}
+                      {partnersError && (
+                        <Alert 
+                          severity="warning" 
+                          action={
+                            <Button 
+                              color="inherit" 
+                              size="small" 
+                              onClick={retryLoadPartners}
+                              disabled={isLoadingPartners}
+                            >
+                              Retry
+                            </Button>
+                          }
+                          sx={{ mb: 2 }}
+                        >
+                          <Typography variant="body2">
+                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                          </Typography>
+                        </Alert>
+                      )}
+                      
+                      <Autocomplete
                       freeSolo
                       options={availablePartners}
                       getOptionLabel={(option) => {
@@ -1414,23 +1671,38 @@ const PartsDiscovery = () => {
                       }}
                       value={bpnl}
                       onChange={(_, newValue) => {
-                        if (typeof newValue === 'string') {
-                          // Custom BPNL entered
-                          setBpnl(newValue);
-                          setSelectedPartner(null);
-                        } else if (newValue) {
-                          // Partner selected from dropdown
-                          setBpnl(newValue.bpnl);
-                          setSelectedPartner(newValue);
-                        } else {
-                          // Cleared
+                        try {
+                          if (typeof newValue === 'string') {
+                            // Custom BPNL entered
+                            setBpnl(newValue);
+                            setSelectedPartner(null);
+                          } else if (newValue) {
+                            // Partner selected from dropdown
+                            setBpnl(newValue.bpnl);
+                            setSelectedPartner(newValue);
+                          } else {
+                            // Cleared
+                            setBpnl('');
+                            setSelectedPartner(null);
+                          }
+                        } catch (err) {
+                          console.error('Error in Autocomplete onChange:', err);
+                          // Fallback to safe state
                           setBpnl('');
                           setSelectedPartner(null);
                         }
                       }}
                       onInputChange={(_, newInputValue) => {
-                        setBpnl(newInputValue);
-                        if (!availablePartners.find(p => p.bpnl === newInputValue)) {
+                        try {
+                          setBpnl(newInputValue || '');
+                          // Safely check if partner exists in the array
+                          if (Array.isArray(availablePartners) && !availablePartners.find(p => p?.bpnl === newInputValue)) {
+                            setSelectedPartner(null);
+                          }
+                        } catch (err) {
+                          console.error('Error in Autocomplete onInputChange:', err);
+                          // Fallback to safe state
+                          setBpnl(newInputValue || '');
                           setSelectedPartner(null);
                         }
                       }}
@@ -1552,7 +1824,8 @@ const PartsDiscovery = () => {
                     >
                       {isLoading ? 'Searching...' : 'Search Digital Twin'}
                     </Button>
-                  </Box>
+                    </Box>
+                  )}
                 </Card>
               </Box>
             )}

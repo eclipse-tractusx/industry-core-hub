@@ -135,9 +135,9 @@ backend:
           managementPath: "/management"
           protocolPath: "/api/v1/dsp"
           catalogPath: "/catalog"
-    # -- Provider configuration
+    # -- Provider configuration  
     provider:
-      connector:
+      connector: 
         dataspace:
           version: "jupiter"
         controlplane:
@@ -386,8 +386,8 @@ frontend:
           strict: false
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
-        policies:
-          - strict: false  # -- Enable here the permutations of constraints (order not matters)
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and
@@ -403,7 +403,7 @@ frontend:
                   rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
-          - strict: true  # -- Disable here the permutations of constraints (order matters)
+          - strict: true #-- Disable here the permutations of constraints (order matters)
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and

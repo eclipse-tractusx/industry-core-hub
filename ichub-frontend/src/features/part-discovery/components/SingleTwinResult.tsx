@@ -108,6 +108,34 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Reset carousel when submodels change
+  useEffect(() => {
+    if (singleTwinResult?.shell_descriptor?.submodelDescriptors) {
+      setCarouselIndex(0);
+    }
+  }, [singleTwinResult?.shell_descriptor?.submodelDescriptors]);
+
+  // Safety checks to prevent runtime errors
+  if (!singleTwinResult || !singleTwinResult.shell_descriptor) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error">
+          Invalid digital twin data: Missing shell descriptor
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!singleTwinResult.shell_descriptor.submodelDescriptors) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error">
+          Invalid digital twin data: Missing submodel descriptors
+        </Typography>
+      </Box>
+    );
+  }
   
   // Calculate items per slide for carousel - show fewer items to enable navigation
   const itemsPerSlide = isMobile ? 2 : 3;
@@ -296,11 +324,6 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
     
     return null;
   };
-
-  // Reset carousel when submodels change
-  useEffect(() => {
-    setCarouselIndex(0);
-  }, [singleTwinResult.shell_descriptor.submodelDescriptors.length]);
 
   // Handle carousel navigation
   const handlePrevious = () => {

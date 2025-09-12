@@ -31,6 +31,7 @@ target_file=/tmp/index.html
 vars=" \
 REQUIRE_HTTPS_URL_PATTERN \
 ICHUB_BACKEND_URL \
+GOVERNANCE_CONFIG \
 "
 
 # base sed command: output source file and remove javascript comments

@@ -90,6 +90,16 @@ const ProductsDetails = () => {
     fetchData();
   }, [manufacturerId, manufacturerPartId]);
 
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [manufacturerId, manufacturerPartId]);
+
   if(!manufacturerId || !manufacturerPartId){
     return <div>Product not found</div>; 
   }

@@ -307,11 +307,13 @@ export const registerCatalogPartTwin = async (
  * Discover shells based on query specifications
  */
 export const discoverShells = async (
-  request: ShellDiscoveryRequest
+  request: ShellDiscoveryRequest,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const response = await axios.post<ShellDiscoveryResponse>(
     `${backendUrl}${SHELL_DISCOVERY_BASE_PATH}`,
-    request
+    request,
+    { signal }
   );
   return response.data;
 };
@@ -417,7 +419,8 @@ export const discoverShellsWithCustomQuery = async (
   counterPartyId: string,
   querySpec: QuerySpecItem[],
   limit?: number,
-  cursor?: string
+  cursor?: string,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -429,7 +432,7 @@ export const discoverShellsWithCustomQuery = async (
     ...(cursor && { cursor })
   };
 
-  return discoverShells(request);
+  return discoverShells(request, signal);
 };
 
 // Types for Single Shell Discovery
@@ -500,7 +503,8 @@ export interface SingleShellDiscoveryResponse {
  */
 export const discoverSingleShell = async (
   counterPartyId: string,
-  aasId: string
+  aasId: string,
+  signal?: AbortSignal
 ): Promise<SingleShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -510,11 +514,26 @@ export const discoverSingleShell = async (
     dtrGovernance: dtrPolicies
   };
 
-  const response = await axios.post<SingleShellDiscoveryResponse>(
+  const response = await axios.post<SingleShellDiscoveryResponse | { status: number; error: string }>(
     `${backendUrl}/discover/shell`,
-    request
+    request,
+    { signal }
   );
-  return response.data;
+  
+  // Check if the response contains error fields instead of valid data
+  const data = response.data;
+  if (data && typeof data === 'object' && 'status' in data && 'error' in data) {
+    const errorResponse = data as { status: number; error: string };
+    throw new Error(errorResponse.error || `Error ${errorResponse.status}: Failed to find digital twin`);
+  }
+  
+  // Validate that we have a proper shell descriptor
+  const validData = data as SingleShellDiscoveryResponse;
+  if (!validData || !validData.shell_descriptor || !validData.shell_descriptor.submodelDescriptors) {
+    throw new Error('Invalid response format: Missing shell descriptor data');
+  }
+  
+  return validData;
 };
 
 // Enhanced pagination functions that automatically extract cursors
@@ -560,14 +579,15 @@ export const getNextPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const nextCursor = getNextPageCursor(currentResponse);
   if (!nextCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor, signal);
 };
 
 /**
@@ -577,14 +597,15 @@ export const getPreviousPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const previousCursor = getPreviousPageCursor(currentResponse);
   if (!previousCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor, signal);
 };
 
 /**
