@@ -68,9 +68,9 @@ class TwinsAspectRegistrationMode(enum.Enum):
 
 
 class TwinAspectRegistration(BaseModel):
-    """Represents the registration of a twin aspect within an enablement service stack."""
+    """Represents the registration of a twin aspect within a DTR."""
 
-    enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect is registered.")
+    dtr_name: str = Field(alias="dtrName", description="The name of the DTR where the twin aspect is registered.")
     status: TwinAspectRegistrationStatus = Field(description="The current status of the aspect registration process.")
     mode: TwinsAspectRegistrationMode = Field(description="The current mode of the aspect registration process.")
     created_date: datetime = Field(alias="createdDate", description="The date when the aspect was initially registered.")
@@ -85,7 +85,7 @@ class TwinAspectCreate(BaseModel):
     global_id: UUID = Field(alias="globalId", description="The Catena-X ID / global ID of the digital twin to which the new aspect belongs.")
     semantic_id: str = Field(alias="semanticId", description="The semantic ID of the new aspect determining the structure of the associated payload data.")
     submodel_id: Optional[UUID] = Field(alias="submodelId", description="The optional ID of the submodel descriptor within the DTR shell descriptor for the associated twin. If not specified, a new UUID will be created automatically.", default=None) 
-    #enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect should be registered.")
+    enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect should be registered.")
     payload: Dict[str, Any] = Field(description="The payload data of the new aspect. This is a JSON object that contains the actual data of the aspect. The structure of this object is determined by the semantic ID of the aspect.")
 
 class TwinRead(BaseModel):
@@ -99,13 +99,14 @@ class TwinRead(BaseModel):
 
 class TwinCreateBase(BaseModel):
     """Represents a digital twin to be created within the Digital Twin Registry."""
+    enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect should be registered.")
 
     global_id: Optional[UUID] = Field(alias="globalId", description="Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.", default=None)
     dtr_aas_id: Optional[UUID] = Field(alias="dtrAasId", description="Optionally the shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry. If not specified, a new UUID will be created automatically.", default=None)
 
 class TwinDetailsReadBase(BaseModel):
     additional_context: Optional[Dict[str, Any]] = Field(alias="additionalContext", description="Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.", default=None)
-    registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
+    registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different DTRs. The key is the name of the DTR.", default=None)
     aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.", default=None)
 
 class TwinShareCreateBase(BaseModel):
