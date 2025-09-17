@@ -1,0 +1,26 @@
+meta {
+  name: Discover Shells
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/discover/shells
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "counterPartyId": "",
+    "limit": "",
+    "cursor": "",
+    "querySpec": [
+      {
+        "name": "",
+        "value": ""
+      }
+    ],
+    "dtrGovernance": ""
+  }
+}

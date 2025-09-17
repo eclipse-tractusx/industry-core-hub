@@ -1,0 +1,16 @@
+meta {
+  name: Twin Management Get Catalog Part Twin From Manufacturer
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/twin-management/catalog-part-twin/:manufacturer_id/:manufacturer_part_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  manufacturer_id: 
+  manufacturer_part_id: 
+}

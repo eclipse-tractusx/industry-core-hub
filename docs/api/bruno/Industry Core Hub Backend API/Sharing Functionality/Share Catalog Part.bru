@@ -1,0 +1,20 @@
+meta {
+  name: Share Catalog Part
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/share/catalog-part
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "businessPartnerNumber": "",
+    "customerPartId": ""
+  }
+}

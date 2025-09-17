@@ -1,0 +1,15 @@
+meta {
+  name: Partner Management Get Business Partner
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/partner-management/business-partner/:business_partner_number
+  body: none
+  auth: inherit
+}
+
+params:path {
+  business_partner_number: 
+}

@@ -1,0 +1,28 @@
+meta {
+  name: Part Management Create Catalog Part
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/part-management/catalog-part
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "name": "",
+    "category": "",
+    "bpns": "",
+    "description": "",
+    "materials": "",
+    "width": "",
+    "height": "",
+    "length": "",
+    "weight": "",
+    "customerPartIds": ""
+  }
+}
