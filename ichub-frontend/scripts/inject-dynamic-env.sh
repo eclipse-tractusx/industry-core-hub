@@ -56,6 +56,8 @@ done
 set -- $json_vars
 while [ -n "$1" ]; do
   var=$1
+  # Set default empty array if variable is empty or undefined
+  eval "if [ -z \"\${${var}}\" ]; then export ${var}='[]'; fi"
   # add a replace expression for each JSON variable
   sed_command="${sed_command} -e \"s@${var}:\s*\\\".*\\\"@${var}: \${${var}}@g\""
   shift

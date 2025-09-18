@@ -69,6 +69,8 @@ spec:
               value: "{{ .Values.participantId }}"
             - name: GOVERNANCE_CONFIG
               value: {{ .Values.frontend.consumption.governance | toJson | quote }}
+            - name: DTR_POLICIES_CONFIG
+              value: {{ .Values.frontend.consumption.digitalTwinRegistry.policies | toJson | quote }}
           {{- if .Values.frontend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:
