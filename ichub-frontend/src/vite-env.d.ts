@@ -22,9 +22,24 @@
 
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_REQUIRE_HTTPS_URL_PATTERN: string
+  readonly VITE_ICHUB_BACKEND_URL: string
+  readonly VITE_PARTICIPANT_ID: string
+  readonly VITE_GOVERNANCE_CONFIG: string
+  readonly VITE_DTR_POLICIES_CONFIG: string
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
+
 declare global {
   interface Window {
     ENV?: {
+      REQUIRE_HTTPS_URL_PATTERN?: string;
+      ICHUB_BACKEND_URL?: string;
+      PARTICIPANT_ID?: string;
       GOVERNANCE_CONFIG?: string;
       DTR_POLICIES_CONFIG?: string;
     }
