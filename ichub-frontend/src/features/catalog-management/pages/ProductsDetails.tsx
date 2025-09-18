@@ -26,7 +26,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Icon } from '@catena-x/portal-shared-components';
+import { Button } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import { CardChip } from "../components/product-list/CardChip";
 import { StatusVariants } from "../types/types";
 import HelpOutlineIcon from '@mui/icons-material/Help';
@@ -255,7 +256,7 @@ const ProductsDetails = () => {
           {getStatusTag(partType.status ?? PRODUCT_STATUS.DRAFT)}
         </Grid2>
         <Grid2 size={4} display="flex" justifyContent="center">
-          <Button size="small" onClick={() => console.log("DCM v2.0 button")} className="update-button" endIcon={<Icon fontSize="16" iconName="Edit" />}>            
+          <Button size="small" onClick={() => console.log("DCM v2.0 button")} className="update-button" endIcon={<EditIcon />}>            
               <span className="update-button-content">UPDATE</span>            
           </Button>
         </Grid2>

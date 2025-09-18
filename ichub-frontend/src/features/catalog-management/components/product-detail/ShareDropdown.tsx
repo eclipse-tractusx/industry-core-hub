@@ -20,9 +20,12 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { DropdownMenu, Button, Icon } from '@catena-x/portal-shared-components';
+import { useState } from 'react';
+import { Menu, MenuItem, Button } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import IosShareIcon from '@mui/icons-material/IosShare';
 import { PRODUCT_OPTIONS } from "../../types/shared";
-import Grid2 from '@mui/material/Grid2';
 
 interface ShareDropdownProps {
     handleCopy: () => void;
@@ -31,27 +34,51 @@ interface ShareDropdownProps {
   }
 
 const ShareDropdown = ({ handleCopy, handleDownload, handleShare }: ShareDropdownProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <DropdownMenu
-        buttonSx={{
-        'padding': '10px 10px',
-        'border': '1px solid #b4b4b4!important',
-        'font-size': '14px',
+    <>
+      <Button
+        onClick={handleClick}
+        sx={{
+          'padding': '10px 10px',
+          'border': '1px solid #b4b4b4!important',
+          'font-size': '14px',
         }}
-        buttonText="Share"
-    >
-        <Grid2 container direction="column">
-        <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" onClick={handleCopy} startIcon={<Icon fontSize="16" iconName="ContentCopy" />}>
+      >
+        Share
+      </Button>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem onClick={() => { handleCopy(); handleClose(); }}>
+          <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" startIcon={<ContentCopyIcon />}>
             <span>{PRODUCT_OPTIONS.COPY}</span>
-        </Button>
-        <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" onClick={handleDownload} startIcon={<Icon fontSize="16" iconName="FileDownload" />}>
+          </Button>
+        </MenuItem>
+        <MenuItem onClick={() => { handleDownload(); handleClose(); }}>
+          <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" startIcon={<FileDownloadIcon />}>
             <span>{PRODUCT_OPTIONS.DOWNLOAD}</span>
-        </Button>
-        <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" onClick={handleShare} startIcon={<Icon fontSize="16" iconName="IosShare" />}>
+          </Button>
+        </MenuItem>
+        <MenuItem onClick={() => { handleShare(); handleClose(); }}>
+          <Button className="dropdown-button share-dropdown-btn" color="secondary" size="small" startIcon={<IosShareIcon />}>
             <span>{PRODUCT_OPTIONS.SHARE}</span>
-        </Button>
-        </Grid2>
-    </DropdownMenu>
+          </Button>
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
 

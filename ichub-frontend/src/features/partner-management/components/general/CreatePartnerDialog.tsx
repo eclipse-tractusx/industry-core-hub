@@ -21,7 +21,7 @@
 ********************************************************************************/
 
 import { useState, useEffect } from 'react';
-import { Button } from '@catena-x/portal-shared-components';
+import { Button } from '@mui/material';
 import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Grid2 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';

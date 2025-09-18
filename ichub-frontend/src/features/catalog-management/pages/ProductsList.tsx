@@ -26,7 +26,8 @@ import { ProductCard } from "../components/product-list/ProductCard";
 import { PartType, ApiPartData } from "../types/types";
 import TablePagination from "@mui/material/TablePagination";
 import { Typography, Grid2, Box } from "@mui/material"; // Removed Paper
-import { Button, PageSnackbar } from "@catena-x/portal-shared-components";
+import { Button } from "@mui/material";
+import { Alert, Snackbar } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import ShareDialog from "../components/shared/ShareDialog";
 import CreateProductListDialog from "../components/product-list/CreateProductListDialog";
@@ -159,13 +160,15 @@ const ProductsList = () => {
 
   return (
     <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", p: 3 }}>
-      <PageSnackbar
+      <Snackbar
         open={snackbarOpen}
-        onCloseNotification={() => setSnackbarOpen(false)}
-        severity={snackbarSeverity}
-        description={snackbarMessage}
-        autoClose={true}
-      />
+        onClose={() => setSnackbarOpen(false)}
+        autoHideDuration={6000}
+      >
+        <Alert severity={snackbarSeverity} onClose={() => setSnackbarOpen(false)}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
       <Grid2 container direction="column" alignItems="center" sx={{ mb: 3 }}>
         <Grid2 className="product-catalog title flex flex-content-center">
           <Typography className="text">Catalog Parts</Typography>

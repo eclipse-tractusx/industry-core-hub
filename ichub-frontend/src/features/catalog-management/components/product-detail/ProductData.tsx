@@ -22,7 +22,7 @@
 
 import { Box, Chip, Snackbar, Alert, Card, CardContent, Divider, Tooltip, IconButton } from '@mui/material'
 import Grid2 from '@mui/material/Grid2';
-import { Typography } from '@catena-x/portal-shared-components';
+import { Typography } from '@mui/material';
 import { PartType, StatusVariants } from '../../types/types';
 import { PieChart } from '@mui/x-charts/PieChart';
 import WifiTetheringErrorIcon from '@mui/icons-material/WifiTetheringError';

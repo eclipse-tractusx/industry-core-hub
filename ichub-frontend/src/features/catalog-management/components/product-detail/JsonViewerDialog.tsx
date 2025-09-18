@@ -21,7 +21,8 @@
 ********************************************************************************/
 
 import { useState } from 'react';
-import { Button, Icon } from '@catena-x/portal-shared-components';
+import { Button } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -70,7 +71,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '4px' }}>
                         <span className='mr-3'>{copied ? 'JSON copied ✅' : ''}</span>
                         <Button variant="text" onClick={handleCopy} size='small' className='copy-button'>
-                            <Icon fontSize="16" iconName="ContentCopy" />
+                            <ContentCopyIcon />
                         </Button>
                     </div>
                     <code style={{ textAlign: 'left', display: 'block' }}>
@@ -80,7 +81,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
             </DialogContent>
             <DialogActions>
                 <Button className="close-button" variant="outlined" size="small" onClick={onClose}>
-                <Icon fontSize="16" iconName="Close" />
+                <CloseIcon />
                     <span className="close-button-content">CLOSE</span>
                 </Button>
             </DialogActions>
