@@ -47,7 +47,7 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import SecurityIcon from '@mui/icons-material/Security';
 import LockIcon from '@mui/icons-material/Lock';
-import { SubmodelViewer } from './SubmodelViewer';
+import { SubmodelViewer } from '../submodel/SubmodelViewer';
 
 interface SingleTwinResultProps {
   counterPartyId: string;
@@ -56,6 +56,8 @@ interface SingleTwinResultProps {
       id: string;
       idShort?: string;
       globalAssetId: string;
+      assetKind: string;
+      assetType: string;
       submodelDescriptors: Array<{
         endpoints: Array<{
           interface: string;
@@ -108,6 +110,34 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Reset carousel when submodels change
+  useEffect(() => {
+    if (singleTwinResult?.shell_descriptor?.submodelDescriptors) {
+      setCarouselIndex(0);
+    }
+  }, [singleTwinResult?.shell_descriptor?.submodelDescriptors]);
+
+  // Safety checks to prevent runtime errors
+  if (!singleTwinResult || !singleTwinResult.shell_descriptor) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error">
+          Invalid digital twin data: Missing shell descriptor
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!singleTwinResult.shell_descriptor.submodelDescriptors) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography color="error">
+          Invalid digital twin data: Missing submodel descriptors
+        </Typography>
+      </Box>
+    );
+  }
   
   // Calculate items per slide for carousel - show fewer items to enable navigation
   const itemsPerSlide = isMobile ? 2 : 3;
@@ -297,11 +327,6 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
     return null;
   };
 
-  // Reset carousel when submodels change
-  useEffect(() => {
-    setCarouselIndex(0);
-  }, [singleTwinResult.shell_descriptor.submodelDescriptors.length]);
-
   // Handle carousel navigation
   const handlePrevious = () => {
     setCarouselIndex(prev => Math.max(0, prev - itemsPerSlide));
@@ -345,15 +370,65 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
     }}>
       {/* Single Twin Results Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        {/* Display idShort if available, otherwise display nothing */}
-        {singleTwinResult.shell_descriptor.idShort && (
-          <Typography variant="h6" sx={{ fontWeight: '600', color: 'primary.main' }}>
-            {singleTwinResult.shell_descriptor.idShort}
-          </Typography>
-        )}
+        {/* Display displayName if available, otherwise idShort, otherwise display nothing */}
+        {(() => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const descriptor = singleTwinResult.shell_descriptor as any;
+          const displayName = descriptor.displayName && Array.isArray(descriptor.displayName) && descriptor.displayName.length > 0 
+            ? descriptor.displayName[0].text 
+            : null;
+          const title = displayName || descriptor.idShort;
+          
+          if (title) {
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: '600', color: 'primary.main' }}>
+                  {title}
+                </Typography>
+                {/* Show asset type if available */}
+                {descriptor.assetType && (
+                  <Chip
+                    label={`Asset Type: ${descriptor.assetType}`}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderColor: 'success.main',
+                      color: 'success.main',
+                      fontWeight: '600',
+                      '& .MuiChip-label': {
+                        fontSize: '0.75rem'
+                      }
+                    }}
+                  />
+                )}
+
+              </Box>
+            );
+          }
+          return null;
+        })()}
         
         {/* DTR Information Button */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 'auto' }}>
+          {(() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const descriptor = singleTwinResult.shell_descriptor as any;
+            return descriptor.assetKind && (
+              <Chip
+                label={`Asset Kind: ${descriptor.assetKind}`}
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                  fontWeight: '600',
+                  '& .MuiChip-label': {
+                    fontSize: '0.75rem'
+                  }
+                }}
+              />
+            );
+          })()}
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             DTR Details
           </Typography>
@@ -381,19 +456,21 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
               <Typography variant="subtitle1" sx={{ fontWeight: '600', color: 'primary.main' }}>
                 Digital Twin Information
               </Typography>
-              <Chip
-                label={digitalTwinType}
-                variant="filled"
-                size="small"
-                sx={{
-                  backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                  color: 'primary.main',
-                  fontWeight: '600',
-                  '& .MuiChip-label': {
-                    fontSize: '0.75rem'
-                  }
-                }}
-              />
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Chip
+                  label={digitalTwinType}
+                  variant="filled"
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                    color: 'primary.main',
+                    fontWeight: '600',
+                    '& .MuiChip-label': {
+                      fontSize: '0.75rem'
+                    }
+                  }}
+                />
+              </Box>
             </Box>
             
             {/* Description if available */}
@@ -442,7 +519,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                             fontSize: '0.75rem'
                             },
                             '& .MuiChip-icon': {
-                            color: 'success.main'
+                            color: '#000000 !important'
                             }
                         }}
                         />
@@ -477,6 +554,58 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
             </Typography>
             
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {/* ID Short */}
+              {(() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const descriptor = singleTwinResult.shell_descriptor as any;
+                const idShort = descriptor.idShort;
+                
+                if (idShort) {
+                  return (
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 0.5 }}>
+                        ID Short:
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Chip
+                          icon={<LabelIcon />}
+                          label={idShort}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            maxWidth: '100%',
+                            color: 'text.primary',
+                            '& .MuiChip-label': {
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem'
+                            },
+                            '& .MuiChip-icon': {
+                              color: '#000000 !important'
+                            }
+                          }}
+                        />
+                        <Tooltip title="Copy ID Short">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCopyToClipboard(idShort)}
+                            sx={{
+                              color: 'text.secondary',
+                              '&:hover': {
+                                color: 'primary.main',
+                                backgroundColor: 'rgba(25, 118, 210, 0.1)'
+                              }
+                            }}
+                          >
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
+                  );
+                }
+                return null;
+              })()}
+
               {/* AAS ID */}
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 0.5 }}>
@@ -490,12 +619,13 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                     size="small"
                     sx={{
                       maxWidth: '100%',
+                      color: 'text.primary',
                       '& .MuiChip-label': {
                         fontFamily: 'monospace',
                         fontSize: '0.75rem'
                       },
                       '& .MuiChip-icon': {
-                        color: 'primary.main'
+                        color: '#000000 !important'
                       }
                     }}
                   />
@@ -530,12 +660,13 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                     size="small"
                     sx={{
                       maxWidth: '100%',
+                      color: 'text.primary',
                       '& .MuiChip-label': {
                         fontFamily: 'monospace',
                         fontSize: '0.75rem'
                       },
                       '& .MuiChip-icon': {
-                        color: 'success.main'
+                        color: '#000000 !important'
                       }
                     }}
                   />

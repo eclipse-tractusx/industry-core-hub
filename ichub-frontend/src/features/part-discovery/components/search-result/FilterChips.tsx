@@ -22,7 +22,7 @@
 
 import React from 'react';
 import { Box, Chip, Typography } from '@mui/material';
-import { SearchFilters, PartType } from '../types';
+import { SearchFilters, PartType } from '../../types/types';
 
 interface FilterChipsProps {
   filters: SearchFilters;

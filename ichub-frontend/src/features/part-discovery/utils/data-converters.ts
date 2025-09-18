@@ -21,7 +21,7 @@
 ********************************************************************************/
 
 import { AASData, getAASDataSummary } from './utils';
-import { PartCardData, SerializedPartData } from './types';
+import { PartCardData, SerializedPartData } from '../types/types';
 
 /**
  * Converts AAS data to Part Card format for catalog view

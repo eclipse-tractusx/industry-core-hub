@@ -20,50 +20,10 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import PersonIcon from '@mui/icons-material/Person'
-import { type Palette, useTheme } from '@mui/material'
 import MuiChip from '@mui/material/Chip'
-import { StatusVariants } from '../../../../types/statusVariants'
 
 export interface CardChipProps {
-  status?: StatusVariants
-  statusText?: string
   dtrIndex?: number
-  useDtrDisplay?: boolean
-}
-
-interface ChipStyle {
-  color: keyof Palette['chip']
-  backgroundColor: keyof Palette['chip']
-  border: keyof Palette['chip']
-}
-
-const statusStyles: Record<StatusVariants | 'default', ChipStyle> = {
-  [StatusVariants.registered]: {
-    color: 'registered',
-    backgroundColor: 'black',
-    border: 'bgRegistered',
-  },
-  [StatusVariants.shared]: {
-    color: 'black',
-    backgroundColor: 'warning',
-    border: 'none',
-  },
-  [StatusVariants.draft]: {
-    color: 'bgDefault',
-    backgroundColor: 'none',
-    border: 'borderDraft',
-  },
-  [StatusVariants.pending]: {
-    color: 'inReview',
-    backgroundColor: 'bgInReview',
-    border: 'inReview',
-  },
-  default: {
-    color: 'default',
-    backgroundColor: 'bgDefault',
-    border: 'none',
-  }
 }
 
 // Helper function to get consistent colors for DTR identifiers
@@ -92,11 +52,9 @@ const getDtrColor = (dtrIndex: number) => {
   };
 };
 
-export const DiscoveryCardChip = ({ status, statusText, dtrIndex, useDtrDisplay }: CardChipProps) => {
-  const theme = useTheme()
+export const DiscoveryCardChip = ({ dtrIndex = 1 }: CardChipProps) => {
 
   // If DTR display is requested and dtrIndex is provided, use DTR styling
-  if (useDtrDisplay && dtrIndex !== undefined) {
     const dtrColors = getDtrColor(dtrIndex);
     return (
       <MuiChip
@@ -112,24 +70,4 @@ export const DiscoveryCardChip = ({ status, statusText, dtrIndex, useDtrDisplay 
         }}
       />
     );
-  }
-
-  // Otherwise, use original status styling
-  const statusKey = status && statusStyles[status] ? status : 'default'
-  const { color, backgroundColor, border } = statusStyles[statusKey]
-
-  return (
-    <MuiChip
-      label={statusText}
-      variant="outlined"
-      sx={{
-        color: theme.palette.chip[color],
-        backgroundColor: theme.palette.chip[backgroundColor],
-        borderRadius: '4px',
-        border: theme.palette.chip[border],
-        height: '28px',
-      }}
-      icon={statusKey==StatusVariants.shared?<PersonIcon sx={{color: '#000000', fontSize: '18px'}}/>:undefined}
-    />
-  )
 }

@@ -24,7 +24,7 @@ import React from 'react';
 import { Box, Grid2, Button, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { FilterChips } from './FilterChips';
-import { SearchFilters, PartType } from '../types';
+import { SearchFilters, PartType } from '../../types/types';
 
 interface SearchHeaderProps {
   bpnl: string;

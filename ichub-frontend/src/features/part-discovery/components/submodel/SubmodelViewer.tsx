@@ -52,9 +52,9 @@ import DownloadIcon from '@mui/icons-material/Download';
 import EmailIcon from '@mui/icons-material/Email';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { fetchSubmodel, SubmodelDiscoveryResponse } from '../api';
-import { submodelAddonRegistry } from './submodel-addons/shared/registry';
-import { usTariffInformationAddon } from './submodel-addons/us-tariff-information/addon';
+import { fetchSubmodel, SubmodelDiscoveryResponse } from '../../api';
+import { submodelAddonRegistry } from '../submodel-addons/shared/registry';
+import { usTariffInformationAddon } from '../submodel-addons/us-tariff-information/addon';
 
 interface SubmodelViewerProps {
   open: boolean;
@@ -329,7 +329,7 @@ export const SubmodelViewer: React.FC<SubmodelViewerProps> = ({
   useEffect(() => {
     // Register US Tariff Information addon if not already registered
     if (!submodelAddonRegistry.getAddon('us-tariff-information')) {
-      submodelAddonRegistry.register(usTariffInformationAddon as unknown as import('./submodel-addons/shared/types').VersionedSubmodelAddon);
+      submodelAddonRegistry.register(usTariffInformationAddon as unknown as import('../submodel-addons/shared/types').VersionedSubmodelAddon);
       console.log('Registered US Tariff Information addon');
     }
   }, []);

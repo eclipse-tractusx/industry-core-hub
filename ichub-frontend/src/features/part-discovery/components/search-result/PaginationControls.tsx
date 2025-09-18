@@ -24,7 +24,7 @@ import React from 'react';
 import { Box, Button, Typography, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { ShellDiscoveryPaginator } from '../api';
+import { ShellDiscoveryPaginator } from '../../api';
 
 interface PaginationControlsProps {
   paginator: ShellDiscoveryPaginator | null;

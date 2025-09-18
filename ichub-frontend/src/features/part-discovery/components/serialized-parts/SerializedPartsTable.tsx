@@ -32,7 +32,7 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 import Download from '@mui/icons-material/Download';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { SerializedPartData } from '../types';
+import { SerializedPartData } from '../../types/types';
 
 interface SerializedPartsTableProps {
   parts: SerializedPartData[];

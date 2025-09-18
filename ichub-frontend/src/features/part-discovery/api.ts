@@ -3,7 +3,10 @@
  *
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
- * See the NOTICE file(s) distributed with this work for additional
+ * See the NOTICE file(s) distributed with this workexport const getAllCatalogParts = async (): Promise<ApiPartData[]> => {
+  const response = await axios.get<ApiPartData[]>(`${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}`);
+  return response.data;
+}; additional
  * information regarding copyright ownership.
  *
  * This program and the accompanying materials are made available under the
@@ -22,22 +25,18 @@
 
 import axios from 'axios';
 import { 
-  getIchubBackendUrl, 
-  getGovernanceConfig, 
-  getDtrPoliciesConfig,
+  getIchubBackendUrl,
   GovernanceConfig,
   GovernanceConstraint,
   GovernanceRule,
   GovernancePolicy
 } from '../../services/EnvironmentService';
-import { ApiPartData } from '../../types/product';
-import { CatalogPartTwinCreateType, TwinReadType } from '../../types/twin';
-import { ShellDiscoveryResponse, getNextPageCursor, getPreviousPageCursor, hasNextPage, hasPreviousPage } from './utils';
+import { ApiPartData } from './types/types';
+import { CatalogPartTwinCreateType, TwinReadType } from './types/types';
+import { ShellDiscoveryResponse, getNextPageCursor, getPreviousPageCursor, hasNextPage, hasPreviousPage } from './utils/utils';
+import { partDiscoveryConfig } from './config';
 
-const CATALOG_PART_MANAGEMENT_BASE_PATH = '/part-management/catalog-part';
-const SHARE_CATALOG_PART_BASE_PATH = '/share/catalog-part';
-const TWIN_MANAGEMENT_BASE_PATH = '/twin-management/catalog-part-twin';
-const SHELL_DISCOVERY_BASE_PATH = '/discover/shells';
+// Use configuration for API endpoints
 const backendUrl = getIchubBackendUrl();
 
 // Cache system with configuration change detection
@@ -147,7 +146,7 @@ const generateDefaultGovernancePolicyPermutations = (): OdrlPolicy[] => {
  * Get cached DTR governance policies with configuration change detection
  */
 const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
-  const currentConfig = getDtrPoliciesConfig();
+  const currentConfig = partDiscoveryConfig.governance.getDtrPoliciesConfig();
   const currentHash = await generateConfigHash(currentConfig);
   
   // Check if cache is valid
@@ -171,7 +170,7 @@ const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
  * Get cached governance policies for a specific semantic ID
  */
 const getCachedGovernancePolicies = async (semanticId: string): Promise<OdrlPolicy[]> => {
-  const currentConfig = getGovernanceConfig();
+  const currentConfig = partDiscoveryConfig.governance.getGovernanceConfig();
   const currentHash = await generateConfigHash(currentConfig);
   
   // Check if cache is valid for this semantic ID
@@ -252,7 +251,7 @@ export interface ShellDiscoveryRequest {
 }
 
 export const fetchCatalogParts = async (): Promise<ApiPartData[]> => {
-  const response = await axios.get<ApiPartData[]>(`${backendUrl}${CATALOG_PART_MANAGEMENT_BASE_PATH}`);
+  const response = await axios.get<ApiPartData[]>(`${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}`);
   return response.data;
 };
 
@@ -261,7 +260,7 @@ export const fetchCatalogPart = async (
   manufacturerPartId: string
 ): Promise<ApiPartData> => {
   const response = await axios.get<ApiPartData>(
-    `${backendUrl}${CATALOG_PART_MANAGEMENT_BASE_PATH}/${manufacturerId}/${manufacturerPartId}`
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}/${manufacturerId}/${manufacturerPartId}`
   );
   return response.data;
 };
@@ -285,7 +284,7 @@ export const shareCatalogPart = async (
   };
 
   const response = await axios.post<ApiPartData>(
-    `${backendUrl}${SHARE_CATALOG_PART_BASE_PATH}`,
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.SHARE_CATALOG_PART}`,
     requestBody
   );
   return response.data;
@@ -295,7 +294,7 @@ export const registerCatalogPartTwin = async (
   twinData: CatalogPartTwinCreateType
 ): Promise<TwinReadType> => {
   const response = await axios.post<TwinReadType>(
-    `${backendUrl}${TWIN_MANAGEMENT_BASE_PATH}`,
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.TWIN_MANAGEMENT}`,
     twinData
   );
   return response.data;
@@ -307,11 +306,13 @@ export const registerCatalogPartTwin = async (
  * Discover shells based on query specifications
  */
 export const discoverShells = async (
-  request: ShellDiscoveryRequest
+  request: ShellDiscoveryRequest,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const response = await axios.post<ShellDiscoveryResponse>(
-    `${backendUrl}${SHELL_DISCOVERY_BASE_PATH}`,
-    request
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.SHELL_DISCOVERY}`,
+    request,
+    { signal }
   );
   return response.data;
 };
@@ -417,7 +418,8 @@ export const discoverShellsWithCustomQuery = async (
   counterPartyId: string,
   querySpec: QuerySpecItem[],
   limit?: number,
-  cursor?: string
+  cursor?: string,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -429,7 +431,7 @@ export const discoverShellsWithCustomQuery = async (
     ...(cursor && { cursor })
   };
 
-  return discoverShells(request);
+  return discoverShells(request, signal);
 };
 
 // Types for Single Shell Discovery
@@ -444,6 +446,8 @@ export interface SingleShellDiscoveryResponse {
     description: unknown[];
     displayName: unknown[];
     globalAssetId: string;
+    assetKind?: string; // Asset kind (Instance, Type, NotApplicable)
+    assetType?: string; // Asset type from shell descriptor
     id: string;
     idShort: string;
     specificAssetIds: Array<{
@@ -500,7 +504,8 @@ export interface SingleShellDiscoveryResponse {
  */
 export const discoverSingleShell = async (
   counterPartyId: string,
-  aasId: string
+  aasId: string,
+  signal?: AbortSignal
 ): Promise<SingleShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -510,11 +515,26 @@ export const discoverSingleShell = async (
     dtrGovernance: dtrPolicies
   };
 
-  const response = await axios.post<SingleShellDiscoveryResponse>(
+  const response = await axios.post<SingleShellDiscoveryResponse | { status: number; error: string }>(
     `${backendUrl}/discover/shell`,
-    request
+    request,
+    { signal }
   );
-  return response.data;
+  
+  // Check if the response contains error fields instead of valid data
+  const data = response.data;
+  if (data && typeof data === 'object' && 'status' in data && 'error' in data) {
+    const errorResponse = data as { status: number; error: string };
+    throw new Error(errorResponse.error || `Error ${errorResponse.status}: Failed to find digital twin`);
+  }
+  
+  // Validate that we have a proper shell descriptor
+  const validData = data as SingleShellDiscoveryResponse;
+  if (!validData || !validData.shell_descriptor || !validData.shell_descriptor.submodelDescriptors) {
+    throw new Error('Invalid response format: Missing shell descriptor data');
+  }
+  
+  return validData;
 };
 
 // Enhanced pagination functions that automatically extract cursors
@@ -560,14 +580,15 @@ export const getNextPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const nextCursor = getNextPageCursor(currentResponse);
   if (!nextCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor, signal);
 };
 
 /**
@@ -577,14 +598,15 @@ export const getPreviousPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const previousCursor = getPreviousPageCursor(currentResponse);
   if (!previousCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor, signal);
 };
 
 /**

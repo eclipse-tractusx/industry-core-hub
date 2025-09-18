@@ -18,9 +18,29 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-import { AASData } from './utils';
+import { AASData } from '../utils/utils';
+
+// Re-export shared product types from catalog-management for discovery context
+export type { 
+  ApiPartData, 
+  DiscoveryPartType,
+  Material,
+  LengthMeasurement,
+  WeightMeasurement,
+  LengthUnit,
+  WeightUnit
+} from '../../catalog-management/types/types';
+
+// Re-export shared twin types from catalog-management
+export type { 
+  TwinReadType, 
+  CatalogPartTwinCreateType 
+} from '../../catalog-management/types/twin-types';
+
+// Note: PartType is redefined here for part discovery context (Catalog | Serialized)
+// This is different from the catalog management PartType interface
 
 export interface PartCardData {
   id: string;

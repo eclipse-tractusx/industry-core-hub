@@ -19,78 +19,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-
-import { StatusVariants } from '../../types/statusVariants';
-import { ApiPartData, PartType } from '../../types/product';
-import { SharedPartner } from '../../types/sharedPartners';
-
-// Helper function to map numeric API status to StatusVariants
-export const mapApiStatusToVariant = (apiStatus: number): StatusVariants => {
-  switch (apiStatus) {
-    case 0:
-      return StatusVariants.draft;
-    case 1:
-      return StatusVariants.pending;
-    case 2:
-      return StatusVariants.registered;
-    case 3:
-      return StatusVariants.shared;
-    default:
-      return StatusVariants.draft;
-  }
-};
-
-// Helper function to map StatusVariants to numeric API status
-export const mapVariantToApiStatus = (variant: StatusVariants): number => {
-  switch (variant) {
-    case StatusVariants.draft:
-      return 0;
-    case StatusVariants.pending:
-      return 1;
-    case StatusVariants.registered:
-      return 2;
-    case StatusVariants.shared:
-      return 3;
-    default:
-      return 0; // Default to draft if unknown variant
-  }
-};
-
-// Maps ApiPartData to PartInstance
-export const mapApiPartDataToPartType = (apiData: ApiPartData): PartType => {
-  const { status, ...rest } = apiData;
-  return {
-    ...rest,
-    status: mapApiStatusToVariant(status),
-  };
-};
-
-// Maps PartInstance to ApiPartData
-export const mapPartInstanceToApiPartData = (partInstance: PartType): ApiPartData => {
-  const { status, ...rest } = partInstance;
-  return {
-    ...rest,
-    status: mapVariantToApiStatus(status ?? StatusVariants.draft),
-  };
-};
-
-export const mapSharePartCustomerPartIds = (
-  customerPartIds: Record<string, { name: string; bpnl: string }>
-): SharedPartner[] => {
-  return Object.entries(customerPartIds).map(([customerPartId, { name, bpnl }]) => ({
-    name,
-    bpnl,
-    customerPartId,
-  }));
-};
-
 // Types for AAS data structure
 export interface AASData {
   description: string[];
   displayName: string[];
   globalAssetId: string;
   id: string;
-  idShort?: string; // Optional idShort field
+  idShort?: string;
+  assetKind?: string;  // Optional idShort field
+  assetType?: string; // Asset type from shell descriptor
   specificAssetIds: SpecificAssetId[];
   submodelDescriptors: SubmodelDescriptor[];
 }

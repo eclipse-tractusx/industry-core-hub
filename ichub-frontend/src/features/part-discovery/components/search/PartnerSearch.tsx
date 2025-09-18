@@ -23,7 +23,7 @@
 import React from 'react';
 import { TextField, Button, Autocomplete, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { PartnerInstance } from '../../../types/partner';
+import { PartnerInstance } from '../../../partner-management/types/types';
 
 interface PartnerSearchProps {
   bpnl: string;

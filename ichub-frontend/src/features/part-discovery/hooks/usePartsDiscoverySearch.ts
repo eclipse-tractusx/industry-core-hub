@@ -29,16 +29,16 @@ import {
 } from '../api';
 import { 
   ShellDiscoveryResponse,
-} from '../utils';
-import { convertToPartCards, convertToSerializedParts } from '../data-converters';
-import { createShellToDtrMap } from '../dtr-utils';
+} from '../utils/utils';
+import { convertToPartCards, convertToSerializedParts } from '../utils/data-converters';
+import { createShellToDtrMap } from '../utils/dtr-utils';
 import { 
   PartCardData, 
   SerializedPartData, 
   SearchFilters, 
   PartType, 
   PaginationSettings 
-} from '../types';
+} from '../types/types';
 
 export const usePartsDiscoverySearch = () => {
   // Results and pagination

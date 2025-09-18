@@ -24,7 +24,7 @@ import React from 'react';
 import { Box, Button, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { SearchMode } from '../types';
+import { SearchMode } from '../../types/types';
 
 interface SearchModeToggleProps {
   searchMode: SearchMode;
