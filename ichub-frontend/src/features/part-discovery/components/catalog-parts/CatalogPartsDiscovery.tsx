@@ -29,10 +29,9 @@ import { Box, Typography, IconButton, Button, Tooltip, Menu } from "@mui/materia
 import { useState } from "react";
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { DiscoveryCardChip } from "./DiscoveryCardChip";
-import { StatusVariants } from "../../../../types/statusVariants";
 import { ErrorNotFound } from "../../../../components/general/ErrorNotFound";
 import LoadingSpinner from "../../../../components/general/LoadingSpinner";
-import { AASData } from "../../../part-discovery/utils";
+import { AASData } from "../../utils/utils";
 
 export interface AppContent {
   id?: string;
@@ -40,7 +39,6 @@ export interface AppContent {
   manufacturerPartId: string;
   name?: string;
   category?: string;
-  status?: StatusVariants;
   dtrIndex?: number; // DTR index for display
   shellId?: string; // Shell ID (AAS ID) for display
   idShort?: string; // idShort for display
@@ -144,11 +142,8 @@ export const CatalogPartsDiscovery = ({
             >
               <Box className="custom-card-header">
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <DiscoveryCardChip 
-                    status={item.status} 
-                    statusText={item.status} 
+                  <DiscoveryCardChip
                     dtrIndex={item.dtrIndex}
-                    useDtrDisplay={item.dtrIndex !== undefined}
                   />
                 </Box>
 
@@ -194,9 +189,22 @@ export const CatalogPartsDiscovery = ({
               </Box>
               <Box className="custom-card-content">
                 <Typography variant="h5">
-                  {name}
+                  {(() => {
+                    // Try to get displayName from rawTwinData first
+                    if (item.rawTwinData?.displayName && Array.isArray(item.rawTwinData.displayName) && item.rawTwinData.displayName.length > 0) {
+                      // Check if displayName is an array of objects with text property
+                      const displayNameEntry = item.rawTwinData.displayName[0];
+                      if (typeof displayNameEntry === 'object' && displayNameEntry !== null && 'text' in displayNameEntry) {
+                        return (displayNameEntry as { text: string }).text;
+                      }
+                      // Otherwise treat as simple string
+                      return displayNameEntry as string;
+                    }
+                    // Fallback to current name logic
+                    return name;
+                  })()}
                 </Typography>
-                {(item.idShort || item.shellId) && (
+                {(item.rawTwinData?.assetType || item.idShort || item.shellId) && (
                   <Typography 
                     variant="caption" 
                     sx={{ 
@@ -214,7 +222,28 @@ export const CatalogPartsDiscovery = ({
                       whiteSpace: 'nowrap'
                     }}
                   >
-                    {item.idShort || item.shellId}
+                    {item.rawTwinData?.assetType || item.idShort || item.shellId}
+                  </Typography>
+                )}
+                {(item.rawTwinData?.idShort) && (
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      fontFamily: 'monospace', 
+                      fontSize: '0.7rem',
+                      color: 'rgba(255, 255, 255, 0.6)',
+                      display: 'block',
+                      mt: 0.5,
+                      mb: 0.5,
+                      wordBreak: 'break-all',
+                      lineHeight: 1.1,
+                      maxHeight: '15px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {item.rawTwinData.idShort}
                   </Typography>
                 )}
                 <br></br>

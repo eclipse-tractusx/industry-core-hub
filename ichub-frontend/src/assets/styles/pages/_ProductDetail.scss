@@ -34,6 +34,15 @@
     * {
         color: $brand-text !important;
     }
+
+    // Force override for black status chip with higher specificity
+    &.productDetail .black-status-chip {
+      color: #000000 !important;
+      
+      &, & *, & .MuiChip-label, & .MuiSvgIcon-root {
+        color: #000000 !important;
+      }
+    }
   
     .product-card {
         background: $brand-dark !important;
@@ -67,9 +76,17 @@
     }
 
     .MuiChip-root span {
-        color: $brand-dark !important;
+        color: #ffffff !important;
     }
-  
+
+    .MuiChip-root .MuiChip-label {
+        color: #ffffff !important;
+    }
+
+    .MuiChip-root .MuiChip-icon {
+        color: #ffffff !important;
+    }
+
     .cx-dropdown-menu {
         button {
             @include mixins.dark-bg-white-text;
@@ -112,7 +129,7 @@
 }
   
 .MuiChip-icon {
-    color: $brand-dark !important;
+    color: #ffffff !important;
 }
 
 .cx-card__decision *,

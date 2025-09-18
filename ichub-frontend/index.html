@@ -37,9 +37,11 @@
     <script>
       // Do NOT change ENV attributes without changing them in scripts/inject-dynamic-env.sh as well
       const ENV = {
-        VITE_REQUIRE_HTTPS_URL_PATTERN: "true",
-        VITE_ICHUB_BACKEND_URL: "https://backend-ichub.int.catena-x.net/v1",
-        VITE_PARTICIPANT_ID: "BPNL0000000093Q7"
+        REQUIRE_HTTPS_URL_PATTERN: "false",
+        ICHUB_BACKEND_URL: "http://localhost:9000/v1",
+        PARTICIPANT_ID: "BPNL0000000093Q7",
+        GOVERNANCE_CONFIG: "[]",
+        DTR_POLICIES_CONFIG: "[]"
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>

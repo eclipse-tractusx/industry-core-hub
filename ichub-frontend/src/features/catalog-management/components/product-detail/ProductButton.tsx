@@ -21,7 +21,7 @@
 ********************************************************************************/
 
 import { Grid2, Button } from '@mui/material';
-import { Icon } from '@catena-x/portal-shared-components';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 interface ProductButtonProps {
   gridSize?: { md?: number; xs?: number; lg?: number; sm?: number };
@@ -43,7 +43,7 @@ const ProductButton = ({ gridSize, buttonText, onClick, disabled = false }: Prod
         disabled={disabled}
       >
         <span className="submodel-button-content">{buttonText}</span>
-        <Icon fontSize="16" iconName="OpenInNew" />
+        <OpenInNewIcon />
       </Button>
     </Grid2>
   );

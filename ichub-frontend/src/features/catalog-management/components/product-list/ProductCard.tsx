@@ -28,7 +28,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { Box, Typography, IconButton, Button, Tooltip } from "@mui/material";
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { CardChip } from "./CardChip";
-import { StatusVariants } from "../../../../types/statusVariants";
+import { StatusVariants } from "../../types/types";
 import { ErrorNotFound } from "../../../../components/general/ErrorNotFound";
 import LoadingSpinner from "../../../../components/general/LoadingSpinner";
 
@@ -47,8 +47,10 @@ export interface CardDecisionProps {
   onMore: (manufacturerId: string, manufacturerPartId: string) => void;
   onRegisterClick: (manufacturerId: string, manufacturerPartId: string) => void;
   items: AppContent[];
-  isLoading: boolean;
-}enum ButtonEvents {
+  isLoading: boolean
+}
+
+export enum ButtonEvents {
   SHARE,
   MORE,
   REGISTER, 

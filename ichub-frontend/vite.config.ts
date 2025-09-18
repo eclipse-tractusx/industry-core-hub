@@ -45,34 +45,24 @@ export default defineConfig({
     reportCompressedSize: false, // Skip gzip size reporting for faster builds
     
     rollupOptions: {
+      // Define external dependencies to control loading
+      external: () => {
+        // Don't externalize anything - keep everything bundled but control order
+        return false;
+      },
       output: {
-        // Automatic chunking based on file patterns - no manual maintenance needed
-        manualChunks: (id) => {
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            // Split large vendor libraries into separate chunks
-            if (id.includes('@mui')) return 'mui';
-            if (id.includes('react-router')) return 'router';
-            if (id.includes('react') || id.includes('react-dom')) return 'react';
-            return 'vendor';
-          }
-          
-          // Feature-based chunking - automatically handles new features
-          if (id.includes('/features/')) {
-            const featureName = id.split('/features/')[1]?.split('/')[0];
-            if (featureName) return `feature-${featureName}`;
-          }
-          
-          // Page-based chunking - automatically handles new pages
-          if (id.includes('/pages/')) {
-            const pageName = id.split('/pages/')[1]?.split('.')[0];
-            if (pageName) return `page-${pageName}`;
-          }
-          
-          // Component-based chunking for large component directories
-          if (id.includes('/components/') && id.includes('/part-discovery/')) {
-            return 'components-part-discovery';
-          }
+        // Ensure proper chunk loading order by defining imports
+        inlineDynamicImports: false,
+        // Manual chunking to ensure React loads before everything else
+        manualChunks: {
+          // Explicitly define React chunk first
+          'react': ['react', 'react-dom'],
+          // Then MUI and emotion together
+          'mui-emotion': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          // Router separately
+          'router': ['react-router-dom'],
+          // Other vendor libs
+          'vendor': ['axios', 'uuid']
         }
       }
     },
@@ -96,7 +86,9 @@ export default defineConfig({
       'react-router-dom',
       '@mui/material',
       '@mui/icons-material'
-    ]
+    ],
+    // Force React to be processed first to ensure useInsertionEffect is available
+    force: true
   },
   
   // Additional optimizations for Docker builds

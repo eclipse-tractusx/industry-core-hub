@@ -22,11 +22,9 @@
 
 import axios from 'axios';
 import { getIchubBackendUrl } from '../../services/EnvironmentService';
-import { PartnerInstance } from '../../types/partner';
-import { ApiPartData } from '../../types/product';
+import { PartnerInstance } from './types/types';
 
 const PARTNER_MANAGEMENT_BASE_PATH = '/partner-management/business-partner';
-const PART_MANAGEMENT_BASE_PATH = '/part-management/catalog-part'; // New base path
 const backendUrl = getIchubBackendUrl();
 
 export const fetchPartners = async (): Promise<PartnerInstance[]> => {
@@ -39,8 +37,4 @@ export const createPartner = async (partnerData: { name: string; bpnl: string })
   return response.data; 
 };
 
-export const createCatalogPart = async (catalogPartData: ApiPartData): Promise<ApiPartData> => {
-  const response = await axios.post<ApiPartData>(`${backendUrl}${PART_MANAGEMENT_BASE_PATH}`, catalogPartData);
-  return response.data;
-};
 
