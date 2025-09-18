@@ -25,24 +25,39 @@
 source_file=/usr/share/nginx/html/index.html.reference
 target_file=/tmp/index.html
 
-# List of environment variables to be replaced
+# List of environment variables to be replaced as strings
 # (They should be set and match the ones in index.html)
 # Sequence is irrelevant
-vars=" \
+string_vars=" \
 REQUIRE_HTTPS_URL_PATTERN \
 ICHUB_BACKEND_URL \
+PARTICIPANT_ID \
+"
+
+# List of environment variables to be replaced as JSON objects
+json_vars=" \
 GOVERNANCE_CONFIG \
-DTR_POLICIES_CONFIG
+DTR_POLICIES_CONFIG \
 "
 
 # base sed command: output source file and remove javascript comments
 sed_command="cat ${source_file} | sed -e \"s@^\\\s*//.*@@g\""
 
-set -- $vars
+# Process string variables (wrapped in quotes)
+set -- $string_vars
 while [ -n "$1" ]; do
   var=$1
-  # add a replace expression for each variable
+  # add a replace expression for each string variable
   sed_command="${sed_command} -e \"s@${var}:\s*\\\".*\\\"@${var}: \\\"\${${var}}\\\"@g\""
+  shift
+done
+
+# Process JSON variables (not wrapped in quotes)
+set -- $json_vars
+while [ -n "$1" ]; do
+  var=$1
+  # add a replace expression for each JSON variable
+  sed_command="${sed_command} -e \"s@${var}:\s*\\\".*\\\"@${var}: \${${var}}@g\""
   shift
 done
 
