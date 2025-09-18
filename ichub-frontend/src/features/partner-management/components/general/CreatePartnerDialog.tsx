@@ -22,11 +22,11 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@catena-x/portal-shared-components';
-import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography } from '@mui/material';
+import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Grid2 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import { PartnerDialogProps } from '../../../../types/partnerDialogViewer';
+import { PartnerDialogProps } from '../../types/dialog-types';
 import { createPartner } from '../../api';
 
 const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDialogProps) => {
@@ -105,9 +105,34 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
   };
 
   return (
-    <Dialog open={open} maxWidth="xl" className="custom-dialog">
-      <DialogTitle sx={{ m: 0, p: 2 }}>
-      {partnerData ? 'Edit partner' : 'Create new partner'}
+    <Dialog 
+      open={open} 
+      maxWidth={false}
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: 'background.paper',
+          width: '60vw',
+          height: 'auto',
+          maxWidth: '60vw',
+          maxHeight: '90vh',
+          '& .MuiDialogContent-root': {
+            backgroundColor: 'background.paper',
+          }
+        }
+      }}
+    >
+      <DialogTitle 
+        sx={{ 
+          m: 0, 
+          p: 3,
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
+          fontSize: '1.25rem',
+          fontWeight: 600
+        }}
+      >
+        {partnerData ? 'Edit partner' : 'Create new partner'}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -116,53 +141,119 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
           position: 'absolute',
           right: 8,
           top: 8,
-          color: theme.palette.grey[500],
+          color: theme.palette.primary.contrastText,
         })}
       >
         <CloseIcon />
       </IconButton>
-      <DialogContent dividers>
-        <Typography variant="label2">Introduce the partner name and BPNL</Typography>
-        <Box sx={{ mt: 2, mx: 'auto', maxWidth: '400px' }}>
-          <TextField
-            label="Partner Name"
-            variant="outlined"
-            size="small"
-            error={error && !name.trim()}
-            helperText={error && !name.trim() ? 'Name is required' : ''}
-            fullWidth
-            sx={{ marginBottom: '16px' }}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="Partner BPNL"
-            variant="outlined"
-            size="small"
-            error={error && !bpnl.trim()}
-            helperText={error && !bpnl.trim() ? 'BPNL is required' : ''}
-            fullWidth
-            value={bpnl}
-            onChange={(e) => setBpnl(e.target.value)}
-            disabled={!!partnerData} // Disable if editing
-          />
-        </Box>
+      <DialogContent sx={{ 
+        p: 3, 
+        backgroundColor: 'background.paper',
+        overflow: 'auto',
+        '& .MuiTextField-root': {
+          backgroundColor: 'background.default',
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: 'background.default',
+            '& fieldset': {
+              borderColor: 'divider',
+            },
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: 'primary.main',
+            }
+          }
+        }
+      }}>
+        <Grid2 container spacing={3}>
+          <Grid2 size={12}>
+            <Typography variant="h6" gutterBottom sx={{ 
+              mb: 2, 
+              color: 'text.primary',
+              fontSize: '1.1rem',
+              fontWeight: 500
+            }}>
+              Partner Information
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Introduce the partner name and BPNL
+            </Typography>
+          </Grid2>
+          
+          <Grid2 size={{xs: 12, sm: 6}}>
+            <TextField
+              label="Partner Name"
+              variant="outlined"
+              size="medium"
+              error={error && !name.trim()}
+              helperText={error && !name.trim() ? 'Name is required' : ''}
+              fullWidth
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Grid2>
+          
+          <Grid2 size={{xs: 12, sm: 6}}>
+            <TextField
+              label="Partner BPNL"
+              variant="outlined"
+              size="medium"
+              error={error && !bpnl.trim()}
+              helperText={error && !bpnl.trim() ? 'BPNL is required' : ''}
+              fullWidth
+              value={bpnl}
+              onChange={(e) => setBpnl(e.target.value)}
+              disabled={!!partnerData} // Disable if editing
+            />
+          </Grid2>
+        </Grid2>
+
         {apiErrorMessage && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 3 }}>
             <Alert severity="error">{apiErrorMessage}</Alert>
           </Box>
         )}
         {successMessage && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 3 }}>
             <Alert severity="success">{successMessage}</Alert>
           </Box>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button className="close-button" variant="outlined" size="small" onClick={onClose} startIcon={<CloseIcon />} >
+      <DialogActions sx={{ 
+        p: 3, 
+        backgroundColor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        gap: 2,
+        justifyContent: 'flex-end'
+      }}>
+        <Button 
+          onClick={onClose}
+          variant="outlined"
+          color="primary"
+          size="large"
+          sx={{
+            minWidth: '100px',
+            textTransform: 'none',
+            fontWeight: 500
+          }}
+        >
           CLOSE
         </Button>
-        <Button className="action-button" variant="contained" size="small" onClick={handleCreate} startIcon={partnerData ? <EditIcon /> : <AddIcon />} >
+        <Button 
+          onClick={handleCreate}
+          variant="contained"
+          color="primary"
+          size="large"
+          startIcon={partnerData ? <EditIcon /> : <AddIcon />}
+          sx={{
+            minWidth: '100px',
+            textTransform: 'none',
+            fontWeight: 500,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
           {partnerData ? 'UPDATE' : 'CREATE'}
         </Button>
       </DialogActions>
