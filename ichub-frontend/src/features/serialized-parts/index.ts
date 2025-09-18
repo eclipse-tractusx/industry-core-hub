@@ -20,28 +20,14 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-export interface SerializedPart {
-    id: number, // not in API, just for table handling
-    customerPartId: string,
-    businessPartner: {name: string, bpnl: string},
-    manufacturerId: string,
-    manufacturerPartId: string,
-    partInstanceId: string,
-    name: string,
-    category: string,
-    bpns: string,
-    van: string
-}
+// Export pages
+export * from './pages';
 
-export interface AddSerializedPartRequest {
-  businessPartnerNumber: string;
-  manufacturerId: string;
-  manufacturerPartId: string;
-  partInstanceId: string;
-  van: string;
-  customerPartId: string;
-  // Optional catalog part fields for auto-generation
-  name?: string;
-  category?: string;
-  bpns?: string;
-}
+// Export routes
+export * from './routes';
+
+// Export API
+export * from './api';
+
+// Export configuration
+export * from './config';

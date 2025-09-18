@@ -20,28 +20,23 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-export interface SerializedPart {
-    id: number, // not in API, just for table handling
-    customerPartId: string,
-    businessPartner: {name: string, bpnl: string},
-    manufacturerId: string,
-    manufacturerPartId: string,
-    partInstanceId: string,
-    name: string,
-    category: string,
-    bpns: string,
-    van: string
-}
+import { Dashboard } from '@mui/icons-material';
+import SerializedParts from './pages/SerializedParts';
+import { FeatureConfig } from '../../types/routing';
 
-export interface AddSerializedPartRequest {
-  businessPartnerNumber: string;
-  manufacturerId: string;
-  manufacturerPartId: string;
-  partInstanceId: string;
-  van: string;
-  customerPartId: string;
-  // Optional catalog part fields for auto-generation
-  name?: string;
-  category?: string;
-  bpns?: string;
-}
+export const serializedPartsFeature: FeatureConfig = {
+  name: 'Serialized Parts',
+  icon: <Dashboard />,
+  navigationPath: '/serialized-parts',
+  disabled: false,
+  routes: [
+    {
+      path: '/serialized-parts',
+      element: <SerializedParts />,
+      meta: {
+        title: 'Serialized Parts',
+        description: 'Manage serialized parts'
+      }
+    }
+  ]
+};
