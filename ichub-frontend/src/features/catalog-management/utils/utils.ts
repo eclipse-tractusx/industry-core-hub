@@ -20,9 +20,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { StatusVariants } from '../../types/statusVariants';
-import { ApiPartData, PartType } from '../../types/product';
-import { SharedPartner } from '../../types/sharedPartners';
+import { StatusVariants } from '../types/types';
+import { ApiPartData, PartType } from '../types/types';
+import { SharedPartner } from '../types/types';
 
 // Helper function to map numeric API status to StatusVariants
 export const mapApiStatusToVariant = (apiStatus: number): StatusVariants => {

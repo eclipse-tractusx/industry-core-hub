@@ -30,7 +30,7 @@ import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { ProductDetailDialogProps } from '../../../../types/dialogViewer';
+import { ProductDetailDialogProps } from '../../types/dialog-types';
 
 const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     const [copied, setCopied] = useState(false);

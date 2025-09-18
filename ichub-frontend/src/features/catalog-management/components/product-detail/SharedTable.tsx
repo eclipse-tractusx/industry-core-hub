@@ -23,7 +23,7 @@
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination} from "@mui/material";
 
-import { SharedPartner } from '../../../../types/sharedPartners';
+import { SharedPartner } from '../../types/types';
 
 interface SharedTableProps {
   sharedParts: SharedPartner[];
