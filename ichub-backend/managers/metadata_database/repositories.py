@@ -330,6 +330,61 @@ class SerializedPartRepository(BaseRepository[SerializedPart]):
 
         return self._session.scalars(stmt).all()
 
+    def find_with_status(self,
+        manufacturer_id: Optional[str] = None,
+        manufacturer_part_id: Optional[str] = None,
+        business_partner_number: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        part_instance_id: Optional[str] = None,
+        van: Optional[str] = None) -> List[tuple[SerializedPart, int]]:
+        """
+        Find serialized parts with status information.
+        The result is a list of tuples, where each tuple contains the SerializedPart object and its status.
+        """
+        
+        # Case to determine the status of the serialized part
+        status_expr = case(
+            # 0: no twin at all (draft)
+            (SerializedPart.twin_id.is_(None), 0),
+            # 1: twin exists, but not yet DTR-registered (pending)
+            (TwinRegistration.dtr_registered.is_(False), 1),
+            # 2: DTR-registered but not yet in any TwinExchange row (registered)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_(None)), 2),
+            # 3: DTR-registered AND appears in TwinExchange (shared)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_not(None)), 3),
+            else_=0
+        ).label("status")
+
+        stmt = select(SerializedPart, status_expr).distinct(SerializedPart.id)
+        
+        stmt = stmt.join(PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id)
+        stmt = stmt.join(CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id)
+        stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+        
+        stmt = stmt.outerjoin(TwinRegistration, TwinRegistration.twin_id == SerializedPart.twin_id)
+        stmt = stmt.outerjoin(TwinExchange, TwinExchange.twin_id == SerializedPart.twin_id)
+
+        if business_partner_number:
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
+                ).where(BusinessPartner.bpnl == business_partner_number)
+        
+        if manufacturer_id:
+            stmt = stmt.where(LegalEntity.bpnl == manufacturer_id)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(CatalogPart.manufacturer_part_id == manufacturer_part_id)
+        
+        if part_instance_id:
+            stmt = stmt.where(SerializedPart.part_instance_id == part_instance_id)
+
+        if van:
+            stmt = stmt.where(SerializedPart.van == van)
+
+        if customer_part_id:
+            stmt = stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+        return self._session.exec(stmt).all()
+
     def create_new(self, partner_catalog_part_id: int, part_instance_id: str, van: Optional[str]) -> SerializedPart:
         """Create a new SerializedPart instance."""
         serialized_part = SerializedPart(

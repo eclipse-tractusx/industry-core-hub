@@ -23,29 +23,188 @@
 import axios from 'axios';
 import { getIchubBackendUrl } from '../../services/EnvironmentService';
 import { SerializedPart, AddSerializedPartRequest } from './types';
+import { SerializedPartTwinCreateType, SerializedPartTwinShareCreateType, SerializedPartTwinUnshareCreateType, TwinReadType, SerializedPartTwinRead } from './types/twin-types';
 
 const SERIALIZED_PART_READ_BASE_PATH = '/part-management/serialized-part';
+const SERIALIZED_PART_TWIN_BASE_PATH = '/twin-management/serialized-part-twin';
 const backendUrl = getIchubBackendUrl();
 
+// Track if twin endpoint is available to avoid repeated 404 calls
+let twinEndpointUnavailable = false;
+
+// Create axios instance with caching configuration for GET requests
+const cacheableAxios = axios.create({
+  headers: {
+    'Cache-Control': 'max-age=300', // Cache for 5 minutes
+  },
+});
+
 export const fetchAllSerializedParts = async (): Promise<SerializedPart[]> => {
-  const response = await axios.get<SerializedPart[]>(`${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}`);
-  return response.data;
+  try {
+    if (!backendUrl) {
+      console.warn('Backend URL not configured, returning empty serialized parts list');
+      return [];
+    }
+    const response = await axios.get<SerializedPart[]>(`${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}`);
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Failed to fetch serialized parts:', error);
+    return []; // Return empty array instead of throwing
+  }
 }
 
 export const fetchSerializedParts = async (manufacturerId: string, manufacturerPartId: string ): Promise<SerializedPart[]> => {
-  const response = await axios.post<SerializedPart[]>(
-    `${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}/query`,
-    {
-      manufacturerId,
-      manufacturerPartId,
+  try {
+    if (!backendUrl) {
+      console.warn('Backend URL not configured, returning empty serialized parts list');
+      return [];
     }
+    const response = await axios.post<SerializedPart[]>(
+      `${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}/query`,
+      {
+        manufacturerId,
+        manufacturerPartId,
+      }
+    );
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Failed to fetch serialized parts:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
+export const addSerializedPart = async (payload: AddSerializedPartRequest, autoGenerate: boolean = false) => {
+  try {
+    if (!backendUrl) {
+      throw new Error('Backend URL not configured');
+    }
+    const response = await axios.post<SerializedPart>(
+      `${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}?autoGenerateCatalogPart=${autoGenerate}`, 
+      payload
+    );
+    return response;
+  } catch (error) {
+    console.error('Failed to add serialized part:', error);
+    throw error; // Re-throw for user feedback
+  }
+};
+
+// Twin Management API Functions
+
+export const createSerializedPartTwin = async (
+  twinData: SerializedPartTwinCreateType
+): Promise<TwinReadType> => {
+  try {
+    if (!backendUrl) {
+      throw new Error('Backend URL not configured');
+    }
+    const response = await axios.post<TwinReadType>(
+      `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}`,
+      twinData
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Failed to create serialized part twin:', error);
+    throw error; // Re-throw for user feedback
+  }
+};
+
+export const shareSerializedPartTwin = async (
+  shareData: SerializedPartTwinShareCreateType
+): Promise<void> => {
+  try {
+    if (!backendUrl) {
+      throw new Error('Backend URL not configured');
+    }
+    await axios.post(
+      `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}/share`,
+      shareData
+    );
+  } catch (error) {
+    console.error('Failed to share serialized part twin:', error);
+    throw error; // Re-throw for user feedback
+  }
+};
+
+export const fetchAllSerializedPartTwins = async (): Promise<SerializedPartTwinRead[]> => {
+  try {
+    if (!backendUrl) {
+      console.warn('Backend URL not configured, returning empty twins list');
+      return [];
+    }
+
+    // If we already know the endpoint is unavailable, don't make the request
+    if (twinEndpointUnavailable) {
+      
+      return [];
+    }
+    
+    // Fetch all twins without any filters using browser caching
+    const params = new URLSearchParams();
+    params.append('include_data_exchange_agreements', 'true');
+    const response = await cacheableAxios.get<SerializedPartTwinRead[]>(
+      `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}?${params.toString()}`
+    );
+    
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error: unknown) {
+    // Handle 404 specifically - endpoint might not be available
+    if (axios.isAxiosError(error) && error?.response?.status === 404) {
+      console.warn('Twin management endpoint not found (404). This feature may not be available in this backend version.');
+      twinEndpointUnavailable = true; // Remember that this endpoint is not available
+      return [];
+    }
+    
+    // Handle other 4xx errors
+    if (axios.isAxiosError(error) && error?.response?.status && error.response.status >= 400 && error.response.status < 500) {
+      console.warn(`Twin management endpoint returned ${error.response.status}. Feature may not be available.`);
+      twinEndpointUnavailable = true; // Remember that this endpoint is not available
+      return [];
+    }
+    
+    console.error('Failed to fetch serialized part twins:', error);
+    return []; // Return empty array instead of throwing
+  }
+};
+
+export const fetchSerializedPartTwinsForCatalogPart = async (
+  manufacturerId: string,
+  manufacturerPartId: string
+): Promise<SerializedPartTwinRead[]> => {
+  // Build query parameters to filter by catalog part using browser caching
+  const params = new URLSearchParams();
+  params.append('include_data_exchange_agreements', 'true');
+  params.append('manufacturerId', manufacturerId);
+  params.append('manufacturerPartId', manufacturerPartId);
+  const response = await cacheableAxios.get<SerializedPartTwinRead[]>(
+    `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}?${params.toString()}`
   );
+  
   return response.data;
 };
 
-export const addSerializedPart = async (payload: AddSerializedPartRequest ) => {
-  const response = await axios.post<SerializedPart>(
-    `${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}`, payload
+export const unshareSerializedPartTwin = async (
+  unshareData: SerializedPartTwinUnshareCreateType
+): Promise<void> => {
+  await axios.post(
+    `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}/unshare`,
+    unshareData
   );
-  return response;
+};
+
+export const deleteSerializedPart = async (
+  partnerCatalogPartId: number,
+  partInstanceId: string
+): Promise<void> => {
+  
+  const url = `${backendUrl}${SERIALIZED_PART_READ_BASE_PATH}/${partnerCatalogPartId}/${partInstanceId}`;
+  
+  
+  try {
+    const response = await axios.delete(url);
+    
+  } catch (error) {
+    console.error("Delete API error:", error);
+    throw error;
+  }
 };

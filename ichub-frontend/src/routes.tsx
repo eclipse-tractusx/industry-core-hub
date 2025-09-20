@@ -20,86 +20,27 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import { CircularProgress, Box } from "@mui/material";
-
-// Lazy load page components for automatic code splitting
-const ProductsList = lazy(() => import('./pages/ProductsList'));
-const PartnersList = lazy(() => import('./pages/PartnersList'));
-const ProductsDetails = lazy(() => import('./pages/ProductsDetails'));
-const PartsDiscovery = lazy(() => import("./pages/PartsDiscovery"));
-const SerializedParts = lazy(() => import("./pages/SerializedParts"));
-
-// Loading component
-const PageLoader = () => (
-  <Box 
-    display="flex" 
-    justifyContent="center" 
-    alignItems="center" 
-    minHeight="50vh"
-  >
-    <CircularProgress />
-  </Box>
-);
+import { getAllRoutes } from "./features/main";
 
 export default function AppRoutes() {
+  const featureRoutes = getAllRoutes();
+
   return (
     <BrowserRouter>
-     <Routes>
-        <Route path="/" element={<MainLayout />} >
-          <Route 
-            index 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductsList />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/product/:manufacturerId/:manufacturerPartId" 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductsDetails />
-              </Suspense>
-            } 
-          />
-
-          <Route 
-            path="/catalog" 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductsList />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/dataspace-discovery" 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PartsDiscovery />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/partners" 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PartnersList />
-              </Suspense>
-            } 
-          />
-          <Route 
-            path="/serialized-parts" 
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <SerializedParts />
-              </Suspense>
-            } 
-          />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {featureRoutes.map((route, index) => (
+            <Route
+              key={index}
+              path={route.path}
+              index={route.index}
+              element={route.element}
+            />
+          ))}
         </Route>
       </Routes>
     </BrowserRouter>
-  );    
+  );
 }

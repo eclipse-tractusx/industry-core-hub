@@ -14,7 +14,6 @@
     "start:docker": "IMAGE=ichub-frontend && docker run --rm -d -p 8080:80 --name ichub-frontend $IMAGE"
   },
   "dependencies": {
-    "@catena-x/portal-shared-components": "^3.7.6",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.4.5",

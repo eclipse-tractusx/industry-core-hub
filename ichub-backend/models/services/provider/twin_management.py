@@ -102,7 +102,7 @@ class TwinCreateBase(BaseModel):
 
     global_id: Optional[UUID] = Field(alias="globalId", description="Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.", default=None)
     dtr_aas_id: Optional[UUID] = Field(alias="dtrAasId", description="Optionally the shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry. If not specified, a new UUID will be created automatically.", default=None)
-
+    id_short: Optional[str] = Field(alias="idShort", description="Optionally the idShort of the digital twin in the Digital Twin Registry. If not specified, a default value 'Twin-{globalId}' will be used.", default=None)
 class TwinDetailsReadBase(BaseModel):
     additional_context: Optional[Dict[str, Any]] = Field(alias="additionalContext", description="Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.", default=None)
     registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)

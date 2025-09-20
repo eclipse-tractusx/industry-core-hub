@@ -52,7 +52,7 @@ class Measurement(SQLModel, table=False):
 
 class Material(BaseModel):
     name: str = PydField(description="Name of the material")
-    share: int = PydField(description="Share of the material in percent. 0-100")
+    share: float = PydField(description="Share of the material in percent. 0-100")
 
 class LegalEntity(SQLModel, table=True):
     """
@@ -194,7 +194,7 @@ class CatalogPart(SQLModel, table=True):
     description: Optional[str] = Field(default=None, description="The description of the catalog part.")
     category: Optional[str] = Field(default=None, description="The category of the catalog part.")
     bpns: Optional[str] = Field(default=None, description="The optional site information (BPNS) of the catalog part.")
-    materials: List[Material] = Field(default_factory=list, sa_column=Column(JSON), description="List of materials, e.g. [{'name':'aluminum','share':'20'}]")
+    materials: List[Material] = Field(default_factory=list, sa_column=Column(JSON), description="List of materials, e.g. [{'name':'aluminum','share':20.5}, {'name':'steel','share':75.25}]")
     width: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Width of the part")
     height: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Height of the part")
     length: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Length of the part")

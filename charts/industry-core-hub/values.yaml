@@ -63,6 +63,38 @@ backend:
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     agreements:
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         usage:
           context:
@@ -135,9 +167,9 @@ backend:
           managementPath: "/management"
           protocolPath: "/api/v1/dsp"
           catalogPath: "/catalog"
-    # -- Provider configuration
+    # -- Provider configuration  
     provider:
-      connector:
+      connector: 
         dataspace:
           version: "jupiter"
         controlplane:
@@ -192,7 +224,7 @@ backend:
             obligation: []
     # -- EDC (Eclipse Dataspace Connector) configuration
     submodel_dispatcher:
-      path: "./data/submodels"
+      path: "/industry-core-hub/data/submodels"
       apiPath: "/submodel-dispatcher"
 
   podAnnotations: {}
@@ -343,6 +375,83 @@ backend:
       keep_alive: 300                       # 5 minutes for DTR operations
       graceful_shutdown: 30                 # 30 seconds for graceful shutdown
 frontend:
+  # -- Enhanced frontend configuration
+  config:
+    # Core application settings
+    environment: "development"  # development, staging, production
+    version: "1.0.0"
+    
+    # API and backend configuration
+    ichubBackendUrl: "https://<backend-hostname>"
+    apiTimeout: 30000
+    apiRetryAttempts: 3
+    requireHttpsUrlPattern: false
+    
+    # API key configuration (optional)
+    apiKey: ""
+    apiKeyHeader: "X-API-Key"
+    enableApiKeyRotation: false
+    apiKeyExpiryWarningDays: 7
+    
+    # Authentication configuration
+    authEnabled: false
+    authProvider: "none"  # none, keycloak
+    
+    # Keycloak configuration (only used when authProvider is keycloak)
+    keycloak:
+      url: ""
+      realm: ""
+      clientId: ""
+      onLoad: "check-sso"  # check-sso, login-required
+      checkLoginIframe: true
+      silentCheckSsoRedirectUri: ""
+      pkceMethod: "S256"
+      enableLogging: false
+      minValidity: 30
+      checkLoginIframeInterval: 5
+      flow: "standard"  # standard, implicit, hybrid
+    
+    # Session management
+    authSessionTimeout: 3600000  # 1 hour in milliseconds
+    authRenewTokenMinValidity: 300  # 5 minutes in seconds
+    authLogoutRedirectUri: ""
+    
+    # Participant configuration
+    participantId: "BPNL0000000093Q7"
+    bpnValidationPattern: "^BPN[LAS]\\d{10}[a-zA-Z0-9]{2}$"
+    
+    # Governance and policies configuration
+    governanceConfig: []
+    dtrPoliciesConfig:
+      - strict: false
+        permission:
+          action: "odrl:use"
+          LogicalConstraint: "odrl:and"
+          constraints:
+            - leftOperand: "cx-policy:FrameworkAgreement"
+              operator: "odrl:eq"
+              rightOperand: "DataExchangeGovernance:1.0"
+            - leftOperand: "cx-policy:Membership"
+              operator: "odrl:eq"
+              rightOperand: "active"
+            - leftOperand: "cx-policy:UsagePurpose"
+              operator: "odrl:eq"
+              rightOperand: "cx.core.digitalTwinRegistry:1"
+        prohibition: []
+        obligation: []
+    governanceStrictMode: false
+    
+    # Feature flags
+    enableAdvancedLogging: false
+    enablePerformanceMonitoring: false
+    enableDevTools: false
+    
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+
+  # Legacy configuration (deprecated - use config section above)
   env:
     # -- industry-core-hub backend base URL
     backendUrl: "https://<backend-hostname>"
@@ -386,8 +495,8 @@ frontend:
           strict: false
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
-        policies:
-          - strict: false  # -- Enable here the permutations of constraints (order not matters)
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and
@@ -403,7 +512,7 @@ frontend:
                   rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
-          - strict: true  # -- Disable here the permutations of constraints (order matters)
+          - strict: true #-- Disable here the permutations of constraints (order matters)
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and
