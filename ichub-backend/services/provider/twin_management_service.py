@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -24,7 +25,6 @@
 
 from typing import Optional, Dict, Any, List
 from uuid import UUID
-
 
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
@@ -130,7 +130,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             
-            dtr_manager = SystemManagementService.create_dtr_manager(db_enablement_service_stack.dtr_service)
+            dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
             
             customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                     for partner_catalog_part in db_catalog_part.partner_catalog_parts}
@@ -310,7 +310,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             if not db_twin_registration.dtr_registered:
-                dtr_manager = SystemManagementService.create_dtr_manager(db_enablement_service_stack.dtr_service)
+                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
                 
                 dtr_manager.create_or_update_shell_descriptor_serialized_part(
                     global_id=db_twin.global_id,
@@ -476,7 +476,6 @@ class TwinManagementService:
                 repo.refresh(db_twin_aspect_registration)
                 repo.refresh(db_twin_aspect)
 
-
             # Step 5: Handle the submodel service
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
                 submodel_service_manager = _create_submodel_service_manager(db_enablement_service_stack.settings)
@@ -491,9 +490,9 @@ class TwinManagementService:
                 # Step 5b: Update the registration status to STORED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.STORED.value
                 repo.commit()
-
+            
             # Step 6: Handle the EDC registration
-            connector_manager = SystemManagementService.create_connector_manager(db_enablement_service_stack.connector_service)
+            connector_manager = SystemManagementService.get_connector_manager(db_enablement_service_stack.connector_service)
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
                 
                 # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
@@ -507,7 +506,7 @@ class TwinManagementService:
 
             # Step 7: Handle the DTR registration
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                dtr_manager = SystemManagementService.create_dtr_manager(db_enablement_service_stack.dtr_service)
+                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
                 
                 # Step 7a: Register the submodel in the DTR (if necessary)
                 try:
@@ -515,10 +514,10 @@ class TwinManagementService:
                         aas_id=db_twin.aas_id,
                         submodel_id=db_twin_aspect.submodel_id,
                         semantic_id=db_twin_aspect.semantic_id,
-                        edc_asset_id=asset_id
+                        connector_asset_id=asset_id
                 )
                 except Exception as e:
-                    logger.error("It was not possible to create the submodel descriptor")
+                    logger.error(f"Failed to create submodel descriptor: {e}")
 
                 # Step 7b: Update the registration status to DTR_REGISTERED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
@@ -710,7 +709,8 @@ class TwinManagementService:
             else:
                 return False
 
-def _create_submodel_service_manager(settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
+
+def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
     """
     Create a new instance of the SubmodelServiceManager class.
     """

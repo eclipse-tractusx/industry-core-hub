@@ -32,266 +32,112 @@ import {
   DialogActions,
   IconButton,
   Typography,
+  Grid2,
+  MenuItem,
+  Tooltip,
+  InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import { createCatalogPart } from "../../api";
 import {
   PartType,
-  Unit,
-  Measurement,
-  Material,
+  WeightUnit,
+  LengthUnit,
 } from "../../../../types/product";
 import { mapPartInstanceToApiPartData } from "../../../catalog-management/utils";
 import { getParticipantId } from "../../../../services/EnvironmentService";
+import { Business, Category, ConfirmationNumber, Description, DriveFileRenameOutline, Fingerprint, Percent, Scale, Science, Straighten } from "@mui/icons-material";
 
 // Define props for ProductListDialog
 interface ProductListDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave?: (data: { jsonContent: string }) => void;
-  productListJson?: string; // Initial JSON content for editing
+  onSave?: (data: { part: PartType }) => void;
 }
 
-const initialJsonPlaceholder = JSON.stringify(
-  {
-    manufacturerPartId: "<<Your Manufacturer Part ID>>",
-    name: "<<Your Part Name>>",
-    description: "<<Your Part Description>>",
-    category: "<<Your Part Category>>",
-    materials: [
-      { name: "Aluminum", share: 80 },
-      { name: "Rubber", share: 20 }
-    ],
-    bpns: "BPNS0000000000ZZ", // Example Site BPN
-    width: { value: 200, unit: Unit.MM },
-    height: { value: 100, unit: Unit.MM },
-    length: { value: 50, unit: Unit.MM },
-    weight: { value: 5, unit: Unit.KG }
-  } as Omit<PartType, "status">, // Use Omit to exclude status from placeholder type
-  null,
-  2
-);
+const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogProps) => {
+  const manufacturerId = getParticipantId();
+  const lengthUnits = Object.values(LengthUnit);
+  const weightUnits = Object.values(WeightUnit);
 
-const CreateProductListDialog = ({
-  open,
-  onClose,
-  onSave,
-  productListJson,
-}: ProductListDialogProps) => {
-  const [jsonContent, setJsonContent] = useState("");
-  const [isEmptyError, setIsEmptyError] = useState(false);
-  const [jsonValidationError, setJsonValidationError] = useState<string | null>(
-    null
-  );
+  const [formData, setFormData] = useState<Omit<PartType, "status">>({
+    manufacturerId: manufacturerId,
+    manufacturerPartId: "",
+    name: "",
+    description: "",
+    category: "",
+    materials: [{ name: "", share: 0 }],
+    bpns: "",
+    width: { value: 0, unit: LengthUnit.MM },
+    height: { value: 0, unit: LengthUnit.MM },
+    length: { value: 0, unit: LengthUnit.MM },
+    weight: { value: 0, unit: WeightUnit.KG },
+  });
+
   const [successMessage, setSuccessMessage] = useState("");
-  const [apiErrorMessage, setApiErrorMessage] = useState(""); // Kept for potential future API errors
+  const [apiErrorMessage, setApiErrorMessage] = useState("");
 
   useEffect(() => {
     if (open) {
-      setJsonContent(productListJson || initialJsonPlaceholder);
-      setIsEmptyError(false);
-      setJsonValidationError(null);
+      setFormData({
+        manufacturerId: manufacturerId,
+        manufacturerPartId: "",
+        name: "",
+        description: "",
+        category: "",
+        materials: [{ name: "", share: 0 }],
+        bpns: "",
+        width: { value: 0, unit: LengthUnit.MM },
+        height: { value: 0, unit: LengthUnit.MM },
+        length: { value: 0, unit: LengthUnit.MM },
+        weight: { value: 0, unit: WeightUnit.KG },
+      });
       setSuccessMessage("");
       setApiErrorMessage("");
     }
-  }, [productListJson, open]);
+  }, [open]);
 
-  const isValidJson = (str: string): string | null => {
-    try {
-      JSON.parse(str);
-    } catch (e) {
-      if (e instanceof Error) {
-        return e.message;
-      }
-      return "Invalid JSON format.";
-    }
-    return null;
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const validatePartInstanceStructure = (obj: unknown): string => {
-    if (typeof obj !== "object" || obj === null) {
-      return "Data must be an object.";
-    }
-    const data = obj as Partial<Omit<PartType, "status">>; // Validate against structure without status
+  const handleMeasurementChange = (field: "width" | "height" | "length" | "weight", key: "value" | "unit", value: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: { ...prev[field], [key]: value },
+    }));
+  };
+  
+  const handleMaterialChange = (index: number, key: "name" | "share", value: any) => {
+    const newMaterials = [...formData.materials];
+    newMaterials[index] = { ...newMaterials[index], [key]: value };
+    setFormData((prev) => ({ ...prev, materials: newMaterials }));
+  };
 
-    const errors: string[] = [];
-
-    if (typeof data.manufacturerPartId !== "string" || !data.manufacturerPartId) {
-      errors.push("manufacturerPartId (non-empty string) is required.");
-    } else if (/\s/.test(data.manufacturerPartId)) {
-      errors.push("manufacturerPartId must not contain spaces.");
-    }
-    if (typeof data.name !== "string" || !data.name)
-      errors.push("name (non-empty string) is required.");
-
-    if (
-      data.description !== undefined &&
-      data.description !== null &&
-      typeof data.description !== "string"
-    )
-      errors.push("description must be a string if provided.");
-    if (
-      data.category !== undefined &&
-      data.category !== null &&
-      typeof data.category !== "string"
-    )
-      errors.push("category must be a string if provided.");
-    if (
-      data.bpns !== undefined &&
-      data.bpns !== null &&
-      typeof data.bpns !== "string"
-    )
-      errors.push("bpns must be a string if provided.");
-
-    if (!Array.isArray(data.materials)) {
-      errors.push("materials (array) is required.");
-    } else {
-      data.materials.forEach((mat, index) => {
-        if (typeof mat !== "object" || mat === null) {
-          errors.push(`materials[${index}] must be an object.`);
-        } else {
-          const material = mat as Material;
-          if (typeof material.name !== "string" || !material.name)
-            errors.push(
-              `materials[${index}].name (non-empty string) is required.`
-            );
-          if (
-            typeof material.share !== "number" ||
-            material.share < 0 ||
-            material.share > 100
-          )
-            errors.push(
-              `materials[${index}].share (number between 0-100) is required.`
-            );
-        }
-      });
-    }
-
-    const checkMeasurement = (
-      m: Measurement | undefined | null,
-      fieldName: string
-    ) => {
-      if (m === undefined || m === null) return; // Optional field
-      if (typeof m !== "object") {
-        errors.push(`${fieldName} must be an object if provided.`);
-        return;
-      }
-      if (typeof m.value !== "number")
-        errors.push(`${fieldName}.value (number) is required.`);
-      if (m.unit === undefined || !Object.values(Unit).includes(m.unit as Unit))
-        errors.push(
-          `${fieldName}.unit must be a valid Unit (${Object.values(Unit).join(
-            ", "
-          )}).`
-        );
-    };
-
-    checkMeasurement(data.width, "width");
-    checkMeasurement(data.height, "height");
-    checkMeasurement(data.length, "length");
-    checkMeasurement(data.weight, "weight");
-
-    // Check for unexpected properties (optional, for stricter validation)
-    const allowedKeys: Set<keyof Omit<PartType, "status">> = new Set([
-      // Exclude status
-      "manufacturerPartId",
-      "name",
-      "description",
-      "category",
-      "materials",
-      "bpns",
-      "width",
-      "height",
-      "length",
-      "weight",
-    ]);
-    for (const key in data) {
-      if (!allowedKeys.has(key as keyof Omit<PartType, "status">)) {
-        errors.push(`Unexpected property: ${key}.`);
-      }
-    }
-
-    return errors.join(" ");
+  const addMaterial = () => {
+    setFormData((prev) => ({ ...prev, materials: [...prev.materials, { name: "", share: 0 }] }));
   };
 
   const handleSave = async () => {
-    if (!jsonContent.trim()) {
-      setIsEmptyError(true);
-      setJsonValidationError(null);
-      setApiErrorMessage("");
-      return;
-    }
-    setIsEmptyError(false);
+    const payload = {
+      ...formData,
+      manufacturerId: getParticipantId(),
+    };
 
-    const currentJsonError = isValidJson(jsonContent);
-    if (currentJsonError) {
-      setJsonValidationError(currentJsonError);
-      setApiErrorMessage("");
-      return;
-    }
-    setJsonValidationError(null);
-    setApiErrorMessage("");
-
-    let parsedPayload;
     try {
-      parsedPayload = JSON.parse(jsonContent.trim());
-    } catch (e) {
-      setJsonValidationError(
-        "Invalid JSON structure: Could not parse. " +
-          (e instanceof Error ? e.message : String(e))
-      );
-      return;
-    }
-
-    // Validate structure against PartInstance model
-    const structureValidationError =
-      validatePartInstanceStructure(parsedPayload);
-    if (structureValidationError) {
-      setJsonValidationError(
-        `Data validation failed: ${structureValidationError}`
-      );
-      return;
-    }
-
-    parsedPayload["manufacturerId"] = getParticipantId()
-
-    // API call for creating catalog part
-    try {
-      // POST to /part-management/catalog-part
-      await createCatalogPart(
-        mapPartInstanceToApiPartData(parsedPayload as PartType)
-      );
-      setSuccessMessage(`Catalog part created successfully.`);
+      await createCatalogPart(mapPartInstanceToApiPartData(payload as PartType));
+      setSuccessMessage("Catalog part created successfully.");
       setTimeout(() => {
         setSuccessMessage("");
-        onSave?.({ jsonContent: jsonContent.trim() });
+        onSave?.({ part: payload as PartType });
         onClose();
       }, 3000);
-    } catch (axiosError) {
-      console.error(`Error creating catalog part:`, axiosError);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let errorMessage = (axiosError as any).message || `Failed to create catalog part.`;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorResponse = (axiosError as any).response;
-
-      if (errorResponse) {
-        if (
-          errorResponse.status === 422 &&
-          errorResponse.data &&
-          errorResponse.data.detail &&
-          Array.isArray(errorResponse.data.detail) &&
-          errorResponse.data.detail.length > 0
-        ) {
-          errorMessage =
-            errorResponse.data.detail[0].msg ||
-            JSON.stringify(errorResponse.data.detail[0]) ||
-            "Validation failed.";
-        } else if (errorResponse.data && errorResponse.data.message) {
-          errorMessage = errorResponse.data.message;
-        } else if (errorResponse.data) {
-          errorMessage = JSON.stringify(errorResponse.data);
-        }
+    } catch (error: any) {
+      console.error("Error creating catalog part:", error);
+      let errorMessage = error.message || "Failed to create catalog part.";
+      if (error.response?.data) {
+        errorMessage = JSON.stringify(error.response.data);
       }
       setApiErrorMessage(errorMessage);
     }
@@ -313,49 +159,230 @@ const CreateProductListDialog = ({
         <CloseIcon />
       </IconButton>
       <DialogContent dividers>
-        <Typography variant="body2" gutterBottom sx={{color: "white"}}>
-          Use the placeholder below to define the new catalog part. Please
-          ensure the JSON is valid.
-        </Typography>
-         <TextField
-            label="manufacturerId"
-            variant="outlined"
-            size="small"
-            fullWidth
-            sx={{ marginBottom: '16px' }}
-            value={getParticipantId()}
-            disabled={true}
-          />
-        <Box sx={{ mt: 2, width: "100%" }}>
-          <TextField
-            label="Catalog Part JSON"
-            variant="outlined"
-            size="small"
-            multiline
-            rows={20}
-            error={isEmptyError || !!jsonValidationError}
-            helperText={
-              (isEmptyError && "JSON content cannot be empty.") ||
-              (jsonValidationError && `Invalid JSON: ${jsonValidationError}`) ||
-              ""
-            }
-            fullWidth
-            sx={{
-              marginBottom: "16px",
-              fontFamily: "monospace",
-              fontSize: "0.875rem",
-              ".MuiInputBase-input": {
-                fontFamily: "monospace",
-              },
-            }}
-            value={jsonContent}
-            onChange={(e) => {
-              setJsonContent(e.target.value);
-              if (isEmptyError) setIsEmptyError(false);
-              if (jsonValidationError) setJsonValidationError(null);
-            }}
-          />
-        </Box>
+        <Typography variant="body2" mt={1} mb={3} sx={{color: "white", borderBottom: "1px solid rgba(255, 255, 255, 0.5)"}}>Main Product Information</Typography>
+        <Grid2 container spacing={2} mt={1}>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="Manufacturer ID"
+              variant="outlined"
+              size="small"
+              value={getParticipantId()}
+              disabled
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Business />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="Manufacturer Part ID"
+              variant="outlined"
+              size="small"
+              value={formData.manufacturerPartId}
+              onChange={(e) => handleChange("manufacturerPartId", e.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <ConfirmationNumber />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="Name"
+              variant="outlined"
+              size="small"
+              value={formData.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DriveFileRenameOutline />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="Description"
+              variant="outlined"
+              size="small"
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Description />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="Category"
+              variant="outlined"
+              size="small"
+              value={formData.category}
+              onChange={(e) => handleChange("category", e.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Category />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+          <Grid2 size={{md: 4, sm: 6, xs: 12}}>
+            <TextField
+              label="BPNS"
+              variant="outlined"
+              size="small"
+              value={formData.bpns}
+              onChange={(e) => handleChange("bpns", e.target.value)}
+              fullWidth
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Fingerprint />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Grid2>
+        </Grid2>
+
+        <Typography variant="body2" mt={3} mb={3} sx={{color: "white", borderBottom: "1px solid rgba(255, 255, 255, 0.5)"}}>Additional Product Information</Typography>
+        {formData.materials.map((mat, index) => (
+          <Grid2 container spacing={2} key={index} alignItems="center" mt={1} px={{md: 6, sm: 0}}>
+            <Grid2 size={{ xs: 7 }}>
+              <TextField
+                label="Material Name"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={mat.name}
+                onChange={(e) => handleMaterialChange(index, "name", e.target.value)}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Science />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 4 }}>
+              <TextField
+                label="Share (%)"
+                type="number"
+                variant="outlined"
+                size="small"
+                fullWidth
+                value={mat.share}
+                onChange={(e) => handleMaterialChange(index, "share", Number(e.target.value))}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Percent />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 1 }} display="flex" justifyContent="center">
+              {index === formData.materials.length - 1 && (
+                <Tooltip title="Add material">
+                  <IconButton onClick={addMaterial} className="add-material-button">
+                    <AddIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Grid2>
+          </Grid2>
+        ))}
+
+        <Box mt={5}></Box>
+        
+        <Grid2 container spacing={2} mt={1} px={{md: 6, sm: 0}}>
+          {(["width", "height", "length", "weight"] as const).map((field) => {
+            const isWeight = field === "weight";
+            const units = isWeight ? weightUnits : lengthUnits;
+            const icon = isWeight ? <Scale /> : <Straighten />;
+
+            return [
+              <Grid2 size={{ md: 4, sm: 8 }} key={`${field}-value`}>
+                <TextField
+                  label={`${field.charAt(0).toUpperCase() + field.slice(1)} value`}
+                  type="number"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={formData[field]?.value ?? ""}
+                  onChange={(e) =>
+                    handleMeasurementChange(field, "value", Number(e.target.value))
+                  }
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          {icon}
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </Grid2>,
+              <Grid2 size={{ md: 2, sm: 4 }} key={`${field}-unit`}>
+                <TextField
+                  label={`${field.charAt(0).toUpperCase() + field.slice(1)} unit`}
+                  select
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={formData[field]?.unit ?? ""}
+                  onChange={(e) =>
+                    handleMeasurementChange(field, "unit", e.target.value)
+                  }
+                >
+                  {units.map((u) => (
+                    <MenuItem key={u} value={u}>{u}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid2>,
+            ];
+          })}
+        </Grid2>
+
         {apiErrorMessage && (
           <Box sx={{ mt: 2 }}>
             <Alert severity="error">{apiErrorMessage}</Alert>

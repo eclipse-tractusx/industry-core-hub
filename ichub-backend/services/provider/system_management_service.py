@@ -1,4 +1,10 @@
 from typing import List, Optional
+
+from connector import connector_manager
+from dtr import dtr_provider_manager
+from managers.enablement_services.provider.dtr_provider_manager import DtrProviderManager
+from managers.enablement_services.provider.connector_provider_manager import ConnectorProviderManager
+
 from models.services.provider.system_management import (
     ConnectorServiceCreate,
     ConnectorServiceRead,
@@ -20,9 +26,6 @@ from models.metadata_database.provider.models import (
     EnablementServiceStack,
     LegalEntity
 )
-from managers.enablement_services.dtr_manager import DTRManager
-from managers.enablement_services.connector_manager import ConnectorManager
-from managers.config.config_manager import ConfigManager
 
 class SystemManagementService:
     """
@@ -252,33 +255,21 @@ class SystemManagementService:
                 return False
 
     @staticmethod
-    def create_dtr_manager(db_dtr_service: DtrService) -> DTRManager:
+    def get_dtr_manager(db_dtr_service: DtrService) -> DtrProviderManager:
         """
-        Create a new instance of the DTRManager class.
+        Get the DtrProviderManager.
         """
-        dtr_connection_settings = db_dtr_service.connection_settings
+        # TODO: create connection based on config in the database
 
-        # TODO: remove the fallback
-        dtr_hostname = dtr_connection_settings.get('hostname') or ConfigManager.get_config('digitalTwinRegistry.hostname')
-        dtr_uri = dtr_connection_settings.get('uri') or ConfigManager.get_config('digitalTwinRegistry.uri')
-        dtr_lookup_uri = dtr_connection_settings.get('lookupUri') or ConfigManager.get_config('digitalTwinRegistry.lookupUri')
-        dtr_api_path = dtr_connection_settings.get('apiPath') or ConfigManager.get_config('digitalTwinRegistry.apiPath')
-        dtr_url = f"{dtr_hostname}{dtr_uri}"
-        dtr_lookup_url = f"{dtr_hostname}{dtr_lookup_uri}"
-
-        # TODO: implement caching
-
-        return DTRManager(
-            dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
-            api_path=str(dtr_api_path))
+        return dtr_provider_manager
 
     @staticmethod
-    def create_connector_manager(db_connector_service: ConnectorService) -> ConnectorManager:
+    def get_connector_manager(db_connector_service: ConnectorService) -> ConnectorProviderManager:
         """
-        Create a new instance of the EDCManager class.
+        Get the ConnectorManager.
         """
         # TODO: later we can configure the manager via the connection settings from the DB here
 
         # TODO: implement caching
 
-        return ConnectorManager()
+        return connector_manager.provider

@@ -26,15 +26,19 @@ import { PartnerInstance } from "../types/partner";
 import TablePagination from '@mui/material/TablePagination';
 import { Typography, Grid2, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { PartnerCard } from "../features/partner-management/components/partners-list/PartnerCard";
 import CreatePartnerDialog from "../features/partner-management/components/general/CreatePartnerDialog";
 import { fetchPartners } from '../features/partner-management/api';
+import {ErrorNotFound} from "../components/general/ErrorNotFound";
+import LoadingSpinner from "../components/general/LoadingSpinner";
 
 const PartnersList = () => {
   const [partnerList, setPartnerList] = useState<PartnerInstance[]>([]);
   const [editingPartner, setEditingPartner] = useState<PartnerInstance | undefined>(undefined);
   const [initialPartnerList, setInitialPartnerList] = useState<PartnerInstance[]>([]);
   const [createPartnerDialogOpen, setCreatePartnerDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const rowsPerPage = 10;
   //const navigate = useNavigate();
@@ -75,6 +79,7 @@ const PartnersList = () => {
   useEffect(() => {
     // Define the async function inside useEffect
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const data = await fetchPartners();
         
@@ -85,6 +90,8 @@ const PartnersList = () => {
 
         setPartnerList([]);
         setInitialPartnerList([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();  // Call the async function
@@ -116,43 +123,58 @@ const PartnersList = () => {
     [page, rowsPerPage, partnerList],
   );
 
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    <Grid2 className="product-catalog" container spacing={1} direction="row">
-      <Grid2 className="title flex flex-content-center">
-        <Typography className="text">
-          Partners View
-        </Typography>
-      </Grid2>
+    <>
+      <Grid2 className="product-catalog" container spacing={1} direction="row">
+        <Grid2 className="title flex flex-content-center">
+          <Typography className="text">
+            Partners View
+          </Typography>
+        </Grid2>
 
-      <Grid2 size={12} container justifyContent="flex-end" marginRight={6} marginBottom={2}>
-        <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreatePartnerDialog} startIcon={<AddIcon />} >New</Button>
-      </Grid2>
+        <Grid2 size={12} container justifyContent="flex-end" marginRight={6} marginBottom={2}>
+          <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreatePartnerDialog} startIcon={<AddIcon />} >New</Button>
+        </Grid2>
 
-      <Grid2 className="flex flex-content-center" size={12}>
-        <PartnerCard
-          onClick={handleButtonClick}
-          onDelete={handleDelete}
-          onEdit={handleEdit}
-          items={visibleRows.map((partner) => ({
-            bpnl: partner.bpnl,
-            name: partner.name,
-          }))}
-        />
-      </Grid2>
+        {partnerList.length === 0 ? (
+          <Grid2 className="flex flex-content-center" size={12}>
+            <ErrorNotFound icon={ReportProblemIcon} message="No partners were added yet, use the green button above to create one."/>
+          </Grid2>
+        ) : (
+          <>
+            <Grid2 className="flex flex-content-center" size={12}>
+              <PartnerCard
+                onClick={handleButtonClick}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+                items={visibleRows.map((partner) => ({
+                  bpnl: partner.bpnl,
+                  name: partner.name,
+                }))}
+              />
+            </Grid2>
 
-      <Grid2 size={12} className="flex flex-content-center">
-        <TablePagination
-          rowsPerPageOptions={[rowsPerPage]}
-          component="div"
-          count={initialPartnerList.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          className="product-list-pagination"
-        />
+            <Grid2 size={12} className="flex flex-content-center">
+              <TablePagination
+                rowsPerPageOptions={[rowsPerPage]}
+                component="div"
+                count={initialPartnerList.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                className="product-list-pagination"
+              />
+            </Grid2>
+          </>
+        )}
       </Grid2>
+      
       <CreatePartnerDialog open={createPartnerDialogOpen} onClose={handleCloseCreatePartnerDialog} onSave={handleCreatePartner} partnerData={editingPartner}/>
-    </Grid2>
+    </>
   );
 };
 

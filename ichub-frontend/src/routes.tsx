@@ -20,27 +20,84 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import ProductsList from './pages/ProductsList';
-import PartnersList from './pages/PartnersList';
-import ProductsDetails from './pages/ProductsDetails';
-import PartsDiscovery from "./pages/PartsDiscovery";
+import { CircularProgress, Box } from "@mui/material";
+
+// Lazy load page components for automatic code splitting
+const ProductsList = lazy(() => import('./pages/ProductsList'));
+const PartnersList = lazy(() => import('./pages/PartnersList'));
+const ProductsDetails = lazy(() => import('./pages/ProductsDetails'));
+const PartsDiscovery = lazy(() => import("./pages/PartsDiscovery"));
+const SerializedParts = lazy(() => import("./pages/SerializedParts"));
+
+// Loading component
+const PageLoader = () => (
+  <Box 
+    display="flex" 
+    justifyContent="center" 
+    alignItems="center" 
+    minHeight="50vh"
+  >
+    <CircularProgress />
+  </Box>
+);
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
      <Routes>
         <Route path="/" element={<MainLayout />} >
-          <Route index element={<ProductsList />} />
-          <Route path="/product/:manufacturerId/:manufacturerPartId" element={<ProductsDetails />} />
+          <Route 
+            index 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ProductsList />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/product/:manufacturerId/:manufacturerPartId" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ProductsDetails />
+              </Suspense>
+            } 
+          />
 
-          {/* Here we must change the elements as we go along as we develop */}
-          <Route path="/catalog" element={<ProductsList />} />
-          <Route path="/discover-parts" element={<PartsDiscovery />} />
-          <Route path="/shared" element={<PartnersList />} />
-          <Route path="/status" element={<ProductsList />} />
+          <Route 
+            path="/catalog" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ProductsList />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/dataspace-discovery" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <PartsDiscovery />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/partners" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <PartnersList />
+              </Suspense>
+            } 
+          />
+          <Route 
+            path="/serialized-parts" 
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <SerializedParts />
+              </Suspense>
+            } 
+          />
         </Route>
       </Routes>
     </BrowserRouter>

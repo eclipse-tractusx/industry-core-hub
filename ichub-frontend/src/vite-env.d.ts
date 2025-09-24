@@ -21,3 +21,14 @@
 ********************************************************************************/
 
 /// <reference types="vite/client" />
+
+declare global {
+  interface Window {
+    ENV?: {
+      GOVERNANCE_CONFIG?: string;
+      DTR_POLICIES_CONFIG?: string;
+    }
+  }
+}
+
+export {};
