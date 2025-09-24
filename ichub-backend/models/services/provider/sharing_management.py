@@ -36,7 +36,7 @@ class SharingBase(BaseModel):
 
 class ShareCatalogPart(SharingBase, CatalogPartBase):
     """Class that stores the information required by request in the sharing functionalit, for catalog parts"""
-    pass
+    enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect should be registered.")
 
 class SharedPartBase(BaseModel):
     business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")
