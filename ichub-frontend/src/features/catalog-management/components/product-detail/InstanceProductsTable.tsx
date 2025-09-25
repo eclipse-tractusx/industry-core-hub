@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -40,10 +40,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 
-import instanceData from "../../../../tests/payloads/instance-data.json";
-import { InstanceProduct } from '../../../../types/instanceProduct';
 
-const rows = instanceData;
+import { SerializedPart } from '../../../serialized-parts/types';
+import { fetchSerializedParts } from '../../../serialized-parts/api';
+import { PartType } from '../../../../types/product';
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (b[orderBy] < a[orderBy]) {
@@ -57,13 +57,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
 
 type Order = 'asc' | 'desc';
 
-function getComparator<Key extends keyof any>(
-  order: Order,
-  orderBy: Key,
-): (
-  a: { [key in Key]: number | string },
-  b: { [key in Key]: number | string },
-) => number {
+function getComparator( order: Order, orderBy: keyof SerializedPart,): (a: SerializedPart, b: SerializedPart) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
@@ -71,17 +65,35 @@ function getComparator<Key extends keyof any>(
 
 interface HeadCell {
   disablePadding: boolean;
-  id: keyof InstanceProduct;
+  id: keyof SerializedPart;
   label: string;
   numeric: boolean;
 }
 
 const headCells: readonly HeadCell[] = [
   {
-    id: 'uuid',
+    id: 'customerPartId',
     numeric: false,
     disablePadding: true,
-    label: 'UUID',
+    label: 'Customer Part ID',
+  },
+  {
+    id: 'businessPartner',
+    numeric: false,
+    disablePadding: false,
+    label: 'Business Partner',
+  },
+  {
+    id: 'manufacturerId',
+    numeric: false,
+    disablePadding: false,
+    label: 'Manufacturer ID',
+  },
+  {
+    id: 'manufacturerPartId',
+    numeric: false,
+    disablePadding: false,
+    label: 'Manufacturer Part ID',
   },
   {
     id: 'partInstanceId',
@@ -90,57 +102,45 @@ const headCells: readonly HeadCell[] = [
     label: 'Part Instance ID',
   },
   {
-    id: 'submodels',
-    numeric: true,
-    disablePadding: false,
-    label: 'Submodels',
-  },
-  {
-    id: 'status',
+    id: 'name',
     numeric: false,
     disablePadding: false,
-    label: 'Status',
+    label: 'Name',
   },
   {
-    id: 'type',
+    id: 'category',
     numeric: false,
     disablePadding: false,
-    label: 'Type',
+    label: 'Category',
   },
   {
-    id: 'created',
+    id: 'bpns',
     numeric: false,
     disablePadding: false,
-    label: 'Created at',
+    label: 'BPNS',
   },
   {
-    id: 'updated',
+    id: 'van',
     numeric: false,
     disablePadding: false,
-    label: 'Updated at',
-  },
-  {
-    id: 'manufacturer',
-    numeric: false,
-    disablePadding: false,
-    label: 'Manufacturer',
+    label: 'VAN',
   },
 ];
 
 interface InstanceProductsTableProps {
   numSelected: number;
-  onRequestSort: (event: React.MouseEvent<unknown>, property: keyof InstanceProduct) => void;
+  onRequestSort: (event: React.MouseEvent<unknown>, property: keyof SerializedPart) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
 }
 
-function InstanceProductsTableHead(props: InstanceProductsTableProps) {
+function InstanceProductsTableHead(props: Readonly<InstanceProductsTableProps>) {
   const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
     props;
   const createSortHandler =
-    (property: keyof InstanceProduct) => (event: React.MouseEvent<unknown>) => {
+    (property: keyof SerializedPart) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
     };
 
@@ -185,7 +185,7 @@ function InstanceProductsTableHead(props: InstanceProductsTableProps) {
 interface InstanceProductsTableToolbarProps {
   numSelected: number;
 }
-function InstanceProductsTableToolbar(props: InstanceProductsTableToolbarProps) {
+function InstanceProductsTableToolbar(props: Readonly<InstanceProductsTableToolbarProps>) {
   const { numSelected } = props;
   return (
     <Toolbar
@@ -214,7 +214,7 @@ function InstanceProductsTableToolbar(props: InstanceProductsTableToolbarProps) 
           id="tableTitle"
           component="div"
         >
-          Instance Products(5 of 52.0213 Digital Twins)
+          Serialized Parts
         </Typography>
       )}
       {numSelected > 0 ? (
@@ -233,16 +233,38 @@ function InstanceProductsTableToolbar(props: InstanceProductsTableToolbarProps) 
     </Toolbar>
   );
 }
-export default function InstanceProductsTable() {
+export default function InstanceProductsTable({ part }: { readonly part: PartType | null }) {
   const [order, setOrder] = useState<Order>('asc');
-  const [orderBy, setOrderBy] = useState<keyof InstanceProduct>('uuid');
+  const [orderBy, setOrderBy] = useState<keyof SerializedPart>('customerPartId');
   const [selected, setSelected] = useState<readonly number[]>([]);
   const [page, setPage] = useState(0);
+  const [rows, setRows] = useState<SerializedPart[]>([]);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  useEffect(() => {
+    if (!part) {
+      setRows([]);
+      return;
+    }
+    const loadData = async () => {
+      try {
+        const data = await fetchSerializedParts(part.manufacturerId, part.manufacturerPartId);
+        const rowsWithId = data.map((row, index) => ({
+          ...row,
+          id: index,
+        }));
+        setRows(rowsWithId);
+      } catch (error) {
+        console.error("Error fetching instance products:", error);
+      }
+    };
+
+    loadData();
+  }, [part]);
 
   const handleRequestSort = (
     _event: React.MouseEvent<unknown>,
-    property: keyof InstanceProduct,
+    property: keyof SerializedPart,
   ) => {
     const isAsc = orderBy === property && order === 'asc';
     setOrder(isAsc ? 'desc' : 'asc');
@@ -295,17 +317,14 @@ export default function InstanceProductsTable() {
       [...rows]
         .sort(getComparator(order, orderBy))
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-    [order, orderBy, page, rowsPerPage],
+    [rows, order, orderBy, page, rowsPerPage],
   );
 
   return (
     <Paper sx={{ width: '100%', mb: 2 }}>
       <InstanceProductsTableToolbar numSelected={selected.length} />
       <TableContainer>
-        <Table
-          aria-labelledby="tableTitle"
-          size='small'
-        >
+        <Table aria-labelledby="tableTitle" size='small'>
           <InstanceProductsTableHead
             numSelected={selected.length}
             order={order}
@@ -323,8 +342,6 @@ export default function InstanceProductsTable() {
                 <TableRow
                   hover
                   onClick={(event) => handleClick(event, row.id)}
-                  role="checkbox"
-                  aria-checked={isItemSelected}
                   tabIndex={-1}
                   key={row.id}
                   selected={isItemSelected}
@@ -333,35 +350,29 @@ export default function InstanceProductsTable() {
                   <TableCell padding="checkbox">
                     <Checkbox
                       checked={isItemSelected}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        handleClick(event, row.id)
+                      }}
                       inputProps={{
                         'aria-labelledby': labelId,
                       }}
                     />
                   </TableCell>
-                  <TableCell
-                    component="th"
-                    id={labelId}
-                    scope="row"
-                    padding="none"
-                  >
-                    {row.uuid}
-                  </TableCell>
+                  <TableCell component="th" id={labelId} scope="row" padding="none">{row.customerPartId}</TableCell>
+                  <TableCell align="right">{row.businessPartner.name}</TableCell>
+                  <TableCell align="right">{row.manufacturerId}</TableCell>
+                  <TableCell align="right">{row.manufacturerPartId}</TableCell>
                   <TableCell align="right">{row.partInstanceId}</TableCell>
-                  <TableCell align="right">{row.submodels}</TableCell>
-                  <TableCell align="right">{row.status}</TableCell>
-                  <TableCell align="right">{row.type}</TableCell>
-                  <TableCell align="right">{row.created}</TableCell>
-                  <TableCell align="right">{row.updated}</TableCell>
-                  <TableCell align="right">{row.manufacturer}</TableCell>
+                  <TableCell align="right">{row.name}</TableCell>
+                  <TableCell align="right">{row.category}</TableCell>
+                  <TableCell align="right">{row.bpns}</TableCell>
+                  <TableCell align="right">{row.van}</TableCell>
                 </TableRow>
               );
             })}
             {emptyRows > 0 && (
-              <TableRow
-                style={{
-                  height: 33 * emptyRows,
-                }}
-              >
+              <TableRow style={{ height: 33 * emptyRows,}} >
                 <TableCell colSpan={6} />
               </TableRow>
             )}

@@ -64,9 +64,11 @@ spec:
               protocol: TCP
           env:
             - name: ICHUB_BACKEND_URL
-              value: "{{ .Values.frontend.env.ichubBackendUrl }}"
+              value: "{{ .Values.frontend.env.backendUrl }}"
             - name: PARTICIPANT_ID
               value: "{{ .Values.participantId }}"
+            - name: GOVERNANCE_CONFIG
+              value: {{ .Values.frontend.consumption.governance | toJson | quote }}
           {{- if .Values.frontend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:

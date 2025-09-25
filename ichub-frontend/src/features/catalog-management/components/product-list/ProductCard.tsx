@@ -42,16 +42,13 @@ export interface AppContent {
 }
 
 export interface CardDecisionProps {
+  onClick: (productId: string) => void;
+  onShare: (manufacturerId: string, manufacturerPartId: string) => void;
+  onMore: (manufacturerId: string, manufacturerPartId: string) => void;
+  onRegisterClick: (manufacturerId: string, manufacturerPartId: string) => void;
   items: AppContent[];
-  onShare: (e1: string, e2: string) => void;
-  onMore: (e1: string, e2: string) => void;
-  onClick: (e: string) => void;
-  onRegisterClick?: (manufacturerId: string, manufacturerPartId: string) => void; 
   isLoading: boolean;
-  isDiscovery?: boolean;
-}
-
-export enum ButtonEvents {
+}enum ButtonEvents {
   SHARE,
   MORE,
   REGISTER, 
@@ -64,7 +61,6 @@ export const ProductCard = ({
   onClick,
   onRegisterClick, 
   isLoading,
-  isDiscovery = false
 }: CardDecisionProps) => {
 
   const handleDecision = (
@@ -90,7 +86,7 @@ export const ProductCard = ({
       {isLoading && (
         <LoadingSpinner />
       )}
-      {!isLoading && items.length === 0 && !isDiscovery && (
+      {!isLoading && items.length === 0 && (
         <ErrorNotFound icon={ReportProblemIcon} message="No catalog parts available, please check your ichub-backend connection/configuration"/>
       )}
       {items.map((item) => {

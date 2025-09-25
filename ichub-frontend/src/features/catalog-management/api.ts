@@ -48,15 +48,24 @@ export const fetchCatalogPart = async (
 export const shareCatalogPart = async (
   manufacturerId: string,
   manufacturerPartId: string,
-  businessPartnerNumber: string
+  businessPartnerNumber: string,
+  customerPartId?: string
 ): Promise<ApiPartData> => {
+  const requestBody: {
+    manufacturerId: string;
+    manufacturerPartId: string;
+    businessPartnerNumber: string;
+    customerPartId?: string;
+  } = {
+    manufacturerId,
+    manufacturerPartId,
+    businessPartnerNumber,
+    customerPartId: customerPartId?.trim() || undefined
+  };
+
   const response = await axios.post<ApiPartData>(
     `${backendUrl}${SHARE_CATALOG_PART_BASE_PATH}`,
-    {
-      manufacturerId,
-      manufacturerPartId,
-      businessPartnerNumber,
-    }
+    requestBody
   );
   return response.data;
 };

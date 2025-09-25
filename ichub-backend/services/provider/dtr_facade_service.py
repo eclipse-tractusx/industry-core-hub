@@ -231,7 +231,7 @@ class DTRFacadeService:
         )
 
         with RepositoryManagerFactory.create() as repos:
-            db_twin = repos.twin_repository.find_by_dtr_aas_id(
+            db_twin = repos.twin_repository.find_by_aas_id(
                 aas_id, include_aspects=True, include_registrations=True)
 
             if db_twin is None or not db_twin.has_registration(
@@ -261,7 +261,7 @@ class DTRFacadeService:
         Get all submodel descriptors for a given AAS ID.
         """
         with RepositoryManagerFactory.create() as repos:
-            db_twin = repos.twin_repository.find_by_dtr_aas_id(aas_id, include_registrations=True)
+            db_twin = repos.twin_repository.find_by_aas_id(aas_id, include_registrations=True)
             if not db_twin or not db_twin.has_registration(enablement_service_stack_id):
                 raise NotFoundError(f"Shell descriptor {aas_id} not found.")
 
@@ -316,7 +316,7 @@ class DTRFacadeService:
         """
         shell_descriptor = ShellDescriptor(id=aas_id.urn)
         with RepositoryManagerFactory.create() as repos:
-            db_twin = repos.twin_repository.find_by_dtr_aas_id(
+            db_twin = repos.twin_repository.find_by_aas_id(
                 aas_id, include_aspects=False, include_registrations=True)
 
             if db_twin is None or not db_twin.has_registration(
@@ -491,7 +491,7 @@ class DTRFacadeService:
         """
         shell_descriptor = ShellDescriptor(id=aas_id.urn)
         with RepositoryManagerFactory.create() as repos:
-            db_twin = repos.twin_repository.find_by_dtr_aas_id(
+            db_twin = repos.twin_repository.find_by_aas_id(
                 aas_id, include_aspects=True, include_registrations=True)
 
             if db_twin is None or not db_twin.has_registration(

@@ -23,6 +23,7 @@
 @use '../config/variables' as *;
 @use '../config/mixins';
 
+// Legacy styles - these should be migrated to component-specific SCSS files
 .parts-discovery-sidebar {
   background-color: #056b9991!important;
 

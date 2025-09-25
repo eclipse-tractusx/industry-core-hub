@@ -158,7 +158,7 @@ const ProductsList = () => {
   };
 
   return (
-    <Box sx={{ p: 3, width: "100%" }}>
+    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", p: 3 }}>
       <PageSnackbar
         open={snackbarOpen}
         onCloseNotification={() => setSnackbarOpen(false)}
@@ -174,43 +174,48 @@ const ProductsList = () => {
       <Grid2 size={12} container justifyContent="flex-end" marginRight={6} marginBottom={2}>
         <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreateDialog} startIcon={<AddIcon />} >Create Catalog Part</Button>
       </Grid2>
-      <Grid2 className="product-catalog" container spacing={1} direction="row">
-        <Grid2 className="flex flex-content-center" size={12}>
-          <ProductCard
-            onClick={handleButtonClick}
-            onShare={handleShareDialog}
-            onMore={handleMore}
-            onRegisterClick={handleRegisterPart}
-            items={visibleRows.map((part) => ({
-              manufacturerId: part.manufacturerId,
-              manufacturerPartId: part.manufacturerPartId,
-              name: part.name,
-              category: part.category,
-              status: part.status,
-            }))}
-            isLoading={isLoading}
-          />
-        </Grid2>
+      
+      {/* Main content area that grows and positions content naturally */}
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", pt: 2 }}>
+        <Grid2 className="product-catalog" container spacing={1} direction="row">
+          <Grid2 className="flex flex-content-center" size={12}>
+            <ProductCard
+              onClick={handleButtonClick}
+              onShare={handleShareDialog}
+              onMore={handleMore}
+              onRegisterClick={handleRegisterPart}
+              items={visibleRows.map((part) => ({
+                manufacturerId: part.manufacturerId,
+                manufacturerPartId: part.manufacturerPartId,
+                name: part.name,
+                category: part.category,
+                status: part.status,
+              }))}
+              isLoading={isLoading}
+            />
+          </Grid2>
 
-        <Grid2 size={12} className="flex flex-content-center">
-          <TablePagination
-            rowsPerPageOptions={[rowsPerPage]}
-            component="div"
-            count={initialCarParts.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            className="product-list-pagination"
-          />
+          {/* Pagination pushed to bottom */}
+          <Grid2 size={12} className="flex flex-content-center" sx={{ mt: "auto", pt: 3 }}>
+            <TablePagination
+              rowsPerPageOptions={[rowsPerPage]}
+              component="div"
+              count={initialCarParts.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              className="product-list-pagination"
+            />
+          </Grid2>
+          {selectedPart && (
+            <ShareDialog
+              open={shareDialogOpen}
+              onClose={() => setShareDialogOpen(false)}
+              partData={selectedPart}
+            />
+          )}
         </Grid2>
-        {selectedPart && (
-          <ShareDialog
-            open={shareDialogOpen}
-            onClose={() => setShareDialogOpen(false)}
-            partData={selectedPart}
-          />
-        )}
-      </Grid2>
+      </Box>
 
       <CreateProductListDialog
         open={isCreateDialogOpen}

@@ -28,6 +28,7 @@ from models.services.provider.part_management import (
     BatchRead,
     CatalogPartCreate,
     CatalogPartDelete,
+    CatalogPartUpdate,
     CatalogPartDetailsRead,
     CatalogPartReadWithStatus,
     CatalogPartDetailsReadWithStatus,
@@ -40,11 +41,13 @@ from models.services.provider.part_management import (
     PartnerCatalogPartRead,
     SerializedPartCreate,
     SerializedPartDelete,
+    SerializedPartUpdate,
     SerializedPartDetailsRead,
     SerializedPartQuery,
     SerializedPartRead,
     SharingStatus,
 )
+
 from models.services.provider.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from models.metadata_database.provider.models import CatalogPart, SerializedPart, PartnerCatalogPart, LegalEntity
@@ -184,12 +187,106 @@ class PartManagementService():
         return result_catalog_part_read
 
 
-    def delete_catalog_part(self, catlog_part: CatalogPartDelete) -> None:
+    def delete_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str) -> bool:
         """
         Delete a catalog part from the system.
         """
-        # Logic to delete a catalog part
-        pass
+        with RepositoryManagerFactory.create() as repos:
+            # Find the legal entity by manufacturer ID
+            db_legal_entity = repos.legal_entity_repository.get_by_bpnl(manufacturer_id)
+            if not db_legal_entity:
+                raise NotFoundError(f"Legal Entity with manufacturer BPNL '{manufacturer_id}' does not exist.")
+
+            # Find the catalog part by legal entity ID and manufacturer part ID
+            db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
+                db_legal_entity.id, manufacturer_part_id
+            )
+            if not db_catalog_part:
+                raise NotFoundError(f"Catalog part '{manufacturer_id}/{manufacturer_part_id}' does not exist.")
+
+            # Check if there are any serialized parts associated with this catalog part through partner catalog parts
+            partner_catalog_parts = repos.partner_catalog_part_repository.get_by_catalog_part_id(db_catalog_part.id)
+            for partner_catalog_part in partner_catalog_parts:
+                serialized_parts = repos.serialized_part_repository.find_by_partner_catalog_part_id(partner_catalog_part.id)
+                if serialized_parts:
+                    raise InvalidError(f"Cannot delete catalog part '{manufacturer_id}/{manufacturer_part_id}' because it has {len(serialized_parts)} associated serialized parts.")
+
+            # Delete associated partner catalog parts first
+            for partner_catalog_part in partner_catalog_parts:
+                repos.partner_catalog_part_repository.delete(partner_catalog_part.id)
+
+            # Delete the catalog part
+            repos.catalog_part_repository.delete(db_catalog_part.id)
+            repos.catalog_part_repository.commit()
+
+            logger.info(f"Successfully deleted catalog part '{manufacturer_id}/{manufacturer_part_id}' and {len(partner_catalog_parts)} associated partner catalog parts")
+            return True
+
+    def update_catalog_part(self, manufacturer_id: str, manufacturer_part_id: str, catalog_part_update: CatalogPartUpdate) -> CatalogPartDetailsReadWithStatus:
+        """
+        Update an existing catalog part in the system.
+        """
+        with RepositoryManagerFactory.create() as repos:
+            # Find the legal entity by manufacturer ID
+            db_legal_entity = repos.legal_entity_repository.get_by_bpnl(manufacturer_id)
+            if not db_legal_entity:
+                raise NotFoundError(f"Legal Entity with manufacturer BPNL '{manufacturer_id}' does not exist.")
+
+            # Find the catalog part by legal entity ID and manufacturer part ID
+            db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(
+                db_legal_entity.id, manufacturer_part_id
+            )
+            if not db_catalog_part:
+                raise NotFoundError(f"Catalog part '{manufacturer_id}/{manufacturer_part_id}' does not exist.")
+
+            # Validate materials share if materials are being updated
+            if catalog_part_update.materials:
+                self._manage_share_error(catalog_part_update)
+
+            # Update the catalog part fields directly on the database object
+            update_data = catalog_part_update.model_dump(exclude_unset=True, by_alias=False)
+            
+            # Only update fields that exist on the database model, excluding ID fields
+            excluded_fields = {'manufacturer_id', 'manufacturer_part_id', 'id', 'legal_entity_id'}
+            filtered_update_data = {k: v for k, v in update_data.items() if k not in excluded_fields}
+            
+            for field, value in filtered_update_data.items():
+                if hasattr(db_catalog_part, field):
+                    setattr(db_catalog_part, field, value)
+            
+            repos.catalog_part_repository.commit()
+
+            # Get the updated catalog part with status
+            db_catalog_parts = repos.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
+                manufacturer_id, manufacturer_part_id, join_partner_catalog_parts=True
+            )
+            
+            if not db_catalog_parts:
+                raise NotFoundError(f"Updated catalog part '{manufacturer_id}/{manufacturer_part_id}' could not be retrieved.")
+            
+            db_catalog_part, status = db_catalog_parts[0]
+
+            # Prepare the result object
+            result = CatalogPartDetailsReadWithStatus(
+                manufacturerId=db_catalog_part.legal_entity.bpnl,
+                manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                name=db_catalog_part.name,
+                category=db_catalog_part.category,
+                bpns=db_catalog_part.bpns,
+                materials=db_catalog_part.materials,
+                width=db_catalog_part.width,
+                height=db_catalog_part.height,
+                length=db_catalog_part.length,
+                weight=db_catalog_part.weight,
+                description=db_catalog_part.description,
+                status=SharingStatus(status)
+            )
+
+            # Fill customer part IDs
+            PartManagementService.fill_customer_part_ids(db_catalog_part, result)
+
+            logger.info(f"Successfully updated catalog part '{manufacturer_id}/{manufacturer_part_id}'")
+            return result
 
     def get_catalog_parts(self, manufacturer_id: Optional[str] = None, manufacturer_part_id: Optional[str] = None) -> List[CatalogPartReadWithStatus]:
         with RepositoryManagerFactory.create() as repos:
@@ -347,13 +444,58 @@ class PartManagementService():
             )
 
 
-    def delete_serialized_part(self, serialized_part: SerializedPartDelete) -> None:
+    def delete_serialized_part(self, partner_catalog_part_id: int, part_instance_id: str) -> bool:
         """
         Delete a serialized part from the system.
         """
-        
-        # Logic to delete a serialized part
-        pass
+        with RepositoryManagerFactory.create() as repos:
+            # Find the serialized part by part instance ID
+            db_serialized_part = repos.serialized_part_repository.get_by_partner_catalog_part_id_part_instance_id(partner_catalog_part_id, part_instance_id)
+            if not db_serialized_part:
+                raise NotFoundError(f"Serialized part with partner catalog part ID '{partner_catalog_part_id}' and part instance ID '{part_instance_id}' does not exist.")
+
+            # Delete the serialized part
+            repos.serialized_part_repository.delete(db_serialized_part.id)
+            repos.serialized_part_repository.commit()
+
+            logger.info(f"Successfully deleted serialized part with partner catalog part ID '{partner_catalog_part_id}' and part instance ID '{part_instance_id}'")
+            return True
+
+    def update_serialized_part(self, partner_catalog_part_id: int, part_instance_id: str, serialized_part_update: SerializedPartUpdate) -> SerializedPartRead:
+        """
+        Update an existing serialized part in the system.
+        """
+        with RepositoryManagerFactory.create() as repos:
+            # Find the serialized part by part instance ID
+            db_serialized_part = repos.serialized_part_repository.get_by_partner_catalog_part_id_part_instance_id(partner_catalog_part_id, part_instance_id)
+            if not db_serialized_part:
+                raise NotFoundError(f"Serialized part with partner catalog part ID '{partner_catalog_part_id}' and part instance ID '{part_instance_id}' does not exist.")
+
+            # Update the serialized part fields directly on the database object
+            update_data = serialized_part_update.model_dump(exclude_unset=True, by_alias=False)
+            
+            # Only update fields that exist on the database model
+            for field, value in update_data.items():
+                if hasattr(db_serialized_part, field):
+                    setattr(db_serialized_part, field, value)
+            
+            repos.serialized_part_repository.commit()
+
+            # Return the updated serialized part
+            return SerializedPartRead(
+                manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
+                manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
+                partInstanceId=db_serialized_part.part_instance_id,
+                customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
+                businessPartner=BusinessPartnerRead(
+                    name=db_serialized_part.partner_catalog_part.business_partner.name,
+                    bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+                ),
+                van=db_serialized_part.van,
+                name=db_serialized_part.partner_catalog_part.catalog_part.name,
+                category=db_serialized_part.partner_catalog_part.catalog_part.category,
+                bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+            )
 
     def get_serialized_part_details(self, manufacturer_id: str, manufacturer_part_id: str, part_instance_id: str) -> SerializedPartDetailsRead:
         """

@@ -28,13 +28,16 @@ from models.services.provider.part_management import (
     CatalogPartCreate,
     CatalogPartDetailsReadWithStatus,
     CatalogPartReadWithStatus,
+    CatalogPartUpdate,
     PartnerCatalogPartCreate,
     PartnerCatalogPartRead,
     SerializedPartCreate,
     SerializedPartQuery,
     SerializedPartRead,
+    SerializedPartUpdate,
 )
 from tools.exceptions import exception_responses
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/part-management", tags=["Part Management"])
 part_management_service = PartManagementService()
@@ -56,6 +59,17 @@ async def part_management_create_catalog_part(catalog_part_create: CatalogPartCr
 async def part_management_create_partner_mapping(partner_catalog_part_create: PartnerCatalogPartCreate) -> PartnerCatalogPartRead:
     return part_management_service.create_partner_catalog_part_mapping(partner_catalog_part_create)
 
+@router.put("/catalog-part/{manufacturer_id}/{manufacturer_part_id}", response_model=CatalogPartDetailsReadWithStatus, responses=exception_responses)
+async def part_management_update_catalog_part(manufacturer_id: str, manufacturer_part_id: str, catalog_part_update: CatalogPartUpdate) -> CatalogPartDetailsReadWithStatus:
+    return part_management_service.update_catalog_part(manufacturer_id, manufacturer_part_id, catalog_part_update)
+
+@router.delete("/catalog-part/{manufacturer_id}/{manufacturer_part_id}", responses=exception_responses)
+async def part_management_delete_catalog_part(manufacturer_id: str, manufacturer_part_id: str) -> JSONResponse:
+    if part_management_service.delete_catalog_part(manufacturer_id, manufacturer_part_id):
+        return JSONResponse(status_code=204, content={"description":"Deleted catalog part successfully"})
+    else:
+        return JSONResponse(status_code=404, content={"description":"Catalog part not found"})
+
 @router.get("/serialized-part", response_model=List[SerializedPartRead], responses=exception_responses)
 async def part_management_get_serialized_parts() -> List[SerializedPartRead]:
     return part_management_service.get_serialized_parts()
@@ -67,3 +81,14 @@ async def part_management_query_serialized_parts(query: SerializedPartQuery) -> 
 @router.post("/serialized-part", response_model=SerializedPartRead, responses=exception_responses)
 async def part_management_create_serialized_part(serialized_part_create: SerializedPartCreate) -> SerializedPartRead:
     return part_management_service.create_serialized_part(serialized_part_create)
+
+@router.put("/serialized-part/{partner_catalog_part_id}/{part_instance_id}", response_model=SerializedPartRead, responses=exception_responses)
+async def part_management_update_serialized_part(partner_catalog_part_id: int, part_instance_id: str, serialized_part_update: SerializedPartUpdate) -> SerializedPartRead:
+    return part_management_service.update_serialized_part(partner_catalog_part_id, part_instance_id, serialized_part_update)
+
+@router.delete("/serialized-part/{partner_catalog_part_id}/{part_instance_id}", responses=exception_responses)
+async def part_management_delete_serialized_part(partner_catalog_part_id: int, part_instance_id: str) -> JSONResponse:
+    if part_management_service.delete_serialized_part(partner_catalog_part_id, part_instance_id):
+        return JSONResponse(status_code=204, content={"description":"Deleted serialized part successfully"})
+    else:
+        return JSONResponse(status_code=404, content={"description":"Serialized part not found"})

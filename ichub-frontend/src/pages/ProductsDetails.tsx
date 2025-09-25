@@ -21,9 +21,10 @@
 ********************************************************************************/
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { StatusTag, Button, Icon } from '@catena-x/portal-shared-components';
-import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import HelpOutlineIcon from '@mui/icons-material/Help';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Grid2 from '@mui/material/Grid2';
 
 import InstanceProductsTable from "../features/catalog-management/components/product-detail/InstanceProductsTable";
@@ -31,6 +32,7 @@ import ShareDropdown from "../features/catalog-management/components/product-det
 import ProductButton from "../features/catalog-management/components/product-detail/ProductButton";
 import ProductData from "../features/catalog-management/components/product-detail/ProductData";
 import JsonViewerDialog from "../features/catalog-management/components/product-detail/JsonViewerDialog";
+import AddSerializedPartDialog from "../features/catalog-management/components/product-detail/AddSerializedPartDialog";
 
 import ShareDialog from "../components/general/ShareDialog";
 import {ErrorNotFound} from "../components/general/ErrorNotFound";
@@ -46,6 +48,7 @@ import { fetchCatalogPart } from "../features/catalog-management/api";
 import { mapApiPartDataToPartType, mapSharePartCustomerPartIds} from "../features/catalog-management/utils";
 
 const ProductsDetails = () => {
+  const navigate = useNavigate();
 
   const { manufacturerId, manufacturerPartId } = useParams<{
     manufacturerId: string;
@@ -55,6 +58,7 @@ const ProductsDetails = () => {
   const [partType, setPartType] = useState<PartType>();
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [addSerializedPartDialogOpen, setAddSerializedPartDialogOpen] = useState(false);
   const [notification, setNotification] = useState<{ open: boolean; severity: "success" | "error"; title: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sharedPartners, setSharedPartners] = useState<SharedPartner[]>([]);
@@ -62,34 +66,34 @@ const ProductsDetails = () => {
   useEffect(() => {
     if (!manufacturerId || !manufacturerPartId) return;
 
-      fetchData();
-    }, [manufacturerId, manufacturerPartId]);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const apiData = await fetchCatalogPart(manufacturerId, manufacturerPartId);
+        console.log(apiData)
+        // Map API data to PartInstance[]
+        const mappedPart: PartType = mapApiPartDataToPartType(apiData)
+        setPartType(mappedPart);
+        // Just if the customer part ids are available we can see if they are shared
+        if(mappedPart.customerPartIds){
+            const mappedResult:SharedPartner[] = mapSharePartCustomerPartIds(mappedPart.customerPartIds)
+            setSharedPartners(mappedResult)
+        }
 
-    if(!manufacturerId || !manufacturerPartId){
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [manufacturerId, manufacturerPartId]);
+
+  if(!manufacturerId || !manufacturerPartId){
     return <div>Product not found</div>; 
   }
   const productId = manufacturerId + "/" + manufacturerPartId
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const apiData = await fetchCatalogPart(manufacturerId, manufacturerPartId);
-      console.log(apiData)
-      // Map API data to PartInstance[]
-      const mappedPart: PartType = mapApiPartDataToPartType(apiData)
-      setPartType(mappedPart);
-      // Just if the customer part ids are available we can see if they are shared
-      if(mappedPart.customerPartIds){
-          const mappedResult:SharedPartner[] = mapSharePartCustomerPartIds(mappedPart.customerPartIds)
-          setSharedPartners(mappedResult)
-      }
-
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -97,7 +101,26 @@ const ProductsDetails = () => {
   
   // Map API data to PartInstance[]
   if (!partType) {
-    return <ErrorNotFound icon={ReportProblemIcon} message="Product not found"/>;
+    return (
+      <Grid2 className="product-catalog" container spacing={1} direction="row">
+        <Grid2 className="flex flex-content-center" size={12} sx={{ 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: 2,
+          minHeight: '60vh'
+        }}>
+          <ErrorNotFound icon={HelpOutlineIcon} message="404 PART NOT FOUND "/>
+          <Button 
+            className="back-button" variant="outlined" size="small"
+            onClick={() => navigate('/catalog')}
+            startIcon={<ArrowBackIcon />}
+          >
+            BACK TO CATALOG
+          </Button>
+        </Grid2>
+      </Grid2>
+    );
   }
 
   const handleOpenJsonDialog = () => {
@@ -114,6 +137,14 @@ const ProductsDetails = () => {
 
   const handleCloseShareDialog = () => {
     setShareDialogOpen(false);
+  };
+
+  const handleOpenAddSerializedPartDialog = () => {
+    setAddSerializedPartDialogOpen(true);
+  };
+
+  const handleCloseAddSerializedPartDialog = () => {
+    setAddSerializedPartDialogOpen(false);
   };
 
   const handleCopy = () => {
@@ -191,18 +222,19 @@ const ProductsDetails = () => {
           <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DIGITAL PRODUCT PASSPORT v6.0.0" onClick={() => console.log("TRANSMISSION PASS v2.0.0")} />
           <ProductButton gridSize={{ lg: 4, md: 12, sm: 12 }} disabled={true} buttonText="DCM v2.0.0" onClick={() => console.log("DPP v2.0 button")} />
           <Grid2 size={{ sm: 12 }}>
-            <Button className="submodel-button" color="success" size="small" onClick={() => console.log("Add button")} fullWidth={true} style={{ padding: "5px" }}>
+            <Button className="submodel-button" color="success" size="small" onClick={handleOpenAddSerializedPartDialog} fullWidth={true} style={{ padding: "5px" }}>
               <Icon fontSize="18" iconName="Add" />
             </Button>
           </Grid2>
         </Grid2>
 
         <Grid2 size={12} className='product-table-wrapper'>
-          <InstanceProductsTable />
+          <InstanceProductsTable part={partType} />
         </Grid2>
         
         <JsonViewerDialog open={jsonDialogOpen} onClose={handleCloseJsonDialog} partData={partType} />
         <ShareDialog open={shareDialogOpen} onClose={handleCloseShareDialog} partData={partType} />
+        <AddSerializedPartDialog open={addSerializedPartDialogOpen} onClose={handleCloseAddSerializedPartDialog} partData={partType} />
       </Grid2>
     </>
   );

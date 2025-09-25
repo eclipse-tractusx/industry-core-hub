@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -229,6 +230,12 @@ class PartnerCatalogPartRepository(BaseRepository[PartnerCatalogPart]):
         )
         self.create(partner_catalog_part)
         return partner_catalog_part
+    
+    def get_by_catalog_part_id(self, catalog_part_id: int) -> List[PartnerCatalogPart]:
+        stmt = select(PartnerCatalogPart).where(
+            PartnerCatalogPart.catalog_part_id == catalog_part_id)
+        return self._session.scalars(stmt).all()
+    
     def create_or_update(self, catalog_part_id: int, business_partner_id: int, customer_part_id: str) -> PartnerCatalogPart:
         """Create or update a PartnerCatalogPart instance."""
         existing = self.get_by_catalog_part_id_business_partner_id(
@@ -282,7 +289,12 @@ class SerializedPartRepository(BaseRepository[SerializedPart]):
             SerializedPart.partner_catalog_part_id == partner_catalog_part_id).where(
             SerializedPart.part_instance_id == part_instance_id)
         return self._session.scalars(stmt).first()
-    
+
+    def find_by_partner_catalog_part_id(self, partner_catalog_part_id: int) -> List[SerializedPart]:
+        stmt = select(SerializedPart).where(
+            SerializedPart.partner_catalog_part_id == partner_catalog_part_id)
+        return self._session.scalars(stmt).all()
+
     def get_by_twin_id(
         self,
         twin_id: int,
@@ -372,7 +384,7 @@ class TwinRepository(BaseRepository[Twin]):
             Twin.global_id == global_id)
         return self._session.scalars(stmt).first()
     
-    def find_by_dtr_aas_id(self,
+    def find_by_aas_id(self,
         dtr_aas_id: UUID,
         include_data_exchange_agreements: bool = False,
         include_aspects: bool = False,
@@ -385,7 +397,7 @@ class TwinRepository(BaseRepository[Twin]):
 
 
         return self._session.scalars(stmt).first()
-
+    
     def find_catalog_part_twins(self,
             manufacturer_id: Optional[str] = None,
             manufacturer_part_id: Optional[str] = None,

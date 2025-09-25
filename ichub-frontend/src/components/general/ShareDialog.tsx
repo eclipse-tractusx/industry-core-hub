@@ -20,11 +20,13 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@catena-x/portal-shared-components';
-import { Box, TextField, Autocomplete, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from '@mui/material';
+import { Box, TextField, Autocomplete, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Checkbox, FormControlLabel } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
 import { ProductDetailDialogProps } from '../../types/dialogViewer';
 import { PartnerInstance } from "../../types/partner";
@@ -34,12 +36,15 @@ import { fetchPartners } from '../../features/partner-management/api';
 
 const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const title = partData?.name ?? "Part name not obtained";
+  const navigate = useNavigate();
 
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
-  const [partnerBpnlsList, setPartnerBpnlsList] = useState<string[]>([]);
+  const [partnersList, setPartnersList] = useState<PartnerInstance[]>([]);
+  const [showCustomPartId, setShowCustomPartId] = useState(false);
+  const [customPartId, setCustomPartId] = useState('');
 
   useEffect(() => {
     // Reset fields when dialog opens or partData changes
@@ -48,28 +53,39 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       setError(false);
       setSuccessMessage('');
       setApiErrorMessage('');
+      setShowCustomPartId(false);
+      setCustomPartId('');
 
       const fetchData = async () => {
         try {
           const data = await fetchPartners();          
-          setPartnerBpnlsList(data.map((partner: PartnerInstance) => partner.bpnl));
+          setPartnersList(data);
         } catch (error) {
           console.error('Error fetching data:', error);  
-          setPartnerBpnlsList([]);
+          setPartnersList([]);
         }
       };
       fetchData();
     }
   }, [open, partData]);
 
-  const handleBpnlChange = (_event: any, value: string | null) => {
-    setBpnl(value ??'');
-    setError(false); // Clear validation error on change
-    setApiErrorMessage(''); // Clear API error on change
-    setSuccessMessage(''); // Clear success message on change
+  const handlePartnerSelection = (_event: React.SyntheticEvent, value: PartnerInstance | null) => {
+    console.log('handlePartnerSelection called with:', value);
+    if (value && 'bpnl' in value) {
+      // User selected a partner from the dropdown
+      console.log('Setting bpnl to partner.bpnl:', value.bpnl);
+      setBpnl(value.bpnl); // Only BPNL for backend
+    } else {
+      // Value is null
+      console.log('Setting bpnl to empty');
+      setBpnl('');
+    }
   };
 
   const handleShare = async () => {
+    console.log('handleShare called with bpnl:', bpnl);
+    console.log('bpnl.trim():', bpnl.trim());
+    
     if (!bpnl.trim()) {
       setError(true);
       setApiErrorMessage('');
@@ -84,10 +100,18 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     }
 
     try {
+      console.log('Calling shareCatalogPart with:', {
+        manufacturerId: partData.manufacturerId,
+        manufacturerPartId: partData.manufacturerPartId,
+        bpnl: bpnl.trim(),
+        customerPartId: customPartId.trim() || undefined
+      });
+      
       await shareCatalogPart(
         partData.manufacturerId,
         partData.manufacturerPartId,
-        bpnl.trim()
+        bpnl.trim(),
+        customPartId.trim() || undefined
       );
       
       setSuccessMessage(`Part shared successfully with ${bpnl.trim()}`);
@@ -95,6 +119,8 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       setTimeout(() => {
         setSuccessMessage('');
         onClose(); // Close dialog on success
+        // Refresh the page to update the view
+        window.location.reload();
       }, 2000);
 
     } catch (axiosError) {
@@ -104,17 +130,22 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errorResponse = (axiosError as any).response;
 
-      if (errorResponse) {
-        if (errorResponse.status === 422 && errorResponse.data && errorResponse.data.detail && Array.isArray(errorResponse.data.detail) && errorResponse.data.detail.length > 0) {
-          errorMessage = errorResponse.data.detail[0].msg || JSON.stringify(errorResponse.data.detail[0]) || 'Validation failed.';
-        } else if (errorResponse.data && errorResponse.data.message) {
-          errorMessage = errorResponse.data.message;
-        } else if (errorResponse.data) {
-          errorMessage = JSON.stringify(errorResponse.data);
-        }
+      if (errorResponse?.status === 422) {
+        errorMessage = errorResponse?.data?.detail?.[0]?.msg
+                      ?? JSON.stringify(errorResponse?.data?.detail?.[0])
+                      ?? 'Validation failed.';
+      } else if (errorResponse?.data?.message) {
+        errorMessage = errorResponse.data.message;
+      } else if (errorResponse?.data) {
+        errorMessage = JSON.stringify(errorResponse.data);
       }
       setApiErrorMessage(errorMessage);
     }
+  };
+
+  const handleGoToPartners = () => {
+    onClose(); // Close the dialog first
+    navigate('/partners'); // Navigate to partners page
   };
 
   return (
@@ -135,25 +166,63 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
         <CloseIcon />
       </IconButton>
       <DialogContent dividers>
-        <p>Introduce the partner BPNL to share the part with them</p>
-        <Box sx={{ mt: 2, mx: 'auto', maxWidth: 400 }}>
-          <Autocomplete
-            freeSolo
-            options={partnerBpnlsList}
-            inputValue={bpnl}
-            onInputChange={handleBpnlChange}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Partner BPNL"
-                variant="outlined"
-                size="small"
-                error={error}
-                helperText={error ? 'BPNL is required' : ''}
+        {partnersList.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <p>No partners available. Please add partners in the Partner View to share parts.</p>
+          </Box>
+        ) : (
+          <>
+            <p>Select a partner to share the part with</p>
+            <Box sx={{ mt: 2, mx: 'auto', maxWidth: 400 }}>
+              <Autocomplete
+                options={partnersList}
+                getOptionLabel={(option) => `${option.name} (${option.bpnl})`}
+                value={partnersList.find(p => p.bpnl === bpnl) || null}
+                onChange={handlePartnerSelection}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Partner"
+                    variant="outlined"
+                    size="small"
+                    error={error}
+                    helperText={error ? 'Partner selection is required' : ''}
+                  />
+                )}
               />
-            )}
-          />
-        </Box>
+            </Box>
+            <Box sx={{ mt: 2, mx: 'auto', maxWidth: 400 }}>
+              <FormControlLabel
+                className='customer-part-id-form'
+                control={
+                  <Checkbox
+                    checked={showCustomPartId}
+                    onChange={(e) => {
+                      console.log('Checkbox changed to:', e.target.checked);
+                      setShowCustomPartId(e.target.checked);
+                    }}
+                    size="small"
+                    className='customer-part-id-checkbox'
+                  />
+                }
+                label="Add custom customer part Id"
+              />
+              {showCustomPartId && (
+                <Box sx={{ mt: 1 }}>
+                  <TextField
+                    label="Customer Part Id"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    value={customPartId}
+                    onChange={(e) => setCustomPartId(e.target.value)}
+                    placeholder="Enter your custom part identifier"
+                  />
+                </Box>
+              )}
+            </Box>
+          </>
+        )}
         {apiErrorMessage && (
           <Box sx={{ mt: 2 }}>
             <Alert severity="error">{apiErrorMessage}</Alert>
@@ -169,9 +238,28 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
         <Button className="close-button" variant="outlined" size="small" onClick={onClose} startIcon={<CloseIcon />} >
           <span className="close-button-content">CLOSE</span>
         </Button>
-        <Button className="action-button" variant="contained" size="small" onClick={handleShare} startIcon={<SendIcon />} >
-          Share
-        </Button>
+        {partnersList.length === 0 ? (
+          <Button 
+            className="action-button" 
+            variant="contained" 
+            size="small" 
+            onClick={handleGoToPartners} 
+            startIcon={<PersonAddIcon />}
+          >
+            Add a Partner
+          </Button>
+        ) : (
+          <Button 
+            className="action-button" 
+            variant="contained" 
+            size="small" 
+            onClick={handleShare} 
+            startIcon={<SendIcon />}
+            disabled={!bpnl}
+          >
+            Share
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

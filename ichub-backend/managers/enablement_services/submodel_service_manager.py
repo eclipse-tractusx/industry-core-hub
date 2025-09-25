@@ -37,7 +37,7 @@ class SubmodelServiceManager:
     logger = LoggingManager.get_logger(__name__)
 
     def __init__(self):
-        submodel_service_path = ConfigManager.get_config("submodel_dispatcher.path", default="/data/submodels")
+        submodel_service_path = ConfigManager.get_config("provider.submodel_dispatcher.path", default="/data/submodels")
         if not isinstance(submodel_service_path, str):
             raise ValueError(f"Expected 'submodel_service.path' to be a string, got: {type(submodel_service_path).__name__}")
         self.file_system = SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)

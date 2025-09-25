@@ -70,4 +70,6 @@ from .twin_management import (
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
     SerializedPartTwinDetailsRead,
+    SerializedPartTwinShareCreate,
+    SerializedPartTwinUnshareCreate
 )

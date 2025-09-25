@@ -22,18 +22,40 @@
 
 import { StatusVariants } from './statusVariants'
 
-export enum Unit {
+export enum LengthUnit {
+  // NM = "nm",
+  // UM = "µm",
   MM = "mm",
   CM = "cm",
+  // DM = "dm",
   M = "m",
-  G = "g",
-  KG = "kg",
+  // DAM = "dam",
+  // HM = "hm",
+  // KM = "km",
+  // IN = "in",
+  // FT = "ft",
+  // YD = "yd",
+  // MI = "mi",
 }
 
-export interface Measurement {
-  value: number;
-  unit: Unit;
+export enum WeightUnit {
+  // MG = "mg",
+  G = "g",
+  KG = "kg",
+  // T = "t",
+  // LB = "lb",
+  // OZ = "oz",
+  // ST = "st",
 }
+
+
+export interface Measurement<U> {
+  value: number;
+  unit: U;
+}
+
+export type LengthMeasurement = Measurement<LengthUnit>;
+export type WeightMeasurement = Measurement<WeightUnit>;
 
 export interface Material {
   name: string;
@@ -48,14 +70,22 @@ export interface PartType {
   description?: string;
   category?: string;
   materials: Material[];
-  bpns?: string; // Site BPN
-  width?: Measurement;
-  height?: Measurement;
-  length?: Measurement;
-  weight?: Measurement;
+  bpns?: string;
+  width?: LengthMeasurement;
+  height?: LengthMeasurement;
+  length?: LengthMeasurement;
+  weight?: WeightMeasurement;
   customerPartIds?: Record<string, { name: string; bpnl: string }>; // e.g., { "CUSTOMER_BPNL_XYZ": { name: "BMW", bpnl: "BPNL00000003CRHK" } }
 }
 
+
+export interface DiscoveryPartType {
+    manufacturerId: string;
+    manufacturerPartId: string;
+    customerPartId: string,
+    id: string,
+    globalAssetId: string,
+}
 export type ApiPartData = Omit<PartType, 'status'> & {
   status: number; // Status from API is a number
 };
