@@ -1,6 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -36,3 +37,7 @@ dependencies:
     name: pgadmin4
     repository: https://helm.runix.net
     version: 1.25.x
+  - condition: keycloak.enabled
+    name: keycloak
+    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+    version: 23.0.0
