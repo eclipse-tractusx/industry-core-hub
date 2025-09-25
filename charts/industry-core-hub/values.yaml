@@ -31,6 +31,7 @@ participantId: ""
 
 # -- Backend configuration
 backend:
+  apiVersion: v1
   enabled: true
   name: "industry-core-hub-backend"
   image:
@@ -46,10 +47,55 @@ backend:
     type: ClusterIP
     portService: 8000
     portContainer: 8000
-
+  cors:
+    enabled: true
+    allow_origins:
+      - "https://<frontend-hostname>"  # Production frontend URL
+    allow_credentials: true
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+      - "PATCH"
+    allow_headers:
+      - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     agreements:
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         usage:
           context:
@@ -94,66 +140,93 @@ backend:
     logger:
      # Possible values: WARNING, INFO, DEBUG
       level: "INFO"
+    # -- Consumer configuration
+    consumer:
+      discovery:
+        discovery_finder:
+          url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+        connector_discovery:
+          key: "bpn"
+        oauth:
+          url: "https://<central-idp-url>/auth/"
+          realm: "<realm>"
+          client_id: "<client-id>"
+          client_secret: "<client-secret>"
+        digitalTwinRegistry:
+          dct_type_key: "dct:type"
+          dct_type_filter:
+            operandLeft: "'http://purl.org/dc/terms/type'.'@id'"
+            operator: "="
+            operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-consumer-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<consumer-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+          catalogPath: "/catalog"
+    # -- Provider configuration
+    provider:
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-provider-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<provider-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+        dataplane:
+          hostname: "https://<edc-provider-dataplane-hostname>"
+          publicPath: "/api/public"
+      digitalTwinRegistry:
+        hostname: "https://<dtr-hostname>"
+        apiPath: "/api/v3"
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+          # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              odrl: http://www.w3.org/ns/odrl/2/
+              cx-policy: https://w3id.org/catenax/policy/
+            permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              odrl: http://www.w3.org/ns/odrl/2/
+              cx-policy: https://w3id.org/catenax/policy/
+            permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+            prohibition: []
+            obligation: []
     # -- EDC (Eclipse Dataspace Connector) configuration
     submodel_dispatcher:
-      path: "./data/submodels"
+      path: "/industry-core-hub/data/submodels"
       apiPath: "/submodel-dispatcher"
-    edc:
-      controlplane:
-        hostname: "https://connector.control.plane"
-        apikeyheader: "X-Api-Key"
-        apikey: "<<example>>"
-        managementpath: "/management"
-        protocolPath: "/api/v1/dsp"
-        catalogPath: "/catalog"
-      dataplane:
-        hostname: "https://connector.data.plane"
-        publicPath: "/api/public"
-    # -- Digital Twin Registry configuration
-    digitalTwinRegistry:
-      hostname: "https://dataprovider-dtr.tx.test"
-      apiPath: "/api/v3"
-      # -- Set this to the urlPrefix defined in your DTR values. [Default value](https://github.com/eclipse-tractusx/sldt-digital-twin-registry/blob/cc9c63c12d96e48050a1b24eca022277075cf6c7/charts/registry/values.yaml#L86)
-      uri: "/semantics/registry"
-      asset_config:
-        dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
-        # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
-      lookup:
-        # -- Same as the uri above
-        uri: "/semantics/registry"
-      dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
-      policy:
-        usage:
-          context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
-          permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.digitalTwinRegistry:1
-          prohibition: []
-          obligation: []
-        access:
-          context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
-          permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-          prohibition: []
-          obligation: []
 
   podAnnotations: {}
 
@@ -291,7 +364,76 @@ backend:
       memory: 512Mi
       ephemeral-storage: "2Gi"
 
+  # Server configuration for uvicorn workers and threads
+  server:
+    # Worker configuration
+    workers:
+      max_workers: 1                        # Single worker for optimal in-memory state
+      worker_threads: 200                   # High thread count for blocking operations
+
+    # Timeout configuration (in seconds)
+    timeouts:
+      keep_alive: 300                       # 5 minutes for DTR operations
+      graceful_shutdown: 30                 # 30 seconds for graceful shutdown
 frontend:
+  # -- Enhanced frontend configuration
+  config:
+    # Core application settings
+    environment: "development"  # development, staging, production
+    version: "1.0.0"
+
+    # API and backend configuration
+    ichubBackendUrl: "https://<backend-hostname>"
+    apiTimeout: 30000
+    apiRetryAttempts: 3
+    requireHttpsUrlPattern: false
+
+    # API key configuration (optional)
+    apiKey: ""
+    apiKeyHeader: "X-API-Key"
+    enableApiKeyRotation: false
+    apiKeyExpiryWarningDays: 7
+
+    # Authentication configuration
+    authEnabled: false
+    authProvider: "none"  # none, keycloak
+
+    # Keycloak configuration (only used when authProvider is keycloak)
+    keycloak:
+      url: ""
+      realm: ""
+      clientId: ""
+      onLoad: "check-sso"  # check-sso, login-required
+      checkLoginIframe: true
+      silentCheckSsoRedirectUri: ""
+      pkceMethod: "S256"
+      enableLogging: false
+      minValidity: 30
+      checkLoginIframeInterval: 5
+      flow: "standard"  # standard, implicit, hybrid
+
+    # Session management
+    authSessionTimeout: 3600000  # 1 hour in milliseconds
+    authRenewTokenMinValidity: 300  # 5 minutes in seconds
+    authLogoutRedirectUri: ""
+
+    # Participant configuration
+    bpnValidationPattern: "^BPN[LAS]\\d{10}[a-zA-Z0-9]{2}$"
+
+    # Feature flags
+    enableAdvancedLogging: false
+    enablePerformanceMonitoring: false
+    enableDevTools: false
+
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+
+  # Legacy configuration (deprecated - use config section above)
+  env:
+    # -- industry-core-hub backend base URL
+    backendUrl: "https://<backend-hostname>/v1"
   enabled: true
   name: "industry-core-hub-frontend"
   image:
@@ -301,9 +443,6 @@ frontend:
     tag: ""
     # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
     pullSecrets: []
-  env:
-    # -- industry-core-hub backend base URL
-    ichubBackendUrl: ""
   service:
     # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
     type: ClusterIP
@@ -313,6 +452,58 @@ frontend:
   podAnnotations: {}
 
   podLabels: {}
+
+  consumption:
+    digitalTwinRegistry:
+      policies:
+        - permission:
+          - action: odrl:use
+            LogicalConstraint: odrl:and
+            constraints:
+              - leftOperand: cx-policy:FrameworkAgreement
+                operator: odrl:eq
+                rightOperand: DataExchangeGovernance:1.0
+              - leftOperand: cx-policy:Membership
+                operator: odrl:eq
+                rightOperand: active
+              - leftOperand: cx-policy:UsagePurpose
+                operator: odrl:eq
+                rightOperand: cx.core.digitalTwinRegistry:1
+          prohibition: []
+          obligation: []
+          strict: false
+    governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies:
+          - strict: false  # -- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true  # -- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
 
   healthChecks:
     startup:
@@ -409,6 +600,11 @@ postgresql:
   enabled: true
   fullnameOverride: ""
   nameOverride: ""
+  image:
+    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+    repository: bitnamilegacy/postgresql
+    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+    tag: 15.4.0-debian-11-r45
   auth:
     # -- Database name
     database: "ichub-postgres"

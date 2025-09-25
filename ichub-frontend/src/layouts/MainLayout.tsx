@@ -24,9 +24,12 @@ import { Outlet } from "react-router-dom";
 import Grid2 from '@mui/material/Grid2';
 import Header from '../components/general/Header';
 import Sidebar from '../components/general/Sidebar';
+import AdditionalSidebar from '../components/general/AdditionalSidebar';
+import { SidebarProvider } from '../contexts/SidebarContext';
+import { AdditionalSidebarProvider } from '../contexts/AdditionalSidebarContext';
 import { features } from '../features/main';
 
-function MainLayout() {
+function MainLayoutContent() {
   return (
     <Grid2 container className="contentWrapper" size={12}>
       <Grid2 size={12} className="headerArea">
@@ -36,11 +39,24 @@ function MainLayout() {
         <Grid2 size={{xl: 0.5, lg: 1, md: 1, sm: 2, xs: 3}} className="sidebarArea">
           <Sidebar items={features} />
         </Grid2>
-        <Grid2 size={{xl: 11.5, lg: 11, md: 11, sm: 10, xs: 9}} className="contentArea" padding={0}>
+        <Grid2 size="auto" className="additionalSidebarArea">
+          <AdditionalSidebar />
+        </Grid2>
+        <Grid2 size="auto" className="contentArea" padding={0} sx={{ flex: 1 }}>
           <Outlet />
         </Grid2>
       </Grid2>
     </Grid2>
+  );
+}
+
+function MainLayout() {
+  return (
+    <SidebarProvider>
+      <AdditionalSidebarProvider>
+        <MainLayoutContent />
+      </AdditionalSidebarProvider>
+    </SidebarProvider>
   );
 };
 

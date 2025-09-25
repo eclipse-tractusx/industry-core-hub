@@ -20,29 +20,27 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import ProductsList from './pages/ProductsList';
-import PartnersList from './pages/PartnersList';
-import ProductsDetails from './pages/ProductsDetails';
-import PartsDiscovery from "./pages/PartsDiscovery";
+import { getAllRoutes } from "./features/main";
 
 export default function AppRoutes() {
+  const featureRoutes = getAllRoutes();
+
   return (
     <BrowserRouter>
-     <Routes>
-        <Route path="/" element={<MainLayout />} >
-          <Route index element={<ProductsList />} />
-          <Route path="/product/:manufacturerId/:manufacturerPartId" element={<ProductsDetails />} />
-
-          {/* Here we must change the elements as we go along as we develop */}
-          <Route path="/catalog" element={<ProductsList />} />
-          <Route path="/discover-parts" element={<PartsDiscovery />} />
-          <Route path="/shared" element={<PartnersList />} />
-          <Route path="/status" element={<ProductsList />} />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {featureRoutes.map((route, index) => (
+            <Route
+              key={index}
+              path={route.path}
+              index={route.index}
+              element={route.element}
+            />
+          ))}
         </Route>
       </Routes>
     </BrowserRouter>
-  );    
+  );
 }

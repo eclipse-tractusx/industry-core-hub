@@ -23,7 +23,6 @@
 # Import custom logging and configuration modules, and database utility
 from managers.config.log_manager import LoggingManager
 from managers.config.config_manager import ConfigManager
-from managers.enablement_services.dtr_manager import DTRManager
 from uuid import uuid4
 
 ## FAST API example for keycloak

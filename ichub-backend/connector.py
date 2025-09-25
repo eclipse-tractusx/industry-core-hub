@@ -21,14 +21,125 @@
 #################################################################################
 
 from tractusx_sdk.dataspace.managers.connection import PostgresMemoryRefreshConnectionManager
+from tractusx_sdk.dataspace.services.discovery import ConnectorDiscoveryService, DiscoveryFinderService
+from tractusx_sdk.dataspace.services.connector import ServiceFactory, BaseConnectorService
 from database import engine
 from managers.enablement_services import ConnectorManager
+from managers.enablement_services.provider import ConnectorProviderManager
+from managers.config.config_manager import ConfigManager
+from managers.config.log_manager import LoggingManager
+from tractusx_sdk.dataspace.managers import OAuth2Manager
+
+from managers.enablement_services.consumer import ConsumerConnectorSyncPostgresMemoryManager
 import logging
 
 logger = logging.getLogger("connector")
 logger.setLevel(logging.INFO)
 
-#connector_manager = ConnectorManager(connection_manager=PostgresConnectionManager(engine=engine)) 320ms
-#connector_manager = ConnectorManager(connection_manager=MemoryConnectionManager()) 150ms
-#connector_manager = ConnectorManager(connection_manager=FileSystemConnectionManager(path="./data/connections.json")) #188 ms
-connector_manager = ConnectorManager(connection_manager=PostgresMemoryRefreshConnectionManager(engine=engine, logger=logger, verbose=True)) #168 ms
+"""
+Currently only one connector is supported from consumer/provider side.
+"""
+
+# Create the connection manager for the provider
+connection_manager = PostgresMemoryRefreshConnectionManager(engine=engine, logger=logger, verbose=True)
+
+# Get configuration provider values
+provider_connector_controlplane_hostname = ConfigManager.get_config("provider.connector.controlplane.hostname")
+provider_connector_controlplane_management_api = ConfigManager.get_config("provider.connector.controlplane.managementPath")
+provider_api_key_header = ConfigManager.get_config("provider.connector.controlplane.apiKeyHeader")
+provider_api_key = ConfigManager.get_config("provider.connector.controlplane.apiKey")
+provider_dataspace_version = ConfigManager.get_config("provider.connector.dataspace.version", default="jupiter")
+
+
+ichub_url = ConfigManager.get_config("hostname")
+agreements = ConfigManager.get_config("agreements")
+path_submodel_dispatcher = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
+
+# Authorization configuration
+authorization_enabled = ConfigManager.get_config("authorization.enabled", False)
+backend_api_key = ConfigManager.get_config("authorization.apiKey.key", "X-Api-Key")
+backend_api_key_value = ConfigManager.get_config("authorization.apiKey.value", "")
+
+# Create EDC headers
+provider_connector_headers = {
+    provider_api_key_header: provider_api_key_header,
+    "Content-Type": "application/json"
+}
+
+# Create the connector provider service
+provider_connector_service:BaseConnectorService = ServiceFactory.get_connector_provider_service(
+    dataspace_version=provider_dataspace_version,
+    base_url=provider_connector_controlplane_hostname,
+    dma_path=provider_connector_controlplane_management_api,
+    headers=provider_connector_headers,
+    logger=logger,
+    verbose=True
+)
+
+# Create the provider manager
+connector_provider_manager = ConnectorProviderManager(
+    connector_provider_service=provider_connector_service,
+    ichub_url=ichub_url,
+    agreements=agreements,
+    path_submodel_dispatcher=path_submodel_dispatcher,
+    authorization=authorization_enabled,
+    backend_api_key=backend_api_key,
+    backend_api_key_value=backend_api_key_value
+)
+
+
+discovery_oauth = OAuth2Manager(
+    auth_url=ConfigManager.get_config("consumer.discovery.oauth.url"),
+    realm=ConfigManager.get_config("consumer.discovery.oauth.realm"),
+    clientid=ConfigManager.get_config("consumer.discovery.oauth.client_id"),
+    clientsecret=ConfigManager.get_config("consumer.discovery.oauth.client_secret"),
+)
+
+discovery_finder_service = DiscoveryFinderService(
+    url=ConfigManager.get_config("consumer.discovery.discovery_finder.url"),
+    oauth=discovery_oauth
+)
+
+# Create the connector discovery service for the consumer
+connector_discovery_service = ConnectorDiscoveryService(
+    oauth=discovery_oauth,
+    discovery_finder_service=discovery_finder_service
+)
+
+consumer_connector_controlplane_hostname = ConfigManager.get_config("consumer.connector.controlplane.hostname")
+consumer_connector_controlplane_management_api = ConfigManager.get_config("consumer.connector.controlplane.managementPath")
+consumer_api_key_header = ConfigManager.get_config("consumer.connector.controlplane.apiKeyHeader")
+consumer_api_key = ConfigManager.get_config("consumer.connector.controlplane.apiKey")
+consumer_dataspace_version = ConfigManager.get_config("consumer.connector.dataspace.version", default="jupiter")
+
+consumer_connector_headers = {
+    consumer_api_key_header: consumer_api_key,
+    "Content-Type": "application/json"
+}
+
+consumer_connector_service:BaseConnectorService = ServiceFactory.get_connector_consumer_service(
+    dataspace_version=consumer_dataspace_version,
+    base_url=consumer_connector_controlplane_hostname,
+    dma_path=consumer_connector_controlplane_management_api,
+    headers=consumer_connector_headers,
+    connection_manager=connection_manager,
+    logger=logger,
+    verbose=True
+)
+
+
+# Create the consumer manager
+connector_consumer_manager = ConsumerConnectorSyncPostgresMemoryManager(
+    connector_consumer_service=consumer_connector_service,
+    engine=engine,
+    connector_discovery=connector_discovery_service,
+    expiration_time=60,  # 60 minutes cache expiration
+    logger=logger,
+    verbose=True
+)
+
+# Create the main connector manager
+connector_manager = ConnectorManager(
+    connector_consumer_manager=connector_consumer_manager,
+    connector_provider_manager=connector_provider_manager
+)

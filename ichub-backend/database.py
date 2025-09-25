@@ -28,7 +28,7 @@ from tools import env_tools
 base_dsn = ConfigManager.get_config("database.connectionString", default={})
 
 # Substitute the environment variables in the connection string if available
-connection_string = env_tools.substitute_env_vars(string=base_dsn) 
+connection_string = env_tools.substitute_env_vars(string=base_dsn)
 
 db_echo = ConfigManager.get_config("database.echo", default={False})
 

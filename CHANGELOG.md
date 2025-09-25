@@ -5,6 +5,49 @@ Further information can be found on the [README.md](README.md) file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.0] - 2025-09-25
+
+### Added
+
+- Implemented data consumption features, including a user interface for submodel retrieval and filtering.
+- Added management and consumption capabilities for serialized parts.
+- Introduced part discovery management and shell discovery endpoints.
+- Implemented governance policy handling and configuration with a caching mechanism.
+- Added `SubmodelViewer` and `SubmodelsGridDialog` components for enhanced submodel display.
+- Introduced the `AddSerializedPartDialog` for streamlined creation of serialized parts.
+- Added connection and part management endpoints to the backend.
+- Implemented API versioning for better maintenance.
+- Added functionality to unshare serialized part twins.
+- Included a US Tariff Information Viewer component.
+- Added comprehensive test coverage for backend services.
+- Implemented an `ErrorBoundary` component for more robust error handling in the frontend.
+- Enabled lazy loading and code splitting for frontend routes to improve performance.
+
+### Changed
+
+- Refactored the backend architecture to better separate consumer and provider logic.
+- Enhanced the frontend configuration system.
+- Updated multiple dependencies, including `fastapi`, `urllib3`, and `requests`.
+- Improved the user interface and experience with updated layouts and navigation.
+- Modularized the routing and configuration in the frontend application.
+- Refactored partner management components and removed duplicates.
+- Optimized the Docker build process for faster and more reliable builds.
+- Updated the Helm chart version and related documentation.
+- Centralized and improved exception handling in the backend.
+- Refactored API routers to incorporate versioning.
+
+### Fixed
+
+- Corrected service names for frontend and backend in configuration files.
+- Resolved various database-related issues and updated the initial schema.
+- Corrected the `submodel_dispatcher` path to be an absolute path.
+- Fixed CORS (Cross-Origin Resource Sharing) configuration for the frontend service.
+- Addressed indentation and configuration issues in various YAML files.
+- Fixed broken API calls in part management and twin management services.
+- Corrected the notification state initialization in the `PartnersList` component.
+- Updated the PostgreSQL dependency to a more recent version.
+- Addressed and resolved multiple SonarQube issues.
+
 ## [0.1.0] - 2025-05-26
 
 ### Added
@@ -113,3 +156,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed unused dependencies and cleaned up files.
+

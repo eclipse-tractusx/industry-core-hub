@@ -34,6 +34,15 @@
     * {
         color: $brand-text !important;
     }
+
+    // Force override for black status chip with higher specificity
+    &.productDetail .black-status-chip {
+      color: #000000 !important;
+      
+      &, & *, & .MuiChip-label, & .MuiSvgIcon-root {
+        color: #000000 !important;
+      }
+    }
   
     .product-card {
         background: $brand-dark !important;
@@ -67,9 +76,17 @@
     }
 
     .MuiChip-root span {
-        color: $brand-dark !important;
+        color: #ffffff !important;
     }
-  
+
+    .MuiChip-root .MuiChip-label {
+        color: #ffffff !important;
+    }
+
+    .MuiChip-root .MuiChip-icon {
+        color: #ffffff !important;
+    }
+
     .cx-dropdown-menu {
         button {
             @include mixins.dark-bg-white-text;
@@ -112,7 +129,7 @@
 }
   
 .MuiChip-icon {
-    color: $brand-dark !important;
+    color: #ffffff !important;
 }
 
 .cx-card__decision *,
@@ -166,17 +183,159 @@ div[role="presentation"] {
 
 .submodel-button{
     border-radius: 8px!important;
-    border-color: $brand-light-blue!important;
+    border: 1px solid $gradient-green-start!important;
+    background: $green-gradient-bg-light;
 
     &:hover {
-        background: $blue-gradient-bg;
-        border-color: $brand-text!important;
+        background: $green-gradient-bg-hover!important;
+        transform: translateY(-1px)!important;
+        box-shadow: 0 8px 24px rgba(33, 122, 0, 0.606)!important;
+        transition: all 0.2s ease-in-out;
     }
     &:disabled{
         background-color: $brand-gray;
         color: $brand-dark;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    &:active{
+        border: 2px solid $gradient-green-start!important;
+        box-shadow: none!important;
+    }
+    &:focus{
+        border: 2px solid $gradient-green-start!important;
+        box-shadow: none!important;
+    }
+}
+
+// Actions dropdown button styling
+button.actions-button {
+    background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%) !important;
+    height: 32px;
+    box-sizing: border-box;
+    border-radius: 6px !important;
+    border: 1px solid $brand-blue !important;
+    font-size: 0.8125rem !important;
+    color: $brand-text !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+
+    &:hover {
+        background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%) !important;
+        border-color: $brand-shadow !important;
+    }
+
+    &:disabled {
+        background-color: transparent !important;
+        color: $brand-gray !important;
         border-color: $brand-gray !important;
         cursor: not-allowed;
         opacity: 0.5;
+    }
+
+    // Icon styling with higher specificity
+    .MuiSvgIcon-root,
+    svg {
+        color: $brand-text !important;
+        font-size: 1.125rem !important;
+        fill: $brand-text !important;
+    }
+
+    &:hover .MuiSvgIcon-root,
+    &:hover svg {
+        color: $brand-text !important;
+        fill: $brand-text !important;
+    }
+
+    &:disabled .MuiSvgIcon-root,
+    &:disabled svg {
+        color: $brand-gray !important;
+        fill: $brand-gray !important;
+    }
+
+    // Ensure text is visible
+    span {
+        color: $brand-text !important;
+    }
+
+    &:disabled span {
+        color: $brand-text !important;
+    }
+
+    // Force icon color with even higher specificity
+    .MuiButton-endIcon .MuiSvgIcon-root {
+        color: $brand-text !important;
+        fill: $brand-text !important;
+    }
+}
+
+// Actions dropdown menu styling
+.MuiPaper-root {
+    &.actions-dropdown-menu {
+        background-color: white !important;
+        border: 1px solid rgba($brand-light-blue, 0.3) !important;
+        border-radius: 8px !important;
+        box-shadow: 0px 4px 20px rgba($brand-primary, 0.1) !important;
+        min-width: 200px !important;
+        margin-top: 4px !important;
+
+        .MuiMenuItem-root {
+            color: $brand-dark !important;
+            font-size: 14px !important;
+            min-height: 36px !important;
+            padding: 8px 16px !important;
+
+            &:hover {
+                background-color: rgba($brand-light-blue, 0.08) !important;
+            }
+
+            .MuiListItemIcon-root {
+                color: $brand-dark !important;
+                min-width: 36px !important;
+
+                .MuiSvgIcon-root,
+                svg {
+                    font-size: 1.125rem !important;
+                    color: $brand-dark !important;
+                    fill: $brand-dark !important;
+                }
+            }
+
+            .MuiListItemText-root {
+                .MuiListItemText-primary {
+                    font-size: 14px !important;
+                    color: $brand-dark !important;
+                    font-weight: 400 !important;
+                }
+            }
+
+            // Danger/delete styling
+            &.danger-item {
+                color: #d32f2f !important;
+
+                &:hover {
+                    background-color: rgba(211, 47, 47, 0.04) !important;
+                }
+
+                .MuiListItemIcon-root {
+                    color: #d32f2f !important;
+
+                    .MuiSvgIcon-root,
+                    svg {
+                        color: #d32f2f !important;
+                        fill: #d32f2f !important;
+                    }
+                }
+
+                .MuiListItemText-primary {
+                    color: #d32f2f !important;
+                }
+            }
+        }
+
+        .MuiDivider-root {
+            border-color: rgba($brand-light-blue, 0.2) !important;
+            margin: 4px 0 !important;
+        }
     }
 }
