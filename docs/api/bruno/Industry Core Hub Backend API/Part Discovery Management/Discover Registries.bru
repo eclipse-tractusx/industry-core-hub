@@ -1,0 +1,17 @@
+meta {
+  name: Discover Registries
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/discover/registries
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "counterPartyId": ""
+  }
+}

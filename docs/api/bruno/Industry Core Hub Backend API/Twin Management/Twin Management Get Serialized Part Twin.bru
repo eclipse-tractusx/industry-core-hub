@@ -1,0 +1,15 @@
+meta {
+  name: Twin Management Get Serialized Part Twin
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/v1/twin-management/serialized-part-twin/:global_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  global_id: 
+}
