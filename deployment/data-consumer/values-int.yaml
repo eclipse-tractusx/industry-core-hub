@@ -74,8 +74,6 @@ tractusx-connector:
           # -- If present overwrites the default secret name
           secretName: "tls-secret-consumer-controlplane"
   dataplane:
-    env:
-      EDC_DCP_V08_FORCED: true
     enabled: true
     endpoints:
       proxy:
