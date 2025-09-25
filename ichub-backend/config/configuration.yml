@@ -24,9 +24,15 @@ hostname: "http://localhost:9000"
 
 authorization:
   enabled: true
-  apiKey: 
+  api_key:
     key: "X-Api-Key"
-    value: "<<example>>"
+    value: <<example>>
+  keycloak:
+    enabled: false
+    auth_url: "https://<central-idp-url>/auth/"
+    realm: "<realm>"
+    client_id: "<client-id>"
+    client_secret: "<client-secret>"
 agreements:
   - semanticid: urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation
     usage:
