@@ -73,7 +73,7 @@ tractusx-connector:
           # -- Enables TLS on the ingress resource
           enabled: true
           # -- If present overwrites the default secret name
-          secretName: "tls-secret-provider-controlplane"
+          secretName: "tls-secret-provider-controlplane-saturn"
   dataplane:
     enabled: true
     endpoints:
@@ -108,7 +108,7 @@ tractusx-connector:
           # -- Enables TLS on the ingress resource
           enabled: true
           # -- If present overwrites the default secret name
-          secretName: "tls-secret-provider-dataplane"
+          secretName: "tls-secret-provider-dataplane-saturn"
         ## Adds [cert-manager](https://cert-manager.io/docs/) annotations to the ingress resource
         certManager:
           # -- If preset enables certificate generation via cert-manager namespace scoped issuer
