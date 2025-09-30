@@ -173,10 +173,7 @@ digital-twin-registry:
     name: "dtr-provider-postgresql"
     auth:
       password: "<path:industry-core-hub/data/dtr#password>"
-    
       database: dtr-provider-db
-      # -- Secret contains passwords for username postgres.
-      existingSecret: secret-dtr-postgres-init-provider
 
 simple-data-backend:
   enabled: true
