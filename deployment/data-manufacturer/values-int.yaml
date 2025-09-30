@@ -178,6 +178,7 @@ digital-twin-registry:
     auth:
       password: "<path:industry-core-hub/data/dtr#password>"
       database: dtr-manufacturer-db
+      existingSecret: secret-dtr-postgres-init
 
 
 simple-data-backend:
