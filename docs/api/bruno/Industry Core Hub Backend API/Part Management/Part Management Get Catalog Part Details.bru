@@ -1,0 +1,16 @@
+meta {
+  name: Part Management Get Catalog Part Details
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/part-management/catalog-part/:manufacturer_id/:manufacturer_part_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  manufacturer_id: 
+  manufacturer_part_id: 
+}

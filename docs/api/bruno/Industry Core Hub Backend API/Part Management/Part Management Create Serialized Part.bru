@@ -1,0 +1,22 @@
+meta {
+  name: Part Management Create Serialized Part
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/v1/part-management/serialized-part
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "businessPartnerNumber": "",
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "partInstanceId": "",
+    "van": "",
+    "customerPartId": ""
+  }
+}

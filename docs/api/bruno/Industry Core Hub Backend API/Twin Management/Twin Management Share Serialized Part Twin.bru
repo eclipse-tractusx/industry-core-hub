@@ -1,0 +1,19 @@
+meta {
+  name: Twin Management Share Serialized Part Twin
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/v1/twin-management/serialized-part-twin/share
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "partInstanceId": ""
+  }
+}

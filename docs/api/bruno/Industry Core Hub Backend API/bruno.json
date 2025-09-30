@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Industry Core Hub Backend API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
