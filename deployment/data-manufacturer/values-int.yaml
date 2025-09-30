@@ -170,7 +170,7 @@ digital-twin-registry:
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     dataSource:
-      url: jdbc:postgresql://dtr-manufacturer-postgresql:5432/dtr-manufacturer-db
+      url: jdbc:postgresql://dtr-manufacturer-postgresql:5432/dtr-manufacturer-db?user=default-user&password=borjaknowsitbest
   postgresql:
     nameOverride: dtr-manufacturer-postgresql
     fullnameOverride: dtr-manufacturer-postgresql
