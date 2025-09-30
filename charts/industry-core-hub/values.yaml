@@ -1,6 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -636,6 +637,11 @@ postgresql:
           secretKeyRef:
             name: "{{ .Values.auth.existingSecret }}"
             key: "ichub-password"
+      - name: "POSTGRES_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "ichub-postgres-secret"
+            key: "postgres-password"
     persistence:
       # -- Enable persistent storage
       enabled: true
@@ -713,3 +719,125 @@ readinessProbe:
   periodSeconds: 10
   successThreshold: 1
   timeoutSeconds: 1
+
+## Keycloak taken from Portal-IAM: https://github.com/eclipse-tractusx/portal-iam
+
+keycloak:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/keycloak
+    tag: 25.0.6-debian-12-r0
+  auth:
+    adminUser: admin
+    # -- Keycloak administrator password.
+    adminPassword: "keycloak-admin-password"
+    # -- Secret containing the password for admin username 'admin'.
+    existingSecret: ""
+  # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
+  production: false
+  # -- Setting the path relative to '/' for serving resources:
+  # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth/'.
+  # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
+  httpRelativePath: /auth/
+  replicaCount: 1
+  extraVolumes:
+    - name: themes
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: themes
+      mountPath: /opt/bitnami/keycloak/themes/catenax-central
+  initContainers:
+    - name: import
+      image: docker.io/tractusx/portal-iam:v4.2.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |
+          echo "Copying themes..."
+          cp -R /import/themes/catenax-central/* /themes
+      volumeMounts:
+        - name: themes
+          mountPath: /themes
+  service:
+    sessionAffinity: ClientIP
+  ingress:
+    # -- Enable ingress record generation
+    enabled: false
+    ingressClassName: ""
+    # -- Provide default path for the ingress record.
+    hostname: ""
+    # -- Optional annotations when using the nginx ingress class;
+    # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
+    # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
+    # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
+    annotations: {}
+      # cert-manager.io/cluster-issuer: ""
+      # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+      # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+      # nginx.ingress.kubernetes.io/cors-allow-origin: "https://centralidp.example.org"
+      # nginx.ingress.kubernetes.io/enable-cors: "true"
+      # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+      # nginx.ingress.kubernetes.io/proxy-buffering: "on"
+      # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+      # nginx.ingress.kubernetes.io/use-regex: "true"
+    tls: false
+  rbac:
+    create: true
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+  postgresql:
+    # -- PostgreSQL chart configuration (recommended for demonstration purposes only);
+    # default configurations:
+    # host: "centralidp-postgresql",
+    # port: 5432;
+    # Switch to enable or disable the PostgreSQL helm chart.
+    enabled: false
+    # -- Setting to Postgres version 15 as that is the aligned version,
+    # https://eclipse-tractusx.github.io/docs/release/trg-5/trg-5-07/#aligning-dependency-versions).
+    # Keycloak helm-chart from Bitnami has moved on to version 16.
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: 15-debian-11
+    commonLabels:
+      app.kubernetes.io/version: "15"
+    auth:
+      # -- Non-root username.
+      username: ichub_keycloak
+      # -- Non-root user password.
+      # password: "kccentral-user-password"
+      # # -- Root user password.
+      # postgresPassword: "postgres-keycloak-admin-password"
+      # -- Database name.
+      database: postgres
+      # -- Secret containing the passwords for root usernames postgres and non-root username kccentral.
+      existingSecret: "ichub-password"
+    architecture: standalone
+  externalDatabase:
+    # -- External PostgreSQL configuration
+    # IMPORTANT: non-root db user needs needs to be created beforehand on external database.
+    host: "{{ include \"industry-core-hub.postgresql.fullname\" . }}"
+    # -- Database port number.
+    port: 5432
+    # -- Non-root username.
+    user: "ichub_keycloak"
+    # -- Database name.
+    database: "ichub-postgres"
+    # -- Password for the non-root username.
+    password: ""
+    # -- Secret containing the database credentials.
+    existingSecret: "ichub-postgres-secret"
+    existingSecretHostKey: ""
+    existingSecretPortKey: ""
+    existingSecretUserKey: ""
+    existingSecretDatabaseKey: ""
+    existingSecretPasswordKey: "ichub-password"

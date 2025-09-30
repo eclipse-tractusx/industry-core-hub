@@ -95,6 +95,7 @@ jobs:
       - name: Setup Helm repos
         run: |
           helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add bitnami-full-index https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
           helm repo add runix https://helm.runix.net
 
       - name: Run chart-testing (install)
@@ -105,6 +106,7 @@ jobs:
       - name: Run helm upgrade
         run: |
          helm repo add bitnami https://charts.bitnami.com/bitnami
+         helm repo add bitnami-full-index https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
          helm repo add runix https://helm.runix.net
          helm repo add tractusx-dev https://eclipse-tractusx.github.io/charts/dev
          helm install industry-core-hub tractusx-dev/industry-core-hub --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }}
