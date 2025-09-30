@@ -180,7 +180,7 @@ digital-twin-registry:
     
       database: dtr-manufacturer-db
       # -- Secret contains passwords for username postgres.
-      existingSecret: secret-dtr-postgres-init
+      existingSecret: secret-dtr-postgres-init-manufacturer
 
 
 simple-data-backend:

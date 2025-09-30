@@ -142,6 +142,9 @@ tractusx-connector:
 
 
 digital-twin-registry:
+  nameOverride: "dtr-provider"
+  fullnameOverride: "dtr-provider"
+  name: "dtr-provider"
   enabled: true
   registry:
     host: dtr-ichub.int.catena-x.net
@@ -149,7 +152,7 @@ digital-twin-registry:
       enabled: true
       tls: 
         enabled: true
-        secretName: tls-secret-registry-certificate-secret
+        secretName: tls-secret-registry-certificate-secret-provider
       urlPrefix: ""
       className: nginx
       rules:
@@ -162,10 +165,18 @@ digital-twin-registry:
         cert-manager.io/cluster-issuer: "letsencrypt-prod"
         nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
         nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-  
+    dataSource:
+      url: jdbc:postgresql://dtr-provider-db:5432
   postgresql:
+    nameOverride: dtr-provider-postgresql
+    fullnameOverride: dtr-provider-postgresql
+    name: "dtr-provider-postgresql"
     auth:
       password: "<path:industry-core-hub/data/dtr#password>"
+    
+      database: dtr-provider-db
+      # -- Secret contains passwords for username postgres.
+      existingSecret: secret-dtr-postgres-init-provider
 
 simple-data-backend:
   enabled: true
