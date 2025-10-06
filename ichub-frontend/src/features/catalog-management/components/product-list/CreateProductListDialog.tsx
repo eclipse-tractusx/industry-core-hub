@@ -88,14 +88,19 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     manufacturerId: manufacturerId,
     manufacturerPartId: "",
     name: "",
-    description: "",
-    category: "",
-    materials: [],
-    bpns: "",
-    width: { value: 0, unit: LengthUnit.MM },
-    height: { value: 0, unit: LengthUnit.MM },
-    length: { value: 0, unit: LengthUnit.MM },
-    weight: { value: 0, unit: WeightUnit.KG },
+    extraMetadata: {
+      "ichub:description": "<<Your Part Description>>",
+      "ichub:category": "<<Your Part Category>>",
+      "ichub:materials": [
+        { name: "Aluminum", share: 80 },
+        { name: "Rubber", share: 20 }
+      ],
+      "ichub:bpns": "BPNS0000000000ZZ",
+      "ichub:width": { value: 200, unit: LengthUnit.MM },
+      "ichub:height": { value: 100, unit: LengthUnit.MM },
+      "ichub:length": { value: 50, unit: LengthUnit.MM },
+      "ichub:weight": { value: 5, unit: WeightUnit.KG }
+    },
   });
 
   const [successMessage, setSuccessMessage] = useState("");
@@ -110,14 +115,16 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
         manufacturerId: manufacturerId,
         manufacturerPartId: "",
         name: "",
-        description: "",
-        category: "",
-        materials: [],
-        bpns: "",
-        width: { value: 0, unit: LengthUnit.MM },
-        height: { value: 0, unit: LengthUnit.MM },
-        length: { value: 0, unit: LengthUnit.MM },
-        weight: { value: 0, unit: WeightUnit.KG },
+        extraMetadata: {
+          "ichub:description": "",
+          "ichub:category": "",
+          "ichub:materials": [],
+          "ichub:bpns": "",
+          "ichub:width": { value: 0, unit: LengthUnit.MM },
+          "ichub:height": { value: 0, unit: LengthUnit.MM },
+          "ichub:length": { value: 0, unit: LengthUnit.MM },
+          "ichub:weight": { value: 0, unit: WeightUnit.KG }
+        },
       });
       // Clear all messages when dialog opens
       setSuccessMessage("");
@@ -131,18 +138,24 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleMeasurementChange = (field: "width" | "height" | "length" | "weight", key: "value" | "unit", value: string | number) => {
+  const handleExtraMetadataChange = (field: string, value: string) => {
+    const extraMetadata = [...formData.extraMetadata];
+    extraMetadata[field] = value
+
+    setFormData((prev) => ({ ...prev, extraMetadata: extraMetadata }));
+  };
+
+  const handleMeasurementChange = (field: "ichub:width" | "ichub:height" | "ichub:length" | "ichub:weight", key: "value" | "unit", value: string | number) => {
+    const extraMetadata = [...formData.extraMetadata];
+    extraMetadata[field] = key === "value" ? (value === "" || value === null || value === undefined ? 0 : Number(value)) : value 
+    
     setFormData((prev) => ({
-      ...prev,
-      [field]: { 
-        ...prev[field], 
-        [key]: key === "value" ? (value === "" || value === null || value === undefined ? 0 : Number(value)) : value 
-      },
-    }));
+      ...prev, extraMetadata: extraMetadata}));
   };
   
   const handleMaterialChange = (index: number, key: "name" | "share", value: string | number) => {
-    const newMaterials = [...formData.materials];
+    const extraMetadata = [...formData.extraMetadata]
+    const newMaterials = extraMetadata?.["icuhub:materials"]?.materials;
     
     if (key === "share") {
       // Allow empty string temporarily, convert to 0 for calculations
@@ -155,8 +168,10 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     } else {
       newMaterials[index] = { ...newMaterials[index], name: value as string };
     }
+
+    extraMetadata["ichub:materials"] = newMaterials
     
-    setFormData((prev) => ({ ...prev, materials: newMaterials }));
+    setFormData((prev) => ({ ...prev, extraMetadata: extraMetadata }));
   };
 
   const addMaterial = () => {
@@ -433,8 +448,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={12}>
             <TextField
               label="Description"
-              value={formData.description}
-              onChange={(e) => handleChange("description", e.target.value)}
+              value={formData.extraMetadata?.["ichub:description"]}
+              onChange={(e) => handleExtraMetadataChange("ichub:description", e.target.value)}
               fullWidth
               multiline
               rows={3}
@@ -461,8 +476,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Category"
-              value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
+              value={formData.extraMetadata?.["ichub:category"]}
+              onChange={(e) => handleExtraMetadataChange("ichub:category", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -479,8 +494,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <TextField
               label="BPNS"
-              value={formData.bpns}
-              onChange={(e) => handleChange("bpns", e.target.value)}
+              value={formData.extraMetadata?.["ichub:bpns"]}
+              onChange={(e) => handleExtraMetadataChange("ichub:bpns", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -512,8 +527,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               label="Width"
               type="number"
-              value={formData.width?.value === 0 ? "" : formData.width?.value || ""}
-              onChange={(e) => handleMeasurementChange("width", "value", e.target.value)}
+              value={formData.extraMetadata?.["ichub:width"]?.value === 0 ? "" : formData.extraMetadata?.["ichub:width"]?.value || ""}
+              onChange={(e) => handleMeasurementChange("ichub:width", "value", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -531,8 +546,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               select
               label="Width Unit"
-              value={formData.width?.unit || LengthUnit.MM}
-              onChange={(e) => handleMeasurementChange("width", "unit", e.target.value)}
+              value={formData.extraMetadata?.["ichub:width"]?.unit || LengthUnit.MM}
+              onChange={(e) => handleMeasurementChange("ichub:width", "unit", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -549,8 +564,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               label="Height"
               type="number"
-              value={formData.height?.value === 0 ? "" : formData.height?.value || ""}
-              onChange={(e) => handleMeasurementChange("height", "value", e.target.value)}
+              value={formData.extraMetadata?.["ichub:height"]?.value === 0 ? "" : formData.extraMetadata?.["ichub:height"]?.value || ""}
+              onChange={(e) => handleMeasurementChange("ichub:height", "value", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -568,8 +583,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               select
               label="Height Unit"
-              value={formData.height?.unit || LengthUnit.MM}
-              onChange={(e) => handleMeasurementChange("height", "unit", e.target.value)}
+              value={formData.extraMetadata?.["ichub:height"]?.unit || LengthUnit.MM}
+              onChange={(e) => handleMeasurementChange("ichub:height", "unit", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -586,8 +601,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               label="Length"
               type="number"
-              value={formData.length?.value === 0 ? "" : formData.length?.value || ""}
-              onChange={(e) => handleMeasurementChange("length", "value", e.target.value)}
+              value={formData.extraMetadata?.["ichub:length"]?.value === 0 ? "" : formData.extraMetadata?.["ichub:length"]?.value || ""}
+              onChange={(e) => handleMeasurementChange("ichub:length", "value", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -605,8 +620,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               select
               label="Length Unit"
-              value={formData.length?.unit || LengthUnit.MM}
-              onChange={(e) => handleMeasurementChange("length", "unit", e.target.value)}
+              value={formData.extraMetadata?.["ichub:length"]?.unit || LengthUnit.MM}
+              onChange={(e) => handleMeasurementChange("ichub:length", "unit", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -623,8 +638,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               label="Weight"
               type="number"
-              value={formData.weight?.value === 0 ? "" : formData.weight?.value || ""}
-              onChange={(e) => handleMeasurementChange("weight", "value", e.target.value)}
+              value={formData.extraMetadata?.["ichub:weight"]?.value === 0 ? "" : formData.extraMetadata?.["ichub:weight"]?.value || ""}
+              onChange={(e) => handleMeasurementChange("ichub:weight", "value", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -642,8 +657,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             <TextField
               select
               label="Weight Unit"
-              value={formData.weight?.unit || WeightUnit.KG}
-              onChange={(e) => handleMeasurementChange("weight", "unit", e.target.value)}
+              value={formData.extraMetadata?.["ichub:weight"]?.unit || WeightUnit.KG}
+              onChange={(e) => handleMeasurementChange("ichub:weight", "unit", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
@@ -672,7 +687,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           {/* Materials Form and Pie Chart Side by Side */}
           <Grid2 size={{ xs: 12, md: 8 }}>
-            {formData.materials.map((material, index) => (
+            {formData.extraMetadata?.["ichub:materials"]?.map((material, index) => (
               <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Grid2 container spacing={2} alignItems="center">
                   <Grid2 size={{ xs: 12, sm: 5 }}>

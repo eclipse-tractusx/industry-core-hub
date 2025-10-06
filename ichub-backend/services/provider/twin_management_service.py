@@ -33,7 +33,11 @@ from managers.submodels.submodel_document_generator import SubmodelDocumentGener
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
-from models.services.provider.part_management import SerializedPartQuery
+from models.services.provider.part_management import (
+    CatalogPartRead,
+    CatalogPartDetailsRead,
+    SerializedPartQuery
+)
 from models.services.provider.partner_management import BusinessPartnerRead, DataExchangeAgreementRead
 from models.services.provider.twin_management import (
     CatalogPartTwinRead,
@@ -57,7 +61,12 @@ from tools.exceptions import NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
 
-from services.provider.part_management_service import PartManagementService
+from .part_management_service import (
+    PartManagementService,
+    ICHUB_BPNS,
+    ICHUB_CATEGORY,
+    ICHUB_DESCRIPTION
+)
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -72,14 +81,6 @@ class TwinManagementService:
     def __init__(self):
         self.submodel_document_generator = SubmodelDocumentGenerator()
 
-    @staticmethod
-    def _none_if_empty(value: Optional[str]) -> Optional[str]:
-        """Return None if the given string is None, empty, or whitespace-only; otherwise the trimmed string."""
-        if value is None:
-            return None
-        trimmed = str(value).strip()
-        return trimmed if trimmed else None
-
     def get_or_create_enablement_stack(self, repo: RepositoryManager, manufacturer_id: str) -> EnablementServiceStack:
         """
         Retrieve or create an EnablementServiceStack for the given manufacturer ID.
@@ -89,7 +90,7 @@ class TwinManagementService:
         if not db_enablement_service_stacks:
             db_legal_entity = repo.legal_entity_repository.get_by_bpnl(bpnl=manufacturer_id)
             db_enablement_service_stack = repo.enablement_service_stack_repository.create(
-                EnablementServiceStack(name=uuid4(), legal_entity_id=db_legal_entity.id))
+                EnablementServiceStack(name=str(uuid4()), legal_entity_id=db_legal_entity.id))
             repo.commit()
             repo.refresh(db_enablement_service_stack)
         else:
@@ -159,8 +160,8 @@ class TwinManagementService:
 
             # Normalize empty category to None for asset_type
             asset_type_value = None
-            if db_catalog_part and getattr(db_catalog_part, 'category', None):
-                _cat = str(db_catalog_part.category).strip()
+            if db_catalog_part and db_catalog_part.get_metadata(ICHUB_CATEGORY):
+                _cat = str(db_catalog_part.get_metadata(ICHUB_CATEGORY)).strip()
                 if _cat:
                     asset_type_value = _cat
 
@@ -169,7 +170,7 @@ class TwinManagementService:
                 aas_id=db_twin.aas_id,
                 asset_kind="Type",
                 display_name=db_catalog_part.name,
-                description=db_catalog_part.description,
+                description=db_catalog_part.get_metadata(ICHUB_DESCRIPTION),
                 id_short=_id_short,
                 manufacturer_id=create_input.manufacturer_id,
                 manufacturer_part_id=create_input.manufacturer_part_id,
@@ -188,7 +189,7 @@ class TwinManagementService:
                     global_id=db_twin.global_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
                     name=db_catalog_part.name,
-                    bpns=db_catalog_part.bpns
+                    bpns=db_catalog_part.get_metadata(ICHUB_BPNS)
                 )
 
                 self.create_twin_aspect(
@@ -229,13 +230,18 @@ class TwinManagementService:
                     manufacturerId=db_catalog_part.legal_entity.bpnl,
                     manufacturerPartId=db_catalog_part.manufacturer_part_id,
                     name=db_catalog_part.name,
-                    category=TwinManagementService._none_if_empty(db_catalog_part.category),
-                    bpns=db_catalog_part.bpns,
                     customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
                         name=partner_catalog_part.business_partner.name,
                         bpnl=partner_catalog_part.business_partner.bpnl
                     ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
                 )
+
+                # TODO: Deprecated fields - remove later
+                PartManagementService.fill_deprected_metadata_fields_base(
+                    db_catalog_part.extra_metadata,
+                    twin_result
+                )
+
                 if include_data_exchange_agreements:
                     self._fill_shares(db_twin, twin_result)
 
@@ -343,8 +349,8 @@ class TwinManagementService:
                                     
             # Normalize empty category to None for asset_type
             asset_type_value = None
-            if db_catalog_part and getattr(db_catalog_part, 'category', None):
-                _cat = str(db_catalog_part.category).strip()
+            if db_catalog_part and db_catalog_part.get_metadata(ICHUB_CATEGORY):
+                _cat = str(db_catalog_part.get_metadata(ICHUB_CATEGORY)).strip()
                 if _cat:
                     asset_type_value = _cat
 
@@ -353,7 +359,7 @@ class TwinManagementService:
                 aas_id=db_twin.aas_id,
                 asset_kind="Instance",
                 display_name=db_catalog_part.name if db_catalog_part else None,
-                description=db_catalog_part.description if db_catalog_part else None,
+                description=db_catalog_part.get_metadata(ICHUB_DESCRIPTION) if db_catalog_part else None,
                 id_short=db_catalog_part.name if db_catalog_part else None,
                 manufacturer_id=create_input.manufacturer_id,
                 manufacturer_part_id=create_input.manufacturer_part_id,
@@ -378,7 +384,7 @@ class TwinManagementService:
                     name=db_serialized_part.partner_catalog_part.catalog_part.name,
                     part_instance_id=create_input.part_instance_id,
                     van=db_serialized_part.van,
-                    bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns
+                    bpns=db_serialized_part.partner_catalog_part.catalog_part.get_metadata(ICHUB_BPNS)
                 )
 
                 self.create_twin_aspect(
@@ -642,56 +648,59 @@ class TwinManagementService:
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=TwinManagementService._none_if_empty(db_catalog_part.category),
-                bpns=db_catalog_part.bpns,
-                additionalContext=db_twin.additional_context,
-                customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
-                    name=partner_catalog_part.business_partner.name,
-                    bpnl=partner_catalog_part.business_partner.bpnl
-                ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+                additionalContext=db_twin.additional_context
             )
+
+            PartManagementService.fill_customer_part_ids(db_catalog_part, twin_result)
 
             TwinManagementService._fill_shares(db_twin, twin_result)
             TwinManagementService._fill_registrations(db_twin, twin_result)
             TwinManagementService._fill_aspects(db_twin, twin_result)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, twin_result)
 
             return twin_result
 
     @staticmethod
     def _build_serialized_part_twin(db_twin: Twin, details: bool = False) -> SerializedPartTwinRead | SerializedPartTwinDetailsRead:
         db_serialized_part = db_twin.serialized_part
+        db_partner_catalog_part = db_serialized_part.partner_catalog_part
+        db_catalog_part = db_partner_catalog_part.catalog_part
         base_kwargs = {
             "globalId": db_twin.global_id,
             "dtrAasId": db_twin.aas_id,
             "createdDate": db_twin.created_date,
             "modifiedDate": db_twin.modified_date,
-            "manufacturerId": db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-            "manufacturerPartId": db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-            "name": db_serialized_part.partner_catalog_part.catalog_part.name,
-            "category": TwinManagementService._none_if_empty(db_serialized_part.partner_catalog_part.catalog_part.category),
-            "bpns": db_serialized_part.partner_catalog_part.catalog_part.bpns,
-            "customerPartId": db_serialized_part.partner_catalog_part.customer_part_id,
+            "manufacturerId": db_catalog_part.legal_entity.bpnl,
+            "manufacturerPartId": db_catalog_part.manufacturer_part_id,
+            "name": db_catalog_part.name,
+            "customerPartId": db_partner_catalog_part.customer_part_id,
             "businessPartner": BusinessPartnerRead(
-            name=db_serialized_part.partner_catalog_part.business_partner.name,
-            bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+            name=db_partner_catalog_part.business_partner.name,
+            bpnl=db_partner_catalog_part.business_partner.bpnl
             ),
             "partInstanceId": db_serialized_part.part_instance_id,
             "van": db_serialized_part.van,
+            "extra_metadata": db_catalog_part.extra_metadata
         }
         if details:
-            details_kwargs = {
-                "description": db_serialized_part.partner_catalog_part.catalog_part.description,
-                "materials": db_serialized_part.partner_catalog_part.catalog_part.materials,
-                "width": db_serialized_part.partner_catalog_part.catalog_part.width,
-                "height": db_serialized_part.partner_catalog_part.catalog_part.height,
-                "length": db_serialized_part.partner_catalog_part.catalog_part.length,
-                "weight": db_serialized_part.partner_catalog_part.catalog_part.weight,
+            base_kwargs.update({
                 "additionalContext": db_twin.additional_context,
-            }
-            base_kwargs.update(details_kwargs)
-            return SerializedPartTwinDetailsRead(**base_kwargs)
+            })
+            result = SerializedPartTwinDetailsRead(**base_kwargs)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_details(db_catalog_part.extra_metadata, result)
+
+            return result
         else:
-            return SerializedPartTwinRead(**base_kwargs)
+            result = SerializedPartTwinRead(**base_kwargs)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, result)
+
+            return result
 
     @staticmethod
     def _fill_shares(db_twin: Twin, twin_result: TwinRead):

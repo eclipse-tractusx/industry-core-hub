@@ -173,9 +173,8 @@ class CatalogPart(SQLModel, table=True):
         id (Optional[int]): The unique identifier for the catalog part.
         manufacturer_part_id (str): The manufacturer part ID. 
         legal_entity_id (int): The ID of the associated legal entity. 
-        twin_id (Optional[int]): The ID of the associated twin. 
-        category (Optional[str]): The category of the catalog part.
-        bpns (Optional[str]): The optional site information (BPNS) of the catalog part. It is a link to a 'site information' of a business partner (s at the end).
+        twin_id (Optional[int]): The ID of the associated twin.
+        extra_metadata(Dict[str, Any]): Column holding extra metadata (not necessary for twin generation) about a catalog part (e.g. description, category, BPNS)
 
     Relationships:
         legal_entity (LegalEntity): The legal entity that offers this catalog part.
@@ -189,16 +188,15 @@ class CatalogPart(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     manufacturer_part_id: str = Field(index=True, description="The manufacturer part ID.")
     legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
-    twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description=TWIN_ID_DESCRIPTION)
+    twin_id: Optional[int] = Field(unique=True, foreign_key="twin.id", description=TWIN_ID_DESCRIPTION, default=None)
     name: str = Field(default="", description="The name of the catalog part at the manufacturer.")
-    description: Optional[str] = Field(default=None, description="The description of the catalog part.")
-    category: Optional[str] = Field(default=None, description="The category of the catalog part.")
-    bpns: Optional[str] = Field(default=None, description="The optional site information (BPNS) of the catalog part.")
-    materials: List[Material] = Field(default_factory=list, sa_column=Column(JSON), description="List of materials, e.g. [{'name':'aluminum','share':20.5}, {'name':'steel','share':75.25}]")
-    width: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Width of the part")
-    height: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Height of the part")
-    length: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Length of the part")
-    weight: Optional[Measurement] = Field(default=None, sa_column=Column(JSON), description="Weight of the part")
+    
+    # JSON field that contains all additional metadata
+    extra_metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON),
+        description="Extended metadata for the catalog part as a JSON object, containing: description, category, bpns, materials, width, height, length, weight"
+    )
 
     # Relationships
     legal_entity: LegalEntity = Relationship(back_populates="catalog_parts")
@@ -206,7 +204,6 @@ class CatalogPart(SQLModel, table=True):
     partner_catalog_parts: List["PartnerCatalogPart"] = Relationship(back_populates="catalog_part")
     batches: List["Batch"] = Relationship(back_populates="catalog_part")
     
-
     __table_args__ = (
         UniqueConstraint("legal_entity_id", "manufacturer_part_id", name="uk_catalog_part_legal_entity_id_manufacturer_part_id"),
     )
@@ -226,6 +223,9 @@ class CatalogPart(SQLModel, table=True):
             if partner_catalog_part.business_partner.bpnl == bpnl:
                 return partner_catalog_part
         return None
+    
+    def get_metadata(self, key: str) -> Any:
+        return self.extra_metadata.get(key) if self.extra_metadata else None
 
 
 class PartnerCatalogPart(SQLModel, table=True):
@@ -526,7 +526,8 @@ class EnablementServiceStack(SQLModel, table=True):
     name: str = Field(index=True, unique=True, description="The name of the enablement service stack.")
     connection_settings: Optional[Dict[str, Any]] = Field(
         sa_column=Column(JSON),  # Specify JSON column type
-        description="Connection settings stored as JSON"
+        description="Connection settings stored as JSON",
+        default=None
     )
     legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
 
