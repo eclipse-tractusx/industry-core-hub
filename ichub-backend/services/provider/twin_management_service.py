@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -25,14 +26,18 @@
 from typing import Optional, Dict, Any, List
 from uuid import UUID, uuid4
 
+from connector import connector_manager
+from dtr import dtr_provider_manager
 
-from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
+from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1, SEM_ID_SERIAL_PART_V3
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from managers.enablement_services.dtr_manager import DTRManager
-from managers.enablement_services.connector_manager import ConnectorManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
-from models.services.provider.part_management import SerializedPartQuery
+from models.services.provider.part_management import (
+    CatalogPartRead,
+    CatalogPartDetailsRead,
+    SerializedPartQuery
+)
 from models.services.provider.partner_management import BusinessPartnerRead, DataExchangeAgreementRead
 from models.services.provider.twin_management import (
     CatalogPartTwinRead,
@@ -51,7 +56,7 @@ from models.services.provider.twin_management import (
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
-from models.metadata_database.provider.models import EnablementServiceStack, Twin
+from models.metadata_database.provider.models import CatalogPart, EnablementServiceStack, Twin, BusinessPartner
 from tools.exceptions import NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
@@ -60,11 +65,13 @@ from .part_management_service import (
     PartManagementService,
     ICHUB_BPNS,
     ICHUB_CATEGORY,
+    ICHUB_DESCRIPTION
 )
 
 logger = LoggingManager.get_logger(__name__)
 
 CATALOG_DIGITAL_TWIN_TYPE = "PartType"
+INSTANCE_DIGITAL_TWIN_TYPE = "PartInstance"
 
 class TwinManagementService:
     """
@@ -135,28 +142,45 @@ class TwinManagementService:
                     enablement_service_stack_id=db_enablement_service_stack.id
                 )
                 repo.commit()
+                repo.refresh(db_twin_registration)
 
             # Step 6: Check the dtr_registered flag on the twin registration entity
             # (if True => we can skip the operation from here on => nothing to do)
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             
-            dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
-            
             customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                     for partner_catalog_part in db_catalog_part.partner_catalog_parts}
-            
-            dtr_manager.create_or_update_shell_descriptor(
+
+            _id_short = None
+            if(create_input.id_short):
+                _id_short = create_input.id_short
+            elif db_catalog_part.name:
+                _id_short = db_catalog_part.name
+
+            # Normalize empty category to None for asset_type
+            asset_type_value = None
+            if db_catalog_part and db_catalog_part.get_metadata(ICHUB_CATEGORY):
+                _cat = str(db_catalog_part.get_metadata(ICHUB_CATEGORY)).strip()
+                if _cat:
+                    asset_type_value = _cat
+
+            dtr_provider_manager.create_or_update_shell_descriptor(
                 global_id=db_twin.global_id,
                 aas_id=db_twin.aas_id,
+                asset_kind="Type",
+                display_name=db_catalog_part.name,
+                description=db_catalog_part.get_metadata(ICHUB_DESCRIPTION),
+                id_short=_id_short,
                 manufacturer_id=create_input.manufacturer_id,
                 manufacturer_part_id=create_input.manufacturer_part_id,
                 customer_part_ids=customer_part_ids,
-                part_category=db_catalog_part.extra_metadata.get(ICHUB_CATEGORY) if db_catalog_part.extra_metadata else None,
+                asset_type=asset_type_value,
                 digital_twin_type=CATALOG_DIGITAL_TWIN_TYPE
             )
 
             db_twin_registration.dtr_registered = True
+            repo.commit()
             
             ## Create part type information submodel when registering, if configured
             # TODO: This makes our API unclean - aspect creation should not be part of twin creation - should be moved to the frontend in future
@@ -165,7 +189,7 @@ class TwinManagementService:
                     global_id=db_twin.global_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
                     name=db_catalog_part.name,
-                    bpns=db_catalog_part.extra_metadata.get(ICHUB_BPNS) if db_catalog_part.extra_metadata else None
+                    bpns=db_catalog_part.get_metadata(ICHUB_BPNS)
                 )
 
                 self.create_twin_aspect(
@@ -263,7 +287,7 @@ class TwinManagementService:
                 db_business_partner=db_business_partner
             )
 
-    def create_serialized_part_twin(self, create_input: SerializedPartTwinCreate, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinRead:
+    def create_serialized_part_twin(self, create_input: SerializedPartTwinCreate, auto_create_serial_part_aspect: bool = False, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinRead:
         with RepositoryManagerFactory.create() as repo:
             # Step 1: Retrieve the catalog part entity according to the catalog part data (manufacturer_id, manufacturer_part_id)
             db_serialized_parts = repo.serialized_part_repository.find(
@@ -272,23 +296,17 @@ class TwinManagementService:
                 part_instance_id=create_input.part_instance_id,
             )
             if not db_serialized_parts:
-                raise NotFoundError("Catalog part not found.")
+                raise NotFoundError("Serialized Part not found.")
             else:
                 db_serialized_part = db_serialized_parts[0]
 
-            # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
-            # (if not there => raise error)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                enablement_service_stack_name,
-                join_legal_entity=True
-            )
-            if not db_enablement_service_stack:
-                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' not found.")
-
-            # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.legal_entity.bpnl != create_input.manufacturer_id:
-                raise NotFoundError(f"Enablement service stack '{enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
-
+            if not db_serialized_part.partner_catalog_part:
+                raise NotAvailableError("Serialized Part is not linked to a Catalog Part of a Business Partner.")
+            
+            # Step 2: Retrieve the enablement service stack entity from the DB according to the given manufacturer ID
+            # This will create one if it doesn't exist
+            db_enablement_service_stack = self.get_or_create_enablement_stack(repo=repo, manufacturer_id=create_input.manufacturer_id)
+            
             # Step 3a: Load existing twin metadata from the DB (if there)
             if db_serialized_part.twin_id:
                 db_twin = repo.twin_repository.find_by_id(db_serialized_part.twin_id)
@@ -322,22 +340,60 @@ class TwinManagementService:
             # (if True => we can skip the operation from here on => nothing to do)
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
-            if not db_twin_registration.dtr_registered:
-                dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
+            
+            db_catalog_part = None
+            if db_serialized_part.partner_catalog_part.catalog_part:
+                db_catalog_part:CatalogPart = db_serialized_part.partner_catalog_part.catalog_part
                 
-                dtr_manager.create_or_update_shell_descriptor_serialized_part(
+            customer_part_ids = {db_serialized_part.partner_catalog_part.customer_part_id: db_serialized_part.partner_catalog_part.business_partner.bpnl}
+                                    
+            # Normalize empty category to None for asset_type
+            asset_type_value = None
+            if db_catalog_part and db_catalog_part.get_metadata(ICHUB_CATEGORY):
+                _cat = str(db_catalog_part.get_metadata(ICHUB_CATEGORY)).strip()
+                if _cat:
+                    asset_type_value = _cat
+
+            dtr_provider_manager.create_or_update_shell_descriptor(
+                global_id=db_twin.global_id,
+                aas_id=db_twin.aas_id,
+                asset_kind="Instance",
+                display_name=db_catalog_part.name if db_catalog_part else None,
+                description=db_catalog_part.get_metadata(ICHUB_DESCRIPTION) if db_catalog_part else None,
+                id_short=db_catalog_part.name if db_catalog_part else None,
+                manufacturer_id=create_input.manufacturer_id,
+                manufacturer_part_id=create_input.manufacturer_part_id,
+                customer_part_ids=customer_part_ids,
+                asset_type=asset_type_value,
+                digital_twin_type=INSTANCE_DIGITAL_TWIN_TYPE,
+                van=db_serialized_part.van,
+                part_instance_id=create_input.part_instance_id
+            )
+
+            db_twin_registration.dtr_registered = True
+            repo.commit()
+
+            ## Create serial part submodel when registering, if configured
+            # TODO: This makes our API unclean - aspect creation should not be part of twin creation - should be moved to the frontend in future
+            if auto_create_serial_part_aspect:
+                serial_part_doc = self.submodel_document_generator.generate_serial_part_v3(
                     global_id=db_twin.global_id,
-                    aas_id=db_twin.aas_id,
                     manufacturer_id=create_input.manufacturer_id,
                     manufacturer_part_id=create_input.manufacturer_part_id,
                     customer_part_id=db_serialized_part.partner_catalog_part.customer_part_id,
+                    name=db_serialized_part.partner_catalog_part.catalog_part.name,
                     part_instance_id=create_input.part_instance_id,
                     van=db_serialized_part.van,
-                    business_partner_number=db_serialized_part.partner_catalog_part.business_partner.bpnl,
-                    part_category=db_serialized_part.partner_catalog_part.catalog_part.category
+                    bpns=db_serialized_part.partner_catalog_part.catalog_part.get_metadata(ICHUB_BPNS)
                 )
 
-                db_twin_registration.dtr_registered = True
+                self.create_twin_aspect(
+                    TwinAspectCreate(
+                        globalId=db_twin.global_id,
+                        semanticId=SEM_ID_SERIAL_PART_V3,
+                        payload=serial_part_doc
+                    )
+                )
 
             return TwinRead(
                 globalId=db_twin.global_id,
@@ -480,10 +536,9 @@ class TwinManagementService:
 
             ## Step 4b: Check if there is created a asset for the digital twin registry.
             
-            edc_manager = _create_connector_manager(db_enablement_service_stack.connection_settings)
-            dtr_config = ConfigManager.get_config("digitalTwinRegistry")
+            dtr_config = ConfigManager.get_config("provider.digitalTwinRegistry")
             asset_config = dtr_config.get("asset_config")
-            dtr_asset_id, _, _, _ = edc_manager.register_dtr_offer(
+            dtr_asset_id, _, _, _ = connector_manager.provider.register_dtr_offer(
                 base_dtr_url=dtr_config.get("hostname"),
                 uri=dtr_config.get("uri"),
                 api_path=dtr_config.get("apiPath"),
@@ -508,37 +563,34 @@ class TwinManagementService:
                 # Step 5b: Update the registration status to STORED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.STORED.value
                 repo.commit()
-
+            
+            asset_id, usage_policy_id, access_policy_id, contract_id = connector_manager.provider.register_submodel_bundle_circular_offer(
+                semantic_id=db_twin_aspect.semantic_id
+            )
             # Step 6: Handle the EDC registration
-            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
-                
-                # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
-                asset_id, usage_policy_id, access_policy_id, contract_id = edc_manager.register_submodel_bundle_circular_offer(
-                    semantic_id=db_twin_aspect.semantic_id
-                )
+            if asset_id and db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
 
                 # Step 6b: Update the registration status to EDC_REGISTERED
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.EDC_REGISTERED.value
                 repo.commit()
-
+            
             # Step 7: Handle the DTR registration
-            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                dtr_manager = _create_dtr_manager(db_enablement_service_stack.connection_settings)
-                
+            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:               
+
                 # Step 7a: Register the submodel in the DTR (if necessary)
                 try:
-                    dtr_manager.create_submodel_descriptor(
+                    dtr_provider_manager.create_submodel_descriptor(
                         aas_id=db_twin.aas_id,
                         submodel_id=db_twin_aspect.submodel_id,
                         semantic_id=db_twin_aspect.semantic_id,
-                        edc_asset_id=asset_id
-                )
+                        connector_asset_id=asset_id
+                    )
+                    # Step 7b: Update the registration status to DTR_REGISTERED only on success
+                    db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
+                    repo.commit()
                 except Exception as e:
-                    logger.error("It was not possible to create the submodel descriptor")
-
-                # Step 7b: Update the registration status to DTR_REGISTERED
-                db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
-                repo.commit()
+                    logger.error(f"Failed to create submodel descriptor: {e}")
+                    raise e  # Re-raise the exception to prevent twin creation from completing
 
             return TwinAspectRead(
                 semanticId=db_twin_aspect.semantic_id,
@@ -596,57 +648,59 @@ class TwinManagementService:
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                additionalContext=db_twin.additional_context,
-                customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
-                    name=partner_catalog_part.business_partner.name,
-                    bpnl=partner_catalog_part.business_partner.bpnl
-                ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+                additionalContext=db_twin.additional_context
             )
 
-            # TODO: Deprecated fields - remove later
-            PartManagementService.fill_customer_part_ids(db_catalog_part.extra_metadata, twin_result)
+            PartManagementService.fill_customer_part_ids(db_catalog_part, twin_result)
 
             TwinManagementService._fill_shares(db_twin, twin_result)
             TwinManagementService._fill_registrations(db_twin, twin_result)
             TwinManagementService._fill_aspects(db_twin, twin_result)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, twin_result)
 
             return twin_result
 
     @staticmethod
     def _build_serialized_part_twin(db_twin: Twin, details: bool = False) -> SerializedPartTwinRead | SerializedPartTwinDetailsRead:
         db_serialized_part = db_twin.serialized_part
+        db_partner_catalog_part = db_serialized_part.partner_catalog_part
+        db_catalog_part = db_partner_catalog_part.catalog_part
         base_kwargs = {
             "globalId": db_twin.global_id,
             "dtrAasId": db_twin.aas_id,
             "createdDate": db_twin.created_date,
             "modifiedDate": db_twin.modified_date,
-            "manufacturerId": db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-            "manufacturerPartId": db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-            "name": db_serialized_part.partner_catalog_part.catalog_part.name,
-            "category": db_serialized_part.partner_catalog_part.catalog_part.category,
-            "bpns": db_serialized_part.partner_catalog_part.catalog_part.bpns,
-            "customerPartId": db_serialized_part.partner_catalog_part.customer_part_id,
+            "manufacturerId": db_catalog_part.legal_entity.bpnl,
+            "manufacturerPartId": db_catalog_part.manufacturer_part_id,
+            "name": db_catalog_part.name,
+            "customerPartId": db_partner_catalog_part.customer_part_id,
             "businessPartner": BusinessPartnerRead(
-            name=db_serialized_part.partner_catalog_part.business_partner.name,
-            bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+            name=db_partner_catalog_part.business_partner.name,
+            bpnl=db_partner_catalog_part.business_partner.bpnl
             ),
             "partInstanceId": db_serialized_part.part_instance_id,
             "van": db_serialized_part.van,
+            "extra_metadata": db_catalog_part.extra_metadata
         }
         if details:
-            details_kwargs = {
-                "description": db_serialized_part.partner_catalog_part.catalog_part.description,
-                "materials": db_serialized_part.partner_catalog_part.catalog_part.materials,
-                "width": db_serialized_part.partner_catalog_part.catalog_part.width,
-                "height": db_serialized_part.partner_catalog_part.catalog_part.height,
-                "length": db_serialized_part.partner_catalog_part.catalog_part.length,
-                "weight": db_serialized_part.partner_catalog_part.catalog_part.weight,
+            base_kwargs.update({
                 "additionalContext": db_twin.additional_context,
-            }
-            base_kwargs.update(details_kwargs)
-            return SerializedPartTwinDetailsRead(**base_kwargs)
+            })
+            result = SerializedPartTwinDetailsRead(**base_kwargs)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_details(db_catalog_part.extra_metadata, result)
+
+            return result
         else:
-            return SerializedPartTwinRead(**base_kwargs)
+            result = SerializedPartTwinRead(**base_kwargs)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, result)
+
+            return result
 
     @staticmethod
     def _fill_shares(db_twin: Twin, twin_result: TwinRead):
@@ -701,7 +755,7 @@ class TwinManagementService:
     def _create_twin_exchange(
         repo: RepositoryManager,
         db_twin: Twin,
-        db_business_partner: BusinessPartnerRead
+        db_business_partner: BusinessPartner
     ) -> bool:
             # Step 1: Retrieve the first data exchange agreement entity for the business partner
             # (this will will later be replaced with an explicit mechanism choose a specific data exchange agreement)
@@ -727,30 +781,6 @@ class TwinManagementService:
             else:
                 return False
 
-
-def _create_dtr_manager(connection_settings: Optional[Dict[str, Any]]) -> DTRManager:
-    """
-    Create a new instance of the DTRManager class.
-    """
-    # TODO: later we can configure the manager via the connection settings from the DB here
-    # For now we take the values from the config file
-    dtr_hostname = ConfigManager.get_config('digitalTwinRegistry.hostname')
-    dtr_uri = ConfigManager.get_config('digitalTwinRegistry.uri')
-    dtr_lookup_uri = ConfigManager.get_config('digitalTwinRegistry.lookupUri')
-    dtr_api_path = ConfigManager.get_config('digitalTwinRegistry.apiPath')
-    dtr_url = f"{dtr_hostname}{dtr_uri}"
-    dtr_lookup_url = f"{dtr_hostname}{dtr_lookup_uri}"
-
-    return DTRManager(
-        dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
-        api_path=str(dtr_api_path))
-
-def _create_connector_manager(connection_settings: Optional[Dict[str, Any]]) -> ConnectorManager:
-    """
-    Create a new instance of the EDCManager class.
-    """
-    # TODO: later we can configure the manager via the connection settings from the DB here
-    return ConnectorManager()
 
 def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
     """

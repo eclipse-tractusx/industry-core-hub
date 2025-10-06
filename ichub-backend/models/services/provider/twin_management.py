@@ -102,7 +102,7 @@ class TwinCreateBase(BaseModel):
 
     global_id: Optional[UUID] = Field(alias="globalId", description="Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.", default=None)
     dtr_aas_id: Optional[UUID] = Field(alias="dtrAasId", description="Optionally the shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry. If not specified, a new UUID will be created automatically.", default=None)
-
+    id_short: Optional[str] = Field(alias="idShort", description="Optionally the idShort of the digital twin in the Digital Twin Registry. If not specified, a default value 'Twin-{globalId}' will be used.", default=None)
 class TwinDetailsReadBase(BaseModel):
     additional_context: Optional[Dict[str, Any]] = Field(alias="additionalContext", description="Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.", default=None)
     registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
@@ -143,3 +143,8 @@ class SerializedPartTwinShareCreate(SerializedPartBase):
     # Hint: we don't need the TwinShareCreateBase here, because a serialized part has already a link to a single business partner
     pass
 
+class SerializedPartTwinUnshareCreate(BaseModel):
+    aas_id: UUID = Field(alias="aasId", description="The AAS ID of the serialized part twin to unshare.")
+    business_partner_number_to_unshare: list[str] = Field(alias="businessPartnerNumberToUnshare", description="The business partner number of the business partner with which the serialized part twin should be unshared.")
+    manufacturer_id: str = Field(alias="manufacturerId", description="The manufacturer ID of the serialized part twin to unshare.")
+    asset_id_names_filter: Optional[List[str]] = Field(alias="assetIdNamesFilter", description="An optional list of asset ID names to filter the serialized part twin unshare operation. If provided, only asset IDs with names in this list will be considered for unsharing.", default=None)

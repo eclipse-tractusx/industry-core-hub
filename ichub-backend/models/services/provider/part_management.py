@@ -89,7 +89,7 @@ class CatalogPartDetailsRead(CatalogPartRead):
 
     # Deprecated fields - will be phased out in future versions
     description: Optional[str] = Field(description="[Deprecated] The description of the part. Use extra_metadata instead.", default=None)
-    materials: Optional[List[Material]] = Field(description="[Deprecated] List of materials. Use extra_metadata instead.", default=[])
+    materials: Optional[List[Material]] = Field(description="[Deprecated] List of materials, e.g. [{'name':'aluminum','share':20.5}, {'name':'steel','share':75.25}] . Use extra_metadata instead.", default=[])
     width: Optional[Measurement] = Field(description="[Deprecated] The width of the part. Use extra_metadata instead.", default=None)
     height: Optional[Measurement] = Field(description="[Deprecated] The height of the part. Use extra_metadata instead.", default=None)
     length: Optional[Measurement] = Field(description="[Deprecated] The length of the part. Use extra_metadata instead.", default=None)
@@ -102,6 +102,9 @@ class CatalogPartCreate(CatalogPartDetailsRead):
     pass
 
 class CatalogPartDelete(CatalogPartBase):
+    pass
+
+class CatalogPartUpdate(CatalogPartCreate):
     pass
 
 class CatalogPartQuery(BaseModel):
@@ -142,14 +145,28 @@ class SerializedPartBase(CatalogPartBase):
 class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase, CustomerPartIdBase):
     van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
 
+class SerializedPartReadWithStatus(SerializedPartRead, StatusBase):
+    """Serialized part read model with status information."""
+    pass
+
 class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
+    pass
+
+class SerializedPartDetailsReadWithStatus(SerializedPartDetailsRead, StatusBase):
+    """Serialized part details read model with status information."""
     pass
 
 class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
     van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
     customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
+    name: Optional[str] = Field(description="The name of the part.", default=None)
+    category: Optional[str] = Field(description="The category of the part.", default=None)
+    bpns: Optional[str] = Field(description="The site number (BPNS) the part is produced", default=None)
 
 class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
+    pass
+
+class SerializedPartUpdate(SerializedPartCreate):
     pass
 
 class SerializedPartQuery(PartnerCatalogPartQuery):

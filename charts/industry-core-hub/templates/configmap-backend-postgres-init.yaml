@@ -96,7 +96,8 @@ data:
     CREATE TABLE public.data_exchange_agreement (
         id integer NOT NULL,
         name character varying NOT NULL,
-        business_partner_id integer NOT NULL
+        business_partner_id integer NOT NULL,
+        is_cancelled boolean DEFAULT false NOT NULL
     );
 
     CREATE TABLE public.data_exchange_contract (
@@ -152,7 +153,8 @@ data:
 
     CREATE TABLE public.twin_exchange (
         twin_id integer NOT NULL,
-        data_exchange_agreement_id integer NOT NULL
+        data_exchange_agreement_id integer NOT NULL,
+        is_cancelled boolean DEFAULT false NOT NULL
     );
 
     CREATE TABLE public.twin_registration (
@@ -477,6 +479,18 @@ data:
     ALTER TABLE ONLY public.twin_registration
         ADD CONSTRAINT fk_twin_registration_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
     ALTER TABLE ONLY public.twin_registration
-    ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+        ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+    ALTER SEQUENCE public.batch_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.business_partner_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.catalog_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.data_exchange_agreement_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.enablement_service_stack_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.jis_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.legal_entity_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.part_share_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
 
 {{- end -}}

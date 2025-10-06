@@ -18,18 +18,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
+
 openapi: 3.1.0
 info:
   title: Industry Core Hub Backend API
-  version: 0.0.1
+  version: 0.2.0
 paths:
-  '/part-management/catalog-part/{manufacturer_id}/manufacturerPartId':
+  '/v1/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}':
     get:
       tags:
         - Part Management
       summary: Part Management Get Catalog Part Details
       operationId: >-
-        part_management_get_catalog_part_details_part_management_catalog_part__manufacturer_id__manufacturerPartId_get
+        part_management_get_catalog_part_details_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__get
       parameters:
         - name: manufacturer_id
           in: path
@@ -38,7 +39,7 @@ paths:
             type: string
             title: Manufacturer Id
         - name: manufacturer_part_id
-          in: query
+          in: path
           required: true
           schema:
             type: string
@@ -94,12 +95,157 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /part-management/catalog-part:
+    put:
+      tags:
+        - Part Management
+      summary: Part Management Update Catalog Part
+      operationId: >-
+        part_management_update_catalog_part_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__put
+      parameters:
+        - name: manufacturer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Id
+        - name: manufacturer_part_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Part Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CatalogPartUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogPartDetailsReadWithStatus'
+        '400':
+          description: Invalid input provided. Please check your request and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '403':
+          description: Access denied. You do not have permission to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '404':
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '409':
+          description: Catalog part already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '502':
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '503':
+          description: Service unavailable. Please try again later.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+    delete:
+      tags:
+        - Part Management
+      summary: Part Management Delete Catalog Part
+      operationId: >-
+        part_management_delete_catalog_part_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__delete
+      parameters:
+        - name: manufacturer_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Id
+        - name: manufacturer_part_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Manufacturer Part Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Invalid input provided. Please check your request and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '403':
+          description: Access denied. You do not have permission to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '404':
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '409':
+          description: Catalog part already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '502':
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '503':
+          description: Service unavailable. Please try again later.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+  /v1/part-management/catalog-part:
     get:
       tags:
         - Part Management
       summary: Part Management Get Catalog Parts
-      operationId: part_management_get_catalog_parts_part_management_catalog_part_get
+      operationId: part_management_get_catalog_parts_v1_part_management_catalog_part_get
       responses:
         '200':
           description: Successful Response
@@ -110,7 +256,7 @@ paths:
                   $ref: '#/components/schemas/CatalogPartReadWithStatus'
                 type: array
                 title: >-
-                  Response Part Management Get Catalog Parts Part Management
+                  Response Part Management Get Catalog Parts V1 Part Management
                   Catalog Part Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -160,7 +306,7 @@ paths:
       tags:
         - Part Management
       summary: Part Management Create Catalog Part
-      operationId: part_management_create_catalog_part_part_management_catalog_part_post
+      operationId: part_management_create_catalog_part_v1_part_management_catalog_part_post
       requestBody:
         content:
           application/json:
@@ -218,13 +364,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /part-management/catalog-part/create-partner-mapping:
+  /v1/part-management/catalog-part/create-partner-mapping:
     post:
       tags:
         - Part Management
       summary: Part Management Create Partner Mapping
       operationId: >-
-        part_management_create_partner_mapping_part_management_catalog_part_create_partner_mapping_post
+        part_management_create_partner_mapping_v1_part_management_catalog_part_create_partner_mapping_post
       requestBody:
         content:
           application/json:
@@ -282,24 +428,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /part-management/serialized-part:
+  /v1/part-management/serialized-part:
     get:
       tags:
         - Part Management
       summary: Part Management Get Serialized Parts
-      operationId: part_management_get_serialized_parts_part_management_serialized_part_get
+      operationId: >-
+        part_management_get_serialized_parts_v1_part_management_serialized_part_get
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
               schema:
+                type: array
                 items:
                   $ref: '#/components/schemas/SerializedPartRead'
-                type: array
                 title: >-
-                  Response Part Management Get Serialized Parts Part Management
-                  Serialized Part Get
+                  Response Part Management Get Serialized Parts V1 Part
+                  Management Serialized Part Get
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -349,13 +496,32 @@ paths:
         - Part Management
       summary: Part Management Create Serialized Part
       operationId: >-
-        part_management_create_serialized_part_part_management_serialized_part_post
+        part_management_create_serialized_part_v1_part_management_serialized_part_post
+      parameters:
+        - name: autoGenerateCatalogPart
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Automatically create the catalog part for this serialized part
+            default: false
+            title: Autogeneratecatalogpart
+          description: Automatically create the catalog part for this serialized part
+        - name: autoGeneratePartnerPart
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Automatically create a catalog partner part
+            default: true
+            title: Autogeneratepartnerpart
+          description: Automatically create a catalog partner part
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SerializedPartCreate'
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -407,13 +573,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /part-management/serialized-part/query:
+  /v1/part-management/serialized-part/query:
     post:
       tags:
         - Part Management
       summary: Part Management Query Serialized Parts
       operationId: >-
-        part_management_query_serialized_parts_part_management_serialized_part_query_post
+        part_management_query_serialized_parts_v1_part_management_serialized_part_query_post
       requestBody:
         content:
           application/json:
@@ -430,7 +596,7 @@ paths:
                   $ref: '#/components/schemas/SerializedPartRead'
                 type: array
                 title: >-
-                  Response Part Management Query Serialized Parts Part
+                  Response Part Management Query Serialized Parts V1 Part
                   Management Serialized Part Query Post
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -476,13 +642,159 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /partner-management/business-partner:
+  '/v1/part-management/serialized-part/{partner_catalog_part_id}/{part_instance_id}':
+    put:
+      tags:
+        - Part Management
+      summary: Part Management Update Serialized Part
+      operationId: >-
+        part_management_update_serialized_part_v1_part_management_serialized_part__partner_catalog_part_id___part_instance_id__put
+      parameters:
+        - name: partner_catalog_part_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Partner Catalog Part Id
+        - name: part_instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Part Instance Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SerializedPartUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SerializedPartRead'
+        '400':
+          description: Invalid input provided. Please check your request and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '403':
+          description: Access denied. You do not have permission to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '404':
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '409':
+          description: Catalog part already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '502':
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '503':
+          description: Service unavailable. Please try again later.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+    delete:
+      tags:
+        - Part Management
+      summary: Part Management Delete Serialized Part
+      operationId: >-
+        part_management_delete_serialized_part_v1_part_management_serialized_part__partner_catalog_part_id___part_instance_id__delete
+      parameters:
+        - name: partner_catalog_part_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            title: Partner Catalog Part Id
+        - name: part_instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Part Instance Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Invalid input provided. Please check your request and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '403':
+          description: Access denied. You do not have permission to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '404':
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '409':
+          description: Catalog part already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '502':
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '503':
+          description: Service unavailable. Please try again later.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+  /v1/partner-management/business-partner:
     get:
       tags:
         - Partner Management
       summary: Partner Management Get Business Partners
       operationId: >-
-        partner_management_get_business_partners_partner_management_business_partner_get
+        partner_management_get_business_partners_v1_partner_management_business_partner_get
       responses:
         '200':
           description: Successful Response
@@ -493,7 +805,7 @@ paths:
                   $ref: '#/components/schemas/BusinessPartnerRead'
                 type: array
                 title: >-
-                  Response Partner Management Get Business Partners Partner
+                  Response Partner Management Get Business Partners V1 Partner
                   Management Business Partner Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -544,7 +856,7 @@ paths:
         - Partner Management
       summary: Partner Management Create Business Partner
       operationId: >-
-        partner_management_create_business_partner_partner_management_business_partner_post
+        partner_management_create_business_partner_v1_partner_management_business_partner_post
       requestBody:
         content:
           application/json:
@@ -602,13 +914,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/partner-management/business-partner/{business_partner_number}':
+  '/v1/partner-management/business-partner/{business_partner_number}':
     get:
       tags:
         - Partner Management
       summary: Partner Management Get Business Partner
       operationId: >-
-        partner_management_get_business_partner_partner_management_business_partner__business_partner_number__get
+        partner_management_get_business_partner_v1_partner_management_business_partner__business_partner_number__get
       parameters:
         - name: business_partner_number
           in: path
@@ -626,7 +938,7 @@ paths:
                   - $ref: '#/components/schemas/BusinessPartnerRead'
                   - type: 'null'
                 title: >-
-                  Response Partner Management Get Business Partner Partner
+                  Response Partner Management Get Business Partner V1 Partner
                   Management Business Partner  Business Partner Number  Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -672,13 +984,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/partner-management/business-partner/{business_partner_number}/data-exchange-agreement':
+  '/v1/partner-management/business-partner/{business_partner_number}/data-exchange-agreement':
     get:
       tags:
         - Partner Management
       summary: Partner Management Get Data Exchange Agreements
       operationId: >-
-        partner_management_get_data_exchange_agreements_partner_management_business_partner__business_partner_number__data_exchange_agreement_get
+        partner_management_get_data_exchange_agreements_v1_partner_management_business_partner__business_partner_number__data_exchange_agreement_get
       parameters:
         - name: business_partner_number
           in: path
@@ -696,7 +1008,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/DataExchangeAgreementRead'
                 title: >-
-                  Response Partner Management Get Data Exchange Agreements
+                  Response Partner Management Get Data Exchange Agreements V1
                   Partner Management Business Partner  Business Partner Number 
                   Data Exchange Agreement Get
         '400':
@@ -743,13 +1055,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /twin-management/catalog-part-twin:
+  /v1/twin-management/catalog-part-twin:
     get:
       tags:
         - Twin Management
       summary: Twin Management Get Catalog Part Twins
       operationId: >-
-        twin_management_get_catalog_part_twins_twin_management_catalog_part_twin_get
+        twin_management_get_catalog_part_twins_v1_twin_management_catalog_part_twin_get
       parameters:
         - name: include_data_exchange_agreements
           in: query
@@ -768,7 +1080,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/CatalogPartTwinRead'
                 title: >-
-                  Response Twin Management Get Catalog Part Twins Twin
+                  Response Twin Management Get Catalog Part Twins V1 Twin
                   Management Catalog Part Twin Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -819,7 +1131,7 @@ paths:
         - Twin Management
       summary: Twin Management Create Catalog Part Twin
       operationId: >-
-        twin_management_create_catalog_part_twin_twin_management_catalog_part_twin_post
+        twin_management_create_catalog_part_twin_v1_twin_management_catalog_part_twin_post
       parameters:
         - name: autoCreatePartTypeInformation
           in: query
@@ -889,13 +1201,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/twin-management/catalog-part-twin/{global_id}':
+  '/v1/twin-management/catalog-part-twin/{global_id}':
     get:
       tags:
         - Twin Management
       summary: Twin Management Get Catalog Part Twin
       operationId: >-
-        twin_management_get_catalog_part_twin_twin_management_catalog_part_twin__global_id__get
+        twin_management_get_catalog_part_twin_v1_twin_management_catalog_part_twin__global_id__get
       parameters:
         - name: global_id
           in: path
@@ -914,8 +1226,8 @@ paths:
                   - $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
                   - type: 'null'
                 title: >-
-                  Response Twin Management Get Catalog Part Twin Twin Management
-                  Catalog Part Twin  Global Id  Get
+                  Response Twin Management Get Catalog Part Twin V1 Twin
+                  Management Catalog Part Twin  Global Id  Get
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -960,26 +1272,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/twin-management/catalog-part-twin/{manufacturerId}/{manufacturerPartId}':
+  '/v1/twin-management/catalog-part-twin/{manufacturer_id}/{manufacturer_part_id}':
     get:
       tags:
         - Twin Management
       summary: Twin Management Get Catalog Part Twin From Manufacturer
       operationId: >-
-        twin_management_get_catalog_part_twin_from_manufacturer_twin_management_catalog_part_twin__manufacturerId___manufacturerPartId__get
+        twin_management_get_catalog_part_twin_from_manufacturer_v1_twin_management_catalog_part_twin__manufacturer_id___manufacturer_part_id__get
       parameters:
-        - name: manufacturerId
+        - name: manufacturer_id
           in: path
           required: true
           schema:
             type: string
-            title: Manufacturerid
-        - name: manufacturerPartId
+            title: Manufacturer Id
+        - name: manufacturer_part_id
           in: path
           required: true
           schema:
             type: string
-            title: Manufacturerpartid
+            title: Manufacturer Part Id
       responses:
         '200':
           description: Successful Response
@@ -991,8 +1303,8 @@ paths:
                   - type: 'null'
                 title: >-
                   Response Twin Management Get Catalog Part Twin From
-                  Manufacturer Twin Management Catalog Part Twin 
-                  Manufacturerid   Manufacturerpartid  Get
+                  Manufacturer V1 Twin Management Catalog Part Twin 
+                  Manufacturer Id   Manufacturer Part Id  Get
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -1037,13 +1349,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /twin-management/catalog-part-twin/share:
+  /v1/twin-management/catalog-part-twin/share:
     post:
       tags:
         - Twin Management
       summary: Twin Management Share Catalog Part Twin
       operationId: >-
-        twin_management_share_catalog_part_twin_twin_management_catalog_part_twin_share_post
+        twin_management_share_catalog_part_twin_v1_twin_management_catalog_part_twin_share_post
       requestBody:
         content:
           application/json:
@@ -1104,13 +1416,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /twin-management/serialized-part-twin:
+  /v1/twin-management/serialized-part-twin:
     get:
       tags:
         - Twin Management
       summary: Twin Management Get All Serialized Part Twins
       operationId: >-
-        twin_management_get_all_serialized_part_twins_twin_management_serialized_part_twin_get
+        twin_management_get_all_serialized_part_twins_v1_twin_management_serialized_part_twin_get
       parameters:
         - name: include_data_exchange_agreements
           in: query
@@ -1119,6 +1431,54 @@ paths:
             type: boolean
             default: false
             title: Include Data Exchange Agreements
+        - name: manufacturerId
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Manufacturerid
+        - name: manufacturerPartId
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Manufacturerpartid
+        - name: customerPartId
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Customerpartid
+        - name: partInstanceId
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Partinstanceid
+        - name: van
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Van
+        - name: businessPartnerNumber
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Businesspartnernumber
       responses:
         '200':
           description: Successful Response
@@ -1129,7 +1489,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/SerializedPartTwinRead'
                 title: >-
-                  Response Twin Management Get All Serialized Part Twins Twin
+                  Response Twin Management Get All Serialized Part Twins V1 Twin
                   Management Serialized Part Twin Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -1180,7 +1540,19 @@ paths:
         - Twin Management
       summary: Twin Management Create Serialized Part Twin
       operationId: >-
-        twin_management_create_serialized_part_twin_twin_management_serialized_part_twin_post
+        twin_management_create_serialized_part_twin_v1_twin_management_serialized_part_twin_post
+      parameters:
+        - name: autoCreatePartTypeInformation
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: >-
+              Automatically create part type information submodel if not
+              present.
+            default: true
+            title: Autocreateparttypeinformation
+          description: Automatically create part type information submodel if not present.
       requestBody:
         required: true
         content:
@@ -1238,13 +1610,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/twin-management/serialized-part-twin/{global_id}':
+  '/v1/twin-management/serialized-part-twin/{global_id}':
     get:
       tags:
         - Twin Management
       summary: Twin Management Get Serialized Part Twin
       operationId: >-
-        twin_management_get_serialized_part_twin_twin_management_serialized_part_twin__global_id__get
+        twin_management_get_serialized_part_twin_v1_twin_management_serialized_part_twin__global_id__get
       parameters:
         - name: global_id
           in: path
@@ -1263,7 +1635,7 @@ paths:
                   - $ref: '#/components/schemas/SerializedPartTwinDetailsRead'
                   - type: 'null'
                 title: >-
-                  Response Twin Management Get Serialized Part Twin Twin
+                  Response Twin Management Get Serialized Part Twin V1 Twin
                   Management Serialized Part Twin  Global Id  Get
         '400':
           description: Invalid input provided. Please check your request and try again.
@@ -1309,12 +1681,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /twin-management/twin-aspect:
+  /v1/twin-management/twin-aspect:
     post:
       tags:
         - Twin Management
       summary: Twin Management Create Twin Aspect
-      operationId: twin_management_create_twin_aspect_twin_management_twin_aspect_post
+      operationId: twin_management_create_twin_aspect_v1_twin_management_twin_aspect_post
       requestBody:
         content:
           application/json:
@@ -1372,13 +1744,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /twin-management/serialized-part-twin/share:
+  /v1/twin-management/serialized-part-twin/share:
     post:
       tags:
         - Twin Management
       summary: Twin Management Share Serialized Part Twin
       operationId: >-
-        twin_management_share_serialized_part_twin_twin_management_serialized_part_twin_share_post
+        twin_management_share_serialized_part_twin_v1_twin_management_serialized_part_twin_share_post
       requestBody:
         content:
           application/json:
@@ -1439,62 +1811,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/submodel-dispatcher/{semantic_id}/{global_id}':
-    get:
+  /v1/twin-management/serialized-part-twin/unshare:
+    post:
       tags:
-        - Submodel Dispatcher
-      summary: Submodel Dispatcher Get Submodel Content Submodel Value
+        - Twin Management
+      summary: Twin Management Unshare Serialized Part Twin
       operationId: >-
-        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__get
-      parameters:
-        - name: semantic_id
-          in: path
-          required: true
-          schema:
-            type: string
-            title: Semantic Id
-        - name: global_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            title: Global Id
-        - name: Edc-Bpn
-          in: header
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            description: The BPN of the consumer delivered by the EDC Data Plane
-            title: Edc-Bpn
-          description: The BPN of the consumer delivered by the EDC Data Plane
-        - name: Edc-Contract-Agreement-Id
-          in: header
-          required: false
-          schema:
-            anyOf:
-              - type: string
-              - type: 'null'
-            description: >-
-              The contract agreement id of the consumer delivered by the EDC
-              Data Plane
-            title: Edc-Contract-Agreement-Id
-          description: >-
-            The contract agreement id of the consumer delivered by the EDC Data
-            Plane
+        twin_management_unshare_serialized_part_twin_v1_twin_management_serialized_part_twin_unshare_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SerializedPartTwinUnshareCreate'
+        required: true
       responses:
         '200':
           description: Successful Response
           content:
             application/json:
-              schema:
-                type: object
-                additionalProperties: true
-                title: >-
-                  Response Submodel Dispatcher Get Submodel Content Submodel
-                  Value Submodel Dispatcher  Semantic Id   Global Id  Get
+              schema: {}
+        '201':
+          description: Catalog part twin unshared successfully
+        '204':
+          description: Catalog part twin already unshared
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -1539,13 +1878,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/submodel-dispatcher/{semantic_id}/{global_id}/submodel':
+  '/v1/submodel-dispatcher/{semantic_id}/{submodel_id}':
     get:
       tags:
         - Submodel Dispatcher
       summary: Submodel Dispatcher Get Submodel Content Submodel Value
       operationId: >-
-        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel_get
+        submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__get
       parameters:
         - name: semantic_id
           in: path
@@ -1553,13 +1892,13 @@ paths:
           schema:
             type: string
             title: Semantic Id
-        - name: global_id
+        - name: submodel_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-            title: Global Id
+            title: Submodel Id
         - name: Edc-Bpn
           in: header
           required: false
@@ -1594,8 +1933,108 @@ paths:
                 additionalProperties: true
                 title: >-
                   Response Submodel Dispatcher Get Submodel Content Submodel
-                  Value Submodel Dispatcher  Semantic Id   Global Id  Submodel
-                  Get
+                  Value V1 Submodel Dispatcher  Semantic Id   Submodel Id  Get
+        '400':
+          description: Invalid input provided. Please check your request and try again.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '403':
+          description: Access denied. You do not have permission to perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '404':
+          description: Catalog not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '409':
+          description: Catalog part already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '502':
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+        '503':
+          description: Service unavailable. Please try again later.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+  '/v1/submodel-dispatcher/{semantic_id}/{submodel_id}/submodel':
+    get:
+      tags:
+        - Submodel Dispatcher
+      summary: Submodel Dispatcher Get Submodel Content Submodel Value
+      operationId: >-
+        submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_get
+      parameters:
+        - name: semantic_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Semantic Id
+        - name: submodel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Submodel Id
+        - name: Edc-Bpn
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: The BPN of the consumer delivered by the EDC Data Plane
+            title: Edc-Bpn
+          description: The BPN of the consumer delivered by the EDC Data Plane
+        - name: Edc-Contract-Agreement-Id
+          in: header
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
+            title: Edc-Contract-Agreement-Id
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: >-
+                  Response Submodel Dispatcher Get Submodel Content Submodel
+                  Value V1 Submodel Dispatcher  Semantic Id   Submodel Id 
+                  Submodel Get
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -1645,7 +2084,7 @@ paths:
         - Submodel Dispatcher
       summary: Submodel Dispatcher Upload Submodel
       operationId: >-
-        submodel_dispatcher_upload_submodel_submodel_dispatcher__semantic_id___global_id__submodel_post
+        submodel_dispatcher_upload_submodel_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_post
       parameters:
         - name: semantic_id
           in: path
@@ -1653,13 +2092,13 @@ paths:
           schema:
             type: string
             title: Semantic Id
-        - name: global_id
+        - name: submodel_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-            title: Global Id
+            title: Submodel Id
       requestBody:
         required: true
         content:
@@ -1721,7 +2160,7 @@ paths:
         - Submodel Dispatcher
       summary: Submodel Dispatcher Delete Submodel
       operationId: >-
-        submodel_dispatcher_delete_submodel_submodel_dispatcher__semantic_id___global_id__submodel_delete
+        submodel_dispatcher_delete_submodel_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_delete
       parameters:
         - name: semantic_id
           in: path
@@ -1729,13 +2168,13 @@ paths:
           schema:
             type: string
             title: Semantic Id
-        - name: global_id
+        - name: submodel_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-            title: Global Id
+            title: Submodel Id
       responses:
         '204':
           description: Successful Response
@@ -1783,13 +2222,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  '/submodel-dispatcher/{semantic_id}/{global_id}/submodel/$value':
+  '/v1/submodel-dispatcher/{semantic_id}/{submodel_id}/submodel/$value':
     get:
       tags:
         - Submodel Dispatcher
       summary: Submodel Dispatcher Get Submodel Content Submodel Value
       operationId: >-
-        submodel_dispatcher_get_submodel_content_submodel_value_submodel_dispatcher__semantic_id___global_id__submodel__value_get
+        submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__submodel__value_get
       parameters:
         - name: semantic_id
           in: path
@@ -1797,13 +2236,13 @@ paths:
           schema:
             type: string
             title: Semantic Id
-        - name: global_id
+        - name: submodel_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-            title: Global Id
+            title: Submodel Id
         - name: Edc-Bpn
           in: header
           required: false
@@ -1838,8 +2277,8 @@ paths:
                 additionalProperties: true
                 title: >-
                   Response Submodel Dispatcher Get Submodel Content Submodel
-                  Value Submodel Dispatcher  Semantic Id   Global Id  Submodel 
-                  Value Get
+                  Value V1 Submodel Dispatcher  Semantic Id   Submodel Id 
+                  Submodel  Value Get
         '400':
           description: Invalid input provided. Please check your request and try again.
           content:
@@ -1884,12 +2323,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /share/catalog-part:
+  /v1/share/catalog-part:
     post:
       tags:
         - Sharing Functionality
       summary: Share Catalog Part
-      operationId: share_catalog_part_share_catalog_part_post
+      operationId: share_catalog_part_v1_share_catalog_part_post
       requestBody:
         content:
           application/json:
@@ -1947,12 +2386,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
-  /connection/data/get:
+  /v1/connection/data/get:
     post:
       tags:
         - Open Connection Management
       summary: Data Get
-      operationId: data_get_connection_data_get_post
+      operationId: data_get_v1_connection_data_get_post
       requestBody:
         content:
           application/json:
@@ -1971,17 +2410,347 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-  /connection/data/post:
+  /v1/connection/data/post:
     post:
       tags:
         - Open Connection Management
       summary: Data Post
-      operationId: data_post_connection_data_post_post
+      operationId: data_post_v1_connection_data_post_post
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/DoPostParams'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/registries:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Registries
+      operationId: discover_registries_v1_discover_registries_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverRegistriesRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/shells:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Shells
+      description: >-
+        Discover digital twin shells using query specifications.
+
+
+        This endpoint discovers available DTRs for the given BPN, negotiates
+        access,
+
+        and searches for shells matching the provided query specifications using
+
+        the /lookup/shellsByAssetLink API.
+
+
+        Args:
+            search_request: Request containing counter_party_id (BPN) and query_spec
+            
+        Returns:
+            Response containing discovered shells and metadata
+      operationId: discover_shells_v1_discover_shells_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverShellsRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/shell:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Shell
+      description: >-
+        Discover digital twin shells using query specifications.
+
+
+        This endpoint discovers available DTRs for the given BPN, negotiates
+        access,
+
+        and searches for shells matching the provided query specifications using
+
+        the /lookup/shellsByAssetLink API.
+
+
+        Args:
+            search_request: Request containing counter_party_id (BPN) and query_spec
+            
+        Returns:
+            Response containing discovered shells and metadata
+      operationId: discover_shell_v1_discover_shell_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverShellRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/shell/submodels:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Submodels
+      description: >-
+        Discover a digital twin shell by ID and retrieve its submodel data in
+        parallel.
+
+
+        This endpoint first discovers the shell using the provided ID, then
+        analyzes its submodels
+
+        to identify unique assets, pre-negotiates access to those assets in
+        parallel, and finally
+
+        fetches the actual submodel data using the negotiated tokens.
+
+
+        The process is optimized to avoid duplicate asset negotiations when
+        multiple submodels
+
+        share the same underlying asset.
+
+
+        Args:
+            search_request: Request containing:
+                - counter_party_id (BPN): The Business Partner Number
+                - id: The shell ID to discover
+                - semantic_id_policies: Mapping of semantic IDs to their acceptable policies
+            
+        Returns:
+            Response containing the shell descriptor with submodel data included
+            
+        Example semantic_id_policies:
+
+        {
+            "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation": [
+                {
+                    "odrl:permission": {
+                        "odrl:action": {
+                            "@id": "odrl:use"
+                        },
+                        "odrl:constraint": {
+                            "odrl:and": [
+                                {
+                                    "odrl:leftOperand": {
+                                        "@id": "cx-policy:FrameworkAgreement"
+                                    },
+                                    "odrl:operator": {
+                                        "@id": "odrl:eq"
+                                    },
+                                    "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                                },
+                                {
+                                    "odrl:leftOperand": {
+                                        "@id": "cx-policy:Membership"
+                                    },
+                                    "odrl:operator": {
+                                        "@id": "odrl:eq"
+                                    },
+                                    "odrl:rightOperand": "active"
+                                },
+                                {
+                                    "odrl:leftOperand": {
+                                        "@id": "cx-policy:UsagePurpose"
+                                    },
+                                    "odrl:operator": {
+                                        "@id": "odrl:eq"
+                                    },
+                                    "odrl:rightOperand": "cx.core.industrycore:1"
+                                }
+                            ]
+                        }
+                    },
+                    "odrl:prohibition": [],
+                    "odrl:obligation": []
+                }
+            ]
+        }
+      operationId: discover_submodels_v1_discover_shell_submodels_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverSubmodelsDataRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/shell/submodel:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Submodel
+      description: >-
+        Discover a specific submodel by exact submodel ID using direct API call
+        for optimal performance.
+
+
+        This endpoint uses the DTR API direct endpoint
+        /shell-descriptors/:base64aasid/submodel-descriptors/:base64submodelid
+
+        for fast, exact lookup of a specific submodel when you know the exact
+        submodel ID.
+
+
+        Args:
+            search_request: Request containing:
+                - counter_party_id (BPN): The Business Partner Number
+                - id: The shell ID to discover
+                - submodel_id: The exact submodel ID to retrieve (required)
+                - governance: List of policy dictionaries for the target submodel
+            
+        Returns:
+            Response containing single submodel descriptor and data
+            
+        Example governance structure:
+
+        [
+            {
+                "odrl:permission": {
+                    "odrl:action": {"@id": "odrl:use"},
+                    "odrl:constraint": {
+                        "odrl:and": [
+                            {
+                                "odrl:leftOperand": {"@id": "cx-policy:FrameworkAgreement"},
+                                "odrl:operator": {"@id": "odrl:eq"},
+                                "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                            }
+                        ]
+                    }
+                },
+                "odrl:prohibition": [],
+                "odrl:obligation": []
+            }
+        ]
+      operationId: discover_submodel_v1_discover_shell_submodel_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverSubmodelDataRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/discover/shell/submodels/semanticId:
+    post:
+      tags:
+        - Part Discovery Management
+      summary: Discover Submodels By Semantic Id
+      description: >-
+        Discover submodels by semantic IDs. Searches through all submodels to
+        find matches.
+
+
+        This endpoint discovers the shell and searches through all submodels to
+        find those
+
+        that match the provided semantic IDs (requiring all to match). May
+        return multiple results.
+
+
+        Args:
+            search_request: Request containing:
+                - counter_party_id (BPN): The Business Partner Number
+                - id: The shell ID to discover
+                - semantic_ids: List of semantic ID objects to search for
+                - semantic_id: Single semantic ID (converted to semantic_ids format)
+                - governance: List of policy dictionaries for target submodels
+            
+        Returns:
+            Response containing multiple submodel descriptors and data
+            
+        Example semantic_id format:
+
+        "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+
+
+        Example semantic_ids format:
+
+        [
+            {"type": "GlobalReference", "value": "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"},
+            {"type": "DataElement", "value": "urn:samm:io.catenax.another_aspect:1.0.0#AnotherAspect"}
+        ]
+      operationId: >-
+        discover_submodels_by_semantic_id_v1_discover_shell_submodels_semanticId_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverSubmodelSemanticIdDataRequest'
         required: true
       responses:
         '200':
@@ -2082,7 +2851,9 @@ components:
               type: array
             - type: 'null'
           title: Materials
-          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
           default: []
         width:
           anyOf:
@@ -2162,7 +2933,9 @@ components:
               type: array
             - type: 'null'
           title: Materials
-          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
           default: []
         width:
           anyOf:
@@ -2260,6 +3033,15 @@ components:
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
             the Digital Twin Registry. If not specified, a new UUID will be
             created automatically.
+        idShort:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Idshort
+          description: >-
+            Optionally the idShort of the digital twin in the Digital Twin
+            Registry. If not specified, a default value 'Twin-{globalId}' will
+            be used.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -2374,7 +3156,9 @@ components:
               type: array
             - type: 'null'
           title: Materials
-          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
           default: []
         width:
           anyOf:
@@ -2489,7 +3273,9 @@ components:
               type: array
             - type: 'null'
           title: Materials
-          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
           default: []
         width:
           anyOf:
@@ -2555,6 +3341,86 @@ components:
         - manufacturerId
         - manufacturerPartId
       title: CatalogPartTwinShareCreate
+    CatalogPartUpdate:
+      properties:
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        name:
+          type: string
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is attached to.
+        description:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Description
+          description: The decription of the part.
+        materials:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/Material'
+              type: array
+            - type: 'null'
+          title: Materials
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
+          default: []
+        width:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The width of the part.
+        height:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The height of the part.
+        length:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The length of the part.
+        weight:
+          anyOf:
+            - $ref: '#/components/schemas/Measurement'
+            - type: 'null'
+          description: The weight of the part.
+        customerPartIds:
+          anyOf:
+            - additionalProperties:
+                $ref: '#/components/schemas/BusinessPartnerRead'
+              type: object
+            - type: 'null'
+          title: Customerpartids
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
+          default: {}
+      type: object
+      required:
+        - manufacturerId
+        - manufacturerPartId
+        - name
+      title: CatalogPartUpdate
     DataExchangeAgreementRead:
       properties:
         businessPartner:
@@ -2599,6 +3465,207 @@ components:
       description: >-
         Represents document type specific contract terms belonging to a data
         exchange agreement.
+    DiscoverRegistriesRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+      type: object
+      required:
+        - counterPartyId
+      title: DiscoverRegistriesRequest
+    DiscoverShellRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+        id:
+          type: string
+          title: Id
+          description: The ID of the AAS.
+        dtrGovernance:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrgovernance
+          description: >-
+            DTR policies to use for connection negotiation. If not provided,
+            will use cached policies for automatic contract negotiation.
+      type: object
+      required:
+        - counterPartyId
+        - id
+      title: DiscoverShellRequest
+    DiscoverShellsRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+        limit:
+          anyOf:
+            - type: integer
+            - type: 'null'
+          title: Limit
+          description: Maximum number of shells to return per page.
+        cursor:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Cursor
+          description: Cursor for pagination.
+        querySpec:
+          items:
+            $ref: '#/components/schemas/QuerySpec'
+          type: array
+          title: Queryspec
+          description: The query specifications for discovering shells.
+        dtrGovernance:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrgovernance
+          description: >-
+            DTR policies to use for connection negotiation. If not provided,
+            will use cached policies for automatic contract negotiation.
+      type: object
+      required:
+        - counterPartyId
+        - querySpec
+      title: DiscoverShellsRequest
+    DiscoverSubmodelDataRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+        id:
+          type: string
+          title: Id
+          description: The ID of the AAS.
+        dtrGovernance:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrgovernance
+          description: >-
+            DTR policies to use for connection negotiation. If not provided,
+            will use cached policies for automatic contract negotiation.
+        submodelId:
+          type: string
+          title: Submodelid
+          description: The ID of the submodel.
+        governance:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Governance
+          description: Policies to be accepted for this semantic ID.
+      type: object
+      required:
+        - counterPartyId
+        - id
+      title: DiscoverSubmodelDataRequest
+    DiscoverSubmodelSemanticIdDataRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+        id:
+          type: string
+          title: Id
+          description: The ID of the AAS.
+        dtrGovernance:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrgovernance
+          description: >-
+            DTR policies to use for connection negotiation. If not provided,
+            will use cached policies for automatic contract negotiation.
+        semanticIds:
+          anyOf:
+            - items:
+                additionalProperties:
+                  type: string
+                type: object
+              type: array
+            - type: 'null'
+          title: Semanticids
+          description: The semantic IDs of the submodel.
+        semanticId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Semanticid
+          description: The semantic ID of the submodel.
+        governance:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Governance
+          description: Policies to be accepted for this semantic ID.
+      type: object
+      required:
+        - counterPartyId
+        - id
+      title: DiscoverSubmodelSemanticIdDataRequest
+    DiscoverSubmodelsDataRequest:
+      properties:
+        counterPartyId:
+          type: string
+          title: Counterpartyid
+          description: The counter party ID of the part.
+        id:
+          type: string
+          title: Id
+          description: The ID of the AAS.
+        dtrGovernance:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrgovernance
+          description: >-
+            DTR policies to use for connection negotiation. If not provided,
+            will use cached policies for automatic contract negotiation.
+        governance:
+          anyOf:
+            - additionalProperties:
+                items:
+                  additionalProperties: true
+                  type: object
+                type: array
+              type: object
+            - type: 'null'
+          title: Governance
+          description: >-
+            Mapping of semantic IDs to their acceptable policies for submodel
+            data retrieval.
+      type: object
+      required:
+        - counterPartyId
+        - id
+      title: DiscoverSubmodelsDataRequest
     DoGetParams:
       properties:
         counter_party_id:
@@ -2742,7 +3809,7 @@ components:
           title: Name
           description: Name of the material
         share:
-          type: integer
+          type: number
           title: Share
           description: Share of the material in percent. 0-100
       type: object
@@ -2834,6 +3901,21 @@ components:
         - name
         - businessPartner
       title: PartnerCatalogPartRead
+    QuerySpec:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: The name of the query specification.
+        value:
+          type: string
+          title: Value
+          description: The value of the query specification.
+      type: object
+      required:
+        - name
+        - value
+      title: QuerySpec
     SerializedPartCreate:
       properties:
         businessPartnerNumber:
@@ -2864,6 +3946,24 @@ components:
             - type: 'null'
           title: Customerpartid
           description: The customer part ID of the part.
+        name:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is produced
       type: object
       required:
         - businessPartnerNumber
@@ -2986,6 +4086,15 @@ components:
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
             the Digital Twin Registry. If not specified, a new UUID will be
             created automatically.
+        idShort:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Idshort
+          description: >-
+            Optionally the idShort of the digital twin in the Digital Twin
+            Registry. If not specified, a default value 'Twin-{globalId}' will
+            be used.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -3118,7 +4227,9 @@ components:
               type: array
             - type: 'null'
           title: Materials
-          description: 'List of materials, e.g. [{''name'':''aluminum'',''share'':''20''}]'
+          description: >-
+            List of materials, e.g. [{'name':'aluminum','share':20.5},
+            {'name':'steel','share':75.25}]
           default: []
         width:
           anyOf:
@@ -3282,6 +4393,97 @@ components:
         - manufacturerPartId
         - partInstanceId
       title: SerializedPartTwinShareCreate
+    SerializedPartTwinUnshareCreate:
+      properties:
+        aasId:
+          type: string
+          format: uuid
+          title: Aasid
+          description: The AAS ID of the serialized part twin to unshare.
+        businessPartnerNumberToUnshare:
+          items:
+            type: string
+          type: array
+          title: Businesspartnernumbertounshare
+          description: >-
+            The business partner number of the business partner with which the
+            serialized part twin should be unshared.
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The manufacturer ID of the serialized part twin to unshare.
+        assetIdNamesFilter:
+          anyOf:
+            - items:
+                type: string
+              type: array
+            - type: 'null'
+          title: Assetidnamesfilter
+          description: >-
+            An optional list of asset ID names to filter the serialized part
+            twin unshare operation. If provided, only asset IDs with names in
+            this list will be considered for unsharing.
+      type: object
+      required:
+        - aasId
+        - businessPartnerNumberToUnshare
+        - manufacturerId
+      title: SerializedPartTwinUnshareCreate
+    SerializedPartUpdate:
+      properties:
+        businessPartnerNumber:
+          type: string
+          title: Businesspartnernumber
+          description: The unique BPNL of the business partner.
+        manufacturerId:
+          type: string
+          title: Manufacturerid
+          description: The BPNL (manufactuer ID) of the part to register.
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+          description: The manufacturer part ID of the part.
+        partInstanceId:
+          type: string
+          title: Partinstanceid
+          description: The part instance ID of the serialized part.
+        van:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Van
+          description: The optional VAN (Vehicle Assembly Number) of the serialized part.
+        customerPartId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Customerpartid
+          description: The customer part ID of the part.
+        name:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Name
+          description: The name of the part.
+        category:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Category
+          description: The category of the part.
+        bpns:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Bpns
+          description: The site number (BPNS) the part is produced
+      type: object
+      required:
+        - businessPartnerNumber
+        - manufacturerId
+        - manufacturerPartId
+        - partInstanceId
+      title: SerializedPartUpdate
     ShareCatalogPart:
       properties:
         manufacturerId:
@@ -3579,3 +4781,7 @@ tags:
     description: >-
       Handles the connections from the consumer modules, for specific services
       like digital twin registry and data endpoints
+  - name: Part Discovery Management
+    description: >-
+      Management of the discovery of parts, searching for digital twins and
+      digital twins registries

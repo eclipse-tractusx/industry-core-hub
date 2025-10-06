@@ -52,7 +52,7 @@ class Measurement(SQLModel, table=False):
 
 class Material(BaseModel):
     name: str = PydField(description="Name of the material")
-    share: int = PydField(description="Share of the material in percent. 0-100")
+    share: float = PydField(description="Share of the material in percent. 0-100")
 
 class LegalEntity(SQLModel, table=True):
     """
@@ -173,9 +173,8 @@ class CatalogPart(SQLModel, table=True):
         id (Optional[int]): The unique identifier for the catalog part.
         manufacturer_part_id (str): The manufacturer part ID. 
         legal_entity_id (int): The ID of the associated legal entity. 
-        twin_id (Optional[int]): The ID of the associated twin. 
-        category (Optional[str]): The category of the catalog part.
-        bpns (Optional[str]): The optional site information (BPNS) of the catalog part. It is a link to a 'site information' of a business partner (s at the end).
+        twin_id (Optional[int]): The ID of the associated twin.
+        extra_metadata(Dict[str, Any]): Column holding extra metadata (not necessary for twin generation) about a catalog part (e.g. description, category, BPNS)
 
     Relationships:
         legal_entity (LegalEntity): The legal entity that offers this catalog part.
@@ -224,6 +223,9 @@ class CatalogPart(SQLModel, table=True):
             if partner_catalog_part.business_partner.bpnl == bpnl:
                 return partner_catalog_part
         return None
+    
+    def get_metadata(self, key: str) -> Any:
+        return self.extra_metadata.get(key) if self.extra_metadata else None
 
 
 class PartnerCatalogPart(SQLModel, table=True):
@@ -631,6 +633,7 @@ class TwinExchange(SQLModel, table=True):
     Attributes:
         twin_id (int): The ID of the associated twin (foreign key to twin).
         data_exchange_agreement_id (int): The ID of the associated data exchange agreement (foreign key).
+        is_cancelled (bool): Whether the twin exchange is cancelled. This is set to true when the data exchange agreement is cancelled.
 
     Relationships:
         twin (Twin): The twin involved in the exchange.
@@ -643,6 +646,7 @@ class TwinExchange(SQLModel, table=True):
     """
     twin_id: int = Field(foreign_key="twin.id", primary_key=True, description=TWIN_ID_DESCRIPTION)
     data_exchange_agreement_id: int = Field(index=True, foreign_key="data_exchange_agreement.id", primary_key=True, description="The ID of the associated data exchange agreement.")
+    is_cancelled: bool = Field(index=True, default=False, description="Whether the twin exchange is cancelled. This is set to true when the data exchange agreement is cancelled.")
 
     # Relationships
     twin: Twin = Relationship(back_populates="twin_exchanges")

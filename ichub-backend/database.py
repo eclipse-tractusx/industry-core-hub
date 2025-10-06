@@ -26,20 +26,24 @@ from sqlmodel import SQLModel, create_engine, text
 from tools import env_tools
 
 base_dsn = ConfigManager.get_config("database.connectionString", default={})
-
+logger = LoggingManager.get_logger(__name__)
 # Substitute the environment variables in the connection string if available
-connection_string = env_tools.substitute_env_vars(string=base_dsn) 
+connection_string = env_tools.substitute_env_vars(string=base_dsn)
 
 db_echo = ConfigManager.get_config("database.echo", default={False})
+db_timeout = ConfigManager.get_config("database.timeout", default=8)
 
-engine = create_engine(str(connection_string), echo=db_echo)
+logger.info("Attempting database connection... with timeout %s seconds", db_timeout)
+engine = create_engine(str(connection_string), echo=db_echo, connect_args={"connect_timeout": db_timeout})
 
-logger = LoggingManager.get_logger(__name__)
+
+database_error:bool = False
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
 def connect_and_test():
+    global database_error, db_timeout
     try:
         with engine.connect() as conn:
             # run a lightweight test query
@@ -47,4 +51,5 @@ def connect_and_test():
         logger.info("Database connection established successfully.")
     except Exception as e:
         logger.critical(f"Failed to establish database connection: {e}")
+        database_error = True
         raise

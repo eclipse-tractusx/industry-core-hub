@@ -1,0 +1,202 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Industry Core Hub Frontend
+ *
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+********************************************************************************/
+
+@use "../../config/variables" as *;
+@use '../../config/mixins';
+
+.catalog-parts-cards-list {
+    display: flex;
+    --ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    .catalog-parts-card-box {
+        padding-right: 8px;
+        padding-left: 8px;
+        margin-bottom: 16px!important;
+        border-radius: 5px;
+        color: $brand-text;
+        width: 360px !important; // Force width change
+        min-width: 360px !important;
+
+        .catalog-parts-card {
+            display: flex;
+            flex-direction: column;
+            width: auto;
+            height: 340px !important; // Increased height for ID Short visibility
+            min-height: 340px !important;
+            justify-content: space-between;
+            cursor: pointer;
+            background: $brand-dark !important;
+            @include mixins.space-shadow($brand-blue);
+            @include mixins.rounded-bordered;
+            position: relative;
+            overflow: hidden;
+
+            &:hover {
+                border: 2px solid rgba($brand-light-blue, 0.85) !important;
+            }
+
+            .catalog-parts-card-header {
+                padding: 12px 14px 4px 14px;
+                margin-bottom: 0px;
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                align-items: center;
+                flex-shrink: 0;
+                min-height: 42px;
+                gap: 8px; // Add gap between left and right sections
+
+                // Left section with chip and shell ID
+                > div:first-child {
+                    flex: 1;
+                    min-width: 0; // Allow shrinking
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    
+                    // Ensure no wrapping
+                    flex-wrap: nowrap;
+                }
+
+                .catalog-parts-card-header-buttons {
+                    display: flex;
+                    justify-self: right;
+                    flex-shrink: 0; // Prevent buttons from shrinking
+
+                    button {
+                        padding: 0px;
+                        margin: 0px 5px;
+                        border-radius: 8px;
+
+                        &:hover {
+                            opacity: 0.5;
+                            background-color: transparent;
+                        }
+
+                        svg {
+                            font-size: 20px;
+                        }
+                    }
+                }
+            }
+
+            .catalog-parts-card-content {
+                padding: 12px 16px;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                overflow: hidden;
+                min-height: 0;
+
+                h5 {
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                    font-weight: bold;
+                    font-size: 17px;
+                    color: $brand-text;
+                    margin-bottom: 14px;
+                    line-height: 1.3;
+                    word-wrap: break-word;
+                    hyphens: auto;
+                }
+
+                span {
+                    color: $brand-text;
+                }
+
+                // Modern label styles
+                .info-label {
+                    font-size: 0.65rem;
+                    color: rgba(255, 255, 255, 0.45);
+                    font-weight: 500;
+                    text-transform: uppercase;
+                    letter-spacing: 0.8px;
+                    margin-bottom: 3px;
+                    display: block;
+                    line-height: 1.2;
+                }
+
+                // ID section styling with improved spacing
+                .id-section {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px; // Increased gap for better separation
+                    margin-bottom: 16px;
+                    flex: 1; // Take available space
+                    
+                    // Each identifier container
+                    > div {
+                        min-height: 36px;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: flex-start;
+                    }
+                }
+
+                // Typography improvements
+                .MuiTypography-caption {
+                    line-height: 1.3;
+                    word-break: break-word;
+                    overflow-wrap: break-word;
+                    hyphens: auto;
+                }
+            }
+
+            .catalog-parts-card-button-box {
+                width: 100%;
+                margin-top: auto;
+                flex-shrink: 0;
+                min-height: 48px;
+
+                button {
+                    border-radius: 8px;
+                    border-top-left-radius: 0px;
+                    border-top-right-radius: 0px;
+                    background: $brand-dark-gray;
+                    width: 100%;
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 13px;
+                    font-weight: 600;
+
+                    &:hover {
+                        background: $blue-gradient-bg;
+                    }
+                }
+            }
+        }
+
+        .MuiChip-icon {
+            color: $brand-dark !important;
+        }
+        
+    }
+}

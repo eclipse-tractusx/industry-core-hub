@@ -22,7 +22,7 @@
 
 
 import Grid2 from '@mui/material/Grid2';
-import { PageNotifications } from '@catena-x/portal-shared-components';
+import { Alert } from '@mui/material';
 
 interface PageNotificationProps {
   notification: { open: boolean; severity: "success" | "error"; title: string } | null;
@@ -32,7 +32,9 @@ const PageNotification = ({ notification }: PageNotificationProps) => {
   return (
     notification && (
       <Grid2 size={{xs: 12}}>
-        <PageNotifications open severity={notification.severity} showIcon title={notification.title} />
+        <Alert severity={notification.severity}>
+          {notification.title}
+        </Alert>
       </Grid2>
     )
   );

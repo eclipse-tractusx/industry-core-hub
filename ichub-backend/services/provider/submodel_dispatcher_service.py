@@ -39,7 +39,7 @@ class SubmodelDispatcherService:
 
     def get_submodel_content(self, edc_bpn: Optional[str],
                              edc_contract_agreement_id: Optional[str], semantic_id: str,
-                             global_id: UUID) -> Dict[str, Any]:
+                             submodel_id: UUID) -> Dict[str, Any]:
         """
         Dispatch a submodel to the appropriate service or endpoint.
         """
@@ -65,9 +65,9 @@ class SubmodelDispatcherService:
 
             # Call the submodel service manager to get the submodel content from the submodel service
         return self.submodel_service_manager.get_twin_aspect_document(
-            global_id, semantic_id)
+            submodel_id, semantic_id)
 
-    def upload_submodel(self, global_id: UUID, semantic_id: str, submodel_payload: Dict[str, Any]) -> None:
+    def upload_submodel(self, submodel_id: UUID, semantic_id: str, submodel_payload: Dict[str, Any]) -> None:
         """
         Uploads a submodel to the appropriate submodel service.
 
@@ -80,16 +80,15 @@ class SubmodelDispatcherService:
             SubmodelNotSharedWithBusinessPartnerError: If the twin is not shared with the given business partner.
         """
         get_submodel_type(semantic_id)  # Validate the semantic ID
+        self.submodel_service_manager.upload_twin_aspect_document(submodel_id, semantic_id, submodel_payload)
 
-        self.submodel_service_manager.upload_twin_aspect_document(global_id, semantic_id, submodel_payload)
-
-    def delete_submodel(self, global_id: UUID, semantic_id: str) -> None:
+    def delete_submodel(self, submodel_id: UUID, semantic_id: str) -> None:
         """
         Deletes a submodel from the submodel service.
 
         Args:
-            global_id (UUID): The global asset ID.
+            submodel_id (UUID): The submodel ID.
             semantic_id (str): The semantic identifier for the submodel.
         """
         get_submodel_type(semantic_id)  # Validate the semantic ID
-        self.submodel_service_manager.delete_twin_aspect_document(global_id, semantic_id)
+        self.submodel_service_manager.delete_twin_aspect_document(submodel_id, semantic_id)

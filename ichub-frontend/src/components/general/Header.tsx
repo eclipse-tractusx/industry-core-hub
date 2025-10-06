@@ -34,11 +34,13 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import { Divider, ListItemIcon, Typography } from '@mui/material';
 import { Logout, Settings } from '@mui/icons-material';
+import { getParticipantId } from '../../services/EnvironmentService';
 
 export default function PrimarySearchAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [participantId, setParticipantId] = useState<string>('CX-Operator');
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -69,6 +71,22 @@ export default function PrimarySearchAppBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const fetchParticipantId = async () => {
+      try {
+        const id = await getParticipantId();
+        if (id) {
+          setParticipantId(id);
+        }
+      } catch (error) {
+        console.warn('Could not fetch participant ID:', error);
+        // Keep default value "CX-Operator"
+      }
+    };
+
+    fetchParticipantId();
+  }, []);
+
   const menuId = 'primary-search-account-menu';
   const renderMenu = (
     <Menu
@@ -81,7 +99,7 @@ export default function PrimarySearchAppBar() {
             Mathias Brunkow Moser
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ padding: '0 16px 8px', fontStyle: 'italic' }}>
-        CX-Operator
+        {participantId}
         </Typography>
         <Divider />
 
