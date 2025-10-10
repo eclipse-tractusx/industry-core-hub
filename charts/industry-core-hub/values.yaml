@@ -385,7 +385,7 @@ frontend:
     version: "1.0.0"
 
     # API and backend configuration
-    ichubBackendUrl: "https://<backend-hostname>"
+    ichubBackendUrl: "https://<backend-hostname>/v1"
     apiTimeout: 30000
     apiRetryAttempts: 3
     requireHttpsUrlPattern: false
