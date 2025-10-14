@@ -1,0 +1,787 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub - Local Umbrella Values
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+# Global configuration
+global:
+  domain: localho.st
+
+# Shared PostgreSQL instance for ICHub databases
+postgresql:
+  enabled: true
+  nameOverride: "shared-ichub-db"
+  auth:
+    postgresPassword: "admin"
+    password: "admin"
+    database: "postgres"  # Default database
+    username: "postgres"
+  primary:
+    initdb:
+      scripts:
+        01-create-databases.sql: |
+          -- Create databases for ICHub instances
+          CREATE DATABASE ichub_manufacturer;
+          CREATE DATABASE ichub_supplier;
+          
+          -- Create users for each ICHub instance
+          CREATE USER ichub_manufacturer WITH PASSWORD 'admin';
+          CREATE USER ichub_supplier WITH PASSWORD 'admin';
+          
+          -- Grant privileges
+          GRANT ALL PRIVILEGES ON DATABASE ichub_manufacturer TO ichub_manufacturer;
+          GRANT ALL PRIVILEGES ON DATABASE ichub_supplier TO ichub_supplier;
+          
+          -- Also grant to postgres user for admin access
+          GRANT ALL PRIVILEGES ON DATABASE ichub_manufacturer TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE ichub_supplier TO postgres;
+
+# Umbrella chart configuration - adapted from minimal-values.yaml
+# Let umbrella components install in their preferred "umbrella" namespace
+umbrella:
+  enabled: true
+  
+  # Portal configuration
+  portal:
+    enabled: true
+    backend:
+      portalmigrations:
+        seeding:
+          seedTestData:
+            enabled: true
+            useOwnConfigMap:
+              configMap: "portal-testdata"
+              filename: "test"
+              companies:
+                # BPN is retrieved from participant id of the tx-data-provider
+                tx-data-provider:
+                  name: "BPN_SUPPLIER"
+                  connectorUrl: "http://supplier-connector-controlplane.tx.test/api/v1/dsp"
+                  connectorName: "BPN SUPPLIER Connector"
+                # BPN is retrieved from participant id of the dataconsumerOne
+                dataconsumerOne:
+                  name: "BPN_MANUFACTURER"
+                  connectorUrl: "http://manufacturer-connector-controlplane.tx.test/api/v1/dsp"
+                  connectorName: "BPN MANUFACTURER Connector"
+
+  # Central IDP configuration
+  centralidp:
+    realmSeeding:
+      extraServiceAccounts:
+        clientSecretsAndBpn:
+          - clientId: satest01
+            clientSecret: UbfW4CR1xH4OskkovqJ2JzcwnQIrG7oj
+            bpn: BPNL00000003CRHK
+          - clientId: satest02
+            clientSecret: pyFUZP2L9UCSVJUScHcN3ZEgy2PGyEpg
+            bpn: BPNL0000000093Q7
+
+  # Replace by ssi-dim-wallet-stub
+  bdrs-server-memory:
+    enabled: false
+
+
+  # Data Consumer One (Manufacturer) - with ICHub
+  dataconsumerOne:
+    enabled: true
+    tractusx-connector:
+      participant:
+        id: BPNL00000003CRHK
+      iatp:
+        id: did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+        trustedIssuers:
+          - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+        sts:
+          oauth:
+            client:
+              id: BPNL00000003CRHK
+      controlplane:
+        endpoints:
+          management:
+            authKey: TEST1
+        ingresses:
+          - enabled: true
+            hostname: "manufacturer-connector-controlplane.tx.test"
+            endpoints:
+              - default
+              - protocol
+              - management
+            className: "nginx"
+            tls:
+              enabled: false
+      dataplane:
+        ingresses:
+          - enabled: true
+            hostname: "manufacturer-connector-dataplane.tx.test"
+            endpoints:
+              - default
+              - public
+            className: "nginx"
+            tls:
+              enabled: false
+    digital-twin-registry:
+      nameOverride: manufacturer-dtr
+      postgresql:
+        nameOverride: manufacturer-dtr-db
+        auth:
+          password: "dbpassworddtrmanufacturer"
+          existingSecret: manufacturer-secret-dtr-postgres-init
+      registry:
+        host: manufacturer-dtr.tx.test
+
+  # Data Provider (Supplier) - with ICHub
+  tx-data-provider:
+    enabled: true
+    seedTestdata: false
+    tractusx-connector:
+      participant:
+        id: BPNL0000000093Q7
+      iatp:
+        id: did:web:ssi-dim-wallet-stub.tx.test:BPNL0000000093Q7
+        trustedIssuers:
+          - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+        sts:
+          dim:
+            url: http://ssi-dim-wallet-stub.tx.test/api/sts
+          oauth:
+            token_url: http://ssi-dim-wallet-stub.tx.test/oauth/token
+            client:
+              id: BPNL0000000093Q7
+      controlplane:
+        bdrs:
+          server:
+            url: http://ssi-dim-wallet-stub.tx.test/api/v1/directory
+        endpoints:
+          management:
+            authKey: TEST2
+        ingresses:
+          - enabled: true
+            hostname: "supplier-connector-controlplane.tx.test"
+            endpoints:
+              - default
+              - protocol
+              - management
+            className: "nginx"
+            tls:
+              enabled: false
+      dataplane:
+        ingresses:
+          - enabled: true
+            hostname: "supplier-connector-dataplane.tx.test"
+            endpoints:
+              - default
+              - public
+            className: "nginx"
+            tls:
+              enabled: false
+
+    digital-twin-registry:
+      registry:
+        host: supplier-dtr.tx.test
+
+  # Data Consumer Two (disabled for minimal setup)
+  dataconsumerTwo:
+    enabled: false
+
+  # Discovery Finder
+  discoveryfinder:
+    enabled: true
+    discoveryfinder:
+      authentication: true
+      host: semantics.tx.test
+
+  # PGAdmin for database management
+  pgadmin4:
+    enabled: true
+
+  # SSI Components
+  ssi-credential-issuer:
+    enabled: false
+
+  ssi-dim-wallet-stub:
+    enabled: true
+    seeding:
+      bpnList: "BPNL0000000093Q7,BPNL00000003CRHK"
+
+# First Industry Core Hub instance - Manufacturer
+industry-core-hub-manufacturer:
+  enabled: true
+  nameOverride: "ichub-manufacturer"
+  
+  # Participant configuration
+  participantId: "BPNL00000003CRHK"
+  
+  # Backend configuration with local image
+  backend:
+    enabled: true
+    name: "ichub-manufacturer-backend"
+    image:
+      repository: "industry-core-hub-backend"
+      tag: "local"
+      pullPolicy: Never
+    
+    service:
+      type: NodePort
+      portService: 8000
+      portContainer: 8000
+    
+    cors:
+      enabled: true
+      allow_origins:
+        - "http://backend-ichub-manufacturer.tx.test"
+        - "http://frontend-ichub-manufacturer.tx.test"
+      allow_credentials: true
+      allow_methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "OPTIONS"
+        - "PATCH"
+      allow_headers:
+        - "*"
+    ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+      #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+      #   nginx.ingress.kubernetes.io/use-regex: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
+      #   # -- Provide CORS allowed origin.
+       nginx.ingress.kubernetes.io/cors-allow-origin: "http://frontend-ichub-manufacturer.tx.test, *"
+       nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+      # -- Ingress TLS configuration
+      hosts:
+      - host: "backend-ichub-manufacturer.tx.test"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "backend"
+              port: 8000
+    configuration:
+      authorization:
+        enabled: false  # Simplified for local development
+      database:
+        echo: false
+      consumer:
+        discovery:
+          discovery_finder:
+            host: "http://discovery-finder:8080/api/v1.0/administration/connectors/discovery/search"
+          oauth:
+            token_url: "http://centralidp.tx.test/auth/"
+            realm: "CX-Central"
+            client_id: "sa-cl1-reg-2"
+            client_secret: "changeme"
+        connector:
+          controlplane:
+            hostname: "http://manufacturer-connector-controlplane.tx.test"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "TEST1"
+      provider:
+        connector: 
+          dataspace:
+            version: "jupiter"
+          controlplane:
+            hostname: "http://manufacturer-connector-controlplane.tx.test"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "TEST1"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+          dataplane:
+            hostname: "http://manufacturer-connector-dataplane.tx.test"
+            publicPath: "/api/public"
+        digitalTwinRegistry:
+          hostname: "http://manufacturer-dtr.tx.test"
+          apiPath: "/api/v3"
+          uri: ""
+          asset_config:
+            dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+            # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          lookup:
+            uri: ""
+          policy:
+            usage:
+              context:
+                odrl: http://www.w3.org/ns/odrl/2/
+                cx-policy: https://w3id.org/catenax/policy/
+              permission:
+                - action: odrl:use
+                  LogicalConstraint: odrl:and
+                  constraints:
+                    - leftOperand: cx-policy:FrameworkAgreement
+                      operator: odrl:eq
+                      rightOperand: DataExchangeGovernance:1.0
+                    - leftOperand: cx-policy:Membership
+                      operator: odrl:eq
+                      rightOperand: active
+                    - leftOperand: cx-policy:UsagePurpose
+                      operator: odrl:eq
+                      rightOperand: cx.core.digitalTwinRegistry:1
+              prohibition: []
+              obligation: []
+            access:
+              context:
+                odrl: http://www.w3.org/ns/odrl/2/
+                cx-policy: https://w3id.org/catenax/policy/
+              permission:
+                - action: odrl:use
+                  constraints:
+                    - leftOperand: cx-policy:Membership
+                      operator: odrl:eq
+                      rightOperand: active
+              prohibition: []
+              obligation: []
+
+  # Use shared PostgreSQL instance - disabled locally
+  postgresql:
+    enabled: false
+  
+  # Configure external database connection to shared PostgreSQL
+  externalDatabase:
+    host: "umbrella-shared-ichub-db"
+    port: 5432
+    database: "ichub_manufacturer"
+    ichubUser: "ichub_manufacturer" 
+    password: "admin"
+    existingSecret: "ichub-manufacturer-external-db-secret"
+
+  # Frontend configuration with local image
+  frontend:
+    enabled: true
+    name: "ichub-manufacturer-frontend"
+    image:
+      repository: "industry-core-hub-frontend"
+      tag: "local"
+      pullPolicy: Never
+    
+    service:
+      type: NodePort
+      portService: 8080
+      portContainer: 8080
+    ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+       nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+       nginx.ingress.kubernetes.io/use-regex: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
+      hosts:
+        - host: "frontend-ichub-manufacturer.tx.test"
+          paths:
+            - path: /(.*)
+              pathType: ImplementationSpecific
+              backend:
+                service: "frontend"
+                port: 8080
+    config:
+      environment: "local"
+      ichubBackendUrl: "http://backend-ichub-manufacturer.tx.test/v1"
+      authEnabled: false
+      
+    consumer:
+      digitalTwinRegistry:
+        policies:
+          - permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+            strict: false
+          - permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+      governance:
+        - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+          policies: 
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+            - strict: true #-- Disable here the permutations of constraints (order matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+              prohibition: []
+              obligation: []
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+        - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+          policies: 
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+            - strict: true #-- Disable here the permutations of constraints (order matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+              prohibition: []
+              obligation: []
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+
+# Second Industry Core Hub instance - Supplier
+industry-core-hub-supplier:
+  enabled: true
+  nameOverride: "ichub-supplier"
+  
+  # Participant configuration
+  participantId: "BPNL0000000093Q7"
+  
+  # Backend configuration with local image
+  backend:
+    enabled: true
+    name: "ichub-supplier-backend"
+    image:
+      repository: "industry-core-hub-backend"
+      tag: "local"
+      pullPolicy: Never
+    
+    service:
+      type: NodePort
+      portService: 8000
+      portContainer: 8000
+    
+    # Use dedicated PostgreSQL
+    cors:
+      enabled: true
+      allow_origins:
+        - "http://backend-ichub-supplier.tx.test"
+        - "http://frontend-ichub-supplier.tx.test"
+      allow_credentials: true
+      allow_methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "OPTIONS"
+        - "PATCH"
+      allow_headers:
+        - "*"
+    ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+      #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+      #   nginx.ingress.kubernetes.io/use-regex: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
+      #   # -- Provide CORS allowed origin.
+       nginx.ingress.kubernetes.io/cors-allow-origin: "http://frontend-ichub-supplier.tx.test, *"
+       nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+      # -- Ingress TLS configuration
+      hosts:
+      - host: "backend-ichub-supplier.tx.test"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "backend"
+              port: 8000
+    configuration:
+      authorization:
+        enabled: false  # Simplified for local development
+      database:
+        echo: false
+      consumer:
+        discovery:
+          discovery_finder:
+            host: "http://discovery-finder:8080/api/v1.0/administration/connectors/discovery/search"
+          oauth:
+            token_url: "http://centralidp.tx.test/auth/"
+            realm: "CX-Central"
+            client_id: "sa-cl1-reg-2"
+            client_secret: "changeme"
+        connector:
+          controlplane:
+            hostname: "http://supplier-connector-controlplane.tx.test"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "TEST2"
+      provider:
+        connector: 
+          dataspace:
+            version: "jupiter"
+          controlplane:
+            hostname: "http://supplier-connector-controlplane.tx.test"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "TEST1"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+          dataplane:
+            hostname: "http://supplier-connector-dataplane.tx.test"
+            publicPath: "/api/public"
+        digitalTwinRegistry:
+          hostname: "http://supplier-dtr.tx.test"
+          apiPath: "/api/v3"
+          uri: ""
+          asset_config:
+            dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+            # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          lookup:
+            uri: ""
+          policy:
+            usage:
+              context:
+                odrl: http://www.w3.org/ns/odrl/2/
+                cx-policy: https://w3id.org/catenax/policy/
+              permission:
+                - action: odrl:use
+                  LogicalConstraint: odrl:and
+                  constraints:
+                    - leftOperand: cx-policy:FrameworkAgreement
+                      operator: odrl:eq
+                      rightOperand: DataExchangeGovernance:1.0
+                    - leftOperand: cx-policy:Membership
+                      operator: odrl:eq
+                      rightOperand: active
+                    - leftOperand: cx-policy:UsagePurpose
+                      operator: odrl:eq
+                      rightOperand: cx.core.digitalTwinRegistry:1
+              prohibition: []
+              obligation: []
+            access:
+              context:
+                odrl: http://www.w3.org/ns/odrl/2/
+                cx-policy: https://w3id.org/catenax/policy/
+              permission:
+                - action: odrl:use
+                  constraints:
+                    - leftOperand: cx-policy:Membership
+                      operator: odrl:eq
+                      rightOperand: active
+              prohibition: []
+              obligation: []
+  # Frontend configuration with local image
+  frontend:
+    enabled: true
+    name: "ichub-supplier-frontend"
+    image:
+      repository: "industry-core-hub-frontend"
+      tag: "local"
+      pullPolicy: Never
+    
+    service:
+      type: NodePort
+      portService: 8080
+      portContainer: 8080
+    
+    ingress:
+      enabled: true
+      className: "nginx"
+      ## Optional annotations when using the nginx ingress class
+      annotations:
+       cert-manager.io/cluster-issuer: letsencrypt-prod
+       nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+       nginx.ingress.kubernetes.io/use-regex: "true"
+       nginx.ingress.kubernetes.io/enable-cors: "true"
+      hosts:
+        - host: "frontend-ichub-supplier.tx.test"
+          paths:
+            - path: /(.*)
+              pathType: ImplementationSpecific
+              backend:
+                service: "frontend"
+                port: 8080
+    config:
+      environment: "local"
+      ichubBackendUrl: "http://backend-ichub-supplier.tx.test/v1"
+      authEnabled: false
+      # DTR and governance configuration
+    consumer:
+      digitalTwinRegistry:
+        policies:
+          - permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+            strict: false
+          - permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+      governance:
+        - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+          policies: 
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+            - strict: true #-- Disable here the permutations of constraints (order matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+              prohibition: []
+              obligation: []
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+        - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+          policies: 
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+            - strict: true #-- Disable here the permutations of constraints (order matters)
+              permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+              prohibition: []
+              obligation: []
+            - strict: false #-- Enable here the permutations of constraints (order not matters)
+              permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.industrycore:1
+              prohibition: []
+              obligation: []
+
+  # Use shared PostgreSQL instance - disabled locally
+  postgresql:
+    enabled: false
+  
+  # Configure external database connection to shared PostgreSQL
+  externalDatabase:
+    host: "umbrella-shared-ichub-db"
+    port: 5432
+    database: "ichub_supplier"
+    ichubUser: "ichub_supplier"
+    password: "admin"
+    existingSecret: "ichub-supplier-external-db-secret"
