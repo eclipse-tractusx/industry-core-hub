@@ -1,6 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
+* Copyright (c) 2025 LKS NEXT
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -31,9 +32,15 @@ data:
     hostname: {{ include "industry-core-hub.ingressUrl" . | quote }}
     authorization:
       enabled: {{ .Values.backend.configuration.authorization.enabled }}
-      apiKey: 
+      api_key:
         key: {{ .Values.backend.configuration.authorization.apiKey.key | quote }}
-        value: {{ .Values.backend.configuration.authorization.apiKey.value | quote }}
+        value: {{ .Values.backend.configuration.authorization.apiKey.value | toJson }}
+      keycloak:
+        enabled: {{ .Values.backend.configuration.authorization.keycloak.enabled }}
+        auth_url: {{ .Values.backend.configuration.authorization.keycloak.authUrl | quote }}
+        realm: {{ .Values.backend.configuration.authorization.keycloak.realm | quote }}
+        client_id: {{ .Values.backend.configuration.authorization.keycloak.clientId | quote }}
+        client_secret: {{ .Values.backend.configuration.authorization.keycloak.clientSecret | quote }}
     agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
     database:
       connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
