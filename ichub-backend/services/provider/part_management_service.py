@@ -541,8 +541,7 @@ class PartManagementService():
                 ),
                 van=db_serialized_part.van,
                 name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                category=db_serialized_part.partner_catalog_part.catalog_part.get_metadata(ICHUB_CATEGORY),
-                bpns=db_serialized_part.partner_catalog_part.catalog_part.get_metadata(ICHUB_DESCRIPTION),
+                extraMetadata=db_serialized_part.partner_catalog_part.catalog_part.extra_metadata
             )
 
     def get_serialized_part_details(self, manufacturer_id: str, manufacturer_part_id: str, part_instance_id: str) -> SerializedPartDetailsReadWithStatus:
