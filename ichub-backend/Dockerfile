@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -21,7 +22,7 @@
 #################################################################################
 
 
-FROM alpine:3.21
+FROM python:3.12-slim
 
 USER root
 
@@ -29,19 +30,22 @@ USER root
 COPY ./ /industry-core-hub
 
 ## Create user groups
-RUN addgroup -g 10001 appgroup \
-	&& adduser -u 10000 -g 10001 -h /home/nonroot -D nonroot
+RUN groupadd -g 10001 appgroup \
+	&& useradd -u 10000 -g 10001 -m -d /home/nonroot nonroot
 
 WORKDIR /industry-core-hub
 
 ## List the contents of the /backend directory
 RUN ls -la
 
-## Install Python
-RUN apk add python3 py3-pip libpq gettext --no-cache
+## Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    gettext \
+    && rm -rf /var/lib/apt/lists/*
 
 ## Install application requirements
-RUN pip3 install --break-system-packages --no-cache-dir -r ./requirements.txt
+RUN pip3 install --no-cache-dir -r ./requirements.txt
 
 ## Specify the volumes
 VOLUME ./data ./logs
@@ -53,22 +57,6 @@ RUN mkdir -p ./data/submodels
 
 ## Update user permissions
 RUN chown -R 10000:10001 /industry-core-hub && chmod -R 775 /industry-core-hub/
-
-## Set entrypoint to executable
-#RUN chmod +x /industry-core-hub/entrypoint.sh
-
-# Rename configuration.yml to configuration.yml.reference, to be used by env variables inject script
-# Create symlink for tmp for configuration.yml to enable readOnlyRootFilesystem
-#RUN mv /industry-core-hub/config/configuration.yml /tmp/configuration.yml.reference \
-    #&& ln -s /tmp/configuration.yml /industry-core-hub/config/configuration.yml
-
-# Same for logging.yml, but as we don't need to inject env variables, we can just copy it
-# and create the symlink
-#RUN mv /industry-core-hub/config/logging.yml /tmp/logging.yml \
-    #&& ln -s /tmp/logging.yml /industry-core-hub/config/logging.yml
-
-## If necessary to inject documentation do it here:
-# COPY ./resources/docs/* ./resources/docs
 
 ## Choose the user
 USER 10000:10001 
