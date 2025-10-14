@@ -27,24 +27,50 @@
   background-image: 
     linear-gradient(rgba($brand-dark, 0.3), rgba($brand-dark, 0.6)), 
     url('/stars-background.png') !important;
+  height: 100vh; // Fixed height instead of min-height
+  overflow: hidden; // Prevent body scrolling
 }
 
+.more-options-menu{
+  background: white!important;
+}
 .headerArea{
   position: sticky;
   top: 0;
   z-index: 1100;
 }
 
-.sidebarArea, .parts-discovery-sidebar {
+.sidebarArea {
+  z-index: 1000;
+  position: sticky;
+  top: 68.8px; // Stick below header
+  height: calc(100vh - 68.8px);
+  overflow-y: auto; // Allow sidebar to scroll if needed
+}
+
+.additionalSidebarArea {
+  position: sticky;
+  top: 68.8px; // Stick below header
+  height: calc(100vh - 68.8px);
+  overflow-y: auto; // Allow additional sidebar to scroll if needed
+  z-index: 900;
+}
+
+.parts-discovery-sidebar {
   position: sticky;
   top: 68.8px; // Header height
   height: calc(100vh - 68.8px);
-  z-index: 1099;
+  z-index: 0;
+  overflow-y: auto; // Allow additional sidebar to scroll if needed
 }
 
 /* Content area styling */
 .contentArea {
-  padding: 20px;
+  padding: 0; // Remove default padding as components handle their own
+  height: calc(100vh - 68.8px); /* Fixed height minus header */
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .productWrapper {

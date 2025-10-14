@@ -26,6 +26,6 @@ __author__ = 'Eclipse Tractus-X Contributors'
 __license__ = "Apache License, Version 2.0"
 
 
-from .dtr_manager import DTRManager
 from .connector_manager import ConnectorManager
+from .dtr_manager import DtrManager
 from .submodel_service_manager import SubmodelServiceManager

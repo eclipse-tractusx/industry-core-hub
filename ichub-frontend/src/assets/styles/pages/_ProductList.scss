@@ -39,6 +39,39 @@
     }
 }
 
+.customer-part-id-form{
+    color: $brand-text !important;
+    
+    .MuiFormControlLabel-label {
+        color: $brand-text !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+.customer-part-id-checkbox{
+    color: $brand-text !important;
+    &.MuiCheckbox-root {
+        color: $brand-text !important;
+        &:hover {
+            background-color: rgba($brand-primary, 0.1) !important;
+        }
+        
+        &.Mui-checked {
+            color: $brand-light-blue !important;
+        }
+    }
+    
+    .MuiSvgIcon-root {
+        color: $brand-text !important;
+    }
+    
+    &.Mui-checked .MuiSvgIcon-root {
+        color: $brand-light-blue !important;
+    }
+}
+
+
 .product-list-pagination {
     p {
         color: $brand-text !important;

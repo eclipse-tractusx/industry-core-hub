@@ -58,8 +58,10 @@
         }
         .MuiInputLabel-shrink{
             font-weight: bold;
+            font-size: 18px;
             color: $brand-text!important;
-            background: $brand-dark!important;
+            background: $brand-dark-gray!important;
+            border-radius: 5px;
             padding: 0 10px;
         }
     }
@@ -87,6 +89,15 @@
             background: $brand-light-blue!important;
             border-color: $brand-text!important;
             color: $brand-text !important;
+        }
+    }
+    .add-material-button{
+        background-color: $brand-header-blue!important;
+        color: white !important;
+    
+        &:hover {
+            background: $header-gradient-bg!important;
+            border: 2px solid $brand-text!important;
         }
     }
 }

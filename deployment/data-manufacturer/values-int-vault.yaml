@@ -1,0 +1,178 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+---
+secrets:
+  client-secret: <path:industry-core-hub/data/wallet#clientSecret>
+
+tractusx-connector:
+  enabled: true
+  participant:
+    id: <path:industry-core-hub/data/edc#bpn>
+
+  iatp:
+    # Decentralized IDentifier
+    id: "<path:industry-core-hub/data/wallet#id>"
+    trustedIssuers: # array [] that needs to be expand but likely like (sorry unconfirmed on how this is done, as I also would need to check)
+      - "<path:industry-core-hub/data/wallet#trustedIssuers"
+    sts:
+      dim:
+        url: "<path:industry-core-hub/data/wallet#dim.url>"
+      oauth:
+        token_url: "<path:industry-core-hub/data/wallet#token.url>"
+        client:
+          id: "<path:industry-core-hub/data/wallet#clientId>"
+          # content from the wallet secret, caution on pasting real secrets here!
+
+  controlplane:
+    enabled: true
+    endpoints:
+      management:
+        # -- authentication key, must be attached to each 'X-Api-Key' request header
+        authKey: <path:industry-core-hub/data/edc#authKey>
+    bdrs:
+      server:
+        url: https://bpn-did-resolution-service.int.catena-x.net/api/directory
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "ichub-edc-provider.int.catena-x.net"
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-provider-controlplane"
+  dataplane:
+    enabled: true
+    endpoints:
+      proxy:
+        authKey: <path:industry-core-hub/data/edc#authKey>
+    token:
+      signer:
+        # alias under which the private key is stored in the vault (JWK or PEM format)
+        privatekey_alias: tokenSignerPrivateKey
+      verifier:
+        # alias under which the public key is stored in the vault, that belongs to the private key ("privatekey_alias", JWK or PEM format)
+        publickey_alias: tokenSignerPublicKey
+
+    ## Ingress declaration to expose the network service.
+    ingresses:
+      ## Public / Internet facing Ingress
+      - enabled: true
+        # -- The hostname to be used to precisely map incoming traffic onto the underlying network service
+        hostname: "ichub-edc-provider"
+        # -- Additional ingress annotations to add
+               # -- Additional ingress annotations to add
+        annotations: {}
+        # -- EDC endpoints exposed by this ingress resource
+        endpoints:
+          - public
+        # -- Defines the [ingress class](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-class)  to use
+        className: "nginx"
+        # -- TLS [tls class](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) applied to the ingress resource
+        tls:
+          # -- Enables TLS on the ingress resource
+          enabled: true
+          # -- If present overwrites the default secret name
+          secretName: "tls-secret-provider-dataplane"
+        ## Adds [cert-manager](https://cert-manager.io/docs/) annotations to the ingress resource
+        certManager:
+          # -- If preset enables certificate generation via cert-manager namespace scoped issuer
+          issuer: ""
+          # -- If preset enables certificate generation via cert-manager cluster-wide issuer
+          clusterIssuer: ""
+
+  postgresql:
+    auth:
+      database: edc
+      username: <path:industry-core-hub/data/db#username>
+      postgresPassword: <path:industry-core-hub/data/db#password>
+      password: <path:industry-core-hub/data/db#password>
+    username: <path:industry-core-hub/data/db#username>
+    password: <path:industry-core-hub/data/db#password>
+
+  vault:
+    hashicorp:
+      url: http://{{ .Release.Name }}-edc-provider-vault:8200
+    secretNames:
+      transferProxyTokenSignerPrivateKey: tokenSignerPrivateKey
+      transferProxyTokenSignerPublicKey: tokenSignerPublicKey
+      transferProxyTokenEncryptionAesKey: tokenEncryptionAesKey
+
+vault:
+  enabled: true
+  nameOverride: edc-provider-vault
+  fullnameOverride: edc-provider-vault
+  injector:
+    enabled: false
+  server:
+    dev:
+      enabled: true
+      devRootToken: root
+    ingress:
+      enabled: false
+
+digital-twin-registry:
+  nameOverride: ichub-dtr
+  postgresql:
+    nameOverride: ichub-dtr-db
+    auth:
+      password: <path:industry-core-hub/data/dtr#password>
+      existingSecret: ichub-dataprovider-secret-dtr-postgres-init
+  registry:
+    host: ichub-dtr.int.catena-x.net
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      tls: true
+
+simple-data-backend:
+  enabled: true
+  nameOverride: ichub-dataprovider-submodelserver
+  ingress:
+    enabled: true
+    ingressClassName: ""
+    annotations:
+      # uncomment the following line for tls
+      
+      # nginx.ingress.kubernetes.io/proxy-body-size: 50m
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+    - host: "ichub-data-service.int.catena-x.net"
+      paths:
+        - path: "/"
+          pathType: "ImplementationSpecific"
+    tls:
+      - secretName: "submodel-server.tx.test-tls"
+        hosts:
+          - "ichub-data-service.int.catena-x.net"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 1024Mi

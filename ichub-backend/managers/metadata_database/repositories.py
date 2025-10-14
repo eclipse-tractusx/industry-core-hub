@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -210,6 +211,12 @@ class PartnerCatalogPartRepository(BaseRepository[PartnerCatalogPart]):
         )
         self.create(partner_catalog_part)
         return partner_catalog_part
+    
+    def get_by_catalog_part_id(self, catalog_part_id: int) -> List[PartnerCatalogPart]:
+        stmt = select(PartnerCatalogPart).where(
+            PartnerCatalogPart.catalog_part_id == catalog_part_id)
+        return self._session.scalars(stmt).all()
+    
     def create_or_update(self, catalog_part_id: int, business_partner_id: int, customer_part_id: str) -> PartnerCatalogPart:
         """Create or update a PartnerCatalogPart instance."""
         existing = self.get_by_catalog_part_id_business_partner_id(
@@ -263,7 +270,12 @@ class SerializedPartRepository(BaseRepository[SerializedPart]):
             SerializedPart.partner_catalog_part_id == partner_catalog_part_id).where(
             SerializedPart.part_instance_id == part_instance_id)
         return self._session.scalars(stmt).first()
-    
+
+    def find_by_partner_catalog_part_id(self, partner_catalog_part_id: int) -> List[SerializedPart]:
+        stmt = select(SerializedPart).where(
+            SerializedPart.partner_catalog_part_id == partner_catalog_part_id)
+        return self._session.scalars(stmt).all()
+
     def get_by_twin_id(
         self,
         twin_id: int,
@@ -318,6 +330,61 @@ class SerializedPartRepository(BaseRepository[SerializedPart]):
 
         return self._session.scalars(stmt).all()
 
+    def find_with_status(self,
+        manufacturer_id: Optional[str] = None,
+        manufacturer_part_id: Optional[str] = None,
+        business_partner_number: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        part_instance_id: Optional[str] = None,
+        van: Optional[str] = None) -> List[tuple[SerializedPart, int]]:
+        """
+        Find serialized parts with status information.
+        The result is a list of tuples, where each tuple contains the SerializedPart object and its status.
+        """
+        
+        # Case to determine the status of the serialized part
+        status_expr = case(
+            # 0: no twin at all (draft)
+            (SerializedPart.twin_id.is_(None), 0),
+            # 1: twin exists, but not yet DTR-registered (pending)
+            (TwinRegistration.dtr_registered.is_(False), 1),
+            # 2: DTR-registered but not yet in any TwinExchange row (registered)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_(None)), 2),
+            # 3: DTR-registered AND appears in TwinExchange (shared)
+            ((TwinRegistration.dtr_registered.is_(True)) & (TwinExchange.twin_id.is_not(None)), 3),
+            else_=0
+        ).label("status")
+
+        stmt = select(SerializedPart, status_expr).distinct(SerializedPart.id)
+        
+        stmt = stmt.join(PartnerCatalogPart, PartnerCatalogPart.id == SerializedPart.partner_catalog_part_id)
+        stmt = stmt.join(CatalogPart, CatalogPart.id == PartnerCatalogPart.catalog_part_id)
+        stmt = stmt.join(LegalEntity, LegalEntity.id == CatalogPart.legal_entity_id)
+        
+        stmt = stmt.outerjoin(TwinRegistration, TwinRegistration.twin_id == SerializedPart.twin_id)
+        stmt = stmt.outerjoin(TwinExchange, TwinExchange.twin_id == SerializedPart.twin_id)
+
+        if business_partner_number:
+            stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
+                ).where(BusinessPartner.bpnl == business_partner_number)
+        
+        if manufacturer_id:
+            stmt = stmt.where(LegalEntity.bpnl == manufacturer_id)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(CatalogPart.manufacturer_part_id == manufacturer_part_id)
+        
+        if part_instance_id:
+            stmt = stmt.where(SerializedPart.part_instance_id == part_instance_id)
+
+        if van:
+            stmt = stmt.where(SerializedPart.van == van)
+
+        if customer_part_id:
+            stmt = stmt.where(PartnerCatalogPart.customer_part_id == customer_part_id)
+
+        return self._session.exec(stmt).all()
+
     def create_new(self, partner_catalog_part_id: int, part_instance_id: str, van: Optional[str]) -> SerializedPart:
         """Create a new SerializedPart instance."""
         serialized_part = SerializedPart(
@@ -351,6 +418,11 @@ class TwinRepository(BaseRepository[Twin]):
     def find_by_global_id(self, global_id: UUID) -> Optional[Twin]:
         stmt = select(Twin).where(
             Twin.global_id == global_id)
+        return self._session.scalars(stmt).first()
+    
+    def find_by_aas_id(self, aas_id: UUID) -> Optional[Twin]:
+        stmt = select(Twin).where(
+            Twin.aas_id == aas_id)
         return self._session.scalars(stmt).first()
     
     def find_catalog_part_twins(self,

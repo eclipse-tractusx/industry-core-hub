@@ -23,7 +23,6 @@
 # Import custom logging and configuration modules, and database utility
 from managers.config.log_manager import LoggingManager
 from managers.config.config_manager import ConfigManager
-from managers.enablement_services.dtr_manager import DTRManager
 from uuid import uuid4
 
 ## FAST API example for keycloak
@@ -67,7 +66,7 @@ if __name__ == "__main__":
      _/ // /__/_____/ __  / /_/ / /_/ /  / /_/ / /_/ / /__/ ,< /  __/ / / / /_/ /  
     /___/\____/    /_/ /_/\__,_/_.___/  /_____/\__,_/\___/_/|_|\___/_/ /_/\__,_/   
     """)
-    print("\n\n\t\t\t\t\t\t\t\t\t\tv0.1.0")
+    print("\n\n\t\t\t\t\t\t\t\t\t\tv0.2.0")
     print("Application starting, listening to requests...\n")
     
     start()
