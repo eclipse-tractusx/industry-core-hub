@@ -714,21 +714,35 @@ class TwinManagementService:
 
     @staticmethod
     def _fill_aspects(db_twin: Twin, twin_result: TwinDetailsReadBase):
-        twin_result.aspects = {
-                db_twin_aspect.semantic_id: TwinAspectRead(
-                    semanticId=db_twin_aspect.semantic_id,
-                    submodelId=db_twin_aspect.submodel_id,
-                    registrations={
-                        db_twin_aspect_registration.enablement_service_stack.name: TwinAspectRegistration(
-                            enablementServiceStackName=db_twin_aspect_registration.enablement_service_stack.name,
-                            status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
-                            mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
-                            createdDate=db_twin_aspect_registration.created_date,
-                            modifiedDate=db_twin_aspect_registration.modified_date
-                        ) for db_twin_aspect_registration in db_twin_aspect.twin_aspect_registrations
-                    } 
-                ) for db_twin_aspect in db_twin.twin_aspects
-            }
+        # Create TwinAspectRead objects for all aspects
+        all_aspects = []
+        aspects_by_semantic_id = {}
+        
+        for db_twin_aspect in db_twin.twin_aspects:
+            aspect_read = TwinAspectRead(
+                semanticId=db_twin_aspect.semantic_id,
+                submodelId=db_twin_aspect.submodel_id,
+                registrations={
+                    db_twin_aspect_registration.enablement_service_stack.name: TwinAspectRegistration(
+                        enablementServiceStackName=db_twin_aspect_registration.enablement_service_stack.name,
+                        status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
+                        mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
+                        createdDate=db_twin_aspect_registration.created_date,
+                        modifiedDate=db_twin_aspect_registration.modified_date
+                    ) for db_twin_aspect_registration in db_twin_aspect.twin_aspect_registrations
+                } 
+            )
+            
+            # Add to complete list
+            all_aspects.append(aspect_read)
+            
+            # For backward compatibility, only keep the first aspect of each semantic type
+            if db_twin_aspect.semantic_id not in aspects_by_semantic_id:
+                aspects_by_semantic_id[db_twin_aspect.semantic_id] = aspect_read
+        
+        # Set both fields
+        twin_result.all_aspects = all_aspects
+        twin_result.aspects = aspects_by_semantic_id
 
     @staticmethod
     def _get_manufacturer_id_from_twin(db_twin: Twin) -> str:

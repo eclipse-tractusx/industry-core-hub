@@ -553,8 +553,41 @@ class TwinRepository(BaseRepository[Twin]):
 
 class TwinAspectRepository(BaseRepository[TwinAspect]):
     def get_by_twin_id_semantic_id(self, twin_id: int, semantic_id: str, include_registrations: bool = False) -> Optional[TwinAspect]:
-        """Retrieve a TwinAspect by its submodel_id."""
+        """Retrieve a TwinAspect by its twin_id and semantic_id. Returns only the first match."""
         stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id).where(TwinAspect.semantic_id == semantic_id)
+
+        if include_registrations:
+            stmt = stmt.join(
+                TwinAspectRegistration, TwinAspectRegistration.twin_aspect_id == TwinAspect.id, isouter=True
+            )
+
+        return self._session.scalars(stmt).first()
+    
+    def get_by_twin_id_and_semantic_id(self, twin_id: int, semantic_id: str, include_registrations: bool = False) -> List[TwinAspect]:
+        """Retrieve all TwinAspects with the specified twin_id and semantic_id. Supports multiple submodels of the same type."""
+        stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id).where(TwinAspect.semantic_id == semantic_id)
+
+        if include_registrations:
+            stmt = stmt.join(
+                TwinAspectRegistration, TwinAspectRegistration.twin_aspect_id == TwinAspect.id, isouter=True
+            )
+
+        return self._session.scalars(stmt).all()
+    
+    def get_by_twin_id(self, twin_id: int, include_registrations: bool = False) -> List[TwinAspect]:
+        """Retrieve all TwinAspects for a given twin_id."""
+        stmt = select(TwinAspect).where(TwinAspect.twin_id == twin_id)
+
+        if include_registrations:
+            stmt = stmt.join(
+                TwinAspectRegistration, TwinAspectRegistration.twin_aspect_id == TwinAspect.id, isouter=True
+            )
+
+        return self._session.scalars(stmt).all()
+    
+    def get_by_submodel_id(self, submodel_id: UUID, include_registrations: bool = False) -> Optional[TwinAspect]:
+        """Retrieve a TwinAspect by its unique submodel_id."""
+        stmt = select(TwinAspect).where(TwinAspect.submodel_id == submodel_id)
 
         if include_registrations:
             stmt = stmt.join(

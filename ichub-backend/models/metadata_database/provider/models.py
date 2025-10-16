@@ -34,7 +34,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from pydantic import BaseModel, Field as PydField
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import case, select, exists, Column, JSON, UniqueConstraint, SmallInteger
+from sqlalchemy import case, select, exists, Column, JSON, UniqueConstraint, SmallInteger, Index
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import aliased
 from tools.constants import TWIN_ID_DESCRIPTION, BUSINESS_PARTNER_ID_DESCRIPTION
@@ -568,8 +568,12 @@ class TwinAspect(SQLModel, table=True):
     twin: Twin = Relationship(back_populates="twin_aspects")
     twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="twin_aspect")
 
+    # NOTE: Removed unique constraint on (twin_id, semantic_id) to support multiple submodels of the same type
+    # Multiple submodels with the same semantic_id can now exist for a single twin
+    # Each submodel is uniquely identified by its submodel_id (UUID)
     __table_args__ = (
-        UniqueConstraint("twin_id", "semantic_id", name="uk_twin_aspect_twin_id_semantic_id"),
+        # Index for performance when querying by twin_id and semantic_id, but not unique
+        Index("idx_twin_aspect_twin_id_semantic_id", "twin_id", "semantic_id"),
     )
 
     __tablename__ = "twin_aspect"

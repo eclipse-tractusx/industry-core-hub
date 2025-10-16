@@ -22,7 +22,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
+from uuid import UUID
 from models.services.provider.part_management import (
     BatchCreate,
     BatchRead,
@@ -52,7 +53,7 @@ from models.services.provider.part_management import (
 
 from models.services.provider.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from models.metadata_database.provider.models import CatalogPart, SerializedPart, PartnerCatalogPart, LegalEntity
+from models.metadata_database.provider.models import CatalogPart, SerializedPart, PartnerCatalogPart, LegalEntity, TwinAspect
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import InvalidError, NotFoundError, AlreadyExistsError
 
@@ -62,6 +63,151 @@ class PartManagementService():
     """
     Service class for managing parts and their relationships in the system.
     """
+
+    # ================================
+    # Submodel Management Methods
+    # ================================
+    
+    def get_submodels_by_twin_id(self, twin_id: int) -> List[TwinAspect]:
+        """
+        Retrieve all submodels (twin aspects) for a given twin ID.
+        
+        Args:
+            twin_id (int): The ID of the twin
+            
+        Returns:
+            List[TwinAspect]: List of all submodels associated with the twin
+        """
+        with RepositoryManagerFactory.create() as repos:
+            return repos.twin_aspect_repository.get_by_twin_id(twin_id)
+
+    def get_submodels_by_semantic_id(self, twin_id: int, semantic_id: str) -> List[TwinAspect]:
+        """
+        Retrieve all submodels with a specific semantic ID for a given twin.
+        Supports multiple submodels of the same type.
+        
+        Args:
+            twin_id (int): The ID of the twin
+            semantic_id (str): The semantic ID of the submodels to retrieve
+            
+        Returns:
+            List[TwinAspect]: List of submodels with the specified semantic ID
+        """
+        with RepositoryManagerFactory.create() as repos:
+            return repos.twin_aspect_repository.get_by_twin_id_and_semantic_id(twin_id, semantic_id)
+
+    def get_submodel_by_id(self, submodel_id: UUID) -> Optional[TwinAspect]:
+        """
+        Retrieve a specific submodel by its unique ID.
+        
+        Args:
+            submodel_id (UUID): The unique ID of the submodel
+            
+        Returns:
+            Optional[TwinAspect]: The submodel if found, None otherwise
+        """
+        with RepositoryManagerFactory.create() as repos:
+            return repos.twin_aspect_repository.get_by_submodel_id(submodel_id)
+
+    def create_submodel(self, twin_id: int, semantic_id: str, submodel_id: Optional[UUID] = None) -> TwinAspect:
+        """
+        Create a new submodel for a twin. Supports multiple submodels of the same semantic type.
+        
+        Args:
+            twin_id (int): The ID of the twin to associate the submodel with
+            semantic_id (str): The semantic ID of the submodel
+            submodel_id (Optional[UUID]): Optional specific submodel ID, will generate if not provided
+            
+        Returns:
+            TwinAspect: The created submodel
+            
+        Raises:
+            NotFoundError: If the twin is not found
+        """
+        with RepositoryManagerFactory.create() as repos:
+            # Verify twin exists
+            twin = repos.twin_repository.find_by_id(twin_id)
+            if not twin:
+                raise NotFoundError(f"Twin with ID {twin_id} not found")
+                
+            # Create the new submodel - no uniqueness constraint on semantic_id per twin
+            submodel = repos.twin_aspect_repository.create_new(
+                twin_id=twin_id,
+                semantic_id=semantic_id,
+                submodel_id=submodel_id
+            )
+            repos.twin_aspect_repository.commit()
+            return submodel
+
+    def delete_submodel(self, submodel_id: UUID) -> bool:
+        """
+        Delete a submodel by its unique ID.
+        
+        Args:
+            submodel_id (UUID): The unique ID of the submodel to delete
+            
+        Returns:
+            bool: True if deletion was successful
+            
+        Raises:
+            NotFoundError: If the submodel is not found
+        """
+        with RepositoryManagerFactory.create() as repos:
+            submodel = repos.twin_aspect_repository.get_by_submodel_id(submodel_id)
+            if not submodel:
+                raise NotFoundError(f"Submodel with ID {submodel_id} not found")
+                
+            repos.twin_aspect_repository.delete(submodel.id)
+            repos.twin_aspect_repository.commit()
+            return True
+
+    def update_submodel_semantic_id(self, submodel_id: UUID, new_semantic_id: str) -> TwinAspect:
+        """
+        Update the semantic ID of a submodel.
+        
+        Args:
+            submodel_id (UUID): The unique ID of the submodel to update
+            new_semantic_id (str): The new semantic ID
+            
+        Returns:
+            TwinAspect: The updated submodel
+            
+        Raises:
+            NotFoundError: If the submodel is not found
+        """
+        with RepositoryManagerFactory.create() as repos:
+            submodel = repos.twin_aspect_repository.get_by_submodel_id(submodel_id)
+            if not submodel:
+                raise NotFoundError(f"Submodel with ID {submodel_id} not found")
+                
+            submodel.semantic_id = new_semantic_id
+            repos.twin_aspect_repository.commit()
+            return submodel
+
+    def get_submodels_grouped_by_semantic_id(self, twin_id: int) -> Dict[str, List[TwinAspect]]:
+        """
+        Retrieve all submodels for a twin grouped by semantic ID.
+        This is useful for understanding which semantic types have multiple instances.
+        
+        Args:
+            twin_id (int): The ID of the twin
+            
+        Returns:
+            Dict[str, List[TwinAspect]]: Dictionary with semantic IDs as keys and lists of submodels as values
+        """
+        submodels = self.get_submodels_by_twin_id(twin_id)
+        
+        grouped = {}
+        for submodel in submodels:
+            if submodel.semantic_id not in grouped:
+                grouped[submodel.semantic_id] = []
+            grouped[submodel.semantic_id].append(submodel)
+            
+        return grouped
+
+    # ================================
+    # Part Management Methods
+    # ================================
 
     def create_catalog_part(self, catalog_part_create: CatalogPartCreate) -> CatalogPartDetailsReadWithStatus:
         """
