@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 from models.services.provider.part_management import (
     BatchCreate,
     BatchRead,
@@ -30,6 +30,7 @@ from models.services.provider.part_management import (
     CatalogPartDelete,
     CatalogPartUpdate,
     CatalogPartDetailsRead,
+    CatalogPartRead,
     CatalogPartReadWithStatus,
     CatalogPartDetailsReadWithStatus,
     JISPartCreate,
@@ -52,11 +53,28 @@ from models.services.provider.part_management import (
 
 from models.services.provider.partner_management import BusinessPartnerRead
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
-from models.metadata_database.provider.models import CatalogPart, SerializedPart, PartnerCatalogPart, LegalEntity
+from models.metadata_database.provider.models import (
+    CatalogPart,
+    LegalEntity,
+    SerializedPart,
+    PartnerCatalogPart,
+    Material,
+    Measurement,
+)
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import InvalidError, NotFoundError, AlreadyExistsError
 
 logger = LoggingManager.get_logger(__name__)
+
+# Define constants for deprecated metadata keys
+ICHUB_DESCRIPTION = "ichub:description"
+ICHUB_CATEGORY = "ichub:category"
+ICHUB_BPNS = "ichub:bpns"
+ICHUB_MATERIALS = "ichub:materials"
+ICHUB_WIDTH = "ichub:width"
+ICHUB_HEIGHT = "ichub:height"
+ICHUB_LENGTH = "ichub:length"
+ICHUB_WEIGHT = "ichub:weight"
 
 class PartManagementService():
     """
@@ -71,7 +89,7 @@ class PartManagementService():
         # Validate the input data
         # Validate materials share
         if catalog_part_create.materials:
-            self._manage_share_error(catalog_part_create)
+            self._validate_material_distribution(catalog_part_create)
         with RepositoryManagerFactory.create() as repos:
             
             # First check if the legal entity exists for the given manufacturer ID
@@ -94,18 +112,32 @@ class PartManagementService():
             if db_catalog_part:
                 raise AlreadyExistsError("Catalog part already exists.")
             else:
-                # Create the catalog part in the metadata database, using legal_entity_id as foreign key
+                # TODO: Deprecated fields - remove later
+                extra_metadata = catalog_part_create.extra_metadata or {}
+                PartManagementService._sync_deprecated_metadata_fields(catalog_part_create, extra_metadata)
+
+                # Write back cumulated extra_metadata into the input object
+                catalog_part_create.extra_metadata = extra_metadata
+
+                # Create the catalog part with the remaining fields and extra_metadata
                 db_catalog_part = CatalogPart(
                     legal_entity_id=db_legal_entity.id,
-                    **catalog_part_create.model_dump(by_alias=False)
+                    manufacturer_part_id=catalog_part_create.manufacturer_part_id,
+                    name=catalog_part_create.name,
+                    extra_metadata=extra_metadata
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
                 repos.catalog_part_repository.commit()
                 
             # Prepare the result object
+            result_data = catalog_part_create.model_dump(by_alias=True)
+            # Ensure extra_metadata is included in the result
+            if 'extraMetadata' not in result_data or not result_data['extraMetadata']:
+                result_data['extraMetadata'] = extra_metadata
+                
             result = CatalogPartDetailsReadWithStatus(
-                **catalog_part_create.model_dump(by_alias=True),
-                status=0,  # Default status is draft
+                **result_data,
+                status=SharingStatus.DRAFT,  # Default status is draft
             )
 
             # Check if we already should create some customer part IDs for the given catalog part
@@ -145,9 +177,9 @@ class PartManagementService():
         return db_business_partner
 
     @staticmethod
-    def _manage_share_error(catalog_part_create):
+    def _validate_material_distribution(catalog_part_create):
         """
-        Validates that the total share of materials in a catalog part is within the allowed range (0% to 100%).
+        [DEPRECATED] Validates that the total share of materials in a catalog part is within the allowed range (0% to 100%).
         """
         total_share = sum(material.share for material in catalog_part_create.materials)
         # We only allow the share to be 0-100%
@@ -156,6 +188,7 @@ class PartManagementService():
         if total_share > 100:
             raise InvalidError(f"The share of materials ({total_share}%) is invalid. It must be between 0% and 100%.")
 
+    
     def create_catalog_part_by_ids(self,
         manufacturer_id: str,
         manufacturer_part_id: str,
@@ -164,7 +197,10 @@ class PartManagementService():
         bpns: Optional[str],
         customer_parts: Optional[List[PartnerCatalogPartBase]]) -> CatalogPartDetailsReadWithStatus:
           
-        """Convenience method to create a catalog part by its IDs."""
+        """
+        [DEPRECATED]: use create_catalog_part instead !!!
+        Convenience method to create a catalog part by its IDs.
+        """
 
         partner_catalog_parts = []
         for partner_catalog_part in customer_parts:
@@ -174,13 +210,17 @@ class PartManagementService():
             )
             partner_catalog_parts.append(partner_catalog_part)
 
+        extra_metadata = {
+            ICHUB_CATEGORY: category,
+            ICHUB_BPNS: bpns
+        }
+
         catalog_part_create = CatalogPartCreate(
             manufacturerId=manufacturer_id,
             manufacturerPartId=manufacturer_part_id,
             name=name,
-            category=category,
-            bpns=bpns,
-            customerPartIds=partner_catalog_parts
+            customerPartIds=partner_catalog_parts,
+            extraMetadata=extra_metadata
         )
 
         # Create the catalog part, and return the catalog saved in the database
@@ -273,19 +313,14 @@ class PartManagementService():
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
-                materials=db_catalog_part.materials,
-                width=db_catalog_part.width,
-                height=db_catalog_part.height,
-                length=db_catalog_part.length,
-                weight=db_catalog_part.weight,
-                description=db_catalog_part.description,
                 status=SharingStatus(status)
             )
 
             # Fill customer part IDs
             PartManagementService.fill_customer_part_ids(db_catalog_part, result)
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_details(db_catalog_part.extra_metadata, result)
 
             logger.info(f"Successfully updated catalog part '{manufacturer_id}/{manufacturer_part_id}'")
             return result
@@ -300,16 +335,18 @@ class PartManagementService():
             
             if db_catalog_parts:
                 for db_catalog_part, status in db_catalog_parts:
-                    result.append(
-                        CatalogPartReadWithStatus(
-                            manufacturerId=db_catalog_part.legal_entity.bpnl,
-                            manufacturerPartId=db_catalog_part.manufacturer_part_id,
-                            name=db_catalog_part.name,
-                            category=db_catalog_part.category,
-                            bpns=db_catalog_part.bpns,
-                            status=status
-                        )
+                    part = CatalogPartReadWithStatus(
+                        manufacturerId=db_catalog_part.legal_entity.bpnl,
+                        manufacturerPartId=db_catalog_part.manufacturer_part_id,
+                        name=db_catalog_part.name,
+                        extraMetadata=db_catalog_part.extra_metadata,
+                        status=SharingStatus(status)
                     )
+                    
+                    # TODO: Deprecated fields - remove later
+                    PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, part)
+
+                    result.append(part)
             
             return result
 
@@ -326,20 +363,19 @@ class PartManagementService():
                 return None
             
             db_catalog_part, status = db_catalog_parts[0]  # Assuming we only want the first match
-
+                
             result = CatalogPartDetailsReadWithStatus(
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
-                materials=db_catalog_part.materials,
-                width=db_catalog_part.width,
-                height=db_catalog_part.height,
-                length=db_catalog_part.length,
-                weight=db_catalog_part.weight,
-                description=db_catalog_part.description,
-                status=SharingStatus(status)  # Assuming SharingStatus is an enum or similar type for status
+                extraMetadata=db_catalog_part.extra_metadata,
+                status=SharingStatus(status)
+            )
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_details(
+                db_catalog_part.extra_metadata,
+                result
             )
 
             PartManagementService.fill_customer_part_ids(db_catalog_part, result)
@@ -386,6 +422,7 @@ class PartManagementService():
         """
         Create a new serialized part in the system.
         """
+        
         with RepositoryManagerFactory.create() as repos:
             
             # Get the business partner by BPNL from the metadata database
@@ -432,7 +469,7 @@ class PartManagementService():
                     van=serialized_part_create.van,
                 )
             
-            return SerializedPartRead(
+            part = SerializedPartRead(
                 manufacturerId=serialized_part_create.manufacturer_id,
                 manufacturerPartId=serialized_part_create.manufacturer_part_id,
                 partInstanceId=serialized_part_create.part_instance_id,
@@ -443,9 +480,16 @@ class PartManagementService():
                 ),
                 van=serialized_part_create.van,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
+                extraMetadata=db_catalog_part.extra_metadata
             )
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(
+                db_catalog_part.extra_metadata,
+                part
+            )
+
+            return part
 
 
     def delete_serialized_part(self, partner_catalog_part_id: int, part_instance_id: str) -> bool:
@@ -497,8 +541,7 @@ class PartManagementService():
                 ),
                 van=db_serialized_part.van,
                 name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                category=db_serialized_part.partner_catalog_part.catalog_part.category,
-                bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
+                extraMetadata=db_serialized_part.partner_catalog_part.catalog_part.extra_metadata
             )
 
     def get_serialized_part_details(self, manufacturer_id: str, manufacturer_part_id: str, part_instance_id: str) -> SerializedPartDetailsReadWithStatus:
@@ -517,18 +560,10 @@ class PartManagementService():
             
             db_serialized_part, status = db_serialized_parts[0]
             
-            return SerializedPartDetailsReadWithStatus(
+            result = SerializedPartDetailsReadWithStatus(
                 manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
                 name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                category=db_serialized_part.partner_catalog_part.catalog_part.category,
-                bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-                description=db_serialized_part.partner_catalog_part.catalog_part.description,
-                materials=db_serialized_part.partner_catalog_part.catalog_part.materials,
-                width=db_serialized_part.partner_catalog_part.catalog_part.width,
-                height=db_serialized_part.partner_catalog_part.catalog_part.height,
-                length=db_serialized_part.partner_catalog_part.catalog_part.length,
-                weight=db_serialized_part.partner_catalog_part.catalog_part.weight,
                 partInstanceId=db_serialized_part.part_instance_id,
                 customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
                 businessPartner=BusinessPartnerRead(
@@ -538,6 +573,11 @@ class PartManagementService():
                 van=db_serialized_part.van,
                 status=SharingStatus(status)
             )
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_details(db_serialized_part.partner_catalog_part.catalog_part.extra_metadata, result)
+
+            return result
 
     def get_serialized_parts(self, query: SerializedPartQuery = SerializedPartQuery()) -> List[SerializedPartReadWithStatus]:
         """
@@ -555,22 +595,28 @@ class PartManagementService():
 
             result = []
             for db_serialized_part, status in db_serialized_parts:
-                result.append(
-                    SerializedPartReadWithStatus(
-                        manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
-                        manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
-                        name=db_serialized_part.partner_catalog_part.catalog_part.name,
-                        category=db_serialized_part.partner_catalog_part.catalog_part.category,
-                        bpns=db_serialized_part.partner_catalog_part.catalog_part.bpns,
-                        partInstanceId=db_serialized_part.part_instance_id,
-                        customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
-                        businessPartner=BusinessPartnerRead(
-                            name=db_serialized_part.partner_catalog_part.business_partner.name,
-                            bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
-                        ),
-                        van=db_serialized_part.van,
-                        status=SharingStatus(status)
-                    )
+                # Create the SerializedPartRead object from the database object
+                # and fill the necessary fields
+
+                part = SerializedPartReadWithStatus(
+                    manufacturerId=db_serialized_part.partner_catalog_part.catalog_part.legal_entity.bpnl,
+                    manufacturerPartId=db_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id,
+                    name=db_serialized_part.partner_catalog_part.catalog_part.name,
+                    partInstanceId=db_serialized_part.part_instance_id,
+                    customerPartId=db_serialized_part.partner_catalog_part.customer_part_id,
+                    businessPartner=BusinessPartnerRead(
+                        name=db_serialized_part.partner_catalog_part.business_partner.name,
+                        bpnl=db_serialized_part.partner_catalog_part.business_partner.bpnl
+                    ),
+                    van=db_serialized_part.van,
+                        status=SharingStatus(status),
+                    extraMetadata=db_serialized_part.partner_catalog_part.catalog_part.extra_metadata,
+                )
+
+                # TODO: Deprecated fields - remove later
+                PartManagementService.fill_deprected_metadata_fields_base(
+                    db_serialized_part.partner_catalog_part.catalog_part.extra_metadata,
+                    part
                 )
             return result
 
@@ -635,18 +681,25 @@ class PartManagementService():
             )
             repos.partner_catalog_part_repository.create(db_partner_catalog_part)
 
-            return PartnerCatalogPartRead(
+            part = PartnerCatalogPartRead(
                 manufacturerId=db_catalog_part.legal_entity.bpnl,
                 manufacturerPartId=db_catalog_part.manufacturer_part_id,
                 name=db_catalog_part.name,
-                category=db_catalog_part.category,
-                bpns=db_catalog_part.bpns,
+                extraMetadata=db_catalog_part.extra_metadata,
                 customerPartId=db_partner_catalog_part.customer_part_id,
                 businessPartner=BusinessPartnerRead(
                     name=db_business_partner.name,
                     bpnl=db_business_partner.bpnl
                 )
             )
+
+            # TODO: Deprecated fields - remove later
+            PartManagementService.fill_deprected_metadata_fields_base(
+                db_catalog_part.extra_metadata,
+                part
+            )
+
+            return part
 
     def delete_partner_catalog_part_mapping(self, partner_catalog_part: PartnerCatalogPartDelete) -> CatalogPartDetailsRead:
         """
@@ -694,13 +747,17 @@ class PartManagementService():
         )
         if not db_catalog_part:
             if auto_generate:
+                extra_metadata = {
+                    ICHUB_CATEGORY: category,
+                    ICHUB_BPNS: bpns
+                }
+
                 # Create a new catalog part with the given manufacturer ID and part ID
                 db_catalog_part = CatalogPart(
                     legal_entity_id=db_legal_entity.id,
                     manufacturer_part_id=manufacturer_part_id,
                     name=name if name else manufacturer_part_id,  # Default name to part ID if not provided
-                    category=category,  # Default category can be set later
-                    bpns=bpns,  # Default BPNS can be set later
+                    extra_metadata=extra_metadata
                 )
                 repos.catalog_part_repository.create(db_catalog_part)
                 repos.catalog_part_repository.commit()
@@ -708,3 +765,68 @@ class PartManagementService():
                 raise NotFoundError(f"Catalog part {manufacturer_id}/manufacturerPartId not found.")
 
         return (db_legal_entity, db_catalog_part)
+    
+    @staticmethod
+    def fill_deprected_metadata_fields_base(extra_metadata: Optional[Dict[str, Any]], service_model: CatalogPartRead):
+        """Sync individual fields to extra_metadata"""
+        if extra_metadata is None:
+            return
+            
+        # Sync fields only if they have (valid) values
+        if ICHUB_CATEGORY in extra_metadata and extra_metadata[ICHUB_CATEGORY]:
+            category = extra_metadata[ICHUB_CATEGORY]
+            if category:
+                category = str(category).strip()
+                if category:
+                    service_model.category = category
+
+        if ICHUB_BPNS in extra_metadata and extra_metadata[ICHUB_BPNS]:
+            service_model.bpns = extra_metadata[ICHUB_BPNS]
+
+    @staticmethod
+    def fill_deprected_metadata_fields_details(extra_metadata: Optional[Dict[str, Any]], service_model: CatalogPartDetailsRead):
+        """Sync individual fields to extra_metadata"""
+        if extra_metadata is None:
+            return
+
+        PartManagementService.fill_deprected_metadata_fields_base(extra_metadata, service_model)
+
+        # Sync fields only if they have values
+        if ICHUB_DESCRIPTION in extra_metadata and extra_metadata[ICHUB_DESCRIPTION]:
+            service_model.description = extra_metadata[ICHUB_DESCRIPTION]
+        if ICHUB_MATERIALS in extra_metadata and extra_metadata[ICHUB_MATERIALS]:
+            service_model.materials = [Material(**m) for m in extra_metadata[ICHUB_MATERIALS]]
+        if ICHUB_WIDTH in extra_metadata and extra_metadata[ICHUB_WIDTH]:
+            service_model.width = Measurement(**extra_metadata[ICHUB_WIDTH])
+        if ICHUB_HEIGHT in extra_metadata and extra_metadata[ICHUB_HEIGHT]:
+            service_model.height = Measurement(**extra_metadata[ICHUB_HEIGHT])
+        if ICHUB_LENGTH in extra_metadata and extra_metadata[ICHUB_LENGTH]:
+            service_model.length = Measurement(**extra_metadata[ICHUB_LENGTH])
+        if ICHUB_WEIGHT in extra_metadata and extra_metadata[ICHUB_WEIGHT]:
+            service_model.weight = Measurement(**extra_metadata[ICHUB_WEIGHT])
+
+    @staticmethod
+    def _sync_deprecated_metadata_fields(service_model: CatalogPartCreate, extra_metadata: Dict[str, Any]):
+        """Sync individual fields to extra_metadata"""
+        if extra_metadata is None:
+            extra_metadata = {}
+            
+        # Sync fields only if they have values
+        if service_model.description:
+            extra_metadata[ICHUB_DESCRIPTION] = service_model.description
+        if service_model.category:
+            extra_metadata[ICHUB_CATEGORY] = service_model.category
+        if service_model.bpns:
+            extra_metadata[ICHUB_BPNS] = service_model.bpns
+        if service_model.materials:
+            extra_metadata[ICHUB_MATERIALS] = [m.model_dump() for m in service_model.materials]
+        if service_model.width:
+            extra_metadata[ICHUB_WIDTH] = service_model.width.model_dump()
+        if service_model.height:
+            extra_metadata[ICHUB_HEIGHT] = service_model.height.model_dump()
+        if service_model.length:
+            extra_metadata[ICHUB_LENGTH] = service_model.length.model_dump()
+        if service_model.weight:
+            extra_metadata[ICHUB_WEIGHT] = service_model.weight.model_dump()
+
+        return extra_metadata

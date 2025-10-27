@@ -49,15 +49,8 @@ export interface PartType {
   manufacturerPartId: string;
   name: string;
   status?: StatusVariants;
-  description?: string;
-  category?: string;
-  materials: Material[];
-  bpns?: string;
-  width?: LengthMeasurement;
-  height?: LengthMeasurement;
-  length?: LengthMeasurement;
-  weight?: WeightMeasurement;
   customerPartIds?: Record<string, { name: string; bpnl: string }>; // e.g., { "CUSTOMER_BPNL_XYZ": { name: "BMW", bpnl: "BPNL00000003CRHK" } }
+  extraMetadata?: Record<string, any>; // Generic JSON field
 }
 
 export interface DiscoveryPartType {
