@@ -167,7 +167,9 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         """
         Reload known_connectors from the DB and restore them to memory.
         """
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (_load_from_db)")
         with self._lock:
+            self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (_load_from_db)")
             try:
                 loaded_bpns = 0
                 with Session(self.engine) as session:
@@ -202,12 +204,15 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
             except SQLAlchemyError as e:
                 if self.logger and self.verbose:
                     self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error loading from db: {e}")
-          
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Released lock (_load_from_db)")
+
     def _save_to_db(self):
         """
         Persist current in-memory known_connectors to the DB only if changes are detected.
         """
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (_save_to_db)")
         with self._lock:
+            self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (_save_to_db)")
             current_hash = hashlib.sha256(json.dumps(self.known_connectors, sort_keys=True, default=str).encode()).hexdigest()
             if current_hash == self._last_saved_hash:
                 return
@@ -239,6 +244,7 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
             except SQLAlchemyError as e:
                 if self.logger and self.verbose:
                     self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error saving to db: {e}")
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Released lock (_save_to_db)")
 
     def stop(self):
         """
