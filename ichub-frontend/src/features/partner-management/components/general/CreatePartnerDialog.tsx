@@ -28,6 +28,7 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { PartnerDialogProps } from '../../types/dialog-types';
 import { createPartner } from '../../api';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDialogProps) => {
   const [name, setName] = useState('');
@@ -35,6 +36,8 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
+
+  useEscapeDialog(onClose, open);
 
   // Load partner data if it exists (edit mode)
   useEffect(() => {
@@ -164,6 +167,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
   return (
     <Dialog 
       open={open} 
+      onClose={onClose}
       maxWidth={false}
       fullWidth
       PaperProps={{
@@ -196,9 +200,13 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
         onClick={onClose}
         sx={(theme) => ({
           position: 'absolute',
-          right: 8,
-          top: 8,
+          right: 21,
+          top: 21,
           color: theme.palette.primary.contrastText,
+          zIndex: 1,
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }
         })}
       >
         <CloseIcon />

@@ -42,9 +42,12 @@ import {
   Collapse,
   CircularProgress,
   InputAdornment,
+  Autocomplete,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -59,6 +62,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import PinDrop from "@mui/icons-material/PinDrop";
 import TagIcon from "@mui/icons-material/Tag";
 import DriveFileRenameOutlineIcon from "@mui/icons-material/DriveFileRenameOutline";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import HeightIcon from "@mui/icons-material/Height";
 import LinearScaleIcon from "@mui/icons-material/LinearScale";
@@ -71,6 +75,7 @@ import {
 } from "../../types/types";
 import { mapPartInstanceToApiPartData } from "../../utils/utils";
 import { getParticipantId } from "../../../../services/EnvironmentService";
+import { useEscapeDialog } from "../../../../hooks/useEscapeKey";
 
 // Define props for ProductListDialog
 interface ProductListDialogProps {
@@ -83,6 +88,48 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
   const manufacturerId = getParticipantId();
   const lengthUnits = Object.values(LengthUnit);
   const weightUnits = Object.values(WeightUnit);
+
+  const categoryOptions = [
+    'Mechanical Component',
+    'Electronic Sensor',
+    'Body Part'
+  ];
+
+  const fieldDescriptions = {
+    basicInformation: "Essential identifying information for the catalog part including ID, name, description, category, and manufacturing location.",
+    manufacturerPartId: "Unique identifier assigned by the manufacturer to this specific part. This ID should be unique within your organization.",
+    name: "Commercial or technical name of the part. This will be displayed as the main identifier in catalogs and listings.",
+    description: "Detailed description of the part including its purpose, functionality, and key characteristics. This helps users understand what the part is for.",
+    category: "Classification category that groups similar parts together. Select from common categories or create your own custom category.",
+    bpns: "Business Partner Number Site - identifies the specific manufacturing location or site where this part is produced.",
+    dimensions: "Physical measurements of the part including width, height, length, and weight. These help with compatibility and logistics planning.",
+    materials: "Material composition of the part with percentage breakdown. This information is crucial for recycling, compatibility, and regulatory compliance.",
+    materialDistribution: "Visual representation of material composition showing the percentage distribution of different materials used in this part.",
+    materialName: "Name of the specific material used in this part (e.g., Steel, Aluminum, Plastic, etc.)",
+    materialShare: "Percentage or proportion of this material in the overall composition of the part. All material shares should add up to 100%."
+  };
+
+  const FieldLabelWithTooltip = ({ label, tooltip }: { label: string; tooltip: string }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: '600', color: 'text.primary' }}>
+        {label}
+      </Typography>
+      <Tooltip 
+        title={tooltip} 
+        arrow 
+        placement="top-start"
+        sx={{ cursor: 'help' }}
+      >
+        <InfoOutlinedIcon 
+          sx={{ 
+            fontSize: '16px', 
+            color: 'text.secondary',
+            '&:hover': { color: 'primary.main' }
+          }} 
+        />
+      </Tooltip>
+    </Box>
+  );
 
   const [formData, setFormData] = useState<Omit<PartType, "status">>({
     manufacturerId: manufacturerId,
@@ -103,6 +150,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
   const [isLoading, setIsLoading] = useState(false);
   const [expandedMaterial, setExpandedMaterial] = useState<number | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+
+  useEscapeDialog(onClose, open);
 
   useEffect(() => {
     if (open) {
@@ -263,6 +312,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
   return (
     <Dialog 
       open={open} 
+      onClose={onClose}
       maxWidth={false}
       fullWidth
       PaperProps={{
@@ -285,11 +335,28 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           backgroundColor: 'primary.main',
           color: 'primary.contrastText',
           fontSize: '1.25rem',
-          fontWeight: 600
+          fontWeight: 600,
+          position: 'relative'
         }}
       >
         Create New Catalog Part
       </DialogTitle>
+      <IconButton
+        aria-label="close"
+        onClick={onClose}
+        sx={(theme) => ({
+          position: 'absolute',
+          right: 21,
+          top: 21,
+          color: theme.palette.primary.contrastText,
+          zIndex: 1,
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }
+        })}
+      >
+        <CloseIcon />
+      </IconButton>
       
       <DialogContent ref={contentRef} sx={{ 
         p: 3, 
@@ -389,18 +456,25 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               }}>
                 Basic Information
               </Typography>
+              <Tooltip title={fieldDescriptions.basicInformation} placement="top">
+                <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
+              </Tooltip>
             </Box>
           </Grid2>
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
+            <FieldLabelWithTooltip 
+              label="Manufacturer Part ID *" 
+              tooltip={fieldDescriptions.manufacturerPartId} 
+            />
             <TextField
-              label="Manufacturer Part ID"
               value={formData.manufacturerPartId}
               onChange={(e) => handleChange("manufacturerPartId", e.target.value)}
               fullWidth
               required
               variant="outlined"
               size="medium"
+              placeholder="Enter unique part identifier"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -412,14 +486,18 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           </Grid2>
           
           <Grid2 size={{ xs: 12, sm: 6 }}>
+            <FieldLabelWithTooltip 
+              label="Part Name *" 
+              tooltip={fieldDescriptions.name} 
+            />
             <TextField
-              label="Part Name"
               value={formData.name}
               onChange={(e) => handleChange("name", e.target.value)}
               fullWidth
               required
               variant="outlined"
               size="medium"
+              placeholder="Enter part name"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -431,8 +509,11 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           </Grid2>
 
           <Grid2 size={12}>
+            <FieldLabelWithTooltip 
+              label="Description" 
+              tooltip={fieldDescriptions.description} 
+            />
             <TextField
-              label="Description"
               value={formData.description}
               onChange={(e) => handleChange("description", e.target.value)}
               fullWidth
@@ -440,6 +521,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               rows={3}
               variant="outlined"
               size="medium"
+              placeholder="Describe the part's purpose, functionality, and key characteristics"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 2 }}>
@@ -459,31 +541,64 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           </Grid2>
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
-            <TextField
-              label="Category"
+            <FieldLabelWithTooltip 
+              label="Category" 
+              tooltip={fieldDescriptions.category} 
+            />
+            <Autocomplete
+              options={categoryOptions}
               value={formData.category}
-              onChange={(e) => handleChange("category", e.target.value)}
+              onChange={(_, newValue) => handleChange("category", newValue || "")}
+              freeSolo
               fullWidth
-              variant="outlined"
-              size="medium"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <CategoryIcon color="action" />
-                  </InputAdornment>
-                ),
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  size="medium"
+                  placeholder="Select or enter a category"
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <CategoryIcon color="action" />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'background.default',
+                  '& fieldset': {
+                    borderColor: 'divider',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'primary.main',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'primary.main',
+                  }
+                }
               }}
             />
           </Grid2>
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
+            <FieldLabelWithTooltip 
+              label="BPNS" 
+              tooltip={fieldDescriptions.bpns} 
+            />
             <TextField
-              label="BPNS"
               value={formData.bpns}
               onChange={(e) => handleChange("bpns", e.target.value)}
               fullWidth
               variant="outlined"
               size="medium"
+              placeholder="Business Partner Number Site"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -505,6 +620,20 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               }}>
                 Measurements
               </Typography>
+              <Tooltip 
+                title={fieldDescriptions.dimensions} 
+                arrow 
+                placement="top-start"
+                sx={{ cursor: 'help' }}
+              >
+                <InfoOutlinedIcon 
+                  sx={{ 
+                    fontSize: '18px', 
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' }
+                  }} 
+                />
+              </Tooltip>
             </Box>
           </Grid2>
 
@@ -667,6 +796,9 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               }}>
                 Materials
               </Typography>
+              <Tooltip title={fieldDescriptions.materials} placement="top">
+                <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
+              </Tooltip>
             </Box>
           </Grid2>
 
@@ -677,7 +809,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 <Grid2 container spacing={2} alignItems="center">
                   <Grid2 size={{ xs: 12, sm: 5 }}>
                     <TextField
-                      label="Material Name"
+                      label={<FieldLabelWithTooltip label="Material Name" tooltip={fieldDescriptions.materialName} />}
                       value={material.name}
                       onChange={(e) => handleMaterialChange(index, "name", e.target.value)}
                       fullWidth
@@ -755,7 +887,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                     <Collapse in={expandedMaterial === index}>
                       <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                         <TextField
-                          label="Exact Share (%)"
+                          label={<FieldLabelWithTooltip label="Exact Share (%)" tooltip={fieldDescriptions.materialShare} />}
                           type="number"
                           value={material.share === 0 ? "" : material.share}
                           onChange={(e) => handleMaterialChange(index, "share", e.target.value)}
@@ -848,6 +980,9 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 }}>
                   Material Distribution
                 </Typography>
+                <Tooltip title={fieldDescriptions.materialDistribution} placement="top">
+                  <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
+                </Tooltip>
               </Box>
               {formData.materials.some(m => m.name.trim() && m.share > 0) ? (
                 <PieChart

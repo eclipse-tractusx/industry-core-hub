@@ -1,0 +1,20 @@
+meta {
+  name: Submodel Dispatcher Upload Submodel
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/v1/submodel-dispatcher/:semantic_id/:global_id/submodel
+  body: json
+  auth: inherit
+}
+
+params:path {
+  semantic_id: 
+  global_id: 
+}
+
+body:json {
+  {}
+}

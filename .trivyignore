@@ -1,0 +1,12 @@
+# Trivy Ignore File
+# This file contains vulnerabilities that are known and accepted risks
+# or have been reviewed and determined to be false positives
+
+# CVE-2024-23342 - ecdsa Minerva Attack Vulnerability
+# Status: No patch available as of October 2025
+# Risk Assessment: Requires sophisticated timing analysis to exploit
+# Dependency Chain: tractusx-sdk -> keycloak -> python-jose -> ecdsa
+# Mitigation: Monitor for updates, implement network security controls
+# Review Date: 2025-10-14
+# Next Review: When patch becomes available
+CVE-2024-23342

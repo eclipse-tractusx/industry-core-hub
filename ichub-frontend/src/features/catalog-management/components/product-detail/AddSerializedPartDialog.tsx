@@ -44,6 +44,7 @@ import { fetchPartners } from '../../../partner-management/api';
 import { PartnerInstance } from '../../../partner-management/types/types';
 import { PartnerAutocomplete } from '../../../partner-management/components';
 import { AxiosError } from '../../../../types/axiosError';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     const [formData, setFormData] = useState({
@@ -65,6 +66,8 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
         severity: 'success' | 'error';
         title: string;
     } | null>(null);
+
+    useEscapeDialog(onClose, open);
 
     // Fetch partners on component mount
     useEffect(() => {
@@ -105,6 +108,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
     return (
         <Dialog 
             open={open} 
+            onClose={onClose}
             maxWidth="md" 
             fullWidth
             PaperProps={{
@@ -134,9 +138,13 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                 onClick={onClose}
                 sx={(theme) => ({
                     position: 'absolute',
-                    right: 8,
-                    top: 8,
+                    right: 21,
+                    top: 21,
                     color: theme.palette.grey[500],
+                    zIndex: 1,
+                    '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
                 })}
                 >
                 <CloseIcon />

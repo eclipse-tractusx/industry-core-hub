@@ -1,0 +1,21 @@
+meta {
+  name: Twin Management Create Serialized Part Twin
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/twin-management/serialized-part-twin
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "globalId": "",
+    "dtrAasId": "",
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "partInstanceId": ""
+  }
+}

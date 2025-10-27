@@ -50,6 +50,10 @@ import { PartnerInstance } from '../../partner-management/types/types';
 import { PartnerAutocomplete } from '../../partner-management/components';
 import { AxiosError } from '../../../types/axiosError';
 import { getParticipantId } from '../../../services/EnvironmentService';
+import { useEscapeDialog } from '../../../hooks/useEscapeKey';
+import { fetchCatalogParts } from '../../catalog-management/api';
+import { ApiPartData } from '../../catalog-management/types/types';
+import Autocomplete from '@mui/material/Autocomplete';
 
 interface AddSerializedPartDialogProps {
     open: boolean;
@@ -82,6 +86,8 @@ interface AddSerializedPartDialogProps {
     const [showCustomerPartIdField, setShowCustomerPartIdField] = useState(false);
     const [partners, setPartners] = useState<PartnerInstance[]>([]);
     const [selectedPartner, setSelectedPartner] = useState<PartnerInstance | null>(null);
+    const [catalogParts, setCatalogParts] = useState<ApiPartData[]>([]);
+    const [manufacturerPartIdOptions, setManufacturerPartIdOptions] = useState<string[]>([]);
 
     const [notification, setNotification] = useState<{
         open: boolean;
@@ -89,7 +95,8 @@ interface AddSerializedPartDialogProps {
         title: string;
     } | null>(null);
 
-    // Fetch partners on component mount
+    useEscapeDialog(onClose, open);
+
     useEffect(() => {
         const loadPartners = async () => {
             try {
@@ -99,7 +106,24 @@ interface AddSerializedPartDialogProps {
                 console.error('Failed to fetch partners:', error);
             }
         };
+
+        const loadCatalogParts = async () => {
+            try {
+                const catalogPartsData = await fetchCatalogParts();
+                setCatalogParts(catalogPartsData);
+                
+                // Extract unique manufacturer part IDs for autocomplete
+                const uniquePartIds = Array.from(
+                    new Set(catalogPartsData.map(part => part.manufacturerPartId))
+                ).filter(partId => partId.trim() !== '');
+                setManufacturerPartIdOptions(uniquePartIds);
+            } catch (error) {
+                console.error('Failed to fetch catalog parts:', error);
+            }
+        };
+
         loadPartners();
+        loadCatalogParts();
     }, []);
 
     // Reset form when dialog opens or closes
@@ -149,6 +173,18 @@ interface AddSerializedPartDialogProps {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validate that manufacturerPartId is not empty
+        if (!formData.manufacturerPartId.trim()) {
+            setNotification({
+                open: true,
+                severity: 'error',
+                title: 'Manufacturer Part ID is required and cannot be empty',
+            });
+            setTimeout(() => setNotification(null), 6000);
+            return;
+        }
+        
         try {
             await addSerializedPart(formData, false); // First try without auto-generation
             setNotification({
@@ -237,6 +273,7 @@ interface AddSerializedPartDialogProps {
     return (
         <Dialog 
             open={open} 
+            onClose={onClose}
             maxWidth="md" 
             fullWidth
             PaperProps={{
@@ -270,9 +307,13 @@ interface AddSerializedPartDialogProps {
                 onClick={onClose}
                 sx={(theme) => ({
                     position: 'absolute',
-                    right: 8,
-                    top: 8,
+                    right: 21,
+                    top: 21,
                     color: theme.palette.grey[500],
+                    zIndex: 1,
+                    '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
                 })}
                 >
                 <CloseIcon />
@@ -344,14 +385,37 @@ interface AddSerializedPartDialogProps {
                         </Grid>
                         
                         <Grid item xs={12}>
-                            <TextField
-                                label="Manufacturer Part ID"
+                            <Autocomplete
+                                options={manufacturerPartIdOptions}
                                 value={formData.manufacturerPartId}
-                                onChange={(e) => setFormData({ ...formData, manufacturerPartId: e.target.value })}
+                                onChange={(_, newValue) => setFormData({ ...formData, manufacturerPartId: newValue || '' })}
+                                freeSolo
                                 fullWidth
-                                required
-                                variant="outlined"
-                                size="medium"
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Manufacturer Part ID"
+                                        required
+                                        variant="outlined"
+                                        size="medium"
+                                        placeholder="Select or enter a manufacturer part ID"
+                                        helperText="Select from existing catalog parts or enter a new one"
+                                    />
+                                )}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'background.default',
+                                        '& fieldset': {
+                                            borderColor: 'divider',
+                                        },
+                                        '&:hover fieldset': {
+                                            borderColor: 'primary.main',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: 'primary.main',
+                                        }
+                                    }
+                                }}
                             />
                         </Grid>
                         

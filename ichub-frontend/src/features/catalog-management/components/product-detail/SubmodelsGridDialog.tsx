@@ -45,6 +45,7 @@ import {
 import { CatalogPartTwinDetailsRead } from '../../types/twin-types';
 import SubmodelCard from './SubmodelCard';
 import DarkSubmodelViewer from './DarkSubmodelViewer';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 interface SubmodelsGridDialogProps {
     open: boolean;
@@ -113,6 +114,8 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
     const [selectedSubmodelId, setSelectedSubmodelId] = useState<string>('');
     const [selectedSemanticId, setSelectedSemanticId] = useState<string>('');
     const [submodelViewerOpen, setSubmodelViewerOpen] = useState(false);
+
+    useEscapeDialog(onClose, open);
 
     const handleViewSubmodelDetails = (
         submodel: {

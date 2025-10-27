@@ -82,9 +82,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -289,9 +287,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -351,9 +347,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -415,9 +409,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -478,9 +470,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -560,9 +550,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -629,9 +617,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -838,9 +824,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -901,9 +885,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -971,9 +953,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1042,9 +1022,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1113,9 +1091,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1138,9 +1114,7 @@ paths:
           required: false
           schema:
             type: boolean
-            description: >-
-              Automatically create part type information submodel if not
-              present.
+            description: Automatically create part type information submodel if not present.
             default: true
             title: Autocreateparttypeinformation
           description: Automatically create part type information submodel if not present.
@@ -1188,9 +1162,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1259,9 +1231,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1336,9 +1306,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1403,9 +1371,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1522,9 +1488,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1597,9 +1561,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1668,9 +1630,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1731,9 +1691,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1798,9 +1756,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -1905,7 +1861,8 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
+              - type: object
+                nullable: true
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -1915,14 +1872,11 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
-            description: >-
-              The contract agreement id of the consumer delivered by the EDC
-              Data Plane
+              - type: object
+                nullable: true
+            description: The contract agreement id of the consumer delivered by the EDC Data Plane
             title: Edc-Contract-Agreement-Id
-          description: >-
-            The contract agreement id of the consumer delivered by the EDC Data
-            Plane
+          description: The contract agreement id of the consumer delivered by the EDC Data Plane
       responses:
         '200':
           description: Successful Response
@@ -1965,9 +1919,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2005,7 +1957,8 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
+              - type: object
+                nullable: true
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -2015,14 +1968,11 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
-            description: >-
-              The contract agreement id of the consumer delivered by the EDC
-              Data Plane
+              - type: object
+                nullable: true
+            description: The contract agreement id of the consumer delivered by the EDC Data Plane
             title: Edc-Contract-Agreement-Id
-          description: >-
-            The contract agreement id of the consumer delivered by the EDC Data
-            Plane
+          description: The contract agreement id of the consumer delivered by the EDC Data Plane
       responses:
         '200':
           description: Successful Response
@@ -2066,9 +2016,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2142,9 +2090,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2209,9 +2155,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2249,7 +2193,8 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
+              - type: object
+                nullable: true
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -2259,14 +2204,11 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: 'null'
-            description: >-
-              The contract agreement id of the consumer delivered by the EDC
-              Data Plane
+              - type: object
+                nullable: true
+            description: The contract agreement id of the consumer delivered by the EDC Data Plane
             title: Edc-Contract-Agreement-Id
-          description: >-
-            The contract agreement id of the consumer delivered by the EDC Data
-            Plane
+          description: The contract agreement id of the consumer delivered by the EDC Data Plane
       responses:
         '200':
           description: Successful Response
@@ -2310,9 +2252,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2373,9 +2313,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: >-
-            Bad Gateway - The server received an invalid response from the
-            upstream server.
+          description: Bad Gateway - The server received an invalid response from the upstream server.
           content:
             application/json:
               schema:
@@ -2829,19 +2767,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Description
           description: The decription of the part.
         materials:
@@ -2849,7 +2790,8 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -2858,33 +2800,36 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
       type: object
       required:
@@ -2911,19 +2856,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Description
           description: The decription of the part.
         materials:
@@ -2931,7 +2879,8 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -2940,33 +2889,36 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
       type: object
       required:
@@ -2995,13 +2947,15 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
       type: object
@@ -3018,16 +2972,16 @@ components:
           anyOf:
             - type: string
               format: uuid
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Globalid
-          description: >-
-            Optionally the Catena-X ID / global ID of the digital twin to
-            create. If not specified, a new UUID will be created automatically.
+          description: Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.
         dtrAasId:
           anyOf:
             - type: string
               format: uuid
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Dtraasid
           description: >-
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
@@ -3061,34 +3015,28 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Additionalcontext
-          description: >-
-            Additional context information about the digital twin. This can
-            include various metadata or properties associated with the twin.
-            Intended for handling twins by third party apps.
+          description: Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.
         registrations:
           anyOf:
             - additionalProperties:
                 type: boolean
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Registrations
-          description: >-
-            A map of registration information for the digital twin in different
-            enablement service stacks. The key is the name of the enablement
-            service stack.
+          description: A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.
         aspects:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Aspects
-          description: >-
-            A map of aspect information for the digital twin. The key is the
-            semantic ID of the aspect. The value is a TwinAspectRead object
-            containing details about the aspect.
+          description: A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.
         globalId:
           type: string
           format: uuid
@@ -3098,9 +3046,7 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: >-
-            The shell descriptor ID ('AAS ID') of the digital twin in the
-            Digital Twin Registry.
+          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -3116,7 +3062,8 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         manufacturerId:
@@ -3134,19 +3081,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Description
           description: The decription of the part.
         materials:
@@ -3154,7 +3104,8 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -3163,33 +3114,36 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
       type: object
       required:
@@ -3201,9 +3155,7 @@ components:
         - manufacturerPartId
         - name
       title: CatalogPartTwinDetailsRead
-      description: >-
-        Represents the details of a catalog part twin within the Digital Twin
-        Registry.
+      description: Represents the details of a catalog part twin within the Digital Twin Registry.
     CatalogPartTwinRead:
       properties:
         globalId:
@@ -3215,9 +3167,7 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: >-
-            The shell descriptor ID ('AAS ID') of the digital twin in the
-            Digital Twin Registry.
+          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -3233,7 +3183,8 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         manufacturerId:
@@ -3251,19 +3202,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Description
           description: The decription of the part.
         materials:
@@ -3271,7 +3225,8 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -3280,33 +3235,36 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
       type: object
       required:
@@ -3324,9 +3282,7 @@ components:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: >-
-            The business partner number of the business partner with which the
-            catalog part is shared.
+          description: The business partner number of the business partner with which the catalog part is shared.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -3429,9 +3385,7 @@ components:
         name:
           type: string
           title: Name
-          description: >-
-            The unique name of the data exchange agreement with the given
-            business partner.
+          description: The unique name of the data exchange agreement with the given business partner.
         contracts:
           items:
             $ref: '#/components/schemas/DataExchangeContractRead'
@@ -3454,9 +3408,7 @@ components:
         edcUsagePolicyId:
           type: string
           title: Edcusagepolicyid
-          description: >-
-            The ID of the EDC usage policy for the background generated EDC
-            contract negotion
+          description: The ID of the EDC usage policy for the background generated EDC contract negotion
       type: object
       required:
         - semanticId
@@ -3691,31 +3643,36 @@ components:
         verify:
           anyOf:
             - type: boolean
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Verify
           default: false
         headers:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Headers
           default: {}
         timeout:
           anyOf:
             - type: integer
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Timeout
         params:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Params
         allow_redirects:
           anyOf:
             - type: boolean
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Allow Redirects
           default: false
       type: object
@@ -3752,7 +3709,8 @@ components:
           anyOf:
             - items: {}
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Policies
         verify:
           type: boolean
@@ -3762,12 +3720,14 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Headers
         timeout:
           anyOf:
             - type: integer
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Timeout
         allow_redirects:
           type: boolean
@@ -3836,9 +3796,7 @@ components:
         customerPartId:
           type: string
           title: Customerpartid
-          description: >-
-            The customer part ID for partner specific mapping of the catalog
-            part.
+          description: The customer part ID for partner specific mapping of the catalog part.
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
@@ -3863,9 +3821,7 @@ components:
         customerPartId:
           type: string
           title: Customerpartid
-          description: >-
-            The customer part ID for partner specific mapping of the catalog
-            part.
+          description: The customer part ID for partner specific mapping of the catalog part.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -3881,13 +3837,15 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         businessPartner:
@@ -3937,13 +3895,15 @@ components:
         van:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
         customerPartId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartid
           description: The customer part ID of the part.
         name:
@@ -3976,37 +3936,43 @@ components:
         manufacturerId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Manufacturerid
           description: The BPNL (manufactuer ID) of the part to register.
         manufacturerPartId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Manufacturerpartid
           description: The manufacturer part ID of the part.
         businessPartnerNumber:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Businesspartnernumber
           description: The unique BPNL of the business partner.
         customerPartId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartid
           description: The customer part ID of the part.
         partInstanceId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Partinstanceid
           description: The part instance ID of the serialized part.
         van:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4016,9 +3982,7 @@ components:
         customerPartId:
           type: string
           title: Customerpartid
-          description: >-
-            The customer part ID for partner specific mapping of the catalog
-            part.
+          description: The customer part ID for partner specific mapping of the catalog part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4041,19 +4005,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         van:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4071,16 +4038,16 @@ components:
           anyOf:
             - type: string
               format: uuid
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Globalid
-          description: >-
-            Optionally the Catena-X ID / global ID of the digital twin to
-            create. If not specified, a new UUID will be created automatically.
+          description: Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.
         dtrAasId:
           anyOf:
             - type: string
               format: uuid
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Dtraasid
           description: >-
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
@@ -4119,34 +4086,28 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Additionalcontext
-          description: >-
-            Additional context information about the digital twin. This can
-            include various metadata or properties associated with the twin.
-            Intended for handling twins by third party apps.
+          description: Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.
         registrations:
           anyOf:
             - additionalProperties:
                 type: boolean
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Registrations
-          description: >-
-            A map of registration information for the digital twin in different
-            enablement service stacks. The key is the name of the enablement
-            service stack.
+          description: A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.
         aspects:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Aspects
-          description: >-
-            A map of aspect information for the digital twin. The key is the
-            semantic ID of the aspect. The value is a TwinAspectRead object
-            containing details about the aspect.
+          description: A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.
         globalId:
           type: string
           format: uuid
@@ -4156,9 +4117,7 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: >-
-            The shell descriptor ID ('AAS ID') of the digital twin in the
-            Digital Twin Registry.
+          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4174,15 +4133,14 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         customerPartId:
           type: string
           title: Customerpartid
-          description: >-
-            The customer part ID for partner specific mapping of the catalog
-            part.
+          description: The customer part ID for partner specific mapping of the catalog part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4205,19 +4163,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Description
           description: The decription of the part.
         materials:
@@ -4225,7 +4186,8 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -4234,38 +4196,42 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
         van:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4281,9 +4247,7 @@ components:
         - partInstanceId
         - name
       title: SerializedPartTwinDetailsRead
-      description: >-
-        Represents the details of a serialized part twin within the Digital Twin
-        Registry.
+      description: Represents the details of a serialized part twin within the Digital Twin Registry.
     SerializedPartTwinRead:
       properties:
         globalId:
@@ -4295,9 +4259,7 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: >-
-            The shell descriptor ID ('AAS ID') of the digital twin in the
-            Digital Twin Registry.
+          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4313,15 +4275,14 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         customerPartId:
           type: string
           title: Customerpartid
-          description: >-
-            The customer part ID for partner specific mapping of the catalog
-            part.
+          description: The customer part ID for partner specific mapping of the catalog part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4344,19 +4305,22 @@ components:
         category:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         van:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4497,44 +4461,36 @@ components:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: >-
-            The business partner number of the business partner with which the
-            catalog part is shared.
+          description: The business partner number of the business partner with which the catalog part is shared.
         customerPartId:
           anyOf:
             - type: string
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartid
-          description: >-
-            The customer part ID which will be mapped to the respective Business
-            Partner
+          description: The customer part ID which will be mapped to the respective Business Partner
       type: object
       required:
         - manufacturerId
         - manufacturerPartId
         - businessPartnerNumber
       title: ShareCatalogPart
-      description: >-
-        Class that stores the information required by request in the sharing
-        functionalit, for catalog parts
+      description: Class that stores the information required by request in the sharing functionalit, for catalog parts
     SharedPartBase:
       properties:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: >-
-            The business partner number of the business partner with which the
-            catalog part is shared.
+          description: The business partner number of the business partner with which the catalog part is shared.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Customerpartids
-          description: >-
-            The list of customer part IDs mapped to the respective Business
-            Partners.
+          description: The list of customer part IDs mapped to the respective Business Partners.
           default: {}
         sharedAt:
           type: string
@@ -4544,7 +4500,8 @@ components:
         twin:
           anyOf:
             - $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
-            - type: 'null'
+            - type: object
+              nullable: true
           description: The digital twin created for part that was shared.
       type: object
       required:
@@ -4566,33 +4523,24 @@ components:
           type: string
           format: uuid
           title: Globalid
-          description: >-
-            The Catena-X ID / global ID of the digital twin to which the new
-            aspect belongs.
+          description: The Catena-X ID / global ID of the digital twin to which the new aspect belongs.
         semanticId:
           type: string
           title: Semanticid
-          description: >-
-            The semantic ID of the new aspect determining the structure of the
-            associated payload data.
+          description: The semantic ID of the new aspect determining the structure of the associated payload data.
         submodelId:
           anyOf:
             - type: string
               format: uuid
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Submodelid
-          description: >-
-            The optional ID of the submodel descriptor within the DTR shell
-            descriptor for the associated twin. If not specified, a new UUID
-            will be created automatically.
+          description: The optional ID of the submodel descriptor within the DTR shell descriptor for the associated twin. If not specified, a new UUID will be created automatically.
         payload:
           additionalProperties: true
           type: object
           title: Payload
-          description: >-
-            The payload data of the new aspect. This is a JSON object that
-            contains the actual data of the aspect. The structure of this object
-            is determined by the semantic ID of the aspect.
+          description: The payload data of the new aspect. This is a JSON object that contains the actual data of the aspect. The structure of this object is determined by the semantic ID of the aspect.
       type: object
       required:
         - globalId
@@ -4604,27 +4552,21 @@ components:
         semanticId:
           type: string
           title: Semanticid
-          description: >-
-            The semantic ID of the aspect determining the structure of the
-            associated payload data.
+          description: The semantic ID of the aspect determining the structure of the associated payload data.
         submodelId:
           type: string
           format: uuid
           title: Submodelid
-          description: >-
-            The ID of the submodel descriptor within the DTR shell descriptor
-            for the associated twin.
+          description: The ID of the submodel descriptor within the DTR shell descriptor for the associated twin.
         registrations:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRegistration'
               type: object
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Registrations
-          description: >-
-            A map of registration information for the aspect in different
-            enablement service stacks. The key is the name of the enablement
-            service stack.
+          description: A map of registration information for the aspect in different enablement service stacks. The key is the name of the enablement service stack.
           default: {}
       type: object
       required:
@@ -4636,9 +4578,7 @@ components:
         enablementServiceStackName:
           type: string
           title: Enablementservicestackname
-          description: >-
-            The name of the enablement service stack where the twin aspect is
-            registered.
+          description: The name of the enablement service stack where the twin aspect is registered.
         status:
           $ref: '#/components/schemas/TwinAspectRegistrationStatus'
           description: The current status of the aspect registration process.
@@ -4663,9 +4603,7 @@ components:
         - createdDate
         - modifiedDate
       title: TwinAspectRegistration
-      description: >-
-        Represents the registration of a twin aspect within an enablement
-        service stack.
+      description: Represents the registration of a twin aspect within an enablement service stack.
     TwinAspectRegistrationStatus:
       type: integer
       enum:
@@ -4674,9 +4612,7 @@ components:
         - 2
         - 3
       title: TwinAspectRegistrationStatus
-      description: >-
-        An enumeration of potential status values when a twin aspect is
-        registered within the system
+      description: An enumeration of potential status values when a twin aspect is registered within the system
     TwinRead:
       properties:
         globalId:
@@ -4688,9 +4624,7 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: >-
-            The shell descriptor ID ('AAS ID') of the digital twin in the
-            Digital Twin Registry.
+          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4706,7 +4640,8 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: 'null'
+            - type: object
+              nullable: true
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
       type: object
@@ -4724,9 +4659,7 @@ components:
         - 1
         - 2
       title: TwinsAspectRegistrationMode
-      description: >-
-        An enumeration of potential possibilities how to provide aspects as
-        assets wihtin the Eclipse Dataspace Connector
+      description: An enumeration of potential possibilities how to provide aspects as assets wihtin the Eclipse Dataspace Connector
     Unit:
       type: string
       enum:
@@ -4759,24 +4692,15 @@ components:
       title: ValidationError
 tags:
   - name: Part Management
-    description: >-
-      Management of part metadata - including catalog parts, serialized parts,
-      JIS parts and batches
+    description: Management of part metadata - including catalog parts, serialized parts, JIS parts and batches
   - name: Sharing Functionality
-    description: >-
-      Sharing functionality for catalog part twins - including sharing of parts
-      with business partners and automatic generation of digital twins and
-      submodels
+    description: Sharing functionality for catalog part twins - including sharing of parts with business partners and automatic generation of digital twins and submodels
   - name: Partner Management
-    description: >-
-      Management of master data around business partners - including business
-      partners, data exchange agreements and contracts
+    description: Management of master data around business partners - including business partners, data exchange agreements and contracts
   - name: Twin Management
     description: Management of how product information can be managed and shared
   - name: Submodel Dispatcher
-    description: >-
-      Internal API called by EDC Data Planes or Admins in order the deliver data
-      of of the internal used Submodel Service
+    description: Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service
   - name: Open Connection Management
     description: >-
       Handles the connections from the consumer modules, for specific services
