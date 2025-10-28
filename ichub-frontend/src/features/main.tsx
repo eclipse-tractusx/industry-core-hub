@@ -25,6 +25,7 @@ import { catalogManagementFeature } from './catalog-management/routes';
 import { partDiscoveryFeature } from './part-discovery/routes';
 import { partnerManagementFeature } from './partner-management/routes';
 import { serializedPartsFeature } from './serialized-parts/routes';
+import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '../types/routing';
 
 // Import all feature configurations
@@ -43,6 +44,8 @@ export const allFeatures: FeatureConfig[] = [
   }
 ];
 
+export const kitFeaturesConfig = kitFeaturesFeature;
+
 // Extract just the navigation items for the sidebar (backward compatibility)
 export const features: NavigationItem[] = allFeatures.map(feature => ({
   icon: feature.icon,
@@ -52,5 +55,5 @@ export const features: NavigationItem[] = allFeatures.map(feature => ({
 
 // Get all routes from all features
 export const getAllRoutes = () => {
-  return allFeatures.flatMap(feature => feature.routes);
+return [...allFeatures.flatMap(feature => feature.routes), ...kitFeaturesConfig.routes];
 };

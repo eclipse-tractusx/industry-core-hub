@@ -22,7 +22,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Snackbar, Alert } from '@mui/material';
+import { Button, Snackbar, Alert, Fab } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import { CardChip } from "../components/product-list/CardChip";
 import { StatusVariants } from "../types/types";
@@ -51,6 +51,7 @@ import { SharedPartner } from "../types/types"
 
 import { fetchCatalogPart, fetchCatalogPartTwinDetails } from "../api";
 import { mapApiPartDataToPartType, mapSharePartCustomerPartIds} from "../utils/utils";
+import { useEscapeNavigation } from "../../../hooks/useEscapeKey";
 
 const ProductsDetails = () => {
   const navigate = useNavigate();
@@ -69,6 +70,8 @@ const ProductsDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sharedPartners, setSharedPartners] = useState<SharedPartner[]>([]);
   const [twinDetails, setTwinDetails] = useState<CatalogPartTwinDetailsRead | null>(null);
+
+  useEscapeNavigation(() => navigate('/catalog'), !jsonDialogOpen && !shareDialogOpen && !addSerializedPartDialogOpen && !submodelsGridDialogOpen);
 
   const fetchData = useCallback(async () => {
     if (!manufacturerId || !manufacturerPartId) return;
@@ -272,6 +275,25 @@ const ProductsDetails = () => {
           {notification?.title}
         </Alert>
       </Snackbar>
+
+      {/* Floating back button */}
+      <Fab
+        color="primary"
+        aria-label="back"
+        onClick={() => navigate('/catalog')}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          left: 104,
+          backgroundColor: '#1976d2',
+          color: 'white',
+          '&:hover': {
+            backgroundColor: '#1565c0',
+          },
+        }}
+      >
+        <ArrowBackIcon />
+      </Fab>
     </Box>
   );
 }

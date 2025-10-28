@@ -23,51 +23,89 @@
 
 /* KIT Features Page Styling */
 .kit-features-container {
-  padding: 2rem;
+  padding: 1.5rem;
   max-width: 100%;
   background: #ffffff;
-  min-height: 175vh; /* Altura extendida para cubrir el scroll */
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .kit-features-subtitle {
   color: #2c3e50 !important;
   font-weight: 500 !important;
   font-size: 1.1rem !important;
+  text-align: center;
 }
 
 .kit-card {
   transition: all 0.3s ease;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(25, 118, 210, 0.1);
+  border-radius: 8px;
+  background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  height: 100%;
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(25, 118, 210, 0.2);
-    border-color: rgba(25, 118, 210, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: #d0d0d0;
   }
   
-  &.disabled {
-    opacity: 0.7;
-  }
-  
-  .kit-sidebar {
-    position: relative;
+  .kit-image-container {
+    img, .kit-icon {
+      transition: transform 0.2s ease;
+    }
     
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 2px;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.2);
+    &:hover {
+      img, .kit-icon {
+        transform: scale(1.02);
+      }
     }
   }
   
-  .kit-icon {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  .feature-row {
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+    
+    .feature-info-icon {
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+      
+      &:hover {
+        opacity: 1;
+      }
+    }
+    
+    .feature-switch {
+      .MuiSwitch-track {
+        transition: all 0.2s ease;
+      }
+      
+      .MuiSwitch-thumb {
+        transition: all 0.2s ease;
+      }
+    }
+  }
+  
+  .coming-soon-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    padding: 1rem;
+    
+    .coming-soon-icon {
+      color: #ff9800;
+      margin-bottom: 0.5rem;
+    }
   }
 }
 
@@ -99,31 +137,56 @@
 }
 
 .kit-card-actions {
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  padding: 0;
   
-  .toggle-switch {
-    .MuiSwitch-track {
-      background-color: rgba(0, 0, 0, 0.3);
-    }
+  .manage-features-button {
+    width: 100%;
+    padding: 16px;
+    font-weight: 500;
+    text-transform: none;
+    border-radius: 0;
+    transition: all 0.2s ease;
     
-    .MuiSwitch-thumb {
-      background-color: #ffffff;
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.06);
     }
-    
-    &.Mui-checked {
-      .MuiSwitch-track {
-        background-color: #1976d2;
-      }
-    }
+  }
+}
+
+.kit-features-summary {
+  background: rgba(245, 245, 245, 0.6);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.coming-soon-message {
+  text-align: center;
+  padding: 24px;
+  color: #666;
+  
+  .coming-soon-icon {
+    font-size: 48px;
+    color: #bbb;
+    margin-bottom: 12px;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
   }
 }
 
 .kit-category-tabs {
   margin-bottom: 2rem;
   margin-top: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   
@@ -150,29 +213,18 @@
   }
 }
 
-/* Responsive grid adjustments */
-@media (max-width: 1200px) {
-  .kit-features-grid {
-    .MuiGrid-item {
-      &[data-grid-size="4"] {
-        flex-basis: 50%;
-        max-width: 50%;
-      }
-    }
-  }
-}
-
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .kit-features-grid {
-    .MuiGrid-item {
-      &[data-grid-size="4"] {
-        flex-basis: 100%;
-        max-width: 100%;
-      }
-    }
-  }
-  
   .kit-features-container {
     padding: 1rem;
+  }
+  
+  .kit-card {
+    .kit-image-container {
+      img {
+        width: 100px !important;
+        height: 100px !important;
+      }
+    }
   }
 }

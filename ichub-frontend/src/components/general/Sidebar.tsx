@@ -22,7 +22,8 @@
 
 import { useState, JSX } from "react";
 import { Box } from "@mui/material";
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { kitFeaturesConfig } from '../../features/main';
 
 type SidebarItem = {
   icon: JSX.Element;
@@ -32,19 +33,35 @@ type SidebarItem = {
 
 const Sidebar = ({ items }: { items: SidebarItem[] }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const location = useLocation();
+  const isKitFeaturesActive = location.pathname === kitFeaturesConfig.navigationPath;
 
   return (
     <Box className="sidebarContainer">
-      {items.map((item, index) => (
+      <Box className="regularItems">
+        {items.map((item, index) => (
+          <NavLink
+            to={item.path}
+            key={index}
+            className={`iconButton ${index === activeIndex ? "active" : ""} ${item.disabled === true ? "disabled" : ""}`}
+            onClick={() => setActiveIndex(index)}
+          >
+            {item.icon}
+          </NavLink>
+        ))}
+      </Box>
+      
+      <Box className="fixedItems">
         <NavLink
-          to={item.path}
-          key={index}
-          className={`iconButton ${index === activeIndex ? "active" : ""} ${item.disabled === true ? "disabled" : ""}`}
-          onClick={() => setActiveIndex(index)}
+          to={kitFeaturesConfig.navigationPath}
+          className={`iconButton kitFeaturesButton ${isKitFeaturesActive ? 'active' : ''}`}
+          onClick={() => setActiveIndex(-1)}
         >
-          {item.icon}
+          <Box className={`kitFeaturesIcon ${isKitFeaturesActive ? 'active' : ''}`}>
+            {kitFeaturesConfig.icon}
+          </Box>
         </NavLink>
-      ))}
+      </Box>
     </Box>
   );
 };

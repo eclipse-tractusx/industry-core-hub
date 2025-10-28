@@ -34,6 +34,7 @@ import { PartnerAutocomplete } from '../../../partner-management/components';
 
 import { shareCatalogPart } from '../../api';
 import { fetchPartners } from '../../../partner-management/api';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const title = partData?.name ?? "Part name not obtained";
@@ -48,6 +49,8 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   const [selectedPartner, setSelectedPartner] = useState<PartnerInstance | null>(null);
   const [showCustomPartId, setShowCustomPartId] = useState(false);
   const [customPartId, setCustomPartId] = useState('');
+
+  useEscapeDialog(onClose, open);
 
   useEffect(() => {
     // Reset fields when dialog opens or partData changes
@@ -159,6 +162,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
   return (
     <Dialog 
       open={open} 
+      onClose={onClose}
       maxWidth={false}
       fullWidth
       PaperProps={{
@@ -192,9 +196,13 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
         onClick={onClose}
         sx={(theme) => ({
           position: 'absolute',
-          right: 8,
-          top: 8,
+          right: 21,
+          top: 21,
           color: theme.palette.primary.contrastText,
+          zIndex: 1,
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }
         })}
       >
         <CloseIcon />
