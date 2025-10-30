@@ -85,7 +85,7 @@ try:
 
     # Create EDC headers
     provider_connector_headers = {
-        provider_api_key_header: provider_api_key_header,
+        provider_api_key_header: provider_api_key,
         "Content-Type": "application/json"
     }
 
