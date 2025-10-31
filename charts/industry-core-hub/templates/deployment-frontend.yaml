@@ -69,6 +69,30 @@ spec:
             - name: APP_VERSION
               value: "{{ .Values.frontend.config.version }}"
             
+            # Keycloak configuration
+            - name: KEYCLOAK_URL
+              value: "{{ .Values.frontend.config.keycloak.url }}"
+            - name: KEYCLOAK_REALM
+              value: "{{ .Values.frontend.config.keycloak.realm }}"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "{{ .Values.frontend.config.keycloak.clientId }}"
+            - name: KEYCLOAK_ON_LOAD
+              value: "{{ .Values.frontend.config.keycloak.onLoad }}"
+            - name: KEYCLOAK_CHECK_LOGIN_IFRAME
+              value: "{{ .Values.frontend.config.keycloak.checkLoginIframe }}"
+            - name: KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI
+              value: "{{ .Values.frontend.config.keycloak.silentCheckSsoRedirectUri }}"
+            - name: KEYCLOAK_PKCE_METHOD
+              value: "{{ .Values.frontend.config.keycloak.pkceMethod }}"
+            - name: KEYCLOAK_ENABLE_LOGGING
+              value: "{{ .Values.frontend.config.keycloak.enableLogging }}"
+            - name: KEYCLOAK_MIN_VALIDITY
+              value: "{{ .Values.frontend.config.keycloak.minValidity }}"
+            - name: KEYCLOAK_CHECK_LOGIN_IFRAME_INTERVAL
+              value: "{{ .Values.frontend.config.keycloak.checkLoginIframeInterval }}"
+            - name: KEYCLOAK_FLOW
+              value: "{{ .Values.frontend.config.keycloak.flow }}"
+            
             # API configuration
             - name: ICHUB_BACKEND_URL
               value: "{{ .Values.frontend.config.ichubBackendUrl }}"
@@ -96,6 +120,14 @@ spec:
               value: "{{ .Values.frontend.config.authEnabled }}"
             - name: AUTH_PROVIDER
               value: "{{ .Values.frontend.config.authProvider }}"
+            
+            # Session management
+            - name: AUTH_SESSION_TIMEOUT
+              value: "{{ .Values.frontend.config.authSessionTimeout }}"
+            - name: AUTH_RENEW_TOKEN_MIN_VALIDITY
+              value: "{{ .Values.frontend.config.authRenewTokenMinValidity }}"
+            - name: AUTH_LOGOUT_REDIRECT_URI
+              value: "{{ .Values.frontend.config.authLogoutRedirectUri }}"
             
             # Participant configuration
             - name: PARTICIPANT_ID

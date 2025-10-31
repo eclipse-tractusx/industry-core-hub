@@ -105,6 +105,54 @@
         "access.token.lifespan": "1800",
         "client.secret.creation.time": "1735724400"
       }
+    },
+    {
+      "id": "ichub-frontend-client-002",
+      "clientId": "industry-core-hub-frontend",
+      "name": "Industry Core Hub Frontend Client",
+      "description": "Public OAuth2 client for Industry Core Hub Frontend Application",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "consentRequired": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://ichub-frontend.tx.test/*",
+        "http://industry-core-hub-frontend.tx.test/*",
+        "http://localhost:5173/*",
+        "*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://ichub-frontend.tx.test",
+        "http://industry-core-hub-frontend.tx.test",
+        "http://localhost:5173",
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ],
+      "attributes": {
+        "access.token.lifespan": "1800",
+        "post.logout.redirect.uris": "http://localhost:3000/*##http://ichub-frontend.tx.test/*##http://industry-core-hub-frontend.tx.test/*##http://localhost:5173/*",
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ]
 }

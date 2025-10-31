@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2025 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -24,13 +25,24 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { theme } from './theme/theme.ts'
 import { ThemeProvider } from '@mui/material/styles';
+import AuthProvider from './components/auth/AuthProvider.tsx'
+import environmentService from './services/EnvironmentService';
 
 import App from './App.tsx'
+
+// Check if authentication is enabled
+const isAuthEnabled = environmentService.isAuthEnabled();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <App />
+      {isAuthEnabled ? (
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      ) : (
+        <App />
+      )}
     </ThemeProvider>
   </StrictMode>,
 )

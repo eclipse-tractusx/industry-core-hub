@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2025 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -25,12 +26,16 @@ import Grid2 from '@mui/material/Grid2';
 import Header from '../components/general/Header';
 import Sidebar from '../components/general/Sidebar';
 import AdditionalSidebar from '../components/general/AdditionalSidebar';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { SidebarProvider } from '../contexts/SidebarContext';
 import { AdditionalSidebarProvider } from '../contexts/AdditionalSidebarContext';
 import { features } from '../features/main';
+import { isAuthEnabled } from '../services/EnvironmentService';
 
 function MainLayoutContent() {
-  return (
+  const authEnabled = isAuthEnabled();
+  
+  const content = (
     <Grid2 container className="contentWrapper" size={12}>
       <Grid2 size={12} className="headerArea">
         <Header/>
@@ -47,6 +52,12 @@ function MainLayoutContent() {
         </Grid2>
       </Grid2>
     </Grid2>
+  );
+
+  return authEnabled ? (
+    <ProtectedRoute>{content}</ProtectedRoute>
+  ) : (
+    content
   );
 }
 

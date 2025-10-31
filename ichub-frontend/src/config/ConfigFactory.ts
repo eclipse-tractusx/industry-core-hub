@@ -129,7 +129,7 @@ export class ConfigFactory {
       
       api: {
         ichubBackendUrl: raw.VITE_ICHUB_BACKEND_URL || (isDevelopment ? 'http://localhost:9000/v1' : ''),
-        timeout: parseInt(raw.VITE_API_TIMEOUT || '30000', 10),
+        timeout: Number(raw.VITE_API_TIMEOUT || '30000'),
         retryAttempts: parseInt(raw.VITE_API_RETRY_ATTEMPTS || '3', 10),
         requireHttpsUrlPattern: raw.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false',
         
@@ -161,8 +161,8 @@ export class ConfigFactory {
         } : undefined,
         
         // Session management
-        sessionTimeout: parseInt(raw.VITE_AUTH_SESSION_TIMEOUT || '3600000', 10), // 1 hour default
-        renewTokenMinValidity: parseInt(raw.VITE_AUTH_RENEW_TOKEN_MIN_VALIDITY || '300', 10), // 5 minutes default
+        sessionTimeout: Number(raw.VITE_AUTH_SESSION_TIMEOUT || '3600000'), // 1 hour default
+        renewTokenMinValidity: Number(raw.VITE_AUTH_RENEW_TOKEN_MIN_VALIDITY || '300'), // 5 minutes default
         logoutRedirectUri: raw.VITE_AUTH_LOGOUT_REDIRECT_URI,
       },
       
