@@ -34,11 +34,13 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import { Divider, ListItemIcon, Typography } from '@mui/material';
 import { Logout, Settings } from '@mui/icons-material';
+import { getParticipantId } from '../../services/EnvironmentService';
 
 export default function PrimarySearchAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [participantId, setParticipantId] = useState<string>('CX-Operator');
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -69,6 +71,22 @@ export default function PrimarySearchAppBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const fetchParticipantId = async () => {
+      try {
+        const id = await getParticipantId();
+        if (id) {
+          setParticipantId(id);
+        }
+      } catch (error) {
+        console.warn('Could not fetch participant ID:', error);
+        // Keep default value "CX-Operator"
+      }
+    };
+
+    fetchParticipantId();
+  }, []);
+
   const menuId = 'primary-search-account-menu';
   const renderMenu = (
     <Menu
@@ -81,7 +99,7 @@ export default function PrimarySearchAppBar() {
             Mathias Brunkow Moser
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ padding: '0 16px 8px', fontStyle: 'italic' }}>
-        CX-Operator
+        {participantId}
         </Typography>
         <Divider />
 
@@ -160,31 +178,54 @@ export default function PrimarySearchAppBar() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" className={`ichub-header ${scrolled ? "scrolled" : ""}`}>
         <Toolbar>
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
-            <a href="/">
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'flex-start' }}>
+            <a href="/" style={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src="/241117_Tractus_X_Logo_Only_RGB.png"
                 alt="Eclipse Tractus-X logo"
                 className='small-logo'
+                style={{ display: 'block' }}
               />
             </a>
           </Box>
-          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <a href="/">
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'flex-start' }}>
+            <a href="/" style={{ display: 'flex', alignItems: 'center' }}>
               <img
                 src="/241117_Tractus_X_Logo_RGB_Light_Version.png"
                 alt="Eclipse Tractus-X logo"
                 className='main-logo'
+                style={{ display: 'block' }}
               />
             </a>
           </Box>
           <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center' }}>
-            <Typography variant="h2" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' } }}>
+            <Typography 
+              variant="h1" 
+              sx={{ 
+                fontSize: { xs: '1.6rem', md: '2rem' },
+                fontWeight: '700',
+                color: 'white',
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}
+            >
               Industry Core Hub
             </Typography>
           </Box>
-          <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-            <IconButton size="large" aria-label="show 4 new mails">
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
+            <IconButton 
+              size="large" 
+              aria-label="show 4 new mails"
+              sx={{
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
               <Badge badgeContent={4} color="error">
                 <MailIcon />
               </Badge>
@@ -192,6 +233,15 @@ export default function PrimarySearchAppBar() {
             <IconButton
               size="large"
               aria-label="show 17 new notifications"
+              sx={{
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
             >
               <Badge badgeContent={17} color="error">
                 <NotificationsIcon />

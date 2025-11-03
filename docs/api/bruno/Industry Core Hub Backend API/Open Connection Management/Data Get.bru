@@ -1,0 +1,28 @@
+meta {
+  name: Data Get
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/v1/connection/data/get
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "counter_party_id": "",
+    "counter_party_address": "",
+    "filter_expression": [
+      {}
+    ],
+    "path": "",
+    "policies": [],
+    "verify": "",
+    "headers": "",
+    "timeout": "",
+    "params": "",
+    "allow_redirects": ""
+  }
+}

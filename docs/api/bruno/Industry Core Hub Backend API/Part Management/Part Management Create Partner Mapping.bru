@@ -1,0 +1,20 @@
+meta {
+  name: Part Management Create Partner Mapping
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/part-management/catalog-part/create-partner-mapping
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "customerPartId": "",
+    "businessPartnerNumber": "",
+    "manufacturerId": "",
+    "manufacturerPartId": ""
+  }
+}

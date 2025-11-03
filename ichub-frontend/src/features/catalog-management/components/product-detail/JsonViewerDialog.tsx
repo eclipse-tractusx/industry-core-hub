@@ -21,7 +21,8 @@
 ********************************************************************************/
 
 import { useState } from 'react';
-import { Button, Icon } from '@catena-x/portal-shared-components';
+import { Button } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -30,11 +31,14 @@ import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
-import { ProductDetailDialogProps } from '../../../../types/dialogViewer';
+import { ProductDetailDialogProps } from '../../types/dialog-types';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     const [copied, setCopied] = useState(false);
     const title = partData?.name ? `${partData.name} JSON data` : "DCM JSON Data";
+
+    useEscapeDialog(onClose, open);
 
     const handleCopy = () => {
         const json_string = JSON.stringify(partData, null, 2);
@@ -49,7 +53,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
       };
 
     return (
-        <Dialog open={open} maxWidth="xl" className='custom-dialog'>
+        <Dialog open={open} onClose={onClose} maxWidth="xl" className='custom-dialog'>
             <DialogTitle sx={{ m: 0, p: 2 }}>
                 {title}
             </DialogTitle>
@@ -58,9 +62,13 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
                 onClick={onClose}
                 sx={(theme) => ({
                     position: 'absolute',
-                    right: 8,
-                    top: 8,
+                    right: 21,
+                    top: 21,
                     color: theme.palette.grey[500],
+                    zIndex: 1,
+                    '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
                 })}
                 >
                 <CloseIcon />
@@ -70,7 +78,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '4px' }}>
                         <span className='mr-3'>{copied ? 'JSON copied ✅' : ''}</span>
                         <Button variant="text" onClick={handleCopy} size='small' className='copy-button'>
-                            <Icon fontSize="16" iconName="ContentCopy" />
+                            <ContentCopyIcon />
                         </Button>
                     </div>
                     <code style={{ textAlign: 'left', display: 'block' }}>
@@ -80,7 +88,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
             </DialogContent>
             <DialogActions>
                 <Button className="close-button" variant="outlined" size="small" onClick={onClose}>
-                <Icon fontSize="16" iconName="Close" />
+                <CloseIcon />
                     <span className="close-button-content">CLOSE</span>
                 </Button>
             </DialogActions>

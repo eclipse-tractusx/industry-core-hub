@@ -47,3 +47,14 @@
         border-color: $brand-text!important;
     }
 }
+
+.back-button{
+    border-radius: 8px!important;
+    border-color: #FFA726!important;
+    color: $brand-text !important;
+
+    &:hover {
+        background: #FF9800!important;
+        border-color: $brand-text!important;
+    }
+}

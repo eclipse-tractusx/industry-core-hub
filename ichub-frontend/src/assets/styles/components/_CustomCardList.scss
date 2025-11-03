@@ -35,13 +35,14 @@
         margin-bottom: 20px!important;
         border-radius: 5px;
         color: $brand-text;
-        width: 280px;
         min-width: 280px;
 
         .custom-card {
             display: flex;
             flex-direction: column;
-            width: auto;
+            width: 320px;
+            max-width: 320px;
+            min-width: 320px;
             justify-content: space-between;
             cursor: pointer;
             background: $brand-dark !important;
@@ -86,8 +87,9 @@
 
                 h5 {
                     display: -webkit-box;
-                    --webkit-line-clamp: 2;
-                    --webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                    line-clamp: 2;
+                    -webkit-box-orient: vertical;
                     overflow: hidden;
                     font-weight: bold;
                     font-size: 18px;

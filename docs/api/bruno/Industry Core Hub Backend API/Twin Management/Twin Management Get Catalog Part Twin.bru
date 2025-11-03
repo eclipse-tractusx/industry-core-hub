@@ -1,0 +1,15 @@
+meta {
+  name: Twin Management Get Catalog Part Twin
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/twin-management/catalog-part-twin/:global_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  global_id: 
+}

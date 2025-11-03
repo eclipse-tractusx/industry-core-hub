@@ -23,17 +23,26 @@
 # Stage 1: Build the React app
 FROM node:23-alpine AS builder
 
-# Copy package files and install dependencies
-COPY package.json package-lock.json ./
-RUN npm ci --ignore-scripts
-
-# Copy the rest of the source code
-COPY . /app
-
-# Set the working directory
+# Set working directory first
 WORKDIR /app
 
-# Build the application
+# Copy package files and install dependencies
+COPY package.json package-lock.json ./
+
+# Install dependencies with optimizations for Docker
+RUN npm ci --include=dev --ignore-scripts --prefer-offline
+
+# Copy only necessary source files for better caching
+COPY src/ ./src/
+COPY public/ ./public/
+COPY index.html ./
+COPY vite.config.ts ./
+COPY tsconfig*.json ./
+
+# Set production environment for optimized build
+ENV NODE_ENV=production
+
+# Build the application with optimized settings
 RUN npm run build
 
 
@@ -48,6 +57,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Change to root user
 USER root
+
+# Update libxml2
+RUN apk update && apk add --no-cache libxml2=2.13.9-r0
 
 # Rename index.html to index.html.reference, to be used by env variables inject script
 # Create symlink for tmp for index.html to enable readOnlyRootFilesystem

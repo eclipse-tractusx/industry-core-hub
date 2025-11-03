@@ -41,9 +41,9 @@ backend:
       edc:
         controlplane:
           hostname: "https://connector.control.plane"
-          apikeyheader: "X-Api-Key"
-          apikey: "<<example>>"
-          managementpath: "/management"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<<example>>"
+          managementPath: "/management"
           protocolPath: "/api/v1/dsp"
           catalogPath: "/catalog"
         dataplane:

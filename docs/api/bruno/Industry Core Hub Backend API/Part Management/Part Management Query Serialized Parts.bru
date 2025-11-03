@@ -1,0 +1,22 @@
+meta {
+  name: Part Management Query Serialized Parts
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/v1/part-management/serialized-part/query
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "manufacturerId": "",
+    "manufacturerPartId": "",
+    "businessPartnerNumber": "",
+    "customerPartId": "",
+    "partInstanceId": "",
+    "van": ""
+  }
+}

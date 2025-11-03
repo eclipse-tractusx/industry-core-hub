@@ -1,6 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2025 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -31,6 +32,7 @@ participantId: ""
 
 # -- Backend configuration
 backend:
+  apiVersion: v1
   enabled: true
   name: "industry-core-hub-backend"
   image:
@@ -46,10 +48,55 @@ backend:
     type: ClusterIP
     portService: 8000
     portContainer: 8000
-
+  cors:
+    enabled: true
+    allow_origins:
+      - "https://<frontend-hostname>"  # Production frontend URL
+    allow_credentials: true
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+      - "PATCH"
+    allow_headers:
+      - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     agreements:
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         usage:
           context:
@@ -86,70 +133,109 @@ backend:
       enabled: true
       apiKey:
         key: "X-Api-Key"
-        value: "<<example>>"
+        value: ["<example>"]
+      keycloak:
+        enabled: false
+        authUrl: "https://<ichub-idp-url>/auth/"
+        realm: "<realm>"
+        clientId: "<client-id>"
+        clientSecret: "<client-secret>"
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: false
+      # -- seconds to wait for the database to respond before aborting the connection attempt
+      timeout: 8
+    # Configuration for the logger settings
+    logger:
+     # Possible values: WARNING, INFO, DEBUG
+      level: "INFO"
+    # -- Consumer configuration
+    consumer:
+      discovery:
+        discovery_finder:
+          url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+        connector_discovery:
+          key: "bpn"
+        oauth:
+          url: "https://<central-idp-url>/auth/"
+          realm: "<realm>"
+          client_id: "<client-id>"
+          client_secret: "<client-secret>"
+        digitalTwinRegistry:
+          dct_type_key: "dct:type"
+          dct_type_filter:
+            operandLeft: "'http://purl.org/dc/terms/type'.'@id'"
+            operator: "="
+            operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-consumer-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<consumer-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+          catalogPath: "/catalog"
+    # -- Provider configuration
+    provider:
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-provider-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<provider-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+        dataplane:
+          hostname: "https://<edc-provider-dataplane-hostname>"
+          publicPath: "/api/public"
+      digitalTwinRegistry:
+        hostname: "https://<dtr-hostname>"
+        apiPath: "/api/v3"
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+          # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              odrl: http://www.w3.org/ns/odrl/2/
+              cx-policy: https://w3id.org/catenax/policy/
+            permission:
+              - action: odrl:use
+                LogicalConstraint: odrl:and
+                constraints:
+                  - leftOperand: cx-policy:FrameworkAgreement
+                    operator: odrl:eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+                  - leftOperand: cx-policy:UsagePurpose
+                    operator: odrl:eq
+                    rightOperand: cx.core.digitalTwinRegistry:1
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              odrl: http://www.w3.org/ns/odrl/2/
+              cx-policy: https://w3id.org/catenax/policy/
+            permission:
+              - action: odrl:use
+                constraints:
+                  - leftOperand: cx-policy:Membership
+                    operator: odrl:eq
+                    rightOperand: active
+            prohibition: []
+            obligation: []
     # -- EDC (Eclipse Dataspace Connector) configuration
     submodel_dispatcher:
-      path: "./data/submodels"
+      path: "/industry-core-hub/data/submodels"
       apiPath: "/submodel-dispatcher"
-    edc:
-      controlplane:
-        hostname: "https://connector.control.plane"
-        apikeyheader: "X-Api-Key"
-        apikey: "<<example>>"
-        managementpath: "/management"
-        protocolPath: "/api/v1/dsp"
-        catalogPath: "/catalog"
-      dataplane:
-        hostname: "https://connector.data.plane"
-        publicPath: "/api/public"
-    # -- Digital Twin Registry configuration
-    digitalTwinRegistry:
-      hostname: "https://dataprovider-dtr.tx.test"
-      apiPath: "/api/v3"
-      # -- Set this to the urlPrefix defined in your DTR values. [Default value](https://github.com/eclipse-tractusx/sldt-digital-twin-registry/blob/cc9c63c12d96e48050a1b24eca022277075cf6c7/charts/registry/values.yaml#L86)
-      uri: "/semantics/registry"
-      asset_config:
-        dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
-        # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
-      lookup:
-        # -- Same as the uri above
-        uri: "/semantics/registry"
-      dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
-      policy:
-        usage:
-          context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
-          permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.digitalTwinRegistry:1
-          prohibition: []
-          obligation: []
-        access:
-          context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
-          permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-          prohibition: []
-          obligation: []
 
   podAnnotations: {}
 
@@ -287,7 +373,76 @@ backend:
       memory: 512Mi
       ephemeral-storage: "2Gi"
 
+  # Server configuration for uvicorn workers and threads
+  server:
+    # Worker configuration
+    workers:
+      max_workers: 1                        # Single worker for optimal in-memory state
+      worker_threads: 200                   # High thread count for blocking operations
+
+    # Timeout configuration (in seconds)
+    timeouts:
+      keep_alive: 300                       # 5 minutes for DTR operations
+      graceful_shutdown: 30                 # 30 seconds for graceful shutdown
 frontend:
+  # -- Enhanced frontend configuration
+  config:
+    # Core application settings
+    environment: "development"  # development, staging, production
+    version: "1.0.0"
+
+    # API and backend configuration
+    ichubBackendUrl: "https://<backend-hostname>/v1"
+    apiTimeout: 30000
+    apiRetryAttempts: 3
+    requireHttpsUrlPattern: false
+
+    # API key configuration (optional)
+    apiKey: ""
+    apiKeyHeader: "X-API-Key"
+    enableApiKeyRotation: false
+    apiKeyExpiryWarningDays: 7
+
+    # Authentication configuration
+    authEnabled: false
+    authProvider: "none"  # none, keycloak
+
+    # Keycloak configuration (only used when authProvider is keycloak)
+    keycloak:
+      url: ""
+      realm: ""
+      clientId: ""
+      onLoad: "check-sso"  # check-sso, login-required
+      checkLoginIframe: true
+      silentCheckSsoRedirectUri: ""
+      pkceMethod: "S256"
+      enableLogging: false
+      minValidity: 30
+      checkLoginIframeInterval: 5
+      flow: "standard"  # standard, implicit, hybrid
+
+    # Session management
+    authSessionTimeout: 3600000  # 1 hour in milliseconds
+    authRenewTokenMinValidity: 300  # 5 minutes in seconds
+    authLogoutRedirectUri: ""
+
+    # Participant configuration
+    bpnValidationPattern: "^BPN[LAS]\\d{10}[a-zA-Z0-9]{2}$"
+
+    # Feature flags
+    enableAdvancedLogging: false
+    enablePerformanceMonitoring: false
+    enableDevTools: false
+
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+
+  # Legacy configuration (deprecated - use config section above)
+  env:
+    # -- industry-core-hub backend base URL
+    backendUrl: "https://<backend-hostname>/v1"
   enabled: true
   name: "industry-core-hub-frontend"
   image:
@@ -297,9 +452,6 @@ frontend:
     tag: ""
     # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
     pullSecrets: []
-  env:
-    # -- industry-core-hub backend base URL
-    ichubBackendUrl: ""
   service:
     # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
     type: ClusterIP
@@ -309,6 +461,58 @@ frontend:
   podAnnotations: {}
 
   podLabels: {}
+
+  consumption:
+    digitalTwinRegistry:
+      policies:
+        - permission:
+          - action: odrl:use
+            LogicalConstraint: odrl:and
+            constraints:
+              - leftOperand: cx-policy:FrameworkAgreement
+                operator: odrl:eq
+                rightOperand: DataExchangeGovernance:1.0
+              - leftOperand: cx-policy:Membership
+                operator: odrl:eq
+                rightOperand: active
+              - leftOperand: cx-policy:UsagePurpose
+                operator: odrl:eq
+                rightOperand: cx.core.digitalTwinRegistry:1
+          prohibition: []
+          obligation: []
+          strict: false
+    governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies:
+          - strict: false  # -- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true  # -- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
 
   healthChecks:
     startup:
@@ -405,6 +609,11 @@ postgresql:
   enabled: true
   fullnameOverride: ""
   nameOverride: ""
+  image:
+    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+    repository: bitnamilegacy/postgresql
+    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+    tag: 15.4.0-debian-11-r45
   auth:
     # -- Database name
     database: "ichub-postgres"
@@ -434,6 +643,11 @@ postgresql:
           secretKeyRef:
             name: "{{ .Values.auth.existingSecret }}"
             key: "ichub-password"
+      - name: "POSTGRES_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "ichub-postgres-secret"
+            key: "postgres-password"
     persistence:
       # -- Enable persistent storage
       enabled: true
@@ -511,3 +725,145 @@ readinessProbe:
   periodSeconds: 10
   successThreshold: 1
   timeoutSeconds: 1
+
+## Keycloak taken from Portal-IAM: https://github.com/eclipse-tractusx/portal-iam
+
+keycloak:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/keycloak
+    tag: 25.0.6-debian-12-r0
+  auth:
+    adminUser: admin
+    # -- Keycloak administrator password.
+    adminPassword: "keycloak-admin-password"
+    # -- Secret containing the password for admin username 'admin'.
+    existingSecret: ""
+  # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
+  production: false
+  # -- Setting the path relative to '/' for serving resources:
+  # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth/'.
+  # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
+  httpRelativePath: /auth/
+  replicaCount: 1
+  # -- Realm import configuration
+  realmImport:
+    enabled: true
+    # -- Method: "startup" for --import-realm flag or "job" for post-install job
+    method: "job"
+  # -- Environment variables for startup import (only if method is "startup")
+  extraEnvVars: []
+
+  extraVolumes:
+    - name: themes
+      emptyDir: {}
+    # -- Volume for realm import (only mounted when onStartup is true)
+    - name: realm-data
+      configMap:
+        name: "{{ .Release.Name }}-realm-data"
+        optional: true
+
+  extraVolumeMounts:
+    - name: themes
+      mountPath: /opt/bitnami/keycloak/themes/catenax-central
+    # -- Mount realm import file (only when onStartup is true)
+    - name: realm-data
+      mountPath: /opt/bitnami/keycloak/data/import
+
+  initContainers:
+    - name: import
+      image: docker.io/tractusx/portal-iam:v4.2.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |
+          echo "Copying themes..."
+          cp -R /import/themes/catenax-central/* /themes
+      volumeMounts:
+        - name: themes
+          mountPath: /themes
+
+  service:
+    sessionAffinity: ClientIP
+
+  ingress:
+    # -- Enable ingress record generation
+    enabled: false
+    ingressClassName: ""
+    # -- Provide default path for the ingress record.
+    hostname: ""
+    # -- Optional annotations when using the nginx ingress class;
+    # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
+    # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
+    # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
+    annotations: {}
+      # cert-manager.io/cluster-issuer: ""
+      # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+      # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+      # nginx.ingress.kubernetes.io/cors-allow-origin: "https://centralidp.example.org"
+      # nginx.ingress.kubernetes.io/enable-cors: "true"
+      # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+      # nginx.ingress.kubernetes.io/proxy-buffering: "on"
+      # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+      # nginx.ingress.kubernetes.io/use-regex: "true"
+    tls: false
+  rbac:
+    create: true
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+  postgresql:
+    # -- PostgreSQL chart configuration (recommended for demonstration purposes only);
+    # default configurations:
+    # host: "centralidp-postgresql",
+    # port: 5432;
+    # Switch to enable or disable the PostgreSQL helm chart.
+    enabled: false
+    # -- Setting to Postgres version 15 as that is the aligned version,
+    # https://eclipse-tractusx.github.io/docs/release/trg-5/trg-5-07/#aligning-dependency-versions).
+    # Keycloak helm-chart from Bitnami has moved on to version 16.
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: 15-debian-11
+    commonLabels:
+      app.kubernetes.io/version: "15"
+    auth:
+      # -- Non-root username.
+      username: ichub_keycloak
+      # -- Non-root user password.
+      # password: "kccentral-user-password"
+      # # -- Root user password.
+      # postgresPassword: "postgres-keycloak-admin-password"
+      # -- Database name.
+      database: postgres
+      # -- Secret containing the passwords for root usernames postgres and non-root username kccentral.
+      existingSecret: "ichub-password"
+    architecture: standalone
+  externalDatabase:
+    # -- External PostgreSQL configuration
+    # IMPORTANT: non-root db user needs needs to be created beforehand on external database.
+    host: "{{ include \"industry-core-hub.postgresql.fullname\" . }}"
+    # -- Database port number.
+    port: 5432
+    # -- Non-root username.
+    user: "ichub_keycloak"
+    # -- Database name.
+    database: "ichub-postgres"
+    # -- Password for the non-root username.
+    password: ""
+    # -- Secret containing the database credentials.
+    existingSecret: "ichub-postgres-secret"
+    existingSecretHostKey: ""
+    existingSecretPortKey: ""
+    existingSecretUserKey: ""
+    existingSecretDatabaseKey: ""
+    existingSecretPasswordKey: "ichub-password"

@@ -22,16 +22,24 @@
 
 import axios from 'axios';
 import { getIchubBackendUrl } from '../../services/EnvironmentService';
-import { PartnerInstance } from '../../types/partner';
-import { ApiPartData } from '../../types/product';
+import { PartnerInstance } from './types/types';
 
 const PARTNER_MANAGEMENT_BASE_PATH = '/partner-management/business-partner';
-const PART_MANAGEMENT_BASE_PATH = '/part-management/catalog-part'; // New base path
 const backendUrl = getIchubBackendUrl();
 
 export const fetchPartners = async (): Promise<PartnerInstance[]> => {
-  const response = await axios.get<PartnerInstance[]>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`);
-  return response.data;
+  try {
+    if (!backendUrl) {
+      console.warn('Backend URL not configured, returning empty partners list');
+      return [];
+    }
+    
+    const response = await axios.get<PartnerInstance[]>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`);
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Failed to fetch partners:', error);
+    return []; // Return empty array instead of throwing
+  }
 };
 
 export const createPartner = async (partnerData: { name: string; bpnl: string }): Promise<PartnerInstance> => {
@@ -39,8 +47,4 @@ export const createPartner = async (partnerData: { name: string; bpnl: string })
   return response.data; 
 };
 
-export const createCatalogPart = async (catalogPartData: ApiPartData): Promise<ApiPartData> => {
-  const response = await axios.post<ApiPartData>(`${backendUrl}${PART_MANAGEMENT_BASE_PATH}`, catalogPartData);
-  return response.data;
-};
 

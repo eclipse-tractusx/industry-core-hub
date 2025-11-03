@@ -1,0 +1,20 @@
+meta {
+  name: Discover Submodels
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/v1/discover/shell/submodels
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "counterPartyId": "",
+    "id": "",
+    "dtrGovernance": "",
+    "governance": ""
+  }
+}

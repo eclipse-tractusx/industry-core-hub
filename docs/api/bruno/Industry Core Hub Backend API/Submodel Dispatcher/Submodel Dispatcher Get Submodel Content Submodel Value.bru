@@ -1,0 +1,21 @@
+meta {
+  name: Submodel Dispatcher Get Submodel Content Submodel Value
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/v1/submodel-dispatcher/:semantic_id/:global_id/submodel/$value
+  body: none
+  auth: inherit
+}
+
+params:path {
+  semantic_id: 
+  global_id: 
+}
+
+headers {
+  ~Edc-Bpn: 
+  ~Edc-Contract-Agreement-Id: 
+}

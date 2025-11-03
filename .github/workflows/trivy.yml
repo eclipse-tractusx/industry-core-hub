@@ -60,6 +60,7 @@ jobs:
           hide-progress: false
           exit-code: "1" # Trivy exits with code 1 if vulnerabilities are found, causing the workflow step to fail.
           limit-severities-for-sarif: true
+          trivyignores: ".trivyignore" # Use the .trivyignore file to suppress known accepted risks
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
@@ -95,6 +96,7 @@ jobs:
             hide-progress: false
             exit-code: "1" # Trivy exits with code 1 if vulnerabilities are found, causing the workflow step to fail.
             limit-severities-for-sarif: true
+            trivyignores: ".trivyignore" # Use the .trivyignore file to suppress known accepted risks
 
         - name: Upload Trivy scan results to GitHub Security tab
           uses: github/codeql-action/upload-sarif@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9

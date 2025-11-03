@@ -21,13 +21,14 @@
 ********************************************************************************/
 
 import { useState, useEffect } from 'react';
-import { Button } from '@catena-x/portal-shared-components';
-import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography } from '@mui/material';
+import { Button } from '@mui/material';
+import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Grid2 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import { PartnerDialogProps } from '../../../../types/partnerDialogViewer';
+import { PartnerDialogProps } from '../../types/dialog-types';
 import { createPartner } from '../../api';
+import { useEscapeDialog } from '../../../../hooks/useEscapeKey';
 
 const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDialogProps) => {
   const [name, setName] = useState('');
@@ -35,6 +36,8 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
   const [error, setError] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [apiErrorMessage, setApiErrorMessage] = useState('');
+
+  useEscapeDialog(onClose, open);
 
   // Load partner data if it exists (edit mode)
   useEffect(() => {
@@ -59,8 +62,6 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
     const partnerPayload = { name: name.trim(), bpnl: bpnl.trim() };
 
     if (partnerData) { // Edit mode
-      // TODO: Implement PUT request for updating partner when API endpoint is defined
-      console.log(`Partner updated (locally) with name: ${name} and BPNL: ${bpnl}`);
       onSave?.(partnerPayload); // Update local state in parent
       setSuccessMessage(`Partner ${name} updated successfully [${bpnl}] (local update)`);
       setTimeout(() => {
@@ -71,7 +72,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
       try {
         await createPartner(partnerPayload);
         
-        console.log(`Partner created via API with name: ${name} and BPNL: ${bpnl}`);
+        
         onSave?.(partnerPayload); // Call onSave to update the parent component's state
 
         setSuccessMessage(`Partner ${name} created successfully [${bpnl}]`);
@@ -81,8 +82,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
         }, 3000);
       } catch (axiosError) {
         console.error('Error creating partner:', axiosError);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let errorMessage = (axiosError as any).message || 'Failed to create partner.';
+        let errorMessage = 'Failed to create partner.';
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errorResponse = (axiosError as any).response;
 
@@ -93,9 +93,69 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
           } else if (errorResponse.data && errorResponse.data.message) {
             // General error message from backend response
             errorMessage = errorResponse.data.message;
-          } else if (errorResponse.data) {
-            // Fallback if no specific message format is found but data exists
-            errorMessage = JSON.stringify(errorResponse.data);
+          } else if (errorResponse.data && typeof errorResponse.data === 'string') {
+            // Check if response contains HTML content
+            if (errorResponse.data.includes('<html>') || errorResponse.data.includes('<title>')) {
+              // Extract meaningful error from HTML if possible
+              const titleMatch = errorResponse.data.match(/<title>(.*?)<\/title>/i);
+              const h1Match = errorResponse.data.match(/<h1>(.*?)<\/h1>/i);
+              
+              if (titleMatch && titleMatch[1]) {
+                errorMessage = titleMatch[1].trim();
+              } else if (h1Match && h1Match[1]) {
+                errorMessage = h1Match[1].trim();
+              } else {
+                // Fallback for HTML responses
+                errorMessage = `Server error (${errorResponse.status}): ${errorResponse.statusText || 'Request failed'}`;
+              }
+            } else {
+              errorMessage = errorResponse.data;
+            }
+          } else if (errorResponse.status) {
+            // Status-based error messages
+            switch (errorResponse.status) {
+              case 400:
+                errorMessage = 'Invalid request. Please check your input.';
+                break;
+              case 401:
+                errorMessage = 'Unauthorized. Please log in again.';
+                break;
+              case 403:
+                errorMessage = 'Access denied. You do not have permission to perform this action.';
+                break;
+              case 404:
+                errorMessage = 'Service not found. Please try again later.';
+                break;
+              case 405:
+                errorMessage = 'Operation not allowed. Please contact support.';
+                break;
+              case 409:
+                errorMessage = 'Partner with this BPNL already exists.';
+                break;
+              case 422:
+                errorMessage = 'Invalid data provided. Please check your input.';
+                break;
+              case 500:
+                errorMessage = 'Internal server error. Please try again later.';
+                break;
+              case 502:
+              case 503:
+              case 504:
+                errorMessage = 'Service temporarily unavailable. Please try again later.';
+                break;
+              default:
+                errorMessage = `Server error (${errorResponse.status}). Please try again.`;
+            }
+          }
+        } else if (axiosError instanceof Error && axiosError.message) {
+          // Network or other errors
+          const message = axiosError.message;
+          if (message.includes('Network Error')) {
+            errorMessage = 'Network error. Please check your connection and try again.';
+          } else if (message.includes('timeout')) {
+            errorMessage = 'Request timed out. Please try again.';
+          } else {
+            errorMessage = 'Connection failed. Please try again later.';
           }
         }
         
@@ -105,64 +165,160 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
   };
 
   return (
-    <Dialog open={open} maxWidth="xl" className="custom-dialog">
-      <DialogTitle sx={{ m: 0, p: 2 }}>
-      {partnerData ? 'Edit partner' : 'Create new partner'}
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      maxWidth={false}
+      fullWidth
+      PaperProps={{
+        sx: {
+          backgroundColor: 'background.paper',
+          width: '60vw',
+          height: 'auto',
+          maxWidth: '60vw',
+          maxHeight: '90vh',
+          '& .MuiDialogContent-root': {
+            backgroundColor: 'background.paper',
+          }
+        }
+      }}
+    >
+      <DialogTitle 
+        sx={{ 
+          m: 0, 
+          p: 3,
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
+          fontSize: '1.25rem',
+          fontWeight: 600
+        }}
+      >
+        {partnerData ? 'Edit partner' : 'Create new partner'}
       </DialogTitle>
       <IconButton
         aria-label="close"
         onClick={onClose}
         sx={(theme) => ({
           position: 'absolute',
-          right: 8,
-          top: 8,
-          color: theme.palette.grey[500],
+          right: 21,
+          top: 21,
+          color: theme.palette.primary.contrastText,
+          zIndex: 1,
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          }
         })}
       >
         <CloseIcon />
       </IconButton>
-      <DialogContent dividers>
-        <Typography variant="label2">Introduce the partner name and BPNL</Typography>
-        <Box sx={{ mt: 2, mx: 'auto', maxWidth: '400px' }}>
-          <TextField
-            label="Partner Name"
-            variant="outlined"
-            size="small"
-            error={error && !name.trim()}
-            helperText={error && !name.trim() ? 'Name is required' : ''}
-            fullWidth
-            sx={{ marginBottom: '16px' }}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="Partner BPNL"
-            variant="outlined"
-            size="small"
-            error={error && !bpnl.trim()}
-            helperText={error && !bpnl.trim() ? 'BPNL is required' : ''}
-            fullWidth
-            value={bpnl}
-            onChange={(e) => setBpnl(e.target.value)}
-            disabled={!!partnerData} // Disable if editing
-          />
-        </Box>
+      <DialogContent sx={{ 
+        p: 3, 
+        backgroundColor: 'background.paper',
+        overflow: 'auto',
+        '& .MuiTextField-root': {
+          backgroundColor: 'background.default',
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: 'background.default',
+            '& fieldset': {
+              borderColor: 'divider',
+            },
+            '&:hover fieldset': {
+              borderColor: 'primary.main',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: 'primary.main',
+            }
+          }
+        }
+      }}>
+        <Grid2 container spacing={3}>
+          <Grid2 size={12}>
+            <Typography variant="h6" gutterBottom sx={{ 
+              mb: 2, 
+              color: 'text.primary',
+              fontSize: '1.1rem',
+              fontWeight: 500
+            }}>
+              Partner Information
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Introduce the partner name and BPNL
+            </Typography>
+          </Grid2>
+          
+          <Grid2 size={{xs: 12, sm: 6}}>
+            <TextField
+              label="Partner Name"
+              variant="outlined"
+              size="medium"
+              error={error && !name.trim()}
+              helperText={error && !name.trim() ? 'Name is required' : ''}
+              fullWidth
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </Grid2>
+          
+          <Grid2 size={{xs: 12, sm: 6}}>
+            <TextField
+              label="Partner BPNL"
+              variant="outlined"
+              size="medium"
+              error={error && !bpnl.trim()}
+              helperText={error && !bpnl.trim() ? 'BPNL is required' : ''}
+              fullWidth
+              value={bpnl}
+              onChange={(e) => setBpnl(e.target.value)}
+              disabled={!!partnerData} // Disable if editing
+            />
+          </Grid2>
+        </Grid2>
+
         {apiErrorMessage && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 3 }}>
             <Alert severity="error">{apiErrorMessage}</Alert>
           </Box>
         )}
         {successMessage && (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: 3 }}>
             <Alert severity="success">{successMessage}</Alert>
           </Box>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button className="close-button" variant="outlined" size="small" onClick={onClose} startIcon={<CloseIcon />} >
+      <DialogActions sx={{ 
+        p: 3, 
+        backgroundColor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        gap: 2,
+        justifyContent: 'flex-end'
+      }}>
+        <Button 
+          onClick={onClose}
+          variant="outlined"
+          color="primary"
+          size="large"
+          sx={{
+            minWidth: '100px',
+            textTransform: 'none',
+            fontWeight: 500
+          }}
+        >
           CLOSE
         </Button>
-        <Button className="action-button" variant="contained" size="small" onClick={handleCreate} startIcon={partnerData ? <EditIcon /> : <AddIcon />} >
+        <Button 
+          onClick={handleCreate}
+          variant="contained"
+          color="primary"
+          size="large"
+          startIcon={partnerData ? <EditIcon /> : <AddIcon />}
+          sx={{
+            minWidth: '100px',
+            textTransform: 'none',
+            fontWeight: 500,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}
+        >
           {partnerData ? 'UPDATE' : 'CREATE'}
         </Button>
       </DialogActions>
