@@ -23,7 +23,7 @@
 #################################################################################
 
 from .models import (
-    LegalEntity, BusinessPartner, EnablementServiceStack, ConnectorService, DtrService,
+    LegalEntity, BusinessPartner, EnablementServiceStack, ConnectorControlPlane, TwinRegistry,
     Twin, TwinAspect, TwinAspectRegistration, TwinExchange, TwinRegistration,
     CatalogPart, PartnerCatalogPart, SerializedPart, JISPart, Batch, BatchBusinessPartner,
     DataExchangeAgreement, DataExchangeContract

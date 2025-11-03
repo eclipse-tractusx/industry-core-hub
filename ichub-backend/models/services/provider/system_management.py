@@ -16,32 +16,32 @@ class LegalEntityUpdate(BaseModel):
 class LegalEntityRead(LegalEntityBase):
     pass
 
-class ConnectorServiceBase(BaseModel):
+class ConnectorControlPlaneBase(BaseModel):
     name: str = Field(..., description="Name of the Connector service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class ConnectorServiceCreate(ConnectorServiceBase, BpnlBase):
+class ConnectorControlPlaneCreate(ConnectorControlPlaneBase, BpnlBase):
     pass
 
-class ConnectorServiceUpdate(BaseModel):
+class ConnectorControlPlaneUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Name of the Connector service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class ConnectorServiceRead(ConnectorServiceBase):
+class ConnectorControlPlaneRead(ConnectorControlPlaneBase):
     legal_entity: LegalEntityRead = Field(alias="legalEntity", description="The legal entity associated with the Connector service")
 
-class DtrServiceBase(BaseModel):
+class TwinRegistryBase(BaseModel):
     name: str = Field(..., description="Name of the DTR service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class DtrServiceCreate(DtrServiceBase):
+class TwinRegistryCreate(TwinRegistryBase):
     pass
 
-class DtrServiceUpdate(BaseModel):
+class TwinRegistryUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Name of the DTR service")
     connection_settings: Optional[Dict[str, Any]] = Field(None, description="Connection settings as JSON")
 
-class DtrServiceRead(DtrServiceBase):
+class TwinRegistryRead(TwinRegistryBase):
     pass
 
 class EnablementServiceStackBase(BaseModel):
@@ -57,5 +57,5 @@ class EnablementServiceStackUpdate(BaseModel):
     # Add other updatable fields as needed
 
 class EnablementServiceStackRead(EnablementServiceStackBase):
-    connector_service: ConnectorServiceRead = Field(alias="connectorService", description="The Connector service associated with the stack")
-    dtr_service: DtrServiceRead = Field(alias="dtrService", description="The DTR service associated with the stack")
+    connector_service: ConnectorControlPlaneRead = Field(alias="connectorService", description="The Connector service associated with the stack")
+    dtr_service: TwinRegistryRead = Field(alias="dtrService", description="The DTR service associated with the stack")

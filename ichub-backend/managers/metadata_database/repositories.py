@@ -31,9 +31,9 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from models.metadata_database.provider.models import (
-    ConnectorService,
+    ConnectorControlPlane,
     BusinessPartner,
-    DtrService,
+    TwinRegistry,
     EnablementServiceStack,
     LegalEntity,
     Twin,
@@ -260,20 +260,20 @@ class EnablementServiceStackRepository(BaseRepository[EnablementServiceStack]):
             EnablementServiceStack.name == name)  # type: ignore
         
         if join_connector_service or join_legal_entity:
-            stmt = stmt.join(ConnectorService, ConnectorService.id == EnablementServiceStack.connector_service_id)
+            stmt = stmt.join(ConnectorControlPlane, ConnectorControlPlane.id == EnablementServiceStack.connector_service_id)
 
         if join_legal_entity:
-            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorService.legal_entity_id)
+            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id)
 
         if join_dtr_service:
-            stmt = stmt.join(DtrService, DtrService.id == EnablementServiceStack.dtr_service_id)
+            stmt = stmt.join(TwinRegistry, TwinRegistry.id == EnablementServiceStack.dtr_service_id)
 
         return self._session.scalars(stmt).first()
     
     def find_by_legal_entity_bpnl(self, legal_entity_bpnl: str) -> List[EnablementServiceStack]:
         stmt = select(EnablementServiceStack)
-        stmt = stmt.join(ConnectorService, ConnectorService.id == EnablementServiceStack.connector_service_id)
-        stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorService.legal_entity_id).where(
+        stmt = stmt.join(ConnectorControlPlane, ConnectorControlPlane.id == EnablementServiceStack.connector_service_id)
+        stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id).where(
             LegalEntity.bpnl == legal_entity_bpnl)
         return self._session.scalars(stmt).all()
 
@@ -611,12 +611,12 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         self.create(twin_registration)
         return twin_registration
 
-class ConnectorServiceRepository(BaseRepository[ConnectorService]):
-    def get_by_name(self, name: str) -> Optional[ConnectorService]:
-        stmt = select(ConnectorService).where(ConnectorService.name == name)
+class ConnectorControlPlaneRepository(BaseRepository[ConnectorControlPlane]):
+    def get_by_name(self, name: str) -> Optional[ConnectorControlPlane]:
+        stmt = select(ConnectorControlPlane).where(ConnectorControlPlane.name == name)
         return self._session.scalars(stmt).first()
 
-class DtrServiceRepository(BaseRepository[DtrService]):
-    def get_by_name(self, name: str) -> Optional[DtrService]:
-        stmt = select(DtrService).where(DtrService.name == name)
+class TwinRegistryRepository(BaseRepository[TwinRegistry]):
+    def get_by_name(self, name: str) -> Optional[TwinRegistry]:
+        stmt = select(TwinRegistry).where(TwinRegistry.name == name)
         return self._session.scalars(stmt).first()

@@ -2,12 +2,12 @@ from fastapi import APIRouter
 from typing import List
 from services.provider.system_management_service import SystemManagementService
 from models.services.provider.system_management import (
-    DtrServiceCreate,
-    DtrServiceRead,
-    DtrServiceUpdate,
-    ConnectorServiceCreate,
-    ConnectorServiceRead,
-    ConnectorServiceUpdate,
+    TwinRegistryCreate,
+    TwinRegistryRead,
+    TwinRegistryUpdate,
+    ConnectorControlPlaneCreate,
+    ConnectorControlPlaneRead,
+    ConnectorControlPlaneUpdate,
     EnablementServiceStackCreate,
     EnablementServiceStackRead,
     EnablementServiceStackUpdate,
@@ -39,47 +39,47 @@ async def update_enablement_service_stack(stack_id: int, stack_update: Enablemen
 async def delete_enablement_service_stack(stack_id: int):
     return system_management_service.delete_enablement_service_stack(stack_id)
 
-# Connector Service endpoints
-@router.post("/connector-service", response_model=ConnectorServiceRead)
-async def create_connector_service(connector_create: ConnectorServiceCreate):
-    return system_management_service.create_connector_service(connector_create)
+# Connector Control Plane endpoints
+@router.post("/connector-control-plane", response_model=ConnectorControlPlaneRead)
+async def create_connector_control_plane(connector_create: ConnectorControlPlaneCreate):
+    return system_management_service.create_connector_control_plane(connector_create)
 
-@router.get("/connector-service", response_model=List[ConnectorServiceRead])
-async def get_connector_services():
-    return system_management_service.get_connector_services()
+@router.get("/connector-control-plane", response_model=List[ConnectorControlPlaneRead])
+async def get_connector_control_planes():
+    return system_management_service.retrieve_connector_control_planes()
 
-@router.get("/connector-service/{connector_id}", response_model=ConnectorServiceRead)
-async def get_connector_service(connector_id: int):
-    return system_management_service.get_connector_service(connector_id)
+@router.get("/connector-control-plane/{connector_id}", response_model=ConnectorControlPlaneRead)
+async def get_connector_control_plane(connector_id: int):
+    return system_management_service.get_connector_control_plane(connector_id)
 
-@router.put("/connector-service/{connector_id}", response_model=ConnectorServiceRead)
-async def update_connector_service(connector_id: int, connector_update: ConnectorServiceUpdate):
-    return system_management_service.update_connector_service(connector_id, connector_update)
+@router.put("/connector-control-plane/{connector_id}", response_model=ConnectorControlPlaneRead)
+async def update_connector_control_plane(connector_id: int, connector_update: ConnectorControlPlaneUpdate):
+    return system_management_service.update_connector_control_plane(connector_id, connector_update)
 
-@router.delete("/connector-service/{connector_id}", response_model=bool)
-async def delete_connector_service(connector_id: int):
-    return system_management_service.delete_connector_service(connector_id)
+@router.delete("/connector-control-plane/{connector_id}", response_model=bool)
+async def delete_connector_control_plane(connector_id: int):
+    return system_management_service.delete_connector_control_plane(connector_id)
 
-# DTR Service endpoints
-@router.post("/dtr-service", response_model=DtrServiceRead)
-async def create_dtr_service(dtr_create: DtrServiceCreate):
-    return system_management_service.create_dtr_service(dtr_create)
+# Twin Registry endpoints
+@router.post("/twin-registry", response_model=TwinRegistryRead)
+async def create_twin_registry(dtr_create: TwinRegistryCreate):
+    return system_management_service.create_twin_registry(dtr_create)
 
-@router.get("/dtr-service", response_model=List[DtrServiceRead])
-async def get_dtr_services():
-    return system_management_service.get_dtr_services()
+@router.get("/twin-registry", response_model=List[TwinRegistryRead])
+async def get_twin_registries():
+    return system_management_service.get_twin_registries()
 
-@router.get("/dtr-service/{dtr_id}", response_model=DtrServiceRead)
-async def get_dtr_service(dtr_id: int):
-    return system_management_service.get_dtr_service(dtr_id)
+@router.get("/twin-registry/{dtr_id}", response_model=TwinRegistryRead)
+async def get_twin_registry(dtr_id: int):
+    return system_management_service.get_twin_registry(dtr_id)
 
-@router.put("/dtr-service/{dtr_id}", response_model=DtrServiceRead)
-async def update_dtr_service(dtr_id: int, dtr_update: DtrServiceUpdate):
-    return system_management_service.update_dtr_service(dtr_id, dtr_update)
+@router.put("/twin-registry/{dtr_id}", response_model=TwinRegistryRead)
+async def update_twin_registry(dtr_id: int, dtr_update: TwinRegistryUpdate):
+    return system_management_service.update_twin_registry(dtr_id, dtr_update)
 
-@router.delete("/dtr-service/{dtr_id}", response_model=bool)
-async def delete_dtr_service(dtr_id: int):
-    return system_management_service.delete_dtr_service(dtr_id)
+@router.delete("/twin-registry/{dtr_id}", response_model=bool)
+async def delete_twin_registry(dtr_id: int):
+    return system_management_service.delete_twin_registry(dtr_id)
 
 # LegalEntity endpoints
 @router.post("/legal-entity", response_model=LegalEntityRead)

@@ -6,12 +6,12 @@ from managers.enablement_services.provider.dtr_provider_manager import DtrProvid
 from managers.enablement_services.provider.connector_provider_manager import ConnectorProviderManager
 
 from models.services.provider.system_management import (
-    ConnectorServiceCreate,
-    ConnectorServiceRead,
-    ConnectorServiceUpdate,
-    DtrServiceCreate,
-    DtrServiceRead,
-    DtrServiceUpdate,
+    ConnectorControlPlaneCreate,
+    ConnectorControlPlaneRead,
+    ConnectorControlPlaneUpdate,
+    TwinRegistryCreate,
+    TwinRegistryRead,
+    TwinRegistryUpdate,
     EnablementServiceStackCreate,
     EnablementServiceStackRead,
     EnablementServiceStackUpdate,
@@ -21,8 +21,8 @@ from models.services.provider.system_management import (
 )
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.provider.models import (
-    ConnectorService,
-    DtrService,
+    ConnectorControlPlane,
+    TwinRegistry,
     EnablementServiceStack,
     LegalEntity
 )
@@ -36,19 +36,19 @@ class SystemManagementService:
             db_enablement_service_stacks = repo.enablement_service_stack_repository.get_by_name(stack_create.name)
             if db_enablement_service_stacks:
                 raise ValueError(f"EnablementServiceStack with name {stack_create.name} already exists.")
-            
-            db_connector_service = repo.connector_service_repository.get_by_name(stack_create.connector_name)
-            if not db_connector_service:
-                raise ValueError(f"ConnectorService with name {stack_create.connector_name} not found.")
-            
-            db_dtr_service = repo.dtr_service_repository.get_by_name(stack_create.dtr_name)
-            if not db_dtr_service:
-                raise ValueError(f"DtrService with name {stack_create.dtr_name} not found.")
+
+            db_connector_control_plane = repo.connector_control_plane_repository.get_by_name(stack_create.connector_name)
+            if not db_connector_control_plane:
+                raise ValueError(f"ConnectorControlPlane with name {stack_create.connector_name} not found.")
+
+            db_twin_registry = repo.twin_registry_repository.get_by_name(stack_create.dtr_name)
+            if not db_twin_registry:
+                raise ValueError(f"TwinRegistry with name {stack_create.dtr_name} not found.")
 
             db_stack = EnablementServiceStack(
                 name=stack_create.name,
-                connector_service_id=db_connector_service.id,
-                dtr_service_id=db_dtr_service.id,
+                connector_service_id=db_connector_control_plane.id,
+                dtr_service_id=db_twin_registry.id,
                 settings=stack_create.settings)
             
             repo.enablement_service_stack_repository.create(db_stack)
@@ -56,9 +56,9 @@ class SystemManagementService:
         
             ## Create a asset in the connector for the digital twin registry.
             # TODO: will all customers want to have that? Maybe introduce a parameter for that?
-            edc_manager = self.create_connector_manager(db_connector_service)
-            
-            dtr_config = db_dtr_service.connection_settings # Get the DTR connection settings from the DB
+            edc_manager = self.get_connector_manager(db_connector_control_plane)
+
+            dtr_config = db_twin_registry.connection_settings # Get the DTR connection settings from the DB
             asset_config = dtr_config.get("asset_config")
             
             dtr_asset_id, _, _, _ = edc_manager.register_dtr_offer(
@@ -71,7 +71,7 @@ class SystemManagementService:
             )
 
             # Update the Connector connection settings with the generated asset id for the DTR
-            db_connector_service.connection_settings["dtr_asset_id"] = dtr_asset_id
+            db_connector_control_plane.connection_settings["dtr_asset_id"] = dtr_asset_id
             repo.commit()
         
         return EnablementServiceStackRead.model_validate(db_stack)
@@ -107,54 +107,54 @@ class SystemManagementService:
             except ValueError:
                 return False
 
-    def create_connector_service(self, connector_create: ConnectorServiceCreate) -> ConnectorServiceRead:
+    def create_connector_control_plane(self, connector_create: ConnectorControlPlaneCreate) -> ConnectorControlPlaneRead:
         with RepositoryManagerFactory.create() as repo:
             legal_entity = repo.legal_entity_repository.get_by_bpnl(connector_create.bpnl)
             if not legal_entity or legal_entity.id is None:
                 raise ValueError("LegalEntity with given BPNL not found or has no ID")
-            db_connector = ConnectorService(
+            db_connector = ConnectorControlPlane(
                 name=connector_create.name,
                 connection_settings=connector_create.connection_settings,
                 legal_entity_id=legal_entity.id
             )
-            repo.connector_service_repository.create(db_connector)
+            repo.connector_control_plane_repository.create(db_connector)
             repo.commit()
-            return ConnectorServiceRead(
+            return ConnectorControlPlaneRead(
                 name=db_connector.name,
                 connection_settings=db_connector.connection_settings,
                 legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
             )
 
-    def get_connector_service(self, connector_id: int) -> Optional[ConnectorServiceRead]:
+    def get_connector_control_plane(self, connector_id: int) -> Optional[ConnectorControlPlaneRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_connector = repo.connector_service_repository.find_by_id(connector_id)
+            db_connector = repo.connector_control_plane_repository.find_by_id(connector_id)
             if db_connector:
                 legal_entity = repo.legal_entity_repository.find_by_id(db_connector.legal_entity_id)
                 if legal_entity:
-                    return ConnectorServiceRead(
+                    return ConnectorControlPlaneRead(
                         name=db_connector.name,
                         connection_settings=db_connector.connection_settings,
                         legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                     )
             return None
 
-    def get_connector_services(self) -> List[ConnectorServiceRead]:
+    def retrieve_connector_control_planes(self) -> List[ConnectorControlPlaneRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_connectors = repo.connector_service_repository.find_all()
+            db_connectors = repo.connector_control_plane_repository.find_all()
             result = []
             for connector in db_connectors:
                 legal_entity = repo.legal_entity_repository.find_by_id(connector.legal_entity_id)
                 if legal_entity:
-                    result.append(ConnectorServiceRead(
+                    result.append(ConnectorControlPlaneRead(
                         name=connector.name,
                         connection_settings=connector.connection_settings,
                         legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                     ))
             return result
 
-    def update_connector_service(self, connector_id: int, connector_update: ConnectorServiceUpdate) -> Optional[ConnectorServiceRead]:
+    def update_connector_control_plane(self, connector_id: int, connector_update: ConnectorControlPlaneUpdate) -> Optional[ConnectorControlPlaneRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_connector = repo.connector_service_repository.find_by_id(connector_id)
+            db_connector = repo.connector_control_plane_repository.find_by_id(connector_id)
             if not db_connector:
                 return None
             for field, value in connector_update.model_dump(exclude_unset=True).items():
@@ -162,55 +162,55 @@ class SystemManagementService:
             repo.commit()
             legal_entity = repo.legal_entity_repository.find_by_id(db_connector.legal_entity_id)
             if legal_entity:
-                return ConnectorServiceRead(
+                return ConnectorControlPlaneRead(
                     name=db_connector.name,
                     connection_settings=db_connector.connection_settings,
                     legalEntity=LegalEntityRead(bpnl=legal_entity.bpnl)
                 )
             return None
 
-    def delete_connector_service(self, connector_id: int) -> bool:
+    def delete_connector_control_plane(self, connector_id: int) -> bool:
         with RepositoryManagerFactory.create() as repo:
             try:
-                repo.connector_service_repository.delete(connector_id)
+                repo.connector_control_plane_repository.delete(connector_id)
                 repo.commit()
                 return True
             except ValueError:
                 return False
 
-    def create_dtr_service(self, dtr_create: DtrServiceCreate) -> DtrServiceRead:
+    def create_twin_registry(self, dtr_create: TwinRegistryCreate) -> TwinRegistryRead:
         with RepositoryManagerFactory.create() as repo:
-            db_dtr = DtrService(**dtr_create.model_dump(by_alias=False))
-            repo.dtr_service_repository.create(db_dtr)
+            db_dtr = TwinRegistry(**dtr_create.model_dump(by_alias=False))
+            repo.twin_registry_repository.create(db_dtr)
             repo.commit()
-            return DtrServiceRead.model_validate(db_dtr)
+            return TwinRegistryRead.model_validate(db_dtr)
 
-    def get_dtr_service(self, dtr_id: int) -> Optional[DtrServiceRead]:
+    def get_twin_registry(self, dtr_id: int) -> Optional[TwinRegistryRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_dtr = repo.dtr_service_repository.find_by_id(dtr_id)
+            db_dtr = repo.twin_registry_repository.find_by_id(dtr_id)
             if db_dtr:
-                return DtrServiceRead.model_validate(db_dtr)
+                return TwinRegistryRead.model_validate(db_dtr)
             return None
 
-    def get_dtr_services(self) -> List[DtrServiceRead]:
+    def get_twin_registries(self) -> List[TwinRegistryRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_dtrs = repo.dtr_service_repository.find_all()
-            return [DtrServiceRead.model_validate(dtr) for dtr in db_dtrs]
+            db_dtrs = repo.twin_registry_repository.find_all()
+            return [TwinRegistryRead.model_validate(dtr) for dtr in db_dtrs]
 
-    def update_dtr_service(self, dtr_id: int, dtr_update: DtrServiceUpdate) -> Optional[DtrServiceRead]:
+    def update_twin_registry(self, dtr_id: int, dtr_update: TwinRegistryUpdate) -> Optional[TwinRegistryRead]:
         with RepositoryManagerFactory.create() as repo:
-            db_dtr = repo.dtr_service_repository.find_by_id(dtr_id)
+            db_dtr = repo.twin_registry_repository.find_by_id(dtr_id)
             if not db_dtr:
                 return None
             for field, value in dtr_update.model_dump(exclude_unset=True).items():
                 setattr(db_dtr, field, value)
             repo.commit()
-            return DtrServiceRead.model_validate(db_dtr)
+            return TwinRegistryRead.model_validate(db_dtr)
 
-    def delete_dtr_service(self, dtr_id: int) -> bool:
+    def delete_twin_registry(self, dtr_id: int) -> bool:
         with RepositoryManagerFactory.create() as repo:
             try:
-                repo.dtr_service_repository.delete(dtr_id)
+                repo.twin_registry_repository.delete(dtr_id)
                 repo.commit()
                 return True
             except ValueError:
@@ -255,7 +255,7 @@ class SystemManagementService:
                 return False
 
     @staticmethod
-    def get_dtr_manager(db_dtr_service: DtrService) -> DtrProviderManager:
+    def get_dtr_manager(db_dtr_service: TwinRegistry) -> DtrProviderManager:
         """
         Get the DtrProviderManager.
         """
@@ -264,7 +264,7 @@ class SystemManagementService:
         return dtr_provider_manager
 
     @staticmethod
-    def get_connector_manager(db_connector_service: ConnectorService) -> ConnectorProviderManager:
+    def get_connector_manager(db_connector_service: ConnectorControlPlane) -> ConnectorProviderManager:
         """
         Get the ConnectorManager.
         """
