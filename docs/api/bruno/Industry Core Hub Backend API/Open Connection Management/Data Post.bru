@@ -1,0 +1,29 @@
+meta {
+  name: Data Post
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/connection/data/post
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "counter_party_id": "",
+    "counter_party_address": "",
+    "body": "",
+    "filter_expression": [
+      {}
+    ],
+    "path": "",
+    "content_type": "",
+    "policies": "",
+    "verify": false,
+    "headers": "",
+    "timeout": "",
+    "allow_redirects": false
+  }
+}

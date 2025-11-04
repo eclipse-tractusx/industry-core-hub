@@ -77,7 +77,7 @@ class CatalogPartReadWithStatus(CatalogPartRead, StatusBase):
 
 class CatalogPartDetailsRead(CatalogPartRead):
     description: Optional[str] = Field(description="The decription of the part.", default=None)
-    materials: Optional[List[Material]] = Field(description="List of materials, e.g. [{'name':'aluminum','share':'20'}]", default=[])
+    materials: Optional[List[Material]] = Field(description="List of materials, e.g. [{'name':'aluminum','share':20.5}, {'name':'steel','share':75.25}]", default=[])
     width: Optional[Measurement] = Field(description="The width of the part.", default=None)
     height: Optional[Measurement] = Field(description="The height of the part.", default=None)
     length: Optional[Measurement] = Field(description="The length of the part.", default=None)
@@ -134,12 +134,23 @@ class SerializedPartBase(CatalogPartBase):
 class SerializedPartRead(CatalogPartRead, SerializedPartBase, PartnerRelatedPartReadBase, CustomerPartIdBase):
     van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
 
+class SerializedPartReadWithStatus(SerializedPartRead, StatusBase):
+    """Serialized part read model with status information."""
+    pass
+
 class SerializedPartDetailsRead(SerializedPartRead, CatalogPartDetailsRead):
+    pass
+
+class SerializedPartDetailsReadWithStatus(SerializedPartDetailsRead, StatusBase):
+    """Serialized part details read model with status information."""
     pass
 
 class SerializedPartCreate(SerializedPartBase, PartnerRelatedPartCreateBase):
     van: Optional[str] = Field(description=VAN_DESCRIPTION, default=None)
     customer_part_id: Optional[str] = Field(alias="customerPartId", description="The customer part ID of the part.", default=None)
+    name: Optional[str] = Field(description="The name of the part.", default=None)
+    category: Optional[str] = Field(description="The category of the part.", default=None)
+    bpns: Optional[str] = Field(description="The site number (BPNS) the part is produced", default=None)
 
 class SerializedPartDelete(SerializedPartBase, PartnerRelatedPartCreateBase):
     pass

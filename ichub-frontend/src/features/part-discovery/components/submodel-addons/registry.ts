@@ -112,7 +112,7 @@ export function createSubmodelAddonRegistry(): SubmodelAddonRegistry {
       }
       
       addons.set(config.id, config);
-      console.log(`Registered submodel add-on: ${config.name} (${config.id})`);
+      `);
     },
 
     getAddon(semanticId: string): SubmodelAddonConfig | null {

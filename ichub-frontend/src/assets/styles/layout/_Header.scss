@@ -40,17 +40,49 @@ header.ichub-header {
     background-color: $brand-border;
     color: $brand-text;
     border: 1px solid $brand-text;
-    margin-left: 15px;
+    transition: all 0.2s ease-in-out;
 
     &:hover {
-      @include mixins.dark-bg-white-text;
-      font-weight: bold;
-      box-shadow: 0 0 15px $brand-orange !important;
+      background-color: rgba(25, 118, 210, 0.2);
+      color: white;
+      border-color: rgba(25, 118, 210, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
     }
   }
-  h2{
+  
+  .MuiIconButton-root {
+    color: white;
+    
+    &:hover {
+      background-color: rgba(25, 118, 210, 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+    }
+    
+    .MuiSvgIcon-root {
+      color: white;
+    }
+  }
+  h1, h2{
     color: $brand-text;
     font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    letter-spacing: 0.5px;
+    
+    &.main-title {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #ffffff 30%, #42a5f5 90%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: none; // Remove text-shadow when using gradient text
+      
+      @media (max-width: 768px) {
+        font-size: 1.6rem;
+      }
+    }
   }
 }
 

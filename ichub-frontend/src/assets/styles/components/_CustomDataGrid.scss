@@ -31,3 +31,229 @@
     color: $brand-text !important;
   }
 }
+
+.modern-data-grid {
+  color: #000000 !important;
+
+  .MuiDataGrid-columnHeaders {
+    background: linear-gradient(135deg, rgba(25, 118, 210, 0.15) 0%, rgba(66, 165, 245, 0.1) 100%) !important;
+    color: #000000 !important;
+    
+    .MuiDataGrid-columnHeader {
+      border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+      
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+    
+    .MuiDataGrid-columnHeaderTitle {
+      color: #000000 !important;
+      font-weight: 700 !important;
+    }
+  }
+
+  .MuiDataGrid-cell {
+    background-color: transparent !important;
+    color: #000000 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.05) !important;
+    
+    &:last-child {
+      border-right: none !important;
+    }
+    
+    * {
+      color: #000000 !important;
+    }
+    
+    p, span, div {
+      color: #000000 !important;
+    }
+  }
+
+  .MuiDataGrid-row {
+    background-color: transparent !important;
+    color: #000000 !important;
+    
+    .MuiDataGrid-cell {
+      color: #000000 !important;
+      
+      *, p, span, div {
+        color: #000000 !important;
+      }
+    }
+    
+    &:hover {
+      .MuiDataGrid-cell {
+        color: #000000 !important;
+        
+        *, p, span, div {
+          color: #000000 !important;
+        }
+      }
+    }
+    
+    &.Mui-selected {
+      .MuiDataGrid-cell {
+        color: #000000 !important;
+        
+        *, p, span, div {
+          color: #000000 !important;
+        }
+      }
+    }
+  }
+
+  .MuiDataGrid-virtualScroller {
+    background-color: transparent !important;
+  }
+
+  .MuiDataGrid-footerContainer {
+    background: rgba(25, 118, 210, 0.05) !important;
+    color: #000000 !important;
+    
+    * {
+      color: #000000 !important;
+    }
+  }
+
+  .MuiTablePagination-root {
+    color: #000000 !important;
+    
+    * {
+      color: #000000 !important;
+    }
+  }
+
+  .MuiDataGrid-overlay {
+    color: #000000 !important;
+    
+    * {
+      color: #000000 !important;
+    }
+  }
+}
+
+// Dark theme variant for SerializedPartsTable
+.modern-data-grid-dark {
+  color: rgb(248, 249, 250) !important;
+
+  .MuiDataGrid-columnHeaders {
+    background: linear-gradient(135deg, rgba(25, 118, 210, 0.15) 0%, rgba(66, 165, 245, 0.1) 100%) !important;
+    color: rgb(248, 249, 250) !important;
+    
+    .MuiDataGrid-columnHeader {
+      border-right: 1px solid rgba(248, 249, 250, 0.12) !important;
+      
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+    
+    .MuiDataGrid-columnHeaderTitle {
+      color: rgb(248, 249, 250) !important;
+      font-weight: 700 !important;
+    }
+  }
+
+  .MuiDataGrid-cell {
+    background-color: transparent !important;
+    color: rgb(248, 249, 250) !important;
+    border-bottom: 1px solid rgba(248, 249, 250, 0.15) !important;
+    border-right: 1px solid rgba(248, 249, 250, 0.08) !important;
+    
+    &:last-child {
+      border-right: none !important;
+    }
+    
+    * {
+      color: rgb(248, 249, 250) !important;
+    }
+    
+    p, span, div {
+      color: rgb(248, 249, 250) !important;
+    }
+  }
+
+  .MuiDataGrid-row {
+    background-color: transparent !important;
+    color: rgb(248, 249, 250) !important;
+    
+    .MuiDataGrid-cell {
+      color: rgb(248, 249, 250) !important;
+      
+      *, p, span, div {
+        color: rgb(248, 249, 250) !important;
+      }
+    }
+    
+    &:hover {
+      .MuiDataGrid-cell {
+        color: rgb(248, 249, 250) !important;
+        
+        *, p, span, div {
+          color: rgb(248, 249, 250) !important;
+        }
+      }
+    }
+    
+    &.Mui-selected {
+      .MuiDataGrid-cell {
+        color: rgb(248, 249, 250) !important;
+        
+        *, p, span, div {
+          color: rgb(248, 249, 250) !important;
+        }
+      }
+    }
+  }
+
+  .MuiDataGrid-virtualScroller {
+    background-color: transparent !important;
+  }
+
+  .MuiDataGrid-footerContainer {
+    background: rgba(25, 118, 210, 0.05) !important;
+    color: rgb(248, 249, 250) !important;
+    
+    * {
+      color: rgb(248, 249, 250) !important;
+    }
+  }
+
+  .MuiTablePagination-root {
+    color: rgb(248, 249, 250) !important;
+    
+    * {
+      color: rgb(248, 249, 250) !important;
+    }
+  }
+
+  .MuiDataGrid-overlay {
+    color: rgb(248, 249, 250) !important;
+    
+    * {
+      color: rgb(248, 249, 250) !important;
+    }
+  }
+}
+
+// Higher specificity for productDetail context
+.productDetail .modern-data-grid {
+  .MuiDataGrid-cell {
+    color: #000000 !important;
+    
+    *, p, span, div, .MuiTypography-root {
+      color: #000000 !important;
+    }
+  }
+  
+  .MuiDataGrid-row {
+    .MuiDataGrid-cell {
+      *, p, span, div, .MuiTypography-root {
+        color: #000000 !important;
+      }
+    }
+  }
+}

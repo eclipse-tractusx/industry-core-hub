@@ -1,0 +1,110 @@
+{
+  "id": "437d7ab7-e432-474f-a961-ad030a50bc14",
+  "realm": "ICHub",
+  "notBefore": 0,
+  "defaultSignatureAlgorithm": "RS256",
+  "revokeRefreshToken": false,
+  "refreshTokenMaxReuse": 0,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "users": [
+    {
+      "id": "admin-user-001",
+      "createdTimestamp": 1735724400000,
+      "username": "ichub-admin",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": true,
+      "firstName": "Industry",
+      "lastName": "Admin",
+      "email": "ichub-admin@example.com",
+      "attributes": {
+        "BPN": ["BPNL000000000000"]
+      },
+      "credentials": [
+        {
+          "id": "admin-cred-001",
+          "type": "password",
+          "userLabel": "Initial password",
+          "createdDate": 1735724400000,
+          "secretData": "{\"value\":\"$2a$10$rz1XxQ6xbpEzCgvlJWLm/O5IZn8cCnRJGFWI0nWLuN8TtBhRyqZti\",\"salt\":\"6OJ3QpqWP6Dt6bvR6qROQg==\",\"additionalParameters\":{}}",
+          "credentialData": "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+        }
+      ],
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-ichub",
+        "offline_access",
+        "uma_authorization"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "realm-admin"
+        ],
+        "account": [
+          "manage-account",
+          "view-profile"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
+    }
+  ],
+  "clients": [
+    {
+      "id": "ichub-api-client-001",
+      "clientId": "industry-core-hub-api",
+      "name": "Industry Core Hub API Client",
+      "description": "OAuth2 client for Industry Core Hub Backend API",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "ichub-client-secret-2024",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": false,
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "consentRequired": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:8000/*",
+        "http://ichub-backend.tx.test/*",
+        "*"
+      ],
+      "webOrigins": [
+        "http://localhost:8000",
+        "http://ichub-backend.tx.test",
+        "*"
+      ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access"
+      ],
+      "attributes": {
+        "access.token.lifespan": "1800",
+        "client.secret.creation.time": "1735724400"
+      }
+    }
+  ]
+}

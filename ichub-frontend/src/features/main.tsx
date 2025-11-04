@@ -20,19 +20,37 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+import { Assignment } from '@mui/icons-material';
+import { catalogManagementFeature } from './catalog-management/routes';
+import { partDiscoveryFeature } from './part-discovery/routes';
+import { partnerManagementFeature } from './partner-management/routes';
+import { serializedPartsFeature } from './serialized-parts/routes';
+import { FeatureConfig, NavigationItem } from '../types/routing';
 
-import {
-    Storefront,
-    FindInPage,
-    People,
-    Assignment,
-    Dashboard
-  } from '@mui/icons-material';
-  
-  export const features = [
-    { icon: <Storefront />, path: '/catalog', disabled: false },
-    { icon: <FindInPage />, path: '/dataspace-discovery', disabled: false },
-    { icon: <Dashboard />, path: '/serialized-parts', disabled: false },
-    { icon: <People />, path: '/partners', disabled: false },
-    { icon: <Assignment />, path: '/status', disabled: true }
-  ];
+// Import all feature configurations
+export const allFeatures: FeatureConfig[] = [
+  catalogManagementFeature,
+  serializedPartsFeature,
+  partDiscoveryFeature,
+  partnerManagementFeature,
+  // Add placeholder for status feature (disabled)
+  {
+    name: 'Status',
+    icon: <Assignment />,
+    navigationPath: '/status',
+    disabled: true,
+    routes: []
+  }
+];
+
+// Extract just the navigation items for the sidebar (backward compatibility)
+export const features: NavigationItem[] = allFeatures.map(feature => ({
+  icon: feature.icon,
+  path: feature.navigationPath,
+  disabled: feature.disabled
+}));
+
+// Get all routes from all features
+export const getAllRoutes = () => {
+  return allFeatures.flatMap(feature => feature.routes);
+};

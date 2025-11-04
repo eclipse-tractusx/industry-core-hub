@@ -1,0 +1,24 @@
+meta {
+  name: Twin Management Create Catalog Part Twin
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/v1/twin-management/catalog-part-twin
+  body: json
+  auth: inherit
+}
+
+params:query {
+  ~autoCreatePartTypeInformation: 
+}
+
+body:json {
+  {
+    "globalId": "",
+    "dtrAasId": "",
+    "manufacturerId": "",
+    "manufacturerPartId": ""
+  }
+}

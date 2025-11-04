@@ -63,12 +63,65 @@ spec:
               containerPort: {{ .Values.frontend.service.portContainer }}
               protocol: TCP
           env:
+            # Core application
+            - name: APP_ENVIRONMENT
+              value: "{{ .Values.frontend.config.environment }}"
+            - name: APP_VERSION
+              value: "{{ .Values.frontend.config.version }}"
+            
+            # API configuration
             - name: ICHUB_BACKEND_URL
-              value: "{{ .Values.frontend.env.backendUrl }}"
+              value: "{{ .Values.frontend.config.ichubBackendUrl }}"
+            - name: API_TIMEOUT
+              value: "{{ .Values.frontend.config.apiTimeout }}"
+            - name: API_RETRY_ATTEMPTS
+              value: "{{ .Values.frontend.config.apiRetryAttempts }}"
+            - name: REQUIRE_HTTPS_URL_PATTERN
+              value: "{{ .Values.frontend.config.requireHttpsUrlPattern }}"
+            
+            # API key configuration
+            {{- if .Values.frontend.config.apiKey }}
+            - name: API_KEY
+              value: "{{ .Values.frontend.config.apiKey }}"
+            {{- end }}
+            - name: API_KEY_HEADER
+              value: "{{ .Values.frontend.config.apiKeyHeader }}"
+            - name: ENABLE_API_KEY_ROTATION
+              value: "{{ .Values.frontend.config.enableApiKeyRotation }}"
+            - name: API_KEY_EXPIRY_WARNING_DAYS
+              value: "{{ .Values.frontend.config.apiKeyExpiryWarningDays }}"
+            
+            # Authentication configuration
+            - name: AUTH_ENABLED
+              value: "{{ .Values.frontend.config.authEnabled }}"
+            - name: AUTH_PROVIDER
+              value: "{{ .Values.frontend.config.authProvider }}"
+            
+            # Participant configuration
             - name: PARTICIPANT_ID
               value: "{{ .Values.participantId }}"
+            
+            # Governance and policies configuration
             - name: GOVERNANCE_CONFIG
               value: {{ .Values.frontend.consumption.governance | toJson | quote }}
+            - name: DTR_POLICIES_CONFIG
+              value: {{ .Values.frontend.consumption.digitalTwinRegistry.policies | toJson | quote }}
+
+            # Feature flags
+            - name: ENABLE_ADVANCED_LOGGING
+              value: "{{ .Values.frontend.config.enableAdvancedLogging }}"
+            - name: ENABLE_PERFORMANCE_MONITORING
+              value: "{{ .Values.frontend.config.enablePerformanceMonitoring }}"
+            - name: ENABLE_DEV_TOOLS
+              value: "{{ .Values.frontend.config.enableDevTools }}"
+            
+            # UI configuration
+            - name: UI_THEME
+              value: "{{ .Values.frontend.config.uiTheme }}"
+            - name: UI_LOCALE
+              value: "{{ .Values.frontend.config.uiLocale }}"
+            - name: UI_COMPACT_MODE
+              value: "{{ .Values.frontend.config.uiCompactMode }}"
           {{- if .Values.frontend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:

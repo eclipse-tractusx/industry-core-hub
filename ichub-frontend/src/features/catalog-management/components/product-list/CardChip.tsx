@@ -23,11 +23,12 @@
 import PersonIcon from '@mui/icons-material/Person'
 import { type Palette, useTheme } from '@mui/material'
 import MuiChip from '@mui/material/Chip'
-import { StatusVariants } from '../../../../types/statusVariants'
+import { StatusVariants } from '../../types/types'
 
 export interface CardChipProps {
   status?: StatusVariants
   statusText?: string
+  className?: string
 }
 
 interface ChipStyle {
@@ -53,9 +54,10 @@ const statusStyles: Record<StatusVariants | 'default', ChipStyle> = {
     border: 'borderDraft',
   },
   [StatusVariants.pending]: {
-    color: 'inReview',
-    backgroundColor: 'bgInReview',
-    border: 'inReview',
+    // Use dark text on white background as requested
+    color: 'black',
+    backgroundColor: 'registered', // registered maps to pure white in palette.chip
+    border: 'none',
   },
   default: {
     color: 'default',
@@ -64,7 +66,7 @@ const statusStyles: Record<StatusVariants | 'default', ChipStyle> = {
   }
 }
 
-export const CardChip = ({ status, statusText }: CardChipProps) => {
+export const CardChip = ({ status, statusText, className }: CardChipProps) => {
   const theme = useTheme()
 
   // Ensure the status is valid; otherwise, use 'default'
@@ -76,14 +78,29 @@ export const CardChip = ({ status, statusText }: CardChipProps) => {
     <MuiChip
       label={statusText}
       variant="outlined"
+      className={className}
       sx={{
-        color: theme.palette.chip[color],
+        color: statusKey === StatusVariants.shared ? '#000000' : theme.palette.chip[color],
         backgroundColor: theme.palette.chip[backgroundColor],
         borderRadius: '4px',
         border: theme.palette.chip[border],
-        height: '28px',
+        height: '32px',
+        ...(statusKey === StatusVariants.shared && {
+          '&, & *': {
+            color: '#000000 !important',
+          },
+          '& .MuiChip-label': {
+            color: '#000000 !important',
+          },
+          '& .MuiSvgIcon-root': {
+            color: '#000000 !important',
+          },
+        }),
       }}
-      icon={statusKey==StatusVariants.shared?<PersonIcon sx={{color: '#000000', fontSize: '18px'}}/>:undefined}
+      icon={statusKey==StatusVariants.shared?<PersonIcon sx={{
+        color: '#000000', 
+        fontSize: '18px'
+      }}/>:undefined}
     />
   )
 }

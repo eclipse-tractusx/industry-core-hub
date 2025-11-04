@@ -28,9 +28,16 @@ on:
       - 'charts/**'
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual release'
+        required: false
+        default: 'Manual release from main branch'
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
     # depending on default permission settings for your org (contents being read-only or read-write for workloads), you will have to add permissions
     # see: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#modifying-the-permissions-for-the-github_token
     permissions:
@@ -56,6 +63,7 @@ jobs:
         run: |
           cd charts/industry-core-hub
           helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add bitnami-full-index https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
           helm repo add runix https://helm.runix.net
           helm dependency update
 

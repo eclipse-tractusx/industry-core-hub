@@ -35,11 +35,81 @@
   <body>
     <div id="root"></div>
     <script>
-      // Do NOT change ENV attributes without changing them in scripts/inject-dynamic-env.sh as well
+      // Enhanced runtime configuration injection
+      // This will be replaced by Helm chart values during deployment
       const ENV = {
-        VITE_REQUIRE_HTTPS_URL_PATTERN: "true",
-        VITE_ICHUB_BACKEND_URL: "https://backend-ichub.int.catena-x.net/v1",
-        VITE_PARTICIPANT_ID: "BPNL0000000093Q7"
+        // Core application
+        APP_ENVIRONMENT: "development",
+        APP_VERSION: "1.0.0",
+        
+        // API configuration
+        ICHUB_BACKEND_URL: "http://localhost:9000/v1",
+        API_TIMEOUT: "30000",
+        API_RETRY_ATTEMPTS: "3",
+        REQUIRE_HTTPS_URL_PATTERN: "false",
+        
+        // API key configuration
+        API_KEY: "",
+        API_KEY_HEADER: "X-API-Key",
+        ENABLE_API_KEY_ROTATION: "false",
+        API_KEY_EXPIRY_WARNING_DAYS: "7",
+        
+        // Authentication configuration
+        AUTH_ENABLED: "false",
+        AUTH_PROVIDER: "none",
+        
+        // Keycloak configuration
+        KEYCLOAK_URL: "",
+        KEYCLOAK_REALM: "",
+        KEYCLOAK_CLIENT_ID: "",
+        KEYCLOAK_ON_LOAD: "check-sso",
+        KEYCLOAK_CHECK_LOGIN_IFRAME: "true",
+        KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: "",
+        KEYCLOAK_PKCE_METHOD: "S256",
+        KEYCLOAK_ENABLE_LOGGING: "false",
+        KEYCLOAK_MIN_VALIDITY: "30",
+        KEYCLOAK_CHECK_LOGIN_IFRAME_INTERVAL: "5",
+        KEYCLOAK_FLOW: "standard",
+        
+        // Session management
+        AUTH_SESSION_TIMEOUT: "3600000",
+        AUTH_RENEW_TOKEN_MIN_VALIDITY: "300",
+        AUTH_LOGOUT_REDIRECT_URI: "",
+        
+        // Participant configuration
+        PARTICIPANT_ID: "",
+        BPN_VALIDATION_PATTERN: "",
+        
+        // Governance and policies
+        GOVERNANCE_CONFIG: "[]",
+        DTR_POLICIES_CONFIG: "[]",
+        GOVERNANCE_STRICT_MODE: "false",
+        
+        // Feature flags
+        ENABLE_ADVANCED_LOGGING: "true",
+        ENABLE_PERFORMANCE_MONITORING: "false",
+        ENABLE_DEV_TOOLS: "true",
+        
+        // UI configuration
+        UI_THEME: "auto",
+        UI_LOCALE: "en",
+        UI_COMPACT_MODE: "false"
+      }
+      
+      // Validate and sanitize environment
+      Object.keys(ENV).forEach(key => {
+        if (ENV[key] === 'undefined' || ENV[key] === '') {
+          delete ENV[key];
+        }
+      });
+      
+      window.ENV = ENV;
+      
+      // Performance monitoring (development only)
+      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true') {
+        window.addEventListener('load', () => {
+          console.info('App loaded in:', performance.now(), 'ms');
+        });
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>

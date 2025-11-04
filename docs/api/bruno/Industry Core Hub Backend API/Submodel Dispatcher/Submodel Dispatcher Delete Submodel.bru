@@ -1,0 +1,16 @@
+meta {
+  name: Submodel Dispatcher Delete Submodel
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/v1/submodel-dispatcher/:semantic_id/:global_id/submodel
+  body: none
+  auth: inherit
+}
+
+params:path {
+  semantic_id: 
+  global_id: 
+}

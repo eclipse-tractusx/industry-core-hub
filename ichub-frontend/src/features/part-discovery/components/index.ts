@@ -20,13 +20,47 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-export { PaginationControls } from './PaginationControls';
-export { SearchModeToggle } from './SearchModeToggle';
-export { FilterChips } from './FilterChips';
-export { PartnerSearch } from './PartnerSearch';
-export { SingleTwinSearch } from './SingleTwinSearch';
-export { SearchHeader } from './SearchHeader';
-export { SingleTwinResult } from './SingleTwinResult';
-export { default as SerializedPartsTable } from './SerializedPartsTable';
-export { default as PartsDiscoverySidebar } from './PartsDiscoverySidebar';
+// Search result components
+export { PaginationControls } from './search-result/PaginationControls';
+export { FilterChips } from './search-result/FilterChips';
+
+// Search components
+export { SearchModeToggle } from './search/SearchModeToggle';
+export { PartnerSearch } from './search/PartnerSearch';
+export { SearchHeader } from './search-result/SearchHeader';
+export { default as SearchLoading } from './search/SearchLoading';
+export { default as ErrorBoundary } from './search/ErrorBoundary';
+export { default as PartsDiscoverySidebar } from './search/PartsDiscoverySidebar';
+
+// Single twin components
+export { SingleTwinSearch } from './single-twin/SingleTwinSearch';
+export { SingleTwinResult } from './single-twin/SingleTwinResult';
+
+// Serialized parts components
+export { default as SerializedPartsTable } from './serialized-parts/SerializedPartsTable';
+
+// Catalog parts components
 export { CatalogPartsDiscovery } from './catalog-parts/CatalogPartsDiscovery';
+export { DiscoveryCardChip } from './catalog-parts/DiscoveryCardChip';
+
+// Submodel components
+export { SubmodelViewer } from './submodel/SubmodelViewer';
+
+// Submodel addon types and interfaces
+export type { 
+  SemanticVersion,
+  VersionRange,
+  ParsedSemanticId,
+  SubmodelData,
+  SubmodelAddonProps,
+  SubmodelAddonConfig,
+  SubmodelAddonRegistry,
+  SubmodelAddonContext
+} from './submodel-addons/types';
+
+// US Tariff Information addon
+export { UsTariffInformationViewer } from './submodel-addons/us-tariff-information/UsTariffInformationViewer';
+export type { UsTariffInformation } from './submodel-addons/us-tariff-information/types';
+
+// Utility functions
+export { getCountryFlag, getAvailableCountries, hasCountryFlag } from './submodel-addons/utils/country-flags';

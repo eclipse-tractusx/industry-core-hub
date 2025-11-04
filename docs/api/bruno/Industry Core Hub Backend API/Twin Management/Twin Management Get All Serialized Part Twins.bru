@@ -1,0 +1,15 @@
+meta {
+  name: Twin Management Get All Serialized Part Twins
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/v1/twin-management/serialized-part-twin
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~include_data_exchange_agreements: 
+}

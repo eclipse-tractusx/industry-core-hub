@@ -34,6 +34,8 @@ from tractusx_sdk.industry.models.aas.v3 import (
     ProtocolInformationSecurityAttributesTypes,
     ProtocolInformation,
     ProtocolInformationSecurityAttributes,
+    MultiLanguage,
+    AssetKind,
 )
 from typing import Dict, Optional
 from uuid import UUID
@@ -46,6 +48,7 @@ from urllib.parse import urljoin
 
 import json
 import logging
+import re
 logger = logging.getLogger(__name__)
 
 class DtrProviderManager:
@@ -80,6 +83,34 @@ class DtrProviderManager:
         base_plus_uri = urljoin(base_dtr_url.rstrip('/') + '/', uri.lstrip('/'))
         full_url = urljoin(base_plus_uri.rstrip('/') + '/', api_path.lstrip('/'))
         return full_url
+
+    @staticmethod
+    def _sanitize_id_short(value: str) -> str:
+        """
+        Sanitize an idShort according to AAS constraints:
+        - allowed chars: letters, digits, underscore
+        - must start with a letter
+        - max length: 128
+        - spaces -> underscore; collapse repeated underscores
+        """
+        if value is None:
+            return value
+        s = str(value).strip()
+        # Replace spaces with underscores first
+        s = s.replace(" ", "_")
+        # Replace any disallowed characters with underscore
+        s = re.sub(r"[^A-Za-z0-9_]+", "_", s)
+        # Collapse multiple underscores
+        s = re.sub(r"_+", "_", s)
+        # Remove leading underscores
+        s = s.lstrip("_")
+        # Ensure it starts with a letter; if not, prefix with 'A'
+        if not s or not re.match(r"[A-Za-z]", s[0]):
+            s = "A" + s
+        # Enforce max length 128
+        if len(s) > 128:
+            s = s[:128]
+        return s
     
     def _reference_from_bpn_list(self, bpn_list:list[str], fallback_id=None):
         """
@@ -109,7 +140,7 @@ class DtrProviderManager:
             keys=keys,
         )
 
-    def _add_or_update_asset_id(self, name:str, value:str, bpn_list:list[str], fallback_id=None):
+    def _add_or_update_asset_id(self, name:str, value:str, bpn_list:list[str], fallback_id=None, supplemental_semantic_ids=None):
         """
         Creates a SpecificAssetId using the given name and value, associated with a Reference
         built from a list of BPNs or a fallback ID.
@@ -126,9 +157,9 @@ class DtrProviderManager:
         # Generate a Reference from BPN list or fallback
         ref = self._reference_from_bpn_list(bpn_list, fallback_id=fallback_id)
         # Create a new SpecificAssetId object with the Reference
-        return SpecificAssetId(name=name, value=value, externalSubjectId=ref, supplementalSemanticIds=None)
+        return SpecificAssetId(name=name, value=value, externalSubjectId=ref, supplementalSemanticIds=supplemental_semantic_ids)
     
-    def upsert_asset_id(self, manufacturer_id:str, name:str, value:str, bpn_keys:list, specific_asset_ids:list[SpecificAssetId]) -> list[SpecificAssetId]:
+    def upsert_asset_id(self, manufacturer_id:str, name:str, value:str, bpn_keys:list, specific_asset_ids:list[SpecificAssetId], supplemental_semantic_ids=None) -> list[SpecificAssetId]:
         """
         Updates an existing SpecificAssetId in the list with new BPN references if it exists,
         or appends a new one if it does not.
@@ -157,7 +188,8 @@ class DtrProviderManager:
                 type=ReferenceTypes.EXTERNAL_REFERENCE,
                 keys=[ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn) for bpn in bpn_keys] or
                     [ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=manufacturer_id)]
-            )
+            ),
+            supplementalSemanticIds=supplemental_semantic_ids
         ))
         return specific_asset_ids
 
@@ -191,8 +223,14 @@ class DtrProviderManager:
         manufacturer_id: str,
         manufacturer_part_id: str,
         customer_part_ids: Dict[str, str] | None,
-        part_category: str,
         digital_twin_type: str,
+        asset_type: Optional[str] = None,
+        asset_kind: Optional[str] = None,
+        id_short: Optional[str] = None,
+        part_instance_id: Optional[str] = None,
+        van: Optional[str] = None,
+        description: Optional[str] = None,
+        display_name: Optional[str] = None,
     ) -> ShellDescriptor:
         """
         Registers or updates a twin in the DTR.
@@ -205,17 +243,46 @@ class DtrProviderManager:
         existing_keys = {}
 
         # Try retrieving an existing shell descriptor using the AAS ID and manufacturer BPN
-        existing_shell = self.aas_service.get_asset_administration_shell_descriptor_by_id(
+        existing_shell:ShellDescriptor = self.aas_service.get_asset_administration_shell_descriptor_by_id(
             aas_identifier=aas_id.urn, bpn=manufacturer_id
         )
-        if isinstance(existing_shell, ShellDescriptor):
+        if not isinstance(existing_shell, Result):
             # If shell exists, set flag and extract existing specific asset IDs
             exists = True
             logger.info(f"Shell with ID {aas_id} already exists, the information will be updated.")
             specific_asset_ids = existing_shell.specific_asset_ids or []
             # Build a set of (name, value) pairs for quick lookup of existing asset IDs
             existing_keys = {(id.name, id.value) for id in specific_asset_ids}
-
+        
+        _display_name_obj = None
+        if display_name:
+            _display_name_obj = [MultiLanguage(
+                language="en",
+                text=display_name
+            )]
+        
+        _description_obj = None
+        if description:
+            _description_obj = [MultiLanguage(
+                language="en",
+                text=description
+            )]
+            
+        # Convert asset_kind string to enum if provided
+        asset_kind_enum = None
+        if asset_kind:
+            try:
+                # AssetKind enum values are in proper case (Instance, Type, NotApplicable)
+                # First try the exact value, then try title case
+                if asset_kind in [e.value for e in AssetKind]:
+                    asset_kind_enum = AssetKind(asset_kind)
+                else:
+                    # Try title case for common variations
+                    asset_kind_title = asset_kind.title()
+                    asset_kind_enum = AssetKind(asset_kind_title)
+            except ValueError:
+                logger.warning(f"Invalid asset_kind value: {asset_kind}. Valid values are: {[e.value for e in AssetKind]}")
+        
         # Construct the BPN list from customer_part_ids and ensure manufacturer_id is included
         bpn_list = list(customer_part_ids.values()) if customer_part_ids else []
         bpn_list.append(manufacturer_id)  # Ensure manufacturer_id is always included
@@ -234,193 +301,71 @@ class DtrProviderManager:
             # Upsert manufacturerPartId asset ID with relevant BPN keys
             specific_asset_ids = self.upsert_asset_id(manufacturer_id, "manufacturerPartId", manufacturer_part_id, bpn_keys, specific_asset_ids)
 
+        if part_instance_id:
+            # Upsert partInstanceId asset ID with relevant BPN keys
+            specific_asset_ids = self.upsert_asset_id(manufacturer_id, "partInstanceId", part_instance_id, bpn_keys, specific_asset_ids)
+        
+        if van:
+            # Upsert van asset ID with relevant BPN keys
+            specific_asset_ids = self.upsert_asset_id(manufacturer_id, "van", van, bpn_keys, specific_asset_ids)
+        
         # Add or update customer part IDs
         if customer_part_ids:
             specific_asset_ids = self._update_or_append_customer_part_ids(specific_asset_ids, customer_part_ids, existing_keys)
-
-        if exists:
-            # If shell existed, update it in the DTR with new asset IDs and BPNs
-            existing_shell.specific_asset_ids = specific_asset_ids
-            logger.info(f"Sharing Asset Administration Shell [{aas_id.urn}] with {bpn_list}")
-            try:
-                res = self.aas_service.update_asset_administration_shell_descriptor(
-                    shell_descriptor=existing_shell, aas_identifier=aas_id.urn, bpn=manufacturer_id
-                )
-                logger.info(f"Successfully updated the AAS with id {aas_id.urn}!")
-            except:
-                logger.error(f"Failed to update AAS {aas_id.urn}")
-        else:
+        
+        if id_short:
+            id_short = self._sanitize_id_short(id_short)
+        
+        if not exists:
             # If shell did not exist, create a new one with the constructed asset IDs
             shell = ShellDescriptor(
                 id=aas_id.urn,
+                idShort=id_short,
+                displayName=_display_name_obj,
+                description=_description_obj,
+                assetType=asset_type,
+                assetKind=asset_kind_enum,
                 globalAssetId=global_id.urn,
                 specificAssetIds=specific_asset_ids,
             )
             logger.info(f"Creating new twin with id {aas_id.urn}!")
             res = self.aas_service.create_asset_administration_shell_descriptor(shell_descriptor=shell)
+            if isinstance(res, Result):
+                raise ExternalAPIError("Error creating or updating shell descriptor"+ res.to_json_string())
+            return res
+        
+        # If shell existed, update it in the DTR with new asset IDs and BPNs
+        existing_shell.specific_asset_ids = specific_asset_ids
+        if id_short:
+            existing_shell.id_short = id_short
+        
+        if _description_obj:
+            existing_shell.description = _description_obj
+        
+        if _display_name_obj:
+            existing_shell.display_name = _display_name_obj
+        
+        if asset_type:
+            existing_shell.asset_type = asset_type
+        
+        if asset_kind_enum:
+            existing_shell.asset_kind = asset_kind_enum
+        
+        logger.info(f"Sharing Asset Administration Shell [{aas_id.urn}] with {bpn_list}")
+        try:
+            res = self.aas_service.update_asset_administration_shell_descriptor(
+                shell_descriptor=existing_shell, aas_identifier=aas_id.urn, bpn=manufacturer_id
+            )
+            logger.info(f"Successfully updated the AAS with id {aas_id.urn}!")
+        except:
+            logger.error(f"Failed to update AAS {aas_id.urn}")
 
         # Raise exception if service returned an error
         if isinstance(res, Result):
-            raise ExternalAPIError("Error creating or updating shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error creating or updating shell descriptor"+ res.to_json_string())
 
         return res
         
-    
-    def create_shell_descriptor(
-        self,
-        aas_id: UUID,
-        global_id: UUID,
-        manufacturer_id: str,
-        manufacturer_part_id: str,
-        customer_part_ids: Dict[str, str] | None,
-        part_category: str,
-        digital_twin_type: str,
-    ) -> ShellDescriptor:
-        """
-        Registers a twin in the DTR.
-        """
-        specific_asset_ids = []
-        # Prepare BPN list from customer_part_ids, if present
-        bpn_list = list(customer_part_ids.values()) if customer_part_ids else []
-
-        # manufacturerId
-        if manufacturer_id:
-            ref_keys = (
-                [ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn) for bpn in bpn_list]
-                if bpn_list else
-                [ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=manufacturer_id)]
-            )
-            specific_manufacturer_asset_id = SpecificAssetId(
-                name="manufacturerId",
-                value=manufacturer_id,
-                externalSubjectId=Reference(
-                    type=ReferenceTypes.EXTERNAL_REFERENCE,
-                    keys=ref_keys,
-                ),
-            )  # type: ignore
-            specific_asset_ids.append(specific_manufacturer_asset_id)
-
-        # digitalTwinType
-        if digital_twin_type:
-            ref_keys = (
-                [ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn) for bpn in bpn_list]
-                if bpn_list else
-                [ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=manufacturer_id)]
-            )
-            digital_twin_asset_id = SpecificAssetId(
-                name="digitalTwinType",
-                value=digital_twin_type,
-                externalSubjectId=Reference(
-                    type=ReferenceTypes.EXTERNAL_REFERENCE,
-                    keys=ref_keys,
-                ),
-            )  # type: ignore
-            specific_asset_ids.append(digital_twin_asset_id)
-
-        # manufacturerPartId
-        if manufacturer_part_id:
-            specific_manufacturer_part_asset_id = SpecificAssetId(
-                name="manufacturerPartId",
-                value=manufacturer_part_id,
-                externalSubjectId=Reference(
-                    type=ReferenceTypes.EXTERNAL_REFERENCE,
-                    keys=[
-                        ReferenceKey(
-                            type=ReferenceKeyTypes.GLOBAL_REFERENCE, value="PUBLIC_READABLE"
-                        ),
-                    ],
-                ),
-            )  # type: ignore
-            specific_asset_ids.append(specific_manufacturer_part_asset_id)
-
-        # Add customerPartId(s) using the common update/append method
-        if customer_part_ids is not None and customer_part_ids != {}:
-            specific_asset_ids = self._update_or_append_customer_part_ids(specific_asset_ids, customer_part_ids, set())
-
-        shell = ShellDescriptor(
-            id=aas_id.urn,
-            globalAssetId=global_id.urn,
-            specificAssetIds=specific_asset_ids,
-        )  # type: ignore
-
-        res = self.aas_service.create_asset_administration_shell_descriptor(shell)
-        if isinstance(res, Result):
-            raise ExternalAPIError("Error creating shell descriptor", res.to_json_string())
-        return res
-
-    def create_or_update_shell_descriptor_serialized_part(self,
-        aas_id: UUID,
-        global_id: UUID,
-        manufacturer_id: str,
-        manufacturer_part_id: str,
-        customer_part_id: str,
-        part_instance_id: str,
-        van: Optional[str],
-        business_partner_number: str,
-        part_category: str) -> ShellDescriptor:
-        """
-        Registers or updates a serialized part twin in the DTR.
-        """
-        try:
-            existing_shell = self.aas_service.get_asset_administration_shell_descriptor_by_id(aas_id.urn)
-            logger.info(f"Shell with ID {aas_id} already exists and will be updated.")
-            specific_asset_ids = existing_shell.specificAssetIds or []
-            existing_keys = {(id.name, id.value) for id in specific_asset_ids}
-        except Exception:
-            existing_shell = None
-            specific_asset_ids = []
-            existing_keys = set()
-
-        if manufacturer_id and ("manufacturerId", manufacturer_id) not in existing_keys:
-            specific_asset_ids.append(self._add_or_update_asset_id("manufacturerId", manufacturer_id, [business_partner_number], fallback_id=manufacturer_id))
-
-        specific_asset_ids.append(self._add_or_update_asset_id("digitalTwinType", 'Instance', [business_partner_number], fallback_id=manufacturer_id))
-
-        if manufacturer_part_id:
-            specific_manufacturer_part_asset_id = SpecificAssetId(
-                name="manufacturerPartId",
-                value=manufacturer_part_id,
-                externalSubjectId=Reference(
-                    type=ReferenceTypes.EXTERNAL_REFERENCE,
-                    keys=[
-                        ReferenceKey(
-                            type=ReferenceKeyTypes.GLOBAL_REFERENCE, value="PUBLIC_READABLE"
-                        ),
-                    ],
-                ),
-            )  # type: ignore
-            specific_asset_ids.append(specific_manufacturer_part_asset_id)
-
-        key = ("customerPartId", customer_part_id)
-        if key not in existing_keys:
-            specific_customer_part_asset_id = SpecificAssetId(
-                name="customerPartId",
-                value=customer_part_id,
-                externalSubjectId=self._reference_from_bpn_list([business_partner_number]),
-            )
-            specific_asset_ids.append(specific_customer_part_asset_id)
-
-        specific_asset_ids.append(self._add_or_update_asset_id("partInstanceId", part_instance_id, [business_partner_number], fallback_id=manufacturer_id))
-        
-        if van and ("van", van) not in existing_keys:
-            specific_asset_ids.append(self._add_or_update_asset_id("van", van, [business_partner_number], fallback_id=manufacturer_id))
-
-        shell = ShellDescriptor(
-            id=aas_id.urn,
-            globalAssetId=global_id.urn,
-            specificAssetIds=specific_asset_ids,
-        )
-
-        if existing_shell:
-            res = self.aas_service.update_asset_administration_shell_descriptor(shell)
-        else:
-            res = self.aas_service.create_asset_administration_shell_descriptor(shell)
-
-        if isinstance(res, Result):
-            raise Exception("Error creating or updating shell descriptor", res.to_json_string())
-
-        return res
-
     def create_submodel_descriptor(
         self,
         aas_id: UUID|str,
@@ -542,7 +487,8 @@ class DtrProviderManager:
         self,
         specific_asset_ids: list[SpecificAssetId],
         customer_part_ids: Dict[str, str],
-        existing_keys: set
+        existing_keys: set,
+        supplemental_semantic_ids=None
     ) -> list[SpecificAssetId]:
         """
         Updates or appends customer part ID entries into specific_asset_ids with proper BPN references.
@@ -560,6 +506,7 @@ class DtrProviderManager:
                     name="customerPartId",
                     value=customer_part_id,
                     externalSubjectId=self._reference_from_bpn_list([bpn]),
+                    supplemental_semantic_ids=supplemental_semantic_ids
                 )
                 specific_asset_ids.append(specific_customer_part_asset_id)
         return specific_asset_ids
@@ -584,6 +531,8 @@ class DtrProviderManager:
                 # If BPN already present, skip update and log warning
                 logger.warning(f"Customer part ID '{customer_part_id}' already shared with BPN '{bpn}'. Skipping update.")
                 continue
+            if len(sa_id.supplemental_semantic_ids) == 0:
+                sa_id.supplemental_semantic_ids = None
             # Append new BPN to existing reference
             sa_id.external_subject_id.keys.append(
                 ReferenceKey(type=ReferenceKeyTypes.GLOBAL_REFERENCE, value=bpn)
