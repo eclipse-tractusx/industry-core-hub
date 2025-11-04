@@ -526,6 +526,7 @@ class ConnectorControlPlane(SQLModel, table=True):
     # Relationships
     enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="connector_control_plane")
     legal_entity: LegalEntity = Relationship()
+    twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="connector_control_plane")
 
     __tablename__ = "connector_control_plane"
 
@@ -671,6 +672,7 @@ class TwinAspectRegistration(SQLModel, table=True):
     """
     twin_aspect_id: int = Field(foreign_key="twin_aspect.id", primary_key=True, description="The ID of the associated twin aspect.")
     twin_registry_id: int = Field(foreign_key="twin_registry.id", primary_key=True, description="The ID of the associated twin registry.")
+    connector_control_plane_id: int = Field(index=True, foreign_key="connector_control_plane.id", description="The ID of the associated connector control plane.")
     status: int = Field(index=True, default=0, description="The status of the registration.", sa_type=SmallInteger) # TODO: Use Enum for status
     registration_mode: int = Field(index=True, default=0, description="The registration mode.", sa_type=SmallInteger) # TODO: Use Enum for registration mode
     created_date: datetime = Field(index=True, default_factory=datetime.utcnow, description="The creation date of the registration.")
@@ -679,6 +681,7 @@ class TwinAspectRegistration(SQLModel, table=True):
     # Relationships
     twin_aspect: TwinAspect = Relationship(back_populates="twin_aspect_registrations")
     twin_registry: TwinRegistry = Relationship(back_populates="twin_aspect_registrations")
+    connector_control_plane: ConnectorControlPlane = Relationship(back_populates="twin_aspect_registrations")
 
     __tablename__ = "twin_aspect_registration"
 

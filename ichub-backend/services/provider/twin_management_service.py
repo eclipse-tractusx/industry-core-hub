@@ -36,6 +36,7 @@ from models.services.provider.twin_management import (
     CatalogPartTwinCreate,
     CatalogPartTwinShareCreate,
     CatalogPartTwinDetailsRead,
+    ConnectorRegistrationData,
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
     SerializedPartTwinShareCreate,
@@ -48,7 +49,7 @@ from models.services.provider.twin_management import (
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
-from models.metadata_database.provider.models import CatalogPart, BusinessPartner, Twin, BusinessPartner, EnablementServiceStack
+from models.metadata_database.provider.models import BusinessPartner, CatalogPart, Twin
 from tools.exceptions import InvalidError, NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
@@ -77,7 +78,7 @@ class TwinManagementService:
         trimmed = str(value).strip()
         return trimmed if trimmed else None
 
-    def create_catalog_part_twin(self, create_input: CatalogPartTwinCreate, auto_create_part_type_information: bool = False) -> TwinRead:
+    def create_catalog_part_twin(self, create_input: CatalogPartTwinCreate, auto_create_part_type_information: Optional[ConnectorRegistrationData] = None) -> TwinRead:
         with RepositoryManagerFactory.create() as repo:
             # Step 1: Retrieve the catalog part entity according to the catalog part data (manufacturer_id, manufacturer_part_id)
             db_catalog_parts = repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id(
@@ -90,20 +91,13 @@ class TwinManagementService:
             else:
                 db_catalog_part, _ = db_catalog_parts[0]
 
-            # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
+            # Step 2: Retrieve the twin registry entity from the DB according to the given name
             # (if not there => raise error)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                create_input.enablement_service_stack_name,
-                join_legal_entity=True,
-                join_connector_control_plane=True,
-                join_twin_registry=True
+            db_twin_registry = repo.twin_registry_repository.get_by_name(
+                create_input.twin_registry_name
             )
-            if not db_enablement_service_stack:
-                raise NotFoundError("Enablement service stack not found.")
-
-            # Consisteency check if the enablement service stack belongs to the manufacturer
-            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != create_input.manufacturer_id:
-                raise InvalidError(f"Enablement service stack {db_enablement_service_stack.name} does not belong to the manufacturer {create_input.manufacturer_id}.")
+            if not db_twin_registry:
+                raise NotFoundError(f"Twin registry '{create_input.twin_registry_name}' not found.")
 
             # Step 3a: Load existing twin metadata from the DB (if there)
             if db_catalog_part.twin_id:
@@ -121,16 +115,16 @@ class TwinManagementService:
                 db_catalog_part.twin_id = db_twin.id
                 repo.commit()
 
-            # Step 4: Try to find the twin registration for the twin id and enablement service stack id
+            # Step 4: Try to find the twin registration for the twin id and twin registry id
             # (if not there => create it now, setting the dtr_registered flag to False)
             db_twin_registration = repo.twin_registration_repository.get_by_twin_id_twin_registry_id(
                 db_twin.id,
-                db_enablement_service_stack.twin_registry_id    
+                db_twin_registry.id    
             )
             if not db_twin_registration:
                 db_twin_registration = repo.twin_registration_repository.create_new(
                     twin_id=db_twin.id,
-                    twin_registry_id=db_enablement_service_stack.twin_registry_id
+                    twin_registry_id=db_twin_registry.id
                 )
                 repo.commit()
                 repo.refresh(db_twin_registration)
@@ -140,7 +134,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             
-            dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
+            dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
             
             customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                     for partner_catalog_part in db_catalog_part.partner_catalog_parts}
@@ -190,7 +184,8 @@ class TwinManagementService:
                         globalId= db_twin.global_id,
                         semanticId= SEM_ID_PART_TYPE_INFORMATION_V1,
                         payload= part_type_info_doc,
-                        enablementServiceStackName= create_input.enablement_service_stack_name
+                        twinRegistryName= create_input.twin_registry_name,
+                        connectorControlPlaneName= auto_create_part_type_information.connector_control_plane_name
                     )                    
                 )
             
@@ -276,7 +271,7 @@ class TwinManagementService:
                 db_business_partner=db_business_partner
             )
 
-    def create_serialized_part_twin(self, create_input: SerializedPartTwinCreate, auto_create_serial_part_aspect: bool = False, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinRead:
+    def create_serialized_part_twin(self, create_input: SerializedPartTwinCreate, auto_create_serial_part_aspect: Optional[ConnectorRegistrationData] = None) -> TwinRead:
         with RepositoryManagerFactory.create() as repo:
             # Step 1: Retrieve the catalog part entity according to the catalog part data (manufacturer_id, manufacturer_part_id)
             db_serialized_parts = repo.serialized_part_repository.find(
@@ -292,20 +287,13 @@ class TwinManagementService:
             if not db_serialized_part.partner_catalog_part:
                 raise NotAvailableError("Serialized Part is not linked to a Catalog Part of a Business Partner.")
             
-            # Step 2: Retrieve the enablement service stack entity from the DB according to the given name
+            # Step 2: Retrieve the twin registry entity from the DB according to the given name
             # (if not there => raise error)
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                create_input.enablement_service_stack_name,
-                join_legal_entity=True,
-                join_connector_control_plane=True,
-                join_twin_registry=True
+            db_twin_registry = repo.twin_registry_repository.get_by_name(
+                create_input.twin_registry_name
             )
-            if not db_enablement_service_stack:
-                raise NotFoundError(f"Enablement service stack '{create_input.enablement_service_stack_name}' not found.")
-
-            # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != create_input.manufacturer_id:
-                raise NotFoundError(f"Enablement service stack '{create_input.enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
+            if not db_twin_registry:
+                raise NotFoundError(f"Twin registry '{create_input.twin_registry_name}' not found.")
             
             # Step 3a: Load existing twin metadata from the DB (if there)
             if db_serialized_part.twin_id:
@@ -323,16 +311,16 @@ class TwinManagementService:
                 db_serialized_part.twin_id = db_twin.id
                 repo.commit()
 
-            # Step 4: Try to find the twin registration for the twin id and enablement service stack id
+            # Step 4: Try to find the twin registration for the twin id and twin registry id
             # (if not there => create it now, setting the dtr_registered flag to False)
             db_twin_registration = repo.twin_registration_repository.get_by_twin_id_twin_registry_id(
                 db_twin.id,
-                db_enablement_service_stack.twin_registry_id
+                db_twin_registry.id
             )
             if not db_twin_registration:
                 db_twin_registration = repo.twin_registration_repository.create_new(
                     twin_id=db_twin.id,
-                    twin_registry_id=db_enablement_service_stack.twin_registry_id
+                    twin_registry_id=db_twin_registry.id
                 )
                 repo.commit()
 
@@ -354,7 +342,7 @@ class TwinManagementService:
                 if _cat:
                     asset_type_value = _cat
 
-            dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
+            dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
                 
             dtr_manager.create_or_update_shell_descriptor(
                 global_id=db_twin.global_id,
@@ -394,7 +382,8 @@ class TwinManagementService:
                         globalId=db_twin.global_id,
                         semanticId=SEM_ID_SERIAL_PART_V3,
                         payload=serial_part_doc,
-                        enablementServiceStackName=create_input.enablement_service_stack_name
+                        twinRegistryName=create_input.twin_registry_name,
+                        connectorControlPlaneName=auto_create_serial_part_aspect.connector_control_plane_name
                     )
                 )
 
@@ -502,22 +491,27 @@ class TwinManagementService:
             # Step 1a: Get associated manufacturer id
             manufacturer_id = self._get_manufacturer_id_from_twin(db_twin)
 
-            # Step 2: Retrieve the enablement service stack entity from the DB according to the given manufacturer ID
+            # Step 2a: Retrieve the twin registry entity from the DB according to the given name
             # (if not there => raise error)
-            # TODO: later the stack needs to be passed as an argument
-            db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
-                name=twin_aspect_create.enablement_service_stack_name,
-                join_legal_entity=True,
-                join_connector_control_plane=True,
-                join_twin_registry=True
+            db_twin_registry = repo.twin_registry_repository.get_by_name(
+                twin_aspect_create.twin_registry_name
             )
-            if not db_enablement_service_stack:
-                raise NotFoundError(f"Enablement service stack '{twin_aspect_create.enablement_service_stack_name}' not found.")
-            
-            # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != manufacturer_id:
-                raise NotFoundError(f"Enablement service stack '{twin_aspect_create.enablement_service_stack_name}' does not belong to the legal entity '{manufacturer_id}'.")
-            
+            if not db_twin_registry:
+                raise NotFoundError(f"Twin registry '{twin_aspect_create.twin_registry_name}' not found.")
+
+            # Step 2b: Retrieve the connector control plane entity from the DB according to the given name
+            # (if not there => raise error)
+            db_connector_control_plane = repo.connector_control_plane_repository.get_by_name(
+                twin_aspect_create.connector_control_plane_name,
+                join_legal_entity=True
+            )
+            if not db_connector_control_plane:
+                raise NotFoundError(f"Connector control plane '{twin_aspect_create.connector_control_plane_name}' not found.")
+
+            # Consistency check of the manufacturer id with the connector control plane
+            if manufacturer_id != db_connector_control_plane.legal_entity.bpnl:
+                raise InvalidError(f"Manufacturer ID '{manufacturer_id}' does not match with connector control plane's manufacturer ID '{db_connector_control_plane.manufacturer_id}'.")
+
             # Step 3: Retrieve a potentially existing twin aspect entity for the given twin_id and semantic_id
             db_twin_aspect = repo.twin_aspect_repository.get_by_twin_id_semantic_id(
                 db_twin.id,
@@ -534,23 +528,28 @@ class TwinManagementService:
                 repo.commit()
                 repo.refresh(db_twin_aspect)
 
-            # Step 4: Check if there is already a registration for the given DTR service and create it if not
+            # Step 4: Check if there is already a registration for the given twin registry and create it if not
             db_twin_aspect_registration = db_twin_aspect.find_registration_by_twin_registry_id(
-                db_enablement_service_stack.twin_registry_id
+                twin_registry_id=db_twin_registry.id
             )
             if not db_twin_aspect_registration:
                 db_twin_aspect_registration = repo.twin_aspect_registration_repository.create_new(
                     twin_aspect_id=db_twin_aspect.id,
-                    twin_registry_id=db_enablement_service_stack.twin_registry_id,
+                    twin_registry_id=db_twin_registry.id,
                     registration_mode=TwinsAspectRegistrationMode.DISPATCHED.value,
                 )
                 repo.commit()
                 repo.refresh(db_twin_aspect_registration)
                 repo.refresh(db_twin_aspect)
+            
+            # Existing registration found: check if the control plane matches
+            else:
+                if db_twin_aspect_registration.connector_control_plane_id != db_connector_control_plane.id:
+                    raise InvalidError("Twin aspect registration already exists with different connector control plane.")
 
             # Step 5: Handle the submodel service
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
-                submodel_service_manager = _create_submodel_service_manager(db_enablement_service_stack.settings)
+                submodel_service_manager = _create_submodel_service_manager(None)
                 
                 # Step 5a: Upload the payload to the submodel service
                 submodel_service_manager.upload_twin_aspect_document(
@@ -564,7 +563,7 @@ class TwinManagementService:
                 repo.commit()
             
             # Step 6: Handle the EDC registration
-            connector_manager = SystemManagementService.get_connector_manager(db_enablement_service_stack.connector_control_plane)
+            connector_manager = SystemManagementService.get_connector_manager(db_connector_control_plane)
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
                 
                 # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
@@ -578,7 +577,7 @@ class TwinManagementService:
 
             # Step 7: Handle the DTR registration
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
+                dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
                 
                 # Step 7a: Register the submodel in the DTR (if necessary)
                 try:
@@ -600,8 +599,9 @@ class TwinManagementService:
                 submodelId=db_twin_aspect.submodel_id,
 
                 registrations={
-                    db_enablement_service_stack.name: TwinAspectRegistration(
-                        dtrName=db_enablement_service_stack.name,
+                    db_twin_registry.name: TwinAspectRegistration(
+                        twinRegistryName=db_twin_registry.name,
+                        connectorControlPlaneName=db_connector_control_plane.name,
                         status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
                         mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
                         createdDate=db_twin_aspect_registration.created_date,
@@ -642,29 +642,29 @@ class TwinManagementService:
     @staticmethod
     def _build_catalog_part_twin_details(db_twin: Twin) -> Optional[CatalogPartTwinDetailsRead]:
             
-            db_catalog_part = db_twin.catalog_part
-            twin_result = CatalogPartTwinDetailsRead(
-                globalId=db_twin.global_id,
-                dtrAasId=db_twin.aas_id,
-                createdDate=db_twin.created_date,
-                modifiedDate=db_twin.modified_date,
-                manufacturerId=db_catalog_part.legal_entity.bpnl,
-                manufacturerPartId=db_catalog_part.manufacturer_part_id,
-                name=db_catalog_part.name,
-                category=TwinManagementService._none_if_empty(db_catalog_part.category),
-                bpns=db_catalog_part.bpns,
-                additionalContext=db_twin.additional_context,
-                customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
-                    name=partner_catalog_part.business_partner.name,
-                    bpnl=partner_catalog_part.business_partner.bpnl
-                ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
-            )
+        db_catalog_part = db_twin.catalog_part
+        twin_result = CatalogPartTwinDetailsRead(
+            globalId=db_twin.global_id,
+            dtrAasId=db_twin.aas_id,
+            createdDate=db_twin.created_date,
+            modifiedDate=db_twin.modified_date,
+            manufacturerId=db_catalog_part.legal_entity.bpnl,
+            manufacturerPartId=db_catalog_part.manufacturer_part_id,
+            name=db_catalog_part.name,
+            category=TwinManagementService._none_if_empty(db_catalog_part.category),
+            bpns=db_catalog_part.bpns,
+            additionalContext=db_twin.additional_context,
+            customerPartIds={partner_catalog_part.customer_part_id: BusinessPartnerRead(
+                name=partner_catalog_part.business_partner.name,
+                bpnl=partner_catalog_part.business_partner.bpnl
+            ) for partner_catalog_part in db_catalog_part.partner_catalog_parts}
+        )
 
-            TwinManagementService._fill_shares(db_twin, twin_result)
-            TwinManagementService._fill_registrations(db_twin, twin_result)
-            TwinManagementService._fill_aspects(db_twin, twin_result)
+        TwinManagementService._fill_shares(db_twin, twin_result)
+        TwinManagementService._fill_registrations(db_twin, twin_result)
+        TwinManagementService._fill_aspects(db_twin, twin_result)
 
-            return twin_result
+        return twin_result
 
     @staticmethod
     def _build_serialized_part_twin(db_twin: Twin, details: bool = False) -> SerializedPartTwinRead | SerializedPartTwinDetailsRead:
@@ -729,7 +729,8 @@ class TwinManagementService:
                     submodelId=db_twin_aspect.submodel_id,
                     registrations={
                         db_twin_aspect_registration.twin_registry.name: TwinAspectRegistration(
-                            dtrName=db_twin_aspect_registration.twin_registry.name,
+                            twinRegistryName=db_twin_aspect_registration.twin_registry.name,
+                            connectorControlPlaneName=db_twin_aspect_registration.connector_control_plane.name,
                             status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
                             mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
                             createdDate=db_twin_aspect_registration.created_date,
@@ -757,29 +758,30 @@ class TwinManagementService:
         db_twin: Twin,
         db_business_partner: BusinessPartner
     ) -> bool:
-            # Step 1: Retrieve the first data exchange agreement entity for the business partner
-            # (this will will later be replaced with an explicit mechanism choose a specific data exchange agreement)
-            db_data_exchange_agreements = repo.data_exchange_agreement_repository.get_by_business_partner_id(
-                db_business_partner.id
+        
+        # Step 1: Retrieve the first data exchange agreement entity for the business partner
+        # (this will will later be replaced with an explicit mechanism choose a specific data exchange agreement)
+        db_data_exchange_agreements = repo.data_exchange_agreement_repository.get_by_business_partner_id(
+            db_business_partner.id
+        )
+        if not db_data_exchange_agreements:
+            raise NotFoundError(f"No data exchange agreement found for business partner '{db_business_partner.bpnl}'.")
+        db_data_exchange_agreement = db_data_exchange_agreements[0] # Get the first one for now
+        
+        # Step 2: Check if there is already a twin exchange entity for the twin and data exchange agreement and create it if not
+        db_twin_exchange = repo.twin_exchange_repository.get_by_twin_id_data_exchange_agreement_id(
+            db_twin.id,
+            db_data_exchange_agreement.id
+        )
+        if not db_twin_exchange:
+            db_twin_exchange = repo.twin_exchange_repository.create_new(
+                twin_id=db_twin.id,
+                data_exchange_agreement_id=db_data_exchange_agreement.id
             )
-            if not db_data_exchange_agreements:
-                raise NotFoundError(f"No data exchange agreement found for business partner '{db_business_partner.bpnl}'.")
-            db_data_exchange_agreement = db_data_exchange_agreements[0] # Get the first one for now
-            
-            # Step 2: Check if there is already a twin exchange entity for the twin and data exchange agreement and create it if not
-            db_twin_exchange = repo.twin_exchange_repository.get_by_twin_id_data_exchange_agreement_id(
-                db_twin.id,
-                db_data_exchange_agreement.id
-            )
-            if not db_twin_exchange:
-                db_twin_exchange = repo.twin_exchange_repository.create_new(
-                    twin_id=db_twin.id,
-                    data_exchange_agreement_id=db_data_exchange_agreement.id
-                )
-                repo.commit()
-                return True
-            else:
-                return False
+            repo.commit()
+            return True
+        else:
+            return False
 
 
 def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
