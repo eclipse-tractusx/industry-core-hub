@@ -5,6 +5,82 @@ Further information can be found on the [README.md](README.md) file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.0] - 2025-09-30
+
+* feat: Improve the error and exception handling in the ichub by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/263
+* fix: responsiveness fixes for new components in product detail page by @pjuaristi-ikerlan in https://github.com/eclipse-tractusx/industry-core-hub/pull/270
+* feat: Add support for serialized parts by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/227
+* Fix: small fix in part_management router and re-arranged imports by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/274
+* feat: Add API operation for customer part ID mapping in catalog part by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/275
+* fix: Fixed broken twin aspect upload function and cleaned up part type information generation logic by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/276
+* chore(backend): fix SonarQube issues in main branch by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/279
+* Feat/swagger: Added open api specification for industry core hub by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/283
+* refactor: connector service and update dependencies (sdk 0.3.0) by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/287
+* Parts discovery page mockup (API integration missing) by @pjuaristi-ikerlan in https://github.com/eclipse-tractusx/industry-core-hub/pull/286
+* Implement share operation for serialized parts by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/282
+* Fix broken API calls in part_management and twin_management; prepare serialized part management for auto-creating parent entities by @sm29105 in https://github.com/eclipse-tractusx/industry-core-hub/pull/281
+* feat: Enable log level configuration via helm by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/249
+* feat: added consumer_modules and split provider from consumer by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/289
+* feat: Add API versioning by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/291
+* refactor: Consolidate model imports and remove unused files by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/296
+* feat: enable unshare mechanism by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/295
+* fix: replace bitnami repository by bitnamilegacy by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/306
+* feat: product delete and modify operations by @CDiezRodriguez in https://github.com/eclipse-tractusx/industry-core-hub/pull/297
+* feat: add service provider tests by @mgarciaLKS in https://github.com/eclipse-tractusx/industry-core-hub/pull/304
+* Serialized parts display and management by @pjuaristi-ikerlan in https://github.com/eclipse-tractusx/industry-core-hub/pull/308
+* chore(deps): bump requests from 2.32.3 to 2.32.4 in /ichub-backend by @dependabot[bot] in https://github.com/eclipse-tractusx/industry-core-hub/pull/267
+* chore(deps): bump urllib3 from 2.3.0 to 2.5.0 in /ichub-backend by @dependabot[bot] in https://github.com/eclipse-tractusx/industry-core-hub/pull/271
+* chore(deps): bump starlette from 0.40.0 to 0.47.2 in /ichub-backend by @dependabot[bot] in https://github.com/eclipse-tractusx/industry-core-hub/pull/292
+* feat [data consumption]: Add configuration infrastructure for consumer/provider separation by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/310
+* feat [data consumption]: Implement comprehensive parts discovery feature by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/313
+* feat [data consumption]: improve UI/UX with layout and navigation enhancements by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/309
+* feat [data consumption]: Refactor backend architecture for consumer/provider separation by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/311
+* feat [data consumption]: Enhance backend API with discovery and improved routing by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/312
+* Catalog part creation form by @pjuaristi-ikerlan in https://github.com/eclipse-tractusx/industry-core-hub/pull/321
+* Feat/consumption: Included loading for data consumption by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/323
+* feat: prepared release v0.2.0 + fixed important errors by @matbmoser in https://github.com/eclipse-tractusx/industry-core-hub/pull/335
+
+### Added
+
+- Implemented data consumption features, including a user interface for submodel retrieval and filtering.
+- Added management and consumption capabilities for serialized parts.
+- Introduced part discovery management and shell discovery endpoints.
+- Implemented governance policy handling and configuration with a caching mechanism.
+- Added `SubmodelViewer` and `SubmodelsGridDialog` components for enhanced submodel display.
+- Introduced the `AddSerializedPartDialog` for streamlined creation of serialized parts.
+- Added connection and part management endpoints to the backend.
+- Implemented API versioning for better maintenance.
+- Added functionality to unshare serialized part twins.
+- Included a US Tariff Information Viewer component.
+- Added comprehensive test coverage for backend services.
+- Implemented an `ErrorBoundary` component for more robust error handling in the frontend.
+- Enabled lazy loading and code splitting for frontend routes to improve performance.
+
+### Changed
+
+- Refactored the backend architecture to better separate consumer and provider logic.
+- Enhanced the frontend configuration system.
+- Updated multiple dependencies, including `fastapi`, `urllib3`, and `requests`.
+- Improved the user interface and experience with updated layouts and navigation.
+- Modularized the routing and configuration in the frontend application.
+- Refactored partner management components and removed duplicates.
+- Optimized the Docker build process for faster and more reliable builds.
+- Updated the Helm chart version and related documentation.
+- Centralized and improved exception handling in the backend.
+- Refactored API routers to incorporate versioning.
+
+### Fixed
+
+- Corrected service names for frontend and backend in configuration files.
+- Resolved various database-related issues and updated the initial schema.
+- Corrected the `submodel_dispatcher` path to be an absolute path.
+- Fixed CORS (Cross-Origin Resource Sharing) configuration for the frontend service.
+- Addressed indentation and configuration issues in various YAML files.
+- Fixed broken API calls in part management and twin management services.
+- Corrected the notification state initialization in the `PartnersList` component.
+- Updated the PostgreSQL dependency to a more recent version.
+- Addressed and resolved multiple SonarQube issues.
+
 ## [0.1.0] - 2025-05-26
 
 ### Added
@@ -113,3 +189,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed unused dependencies and cleaned up files.
+

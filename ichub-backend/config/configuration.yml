@@ -20,15 +20,53 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-hostname: "http://localhost:8000"
+hostname: "http://localhost:9000"
 
 authorization:
   enabled: true
-  apiKey: 
+  api_key:
     key: "X-Api-Key"
     value: <<example>>
+  keycloak:
+    enabled: false
+    auth_url: "https://<central-idp-url>/auth/"
+    realm: "<realm>"
+    client_id: "<client-id>"
+    client_secret: "<client-secret>"
 agreements:
   - semanticid: urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation
+    usage:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          LogicalConstraint: odrl:and
+          constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+            - leftOperand: cx-policy:UsagePurpose
+              operator: odrl:eq
+              rightOperand: cx.core.industrycore:1
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          constraints:
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+      prohibition: []
+      obligation: []
+  - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
     usage:
       context:
         odrl: http://www.w3.org/ns/odrl/2/
@@ -92,9 +130,11 @@ agreements:
               rightOperand: active
       prohibition: []
       obligation: []
+
 database:
   connectionString: "postgresql://user:password@localhost:5432/ichub"
   echo: false
+  timeout: 8
 
 cors:
   enabled: true
@@ -116,16 +156,27 @@ cors:
   allow_headers:
     - "*"
 
+server:
+  # Worker configuration
+  workers:
+    max_workers: 1                        # Single worker for optimal in-memory state
+    worker_threads: 200                   # High thread count for blocking operations
+
+  # Timeout configuration (in seconds)
+  timeouts:
+    keep_alive: 300                       # 5 minutes for DTR operations
+    graceful_shutdown: 30    
+
 consumer:
   discovery:
     discovery_finder:
-      url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+      url: "https://<discovery-finder>/api/v1.0/administration/connectors/discovery/search"
     connector_discovery:
       key: "bpn"
     oauth:
-      url: "https://<central-idp-url>/auth/"
+      url: "https://<centralidp.url>/auth/"
       realm: "CX-Central"
-      client_id: "<client-id>"
+      client_id: "<client-id>>"
       client_secret: "<client-secret>"
     digitalTwinRegistry:
       dct_type_key: "dct:type"
@@ -137,30 +188,92 @@ consumer:
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: https://<edc-consumer-control-hostname>
-      apiKeyHeader: X-Api-Key
-      apiKey: <consumer-edc-api-key>
-      managementPath: /management
-      protocolPath: /api/v1/dsp
-      catalogPath: /catalog
-
+      hostname: "https://<control-plane-edc-consumer>"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "<api-key-edc-consumer>"
+      managementPath: "/management"
+      protocolPath: "/api/v1/dsp"
+      catalogPath: "/catalog"
+  governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#SerialPart"
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
 provider:
   connector: 
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: https://<edc-consumer-control-hostname>
-      apiKeyHeader: X-Api-Key
-      apiKey: <provider-edc-api-key>
-      managementPath: /management
-      protocolPath: /api/v1/dsp
+      hostname: "https://<provider-edc-control-plane>"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "<api-key-controlplane>"
+      managementPath: "/management"
+      protocolPath: "/api/v1/dsp"
     dataplane:
-      hostname: https://edc-provider-ichub-dataplane.int.catena-x.net
+      hostname: "https://<provider-edc-dataplane>"
       publicPath: "/api/public"
 
   digitalTwinRegistry:
-    hostname: https://<dtr-hostname>
-    apiPath: /api/v3
+    hostname: "https://<provider-digital-twin-registry>"
+    apiPath: "/api/v3"
     uri: ""
     asset_config:
       dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
@@ -170,8 +283,8 @@ provider:
     policy:
       usage:
         context:
-          odrl: http://www.w3.org/ns/odrl/2/
-          cx-policy: https://w3id.org/catenax/policy/
+          odrl: "http://www.w3.org/ns/odrl/2/"
+          cx-policy: "https://w3id.org/catenax/policy/"
         permission:
           - action: odrl:use
             LogicalConstraint: odrl:and
@@ -189,8 +302,8 @@ provider:
         obligation: []
       access:
         context:
-          odrl: http://www.w3.org/ns/odrl/2/
-          cx-policy: https://w3id.org/catenax/policy/
+          odrl: "http://www.w3.org/ns/odrl/2/"
+          cx-policy: "https://w3id.org/catenax/policy/"
         permission:
           - action: odrl:use
             constraints:

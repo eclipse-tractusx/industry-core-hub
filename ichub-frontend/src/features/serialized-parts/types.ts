@@ -40,4 +40,8 @@ export interface AddSerializedPartRequest {
   partInstanceId: string;
   van: string;
   customerPartId: string;
+  // Optional catalog part fields for auto-generation
+  name?: string;
+  category?: string;
+  bpns?: string;
 }

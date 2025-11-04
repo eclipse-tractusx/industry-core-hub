@@ -11,7 +11,7 @@
  * https://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an "AS IS" BASIS
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the
  * License for the specific language govern in permissions and limitations
@@ -20,24 +20,22 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+/** Created using an LLM (Github Copilot) review by a human committer */
+
 import axios from 'axios';
 import { 
-  getIchubBackendUrl, 
-  getGovernanceConfig, 
-  getDtrPoliciesConfig,
+  getIchubBackendUrl,
   GovernanceConfig,
   GovernanceConstraint,
   GovernanceRule,
   GovernancePolicy
 } from '../../services/EnvironmentService';
-import { ApiPartData } from '../../types/product';
-import { CatalogPartTwinCreateType, TwinReadType } from '../../types/twin';
-import { ShellDiscoveryResponse, getNextPageCursor, getPreviousPageCursor, hasNextPage, hasPreviousPage } from './utils';
+import { ApiPartData } from './types/types';
+import { CatalogPartTwinCreateType, TwinReadType } from './types/types';
+import { ShellDiscoveryResponse, getNextPageCursor, getPreviousPageCursor, hasNextPage, hasPreviousPage } from './utils/utils';
+import { partDiscoveryConfig } from './config';
 
-const CATALOG_PART_MANAGEMENT_BASE_PATH = '/part-management/catalog-part';
-const SHARE_CATALOG_PART_BASE_PATH = '/share/catalog-part';
-const TWIN_MANAGEMENT_BASE_PATH = '/twin-management/catalog-part-twin';
-const SHELL_DISCOVERY_BASE_PATH = '/discover/shells';
+// Use configuration for API endpoints
 const backendUrl = getIchubBackendUrl();
 
 // Cache system with configuration change detection
@@ -63,26 +61,36 @@ const generateConfigHash = async (config: unknown): Promise<string> => {
 };
 
 /**
- * Generate DTR policies with all constraint permutations
+ * Generate policies with all constraint permutations
  */
-const generateDtrPoliciesWithPermutations = (dtrPolicies: GovernancePolicy[]): OdrlPolicy[] => {
+const generatePoliciesWithPermutations = (dtrPolicies: GovernancePolicy[]): OdrlPolicy[] => {
   const allPolicyPermutations: OdrlPolicy[] = [];
   
   for (const policy of dtrPolicies) {
-    // Generate permutations for each rule type
-    const permissionPermutations = generateRulesPermutations(policy.permission);
-    const prohibitionPermutations = generateRulesPermutations(policy.prohibition);
-    const obligationPermutations = generateRulesPermutations(policy.obligation);
-    
-    // Create cartesian product of all rule permutations
-    for (const permission of permissionPermutations) {
-      for (const prohibition of prohibitionPermutations) {
-        for (const obligation of obligationPermutations) {
-          allPolicyPermutations.push({
-            "odrl:permission": convertRulesToOdrl(permission),
-            "odrl:prohibition": convertRulesToOdrl(prohibition),
-            "odrl:obligation": convertRulesToOdrl(obligation)
-          });
+    // Check if policy is strict - if so, don't generate permutations
+    if (policy.strict === true) {
+      // Strict policy: use exact order without permutations
+      allPolicyPermutations.push({
+        "odrl:permission": convertRulesToOdrl(policy.permission),
+        "odrl:prohibition": convertRulesToOdrl(policy.prohibition),
+        "odrl:obligation": convertRulesToOdrl(policy.obligation)
+      });
+    } else {
+      // Non-strict policy: generate permutations for each rule type
+      const permissionPermutations = generateRulesPermutations(policy.permission);
+      const prohibitionPermutations = generateRulesPermutations(policy.prohibition);
+      const obligationPermutations = generateRulesPermutations(policy.obligation);
+      
+      // Create cartesian product of all rule permutations
+      for (const permission of permissionPermutations) {
+        for (const prohibition of prohibitionPermutations) {
+          for (const obligation of obligationPermutations) {
+            allPolicyPermutations.push({
+              "odrl:permission": convertRulesToOdrl(permission),
+              "odrl:prohibition": convertRulesToOdrl(prohibition),
+              "odrl:obligation": convertRulesToOdrl(obligation)
+            });
+          }
         }
       }
     }
@@ -100,54 +108,19 @@ const generateGovernancePoliciesWithPermutations = async (semanticId: string, co
   
   if (relevantConfig) {
     // Found specific configuration, use it
-    return generateDtrPoliciesWithPermutations(relevantConfig.policies);
+    return generatePoliciesWithPermutations(relevantConfig.policies);
   }
   
   // No specific configuration found, use default policies as fallback
-  console.log(`No specific governance configuration found for semantic ID: ${semanticId}, using default policies`);
-  return await getCachedDefaultGovernancePolicies();
-};
-
-/**
- * Generate default governance policy permutations
- */
-const generateDefaultGovernancePolicyPermutations = (): OdrlPolicy[] => {
-  // Default policies with constraints that need permutations
-  const defaultPolicy: GovernancePolicy = {
-    strict: false,
-    permission: {
-      action: 'odrl:use',
-      LogicalConstraint: 'odrl:and',
-      constraints: [
-        {
-          leftOperand: 'cx-policy:FrameworkAgreement',
-          operator: 'odrl:eq',
-          rightOperand: 'DataExchangeGovernance:1.0'
-        },
-        {
-          leftOperand: 'cx-policy:Membership',
-          operator: 'odrl:eq',
-          rightOperand: 'active'
-        },
-        {
-          leftOperand: 'cx-policy:UsagePurpose',
-          operator: 'odrl:eq',
-          rightOperand: 'cx.core.industrycore:1'
-        }
-      ]
-    },
-    prohibition: [],
-    obligation: []
-  };
   
-  return generateDtrPoliciesWithPermutations([defaultPolicy]);
+  return await getCachedDefaultGovernancePolicies();
 };
 
 /**
  * Get cached DTR governance policies with configuration change detection
  */
 const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
-  const currentConfig = getDtrPoliciesConfig();
+  const currentConfig = partDiscoveryConfig.governance.getDtrPoliciesConfig();
   const currentHash = await generateConfigHash(currentConfig);
   
   // Check if cache is valid
@@ -156,8 +129,8 @@ const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
   }
   
   // Cache is invalid or doesn't exist, regenerate
-  console.log('DTR governance policies cache invalidated, regenerating...');
-  const newPolicies = generateDtrPoliciesWithPermutations(currentConfig);
+  
+  const newPolicies = generatePoliciesWithPermutations(currentConfig);
   
   dtrGovernancePoliciesCache = {
     configHash: currentHash,
@@ -171,7 +144,7 @@ const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
  * Get cached governance policies for a specific semantic ID
  */
 const getCachedGovernancePolicies = async (semanticId: string): Promise<OdrlPolicy[]> => {
-  const currentConfig = getGovernanceConfig();
+  const currentConfig = partDiscoveryConfig.governance.getGovernanceConfig();
   const currentHash = await generateConfigHash(currentConfig);
   
   // Check if cache is valid for this semantic ID
@@ -181,7 +154,7 @@ const getCachedGovernancePolicies = async (semanticId: string): Promise<OdrlPoli
   }
   
   // Cache is invalid or doesn't exist, regenerate
-  console.log(`Governance policies cache invalidated for semantic ID: ${semanticId}, regenerating...`);
+  
   const newPolicies = await generateGovernancePoliciesWithPermutations(semanticId, currentConfig);
   
   governancePoliciesCache.set(semanticId, {
@@ -190,6 +163,28 @@ const getCachedGovernancePolicies = async (semanticId: string): Promise<OdrlPoli
   });
   
   return newPolicies;
+};
+
+/**
+ * Generate default governance policy permutations when no specific configuration is found
+ */
+const generateDefaultGovernancePolicyPermutations = (): OdrlPolicy[] => {
+  // Define your default governance policies here if needed
+  // For now, return empty array as default - no policies means no restrictions
+  // If you have default policies, they should also respect the strict flag:
+  
+  // Example of how to add default policies that respect strict flag:
+  // const defaultPolicies: GovernancePolicy[] = [
+  //   {
+  //     strict: false, // or true depending on your requirements
+  //     permission: [...],
+  //     prohibition: [...],
+  //     obligation: [...]
+  //   }
+  // ];
+  // return generatePoliciesWithPermutations(defaultPolicies);
+  
+  return [];
 };
 
 /**
@@ -204,7 +199,7 @@ const getCachedDefaultGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
     return defaultGovernancePolicyCache.policies;
   }
   
-  console.log('Default governance policies cache invalidated, regenerating...');
+  
   const newPolicies = generateDefaultGovernancePolicyPermutations();
   
   defaultGovernancePolicyCache = {
@@ -252,7 +247,7 @@ export interface ShellDiscoveryRequest {
 }
 
 export const fetchCatalogParts = async (): Promise<ApiPartData[]> => {
-  const response = await axios.get<ApiPartData[]>(`${backendUrl}${CATALOG_PART_MANAGEMENT_BASE_PATH}`);
+  const response = await axios.get<ApiPartData[]>(`${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}`);
   return response.data;
 };
 
@@ -261,7 +256,7 @@ export const fetchCatalogPart = async (
   manufacturerPartId: string
 ): Promise<ApiPartData> => {
   const response = await axios.get<ApiPartData>(
-    `${backendUrl}${CATALOG_PART_MANAGEMENT_BASE_PATH}/${manufacturerId}/${manufacturerPartId}`
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}/${manufacturerId}/${manufacturerPartId}`
   );
   return response.data;
 };
@@ -285,7 +280,7 @@ export const shareCatalogPart = async (
   };
 
   const response = await axios.post<ApiPartData>(
-    `${backendUrl}${SHARE_CATALOG_PART_BASE_PATH}`,
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.SHARE_CATALOG_PART}`,
     requestBody
   );
   return response.data;
@@ -295,7 +290,7 @@ export const registerCatalogPartTwin = async (
   twinData: CatalogPartTwinCreateType
 ): Promise<TwinReadType> => {
   const response = await axios.post<TwinReadType>(
-    `${backendUrl}${TWIN_MANAGEMENT_BASE_PATH}`,
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.TWIN_MANAGEMENT}`,
     twinData
   );
   return response.data;
@@ -307,11 +302,13 @@ export const registerCatalogPartTwin = async (
  * Discover shells based on query specifications
  */
 export const discoverShells = async (
-  request: ShellDiscoveryRequest
+  request: ShellDiscoveryRequest,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const response = await axios.post<ShellDiscoveryResponse>(
-    `${backendUrl}${SHELL_DISCOVERY_BASE_PATH}`,
-    request
+    `${backendUrl}${partDiscoveryConfig.api.endpoints.SHELL_DISCOVERY}`,
+    request,
+    { signal }
   );
   return response.data;
 };
@@ -417,7 +414,8 @@ export const discoverShellsWithCustomQuery = async (
   counterPartyId: string,
   querySpec: QuerySpecItem[],
   limit?: number,
-  cursor?: string
+  cursor?: string,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -429,7 +427,7 @@ export const discoverShellsWithCustomQuery = async (
     ...(cursor && { cursor })
   };
 
-  return discoverShells(request);
+  return discoverShells(request, signal);
 };
 
 // Types for Single Shell Discovery
@@ -444,6 +442,8 @@ export interface SingleShellDiscoveryResponse {
     description: unknown[];
     displayName: unknown[];
     globalAssetId: string;
+    assetKind?: string; // Asset kind (Instance, Type, NotApplicable)
+    assetType?: string; // Asset type from shell descriptor
     id: string;
     idShort: string;
     specificAssetIds: Array<{
@@ -500,7 +500,8 @@ export interface SingleShellDiscoveryResponse {
  */
 export const discoverSingleShell = async (
   counterPartyId: string,
-  aasId: string
+  aasId: string,
+  signal?: AbortSignal
 ): Promise<SingleShellDiscoveryResponse> => {
   const dtrPolicies = await convertDtrPoliciesToOdrl();
   
@@ -510,11 +511,26 @@ export const discoverSingleShell = async (
     dtrGovernance: dtrPolicies
   };
 
-  const response = await axios.post<SingleShellDiscoveryResponse>(
+  const response = await axios.post<SingleShellDiscoveryResponse | { status: number; error: string }>(
     `${backendUrl}/discover/shell`,
-    request
+    request,
+    { signal }
   );
-  return response.data;
+  
+  // Check if the response contains error fields instead of valid data
+  const data = response.data;
+  if (data && typeof data === 'object' && 'status' in data && 'error' in data) {
+    const errorResponse = data as { status: number; error: string };
+    throw new Error(errorResponse.error || `Error ${errorResponse.status}: Failed to find digital twin`);
+  }
+  
+  // Validate that we have a proper shell descriptor
+  const validData = data as SingleShellDiscoveryResponse;
+  if (!validData || !validData.shell_descriptor || !validData.shell_descriptor.submodelDescriptors) {
+    throw new Error('Invalid response format: Missing shell descriptor data');
+  }
+  
+  return validData;
 };
 
 // Enhanced pagination functions that automatically extract cursors
@@ -560,14 +576,15 @@ export const getNextPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const nextCursor = getNextPageCursor(currentResponse);
   if (!nextCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, nextCursor, signal);
 };
 
 /**
@@ -577,14 +594,15 @@ export const getPreviousPageFromCustomQuery = async (
   currentResponse: ShellDiscoveryResponse,
   counterPartyId: string,
   querySpec: QuerySpecItem[],
-  limit?: number
+  limit?: number,
+  signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse | null> => {
   const previousCursor = getPreviousPageCursor(currentResponse);
   if (!previousCursor) {
     return null;
   }
   
-  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor);
+  return discoverShellsWithCustomQuery(counterPartyId, querySpec, limit, previousCursor, signal);
 };
 
 /**

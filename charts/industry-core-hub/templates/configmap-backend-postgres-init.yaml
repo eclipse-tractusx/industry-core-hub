@@ -1,6 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
+* Copyright (c) 2025 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -35,8 +36,28 @@ data:
       export PGPASSWORD="$POSTGRES_PASSWORD"
       echo "CREATE USER ichub WITH PASSWORD '${escaped_password}';" | psql -U postgres
     }
+    postgresql_create_ichub_keycloak_user() {
+      local -r escaped_password="${DATABASE_PASSWORD//\'/\'\'}"
+      info "Creating user ichub_keycloak"
+      export PGPASSWORD="$POSTGRES_PASSWORD"
+      echo "CREATE USER ichub_keycloak WITH PASSWORD '${escaped_password}';" | psql -U postgres
+    }
     postgresql_create_ichub_user
+    postgresql_create_ichub_keycloak_user
   02-init-db.sql: |
+    CREATE SCHEMA IF NOT EXISTS ichub_keycloak;
+    ALTER SCHEMA ichub_keycloak OWNER TO ichub_keycloak;
+    GRANT CREATE ON SCHEMA public TO ichub_keycloak;
+    GRANT USAGE ON SCHEMA public TO ichub_keycloak;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ichub_keycloak;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ichub_keycloak;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ichub_keycloak;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ichub_keycloak;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO ichub_keycloak;
+    GRANT ALL PRIVILEGES ON SCHEMA ichub_keycloak TO ichub_keycloak;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA ichub_keycloak GRANT ALL ON TABLES TO ichub_keycloak;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA ichub_keycloak GRANT ALL ON SEQUENCES TO ichub_keycloak;
+
     CREATE SCHEMA ichub;
     ALTER SCHEMA ichub OWNER TO ichub;
     GRANT USAGE ON SCHEMA public TO ichub;
@@ -96,7 +117,8 @@ data:
     CREATE TABLE public.data_exchange_agreement (
         id integer NOT NULL,
         name character varying NOT NULL,
-        business_partner_id integer NOT NULL
+        business_partner_id integer NOT NULL,
+        is_cancelled boolean DEFAULT false NOT NULL
     );
 
     CREATE TABLE public.data_exchange_contract (
@@ -152,7 +174,8 @@ data:
 
     CREATE TABLE public.twin_exchange (
         twin_id integer NOT NULL,
-        data_exchange_agreement_id integer NOT NULL
+        data_exchange_agreement_id integer NOT NULL,
+        is_cancelled boolean DEFAULT false NOT NULL
     );
 
     CREATE TABLE public.twin_registration (
@@ -477,6 +500,18 @@ data:
     ALTER TABLE ONLY public.twin_registration
         ADD CONSTRAINT fk_twin_registration_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
     ALTER TABLE ONLY public.twin_registration
-    ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+        ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+    ALTER SEQUENCE public.batch_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.business_partner_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.catalog_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.data_exchange_agreement_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.enablement_service_stack_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.jis_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.legal_entity_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.part_share_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
 
 {{- end -}}

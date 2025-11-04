@@ -50,9 +50,67 @@ pgadmin4:
          hosts:
            - "pgadmin-ichub.int.catena-x.net" 
 frontend: 
+  config:
+    # Core application
+    environment: "integration"
+    version: "1.0.0"
+    
+    # API configuration
+    ichubBackendUrl: "https://backend-ichub.int.catena-x.net/v1"
+    apiTimeout: 20000
+    apiRetryAttempts: 2
+    requireHttpsUrlPattern: true
+    
+    # API key configuration (disabled for integration)
+    apiKey: ""
+    apiKeyHeader: "X-API-Key"
+    enableApiKeyRotation: false
+    apiKeyExpiryWarningDays: 7
+    
+    # Authentication configuration (disabled for integration)
+    authEnabled: false
+    authProvider: "none"
+    authSessionTimeout: 3600
+    authRenewTokenMinValidity: 60
+    authLogoutRedirectUri: ""
+    
+    # Keycloak configuration (disabled for integration)
+    keycloak:
+      url: ""
+      realm: ""
+      clientId: ""
+      onLoad: "check-sso"
+      checkLoginIframe: true
+      silentCheckSsoRedirectUri: ""
+      pkceMethod: "S256"
+      enableLogging: false
+      minValidity: 30
+      checkLoginIframeInterval: 5
+      flow: "standard"
+    
+    # Feature flags for integration environment
+    enableAdvancedLogging: true
+    enablePerformanceMonitoring: true
+    enableDevTools: false
+    
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+    
+    # Governance configuration
+    governanceApiUrl: ""
+    governanceTimeout: 30000
+    governanceRetryAttempts: 2
+    
+    # Participant configuration  
+    participantApiUrl: ""
+    participantTimeout: 30000
+    participantRetryAttempts: 2
+  
   env:
-    # -- industry-core-hub backend base URL
-    backendUrl: "https://backend-ichub.int.catena-x.net"
+    # Legacy backend URL (maintained for backward compatibility)
+    backendUrl: "https://backend-ichub.int.catena-x.net/v1"
   ingress:
       enabled: true
       className: "nginx"
@@ -82,7 +140,111 @@ frontend:
               backend:
                 service: "frontend"
                 port: 8080
+  consumption:
+    digitalTwinRegistry:
+      policies:
+        - permission:
+          - action: odrl:use
+            LogicalConstraint: odrl:and
+            constraints:
+              - leftOperand: cx-policy:FrameworkAgreement
+                operator: odrl:eq
+                rightOperand: DataExchangeGovernance:1.0
+              - leftOperand: cx-policy:Membership
+                operator: odrl:eq
+                rightOperand: active
+              - leftOperand: cx-policy:UsagePurpose
+                operator: odrl:eq
+                rightOperand: cx.core.digitalTwinRegistry:1
+          prohibition: []
+          obligation: []
+          strict: false
+        - permission:
+          - action: odrl:use
+            constraints:
+              - leftOperand: cx-policy:UsagePurpose
+                operator: odrl:eq
+                rightOperand: cx.core.digitalTwinRegistry:1
+          prohibition: []
+          obligation: []
+          strict: false
+    governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+        policies: 
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
 backend:
+  apiVersion: v1
   cors:
     enabled: true
     allow_origins:
@@ -115,12 +277,62 @@ backend:
       # -- Enable logs persistence
       enabled: true
       # -- Storage size for logs
-      size: 1Gi
       # -- Access mode for logs volume
       accessMode: ReadWriteOnce
       # -- Storage class for logs volume
       storageClass: "default"
   configuration:
+    agreements:
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
     authorization:
       enabled: true
       apiKey:
@@ -136,7 +348,7 @@ backend:
         oauth:
           url: "https://centralidp.int.catena-x.net/auth/"
           realm: "CX-Central"
-          client_id: "sa307"
+          client_id: "<path:industry-core-hub/data/oauth#client-id>"
           client_secret: <path:industry-core-hub/data/oauth#client-secret>
         digitalTwinRegistry:
           dct_type_key: "dct:type"
@@ -148,7 +360,7 @@ backend:
         dataspace:
           version: "jupiter"
         controlplane:
-          hostname: "https://edc-consumer-ichub-control.int.catena-x.net"
+          hostname: "https://edc-provider-ichub-control.int.catena-x.net"
           apiKeyHeader: "X-Api-Key"
           apiKey: <path:industry-core-hub/data/edc-consumer#authKey>
           managementPath: "/management"
@@ -183,14 +395,7 @@ backend:
               cx-policy: https://w3id.org/catenax/policy/
             permission:
               - action: odrl:use
-                LogicalConstraint: odrl:and
                 constraints:
-                  - leftOperand: cx-policy:FrameworkAgreement
-                    operator: odrl:eq
-                    rightOperand: DataExchangeGovernance:1.0
-                  - leftOperand: cx-policy:Membership
-                    operator: odrl:eq
-                    rightOperand: active
                   - leftOperand: cx-policy:UsagePurpose
                     operator: odrl:eq
                     rightOperand: cx.core.digitalTwinRegistry:1
@@ -209,7 +414,7 @@ backend:
             prohibition: []
             obligation: []
     submodel_dispatcher:
-      path: "./data/submodels"
+      path: "/industry-core-hub/data/submodels"
       apiPath: "/submodel-dispatcher"
   ingress:
       enabled: true

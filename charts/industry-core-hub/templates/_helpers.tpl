@@ -262,6 +262,7 @@ Return the postgresql DSN URL
 {{- $ingress := .Values.backend.ingress }}
 {{- $host := "" }}
 {{- $path := "/" }}
+{{- $apiVersion := .Values.backend.apiVersion }}
 {{- $tlsHosts := dict }}
 {{- range $tls := $ingress.tls }}
   {{- range $tlsHost := $tls.hosts }}
@@ -280,8 +281,16 @@ Return the postgresql DSN URL
 {{- end }}
 {{- $scheme := ternary "https" "http" (hasKey $tlsHosts $host) }}
 {{- if eq $path "/" }}
-  {{- printf "%s://%s" $scheme $host }}
+  {{- if and $apiVersion (ne $apiVersion "") }}
+    {{- printf "%s://%s/%s" $scheme $host $apiVersion }}
+  {{- else }}
+    {{- printf "%s://%s" $scheme $host }}
+  {{- end }}
 {{- else }}
-  {{- printf "%s://%s%s" $scheme $host $path }}
+  {{- if and $apiVersion (ne $apiVersion "") }}
+    {{- printf "%s://%s%s/%s" $scheme $host $path $apiVersion }}
+  {{- else }}
+    {{- printf "%s://%s%s" $scheme $host $path }}
+  {{- end }}
 {{- end }}
 {{- end }}

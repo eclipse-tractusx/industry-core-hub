@@ -46,6 +46,7 @@ from .routers.consumer.v1 import (
     connection_management,
     discovery_management
 )
+from .routers.authentication.auth_api import get_authentication_dependency
 
 tags_metadata = [
     {
