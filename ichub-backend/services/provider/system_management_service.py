@@ -47,8 +47,8 @@ class SystemManagementService:
 
             db_stack = EnablementServiceStack(
                 name=stack_create.name,
-                connector_service_id=db_connector_control_plane.id,
-                dtr_service_id=db_twin_registry.id,
+                connector_control_plane_id=db_connector_control_plane.id,
+                twin_registry_id=db_twin_registry.id,
                 settings=stack_create.settings)
             
             repo.enablement_service_stack_repository.create(db_stack)
@@ -255,7 +255,7 @@ class SystemManagementService:
                 return False
 
     @staticmethod
-    def get_dtr_manager(db_dtr_service: TwinRegistry) -> DtrProviderManager:
+    def get_dtr_manager(db_twin_registry: TwinRegistry) -> DtrProviderManager:
         """
         Get the DtrProviderManager.
         """
@@ -264,7 +264,7 @@ class SystemManagementService:
         return dtr_provider_manager
 
     @staticmethod
-    def get_connector_manager(db_connector_service: ConnectorControlPlane) -> ConnectorProviderManager:
+    def get_connector_manager(db_connector_control_plane: ConnectorControlPlane) -> ConnectorProviderManager:
         """
         Get the ConnectorManager.
         """

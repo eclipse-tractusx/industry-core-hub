@@ -636,25 +636,25 @@ class TwinAspect(SQLModel, table=True):
 
     __tablename__ = "twin_aspect"
 
-    def find_registration_by_dtr_service_id(self, dtr_service_id: int) -> Optional["TwinAspectRegistration"]:
-        """Find the registration for a given DTR service."""
+    def find_registration_by_twin_registry_id(self, twin_registry_id: int) -> Optional["TwinAspectRegistration"]:
+        """Find the registration for a given twin registry."""
         for registration in self.twin_aspect_registrations:
-            if registration.dtr_service_id == dtr_service_id:
+            if registration.twin_registry_id == twin_registry_id:
                 return registration
         return None
 
 
 class TwinAspectRegistration(SQLModel, table=True):
     """
-    Represents the relation between a twin_aspect and a DTR service
-    through their ids (twin_aspect_id and dtr_service_id).
+    Represents the relation between a twin_aspect and a twin_registry
+    through their ids (twin_aspect_id and twin_registry_id).
     It holds information about the status, the registration mode and creation and update dates.
 
     Attributes:
         twin_aspect_id (int): The ID of the associated twin aspect (foreign key to twin_aspect).
-        dtr_service_stack_id (int): The ID of the associated DTR service stack (foreign key).
+        twin_registry_id (int): The ID of the associated twin registry (foreign key).
         status (int): The status of the registration.
-			It‘s actually the status for all 3 services DTR/EDC/Submodel Service (number). It will be set by the system internally.
+			It's actually the status for all 3 services DTR/EDC/Submodel Service (number). It will be set by the system internally.
         registration_mode (int): The registration mode. It indicates asset bundling (yes or no). 
 			In the first version, there is no asset bundling. Later provided by the API caller
         created_date (datetime): The creation date of the registration. Auto-generated in the DB.
@@ -662,7 +662,7 @@ class TwinAspectRegistration(SQLModel, table=True):
 
     Relationships:
         twin_aspect (TwinAspect): The twin aspect being registered.
-        dtr_service (DtrService): The DTR service used for registration.
+        twin_registry (TwinRegistry): The twin registry used for registration.
 
     Table Name:
         twin_aspect_registration
@@ -670,7 +670,7 @@ class TwinAspectRegistration(SQLModel, table=True):
    
     """
     twin_aspect_id: int = Field(foreign_key="twin_aspect.id", primary_key=True, description="The ID of the associated twin aspect.")
-    dtr_service_id: int = Field(foreign_key="dtr_service.id", primary_key=True, description="The ID of the associated DTR service.")
+    twin_registry_id: int = Field(foreign_key="twin_registry.id", primary_key=True, description="The ID of the associated twin registry.")
     status: int = Field(index=True, default=0, description="The status of the registration.", sa_type=SmallInteger) # TODO: Use Enum for status
     registration_mode: int = Field(index=True, default=0, description="The registration mode.", sa_type=SmallInteger) # TODO: Use Enum for registration mode
     created_date: datetime = Field(index=True, default_factory=datetime.utcnow, description="The creation date of the registration.")
@@ -678,7 +678,7 @@ class TwinAspectRegistration(SQLModel, table=True):
 
     # Relationships
     twin_aspect: TwinAspect = Relationship(back_populates="twin_aspect_registrations")
-    dtr_service: TwinRegistry = Relationship(back_populates="twin_aspect_registrations")
+    twin_registry: TwinRegistry = Relationship(back_populates="twin_aspect_registrations")
 
     __tablename__ = "twin_aspect_registration"
 
@@ -718,29 +718,29 @@ class TwinExchange(SQLModel, table=True):
 
 class TwinRegistration(SQLModel, table=True):
     """
-    Represents the relation between a twin and a DTR service
-    through their ids (twin_id and dtr_service_id).
-    It also indicates if the twin is registered in the DTR using a boolean (dtr_registered).
+    Represents the relation between a twin and a twin registry
+    through their ids (twin_id and twin_registry_id).
+    It also indicates if the twin is registered in the twin registry using a boolean (twin_registered).
 
     Attributes:
         twin_id (int): The ID of the associated twin (foreign key to twin).
-        dtr_service_id (int): The ID of the associated DTR service (foreign key).
-        dtr_registered (bool): Whether the twin is registered in the DTR.
+        twin_registry_id (int): The ID of the associated twin registry (foreign key).
+        dtr_registered (bool): Whether the twin is registered in the twin registry.
 
     Relationships:
         twin (Twin): The twin being registered.
-        dtr_service (DtrService): The DTR service used for registration.
+        twin_registry (TwinRegistry): The twin registry used for registration.
 
     Table Name:
         twin_registration
 
     """
     twin_id: int = Field(foreign_key="twin.id", primary_key=True, description=TWIN_ID_DESCRIPTION)
-    dtr_service_id: int = Field(foreign_key="dtr_service.id", primary_key=True, description="The ID of the associated DTR service.")
-    dtr_registered: bool = Field(index=True, default=False, description="Whether the twin is registered in the DTR.")
+    twin_registry_id: int = Field(foreign_key="twin_registry.id", primary_key=True, description="The ID of the associated twin registry.")
+    dtr_registered: bool = Field(index=True, default=False, description="Whether the twin is registered in the twin registry.")
 
     # Relationships
     twin: Twin = Relationship(back_populates="twin_registrations")
-    dtr_service: TwinRegistry = Relationship(back_populates="twin_registrations")
+    twin_registry: TwinRegistry = Relationship(back_populates="twin_registrations")
 
     __tablename__ = "twin_registration"

@@ -86,14 +86,14 @@ class TwinManagementService:
             db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
                 create_input.enablement_service_stack_name,
                 join_legal_entity=True,
-                join_connector_service=True,
-                join_dtr_service=True
+                join_connector_control_plane=True,
+                join_twin_registry=True
             )
             if not db_enablement_service_stack:
                 raise NotFoundError("Enablement service stack not found.")
 
             # Consisteency check if the enablement service stack belongs to the manufacturer
-            if db_enablement_service_stack.connector_service.legal_entity.bpnl != create_input.manufacturer_id:
+            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != create_input.manufacturer_id:
                 raise InvalidError(f"Enablement service stack {db_enablement_service_stack.name} does not belong to the manufacturer {create_input.manufacturer_id}.")
 
             # Step 3a: Load existing twin metadata from the DB (if there)
@@ -114,14 +114,14 @@ class TwinManagementService:
 
             # Step 4: Try to find the twin registration for the twin id and enablement service stack id
             # (if not there => create it now, setting the dtr_registered flag to False)
-            db_twin_registration = repo.twin_registration_repository.get_by_twin_id_dtr_service_id(
+            db_twin_registration = repo.twin_registration_repository.get_by_twin_id_twin_registry_id(
                 db_twin.id,
-                db_enablement_service_stack.dtr_service_id
+                db_enablement_service_stack.twin_registry_id    
             )
             if not db_twin_registration:
                 db_twin_registration = repo.twin_registration_repository.create_new(
                     twin_id=db_twin.id,
-                    dtr_service_id=db_enablement_service_stack.dtr_service_id
+                    twin_registry_id=db_enablement_service_stack.twin_registry_id
                 )
                 repo.commit()
 
@@ -130,7 +130,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             
-            dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
+            dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
             
             customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                     for partner_catalog_part in db_catalog_part.partner_catalog_parts}
@@ -266,14 +266,14 @@ class TwinManagementService:
             db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
                 create_input.enablement_service_stack_name,
                 join_legal_entity=True,
-                join_connector_service=True,
-                join_dtr_service=True
+                join_connector_control_plane=True,
+                join_twin_registry=True
             )
             if not db_enablement_service_stack:
                 raise NotFoundError(f"Enablement service stack '{create_input.enablement_service_stack_name}' not found.")
 
             # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.connector_service.legal_entity.bpnl != create_input.manufacturer_id:
+            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != create_input.manufacturer_id:
                 raise NotFoundError(f"Enablement service stack '{create_input.enablement_service_stack_name}' does not belong to the legal entity '{create_input.manufacturer_id}'.")
 
             # Step 3a: Load existing twin metadata from the DB (if there)
@@ -294,14 +294,14 @@ class TwinManagementService:
 
             # Step 4: Try to find the twin registration for the twin id and enablement service stack id
             # (if not there => create it now, setting the dtr_registered flag to False)
-            db_twin_registration = repo.twin_registration_repository.get_by_twin_id_dtr_service_id(
+            db_twin_registration = repo.twin_registration_repository.get_by_twin_id_twin_registry_id(
                 db_twin.id,
-                db_enablement_service_stack.dtr_service_id
+                db_enablement_service_stack.twin_registry_id
             )
             if not db_twin_registration:
                 db_twin_registration = repo.twin_registration_repository.create_new(
                     twin_id=db_twin.id,
-                    dtr_service_id=db_enablement_service_stack.dtr_service_id
+                    twin_registry_id=db_enablement_service_stack.twin_registry_id
                 )
                 repo.commit()
 
@@ -310,7 +310,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             if not db_twin_registration.dtr_registered:
-                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
+                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
                 
                 dtr_manager.create_or_update_shell_descriptor_serialized_part(
                     global_id=db_twin.global_id,
@@ -436,14 +436,14 @@ class TwinManagementService:
             db_enablement_service_stack = repo.enablement_service_stack_repository.get_by_name(
                 name=twin_aspect_create.enablement_service_stack_name,
                 join_legal_entity=True,
-                join_connector_service=True,
-                join_dtr_service=True
+                join_connector_control_plane=True,
+                join_twin_registry=True
             )
             if not db_enablement_service_stack:
                 raise NotFoundError(f"Enablement service stack '{twin_aspect_create.enablement_service_stack_name}' not found.")
             
             # Step 2a: Enablement service stack consistency check
-            if db_enablement_service_stack.connector_service.legal_entity.bpnl != manufacturer_id:
+            if db_enablement_service_stack.connector_control_plane.legal_entity.bpnl != manufacturer_id:
                 raise NotFoundError(f"Enablement service stack '{twin_aspect_create.enablement_service_stack_name}' does not belong to the legal entity '{manufacturer_id}'.")
             
             # Step 3: Retrieve a potentially existing twin aspect entity for the given twin_id and semantic_id
@@ -463,13 +463,13 @@ class TwinManagementService:
                 repo.refresh(db_twin_aspect)
 
             # Step 4: Check if there is already a registration for the given DTR service and create it if not
-            db_twin_aspect_registration = db_twin_aspect.find_registration_by_dtr_service_id(
-                db_enablement_service_stack.dtr_service_id
+            db_twin_aspect_registration = db_twin_aspect.find_registration_by_twin_registry_id(
+                db_enablement_service_stack.twin_registry_id
             )
             if not db_twin_aspect_registration:
                 db_twin_aspect_registration = repo.twin_aspect_registration_repository.create_new(
                     twin_aspect_id=db_twin_aspect.id,
-                    dtr_service_id=db_enablement_service_stack.dtr_service_id,
+                    twin_registry_id=db_enablement_service_stack.twin_registry_id,
                     registration_mode=TwinsAspectRegistrationMode.DISPATCHED.value,
                 )
                 repo.commit()
@@ -492,7 +492,7 @@ class TwinManagementService:
                 repo.commit()
             
             # Step 6: Handle the EDC registration
-            connector_manager = SystemManagementService.get_connector_manager(db_enablement_service_stack.connector_service)
+            connector_manager = SystemManagementService.get_connector_manager(db_enablement_service_stack.connector_control_plane)
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
                 
                 # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
@@ -506,7 +506,7 @@ class TwinManagementService:
 
             # Step 7: Handle the DTR registration
             if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.dtr_service)
+                dtr_manager = SystemManagementService.get_dtr_manager(db_enablement_service_stack.twin_registry)
                 
                 # Step 7a: Register the submodel in the DTR (if necessary)
                 try:
@@ -645,7 +645,7 @@ class TwinManagementService:
     @staticmethod   
     def _fill_registrations(db_twin: Twin, twin_result: TwinDetailsReadBase):
         twin_result.registrations = {
-                db_twin_registration.dtr_service.name: db_twin_registration.dtr_registered
+                db_twin_registration.twin_registry.name: db_twin_registration.dtr_registered
                     for db_twin_registration in db_twin.twin_registrations
             }
 
@@ -656,8 +656,8 @@ class TwinManagementService:
                     semanticId=db_twin_aspect.semantic_id,
                     submodelId=db_twin_aspect.submodel_id,
                     registrations={
-                        db_twin_aspect_registration.dtr_service.name: TwinAspectRegistration(
-                            dtrName=db_twin_aspect_registration.dtr_service.name,
+                        db_twin_aspect_registration.twin_registry.name: TwinAspectRegistration(
+                            dtrName=db_twin_aspect_registration.twin_registry.name,
                             status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
                             mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
                             createdDate=db_twin_aspect_registration.created_date,
