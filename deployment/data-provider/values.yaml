@@ -82,6 +82,11 @@ tractusx-connector:
 
   postgresql:
     nameOverride: edc-postgresql
+    image:
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      repository: bitnamilegacy/postgresql
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      tag: 15.4.0-debian-11-r45
     primary:
       persistence:
         enabled: false
@@ -100,6 +105,11 @@ digital-twin-registry:
   enableKeycloak: false
 
   postgresql:
+    image:
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      repository: bitnamilegacy/postgresql
+      # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
+      tag: 15.4.0-debian-11-r45
     primary:
       persistence:
         enabled: false
