@@ -125,8 +125,10 @@ async def twin_management_create_serialized_part_twin(serialized_part_twin_creat
     return twin_management_service.create_serialized_part_twin(serialized_part_twin_create, auto_create_serial_part)
 
 @router.post("/twin-aspect", response_model=TwinAspectRead, responses=exception_responses)
-async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
-    return twin_management_service.create_twin_aspect(twin_aspect_create)
+async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreate, default: bool = True) -> TwinAspectRead:
+    if default:
+        return twin_management_service.create_twin_aspect(twin_aspect_create)
+    return twin_management_service.create_or_update_twin_aspect_not_default(twin_aspect_create)
 
 @router.post("/serialized-part-twin/share", responses={
     201: {"description": "Catalog part twin shared successfully"},

@@ -337,7 +337,7 @@ class TestPartManagementService:
         business_partner.bpnl = "BPNL987654321098"
         partner_catalog_part.business_partner = business_partner
         
-        mock_repos.serialized_part_repository.find.return_value = [serialized_part]
+        mock_repos.serialized_part_repository.find_with_status.return_value = [(serialized_part, 1)]
         
         query = SerializedPartQuery(
             manufacturer_id="BPNL123456789012",
@@ -706,14 +706,14 @@ class TestPartManagementService:
         with patch('services.provider.part_management_service.RepositoryManagerFactory.create') as mock_repo_factory:
             mock_repos = Mock()
             mock_repo_factory.return_value.__enter__.return_value = mock_repos
-            mock_repos.serialized_part_repository.find.return_value = []
+            mock_repos.serialized_part_repository.find_with_status.return_value = []
             
             # Act
             result = self.service.get_serialized_parts()
             
             # Assert
             assert result == []
-            mock_repos.serialized_part_repository.find.assert_called_once()
+            mock_repos.serialized_part_repository.find_with_status.assert_called_once()
 
     def test_get_catalog_parts_empty_result(self):
         """Test get_catalog_parts when no parts are found."""

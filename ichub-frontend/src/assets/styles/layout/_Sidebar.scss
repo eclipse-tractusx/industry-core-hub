@@ -32,6 +32,20 @@
     align-items: center;
     padding: 10px 0;
     z-index: 1000000;
+    justify-content: space-between;
+  }
+  
+  .regularItems {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .fixedItems {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
   }
   
   .iconButton {
@@ -54,6 +68,42 @@
       opacity: 0.5;
       cursor: default;
       color: #6b6b6b;
+    }
+    
+    &.kitFeaturesButton {
+      margin: 5px 0;
+      opacity: 1;
+      width: 100%;
+      padding: 0 8px;
+      
+      .kitFeaturesIcon {
+        background: $brand-primary;
+        border-radius: 8px;
+        padding: 10px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba($brand-primary, 0.3);
+        transition: all 0.3s ease;
+        width: 100%;
+        
+        &:hover {
+          background: #0d47a1;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba($brand-primary, 0.4);
+        }
+        
+        &.active {
+          background: #64b5f6;
+          box-shadow: 0 2px 8px rgba(100, 181, 246, 0.3);
+          
+          &:hover {
+            background: #42a5f5;
+            box-shadow: 0 4px 12px rgba(100, 181, 246, 0.4);
+          }
+        }
+      }
     }
   }
   

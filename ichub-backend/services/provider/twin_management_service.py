@@ -25,6 +25,7 @@
 
 from typing import Optional, Dict, Any, List
 from uuid import UUID
+from datetime import datetime, timezone
 
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1, SEM_ID_SERIAL_PART_V3
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
@@ -44,12 +45,12 @@ from models.services.provider.twin_management import (
     TwinRead,
     TwinAspectCreate,
     TwinAspectRead,
-    TwinAspectRegistration,
+    TwinAspectRegistration as SvcTwinAspectRegistration,
     TwinAspectRegistrationStatus,
     TwinsAspectRegistrationMode,
     TwinDetailsReadBase,
 )
-from models.metadata_database.provider.models import BusinessPartner, CatalogPart, Twin
+from models.metadata_database.provider.models import BusinessPartner, TwinAspect, TwinAspectRegistration, CatalogPart, Twin, TwinRegistry, ConnectorControlPlane
 from tools.exceptions import InvalidError, NotFoundError, NotAvailableError
 
 from managers.config.log_manager import LoggingManager
@@ -520,95 +521,239 @@ class TwinManagementService:
             )
             if not db_twin_aspect:
                 # Step 3a: Create a new twin aspect entity in the database
-                db_twin_aspect = repo.twin_aspect_repository.create_new(
+                db_twin_aspect = self._create_twin_aspect_entity_db(twin_aspect_create, repo, db_twin)
+
+            # Step 4: Check if there is already a registration for the given twin registry and create it if not
+            db_twin_aspect_registration = self._get_or_create_twin_aspect_registration(
+                repo, db_twin_aspect, db_twin_registry, db_connector_control_plane
+            )
+
+            # Step 4b: Ensure DTR asset is registered
+            # TODO: to be removed later as no longer concern if this module
+            SystemManagementService.ensure_dtr_asset_registration()
+
+            # Step 5: Handle the submodel service
+            self._handle_submodel_service_upload(
+                repo, db_twin_aspect_registration, db_twin_aspect, db_connector_control_plane, twin_aspect_create
+            )
+            
+            # Step 6: Handle the EDC registration
+            asset_id = self._handle_edc_registration(repo, db_connector_control_plane, db_twin_aspect_registration, db_twin_aspect)
+            
+            # Step 7: Handle the DTR registration
+            self._handle_dtr_registration(repo, db_twin_aspect_registration, db_twin, db_twin_aspect, asset_id)
+
+            return self._create_twin_aspect_read_response(db_twin_aspect, db_twin_registry, db_connector_control_plane, db_twin_aspect_registration)
+        
+    def create_or_update_twin_aspect_not_default(self, twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
+        """
+        Create or update a twin aspect for a give twin without using the default Twin Registry and Connector Control Plane.
+        """
+
+        with RepositoryManagerFactory.create() as repo:
+            
+            # Step 1: Retrieve the twin entity according to the global_id
+            db_twin = repo.twin_repository.find_by_global_id(twin_aspect_create.global_id)
+            if not db_twin:
+                raise NotFoundError(f"Twin for global ID '{twin_aspect_create.global_id}' not found.")
+
+            # Step 2: Get associated manufacturer id
+            manufacturer_id = self._get_manufacturer_id_from_twin(db_twin)
+
+            # Step 3a: Retrieve the twin registry entity from the DB according to the given name
+            # (if not there => raise error)
+            db_twin_registry = repo.twin_registry_repository.get_by_name(
+                twin_aspect_create.twin_registry_name
+            )
+            if not db_twin_registry:
+                raise NotFoundError(f"Twin registry '{twin_aspect_create.twin_registry_name}' not found.")
+
+            # Step 3b: Retrieve the connector control plane entity from the DB according to the given name
+            # (if not there => raise error)
+            db_connector_control_plane = repo.connector_control_plane_repository.get_by_name(
+                twin_aspect_create.connector_control_plane_name,
+                join_legal_entity=True
+            )
+            if not db_connector_control_plane:
+                raise NotFoundError(f"Connector control plane '{twin_aspect_create.connector_control_plane_name}' not found.")
+
+            # Consistency check of the manufacturer id with the connector control plane
+            if manufacturer_id != db_connector_control_plane.legal_entity.bpnl:
+                raise InvalidError(f"Manufacturer ID '{manufacturer_id}' does not match with connector control plane's manufacturer ID '{db_connector_control_plane.manufacturer_id}'.")
+            
+            # Step 4a: Create a new twin aspect entity in the database if a submodel_id is not provided
+            if not twin_aspect_create.submodel_id:
+                db_twin_aspect = self._create_twin_aspect_entity_db(twin_aspect_create, repo, db_twin)
+
+            # Step 4b: Retrieve a potentially existing twin aspect entity for the given twin_id, semantic_id and submodel_id. If not found, create it. Otherwise, update it.
+            else:
+                db_twin_aspect = repo.twin_aspect_repository.get_by_twin_id_semantic_id_submodel_id(
+                    db_twin.id,
+                    twin_aspect_create.semantic_id,
+                    twin_aspect_create.submodel_id
+                )
+                if not db_twin_aspect:
+                    db_twin_aspect = self._create_twin_aspect_entity_db(twin_aspect_create, repo, db_twin)
+                else:
+                    # Update existing twin aspect
+                    self._handle_submodel_service_update(
+                        repo, db_twin_aspect.registrations[0], db_connector_control_plane, db_twin_aspect, twin_aspect_create
+                    )
+                    repo.commit()
+                    repo.refresh(db_twin_aspect)
+                    return self._create_twin_aspect_read_response(db_twin_aspect, db_twin_registry, db_connector_control_plane, db_twin_aspect.registrations[0])
+            
+
+            # Step 5a: Check if there is already a registration for the given Twin Registry stack and create it if not
+            db_twin_aspect_registration = self._get_or_create_twin_aspect_registration(
+                repo, db_twin_aspect, db_twin_registry, db_connector_control_plane
+            )
+
+            # Step 5b: Ensure DTR asset is registered
+            SystemManagementService.ensure_dtr_asset_registration()
+
+            # Step 6: Handle the submodel service
+            self._handle_submodel_service_upload(
+                repo, db_twin_aspect_registration, db_twin_aspect, db_connector_control_plane,twin_aspect_create
+            )
+            
+            # Step 7: Handle the EDC registration
+            asset_id = self._handle_edc_registration(repo, db_connector_control_plane, db_twin_aspect_registration, db_twin_aspect)
+            
+            # Step 8: Handle the DTR registration
+            self._handle_dtr_registration(repo, db_twin_aspect_registration, db_twin, db_twin_aspect, asset_id)
+
+            return self._create_twin_aspect_read_response(db_twin_aspect, db_twin_registry, db_connector_control_plane, db_twin_aspect_registration)
+
+    def _get_or_create_twin_aspect_registration(self, repo: RepositoryManager, db_twin_aspect: TwinAspect, db_twin_registry: TwinRegistry, db_connector_control_plane: ConnectorControlPlane) -> TwinAspectRegistration:
+        """
+        Get or create a twin aspect registration for the given Twin Registry and Connector Control Plane.
+        """
+        db_twin_aspect_registration = db_twin_aspect.find_registration_by_twin_registry_id(
+            db_twin_registry.id
+        )
+        if not db_twin_aspect_registration:
+            db_twin_aspect_registration = repo.twin_aspect_registration_repository.create_new(
+                twin_aspect_id=db_twin_aspect.id,
+                twin_registry_id=db_twin_registry.id,
+                # TODO: add Control Plane
+                registration_mode=TwinsAspectRegistrationMode.DISPATCHED.value, 
+            )
+            repo.commit()
+            repo.refresh(db_twin_aspect_registration)
+            repo.refresh(db_twin_aspect)
+        else:
+            # TODO: later make consistency check with assigned Control Plane
+            pass
+
+        return db_twin_aspect_registration
+
+    def _handle_submodel_service_upload(self, repo: RepositoryManager, db_twin_aspect_registration: TwinAspectRegistration, db_twin_aspect: TwinAspect, db_connector_control_plane: ConnectorControlPlane, twin_aspect_create: TwinAspectCreate) -> None:
+        """
+        Handle the upload of the twin aspect payload to the submodel service.
+        """
+        if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
+            submodel_service_manager = _create_submodel_service_manager()
+            
+            # Upload the payload to the submodel service
+            submodel_service_manager.upload_twin_aspect_document(
+                db_twin_aspect.submodel_id,
+                db_twin_aspect.semantic_id,
+                twin_aspect_create.payload
+            )
+
+            # Update the registration status to STORED
+            db_twin_aspect_registration.status = TwinAspectRegistrationStatus.STORED.value
+            repo.commit()
+            repo.refresh(db_twin_aspect_registration)
+    
+    def _handle_submodel_service_update(self, repo: RepositoryManager, db_twin_aspect_registration: TwinAspectRegistration, db_twin_aspect: TwinAspect, db_connector_control_plane: ConnectorControlPlane, twin_aspect_create: TwinAspectCreate) -> None:
+        """
+        Handle the update of the twin aspect payload to the submodel service.
+        """
+        if db_twin_aspect_registration.status == TwinAspectRegistrationStatus.STORED.value:
+            submodel_service_manager = _create_submodel_service_manager()
+            
+            # Update the payload to the submodel service
+            submodel_service_manager.upload_twin_aspect_document(
+                db_twin_aspect.submodel_id,
+                db_twin_aspect.semantic_id,
+                twin_aspect_create.payload
+            )
+            # Update the registration modified date
+            db_twin_aspect_registration.modified_date = datetime.now(timezone.utc)
+            repo.commit()
+        else:
+            raise NotAvailableError("Twin aspect document cannot be updated before it is stored in the submodel service.")
+
+    def _handle_edc_registration(self, repo: RepositoryManager, db_connector_control_plane: ConnectorControlPlane, db_twin_aspect_registration: TwinAspectRegistration, db_twin_aspect: TwinAspect) -> str:
+        """
+        Handle the EDC registration for the twin aspect and return the asset ID.
+        """
+        connector_manager_provider = SystemManagementService.get_connector_manager(db_connector_control_plane)
+
+        asset_id, usage_policy_id, access_policy_id, contract_id = connector_manager_provider.register_submodel_bundle_circular_offer(
+            semantic_id=db_twin_aspect.semantic_id
+        )
+        
+        # Handle the EDC registration
+        if asset_id and db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
+            # Update the registration status to EDC_REGISTERED
+            db_twin_aspect_registration.status = TwinAspectRegistrationStatus.EDC_REGISTERED.value
+            repo.commit()
+        
+        return asset_id
+
+    def _handle_dtr_registration(self, repo: RepositoryManager, db_twin_aspect_registration: TwinAspectRegistration, db_twin: Twin, db_twin_aspect: TwinAspect, asset_id: str) -> None:
+        """
+        Handle the DTR registration for the twin aspect.
+        """
+        dtr_provider_manager = SystemManagementService.get_dtr_manager(db_twin_aspect_registration.twin_registry)
+
+        if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:               
+            # Register the submodel in the DTR (if necessary)
+            try:
+                dtr_provider_manager.create_submodel_descriptor(
+                    aas_id=db_twin.aas_id,
+                    submodel_id=db_twin_aspect.submodel_id,
+                    semantic_id=db_twin_aspect.semantic_id,
+                    connector_asset_id=asset_id
+                )
+                # Update the registration status to DTR_REGISTERED only on success
+                db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
+                repo.commit()
+            except Exception as e:
+                logger.error(f"Failed to create submodel descriptor: {e}")
+                raise e  # Re-raise the exception to prevent twin creation from completing
+
+    def _create_twin_aspect_read_response(self, db_twin_aspect: TwinAspect, db_twin_registry: TwinRegistry, db_connector_control_plane: ConnectorControlPlane, db_twin_aspect_registration: TwinAspectRegistration) -> TwinAspectRead:
+        """
+        Create and return the TwinAspectRead response object.
+        """
+        registration_data = SvcTwinAspectRegistration(
+            twinRegistryName=db_twin_registry.name,
+            connectorControlPlaneName=db_connector_control_plane.name,
+            status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
+            mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
+            createdDate=db_twin_aspect_registration.created_date,
+            modifiedDate=db_twin_aspect_registration.modified_date
+        )
+        
+        return TwinAspectRead(
+            semanticId=db_twin_aspect.semantic_id,
+            submodelId=db_twin_aspect.submodel_id,
+            registrations={db_twin_registry.name: registration_data}
+        )
+
+    def _create_twin_aspect_entity_db(self, twin_aspect_create: TwinAspectCreate, repo: RepositoryManager, db_twin: Twin) -> TwinAspect:
+        db_twin_aspect = repo.twin_aspect_repository.create_new(
                     twin_id=db_twin.id,
                     semantic_id=twin_aspect_create.semantic_id,
                     submodel_id=twin_aspect_create.submodel_id
                 )
-                repo.commit()
-                repo.refresh(db_twin_aspect)
-
-            # Step 4: Check if there is already a registration for the given twin registry and create it if not
-            db_twin_aspect_registration = db_twin_aspect.find_registration_by_twin_registry_id(
-                twin_registry_id=db_twin_registry.id
-            )
-            if not db_twin_aspect_registration:
-                db_twin_aspect_registration = repo.twin_aspect_registration_repository.create_new(
-                    twin_aspect_id=db_twin_aspect.id,
-                    twin_registry_id=db_twin_registry.id,
-                    registration_mode=TwinsAspectRegistrationMode.DISPATCHED.value,
-                )
-                repo.commit()
-                repo.refresh(db_twin_aspect_registration)
-                repo.refresh(db_twin_aspect)
-            
-            # Existing registration found: check if the control plane matches
-            else:
-                if db_twin_aspect_registration.connector_control_plane_id != db_connector_control_plane.id:
-                    raise InvalidError("Twin aspect registration already exists with different connector control plane.")
-
-            # Step 5: Handle the submodel service
-            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.STORED.value:
-                submodel_service_manager = _create_submodel_service_manager(None)
-                
-                # Step 5a: Upload the payload to the submodel service
-                submodel_service_manager.upload_twin_aspect_document(
-                    db_twin_aspect.submodel_id,
-                    db_twin_aspect.semantic_id,
-                    twin_aspect_create.payload
-                )
-
-                # Step 5b: Update the registration status to STORED
-                db_twin_aspect_registration.status = TwinAspectRegistrationStatus.STORED.value
-                repo.commit()
-            
-            # Step 6: Handle the EDC registration
-            connector_manager = SystemManagementService.get_connector_manager(db_connector_control_plane)
-            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.EDC_REGISTERED.value:
-                
-                # Step 6a: Register the aspect as asset in the EDC (if necessary) only submodel bundle allowed
-                asset_id, usage_policy_id, access_policy_id, contract_id = connector_manager.register_submodel_bundle_circular_offer(
-                    semantic_id=db_twin_aspect.semantic_id
-                )
-
-                # Step 6b: Update the registration status to EDC_REGISTERED
-                db_twin_aspect_registration.status = TwinAspectRegistrationStatus.EDC_REGISTERED.value
-                repo.commit()
-
-            # Step 7: Handle the DTR registration
-            if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:
-                dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
-                
-                # Step 7a: Register the submodel in the DTR (if necessary)
-                try:
-                    dtr_manager.create_submodel_descriptor(
-                        aas_id=db_twin.aas_id,
-                        submodel_id=db_twin_aspect.submodel_id,
-                        semantic_id=db_twin_aspect.semantic_id,
-                        connector_asset_id=asset_id
-                )
-                except Exception as e:
-                    logger.error(f"Failed to create submodel descriptor: {e}")
-
-                # Step 7b: Update the registration status to DTR_REGISTERED
-                db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
-                repo.commit()
-
-            return TwinAspectRead(
-                semanticId=db_twin_aspect.semantic_id,
-                submodelId=db_twin_aspect.submodel_id,
-
-                registrations={
-                    db_twin_registry.name: TwinAspectRegistration(
-                        twinRegistryName=db_twin_registry.name,
-                        connectorControlPlaneName=db_connector_control_plane.name,
-                        status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
-                        mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
-                        createdDate=db_twin_aspect_registration.created_date,
-                        modifiedDate=db_twin_aspect_registration.modified_date
-                    )
-                }
-            )
+        repo.commit()
+        repo.refresh(db_twin_aspect)
+        return db_twin_aspect
             
     def get_catalog_part_twin_details_id(self, global_id:UUID) -> Optional[CatalogPartTwinDetailsRead]:
         with RepositoryManagerFactory.create() as repo:
@@ -723,22 +868,40 @@ class TwinManagementService:
 
     @staticmethod
     def _fill_aspects(db_twin: Twin, twin_result: TwinDetailsReadBase):
-        twin_result.aspects = {
-                db_twin_aspect.semantic_id: TwinAspectRead(
-                    semanticId=db_twin_aspect.semantic_id,
-                    submodelId=db_twin_aspect.submodel_id,
-                    registrations={
-                        db_twin_aspect_registration.twin_registry.name: TwinAspectRegistration(
-                            twinRegistryName=db_twin_aspect_registration.twin_registry.name,
-                            connectorControlPlaneName=db_twin_aspect_registration.connector_control_plane.name,
-                            status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
-                            mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
-                            createdDate=db_twin_aspect_registration.created_date,
-                            modifiedDate=db_twin_aspect_registration.modified_date
-                        ) for db_twin_aspect_registration in db_twin_aspect.twin_aspect_registrations
-                    } 
-                ) for db_twin_aspect in db_twin.twin_aspects
-            }
+        # Create TwinAspectRead objects for all aspects
+        all_aspects = []
+        aspects_by_semantic_id = {}
+        
+        for db_twin_aspect in db_twin.twin_aspects:
+            # Build registrations dictionary separately
+            registrations = {}
+            for db_twin_aspect_registration in db_twin_aspect.twin_aspect_registrations:
+                registration_data = SvcTwinAspectRegistration(
+                    twinRegistryName=db_twin_aspect_registration.twin_registry.name,
+                    connectorControlPlaneName=db_twin_aspect_registration.connector_control_plane.name,
+                    status=TwinAspectRegistrationStatus(db_twin_aspect_registration.status),
+                    mode=TwinsAspectRegistrationMode(db_twin_aspect_registration.registration_mode),
+                    createdDate=db_twin_aspect_registration.created_date,
+                    modifiedDate=db_twin_aspect_registration.modified_date
+                )
+                registrations[db_twin_aspect_registration.twin_registry.name] = registration_data
+            
+            aspect_read = TwinAspectRead(
+                semanticId=db_twin_aspect.semantic_id,
+                submodelId=db_twin_aspect.submodel_id,
+                registrations=registrations
+            )
+            
+            # Add to complete list
+            all_aspects.append(aspect_read)
+            
+            # For backward compatibility, only keep the first aspect of each semantic type
+            if db_twin_aspect.semantic_id not in aspects_by_semantic_id:
+                aspects_by_semantic_id[db_twin_aspect.semantic_id] = aspect_read
+        
+        # Set both fields
+        twin_result.all_aspects = all_aspects
+        twin_result.aspects = aspects_by_semantic_id
 
     @staticmethod
     def _get_manufacturer_id_from_twin(db_twin: Twin) -> str:
@@ -784,7 +947,7 @@ class TwinManagementService:
             return False
 
 
-def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]]) -> SubmodelServiceManager:
+def _create_submodel_service_manager(connection_settings: Optional[Dict[str, Any]] = None) -> SubmodelServiceManager:
     """
     Create a new instance of the SubmodelServiceManager class.
     """

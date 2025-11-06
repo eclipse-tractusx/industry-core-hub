@@ -2,6 +2,7 @@ from typing import List, Optional
 
 from connector import connector_manager
 from dtr import dtr_provider_manager
+from managers.config.config_manager import ConfigManager
 from managers.enablement_services.provider.dtr_provider_manager import DtrProviderManager
 from managers.enablement_services.provider.connector_provider_manager import ConnectorProviderManager
 
@@ -26,6 +27,8 @@ from models.metadata_database.provider.models import (
     EnablementServiceStack,
     LegalEntity
 )
+
+from tools.exceptions import NotAvailableError
 
 class SystemManagementService:
     """
@@ -273,3 +276,21 @@ class SystemManagementService:
         # TODO: implement caching
 
         return connector_manager.provider
+    
+    @staticmethod
+    def ensure_dtr_asset_registration() -> None:
+        """
+        Ensure that the Digital Twin Registry asset is registered.
+        """
+        dtr_config = ConfigManager.get_config("provider.digitalTwinRegistry")
+        asset_config = dtr_config.get("asset_config")
+        dtr_asset_id, _, _, _ = connector_manager.provider.register_dtr_offer(
+            base_dtr_url=dtr_config.get("hostname"),
+            uri=dtr_config.get("uri"),
+            api_path=dtr_config.get("apiPath"),
+            dtr_policy_config=dtr_config.get("policy"),
+            dct_type=asset_config.get("dct_type"),
+            existing_asset_id=asset_config.get("existing_asset_id", None)
+        )
+        if not dtr_asset_id:
+            raise NotAvailableError("The Digital Twin Registry was not able to be registered, or was not found in the Connector!")

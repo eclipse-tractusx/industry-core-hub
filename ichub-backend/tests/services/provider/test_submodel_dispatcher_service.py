@@ -109,7 +109,7 @@ class TestSubmodelDispatcherService:
             edc_bpn=sample_edc_bpn,
             edc_contract_agreement_id=sample_contract_agreement_id,
             semantic_id=sample_semantic_id,
-            global_id=sample_global_id
+            submodel_id=sample_global_id
         )
 
         # Assert
@@ -135,7 +135,7 @@ class TestSubmodelDispatcherService:
             edc_bpn=None,
             edc_contract_agreement_id=None,
             semantic_id=sample_semantic_id,
-            global_id=sample_global_id
+            submodel_id=sample_global_id
         )
 
         # Assert
@@ -159,7 +159,7 @@ class TestSubmodelDispatcherService:
                 edc_bpn=sample_edc_bpn,
                 edc_contract_agreement_id="agreement-123",
                 semantic_id=invalid_semantic_id,
-                global_id=sample_global_id
+                submodel_id=sample_global_id
             )
 
         mock_get_submodel_type.assert_called_once_with(invalid_semantic_id)
@@ -181,7 +181,7 @@ class TestSubmodelDispatcherService:
                 edc_bpn=sample_edc_bpn,
                 edc_contract_agreement_id="agreement-123",
                 semantic_id=sample_semantic_id,
-                global_id=sample_global_id
+                submodel_id=sample_global_id
             )
 
         mock_get_submodel_type.assert_called_once_with(sample_semantic_id)
@@ -199,7 +199,7 @@ class TestSubmodelDispatcherService:
 
         # Act
         self.service.upload_submodel(
-            global_id=sample_global_id,
+            submodel_id=sample_global_id,
             semantic_id=sample_semantic_id,
             submodel_payload=sample_submodel_payload
         )
@@ -221,7 +221,7 @@ class TestSubmodelDispatcherService:
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid semantic ID"):
             self.service.upload_submodel(
-                global_id=sample_global_id,
+                submodel_id=sample_global_id,
                 semantic_id=invalid_semantic_id,
                 submodel_payload=sample_submodel_payload
             )
@@ -239,7 +239,7 @@ class TestSubmodelDispatcherService:
 
         # Act
         self.service.upload_submodel(
-            global_id=sample_global_id,
+            submodel_id=sample_global_id,
             semantic_id=sample_semantic_id,
             submodel_payload=empty_payload
         )
@@ -264,7 +264,7 @@ class TestSubmodelDispatcherService:
         # Act & Assert
         with pytest.raises(Exception, match="Upload failed"):
             self.service.upload_submodel(
-                global_id=sample_global_id,
+                submodel_id=sample_global_id,
                 semantic_id=sample_semantic_id,
                 submodel_payload=sample_submodel_payload
             )
@@ -284,7 +284,7 @@ class TestSubmodelDispatcherService:
 
         # Act
         self.service.delete_submodel(
-            global_id=sample_global_id,
+            submodel_id=sample_global_id,
             semantic_id=sample_semantic_id
         )
 
@@ -305,7 +305,7 @@ class TestSubmodelDispatcherService:
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid semantic ID"):
             self.service.delete_submodel(
-                global_id=sample_global_id,
+                submodel_id=sample_global_id,
                 semantic_id=invalid_semantic_id
             )
 
@@ -324,7 +324,7 @@ class TestSubmodelDispatcherService:
         # Act & Assert
         with pytest.raises(Exception, match="Delete failed"):
             self.service.delete_submodel(
-                global_id=sample_global_id,
+                submodel_id=sample_global_id,
                 semantic_id=sample_semantic_id
             )
 

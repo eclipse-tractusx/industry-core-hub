@@ -575,6 +575,14 @@ class TwinAspectRepository(BaseRepository[TwinAspect]):
             )
 
         return self._session.scalars(stmt).first()
+    
+    def get_by_twin_id_semantic_id_submodel_id(self, twin_id: int, semantic_id: str, submodel_id: UUID) -> Optional[TwinAspect]:
+        """Retrieve a TwinAspect by its submodel_id."""
+        stmt = select(TwinAspect).where(
+            TwinAspect.twin_id == twin_id).where(
+            TwinAspect.semantic_id == semantic_id).where(
+            TwinAspect.submodel_id == submodel_id)
+        return self._session.scalars(stmt).first()
 
     def create_new(self, twin_id: int, semantic_id: str, submodel_id: UUID = None) -> TwinAspect:
         """Create a new TwinAspect instance."""

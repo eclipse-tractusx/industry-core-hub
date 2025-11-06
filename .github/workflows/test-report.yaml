@@ -1,0 +1,239 @@
+###############################################################
+# Copyright (c) 2025 LKS NEXT
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+name: Unit Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('ichub-backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install Python dependencies
+      run: |
+        cd ichub-backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-cov pytest-html flake8
+        
+    - name: Verify critical imports
+      run: |
+        cd ichub-backend
+        python -c "import sys; print('Python version:', sys.version)"
+        python -c "import tractusx_sdk; print('tractusx_sdk version:', tractusx_sdk.__version__)" || echo "tractusx_sdk not available"
+        python -c "import pytest; print('pytest version:', pytest.__version__)"
+        
+    - name: Check Python syntax
+      run: |
+        cd ichub-backend
+        python -m py_compile **/*.py || true
+        
+    - name: Lint Python code
+      run: |
+        cd ichub-backend
+        python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        
+    - name: Run unit tests
+      run: |
+        cd ichub-backend
+        echo "Running all unit tests..."
+        PYTHONPATH=. python -m pytest tests/ -v --tb=short --maxfail=5
+        
+    - name: Run tests with coverage
+      if: success() || failure()
+      run: |
+        cd ichub-backend
+        echo "Running all backend tests..."
+        PYTHONPATH=. python -m pytest tests/ -v --tb=short --cov=. --cov-report=xml --cov-report=html --junit-xml=test-results.xml
+        
+    - name: Upload coverage reports
+      if: always()
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      with:
+        name: backend-coverage
+        path: |
+          ichub-backend/coverage.xml
+          ichub-backend/htmlcov/
+          
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      with:
+        name: backend-test-results
+        path: ichub-backend/test-results.xml
+
+  summary:
+    name: Test Report Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+    if: always()
+    
+    steps:
+    - name: Download test results
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-test-results
+        path: backend-test-results
+      continue-on-error: true
+      id: download-test-results
+
+    - name: Download coverage reports
+      uses: actions/download-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend-coverage
+      continue-on-error: true
+      id: download-coverage
+
+    - name: Generate summary content
+      id: summary-content
+      run: |
+        # --- Default Values ---
+        TESTS=0
+        FAILURES=0
+        ERRORS=0
+        PASSED=0
+        COVERAGE="0.00"
+        STATUS_ICON="⚠️"
+        STATUS_MSG="ATTENTION NEEDED"
+
+        # --- Check if backend tests crashed/failed ---
+        if [[ "${{ steps.download-test-results.outcome }}" == "failure" ]]; then
+          STATUS_ICON="❌"
+          STATUS_MSG="TESTS FAILED"
+          
+          # --- Generate Failure Summary (summary.md) ---
+          echo "# 🧪 Test Summary" > summary.md
+          echo "## $STATUS_ICON Status: $STATUS_MSG" >> summary.md
+          echo "" >> summary.md
+          echo "### ❌ Backend Tests" >> summary.md
+          echo "The unit tests failed and could not run." >> summary.md
+          echo "" >> summary.md
+        else
+          # --- Parse Test Results (JUnit XML) ---
+          if [ -f backend-test-results/test-results.xml ]; then
+            RESULTS_FILE="backend-test-results/test-results.xml"
+            TESTS=$(grep '<testsuite ' $RESULTS_FILE | awk -F'tests="' '{print $2}' | awk -F'"' '{print $1}')
+            FAILURES=$(grep '<testsuite ' $RESULTS_FILE | awk -F'failures="' '{print $2}' | awk -F'"' '{print $1}')
+            ERRORS=$(grep '<testsuite ' $RESULTS_FILE | awk -F'errors="' '{print $2}' | awk -F'"' '{print $1}')
+            
+            TESTS=${TESTS:-0}
+            FAILURES=${FAILURES:-0}
+            ERRORS=${ERRORS:-0}
+
+            TOTAL_FAILED=$((FAILURES + ERRORS))
+            PASSED=$((TESTS - TOTAL_FAILED))
+          fi
+
+          # --- Coverage parse (Cobertura XML) ---
+          if [ -f backend-coverage/coverage.xml ]; then
+            COVERAGE_FILE="backend-coverage/coverage.xml"
+            COVERAGE_FRAC=$(grep '<coverage ' $COVERAGE_FILE | awk -F'line-rate="' '{print $2}' | awk -F'"' '{print $1}')
+            COVERAGE_FRAC=${COVERAGE_FRAC:-0}
+            # Usar awk para multiplicación de punto flotante
+            COVERAGE=$(awk -v cov=$COVERAGE_FRAC 'BEGIN {printf "%.2f", cov * 100}')
+          fi
+
+          # --- Determine Overall Status ---
+          if [[ "${{ needs.backend-tests.result }}" == "success" ]]; then
+            STATUS_ICON="🎉"
+            STATUS_MSG="SUCCESS"
+          fi
+
+          # --- Generate Summary (summary.md) ---
+          echo "# 🧪 Test Summary" > summary.md
+          echo "## $STATUS_ICON Status: $STATUS_MSG" >> summary.md
+          echo "" >> summary.md
+          echo "### 📊 Backend Tests" >> summary.md
+          echo "| Passed | Failed | Total | Coverage |" >> summary.md
+          echo "|:---:|:---:|:---:|:---:|" >> summary.md
+          echo "| ✅ $PASSED | ❌ $TOTAL_FAILED | 📋 $TESTS | 📈 $COVERAGE% |" >> summary.md
+          echo "" >> summary.md
+        fi
+        
+        # Hide run details in a collapsible section
+        echo "<details><summary>Run Details</summary>" >> summary.md
+        echo "" >> summary.md
+        echo "- **Branch:** \`${{ github.ref_name }}\`" >> summary.md
+        echo "- **Commit:** \`${{ github.sha }}\`" >> summary.md
+        echo "- **Trigger:** \`${{ github.event_name }}\`" >> summary.md
+        echo "</details>" >> summary.md
+
+        echo "" >> summary.md
+        echo "<!-- test-report -->" >> summary.md
+
+        echo "summary_path=summary.md" >> $GITHUB_OUTPUT
+
+    - name: Write to Job Summary
+      run: cat ${{ steps.summary-content.outputs.summary_path }} >> $GITHUB_STEP_SUMMARY
+
+    - name: Find existing summary comment
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+      id: find-summary
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: 🧪 Test Summary
+
+    - name: Create or update summary comment
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        comment-id: ${{ steps.find-summary.outputs.comment-id }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body-path: ${{ steps.summary-content.outputs.summary_path }}
+        edit-mode: replace
