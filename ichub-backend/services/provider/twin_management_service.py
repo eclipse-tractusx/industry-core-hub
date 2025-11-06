@@ -135,7 +135,7 @@ class TwinManagementService:
             # (if False => we need to register the twin in the DTR using the industry core SDK, then
             #  update the twin registration entity with the dtr_registered flag to True)
             
-            dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
+            dtr_provider_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
             
             customer_part_ids = {partner_catalog_part.customer_part_id: partner_catalog_part.business_partner.bpnl 
                                     for partner_catalog_part in db_catalog_part.partner_catalog_parts}
@@ -153,7 +153,7 @@ class TwinManagementService:
                 if _cat:
                     asset_type_value = _cat
 
-            dtr_manager.create_or_update_shell_descriptor(
+            dtr_provider_manager.create_or_update_shell_descriptor(
                 global_id=db_twin.global_id,
                 aas_id=db_twin.aas_id,
                 asset_kind="Type",
@@ -343,9 +343,9 @@ class TwinManagementService:
                 if _cat:
                     asset_type_value = _cat
 
-            dtr_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
+            dtr_provider_manager = SystemManagementService.get_dtr_manager(db_twin_registry)
                 
-            dtr_manager.create_or_update_shell_descriptor(
+            dtr_provider_manager.create_or_update_shell_descriptor(
                 global_id=db_twin.global_id,
                 aas_id=db_twin.aas_id,
                 asset_kind="Instance",
