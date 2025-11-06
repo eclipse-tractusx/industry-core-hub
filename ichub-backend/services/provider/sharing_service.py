@@ -84,7 +84,8 @@ class SharingService:
                     globalId=db_twin.global_id,
                     semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
                     payload=part_type_info_doc,
-                    enablementServiceStackName=catalog_part_to_share.enablement_service_stack_name
+                    twinRegistryName=catalog_part_to_share.twin_registry_name,
+                    connectorControlPlaneName=catalog_part_to_share.connector_control_plane_name
                 )
             )
             # Step 9: Return the shared part information
