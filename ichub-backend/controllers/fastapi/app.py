@@ -22,7 +22,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import FastAPI, HTTPException, status, Request, APIRouter, Header, Body, Depends
+from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,7 +39,8 @@ from .routers.provider.v1 import (
     partner_management,
     twin_management,
     submodel_dispatcher,
-    sharing_handler
+    sharing_handler,
+    system_management,
 )
 from .routers.consumer.v1 import (
     connection_management,
@@ -69,13 +70,17 @@ tags_metadata = [
         "description": "Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service"
     },
     {
+        "name": "System Management",
+        "description": "Management of integrated system components (EDC, DTR, etc.)"
+    },
+    {
         "name": "Open Connection Management",
         "description": "Handles the connections from the consumer modules, for specific services like digital twin registry and data endpoints"
     },
     {
         "name": "Part Discovery Management",
         "description": "Management of the discovery of parts, searching for digital twins and digital twins registries"
-    }
+    },
 ]
 
 app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata)
@@ -147,6 +152,7 @@ v1_router.include_router(partner_management.router)
 v1_router.include_router(twin_management.router)
 v1_router.include_router(submodel_dispatcher.router)
 v1_router.include_router(sharing_handler.router)
+v1_router.include_router(system_management.router)
 v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
 
