@@ -21,7 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
 from typing import List, Optional
 from uuid import UUID
@@ -37,8 +37,13 @@ from models.services.provider.twin_management import (
 )
 from tools.exceptions import exception_responses
 from utils.async_utils import AsyncManagerWrapper
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
-router = APIRouter(prefix="/twin-management", tags=["Twin Management"])
+router = APIRouter(
+    prefix="/twin-management",
+    tags=["Twin Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 twin_management_service = TwinManagementService()
 
 # Create universal async wrapper - works with any service!

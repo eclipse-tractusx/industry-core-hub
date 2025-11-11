@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Body, Header
+from fastapi import APIRouter, Body, Header, Depends
 from fastapi.responses import JSONResponse
 from typing import Any, Dict, Optional
 from uuid import UUID
@@ -28,9 +28,14 @@ from uuid import UUID
 from services.provider.submodel_dispatcher_service import SubmodelDispatcherService
 from managers.config.config_manager import ConfigManager
 from tools.exceptions import exception_responses
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
 path_submodel_dispatcher = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
-router = APIRouter(prefix=path_submodel_dispatcher, tags=["Submodel Dispatcher"])
+router = APIRouter(
+    prefix=path_submodel_dispatcher,
+    tags=["Submodel Dispatcher"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 submodel_dispatcher_service = SubmodelDispatcherService()
 
 @router.get("/{semantic_id}/{submodel_id}/submodel/$value", response_model=Dict[str, Any], responses=exception_responses)

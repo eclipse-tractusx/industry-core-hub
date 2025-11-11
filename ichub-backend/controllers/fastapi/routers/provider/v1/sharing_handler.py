@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Body, Header
+from fastapi import APIRouter, Body, Header, Depends
 
 from services.provider.sharing_service import SharingService
 from models.services.provider.sharing_management import (
@@ -30,8 +30,13 @@ from models.services.provider.sharing_management import (
 )
 from typing import Optional, List
 from tools.exceptions import exception_responses
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
-router = APIRouter(prefix="/share", tags=["Sharing Functionality"])
+router = APIRouter(
+    prefix="/share",
+    tags=["Sharing Functionality"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 part_sharing_service = SharingService()
 
 @router.post("/catalog-part", response_model=SharedPartBase, responses=exception_responses)

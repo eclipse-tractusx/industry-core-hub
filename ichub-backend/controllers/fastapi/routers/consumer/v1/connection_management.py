@@ -43,7 +43,13 @@ from models.services.consumer.connection_management import (
 
 from typing import Optional, List
 from tools.exceptions import exception_responses
-router = APIRouter(prefix="/connection", tags=["Open Connection Management"])
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+
+router = APIRouter(
+    prefix="/connection",
+    tags=["Open Connection Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 #connection_service = ConnectionService()
 
 from dtr import dtr_manager

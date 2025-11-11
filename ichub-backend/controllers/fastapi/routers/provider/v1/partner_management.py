@@ -20,15 +20,20 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import Optional, List
 
 from services.provider.partner_management_service import PartnerManagementService
 from models.services.provider.partner_management import BusinessPartnerRead, BusinessPartnerCreate, DataExchangeAgreementRead
 from tools.exceptions import exception_responses
 from utils.async_utils import AsyncManagerWrapper
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
-router = APIRouter(prefix="/partner-management", tags=["Partner Management"])
+router = APIRouter(
+    prefix="/partner-management",
+    tags=["Partner Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 partner_management_service = PartnerManagementService()
 
 # Create universal async wrapper - works with any service/manager!
