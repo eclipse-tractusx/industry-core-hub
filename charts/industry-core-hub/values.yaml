@@ -386,6 +386,42 @@ backend:
     timeouts:
       keep_alive: 300                       # 5 minutes for DTR operations
       graceful_shutdown: 30                 # 30 seconds for graceful shutdown
+
+  # -- Jobs configuration for background tasks
+  jobs:
+    # Asset synchronization job
+    assetSync:
+      # -- Enable asset sync job (can be deployed as Job or CronJob)
+      enabled: true
+      # -- Type of job: "job" for one-time execution, "cronjob" for scheduled execution
+      type: "cronjob"  # job or cronjob
+      # -- Cron schedule (only used when type is "cronjob")
+      # Example: "0 */6 * * *" runs every 6 hours
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      # -- Deadline in seconds for starting the job if it misses scheduled time (CronJob only)
+      startingDeadlineSeconds: 200
+      # -- Restart policy for job pods
+      restartPolicy: "OnFailure"
+      # -- Number of retries before marking job as failed
+      backoffLimit: 3
+      # -- Concurrency policy for CronJob (only used when type is "cronjob")
+      # Options: Allow, Forbid, Replace
+      concurrencyPolicy: "Forbid"
+      # -- Number of successful jobs to keep in history (CronJob only)
+      successfulJobsHistoryLimit: 3
+      # -- Number of failed jobs to keep in history (CronJob only)
+      failedJobsHistoryLimit: 3
+      # -- Resource limits for the job
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+          ephemeral-storage: "128Mi"
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: "1Gi"
+
 frontend:
   # -- Enhanced frontend configuration
   config:
