@@ -406,16 +406,16 @@ frontend:
     apiKeyExpiryWarningDays: 7
 
     # Authentication configuration
-    authEnabled: false
-    authProvider: "none"  # none, keycloak
+    authEnabled: true
+    authProvider: "keycloak"  # none, keycloak
 
-    # Keycloak configuration (only used when authProvider is keycloak)
+    # Keycloak configuration
     keycloak:
-      url: ""
-      realm: ""
-      clientId: ""
-      onLoad: "check-sso"  # check-sso, login-required
-      checkLoginIframe: true
+      url: "https://<keycloak-hostname>/auth"
+      realm: "ICHub"
+      clientId: "industry-core-hub-frontend"
+      onLoad: "login-required"  # check-sso, login-required
+      checkLoginIframe: false
       silentCheckSsoRedirectUri: ""
       pkceMethod: "S256"
       enableLogging: false
@@ -546,7 +546,7 @@ frontend:
       #   hosts:
       #     - ""
     hosts:
-      - host: ""
+      - host: "<frontend-hostname>"
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -749,6 +749,22 @@ keycloak:
   # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
   httpRelativePath: /auth/
   replicaCount: 1
+  # -- Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 240
+    periodSeconds: 2
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+  # -- Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 20
+    timeoutSeconds: 2
+    failureThreshold: 6
+    successThreshold: 1
   # -- Realm import configuration
   realmImport:
     enabled: true
@@ -796,12 +812,13 @@ keycloak:
     enabled: false
     ingressClassName: ""
     # -- Provide default path for the ingress record.
-    hostname: ""
+    hostname: "<keycloak-hostname>"
     # -- Optional annotations when using the nginx ingress class;
     # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
     # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
     # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
       # cert-manager.io/cluster-issuer: ""
       # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
       # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
@@ -810,8 +827,17 @@ keycloak:
       # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
       # nginx.ingress.kubernetes.io/proxy-buffering: "on"
       # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
-      # nginx.ingress.kubernetes.io/use-regex: "true"
     tls: false
+  # -- Resource configuration for Keycloak
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+      ephemeral-storage: "256Mi"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+      ephemeral-storage: "2Gi"
   rbac:
     create: true
     rules:
@@ -846,9 +872,9 @@ keycloak:
       # # -- Root user password.
       # postgresPassword: "postgres-keycloak-admin-password"
       # -- Database name.
-      database: postgres
-      # -- Secret containing the passwords for root usernames postgres and non-root username kccentral.
-      existingSecret: "ichub-password"
+      database: ichub-postgres
+      # -- Secret containing the passwords for root usernames postgres and non-root username ichub.
+      existingSecret: "ichub-postgres-secret"
     architecture: standalone
   externalDatabase:
     # -- External PostgreSQL configuration

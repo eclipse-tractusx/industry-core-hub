@@ -22,7 +22,7 @@
 
 /** Created using an LLM (Github Copilot) review by a human committer */
 
-import axios from 'axios';
+import httpClient from '../../services/HttpClient';
 import { 
   getIchubBackendUrl,
   GovernanceConfig,
@@ -247,7 +247,7 @@ export interface ShellDiscoveryRequest {
 }
 
 export const fetchCatalogParts = async (): Promise<ApiPartData[]> => {
-  const response = await axios.get<ApiPartData[]>(`${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}`);
+  const response = await httpClient.get<ApiPartData[]>(`${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}`);
   return response.data;
 };
 
@@ -255,7 +255,7 @@ export const fetchCatalogPart = async (
   manufacturerId: string ,
   manufacturerPartId: string
 ): Promise<ApiPartData> => {
-  const response = await axios.get<ApiPartData>(
+  const response = await httpClient.get<ApiPartData>(
     `${backendUrl}${partDiscoveryConfig.api.endpoints.CATALOG_PART_MANAGEMENT}/${manufacturerId}/${manufacturerPartId}`
   );
   return response.data;
@@ -279,7 +279,7 @@ export const shareCatalogPart = async (
     customerPartId: customerPartId && customerPartId.trim() ? customerPartId.trim() : undefined,
   };
 
-  const response = await axios.post<ApiPartData>(
+  const response = await httpClient.post<ApiPartData>(
     `${backendUrl}${partDiscoveryConfig.api.endpoints.SHARE_CATALOG_PART}`,
     requestBody
   );
@@ -289,7 +289,7 @@ export const shareCatalogPart = async (
 export const registerCatalogPartTwin = async (
   twinData: CatalogPartTwinCreateType
 ): Promise<TwinReadType> => {
-  const response = await axios.post<TwinReadType>(
+  const response = await httpClient.post<TwinReadType>(
     `${backendUrl}${partDiscoveryConfig.api.endpoints.TWIN_MANAGEMENT}`,
     twinData
   );
@@ -305,7 +305,7 @@ export const discoverShells = async (
   request: ShellDiscoveryRequest,
   signal?: AbortSignal
 ): Promise<ShellDiscoveryResponse> => {
-  const response = await axios.post<ShellDiscoveryResponse>(
+  const response = await httpClient.post<ShellDiscoveryResponse>(
     `${backendUrl}${partDiscoveryConfig.api.endpoints.SHELL_DISCOVERY}`,
     request,
     { signal }
@@ -511,7 +511,7 @@ export const discoverSingleShell = async (
     dtrGovernance: dtrPolicies
   };
 
-  const response = await axios.post<SingleShellDiscoveryResponse | { status: number; error: string }>(
+  const response = await httpClient.post<SingleShellDiscoveryResponse | { status: number; error: string }>(
     `${backendUrl}/discover/shell`,
     request,
     { signal }
@@ -964,7 +964,7 @@ export const fetchSubmodel = async (
     governance
   };
 
-  const response = await axios.post<SubmodelDiscoveryResponse>(
+  const response = await httpClient.post<SubmodelDiscoveryResponse>(
     `${backendUrl}/discover/shell/submodel`,
     request
   );

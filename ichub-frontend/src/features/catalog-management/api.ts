@@ -20,7 +20,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import axios from 'axios';
+import httpClient from '../../services/HttpClient';
+import axios from 'axios'; // Only used for isAxiosError type guard
 import { getIchubBackendUrl } from '../../services/EnvironmentService';
 import { ApiPartData } from './types/types';
 import { CatalogPartTwinCreateType, TwinReadType, CatalogPartTwinDetailsRead } from './types/twin-types';
@@ -33,7 +34,7 @@ interface SubmodelContent {
 const backendUrl = getIchubBackendUrl();
 
 export const fetchCatalogParts = async (): Promise<ApiPartData[]> => {
-  const response = await axios.get<ApiPartData[]>(`${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}`);
+  const response = await httpClient.get<ApiPartData[]>(`${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}`);
   return response.data;
 };
 
@@ -41,7 +42,7 @@ export const fetchCatalogPart = async (
   manufacturerId: string ,
   manufacturerPartId: string
 ): Promise<ApiPartData> => {
-  const response = await axios.get<ApiPartData>(
+  const response = await httpClient.get<ApiPartData>(
     `${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}/${manufacturerId}/${manufacturerPartId}`
   );
   return response.data;
@@ -65,7 +66,7 @@ export const shareCatalogPart = async (
     customerPartId: customerPartId?.trim() || undefined
   };
 
-  const response = await axios.post<ApiPartData>(
+  const response = await httpClient.post<ApiPartData>(
     `${backendUrl}${catalogManagementConfig.api.endpoints.SHARE_CATALOG_PART}`,
     requestBody
   );
@@ -75,7 +76,7 @@ export const shareCatalogPart = async (
 export const registerCatalogPartTwin = async (
   twinData: CatalogPartTwinCreateType
 ): Promise<TwinReadType> => {
-  const response = await axios.post<TwinReadType>(
+  const response = await httpClient.post<TwinReadType>(
     `${backendUrl}${catalogManagementConfig.api.endpoints.TWIN_MANAGEMENT}`,
     twinData
   );
@@ -83,7 +84,7 @@ export const registerCatalogPartTwin = async (
 };
 
 export const createCatalogPart = async (catalogPartData: ApiPartData): Promise<ApiPartData> => {
-  const response = await axios.post<ApiPartData>(`${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}`, catalogPartData);
+  const response = await httpClient.post<ApiPartData>(`${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}`, catalogPartData);
   return response.data;
 };
 
@@ -93,7 +94,7 @@ export const fetchCatalogPartTwinDetails = async (
 ): Promise<CatalogPartTwinDetailsRead | null> => {
   try {
     
-    const response = await axios.get<CatalogPartTwinDetailsRead>(
+    const response = await httpClient.get<CatalogPartTwinDetailsRead>(
       `${backendUrl}/twin-management/catalog-part-twin/${manufacturerId}/${manufacturerPartId}`
     );
     
@@ -101,7 +102,7 @@ export const fetchCatalogPartTwinDetails = async (
   } catch (error) {
     console.error('Error fetching catalog part twin details:', error);
     // If the twin doesn't exist, return null instead of throwing an error
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
+    if (axios.isAxiosError?.(error) && error.response?.status === 404) {
       return null;
     }
     throw error;
@@ -111,7 +112,7 @@ export const fetchCatalogPartTwinDetails = async (
 export const fetchSubmodelContent = async (semanticId: string, submodelId: string): Promise<SubmodelContent> => {
   try {
     const encodedSemanticId = encodeURIComponent(semanticId);
-    const response = await axios.get(
+    const response = await httpClient.get(
       `${backendUrl}/submodel-dispatcher/${encodedSemanticId}/${submodelId}/submodel`
     );
     if (!response.data) {

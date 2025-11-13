@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import axios from 'axios';
+import httpClient from '../../services/HttpClient';
 import { getIchubBackendUrl } from '../../services/EnvironmentService';
 import { PartnerInstance } from './types/types';
 
@@ -34,7 +34,7 @@ export const fetchPartners = async (): Promise<PartnerInstance[]> => {
       return [];
     }
     
-    const response = await axios.get<PartnerInstance[]>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`);
+  const response = await httpClient.get<PartnerInstance[]>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`);
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('Failed to fetch partners:', error);
@@ -43,7 +43,7 @@ export const fetchPartners = async (): Promise<PartnerInstance[]> => {
 };
 
 export const createPartner = async (partnerData: { name: string; bpnl: string }): Promise<PartnerInstance> => {
-  const response = await axios.post<PartnerInstance>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`, partnerData);
+  const response = await httpClient.post<PartnerInstance>(`${backendUrl}${PARTNER_MANAGEMENT_BASE_PATH}`, partnerData);
   return response.data; 
 };
 

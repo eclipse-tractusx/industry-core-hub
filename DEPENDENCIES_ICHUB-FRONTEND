@@ -113,6 +113,7 @@ npm/npmjs/-/is-extglob/2.1.1, MIT, approved, clearlydefined
 npm/npmjs/-/is-glob/4.0.3, MIT, approved, clearlydefined
 npm/npmjs/-/is-number/7.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/isexe/2.0.0, ISC, approved, clearlydefined
+npm/npmjs/-/js-sha256/0.11.1, MIT, approved, clearlydefined
 npm/npmjs/-/js-tokens/4.0.0, MIT, approved, #2401
 npm/npmjs/-/js-tokens/9.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/js-yaml/4.1.0, MIT, approved, clearlydefined
@@ -121,6 +122,8 @@ npm/npmjs/-/json-buffer/3.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-parse-even-better-errors/2.3.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-schema-traverse/0.4.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-stable-stringify-without-jsonify/1.0.1, MIT, approved, clearlydefined
+npm/npmjs/-/jwt-decode/4.0.0, MIT, approved, clearlydefined
+npm/npmjs/-/keycloak-js/25.0.6, Apache-2.0, approved, clearlydefined
 npm/npmjs/-/keyv/4.5.4, MIT, approved, #4674
 npm/npmjs/-/levn/0.4.1, MIT, approved, clearlydefined
 npm/npmjs/-/lines-and-columns/1.2.4, MIT, approved, clearlydefined
