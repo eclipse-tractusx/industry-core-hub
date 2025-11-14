@@ -618,7 +618,7 @@ postgresql:
     # -- PostgreSQL image registry
     registry: docker.io
     # -- PostgreSQL image repository
-    repository: postgres  
+    repository: postgres
   # -- PostgreSQL Authentication (postgres admin user)
   auth:
     # -- Password for postgres admin user (stored in existingSecret with key 'postgres-password')
