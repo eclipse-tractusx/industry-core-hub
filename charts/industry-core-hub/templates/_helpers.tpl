@@ -144,7 +144,7 @@ Get the database port
 */}}
 {{- define "industry-core-hub.postgresql.port" -}}
 {{- if .Values.postgresql.enabled }}
-{{- .Values.postgresql.auth.port -}}
+{{- .Values.postgresql.service.port | default 5432 -}}
 {{- else -}}
 {{- .Values.externalDatabase.port -}}
 {{- end -}}
