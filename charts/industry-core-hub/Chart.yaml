@@ -30,9 +30,10 @@ sources:
   - https://github.com/eclipse-tractusx/industry-core-hub
 dependencies:
   - condition: postgresql.enabled
-    name: postgresql
-    repository: https://charts.bitnami.com/bitnami
-    version: 12.12.x
+    alias: postgresql
+    name: postgres
+    repository: oci://registry-1.docker.io/cloudpirates
+    version: 0.11.0
   - condition: pgadmin4.enabled
     name: pgadmin4
     repository: https://helm.runix.net
