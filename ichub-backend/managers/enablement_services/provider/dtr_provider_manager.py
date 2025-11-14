@@ -41,12 +41,10 @@ from typing import Dict, Optional
 from uuid import UUID
 from urllib import parse
 
-from managers.config.config_manager import ConfigManager
 from tools.aspect_id_tools import extract_aspect_id_name_from_urn_camelcase
 from tools.exceptions import ExternalAPIError, InvalidError
 from urllib.parse import urljoin
 
-import json
 import logging
 import re
 logger = logging.getLogger(__name__)
@@ -241,6 +239,7 @@ class DtrProviderManager:
         # Prepare containers for asset IDs and key lookup
         specific_asset_ids = []
         existing_keys = {}
+        res = None
 
         # Try retrieving an existing shell descriptor using the AAS ID and manufacturer BPN
         existing_shell:ShellDescriptor = self.aas_service.get_asset_administration_shell_descriptor_by_id(
@@ -331,7 +330,7 @@ class DtrProviderManager:
             logger.info(f"Creating new twin with id {aas_id.urn}!")
             res = self.aas_service.create_asset_administration_shell_descriptor(shell_descriptor=shell)
             if isinstance(res, Result):
-                raise ExternalAPIError("Error creating or updating shell descriptor"+ res.to_json_string())
+                raise ExternalAPIError("Error creating or updating shell descriptor: " + "\n" + res.to_json_string())
             return res
         
         # If shell existed, update it in the DTR with new asset IDs and BPNs
@@ -357,12 +356,12 @@ class DtrProviderManager:
                 shell_descriptor=existing_shell, aas_identifier=aas_id.urn, bpn=manufacturer_id
             )
             logger.info(f"Successfully updated the AAS with id {aas_id.urn}!")
-        except:
-            logger.error(f"Failed to update AAS {aas_id.urn}")
+        except Exception as e:
+            logger.error(f"Failed to update AAS {aas_id.urn}: {e}")
 
         # Raise exception if service returned an error
         if isinstance(res, Result):
-            raise ExternalAPIError("Error creating or updating shell descriptor"+ res.to_json_string())
+            raise ExternalAPIError("Error creating or updating shell descriptor: " + "\n" + res.to_json_string())
 
         return res
         
@@ -437,7 +436,7 @@ class DtrProviderManager:
         
         res = self.aas_service.create_submodel_descriptor(aas_id.urn, submodel)
         if isinstance(res, Result):
-            raise ExternalAPIError("Error creating submodels descriptor", res.to_json_string())
+            raise ExternalAPIError("Error creating submodels descriptor: " + "\n" +res.to_json_string())
         return res
 
     def get_shell_descriptor_by_id(self, aas_id: UUID) -> ShellDescriptor:
@@ -448,7 +447,7 @@ class DtrProviderManager:
             aas_id.urn
         )
         if isinstance(res, Result):
-            raise ExternalAPIError("Error retrieving shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error retrieving shell descriptor: " + "\n" + res.to_json_string())
         return res
 
     def get_submodel_descriptor_by_id(
@@ -462,7 +461,7 @@ class DtrProviderManager:
         )
         if isinstance(res, Result):
             raise ExternalAPIError(
-                "Error retrieving submodel descriptor", res.to_json_string()
+                "Error retrieving submodel descriptor: " + "\n" + res.to_json_string()
             )
         return res
 
@@ -472,7 +471,7 @@ class DtrProviderManager:
         """
         res = self.aas_service.delete_asset_administration_shell_descriptor(aas_id.urn)
         if isinstance(res, Result):
-            raise ExternalAPIError("Error deleting shell descriptor", res.to_json_string())
+            raise ExternalAPIError("Error deleting shell descriptor: " + "\n" + res.to_json_string())
 
     def delete_submodel_descriptor(self, aas_id: UUID, submodel_id: UUID) -> None:
         """
@@ -480,7 +479,7 @@ class DtrProviderManager:
         """
         res = self.aas_service.delete_submodel_descriptor(aas_id.urn, submodel_id.urn)
         if isinstance(res, Result):
-            raise ExternalAPIError("Error deleting submodel descriptor", res.to_json_string())
+            raise ExternalAPIError("Error deleting submodel descriptor: " + "\n" + res.to_json_string())
 
 
     def _update_or_append_customer_part_ids(

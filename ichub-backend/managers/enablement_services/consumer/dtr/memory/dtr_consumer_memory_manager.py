@@ -28,21 +28,16 @@ import logging
 import threading
 import json
 import base64
-import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 from tractusx_sdk.dataspace.tools import op
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
-from tractusx_sdk.industry.services import AasService
-from tractusx_sdk.industry.models.aas.v3 import SpecificAssetId
-from managers.config.config_manager import ConfigManager
 from managers.enablement_services.consumer.base_dtr_consumer_manager import BaseDtrConsumerManager
 from managers.enablement_services.consumer.dtr.pagination_manager import PaginationManager, DtrPaginationState, PageState
 if TYPE_CHECKING:
     from managers.enablement_services.connector_manager import BaseConnectorConsumerManager
 from requests import Response
 from tractusx_sdk.dataspace.models.connector.base_catalog_model import BaseCatalogModel
-from models.services.consumer.discovery_management import QuerySpec
 from tractusx_sdk.dataspace.tools import HttpTools
 
 class DtrConsumerMemoryManager(BaseDtrConsumerManager):
@@ -549,8 +544,7 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 return {
                     "shellDescriptors": [],
                     "dtrs": [],
-                    "error": f"Cursor was created with limit {current_page.limit} but request has limit {limit}. Please start pagination from the beginning.",
-                    "error": "LIMIT_MISMATCH"
+                    "error": f"Cursor was created with limit {current_page.limit} but request has limit {limit}. Please start pagination from the beginning."+ "\n" +"LIMIT_MISMATCH"
                 }
         else:
             # Initialize first page
@@ -1534,9 +1528,6 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
     def _create_semantic_ids_base64(self, submodel: Dict) -> str:
         """Create base64 encoded semantic IDs from submodel descriptor."""
         try:
-            import base64
-            import json
-            
             semantic_id_obj = submodel.get("semanticId", {})
             if semantic_id_obj:
                 # Convert semantic ID object to JSON string then encode to base64

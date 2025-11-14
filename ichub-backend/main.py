@@ -23,7 +23,6 @@
 # Import custom logging and configuration modules, and database utility
 from managers.config.log_manager import LoggingManager
 from managers.config.config_manager import ConfigManager
-from uuid import uuid4
 
 ## FAST API example for keycloak
 # from fastapi_keycloak_middleware import CheckPermissions

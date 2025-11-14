@@ -23,8 +23,7 @@
 import os
 import sys
 import yaml
-import logging
-from logging import config
+from logging import config, getLogger
 from tractusx_sdk.dataspace.tools import op
 
 
@@ -68,4 +67,4 @@ class LoggingManager:
     def get_logger(cls, name=None):
         if not cls._initialized:
             cls.init_logging()
-        return logging.getLogger(name if name else __name__)
+        return getLogger(name if name else __name__)

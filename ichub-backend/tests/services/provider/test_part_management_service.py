@@ -34,10 +34,8 @@ from models.services.provider.part_management import (
     PartnerCatalogPartCreate,
     PartnerCatalogPartRead,
     PartnerCatalogPartBase,
-    SharingStatus,
 )
-from models.services.provider.partner_management import BusinessPartnerRead
-from models.metadata_database.provider.models import CatalogPart, SerializedPart, PartnerCatalogPart, LegalEntity
+from models.metadata_database.provider.models import CatalogPart, SerializedPart, LegalEntity
 from tools.exceptions import InvalidError, NotFoundError, AlreadyExistsError
 
 

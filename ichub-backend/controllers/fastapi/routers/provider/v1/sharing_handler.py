@@ -20,15 +20,13 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Body, Header
+from fastapi import APIRouter
 
 from services.provider.sharing_service import SharingService
 from models.services.provider.sharing_management import (
     SharedPartBase,
     ShareCatalogPart,
-    SharedPartner
 )
-from typing import Optional, List
 from tools.exceptions import exception_responses
 
 router = APIRouter(prefix="/share", tags=["Sharing Functionality"])

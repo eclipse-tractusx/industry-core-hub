@@ -30,7 +30,6 @@ import threading
 from tractusx_sdk.dataspace.services.discovery import ConnectorDiscoveryService
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
 from tractusx_sdk.dataspace.tools import op
-from managers.config.log_manager import LoggingManager
 from managers.enablement_services.consumer.base_connector_consumer_manager import BaseConnectorConsumerManager
 from typing import List, Dict, Optional
 import copy

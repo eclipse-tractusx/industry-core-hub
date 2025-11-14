@@ -23,17 +23,15 @@
 
 import threading
 import hashlib
-from typing import List, Dict, Optional
+from typing import List, Dict
 import json
 from datetime import datetime
-from abc import abstractmethod
 from sqlmodel import select, delete, Session, SQLModel
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 from ..memory import ConnectorConsumerMemoryManager
 from tractusx_sdk.dataspace.services.discovery import ConnectorDiscoveryService
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
-from tractusx_sdk.dataspace.tools import op
 from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownConnectors
