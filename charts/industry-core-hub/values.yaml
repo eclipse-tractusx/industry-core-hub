@@ -659,8 +659,9 @@ postgresql:
     port: 5432
     # -- Secret containing the passwords for root usernames postgres and non-root usernames repl_user and ichub.
     existingSecret: "ichub-postgres-secret"
-    # -- Password for the root username 'postgres' (will be stored in a secret if existingSecret is not provided)
-    password: ""
+    # -- Key in the existing secret that contains database password for postgres user
+    secretKeys:
+      adminPasswordKey: "postgres-password"
     # -- Non-root username for ichub.
     ichubUser: "ichub"
     # -- Password for the non-root username 'ichub'. Secret-key 'ichub-password'.
@@ -681,11 +682,6 @@ postgresql:
           secretKeyRef:
             name: "{{ .Values.auth.existingSecret }}"
             key: "ichub-password"
-      - name: "POSTGRES_PASSWORD"
-        valueFrom:
-          secretKeyRef:
-            name: "ichub-postgres-secret"
-            key: "postgres-password"
     persistence:
       # -- Enable persistent storage
       enabled: true

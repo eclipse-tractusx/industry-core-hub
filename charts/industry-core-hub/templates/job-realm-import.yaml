@@ -78,8 +78,8 @@ spec:
               with open('/import/realm-export.json', 'r') as f:
                   realm_data = json.load(f)
               
-              # Get password from environment and decode from base64
-              password = base64.b64decode(os.environ['ICHUB_ADMIN_PASSWORD']).decode('utf-8')
+              # Get password from environment (already decoded by Kubernetes)
+              password = os.environ['ICHUB_ADMIN_PASSWORD']
               
               # Generate bcrypt hash (Keycloak uses bcrypt with 10 rounds by default)
               salt = bcrypt.gensalt(rounds=10)
