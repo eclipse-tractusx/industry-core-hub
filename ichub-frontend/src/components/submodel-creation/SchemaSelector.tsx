@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React, { useState } from 'react';
+import { scrollToElement } from '../../utils/fieldNavigation';
 import {
     Dialog,
     DialogContent,
@@ -76,6 +77,39 @@ const darkTheme = createTheme({
             primary: '#ffffff',
             secondary: '#b3b3b3',
         },
+        danger: {
+            danger: undefined,
+            dangerHover: undefined,
+            dangerBadge: undefined
+        },
+        textField: {
+            placeholderText: undefined,
+            helperText: undefined,
+            background: undefined,
+            backgroundHover: undefined
+        },
+        chip: {
+            release: '',
+            active: '',
+            inactive: '',
+            created: '',
+            inReview: '',
+            enabled: '',
+            default: '',
+            bgRelease: '',
+            bgActive: '',
+            bgInactive: '',
+            bgCreated: '',
+            bgInReview: '',
+            bgEnabled: '',
+            bgDefault: '',
+            warning: '',
+            registered: '',
+            bgRegistered: '',
+            borderDraft: '',
+            black: '',
+            none: ''
+        }
     },
     components: {
         MuiDialog: {
@@ -97,9 +131,10 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     const availableSchemas = getAvailableSchemas();
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
+    const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
 
     const handleCopy = async (value: string, event: React.MouseEvent) => {
-        event.stopPropagation(); // Prevenir que se active el click de la card
+        event.stopPropagation(); // Prevent card click
         try {
             await navigator.clipboard.writeText(value);
             setCopiedValue(value);
@@ -111,6 +146,26 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
 
     const handleSchemaSelect = (schemaKey: string, schema: SchemaDefinition) => {
         onSchemaSelect(schemaKey, schema);
+    };
+
+    const toggleExpanded = (schemaKey: string, event?: React.MouseEvent) => {
+        if (event) event.stopPropagation();
+        setExpandedMap(prev => {
+            const next = { ...prev, [schemaKey]: !prev[schemaKey] };
+            // If collapsing (was expanded and now will be false), reset scroll of the description
+            if (prev[schemaKey]) {
+                try {
+                    const el = typeof document !== 'undefined' ? document.getElementById(`desc-${schemaKey}`) : null;
+                    if (el) {
+                        // Use helper to reset scroll position without animation
+                        scrollToElement({ element: el as HTMLElement, container: el as HTMLElement, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
+                    }
+                } catch (err) {
+                    // ignore in non-browser environments
+                }
+            }
+            return next;
+        });
     };
 
     return (
@@ -190,7 +245,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                         key={schemaKey} 
                                         size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                                     >
-                                        <Card sx={{
+                                        <Card data-schema-card={schemaKey} sx={{
                                             backgroundColor: 'rgba(0, 0, 0, 0.4)',
                                             border: '1px solid rgba(255, 255, 255, 0.12)',
                                             borderRadius: 2,
@@ -239,21 +294,88 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                         />
                                                     </Box>
 
-                                                    {/* Schema Description - centered vertically */}
+                                                    {/* Schema Description - with read-more toggle */}
                                                     <Box sx={{ 
                                                         display: 'flex',
-                                                        alignItems: 'center',
                                                         flex: 1,
-                                                        py: 2
+                                                        py: '11px',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'stretch',
+                                                        justifyContent: 'flex-start'
                                                     }}>
-                                                        <Typography variant="body2" sx={{ 
-                                                            color: 'text.secondary',
-                                                            fontSize: '0.875rem',
-                                                            lineHeight: 1.4,
-                                                            textAlign: 'left'
-                                                        }}>
-                                                            {schema.metadata.description}
-                                                        </Typography>
+                                                        {(() => {
+                                                            const desc = schema.metadata.description || '';
+                                                            const lines = desc.split(/\r?\n/);
+                                                            const isLong = lines.length > 5 || desc.length > 500;
+                                                            const expanded = !!expandedMap[schemaKey];
+
+                                                            // Fallback preview: first 5 newline lines if present, otherwise slice chars
+                                                            const preview = lines.length > 1
+                                                                ? lines.slice(0, 5).join('\n')
+                                                                : desc.slice(0, 500).trim();
+
+                                                            return (
+                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                    <Box
+                                                                        id={`desc-${schemaKey}`}
+                                                                        sx={{
+                                                                            color: 'text.secondary',
+                                                                            fontSize: '0.875rem',
+                                                                            lineHeight: 1.4,
+                                                                            textAlign: 'left',
+                                                                            whiteSpace: 'pre-line',
+                                                                            overflow: expanded ? 'auto' : 'hidden',
+                                                                            // Keep room for the Read less toggle and namespace chip below
+                                                                            maxHeight: expanded ? '140px' : undefined,
+                                                                            pr: expanded ? 1 : 0,
+                                                                            // multiline clamp when collapsed (5 lines)
+                                                                            display: !expanded ? '-webkit-box' : 'block',
+                                                                            WebkitBoxOrient: !expanded ? 'vertical' : undefined,
+                                                                            WebkitLineClamp: !expanded ? 5 : undefined,
+                                                                            // subtle custom scrollbar (no visible track background)
+                                                                            '&::-webkit-scrollbar': {
+                                                                                width: '8px'
+                                                                            },
+                                                                            '&::-webkit-scrollbar-track': {
+                                                                                background: 'transparent'
+                                                                            },
+                                                                            '&::-webkit-scrollbar-thumb': {
+                                                                                backgroundColor: 'rgba(255,255,255,0.12)',
+                                                                                borderRadius: '8px'
+                                                                            },
+                                                                            scrollbarWidth: 'thin',
+                                                                            scrollbarColor: 'rgba(255,255,255,0.12) transparent'
+                                                                        }}
+                                                                    >
+                                                                        {!expanded && isLong ? `${preview}...` : desc}
+                                                                    </Box>
+
+                                                                    {isLong && (
+                                                                        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                                            <Box component="button"
+                                                                                onClick={(e: any) => toggleExpanded(schemaKey, e)}
+                                                                                aria-expanded={expanded}
+                                                                                aria-controls={`desc-${schemaKey}`}
+                                                                                sx={{
+                                                                                    background: 'transparent',
+                                                                                    border: 'none',
+                                                                                    color: 'primary.main',
+                                                                                    cursor: 'pointer',
+                                                                                    fontSize: '0.75rem',
+                                                                                    fontWeight: 600,
+                                                                                    textTransform: 'none',
+                                                                                    px: 0,
+                                                                                    alignSelf: 'flex-end',
+                                                                                    '&:hover': { textDecoration: 'underline' }
+                                                                                }}
+                                                                            >
+                                                                                {expanded ? 'Show less' : 'Read more'}
+                                                                            </Box>
+                                                                        </Box>
+                                                                    )}
+                                                                </Box>
+                                                            );
+                                                        })()}
                                                     </Box>
 
                                                     {/* Semantic ID and Namespace */}
@@ -263,7 +385,6 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                         gap: 1,
                                                         mt: 'auto'
                                                     }}>
-                                                        {/* Semantic ID chip removed as requested */}
                                                         {/* Namespace Chip */}
                                                         {schema.metadata.namespace && (
                                                             <Tooltip

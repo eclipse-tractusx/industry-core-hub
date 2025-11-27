@@ -105,17 +105,20 @@
       
       window.ENV = ENV;
       
-      // Debug: Log config on page load
-      console.log('🔧 CONFIG LOADED:', {
-        AUTH_ENABLED: ENV.AUTH_ENABLED,
-        AUTH_PROVIDER: ENV.AUTH_PROVIDER,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Performance monitoring (development only)
-      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true') {
+      // Conditional debug output controlled by `ENABLE_DEV_TOOLS`
+      if (ENV.ENABLE_DEV_TOOLS === 'true') {
+        try {
+          console.log('🔧 CONFIG LOADED:', {
+            AUTH_ENABLED: ENV.AUTH_ENABLED,
+            AUTH_PROVIDER: ENV.AUTH_PROVIDER,
+            timestamp: new Date().toISOString()
+          });
+        } catch (e) {}
+      }
+      // Conditional performance monitoring (development only)
+      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true' && ENV.ENABLE_DEV_TOOLS === 'true') {
         window.addEventListener('load', () => {
-          console.info('App loaded in:', performance.now(), 'ms');
+          try { console.info('App loaded in:', performance.now(), 'ms'); } catch(e) {}
         });
       }
     </script>

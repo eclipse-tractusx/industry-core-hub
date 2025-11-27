@@ -119,6 +119,39 @@ const darkTheme = createTheme({
             primary: '#ffffff',
             secondary: '#b3b3b3',
         },
+        danger: {
+            danger: undefined,
+            dangerHover: undefined,
+            dangerBadge: undefined
+        },
+        textField: {
+            placeholderText: undefined,
+            helperText: undefined,
+            background: undefined,
+            backgroundHover: undefined
+        },
+        chip: {
+            release: '',
+            active: '',
+            inactive: '',
+            created: '',
+            inReview: '',
+            enabled: '',
+            default: '',
+            bgRelease: '',
+            bgActive: '',
+            bgInactive: '',
+            bgCreated: '',
+            bgInReview: '',
+            bgEnabled: '',
+            bgDefault: '',
+            warning: '',
+            registered: '',
+            bgRegistered: '',
+            borderDraft: '',
+            black: '',
+            none: ''
+        }
     },
     components: {
         MuiDialog: {

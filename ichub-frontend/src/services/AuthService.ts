@@ -47,22 +47,24 @@ class AuthService {
  
   async initialize(): Promise<void> {
     if (this.initialized) {
-      console.log('🔐 AuthService already initialized, skipping');
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('🔐 AuthService already initialized, skipping'); } catch(e) {}
       return;
     }
  
     if (this.initializing) {
-      console.log('🔐 AuthService initialization already in progress, skipping');
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('🔐 AuthService initialization already in progress, skipping'); } catch(e) {}
       return;
     }
  
     this.initializing = true;
  
     try {
-      console.log('🔐 AuthService.initialize() called');
-      console.log('  - isAuthEnabled:', environmentService.isAuthEnabled());
-      console.log('  - authProvider:', environmentService.getAuthProvider());
-      console.log('  - isKeycloakEnabled:', environmentService.isKeycloakEnabled());
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try {
+        console.log('🔐 AuthService.initialize() called');
+        console.log('  - isAuthEnabled:', environmentService.isAuthEnabled());
+        console.log('  - authProvider:', environmentService.getAuthProvider());
+        console.log('  - isKeycloakEnabled:', environmentService.isKeycloakEnabled());
+      } catch(e) {}
       
       if (!environmentService.isAuthEnabled()) {
         console.log('  ⚠️ Auth is disabled, skipping initialization');
@@ -78,10 +80,10 @@ class AuthService {
       }
  
       if (environmentService.isKeycloakEnabled()) {
-        console.log('  ✅ Keycloak is enabled, initializing...');
+        if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('  ✅ Keycloak is enabled, initializing...'); } catch(e) {}
         await this.initializeKeycloak();
       } else {
-        console.log('  ⚠️ Keycloak is not enabled');
+        if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('  ⚠️ Keycloak is not enabled'); } catch(e) {}
       }
  
       this.initialized = true;
@@ -101,15 +103,17 @@ class AuthService {
     const keycloakConfig = environmentService.getKeycloakConfig();
     const initOptions = environmentService.getKeycloakInitOptions();
  
-    console.log('🔐 Initializing Keycloak with config:', {
-      url: keycloakConfig.url,
-      realm: keycloakConfig.realm,
-      clientId: keycloakConfig.clientId,
-      onLoad: initOptions.onLoad
-    });
-    console.log('📍 Current URL:', window.location.href);
-    console.log('🔗 URL has code:', window.location.href.includes('code='));
-    console.log('🔗 URL has state:', window.location.href.includes('state='));
+    if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try {
+      console.log('🔐 Initializing Keycloak with config:', {
+        url: keycloakConfig.url,
+        realm: keycloakConfig.realm,
+        clientId: keycloakConfig.clientId,
+        onLoad: initOptions.onLoad
+      });
+      console.log('📍 Current URL:', window.location.href);
+      console.log('🔗 URL has code:', window.location.href.includes('code='));
+      console.log('🔗 URL has state:', window.location.href.includes('state='));
+    } catch(e) {}
  
     this.keycloak = new Keycloak({
       url: keycloakConfig.url,
@@ -118,7 +122,7 @@ class AuthService {
     });
  
     try {
-      console.log('⏳ Calling keycloak.init()...');
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('⏳ Calling keycloak.init()...'); } catch(e) {}
       
       // Add timeout to prevent infinite hanging
       const initPromise = this.keycloak.init({
@@ -134,20 +138,22 @@ class AuthService {
  
       const authenticated = await Promise.race([initPromise, timeoutPromise]);
  
-      console.log('✅ Keycloak init completed. Authenticated:', authenticated);
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('✅ Keycloak init completed. Authenticated:', authenticated); } catch(e) {}
       
-      if (this.keycloak.token) {
-        console.log('🎫 Token received:', this.keycloak.token.substring(0, 20) + '...');
-      } else {
-        console.log('⚠️ No token available');
-      }
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try {
+        if (this.keycloak && this.keycloak.token) {
+          console.log('🎫 Token received: (truncated)');
+        } else {
+          console.log('⚠️ No token available');
+        }
+      } catch(e) {}
  
       if (authenticated) {
         console.log('✅ User is authenticated, loading profile...');
         
         // Clean up OAuth callback parameters from URL to prevent re-processing
         if (window.location.search.includes('state=') || window.location.search.includes('code=')) {
-          console.log('🧹 Cleaning up OAuth callback parameters from URL');
+          if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('🧹 Cleaning up OAuth callback parameters from URL'); } catch(e) {}
           const cleanUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }
@@ -196,15 +202,7 @@ class AuthService {
         throw new Error('Invalid token received');
       }
 
-      console.log('📋 Token parsed:', {
-        sub: tokenParsed.sub,
-        preferred_username: tokenParsed.preferred_username,
-        email: tokenParsed.email,
-        given_name: tokenParsed.given_name,
-        family_name: tokenParsed.family_name,
-        realm_access: tokenParsed.realm_access,
-        resource_access: tokenParsed.resource_access
-      });
+      if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('📋 Token parsed: (redacted)'); } catch(e) {}
  
       // Extract user info from token claims (avoid loadUserProfile which has CORS issues)
       const user: AuthUser = {

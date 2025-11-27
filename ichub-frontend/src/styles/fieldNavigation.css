@@ -1,0 +1,33 @@
+.field-nav-highlight {
+  /* Subtle highlight: slightly lighter background and a gentle inner line to emphasize the value area */
+  background-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.10);
+  border-radius: 6px;
+  position: relative;
+}
+
+/* Animatable wrapper controls the transitions so they apply both when class is added and removed */
+.field-nav-animatable {
+  transition: background-color 600ms cubic-bezier(.22,.9,.26,1), box-shadow 600ms cubic-bezier(.22,.9,.26,1), border-color 600ms cubic-bezier(.22,.9,.26,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-nav-animatable {
+    transition: none;
+  }
+}
+
+/* Hover-like outline when navigated to */
+.field-nav-hover {
+  /* This targets the outline color used on hover in the form controls */
+  /* The actual visible outline is usually the fieldset/notchedOutline; set a border-color-ish effect via box-shadow to match */
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.10), 0 0 0 3px rgba(96,165,250,0.28);
+}
+
+/* Ensure boolean controls (Switch/Checkbox and label wrappers) show the hover outline when navigated to */
+.MuiSwitch-root.field-nav-hover,
+.MuiCheckbox-root.field-nav-hover,
+.MuiFormControlLabel-root.field-nav-hover {
+  box-shadow: inset 0 2px 10px rgba(255,255,255,0.10), 0 0 0 3px rgba(96,165,250,0.28);
+  border-radius: 6px;
+}

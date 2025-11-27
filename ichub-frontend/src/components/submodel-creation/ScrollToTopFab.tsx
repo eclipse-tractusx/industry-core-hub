@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { scrollToElement } from '../../utils/fieldNavigation';
 import { Fab, Zoom } from '@mui/material';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
@@ -47,7 +48,7 @@ const ScrollToTopFab: React.FC<ScrollToTopFabProps> = ({ containerRef }) => {
   const handleClick = () => {
     const container = containerRef.current;
     if (container) {
-      container.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollToElement({ container, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
     }
   };
 

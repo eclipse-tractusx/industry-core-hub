@@ -59,6 +59,8 @@ import { FormField as BaseFormField } from '../../schemas/json-schema-interprete
 // Extend FormField to allow urn property for UI logic
 type FormField = BaseFormField & { urn?: string };
 import { getValueByPath, setValueByPath } from './objectPathUtils';
+import { scrollToElement } from '../../utils/fieldNavigation';
+import '../../styles/fieldNavigation.css';
 
 // For backwards compatibility, use FormField as DPPFormField
 type DPPFormField = FormField;
@@ -212,20 +214,19 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
         scrollToField: (fieldKey: string) => {
             // First, find and expand the section containing this field
             const sectionName = findFieldSection(fieldKey);
+            const performScroll = () => {
+                const element = fieldRefs.current[fieldKey] as HTMLElement | null;
+                if (!element) return;
+                // Use centralized helper: scroll, focus (if input), and highlight (3s)
+                scrollToElement({ element, container: containerRef.current, focus: true, highlightClass: 'field-nav-highlight', durationMs: 3000, block: 'center' });
+            };
+
             if (sectionName && expandedPanel !== sectionName) {
                 setExpandedPanel(sectionName);
-                // Wait for expansion animation to complete before scrolling
-                setTimeout(() => {
-                    const element = fieldRefs.current[fieldKey];
-                    if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 350);
+                // Wait for expansion animation to complete before scrolling. Use a short delay to allow render.
+                setTimeout(() => performScroll(), 320);
             } else {
-                const element = fieldRefs.current[fieldKey];
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
+                performScroll();
             }
         }
     }));
@@ -344,17 +345,18 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
 
         // Función actualizada: Separar styling de errores reales vs campos requeridos
         const getFieldStyles = (required: boolean, isEmpty: boolean = false, hasError: boolean = false) => ({
-            '& .MuiOutlinedInput-root': {
+            '& .MuiOutlinedInput-root, & .MuiInputBase-root, & .MuiSelect-root': {
                 backgroundColor: 'rgba(19, 19, 19, 0.02)',
-                '&:hover fieldset': {
+                // Hover should affect the visible outline for both OutlinedInput and Selects
+                '&:hover fieldset, &:hover .MuiOutlinedInput-notchedOutline': {
                     borderColor: 'rgba(96, 165, 250, 0.5)',
                 },
-                '&.Mui-focused fieldset': {
+                '&.Mui-focused fieldset, &.Mui-focused .MuiOutlinedInput-notchedOutline': {
                     borderColor: hasError ? 'error.main' : 'primary.main',
                 },
                 // Borde rojo solo para errores reales, no solo por ser requerido
                 ...(hasError && {
-                    '& fieldset': {
+                    '& fieldset, & .MuiOutlinedInput-notchedOutline': {
                         borderColor: 'error.main',
                         borderWidth: '2px',
                     }
@@ -375,32 +377,6 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
                 color: hasError ? 'error.main' : 'primary.main',
             }
         });
-
-
-
-    // Common description tooltip with info icon click
-    // Show info icon with combined tooltip (description + URN if present)
-    // This implementation always returns a valid React element or null
-    // (Do not redefine this function, use the one defined above)
-    // Remove this duplicate and use the main getDescriptionTooltip above.
-
-    // Icon container: right outside the field, show icons only if present
-    // Only show info icon with combined tooltip (description + URN)
-    const getIconContainer = (description?: string, fieldKey?: string, urn?: string) => {
-        if (!description && !urn) return null;
-        const tooltip = getDescriptionTooltip(description, fieldKey, urn);
-        if (!tooltip) return null;
-        return (
-            <Box sx={{
-                display: 'flex',
-                alignItems: 'center',
-                ml: 1.5,
-                gap: 0.5
-            }}>
-                {tooltip}
-            </Box>
-        );
-    };
 
         switch (field.type) {
             case 'text':
@@ -559,7 +535,7 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
 
             case 'checkbox':
                 return (
-                    <Box key={field.key} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Box key={field.key} data-boolean={field.key} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box 
                                 onClick={() => handleFieldChange(field, !currentValue)}
@@ -848,7 +824,7 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
                         ) : (
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                 {ensureArray.map((item, index) => (
-                                    <Card key={index} sx={{
+                                    <Card key={index} data-array-item sx={{
                                         backgroundColor: 'rgba(255, 255, 255, 0.03)',
                                         border: '1px solid rgba(255, 255, 255, 0.1)',
                                         borderRadius: 2
@@ -1018,13 +994,22 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
                     // Create a friendly label for the group
                     const groupLabel = key.charAt(0).toUpperCase() + key.slice(1)
                         .replace(/([A-Z])/g, ' $1')
-                        .replace(/^\s/, '');
+                        .replace(/^s/, '');
 
                     const groupId = `${node.path}-${depth}`;
                     const isGroupExpanded = expandedGroups[groupId] ?? true; // Default expanded
 
+                    // Add data-object attribute for parent object containers (not for root)
+                    const groupBoxProps: any = {
+                        key: node.path,
+                        sx: { mb: 2 }
+                    };
+                    if (depth > 0) {
+                        groupBoxProps['data-object'] = node.path;
+                    }
+
                     return (
-                        <Box key={node.path} sx={{ mb: 2 }}>
+                        <Box {...groupBoxProps}>
                             {/* Parent Group Container */}
                             <Box
                                 sx={{
@@ -1082,6 +1067,14 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
                                         >
                                             {groupLabel}
                                         </Typography>
+                                        {/* Info icon for object group if metadata present (now to the right of the label) */}
+                                        {(() => {
+                                            const metaField = node.field;
+                                            if (metaField && (metaField.description || metaField.urn)) {
+                                                return getIconContainer(metaField.description, metaField.key, metaField.urn);
+                                            }
+                                            return null;
+                                        })()}
                                         <Chip 
                                             label={Object.keys(node.children).length} 
                                             size="small" 
@@ -1156,48 +1149,22 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
                         onChange={(event, isExpanded) => {
                             setExpandedPanel(isExpanded ? sectionName : null);
                             if (isExpanded) {
-                                const el = accordionRefs.current[sectionName];
+                                const el = accordionRefs.current[sectionName] as HTMLElement | null;
                                 const container = containerRef.current;
-                                // Scroll inmediato
-                                if (el && typeof el.scrollIntoView === 'function') {
-                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                                // Scroll sobre el contenedor principal si existe
-                                if (container && el) {
-                                    setTimeout(() => {
-                                        // Scroll relativo al contenedor
-                                        const elRect = el.getBoundingClientRect();
-                                        const contRect = container.getBoundingClientRect();
-                                        container.scrollTop += (elRect.top - contRect.top);
-                                    }, 10);
-                                }
-                                // Scroll tras 300ms
+                                // Use centralized helper to scroll the container to the expanded section.
+                                // Small delay gives the accordion time to animate/measure.
                                 setTimeout(() => {
-                                    if (el && typeof el.scrollIntoView === 'function') {
-                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    if (el) {
+                                        scrollToElement({ element: el, container, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
                                     }
-                                    if (container && el) {
-                                        const elRect = el.getBoundingClientRect();
-                                        const contRect = container.getBoundingClientRect();
-                                        container.scrollTop += (elRect.top - contRect.top);
-                                    }
-                                }, 300);
-                                // Scroll tras 700ms
-                                setTimeout(() => {
-                                    if (el && typeof el.scrollIntoView === 'function') {
-                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
-                                    if (container && el) {
-                                        const elRect = el.getBoundingClientRect();
-                                        const contRect = container.getBoundingClientRect();
-                                        container.scrollTop += (elRect.top - contRect.top);
-                                    }
-                                }, 700);
+                                }, 120);
                             }
                         }}
                         ref={(el) => {
                             if (el) accordionRefs.current[sectionName] = el;
                         }}
+                        // Make the accordion discoverable by the field navigation helper
+                        data-section={sectionName}
                         sx={{
                             mb: 2,
                             backgroundColor: 'rgba(255, 255, 255, 0.02)',
