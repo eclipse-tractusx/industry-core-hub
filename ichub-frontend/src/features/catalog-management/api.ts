@@ -43,7 +43,7 @@ export const fetchCatalogPart = async (
   manufacturerPartId: string
 ): Promise<ApiPartData> => {
   const response = await httpClient.get<ApiPartData>(
-    `${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}/${manufacturerId}/${manufacturerPartId}`
+    `${backendUrl}${catalogManagementConfig.api.endpoints.CATALOG_PARTS}/${manufacturerId}/${encodeURIComponent(manufacturerPartId)}`
   );
   return response.data;
 };
@@ -95,7 +95,7 @@ export const fetchCatalogPartTwinDetails = async (
   try {
     
     const response = await httpClient.get<CatalogPartTwinDetailsRead>(
-      `${backendUrl}/twin-management/catalog-part-twin/${manufacturerId}/${manufacturerPartId}`
+      `${backendUrl}/twin-management/catalog-part-twin/${manufacturerId}/${encodeURIComponent(manufacturerPartId)}`
     );
     
     return response.data;
