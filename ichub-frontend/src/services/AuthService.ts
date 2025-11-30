@@ -47,25 +47,15 @@ class AuthService {
  
   async initialize(): Promise<void> {
     if (this.initialized) {
-      console.log('🔐 AuthService already initialized, skipping');
       return;
     }
- 
+
     if (this.initializing) {
-      console.log('🔐 AuthService initialization already in progress, skipping');
       return;
-    }
- 
-    this.initializing = true;
- 
+    }    this.initializing = true;
+
     try {
-      console.log('🔐 AuthService.initialize() called');
-      console.log('  - isAuthEnabled:', environmentService.isAuthEnabled());
-      console.log('  - authProvider:', environmentService.getAuthProvider());
-      console.log('  - isKeycloakEnabled:', environmentService.isKeycloakEnabled());
-      
       if (!environmentService.isAuthEnabled()) {
-        console.log('  ⚠️ Auth is disabled, skipping initialization');
         this.setAuthState({
           isAuthenticated: false,
           isLoading: false,
@@ -76,15 +66,10 @@ class AuthService {
         this.initialized = true;
         return;
       }
- 
+
       if (environmentService.isKeycloakEnabled()) {
-        console.log('  ✅ Keycloak is enabled, initializing...');
         await this.initializeKeycloak();
-      } else {
-        console.log('  ⚠️ Keycloak is not enabled');
-      }
- 
-      this.initialized = true;
+      }      this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize authentication:', error);
       this.setAuthState({
@@ -100,17 +85,7 @@ class AuthService {
   private async initializeKeycloak(): Promise<void> {
     const keycloakConfig = environmentService.getKeycloakConfig();
     const initOptions = environmentService.getKeycloakInitOptions();
- 
-    console.log('🔐 Initializing Keycloak with config:', {
-      url: keycloakConfig.url,
-      realm: keycloakConfig.realm,
-      clientId: keycloakConfig.clientId,
-      onLoad: initOptions.onLoad
-    });
-    console.log('📍 Current URL:', window.location.href);
-    console.log('🔗 URL has code:', window.location.href.includes('code='));
-    console.log('🔗 URL has state:', window.location.href.includes('state='));
- 
+
     this.keycloak = new Keycloak({
       url: keycloakConfig.url,
       realm: keycloakConfig.realm,
@@ -118,8 +93,6 @@ class AuthService {
     });
  
     try {
-      console.log('⏳ Calling keycloak.init()...');
-      
       // Add timeout to prevent infinite hanging
       const initPromise = this.keycloak.init({
         onLoad: initOptions.onLoad,
@@ -133,28 +106,15 @@ class AuthService {
       });
  
       const authenticated = await Promise.race([initPromise, timeoutPromise]);
- 
-      console.log('✅ Keycloak init completed. Authenticated:', authenticated);
-      
-      if (this.keycloak.token) {
-        console.log('🎫 Token received:', this.keycloak.token.substring(0, 20) + '...');
-      } else {
-        console.log('⚠️ No token available');
-      }
- 
-      if (authenticated) {
-        console.log('✅ User is authenticated, loading profile...');
-        
-        // Clean up OAuth callback parameters from URL to prevent re-processing
+
+      if (authenticated) {        // Clean up OAuth callback parameters from URL to prevent re-processing
         if (window.location.search.includes('state=') || window.location.search.includes('code=')) {
-          console.log('🧹 Cleaning up OAuth callback parameters from URL');
           const cleanUrl = window.location.origin + window.location.pathname;
           window.history.replaceState({}, document.title, cleanUrl);
         }
         
         await this.handleAuthenticationSuccess();
       } else {
-        console.log('⚠️ User is not authenticated after init, redirecting to login...');
         // With check-sso, if not authenticated, we need to manually trigger login
         await this.keycloak.login({
           redirectUri: window.location.origin + window.location.pathname
@@ -196,16 +156,6 @@ class AuthService {
         throw new Error('Invalid token received');
       }
 
-      console.log('📋 Token parsed:', {
-        sub: tokenParsed.sub,
-        preferred_username: tokenParsed.preferred_username,
-        email: tokenParsed.email,
-        given_name: tokenParsed.given_name,
-        family_name: tokenParsed.family_name,
-        realm_access: tokenParsed.realm_access,
-        resource_access: tokenParsed.resource_access
-      });
- 
       // Extract user info from token claims (avoid loadUserProfile which has CORS issues)
       const user: AuthUser = {
         id: tokenParsed.sub || '',
@@ -242,49 +192,50 @@ class AuthService {
  
   private setupTokenRefresh(): void {
     if (!this.keycloak) return;
- 
+
     const minValidity = environmentService.getRenewTokenMinValidity();
- 
+
     // Set up automatic token refresh
     setInterval(async () => {
       if (this.keycloak?.authenticated) {
         try {
           const refreshed = await this.keycloak.updateToken(minValidity);
           if (refreshed) {
-            console.info('Token refreshed successfully');
             await this.handleAuthenticationSuccess(); // Update tokens in state
           }
         } catch (error) {
-          console.error('Failed to refresh token:', error);
-          await this.logout();
+          console.error('Failed to refresh token, reloading page:', error);
+          // Clear stored auth state before reload
+          sessionStorage.removeItem('keycloak_authenticated');
+          // Refresh the page to re-authenticate instead of manual logout
+          window.location.reload();
         }
       }
     }, 60000); // Check every minute
-  }
- 
-  private setupKeycloakEvents(): void {
+  }  private setupKeycloakEvents(): void {
     if (!this.keycloak) return;
- 
+
     this.keycloak.onTokenExpired = () => {
-      console.warn('Token expired');
-      this.logout();
+      // Clear stored auth state before reload
+      sessionStorage.removeItem('keycloak_authenticated');
+      // Refresh the page to re-authenticate
+      window.location.reload();
     };
- 
+
     this.keycloak.onAuthRefreshError = () => {
-      console.error('Auth refresh error');
-      this.logout();
+      // Clear stored auth state before reload
+      sessionStorage.removeItem('keycloak_authenticated');
+      // Refresh the page to re-authenticate
+      window.location.reload();
     };
- 
-    this.keycloak.onAuthError = (error: any) => {
-      console.error('Auth error:', error);
+
+    this.keycloak.onAuthError = (error: unknown) => {
       this.setAuthState({
         ...this.authState,
-        error: 'Authentication error occurred',
+        error: error instanceof Error ? error.message : 'Authentication error occurred',
       });
     };
-  }
- 
-  async login(): Promise<void> {
+  }  async login(): Promise<void> {
     if (!environmentService.isAuthEnabled()) {
       throw new Error('Authentication is not enabled');
     }
@@ -297,13 +248,16 @@ class AuthService {
   }
  
   async logout(): Promise<void> {
+    // Clear stored auth state
+    sessionStorage.removeItem('keycloak_authenticated');
+    
     if (this.keycloak?.authenticated) {
       const logoutUri = environmentService.getLogoutRedirectUri();
       await this.keycloak.logout({
         redirectUri: logoutUri || window.location.origin,
       });
     }
- 
+
     this.setAuthState({
       isAuthenticated: false,
       isLoading: false,
@@ -311,9 +265,7 @@ class AuthService {
       tokens: null,
       error: null,
     });
-  }
- 
-  getAuthState(): AuthState {
+  }  getAuthState(): AuthState {
     return { ...this.authState };
   }
  

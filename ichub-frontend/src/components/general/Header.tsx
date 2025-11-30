@@ -30,11 +30,11 @@ import Badge from '@mui/material/Badge';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import MailIcon from '@mui/icons-material/Mail';
+import Policy from '@mui/icons-material/Policy';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
-import { Divider, ListItemIcon, Typography } from '@mui/material';
-import { Logout, Settings } from '@mui/icons-material';
+import { Divider, ListItemIcon, Typography, Tooltip } from '@mui/material';
+import { Logout, Settings, ContentCopy } from '@mui/icons-material';
 import { getParticipantId } from '../../services/EnvironmentService';
 import useAuth from '../../hooks/useAuth';
 
@@ -43,6 +43,7 @@ export default function PrimarySearchAppBar() {
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [participantId, setParticipantId] = useState<string>('CX-Operator');
+  const [copied, setCopied] = useState(false);
   
   // Auth hook
   const { isAuthenticated, user, logout } = useAuth();
@@ -74,6 +75,16 @@ export default function PrimarySearchAppBar() {
 
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+
+  const handleCopyParticipantId = async () => {
+    try {
+      await navigator.clipboard.writeText(participantId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   useEffect(() => {
@@ -108,40 +119,160 @@ export default function PrimarySearchAppBar() {
       id={menuId}
       open={isMenuOpen}
       onClose={handleMenuClose}
+      PaperProps={{
+        elevation: 8,
+        sx: {
+          overflow: 'visible',
+          filter: 'drop-shadow(0px 4px 20px rgba(0,0,0,0.15))',
+          mt: 1.5,
+          minWidth: 280,
+          borderRadius: 2,
+          '&:before': {
+            content: '""',
+            display: 'block',
+            position: 'absolute',
+            top: 0,
+            right: 14,
+            width: 10,
+            height: 10,
+            bgcolor: 'background.paper',
+            transform: 'translateY(-50%) rotate(45deg)',
+            zIndex: 0,
+          },
+        },
+      }}
+      transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+      anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
     >
-        <Typography variant="subtitle1" sx={{ padding: '8px 16px 0px 16px', fontWeight: 'bold' }}>
-            Mathias Brunkow Moser
+      {/* User Info Section */}
+      <Box sx={{ px: 2, py: 2, background: 'linear-gradient(135deg, rgba(66, 165, 245, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)' }}>
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            fontWeight: 600,
+            mb: 0.5,
+            color: 'text.primary'
+          }}
+        >
+          Mathias Brunkow Moser
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ padding: '0 16px 4px', fontStyle: 'italic' }}>
-        {isAuthenticated && user ? user.username : participantId}
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: 'text.secondary',
+            mb: 0.5,
+            fontSize: '0.875rem'
+          }}
+        >
+          {isAuthenticated && user ? user.username : 'Guest'}
         </Typography>
         {isAuthenticated && user?.email && (
-          <Typography variant="caption" color="text.secondary" sx={{ padding: '0 16px 8px' }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'text.secondary',
+              display: 'block',
+              mb: 1
+            }}
+          >
             {user.email}
           </Typography>
         )}
-        <Divider />
+        <Box 
+          sx={{ 
+            mt: 1,
+            px: 1.5,
+            py: 0.75,
+            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+            borderRadius: 1,
+            border: '1px solid rgba(25, 118, 210, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'primary.main',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              letterSpacing: '0.3px',
+              flex: 1
+            }}
+          >
+            Company ID: {participantId}
+          </Typography>
+          <Tooltip title={copied ? "Copied!" : "Copy ID"} arrow>
+            <IconButton
+              size="small"
+              onClick={handleCopyParticipantId}
+              sx={{
+                padding: '4px',
+                color: 'primary.main',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.15)'
+                }
+              }}
+            >
+              <ContentCopy sx={{ fontSize: '0.875rem' }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Box>
+      
+      <Divider sx={{ my: 1 }} />
 
-        {/* Opciones del menú */}
-        <MenuItem onClick={handleMenuClose}>
+      {/* Menu Options */}
+      <MenuItem 
+        onClick={handleMenuClose}
+        sx={{
+          py: 1.25,
+          px: 2,
+          '&:hover': {
+            backgroundColor: 'rgba(66, 165, 245, 0.08)'
+          }
+        }}
+      >
         <ListItemIcon>
-            <AccountCircle fontSize="small" />
+          <AccountCircle fontSize="small" sx={{ color: 'primary.main' }} />
         </ListItemIcon>
-        Profile
-        </MenuItem>
-        <MenuItem onClick={handleMenuClose}>
+        <Typography variant="body2">Profile</Typography>
+      </MenuItem>
+      <MenuItem 
+        onClick={handleMenuClose}
+        sx={{
+          py: 1.25,
+          px: 2,
+          '&:hover': {
+            backgroundColor: 'rgba(66, 165, 245, 0.08)'
+          }
+        }}
+      >
         <ListItemIcon>
-            <Settings fontSize="small" />
+          <Settings fontSize="small" sx={{ color: 'primary.main' }} />
         </ListItemIcon>
-        Settings
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleLogout}>
+        <Typography variant="body2">Settings</Typography>
+      </MenuItem>
+      
+      <Divider sx={{ my: 1 }} />
+      
+      <MenuItem 
+        onClick={handleLogout}
+        sx={{
+          py: 1.25,
+          px: 2,
+          '&:hover': {
+            backgroundColor: 'rgba(211, 47, 47, 0.08)'
+          }
+        }}
+      >
         <ListItemIcon>
-            <Logout fontSize="small" />
+          <Logout fontSize="small" sx={{ color: 'error.main' }} />
         </ListItemIcon>
-        Logout
-        </MenuItem>
+        <Typography variant="body2" color="error">Logout</Typography>
+      </MenuItem>
     </Menu>
   );
 
@@ -163,14 +294,6 @@ export default function PrimarySearchAppBar() {
       onClose={handleMobileMenuClose}
     >
       <MenuItem>
-        <IconButton size="large" aria-label="show 4 new mails">
-          <Badge badgeContent={4} color="error">
-            <MailIcon />
-          </Badge>
-        </IconButton>
-        <p>Messages</p>
-      </MenuItem>
-      <MenuItem>
         <IconButton
           size="large"
           aria-label="show 17 new notifications"
@@ -180,6 +303,15 @@ export default function PrimarySearchAppBar() {
           </Badge>
         </IconButton>
         <p>Notifications</p>
+      </MenuItem>
+      <MenuItem>
+        <IconButton
+          size="large"
+          aria-label="configure policies"
+        >
+          <Policy />
+        </IconButton>
+        <p>Policy Config</p>
       </MenuItem>
       <MenuItem onClick={handleProfileMenuOpen}>
         <IconButton
@@ -232,40 +364,42 @@ export default function PrimarySearchAppBar() {
             </Typography>
           </Box>
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center' }}>
-            <IconButton 
-              size="large" 
-              aria-label="show 4 new mails"
-              sx={{
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              <Badge badgeContent={4} color="error">
-                <MailIcon />
-              </Badge>
-            </IconButton>
-            <IconButton
-              size="large"
-              aria-label="show 17 new notifications"
-              sx={{
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-            >
-              <Badge badgeContent={17} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
+            <Tooltip title="Notifications are coming soon" arrow>
+              <IconButton
+                size="large"
+                aria-label="show 17 new notifications"
+                sx={{
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                <Badge badgeContent={17} color="error">
+                  <NotificationsIcon />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Policy/Governance Configuration is coming soon" arrow>
+              <IconButton 
+                size="large" 
+                aria-label="configure policies"
+                sx={{
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                <Policy/>
+              </IconButton>
+            </Tooltip>
             <IconButton
               size="large"
               edge="end"

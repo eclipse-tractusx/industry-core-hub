@@ -35,7 +35,9 @@ interface AuthProviderProps {
 * Component that initializes authentication and provides auth context to the entire app
 */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [isInitialized, setIsInitialized] = useState(false);
+  // Check if we have a stored auth state to skip the loading screen
+  const hasStoredAuth = sessionStorage.getItem('keycloak_authenticated') === 'true';
+  const [isInitialized, setIsInitialized] = useState(hasStoredAuth);
   const [initError, setInitError] = useState<string | null>(null);
  
   useEffect(() => {
@@ -47,9 +49,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
  
         await authService.initialize();
+        
+        // Store authentication state
+        if (authService.isAuthenticated()) {
+          sessionStorage.setItem('keycloak_authenticated', 'true');
+        } else {
+          sessionStorage.removeItem('keycloak_authenticated');
+        }
+        
         setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize authentication:', error);
+        sessionStorage.removeItem('keycloak_authenticated');
         setInitError(error instanceof Error ? error.message : 'Authentication initialization failed');
         setIsInitialized(true);
       }
@@ -59,6 +70,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
  
   // Show loading screen while initializing
+  // Note: Keycloak handles session persistence via cookies, so if user is already logged in,
+  // this will be very brief and won't require re-authentication
   if (!isInitialized) {
     return (
       <Box
