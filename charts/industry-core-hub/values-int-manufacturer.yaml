@@ -496,7 +496,7 @@ keycloak:
     enabled: true
     # -- Provide default path for the ingress record.
     hostname: "ichub-iam-manufacturer.int.catena-x.net"
-    tls:
-       - secretName: "ichub-iam-manufacturer.int.catena-x.net-tls"
-         hosts:
-           - "ichub-iam.int.catena-x.net" 
+    # -- Enable TLS/SSL for ingress (boolean)
+    tls: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod 
