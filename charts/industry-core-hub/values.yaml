@@ -960,7 +960,9 @@ keycloak:
   realmImport:
     enabled: true
     # -- Method: "startup" for --import-realm flag or "job" for post-install job
-    method: "job"
+    # -- "startup": Automatic import on Keycloak container startup (simpler, more reliable for ArgoCD)
+    # -- "job": Post-install Kubernetes job (allows dynamic password setting)
+    method: "startup"
     # -- Realm JSON for ArgoCD deployments (optional). Only needed when files/realm-export.json is not available.
     # -- Leave as null for local Helm deployments or when files/ directory is committed to Git.
     # -- For ArgoCD without files/ in Git: Copy entire content of files/realm-export.json as JSON string.
@@ -992,8 +994,14 @@ keycloak:
           - "default-roles-ichub"
           - "offline_access"
           - "uma_authorization"
-  # -- Environment variables for startup import (only if method is "startup")
+  # -- Environment variables and command configuration
+  # -- Will be set automatically based on realmImport.method
   extraEnvVars: []
+  
+  # -- Command override for Keycloak container
+  # -- Will be set automatically when realmImport.method is "startup"
+  command: []
+  args: []
 
   extraVolumes:
     - name: themes
@@ -1007,7 +1015,7 @@ keycloak:
   extraVolumeMounts:
     - name: themes
       mountPath: /opt/bitnami/keycloak/themes/catenax-central
-    # -- Mount realm import file (only when onStartup is true)
+    # -- Mount realm import file for automatic import on startup
     - name: realm-data
       mountPath: /opt/bitnami/keycloak/data/import
 
