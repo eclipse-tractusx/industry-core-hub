@@ -20,37 +20,55 @@
 * SPDX-License-Identifier: Apache-2.0
 */}}
 {{- if and .Values.keycloak.enabled .Values.keycloak.realmImport.enabled }}
-{{- $realmData := .Files.Get "files/realm-export.json" | fromJson }}
-{{- $_ := set $realmData "users" list }}
-{{- range $user := .Values.keycloak.realm.users }}
-{{- $newUser := dict 
-  "username" $user.username
-  "enabled" (default true $user.enabled)
-  "totp" false
-  "emailVerified" (default true $user.emailVerified)
-  "firstName" (default "" $user.firstName)
-  "lastName" (default "" $user.lastName)
-  "email" $user.email
-  "attributes" (default dict $user.attributes)
-  "credentials" list
-  "disableableCredentialTypes" list
-  "requiredActions" list
-  "realmRoles" (default (list "default-roles-ichub") $user.realmRoles)
-  "clientRoles" (default dict $user.clientRoles)
-  "notBefore" 0
-  "groups" (default list $user.groups)
-}}
-{{- $_ := set $realmData "users" (append $realmData.users $newUser) }}
+{{- /*
+Load realm JSON from files/ directory, from values, or use embedded default
+Priority: files/realm-export.json > .Values.keycloak.realmImport.realmJson > embedded default
+Note: .Files.Get works with local helm but NOT with ArgoCD deployments from Git
+*/}}
+
+{{- $defaultRealmJson := `{"id":"437d7ab7-e432-474f-a961-ad030a50bc14","realm":"ICHub","notBefore":0,"defaultSignatureAlgorithm":"RS256","revokeRefreshToken":false,"refreshTokenMaxReuse":0,"accessTokenLifespan":300,"accessTokenLifespanForImplicitFlow":900,"ssoSessionIdleTimeout":1800,"ssoSessionMaxLifespan":36000,"offlineSessionIdleTimeout":2592000,"offlineSessionMaxLifespanEnabled":false,"offlineSessionMaxLifespan":5184000,"clientSessionIdleTimeout":0,"clientSessionMaxLifespan":0,"clientOfflineSessionIdleTimeout":0,"clientOfflineSessionMaxLifespan":0,"accessCodeLifespan":60,"accessCodeLifespanUserAction":300,"accessCodeLifespanLogin":1800,"actionTokenGeneratedByAdminLifespan":43200,"actionTokenGeneratedByUserLifespan":300,"oauth2DeviceCodeLifespan":600,"oauth2DevicePollingInterval":5,"enabled":true,"sslRequired":"external","registrationAllowed":false,"registrationEmailAsUsername":false,"rememberMe":false,"verifyEmail":false,"loginWithEmailAllowed":true,"duplicateEmailsAllowed":false,"resetPasswordAllowed":false,"editUsernameAllowed":false,"bruteForceProtected":false,"permanentLockout":false,"maxFailureWaitSeconds":900,"minimumQuickLoginWaitSeconds":60,"waitIncrementSeconds":60,"quickLoginCheckMilliSeconds":1000,"maxDeltaTimeSeconds":43200,"failureFactor":30,"roles":{"realm":[{"name":"default-roles-ichub","description":"${role_default-roles}","composite":true,"composites":{"realm":["offline_access","uma_authorization"]},"clientRole":false},{"name":"offline_access","description":"${role_offline-access}","composite":false,"clientRole":false},{"name":"uma_authorization","description":"${role_uma_authorization}","composite":false,"clientRole":false}]},"groups":[],"defaultRole":{"name":"default-roles-ichub","description":"${role_default-roles}","composite":true,"clientRole":false},"requiredCredentials":["password"],"otpPolicyType":"totp","otpPolicyAlgorithm":"HmacSHA1","otpPolicyInitialCounter":0,"otpPolicyDigits":6,"otpPolicyLookAheadWindow":1,"otpPolicyPeriod":30,"otpSupportedApplications":["totpAppGoogleName","totpAppFreeOTPName"],"webAuthnPolicyRpEntityName":"keycloak","webAuthnPolicySignatureAlgorithms":["ES256"],"webAuthnPolicyRpId":"","webAuthnPolicyAttestationConveyancePreference":"not specified","webAuthnPolicyAuthenticatorAttachment":"not specified","webAuthnPolicyRequireResidentKey":"not specified","webAuthnPolicyUserVerificationRequirement":"not specified","webAuthnPolicyCreateTimeout":0,"webAuthnPolicyAvoidSameAuthenticatorRegister":false,"webAuthnPolicyAcceptableAaguids":[],"scopeMappings":[],"clientScopeMappings":{},"clients":[{"id":"ichub-api-client-001","clientId":"industry-core-hub-api","name":"Industry Core Hub API Client","description":"OAuth2 client for Industry Core Hub Backend API","rootUrl":"","adminUrl":"","baseUrl":"","surrogateAuthRequired":false,"enabled":true,"alwaysDisplayInConsole":false,"clientAuthenticatorType":"client-secret","secret":"ichub-client-secret-2024","redirectUris":["http://localhost:8000/*","http://localhost:9000/*","http://ichub-backend.tx.test/*","*"],"webOrigins":["http://localhost:8000","http://localhost:9000","http://ichub-backend.tx.test","*"],"notBefore":0,"bearerOnly":false,"consentRequired":false,"standardFlowEnabled":true,"implicitFlowEnabled":false,"directAccessGrantsEnabled":true,"serviceAccountsEnabled":true,"publicClient":false,"frontchannelLogout":true,"protocol":"openid-connect","attributes":{"access.token.lifespan":"1800","client.secret.creation.time":"1735724400"},"authenticationFlowBindingOverrides":{},"fullScopeAllowed":true,"nodeReRegistrationTimeout":-1,"defaultClientScopes":["web-origins","acr","profile","roles","email"],"optionalClientScopes":["address","phone","offline_access","microprofile-jwt"]},{"id":"ichub-frontend-client-002","clientId":"industry-core-hub-frontend","name":"Industry Core Hub Frontend Client","description":"Public OAuth2 client for Industry Core Hub Frontend Application","rootUrl":"","adminUrl":"","baseUrl":"","surrogateAuthRequired":false,"enabled":true,"alwaysDisplayInConsole":false,"clientAuthenticatorType":"client-secret","redirectUris":["http://localhost:3000/*","http://localhost:5173/*","http://ichub-frontend.tx.test/*","http://industry-core-hub-frontend.tx.test/*","*"],"webOrigins":["http://localhost:3000","http://localhost:5173","http://ichub-frontend.tx.test","http://industry-core-hub-frontend.tx.test","*"],"notBefore":0,"bearerOnly":false,"consentRequired":false,"standardFlowEnabled":true,"implicitFlowEnabled":false,"directAccessGrantsEnabled":false,"serviceAccountsEnabled":false,"publicClient":true,"frontchannelLogout":true,"protocol":"openid-connect","attributes":{"access.token.lifespan":"1800","post.logout.redirect.uris":"http://localhost:3000/*##http://localhost:5173/*##http://ichub-frontend.tx.test/*##http://industry-core-hub-frontend.tx.test/*","pkce.code.challenge.method":"S256"},"authenticationFlowBindingOverrides":{},"fullScopeAllowed":true,"nodeReRegistrationTimeout":-1,"defaultClientScopes":["web-origins","acr","profile","roles","email"],"optionalClientScopes":["address","phone","offline_access","microprofile-jwt"]}],"clientScopes":[],"users":[],"browserSecurityHeaders":{"contentSecurityPolicyReportOnly":"","xContentTypeOptions":"nosniff","referrerPolicy":"no-referrer","xRobotsTag":"none","xFrameOptions":"SAMEORIGIN","contentSecurityPolicy":"frame-src 'self'; frame-ancestors 'self'; object-src 'none';","xXSSProtection":"1; mode=block","strictTransportSecurity":"max-age=31536000; includeSubDomains"},"smtpServer":{},"eventsEnabled":false,"eventsListeners":["jboss-logging"],"enabledEventTypes":[],"adminEventsEnabled":false,"adminEventsDetailsEnabled":false,"identityProviders":[],"identityProviderMappers":[],"components":{},"internationalizationEnabled":false,"supportedLocales":[],"authenticationFlows":[{"alias":"browser","description":"browser based authentication","providerId":"basic-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"auth-cookie","requirement":"ALTERNATIVE","priority":10,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"identity-provider-redirector","requirement":"ALTERNATIVE","priority":25,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"auth-username-password-form","requirement":"ALTERNATIVE","priority":30,"userSetupAllowed":false,"autheticatorFlow":false}]},{"alias":"direct grant","description":"OpenID Connect Resource Owner Grant","providerId":"basic-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"direct-grant-validate-username","requirement":"REQUIRED","priority":10,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"direct-grant-validate-password","requirement":"REQUIRED","priority":20,"userSetupAllowed":false,"autheticatorFlow":false}]},{"alias":"registration","description":"registration flow","providerId":"basic-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"registration-page-form","requirement":"REQUIRED","priority":10,"flowAlias":"registration form","userSetupAllowed":false,"autheticatorFlow":true}]},{"alias":"registration form","description":"registration form","providerId":"form-flow","topLevel":false,"builtIn":true,"authenticationExecutions":[{"authenticator":"registration-user-creation","requirement":"REQUIRED","priority":20,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"registration-profile-action","requirement":"REQUIRED","priority":40,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"registration-password-action","requirement":"REQUIRED","priority":50,"userSetupAllowed":false,"autheticatorFlow":false}]},{"alias":"reset credentials","description":"Reset credentials for a user if they forgot their password or something","providerId":"basic-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"reset-credentials-choose-user","requirement":"REQUIRED","priority":10,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"reset-credential-email","requirement":"REQUIRED","priority":20,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"reset-password","requirement":"REQUIRED","priority":30,"userSetupAllowed":false,"autheticatorFlow":false}]},{"alias":"clients","description":"Base authentication for clients","providerId":"client-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"client-secret","requirement":"ALTERNATIVE","priority":10,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"client-jwt","requirement":"ALTERNATIVE","priority":20,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"client-secret-jwt","requirement":"ALTERNATIVE","priority":30,"userSetupAllowed":false,"autheticatorFlow":false},{"authenticator":"client-x509","requirement":"ALTERNATIVE","priority":40,"userSetupAllowed":false,"autheticatorFlow":false}]},{"alias":"docker auth","description":"Used by Docker clients to authenticate against the IDP","providerId":"basic-flow","topLevel":true,"builtIn":true,"authenticationExecutions":[{"authenticator":"docker-http-basic-authenticator","requirement":"REQUIRED","priority":10,"userSetupAllowed":false,"autheticatorFlow":false}]}],"authenticatorConfig":[],"requiredActions":[{"alias":"CONFIGURE_TOTP","name":"Configure OTP","providerId":"CONFIGURE_TOTP","enabled":true,"defaultAction":false,"priority":10,"config":{}},{"alias":"TERMS_AND_CONDITIONS","name":"Terms and Conditions","providerId":"TERMS_AND_CONDITIONS","enabled":false,"defaultAction":false,"priority":20,"config":{}},{"alias":"UPDATE_PASSWORD","name":"Update Password","providerId":"UPDATE_PASSWORD","enabled":true,"defaultAction":false,"priority":30,"config":{}},{"alias":"UPDATE_PROFILE","name":"Update Profile","providerId":"UPDATE_PROFILE","enabled":true,"defaultAction":false,"priority":40,"config":{}},{"alias":"VERIFY_EMAIL","name":"Verify Email","providerId":"VERIFY_EMAIL","enabled":true,"defaultAction":false,"priority":50,"config":{}}],"browserFlow":"browser","registrationFlow":"registration","directGrantFlow":"direct grant","resetCredentialsFlow":"reset credentials","clientAuthenticationFlow":"clients","dockerAuthenticationFlow":"docker auth","attributes":{},"keycloakVersion":"23.0.0"}` }}
+
+{{- $realmJsonRaw := "" }}
+{{- if .Files.Get "files/realm-export.json" }}
+  {{- $realmJsonRaw = .Files.Get "files/realm-export.json" }}
+{{- else if .Values.keycloak.realmImport.realmJson }}
+  {{- $realmJsonRaw = .Values.keycloak.realmImport.realmJson }}
+{{- else }}
+  {{- $realmJsonRaw = $defaultRealmJson }}
 {{- end }}
+
+{{- /* Parse the realm JSON */ -}}
+{{- $realmData := fromJson $realmJsonRaw }}
+
+{{- /* Inject users from values */ -}}
+{{- $users := list }}
+{{- range .Values.keycloak.realm.users }}
+{{- $user := dict 
+  "username" .username
+  "enabled" true
+  "emailVerified" true
+  "firstName" (default "" .firstName)
+  "lastName" (default "" .lastName)
+  "email" (default (printf "%s@ichub.local" .username) .email)
+  "credentials" (list (dict "type" "password" "value" "password-to-be-set" "temporary" false))
+  "realmRoles" (default (list "offline_access" "uma_authorization") .roles)
+  "clientRoles" dict
+}}
+{{- $users = append $users $user }}
+{{- end }}
+
+{{- $realmData := merge $realmData (dict "users" $users) }}
+
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-realm-data
-  namespace: {{ .Release.Namespace | default "default" | quote }}
+  name: {{ include "industry-core-hub.fullname" . }}-realm-data
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
-    app.kubernetes.io/component: keycloak
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 data:
-  realm-export.json: |
-{{ $realmData | toPrettyJson | indent 4 }}
+  realm-export.json: {{ toJson $realmData | quote }}
 {{- end }}

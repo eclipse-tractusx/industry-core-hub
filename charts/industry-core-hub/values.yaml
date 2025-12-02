@@ -961,6 +961,10 @@ keycloak:
     enabled: true
     # -- Method: "startup" for --import-realm flag or "job" for post-install job
     method: "job"
+    # -- Realm JSON for ArgoCD deployments (optional). Only needed when files/realm-export.json is not available.
+    # -- Leave as null for local Helm deployments or when files/ directory is committed to Git.
+    # -- For ArgoCD without files/ in Git: Copy entire content of files/realm-export.json as JSON string.
+    realmJson: null
     # -- Resource limits for the realm import job
     resources:
       requests:
