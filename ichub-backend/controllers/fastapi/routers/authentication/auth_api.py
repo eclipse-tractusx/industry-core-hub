@@ -26,6 +26,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import HTTPException, Request, status, Depends
+import time
 
 logger = LoggingManager.get_logger('staging')
 auth_manager: AuthManager | OAuth2Manager = None
@@ -43,14 +44,45 @@ if ConfigManager.get_config("authorization.enabled"):
         keycloak_url = ConfigManager.get_config("authorization.keycloak.auth_url")
         keycloak_realm = ConfigManager.get_config("authorization.keycloak.realm")
         keycloak_client_id = ConfigManager.get_config("authorization.keycloak.client_id")
-        logger.info(f"[OAuth2 Manager] Authorization enabled with Keycloak OAuth2 authentication + keycloak : {keycloak_url} + realm: {keycloak_realm}")
+        logger.info(f"[OAuth2 Manager] Attempting to connect to Keycloak OAuth2: {keycloak_url} realm: {keycloak_realm}")
         
-        auth_manager = OAuth2Manager(
-            auth_url=keycloak_url,
-            realm=keycloak_realm,
-            clientid=keycloak_client_id,
-            clientsecret=ConfigManager.get_config("authorization.keycloak.client_secret"),
-        )
+        # Retry logic for Keycloak connection
+        max_retries = ConfigManager.get_config("authorization.keycloak.retry.max_retries", 5)
+        retry_delay = ConfigManager.get_config("authorization.keycloak.retry.retry_delay", 10)
+        keycloak_connected = False
+        logger.info(f"[OAuth2 Manager] Retry configuration: max_retries={max_retries}, retry_delay={retry_delay}s")
+        
+        for attempt in range(1, max_retries + 1):
+            try:
+                logger.info(f"[OAuth2 Manager] Connection attempt {attempt}/{max_retries}...")
+                auth_manager = OAuth2Manager(
+                    auth_url=keycloak_url,
+                    realm=keycloak_realm,
+                    clientid=keycloak_client_id,
+                    clientsecret=ConfigManager.get_config("authorization.keycloak.client_secret"),
+                )
+                keycloak_connected = True
+                logger.info(f"[OAuth2 Manager] Successfully connected to Keycloak")
+                break
+            except Exception as e:
+                logger.warning(f"[OAuth2 Manager] Connection attempt {attempt}/{max_retries} failed: {e}")
+                if attempt < max_retries:
+                    logger.info(f"[OAuth2 Manager] Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                else:
+                    logger.error(f"[OAuth2 Manager] Failed to connect to Keycloak after {max_retries} attempts")
+        
+        # Fallback to API Key authentication if Keycloak connection fails
+        if not keycloak_connected:
+            logger.warning("=" * 80)
+            logger.warning("[AUTH] Keycloak connection failed - Falling back to API Key authentication")
+            logger.warning("=" * 80)
+            auth_manager = AuthManager(
+                api_key_header=ConfigManager.get_config("authorization.api_key.key"),
+                configured_api_key=ConfigManager.get_config("authorization.api_key.value"),
+                auth_enabled=ConfigManager.get_config("authorization.enabled")
+            )
+            logger.info(f"[API Key Manager] Fallback authentication initialized with header: {ConfigManager.get_config('authorization.api_key.key')}")
 else:
     logger.warning("=" * 80)
     logger.warning("[AUTH] Authorization is DISABLED - API endpoints are publicly accessible")

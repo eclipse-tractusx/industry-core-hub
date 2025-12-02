@@ -179,6 +179,9 @@ backend:
         realm: "ICHub"
         clientId: "industry-core-hub-api"
         clientSecret: "ichub-client-secret-2024"
+        retry:
+          maxRetries: 10
+          retryDelay: 15
     # -- Consumer configuration
     consumer:
       discovery:

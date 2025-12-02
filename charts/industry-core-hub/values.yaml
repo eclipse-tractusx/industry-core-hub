@@ -190,6 +190,10 @@ backend:
         realm: "<realm>"
         clientId: "<client-id>"
         clientSecret: "<client-secret>"
+        # -- Retry configuration for Keycloak connection
+        retry:
+          maxRetries: 5
+          retryDelay: 10
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: false
