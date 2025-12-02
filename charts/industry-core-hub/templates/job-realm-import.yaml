@@ -29,11 +29,13 @@ metadata:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-import
   annotations:
+    # Helm hooks (for helm install/upgrade)
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # ArgoCD hooks (for ArgoCD deployments)
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
     argocd.argoproj.io/sync-wave: "2"
 spec:
   ttlSecondsAfterFinished: 600
@@ -77,54 +79,115 @@ spec:
               
               # Wait for Keycloak to be available
               echo "Waiting for Keycloak at $KEYCLOAK_URL..."
-              for i in $(seq 1 60); do
-                if curl -f "$KEYCLOAK_URL/auth/realms/master" >/dev/null 2>&1; then
-                  echo "Keycloak is ready!"
+              RETRIES=0
+              MAX_RETRIES=60
+              while [ $RETRIES -lt $MAX_RETRIES ]; do
+                echo "Attempt $((RETRIES + 1))/$MAX_RETRIES: Checking Keycloak availability..."
+                
+                # Try multiple endpoints to check if Keycloak is ready
+                if curl -f -s "$KEYCLOAK_URL/health/ready" >/dev/null 2>&1 || \
+                   curl -f -s "$KEYCLOAK_URL/realms/master" >/dev/null 2>&1 || \
+                   curl -f -s "$KEYCLOAK_URL/auth/realms/master" >/dev/null 2>&1; then
+                  echo "✓ Keycloak is ready!"
+                  sleep 5  # Extra wait to ensure full initialization
                   break
                 fi
-                echo "Attempt $i: Waiting for Keycloak..."
-                sleep 10
-                if [ $i -eq 60 ]; then
-                  echo "ERROR: Keycloak not available after 10 minutes"
+                
+                RETRIES=$((RETRIES + 1))
+                if [ $RETRIES -eq $MAX_RETRIES ]; then
+                  echo "✗ ERROR: Keycloak not available after 10 minutes"
+                  echo "Debug: Trying to connect to $KEYCLOAK_URL"
+                  curl -v "$KEYCLOAK_URL/health/ready" 2>&1 || true
                   exit 1
                 fi
+                sleep 10
               done
               
-              # Get admin token
+              # Get admin token (try both old and new Keycloak paths)
               echo "Getting admin token..."
-              TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/auth/realms/master/protocol/openid-connect/token" \
+              
+              # Try new Keycloak path first (Keycloak 17+)
+              TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" \
                 -H "Content-Type: application/x-www-form-urlencoded" \
                 -d "username=$KEYCLOAK_ADMIN" \
                 -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
                 -d "grant_type=password" \
-                -d "client_id=admin-cli" | \
+                -d "client_id=admin-cli" 2>/dev/null | \
                 sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
               
+              # If that fails, try old Keycloak path (Keycloak 16 and earlier)
               if [ -z "$TOKEN" ]; then
-                echo "ERROR: Failed to get admin token"
+                echo "Trying legacy Keycloak path..."
+                TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/auth/realms/master/protocol/openid-connect/token" \
+                  -H "Content-Type: application/x-www-form-urlencoded" \
+                  -d "username=$KEYCLOAK_ADMIN" \
+                  -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
+                  -d "grant_type=password" \
+                  -d "client_id=admin-cli" 2>/dev/null | \
+                  sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+              fi
+              
+              if [ -z "$TOKEN" ]; then
+                echo "✗ ERROR: Failed to get admin token"
+                echo "Debug: KEYCLOAK_ADMIN=$KEYCLOAK_ADMIN"
+                echo "Debug: Attempting token request..."
+                curl -v -X POST "$KEYCLOAK_URL/realms/master/protocol/openid-connect/token" \
+                  -H "Content-Type: application/x-www-form-urlencoded" \
+                  -d "username=$KEYCLOAK_ADMIN" \
+                  -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
+                  -d "grant_type=password" \
+                  -d "client_id=admin-cli" 2>&1 || true
                 exit 1
               fi
+              
+              echo "✓ Successfully obtained admin token"
               
               # Check if realm already exists
               REALM_NAME="ICHub"
               echo "Checking if realm '$REALM_NAME' exists..."
+              
+              # Determine correct API path (try new path first, then legacy)
+              ADMIN_API_PATH=""
+              if curl -s -f -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/admin/realms/$REALM_NAME" >/dev/null 2>&1; then
+                ADMIN_API_PATH="/admin"
+                echo "Using new Keycloak API path: /admin"
+              elif curl -s -f -H "Authorization: Bearer $TOKEN" "$KEYCLOAK_URL/auth/admin/realms/$REALM_NAME" >/dev/null 2>&1; then
+                ADMIN_API_PATH="/auth/admin"
+                echo "Using legacy Keycloak API path: /auth/admin"
+              else
+                # Realm doesn't exist yet, try to detect from token endpoint
+                if [ -n "$(echo $KEYCLOAK_URL | grep -o '/auth')" ] || curl -s -f "$KEYCLOAK_URL/auth/realms/master" >/dev/null 2>&1; then
+                  ADMIN_API_PATH="/auth/admin"
+                  echo "Detected legacy Keycloak, using: /auth/admin"
+                else
+                  ADMIN_API_PATH="/admin"
+                  echo "Detected new Keycloak, using: /admin"
+                fi
+              fi
+              
               REALM_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
                 -H "Authorization: Bearer $TOKEN" \
-                "$KEYCLOAK_URL/auth/admin/realms/$REALM_NAME")
+                "$KEYCLOAK_URL$ADMIN_API_PATH/realms/$REALM_NAME")
               
               if [ "$REALM_EXISTS" = "200" ]; then
-                echo "Realm '$REALM_NAME' already exists"
+                echo "✓ Realm '$REALM_NAME' already exists"
               else
                 echo "Importing realm '$REALM_NAME'..."
-                curl -s -X POST "$KEYCLOAK_URL/auth/admin/realms" \
+                echo "Using API endpoint: $KEYCLOAK_URL$ADMIN_API_PATH/realms"
+                
+                IMPORT_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "$KEYCLOAK_URL$ADMIN_API_PATH/realms" \
                   -H "Authorization: Bearer $TOKEN" \
                   -H "Content-Type: application/json" \
-                  -d @/import/realm-export.json
+                  -d @/import/realm-export.json)
                 
-                if [ $? -eq 0 ]; then
-                  echo "Realm '$REALM_NAME' imported successfully"
+                HTTP_CODE=$(echo "$IMPORT_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+                RESPONSE_BODY=$(echo "$IMPORT_RESPONSE" | sed '/HTTP_CODE:/d')
+                
+                if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
+                  echo "✓ Realm '$REALM_NAME' imported successfully (HTTP $HTTP_CODE)"
                 else
-                  echo "ERROR: Failed to import realm '$REALM_NAME'"
+                  echo "✗ ERROR: Failed to import realm '$REALM_NAME' (HTTP $HTTP_CODE)"
+                  echo "Response: $RESPONSE_BODY"
                   exit 1
                 fi
               fi
@@ -134,23 +197,23 @@ spec:
               echo "Processing user '{{ $user.username }}'..."
               
               # Get user ID
-              USER_ID=$(curl -s -X GET "$KEYCLOAK_URL/auth/admin/realms/$REALM_NAME/users?username={{ $user.username }}" \
+              USER_ID=$(curl -s -X GET "$KEYCLOAK_URL$ADMIN_API_PATH/realms/$REALM_NAME/users?username={{ $user.username }}" \
                 -H "Authorization: Bearer $TOKEN" | \
                 sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -1)
               
               if [ -z "$USER_ID" ]; then
-                echo "WARNING: User '{{ $user.username }}' not found in realm, skipping password setup"
+                echo "⚠ WARNING: User '{{ $user.username }}' not found in realm, skipping password setup"
               else
                 echo "Found user '{{ $user.username }}' with ID: $USER_ID"
                 
                 # Set password using Admin API
                 HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
-                  "$KEYCLOAK_URL/auth/admin/realms/$REALM_NAME/users/$USER_ID/reset-password" \
+                  "$KEYCLOAK_URL$ADMIN_API_PATH/realms/$REALM_NAME/users/$USER_ID/reset-password" \
                   -H "Authorization: Bearer $TOKEN" \
                   -H "Content-Type: application/json" \
                   -d "{\"type\":\"password\",\"value\":\"${{ $user.username | upper | replace "-" "_" }}_PASSWORD\",\"temporary\":false}")
                 
-                if [ "$HTTP_STATUS" = "204" ]; then
+                if [ "$HTTP_STATUS" = "204" ] || [ "$HTTP_STATUS" = "200" ]; then
                   echo "✓ Password set successfully for user '{{ $user.username }}'"
                 else
                   echo "✗ Failed to set password for user '{{ $user.username }}' (HTTP $HTTP_STATUS)"

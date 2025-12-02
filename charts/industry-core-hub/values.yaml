@@ -998,11 +998,11 @@ keycloak:
   extraVolumes:
     - name: themes
       emptyDir: {}
-    # -- Volume for realm import (only mounted when onStartup is true)
+    # -- Volume for realm import data (used by post-install job)
     - name: realm-data
       configMap:
         name: "{{ .Release.Name }}-realm-data"
-        optional: true
+        optional: false
 
   extraVolumeMounts:
     - name: themes
