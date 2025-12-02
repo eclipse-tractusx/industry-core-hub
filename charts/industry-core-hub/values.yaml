@@ -1001,7 +1001,7 @@ keycloak:
     # -- Volume for realm import data (used by post-install job)
     - name: realm-data
       configMap:
-        name: "{{ .Release.Name }}-realm-data"
+        name: "{{ include \"industry-core-hub.fullname\" . }}-realm-data"
         optional: false
 
   extraVolumeMounts:
