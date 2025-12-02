@@ -67,36 +67,19 @@ frontend:
     enableApiKeyRotation: false
     apiKeyExpiryWarningDays: 7
     
-    # Authentication configuration (disabled for integration)
-    authEnabled: false
-    authProvider: "none"
+    # Authentication configuration
+    authEnabled: true
+    authProvider: "keycloak"
     authSessionTimeout: 3600
     authRenewTokenMinValidity: 60
-    authLogoutRedirectUri: ""
+    authLogoutRedirectUri: "https://frontend-ichub.int.catena-x.net"
     
-    # Keycloak configuration (disabled for integration)
+    # Keycloak configuration
     keycloak:
       url: "https://ichub-iam.int.catena-x.net/auth"
+      realm: "ICHub"
+      clientId: "industry-core-hub-frontend"
     
-    # Feature flags for integration environment
-    enableAdvancedLogging: true
-    enablePerformanceMonitoring: true
-    enableDevTools: false
-    
-    # UI configuration
-    uiTheme: "auto"
-    uiLocale: "en"
-    uiCompactMode: false
-    
-    # Governance configuration
-    governanceApiUrl: ""
-    governanceTimeout: 30000
-    governanceRetryAttempts: 2
-    
-    # Participant configuration  
-    participantApiUrl: ""
-    participantTimeout: 30000
-    participantRetryAttempts: 2
   
   env:
     # Legacy backend URL (maintained for backward compatibility)
