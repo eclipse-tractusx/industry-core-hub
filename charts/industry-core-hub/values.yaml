@@ -1006,10 +1006,10 @@ keycloak:
   extraVolumes:
     - name: themes
       emptyDir: {}
-    # -- Volume for realm import data (used by post-install job)
+    # -- Volume for realm import data (automatic import on startup)
     - name: realm-data
       configMap:
-        name: "{{ include \"industry-core-hub.fullname\" . }}-realm-data"
+        name: "{{ .Release.Name }}-keycloak-realm-data"
         optional: false
 
   extraVolumeMounts:

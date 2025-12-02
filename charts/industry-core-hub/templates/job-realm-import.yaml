@@ -228,7 +228,7 @@ spec:
       volumes:
         - name: realm-data
           configMap:
-            name: {{ include "industry-core-hub.fullname" . }}-realm-data
+            name: {{ .Release.Name }}-keycloak-realm-data
       securityContext:
         runAsNonRoot: false
         runAsUser: 0

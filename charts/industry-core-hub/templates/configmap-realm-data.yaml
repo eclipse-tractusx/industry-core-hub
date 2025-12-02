@@ -63,7 +63,7 @@ Note: .Files.Get works with local helm but NOT with ArgoCD deployments from Git
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "industry-core-hub.fullname" . }}-realm-data
+  name: {{ .Release.Name }}-keycloak-realm-data
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}

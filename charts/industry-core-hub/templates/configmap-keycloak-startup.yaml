@@ -27,7 +27,7 @@ It sets the necessary environment variables and command to enable automatic real
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "industry-core-hub.fullname" . }}-keycloak-startup-config
+  name: {{ .Release.Name }}-keycloak-startup-config
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
