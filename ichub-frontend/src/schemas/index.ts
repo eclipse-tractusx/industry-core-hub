@@ -33,6 +33,7 @@
 
 import { loadSchemas } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
+import UsTariffInformationSchema from './UsTariffInformation-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -64,7 +65,8 @@ export interface SchemaDefinition<T = any> {
  * Simply import the JSON schema file and add it to this array.
  */
 const schemasToLoad = [
-  digitalProductPassportSchema as JSONSchema
+  digitalProductPassportSchema as JSONSchema,
+  UsTariffInformationSchema as JSONSchema
   // Add more schemas here:
   // serialPartSchema as JSONSchema,
   // batchSchema as JSONSchema,

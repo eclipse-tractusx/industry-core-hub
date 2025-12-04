@@ -41,9 +41,9 @@ backend:
   name: "industry-core-hub-backend"
   image:
     repository: "tractusx/industry-core-hub-backend"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # -- Overrides the image tag whose default is the chart appVersion
-    tag: ""
+    tag: "feat-consumer-dpp"
     # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
     pullSecrets: []
 
@@ -545,9 +545,9 @@ frontend:
   name: "industry-core-hub-frontend"
   image:
     repository: "tractusx/industry-core-hub-frontend"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # -- Overrides the image tag whose default is the chart appVersion
-    tag: ""
+    tag: "feat-consumer-dpp"
     # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
     pullSecrets: []
   service:

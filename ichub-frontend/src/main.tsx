@@ -32,27 +32,6 @@ import App from './App.tsx'
 // Check if authentication is enabled
 const isAuthEnabled = environmentService.isAuthEnabled();
 
-// Debug logging
-if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') {
-  try {
-    console.log('=== Authentication Configuration Debug ===');
-    console.log('window.ENV:', window.ENV);
-    console.log('isAuthEnabled:', isAuthEnabled);
-    console.log('authProvider:', environmentService.getAuthProvider());
-    if (isAuthEnabled) {
-      try {
-        const keycloakConfig = environmentService.getKeycloakConfig();
-        console.log('Keycloak Config:', keycloakConfig);
-      } catch (e) {
-        console.error('Failed to get Keycloak config:', e);
-      }
-    }
-    console.log('==========================================');
-  } catch (e) {
-    // ignore logging errors
-  }
-}
-
 createRoot(document.getElementById('root')!).render(
   <ThemeProvider theme={theme}>
     {isAuthEnabled ? (
