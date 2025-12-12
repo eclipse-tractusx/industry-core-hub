@@ -106,7 +106,8 @@ class TwinCreateBase(BaseModel):
 class TwinDetailsReadBase(BaseModel):
     additional_context: Optional[Dict[str, Any]] = Field(alias="additionalContext", description="Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.", default=None)
     registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
-    aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.", default=None)
+    all_aspects: Optional[List[TwinAspectRead]] = Field(alias="allAspects", description="A complete list of all aspect information for the digital twin, including multiple aspects with the same semantic ID.", default=None)
+    aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect. For backward compatibility, only the first aspect of each semantic type is included.", default=None)
 
 class TwinShareCreateBase(BaseModel):
     business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")

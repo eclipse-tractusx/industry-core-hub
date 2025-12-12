@@ -20,33 +20,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Body, Header
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from connector import connector_consumer_manager
-
-from requests import Session
 
 from fastapi.responses import Response
 from tractusx_sdk.dataspace.tools.http_tools import HttpTools
 #from services.consumer import ConnectionService
 from models.services.consumer.connection_management import (
-    ConnectionDetails,
-    StartConnection,
-    ForgetConnection,
-    PossibleConnections,
-    ConnectionDescription,
     DoGetParams,
-    DoPostParams,
-    DoDspParams
+    DoPostParams
 )
 
 
-from typing import Optional, List
-from tools.exceptions import exception_responses
-router = APIRouter(prefix="/connection", tags=["Open Connection Management"])
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+
+router = APIRouter(
+    prefix="/connection",
+    tags=["Open Connection Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
+
 #connection_service = ConnectionService()
 
-from dtr import dtr_manager
 # Create universal async wrapper - works with any manager
 
 """

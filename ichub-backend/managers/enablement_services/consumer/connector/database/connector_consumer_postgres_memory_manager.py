@@ -23,17 +23,16 @@
 
 import threading
 import hashlib
-from typing import List, Dict, Optional
+import copy
+from typing import List, Dict
 import json
 from datetime import datetime
-from abc import abstractmethod
 from sqlmodel import select, delete, Session, SQLModel
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 from ..memory import ConnectorConsumerMemoryManager
 from tractusx_sdk.dataspace.services.discovery import ConnectorDiscoveryService
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
-from tractusx_sdk.dataspace.tools import op
 from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownConnectors
@@ -167,7 +166,9 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         """
         Reload known_connectors from the DB and restore them to memory.
         """
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (_load_from_db)")
         with self._lock:
+            self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (_load_from_db)")
             try:
                 loaded_bpns = 0
                 with Session(self.engine) as session:
@@ -202,43 +203,56 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
             except SQLAlchemyError as e:
                 if self.logger and self.verbose:
                     self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error loading from db: {e}")
-          
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Released lock (_load_from_db)")
+
     def _save_to_db(self):
         """
         Persist current in-memory known_connectors to the DB only if changes are detected.
         """
+        connectors_to_save = {}
+        current_hash = ""
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (_save_to_db)")
         with self._lock:
+            self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (_save_to_db)")
             current_hash = hashlib.sha256(json.dumps(self.known_connectors, sort_keys=True, default=str).encode()).hexdigest()
+
             if current_hash == self._last_saved_hash:
                 return
-            try:
-                saved_connectors = 0
-                with Session(self.engine) as session:
-                    # Clear existing data
-                    session.exec(delete(self.KnownConnectorsModel))
-                    
-                    # Save each BPN's connector data
-                    for bpn, bpn_data in self.known_connectors.items():
-                        if self.CONNECTOR_LIST_KEY in bpn_data and self.REFRESH_INTERVAL_KEY in bpn_data:
-                            # Convert timestamp to datetime object instead of using the formatted string
-                            timestamp = bpn_data[self.REFRESH_INTERVAL_KEY]
-                            expires_at = datetime.fromtimestamp(timestamp)
-                            connectors_list = bpn_data[self.CONNECTOR_LIST_KEY]
-                            
-                            session.add(self.KnownConnectorsModel(
-                                bpnl=bpn,
-                                connectors=connectors_list,
-                                expires_at=expires_at
-                            ))
-                            saved_connectors += 1
-                                    
-                    session.commit()
+            
+            connectors_to_save = copy.deepcopy(self.known_connectors)
+
+        self.logger.debug(f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] Released lock (_save_to_db)")
+        try:
+            saved_connectors = 0
+            with Session(self.engine) as session:
+                # Clear existing data
+                session.exec(delete(self.KnownConnectorsModel))
+                
+                # Save each BPN's connector data
+                for bpn, bpn_data in connectors_to_save.items():
+                    if self.CONNECTOR_LIST_KEY in bpn_data and self.REFRESH_INTERVAL_KEY in bpn_data:
+                        # Convert timestamp to datetime object instead of using the formatted string
+                        timestamp = bpn_data[self.REFRESH_INTERVAL_KEY]
+                        expires_at = datetime.fromtimestamp(timestamp)
+                        connectors_list = bpn_data[self.CONNECTOR_LIST_KEY]
+                        
+                        session.add(self.KnownConnectorsModel(
+                            bpnl=bpn,
+                            connectors=connectors_list,
+                            expires_at=expires_at
+                        ))
+                        saved_connectors += 1
+                                
+                session.commit()
+
+                with self._lock:
                     self._last_saved_hash = current_hash
-                    if self.logger and self.verbose:
-                        self.logger.info(f"[ConsumerConnectorPostgresMemoryManager] Saved {saved_connectors} BPN connector entries to the database.")
-            except SQLAlchemyError as e:
+
                 if self.logger and self.verbose:
-                    self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error saving to db: {e}")
+                    self.logger.info(f"[ConsumerConnectorPostgresMemoryManager] Saved {saved_connectors} BPN connector entries to the database.")
+        except SQLAlchemyError as e:
+            if self.logger and self.verbose:
+                self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error saving to db: {e}")
 
     def stop(self):
         """

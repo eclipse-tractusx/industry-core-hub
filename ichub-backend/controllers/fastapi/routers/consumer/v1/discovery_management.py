@@ -20,29 +20,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Body, Header
-from fastapi import Depends
-from connector import connector_manager
+from fastapi import APIRouter, Depends
 import json
 
-from requests import Session
 
 from fastapi.responses import Response
-from tractusx_sdk.dataspace.tools.http_tools import HttpTools
 #from services.consumer import ConnectionService
 from models.services.consumer.discovery_management import (
     DiscoverRegistriesRequest,
     DiscoverShellsRequest,
     DiscoverShellRequest,
-    DiscoveryWithPaginationRequest,
     DiscoverSubmodelsDataRequest,
     DiscoverSubmodelDataRequest,
     DiscoverSubmodelSemanticIdDataRequest
 )
 
-from typing import Optional, List
-from tools.exceptions import exception_responses
-router = APIRouter(prefix="/discover", tags=["Part Discovery Management"])
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+
+router = APIRouter(
+    prefix="/discover",
+    tags=["Part Discovery Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 #connection_service = ConnectionService()
 
 from dtr import dtr_manager  # Use the original manager

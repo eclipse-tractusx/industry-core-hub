@@ -82,7 +82,9 @@ const ProductsList = () => {
   }, []);
 
   const handleButtonClick = (partId: string) => {
-    navigate(`/product/${partId}`); // Navigate to the details page
+    // partId is typically manufacturerId/manufacturerPartId
+    const [manufacturerId, manufacturerPartId] = partId.split('/');
+    navigate(`/product/${manufacturerId}/${encodeURIComponent(manufacturerPartId)}`); // Navigate to the details page
   };
 
   const handleShareDialog = (

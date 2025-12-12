@@ -52,6 +52,13 @@ import {
 } from '@mui/icons-material';
 import KitCard from '../components/KitCard';
 import { KitFeature } from '../types';
+import IndustryCoreKitImage from '../../../assets/kit-images/industry-core-kit.svg';
+import PcfKitImage from '../../../assets/kit-images/pcf-kit.svg';
+import DataChainKitImage from '../../../assets/kit-images/data-chain-kit.svg';
+import BusinessPartnerKitImage from '../../../assets/kit-images/business-partner-kit.svg';
+import DcmKitImage from '../../../assets/kit-images/dcm-kit.svg';
+import EcoPassKitImage from '../../../assets/kit-images/eco-pass-kit.svg';
+import TraceabilityKitImage from '../../../assets/kit-images/traceability-kit.svg';
 
 const KitFeaturesPage: React.FC = () => {
   const [kits, setKits] = useState<KitFeature[]>([]);
@@ -72,7 +79,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Core functionality for industrial data management, partner discovery, and catalog management.',
       status: 'available',
       icon: <Hub />,
-      image: '/src/assets/kit-images/industry-core-kit.svg',
+      image: IndustryCoreKitImage,
       features: [
         { id: 'catalog-management', name: 'Catalog Management', description: 'Manage service catalogs and registrations', enabled: true },
         { id: 'serialized-parts', name: 'Serialized Parts', description: 'Track and manage serialized components', enabled: true },
@@ -90,7 +97,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Product Carbon Footprint calculation and lifecycle assessment tools.',
       status: 'available',
       icon: <Science />,
-      image: '/src/assets/kit-images/pcf-kit.svg',
+      image: PcfKitImage,
       features: [
         { id: 'carbon-calculation', name: 'Carbon Calculation', description: 'Calculate product carbon footprints', enabled: false },
         { id: 'lifecycle-assessment', name: 'Lifecycle Assessment', description: 'Perform comprehensive LCA analysis', enabled: false },
@@ -108,7 +115,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Secure data sharing and interoperability across automotive value chains.',
       status: 'coming-soon',
       icon: <Link />,
-      image: '/src/assets/kit-images/data-chain-kit.svg',
+      image: DataChainKitImage,
       features: [
         { id: 'data-sharing', name: 'Data Sharing', description: 'Secure data sharing capabilities', enabled: false },
         { id: 'interoperability', name: 'Interoperability', description: 'Cross-platform interoperability', enabled: false },
@@ -124,7 +131,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Comprehensive business partner data management and validation.',
       status: 'coming-soon',
       icon: <Build />,
-      image: '/src/assets/kit-images/business-partner-kit.svg',
+      image: BusinessPartnerKitImage,
       features: [
         { id: 'partner-data', name: 'Partner Data', description: 'Manage partner information', enabled: false },
         { id: 'validation', name: 'Validation', description: 'Validate partner data', enabled: false },
@@ -140,7 +147,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Demand and Capacity Management for optimizing supply chain operations.',
       status: 'coming-soon',
       icon: <DeviceHub />,
-      image: '/src/assets/kit-images/dcm-kit.svg',
+      image: DcmKitImage,
       features: [
         { id: 'demand-planning', name: 'Demand Planning', description: 'Plan and forecast demand', enabled: false },
         { id: 'capacity-planning', name: 'Capacity Planning', description: 'Optimize capacity planning', enabled: false },
@@ -156,7 +163,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'Environmental sustainability tracking and carbon footprint management for supply chains.',
       status: 'coming-soon',
       icon: <Recycling />,
-      image: '/src/assets/kit-images/eco-pass-kit.svg',
+      image: EcoPassKitImage,
       features: [
         { id: 'carbon-footprint', name: 'Carbon Footprint', description: 'Environmental impact tracking', enabled: false },
         { id: 'environmental-impact', name: 'Environmental Impact', description: 'Assess environmental impacts', enabled: false },
@@ -172,7 +179,7 @@ const KitFeaturesPage: React.FC = () => {
       description: 'End-to-end traceability of parts and components throughout the supply chain.',
       status: 'available',
       icon: <Timeline />,
-      image: '/src/assets/kit-images/traceability-kit.svg',
+      image: TraceabilityKitImage,
       features: [
         { id: 'part-tracking', name: 'Part Tracking', description: 'Track parts through supply chain', enabled: false },
         { id: 'supply-chain-visibility', name: 'Supply Chain Visibility', description: 'Full supply chain visibility', enabled: false },

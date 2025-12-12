@@ -23,6 +23,7 @@
 /** Created using an LLM (Github Copilot) review by a human committer */
 
 import { useState, useEffect, useRef } from "react";
+import { scrollToElement } from '../../../../utils/fieldNavigation';
 import {
   Box,
   TextField,
@@ -304,7 +305,9 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
       setApiErrorMessage(errorMessage);
       // Ensure the error is visible by scrolling to the top of the dialog content
       setTimeout(() => {
-        contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        if (contentRef.current) {
+          scrollToElement({ container: contentRef.current, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
+        }
       }, 0);
     }
   };

@@ -34,9 +34,7 @@ from uuid import UUID, uuid4
 from datetime import datetime
 from pydantic import BaseModel, Field as PydField
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import case, select, exists, Column, JSON, UniqueConstraint, SmallInteger
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import aliased
+from sqlalchemy import Column, JSON, UniqueConstraint, SmallInteger
 from tools.constants import TWIN_ID_DESCRIPTION, BUSINESS_PARTNER_ID_DESCRIPTION
 
 class Unit(str, Enum):

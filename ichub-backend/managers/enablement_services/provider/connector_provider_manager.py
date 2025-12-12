@@ -20,15 +20,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from uuid import UUID
 from urllib.parse import quote
-from hashlib import sha256
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
-from tractusx_sdk.dataspace.services import BaseConnectorService
-from tractusx_sdk.dataspace.managers.connection import PostgresConnectionManager
-from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
-from tools.exceptions import NotFoundError, ExternalAPIError
+from tools.exceptions import NotFoundError
 from tools.constants import ODRL_CONTEXT, CX_POLICY_CONTEXT, TYPE
 import json
 

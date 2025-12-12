@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2025 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -32,15 +33,20 @@ import AccountCircle from '@mui/icons-material/AccountCircle';
 import MailIcon from '@mui/icons-material/Mail';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
-import { Divider, ListItemIcon, Typography } from '@mui/material';
-import { Logout, Settings } from '@mui/icons-material';
+import { Divider, ListItemIcon, Typography, Tooltip } from '@mui/material';
+import { Logout, Settings, ContentCopy } from '@mui/icons-material';
 import { getParticipantId } from '../../services/EnvironmentService';
+import useAuth from '../../hooks/useAuth';
 
 export default function PrimarySearchAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
   const [participantId, setParticipantId] = useState<string>('CX-Operator');
+  const [copied, setCopied] = useState(false);
+  
+  // Auth hook
+  const { isAuthenticated, user, logout } = useAuth();
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -58,8 +64,23 @@ export default function PrimarySearchAppBar() {
     handleMobileMenuClose();
   };
 
+  const handleLogout = async () => {
+    try {
+      handleMenuClose();
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMobileMoreAnchorEl(event.currentTarget);
+  };
+
+  const handleCopyParticipantId = () => {
+    navigator.clipboard.writeText(participantId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   useEffect(() => {
@@ -95,13 +116,85 @@ export default function PrimarySearchAppBar() {
       open={isMenuOpen}
       onClose={handleMenuClose}
     >
-        <Typography variant="subtitle1" sx={{ padding: '8px 16px 0px 16px', fontWeight: 'bold' }}>
-            Mathias Brunkow Moser
+      <Box sx={{ px: 2, py: 2, background: 'linear-gradient(135deg, rgba(66, 165, 245, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%)' }}>
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            fontWeight: 600,
+            mb: 0.5,
+            color: 'text.primary'
+          }}
+        >
+          Mathias Brunkow Moser
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ padding: '0 16px 8px', fontStyle: 'italic' }}>
-        {participantId}
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: 'text.secondary',
+            mb: 0.5,
+            fontSize: '0.875rem'
+          }}
+        >
+          {isAuthenticated && user ? user.username : 'Guest'}
         </Typography>
-        <Divider />
+        {isAuthenticated && user?.email && (
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'text.secondary',
+              display: 'block',
+              mb: 1
+            }}
+          >
+            {user.email}
+          </Typography>
+        )}
+        <Box 
+          sx={{ 
+            mt: 1,
+            px: 1.5,
+            py: 0.75,
+            backgroundColor: 'rgba(25, 118, 210, 0.08)',
+            borderRadius: 1,
+            border: '1px solid rgba(25, 118, 210, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1
+          }}
+        >
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'primary.main',
+              fontWeight: 600,
+              fontSize: '0.75rem',
+              letterSpacing: '0.3px',
+              flex: 1
+            }}
+          >
+            Company ID: {participantId}
+          </Typography>
+          <Tooltip title={copied ? "Copied!" : "Copy ID"} arrow>
+            <IconButton
+              size="small"
+              onClick={handleCopyParticipantId}
+              sx={{
+                padding: '4px',
+                color: 'primary.main',
+                '&:hover': {
+                  backgroundColor: 'rgba(25, 118, 210, 0.15)'
+                }
+              }}
+            >
+              <ContentCopy sx={{ fontSize: '0.875rem' }} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </Box>
+      
+      <Divider sx={{ my: 1 }} />
+
 
         {/* Opciones del menú */}
         <MenuItem onClick={handleMenuClose}>
@@ -117,7 +210,7 @@ export default function PrimarySearchAppBar() {
         Settings
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleMenuClose}>
+        <MenuItem onClick={handleLogout}>
         <ListItemIcon>
             <Logout fontSize="small" />
         </ListItemIcon>

@@ -21,10 +21,9 @@
 ###############################################################
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from datetime import datetime, timezone
-from uuid import UUID, uuid4
-from typing import List, Dict, Any, Tuple
+import uuid
 
 # Mock the problematic imports before importing the actual service
 with patch.dict('sys.modules', {
@@ -36,8 +35,6 @@ with patch.dict('sys.modules', {
 }):
     from services.provider.sharing_service import SharingService
 from models.services.provider.sharing_management import ShareCatalogPart
-from models.services.provider.partner_management import BusinessPartnerRead
-from models.services.provider.twin_management import CatalogPartTwinCreate, TwinAspectCreate, TwinRead
 from models.metadata_database.provider.models import (
     BusinessPartner, 
     Twin, 
@@ -112,7 +109,7 @@ class TestSharingService:
         """Create sample database twin."""
         twin = Mock(spec=Twin)
         twin.id = 1
-        twin.global_id = uuid4()
+        twin.global_id = uuid.uuid4()
         return twin
 
     @pytest.fixture
@@ -183,9 +180,7 @@ class TestSharingService:
         self.service.twin_management_service.create_twin_aspect = Mock()
         self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
         
-        # Create proper mock for twin details with all required fields
-        from datetime import datetime, timezone
-        import uuid
+        # Create proper mock for twin details with all required fields   
         
         twin_details_mock = {
             "globalId": str(uuid.uuid4()),
@@ -446,7 +441,7 @@ class TestSharingService:
     def test_create_part_type_information_aspect_doc(self):
         """Test part type information aspect document creation."""
         # Arrange
-        global_id = uuid4()
+        global_id = uuid.uuid4()
         self.service.submodel_document_generator.generate_part_type_information_v1 = Mock(return_value={"test": "document"})
         
         # Act

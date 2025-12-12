@@ -1,0 +1,132 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+participantId: ""
+deploymentMode: "helm"
+
+backend:
+  enabled: true
+  cors:
+    enabled: true
+    allow_origins:
+      - "http://ichub-frontend.tx.test"
+  configuration:
+    authorization:
+      enabled: true
+      apiKey:
+        key: "X-Api-Key"
+        value: ["<example>"]
+      keycloak:
+        enabled: true
+        authUrl: "http://ichub-keycloak.tx.test/auth/"
+        realm: "ICHub"
+        clientId: "industry-core-hub-api"
+        clientSecret: "ichub-client-secret-2024"
+    consumer:
+      discovery:
+        discovery_finder:
+          url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+        connector_discovery:
+          key: "bpn"
+        oauth:
+          url: "https://<central-idp-url>/auth/"
+          realm: "<realm>"
+          client_id: "<client-id>"
+          client_secret: "<client-secret>"
+        digitalTwinRegistry:
+          dct_type_key: "dct:type"
+          dct_type_filter:
+            operandLeft: "'http://purl.org/dc/terms/type'.'@id'"
+            operator: "="
+            operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-consumer-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<consumer-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+          catalogPath: "/catalog"
+    # -- Provider configuration
+    provider:
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-provider-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<provider-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+        dataplane:
+          hostname: "https://<edc-provider-dataplane-hostname>"
+          publicPath: "/api/public"
+      digitalTwinRegistry:
+        hostname: "https://<dtr-hostname>"
+        apiPath: "/api/v3"
+        uri: ""
+  ingress:
+    enabled: true
+    hosts:
+      - host: "ichub-backend.tx.test"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "backend"
+              port: 8000
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      enabled: false
+
+frontend:
+  enabled: true
+  config:
+    ichubBackendUrl: "http://ichub-backend.tx.test/v1"
+    keycloak:
+      url: "http://ichub-keycloak.tx.test/auth"
+  env:
+    backendUrl: "http://ichub-backend.tx.test/v1"
+  ingress:
+    enabled: true
+    hosts:
+      - host: "ichub-frontend.tx.test"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "frontend"
+              port: 8080
+
+pgadmin4:
+  enabled: false
+
+keycloak:
+  enabled: true
+  ingress:
+    enabled: true
+    hostname: "ichub-keycloak.tx.test"

@@ -182,7 +182,7 @@ const KitCard: React.FC<KitCardProps> = ({ kit, onFeatureToggle, isCenter = fals
             />
           </Box>
 
-          {/* Kit Image/Icon centered */}
+                   {/* Kit Image/Icon centered */}
           <Box display="flex" justifyContent="center" mb={1.5}>
             {kit.image ? (
               <Box
@@ -190,17 +190,17 @@ const KitCard: React.FC<KitCardProps> = ({ kit, onFeatureToggle, isCenter = fals
                 src={kit.image}
                 alt={kit.name}
                 sx={{ 
-                  width: showFeatures ? 80 : 140, // Larger by default, smaller when features shown
+                  width: showFeatures ? 80 : 140,
                   height: showFeatures ? 80 : 140,
                   objectFit: 'contain',
-                  transition: 'all 0.3s ease' // Smooth transition
+                  transition: 'all 0.3s ease'
                 }}
               />
             ) : (
               <Box sx={{ 
-                fontSize: showFeatures ? '3.5rem' : '5.5rem', // Larger by default, smaller when features shown
+                fontSize: showFeatures ? '3.5rem' : '5.5rem',
                 color: getStatusColor(kit.status),
-                transition: 'all 0.3s ease', // Smooth transition
+                transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'

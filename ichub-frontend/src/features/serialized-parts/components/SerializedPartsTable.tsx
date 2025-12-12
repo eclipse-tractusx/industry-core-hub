@@ -292,10 +292,42 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
       showSuccess('Twin registered successfully!');
     } catch (error) {
       console.error("Error creating twin:", error);
-      
-      // Extract meaningful error message
+      // After error (e.g., 404), refetch and decide success vs error based on updated status
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        const updatedTwinsAfter = await fetchTwinsOnce();
+        const relevantTwinsAfter = getRelevantTwins(updatedTwinsAfter);
+
+        const refreshedRows = parts.map((serializedPart, index) => {
+          const { status, globalId, dtrAasId } = determineTwinStatus(serializedPart, relevantTwinsAfter);
+          return {
+            ...serializedPart,
+            id: serializedPart.id || index,
+            twinStatus: status,
+            globalId,
+            dtrAasId,
+            businessPartnerName: serializedPart.businessPartner.name,
+            businessPartnerBpnl: serializedPart.businessPartner.bpnl,
+          };
+        });
+        setRows(refreshedRows);
+
+        const updatedRow = refreshedRows.find(
+          (r) =>
+            r.manufacturerId === row.manufacturerId &&
+            r.manufacturerPartId === row.manufacturerPartId &&
+            r.partInstanceId === row.partInstanceId
+        );
+        if (updatedRow && updatedRow.twinStatus === StatusVariants.registered) {
+          showSuccess('Twin registered successfully!');
+          return; // suppress original error
+        }
+      } catch (recheckError) {
+        console.warn('Twin status recheck after error failed:', recheckError);
+      }
+
+      // Extract meaningful error message if status remains draft
       let errorMessage = 'Failed to register twin. Please try again.';
-      
       if (error instanceof Error) {
         errorMessage = `Registration failed: ${error.message}`;
       } else if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -306,7 +338,6 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
           errorMessage = `Registration failed: ${axiosError.response.data.error}`;
         }
       }
-      
       showError(errorMessage);
     } finally {
       setTwinCreatingId(null);
@@ -622,7 +653,11 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
                   transition: 'all 0.2s ease-in-out',
                 }}
               >
-                <CloudUploadIcon fontSize="small" />
+                {twinCreatingId === row.id ? (
+                  <CircularProgress size={16} sx={{ color: '#1976d2' }} />
+                ) : (
+                  <CloudUploadIcon fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
           );

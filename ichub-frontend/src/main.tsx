@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2025 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -20,17 +21,46 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { theme } from './theme/theme.ts'
 import { ThemeProvider } from '@mui/material/styles';
+import AuthProvider from './components/auth/AuthProvider.tsx'
+import environmentService from './services/EnvironmentService';
 
 import App from './App.tsx'
 
+// Check if authentication is enabled
+const isAuthEnabled = environmentService.isAuthEnabled();
+
+// Debug logging
+if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') {
+  try {
+    console.log('=== Authentication Configuration Debug ===');
+    console.log('window.ENV:', window.ENV);
+    console.log('isAuthEnabled:', isAuthEnabled);
+    console.log('authProvider:', environmentService.getAuthProvider());
+    if (isAuthEnabled) {
+      try {
+        const keycloakConfig = environmentService.getKeycloakConfig();
+        console.log('Keycloak Config:', keycloakConfig);
+      } catch (e) {
+        console.error('Failed to get Keycloak config:', e);
+      }
+    }
+    console.log('==========================================');
+  } catch (e) {
+    // ignore logging errors
+  }
+}
+
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ThemeProvider theme={theme}>
+  <ThemeProvider theme={theme}>
+    {isAuthEnabled ? (
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    ) : (
       <App />
-    </ThemeProvider>
-  </StrictMode>,
+    )}
+  </ThemeProvider>,
 )

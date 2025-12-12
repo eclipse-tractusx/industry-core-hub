@@ -31,8 +31,11 @@ import {
 import {
     ContentCopy as ContentCopyIcon,
     Check as CheckIcon,
-    DataObject as DataObjectIcon
+    DataObject as DataObjectIcon,
+    Download as DownloadIcon
 } from '@mui/icons-material';
+import { downloadJson } from '../../utils/downloadJson';
+
 
 interface JsonViewerProps {
     data: Record<string, unknown>;
@@ -55,6 +58,10 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
     };
 
     // Format JSON with line numbers and higher indentation
+
+    const handleDownloadJson = () => {
+        downloadJson(data, filename);
+    };
     const jsonString = JSON.stringify(data, null, 4); // Increased indentation to 4 spaces
     const lines = jsonString.split('\n');
 
@@ -63,6 +70,9 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
         const totalLines = lines.length;
         const lineNumberWidth = Math.max(50, (totalLines.toString().length * 8) + 16); // 8px per digit + 16px padding
         
+                const handleDownloadJson = () => {
+                    downloadJson(data, filename);
+                };
         return lines.map((line, index) => {
             const lineNumber = index + 1;
             return (
@@ -209,7 +219,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
                 <Typography variant="body2" sx={{ fontSize: '13px', fontFamily: 'inherit' }}>
                     {filename}
                 </Typography>
-                <Box sx={{ ml: 'auto' }}>
+                <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                     <Tooltip title={copySuccess ? "Copied!" : "Copy JSON"}>
                         <IconButton
                             size="small"
@@ -226,6 +236,21 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
                             }}
                         >
                             {copySuccess ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Download JSON">
+                        <IconButton
+                            size="small"
+                            onClick={handleDownloadJson}
+                            sx={{
+                                color: '#CCCCCC',
+                                '&:hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                            }}
+                        >
+                            <DownloadIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Box>

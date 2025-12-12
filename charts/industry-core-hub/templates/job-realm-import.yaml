@@ -23,16 +23,25 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-realm-import
+  name: {{ .Release.Name }}-realm-import-{{ now | date "20060102-150405" }}
   namespace: {{ .Release.Namespace | default "default" | quote }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-import
   annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- if eq .Values.deploymentMode "argocd"  }}
+    # ArgoCD annotations - runs on every sync
+      "argocd.argoproj.io/sync-wave": "3"
+      "argocd.argoproj.io/hook": Sync
+      "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+    {{- else }}
+    # Helm hooks for standard Helm deployments
+      "helm.sh/hook": post-install, post-upgrade
+      "helm.sh/hook-weight": "5"
+      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- end }}
 spec:
+  backoffLimit: 3
   ttlSecondsAfterFinished: 600
   template:
     metadata:
@@ -41,90 +50,84 @@ spec:
         app.kubernetes.io/component: keycloak-import
     spec:
       restartPolicy: OnFailure
-      containers:
-        - name: realm-import
+      initContainers:
+        - name: wait-for-keycloak
           image: curlimages/curl:8.5.0
           imagePullPolicy: IfNotPresent
-          env:
-            - name: KEYCLOAK_URL
-              value: "http://{{ .Release.Name }}-keycloak:80"
-            - name: KEYCLOAK_ADMIN
-              value: "{{ .Values.keycloak.auth.adminUser }}"
-            - name: KEYCLOAK_ADMIN_PASSWORD
-              value: "{{ .Values.keycloak.auth.adminPassword }}"
-          volumeMounts:
-            - name: realm-data
-              mountPath: /import
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
           command:
             - /bin/sh
             - -c
           args:
             - |
               set -e
-              echo "Starting realm import process..."
-              
-              # Wait for Keycloak to be available
-              echo "Waiting for Keycloak at $KEYCLOAK_URL..."
+              echo "Waiting for Keycloak at http://{{ .Release.Name }}-keycloak:80/auth/realms/master..."
               for i in $(seq 1 60); do
-                if curl -f "$KEYCLOAK_URL/auth/realms/master" >/dev/null 2>&1; then
-                  echo "Keycloak is ready!"
-                  break
+                if curl -f "http://{{ .Release.Name }}-keycloak:80/auth/realms/master" >/dev/null 2>&1; then
+                  echo "✓ Keycloak is ready!"
+                  exit 0
                 fi
-                echo "Attempt $i: Waiting for Keycloak..."
+                echo "Attempt $i/60: Waiting for Keycloak..."
                 sleep 10
-                if [ $i -eq 60 ]; then
-                  echo "ERROR: Keycloak not available after 10 minutes"
-                  exit 1
-                fi
               done
-              
-              # Get admin token
-              echo "Getting admin token..."
-              TOKEN=$(curl -s -X POST "$KEYCLOAK_URL/auth/realms/master/protocol/openid-connect/token" \
-                -H "Content-Type: application/x-www-form-urlencoded" \
-                -d "username=$KEYCLOAK_ADMIN" \
-                -d "password=$KEYCLOAK_ADMIN_PASSWORD" \
-                -d "grant_type=password" \
-                -d "client_id=admin-cli" | \
-                sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
-              
-              if [ -z "$TOKEN" ]; then
-                echo "ERROR: Failed to get admin token"
-                exit 1
-              fi
-              
-              # Check if realm already exists
-              REALM_NAME="ICHub"
-              echo "Checking if realm '$REALM_NAME' exists..."
-              REALM_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" \
-                -H "Authorization: Bearer $TOKEN" \
-                "$KEYCLOAK_URL/auth/admin/realms/$REALM_NAME")
-              
-              if [ "$REALM_EXISTS" = "200" ]; then
-                echo "Realm '$REALM_NAME' already exists, skipping import"
-              else
-                echo "Importing realm '$REALM_NAME'..."
-                curl -s -X POST "$KEYCLOAK_URL/auth/admin/realms" \
-                  -H "Authorization: Bearer $TOKEN" \
-                  -H "Content-Type: application/json" \
-                  -d @/import/realm-export.json
-                
-                if [ $? -eq 0 ]; then
-                  echo "Realm '$REALM_NAME' imported successfully"
-                else
-                  echo "ERROR: Failed to import realm '$REALM_NAME'"
-                  exit 1
-                fi
-              fi
-              
-              echo "Realm import process completed!"
+              echo "ERROR: Keycloak not available after 10 minutes"
+              exit 1
+      containers:
+        - name: keycloak-config-cli
+          image: {{ .Values.keycloak.realmImport.image.repository }}:{{ .Values.keycloak.realmImport.image.tag }}
+          imagePullPolicy: {{ .Values.keycloak.realmImport.image.pullPolicy }}
+          env:
+            - name: KEYCLOAK_URL
+              value: "http://{{ .Release.Name }}-keycloak:80/auth"
+            - name: KEYCLOAK_USER
+              value: "{{ .Values.keycloak.auth.adminUser }}"
+            - name: KEYCLOAK_PASSWORD
+              value: "{{ .Values.keycloak.auth.adminPassword }}"
+            - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
+              value: "true"
+            - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
+              value: "120s"
+            - name: IMPORT_PATH
+              value: "/config"
+            - name: IMPORT_FORCE
+              value: "true"
+            - name: IMPORT_VAR_SUBSTITUTION_ENABLED
+              value: "true"
+            {{- range $user := .Values.keycloak.realm.users }}
+            - name: {{ $user.username | upper | replace "-" "_" }}_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Release.Name }}-keycloak-realm-users
+                  key: {{ $user.username }}-password
+            {{- end }}
+          volumeMounts:
+            - name: realm-config
+              mountPath: /config
+              readOnly: true
+          resources:
+            {{- toYaml .Values.keycloak.realmImport.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
       volumes:
-        - name: realm-data
+        - name: realm-config
           configMap:
             name: {{ .Release.Name }}-realm-data
       securityContext:
+        fsGroup: 1000
         runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
-        fsGroup: 65534
 {{- end }}

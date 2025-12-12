@@ -28,6 +28,10 @@ nameOverride: ""
 fullnameOverride: ""
 replicaCount: 1
 
+# -- Deployment mode: "helm" for standard Helm deployments, "argocd" for ArgoCD deployments
+# This controls which annotations are used for the realm import job
+deploymentMode: "helm"
+
 participantId: ""
 
 # -- Backend configuration
@@ -65,6 +69,31 @@ backend:
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     agreements:
+      - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.circular.dpp:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
       - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
         usage:
           context:
@@ -129,6 +158,31 @@ backend:
                   rightOperand: active
           prohibition: []
           obligation: []
+      - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
     authorization:
       enabled: true
       apiKey:
@@ -140,6 +194,12 @@ backend:
         realm: "<realm>"
         clientId: "<client-id>"
         clientSecret: "<client-secret>"
+        # -- Retry configuration for Keycloak connection
+        retry:
+          maxRetries: 5
+          retryDelay: 10
+          # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
+          backgroundRetryInterval: 60
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: false
@@ -386,6 +446,42 @@ backend:
     timeouts:
       keep_alive: 300                       # 5 minutes for DTR operations
       graceful_shutdown: 30                 # 30 seconds for graceful shutdown
+
+  # -- Jobs configuration for background tasks
+  jobs:
+    # Asset synchronization job
+    assetSync:
+      # -- Enable asset sync job (can be deployed as Job or CronJob)
+      enabled: true
+      # -- Type of job: "job" for one-time execution, "cronjob" for scheduled execution
+      type: "cronjob"  # job or cronjob
+      # -- Cron schedule (only used when type is "cronjob")
+      # Example: "0 */6 * * *" runs every 6 hours
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      # -- Deadline in seconds for starting the job if it misses scheduled time (CronJob only)
+      startingDeadlineSeconds: 200
+      # -- Restart policy for job pods
+      restartPolicy: "OnFailure"
+      # -- Number of retries before marking job as failed
+      backoffLimit: 3
+      # -- Concurrency policy for CronJob (only used when type is "cronjob")
+      # Options: Allow, Forbid, Replace
+      concurrencyPolicy: "Forbid"
+      # -- Number of successful jobs to keep in history (CronJob only)
+      successfulJobsHistoryLimit: 3
+      # -- Number of failed jobs to keep in history (CronJob only)
+      failedJobsHistoryLimit: 3
+      # -- Resource limits for the job
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+          ephemeral-storage: "128Mi"
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: "1Gi"
+
 frontend:
   # -- Enhanced frontend configuration
   config:
@@ -406,16 +502,16 @@ frontend:
     apiKeyExpiryWarningDays: 7
 
     # Authentication configuration
-    authEnabled: false
-    authProvider: "none"  # none, keycloak
+    authEnabled: true
+    authProvider: "keycloak"  # none, keycloak
 
-    # Keycloak configuration (only used when authProvider is keycloak)
+    # Keycloak configuration
     keycloak:
-      url: ""
-      realm: ""
-      clientId: ""
+      url: "https://<keycloak-hostname>/auth"
+      realm: "ICHub"
+      clientId: "industry-core-hub-frontend"
       onLoad: "check-sso"  # check-sso, login-required
-      checkLoginIframe: true
+      checkLoginIframe: false
       silentCheckSsoRedirectUri: ""
       pkceMethod: "S256"
       enableLogging: false
@@ -483,10 +579,19 @@ frontend:
           prohibition: []
           obligation: []
           strict: false
+        - permission:
+          - action: odrl:use
+            constraints:
+              - leftOperand: cx-policy:UsagePurpose
+                operator: odrl:eq
+                rightOperand: cx.core.digitalTwinRegistry:1
+          prohibition: []
+          obligation: []
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         policies:
-          - strict: false  # -- Enable here the permutations of constraints (order not matters)
+          # -- Enable here the permutations of constraints (order not matters)
+          - strict: false
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and
@@ -502,7 +607,8 @@ frontend:
                   rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
-          - strict: true  # -- Disable here the permutations of constraints (order matters)
+          # -- Disable here the permutations of constraints (order matters)
+          - strict: true
             permission:
             - action: odrl:use
               LogicalConstraint: odrl:and
@@ -513,6 +619,129 @@ frontend:
                 - leftOperand: cx-policy:Membership
                   operator: odrl:eq
                   rightOperand: active
+            prohibition: []
+            obligation: []
+          # -- Enable here the permutations of constraints (order not matters)
+          - strict: false
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+        policies:
+          # -- Enable here the permutations of constraints (order not matters)
+          - strict: false
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          # -- Disable here the permutations of constraints (order matters)
+          - strict: true
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+          # -- Enable here the permutations of constraints (order not matters)
+          - strict: false
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport"
+        policies:
+          # -- Enable here the permutations of constraints (order not matters)
+          - strict: false
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.circular.dpp:1
+            prohibition: []
+            obligation: []
+          # -- Disable here the permutations of constraints (order matters)
+          - strict: false
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.circular.dpp:1
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        policies:
+          - strict: false
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          # -- Disable here the permutations of constraints (order matters)
+          - strict: true
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+          - strict: false
+            permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
 
@@ -546,7 +775,7 @@ frontend:
       #   hosts:
       #     - ""
     hosts:
-      - host: ""
+      - host: "<frontend-hostname>"
         paths:
           - path: /
             pathType: ImplementationSpecific
@@ -739,34 +968,107 @@ keycloak:
     existingSecret: ""
   # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
   production: false
+  # -- Proxy mode for Keycloak when running behind a reverse proxy (edge, reencrypt, passthrough, or none)
+  # Use 'edge' when running behind a reverse proxy that terminates SSL/TLS
+  proxy: edge
   # -- Setting the path relative to '/' for serving resources:
   # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth/'.
   # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
   httpRelativePath: /auth/
   replicaCount: 1
+  # -- Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 240
+    periodSeconds: 2
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+  # -- Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 20
+    timeoutSeconds: 2
+    failureThreshold: 6
+    successThreshold: 1
   # -- Realm import configuration
   realmImport:
     enabled: true
     # -- Method: "startup" for --import-realm flag or "job" for post-install job
+    # -- "startup": Automatic import on Keycloak container startup (simpler, more reliable for ArgoCD)
+    # -- "job": Post-install Kubernetes job (allows dynamic password setting)
     method: "job"
-  # -- Environment variables for startup import (only if method is "startup")
+    # -- keycloak-config-cli image configuration
+    image:
+      repository: "adorsys/keycloak-config-cli"
+      tag: "latest-25.0.1"
+      pullPolicy: "IfNotPresent"
+    # -- Resource limits for the realm import job
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+        ephemeral-storage: "64Mi"
+      limits:
+        cpu: 500m
+        memory: 256Mi
+        ephemeral-storage: "128Mi"
+  # -- Realm user configuration (passwords will be hashed at deployment time)
+  realm:
+    name: "ICHub"
+    users:
+      - username: "ichub-admin"
+        password: "changeme"
+        email: "ichub-admin@example.com"
+        firstName: "Industry"
+        lastName: "Admin"
+        emailVerified: true
+        enabled: true
+        attributes:
+          BPN: ["BPNL000000000000"]
+        realmRoles:
+          - "default-roles-ichub"
+          - "offline_access"
+          - "uma_authorization"
+    # -- Client redirect URIs configuration
+    clients:
+      frontend:
+        redirectUris:
+          - "http://localhost:3000/*"
+          - "http://localhost:5173/*"
+          - "http://ichub-frontend.tx.test/*"
+          - "http://industry-core-hub-frontend.tx.test/*"
+        webOrigins:
+          - "http://localhost:3000"
+          - "http://localhost:5173"
+          - "http://ichub-frontend.tx.test"
+          - "http://industry-core-hub-frontend.tx.test"
+      backend:
+        redirectUris:
+          - "http://localhost:8000/*"
+          - "http://localhost:9000/*"
+          - "http://ichub-backend.tx.test/*"
+        webOrigins:
+          - "http://localhost:8000"
+          - "http://localhost:9000"
+          - "http://ichub-backend.tx.test"
+  # -- Environment variables and command configuration
+  # -- Will be set automatically based on realmImport.method
   extraEnvVars: []
+
+  # -- Command override for Keycloak container
+  # -- Will be set automatically when realmImport.method is "startup"
+  command: []
+  args: []
 
   extraVolumes:
     - name: themes
       emptyDir: {}
-    # -- Volume for realm import (only mounted when onStartup is true)
-    - name: realm-data
-      configMap:
-        name: "{{ .Release.Name }}-realm-data"
-        optional: true
 
   extraVolumeMounts:
     - name: themes
       mountPath: /opt/bitnami/keycloak/themes/catenax-central
-    # -- Mount realm import file (only when onStartup is true)
-    - name: realm-data
-      mountPath: /opt/bitnami/keycloak/data/import
 
   initContainers:
     - name: import
@@ -791,12 +1093,13 @@ keycloak:
     enabled: false
     ingressClassName: ""
     # -- Provide default path for the ingress record.
-    hostname: ""
+    hostname: "<keycloak-hostname>"
     # -- Optional annotations when using the nginx ingress class;
     # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
     # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
     # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
       # cert-manager.io/cluster-issuer: ""
       # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
       # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
@@ -805,8 +1108,17 @@ keycloak:
       # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
       # nginx.ingress.kubernetes.io/proxy-buffering: "on"
       # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
-      # nginx.ingress.kubernetes.io/use-regex: "true"
     tls: false
+  # -- Resource configuration for Keycloak
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+      ephemeral-storage: "256Mi"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+      ephemeral-storage: "2Gi"
   rbac:
     create: true
     rules:
@@ -841,9 +1153,9 @@ keycloak:
       # # -- Root user password.
       # postgresPassword: "postgres-keycloak-admin-password"
       # -- Database name.
-      database: postgres
-      # -- Secret containing the passwords for root usernames postgres and non-root username kccentral.
-      existingSecret: "ichub-password"
+      database: ichub-postgres
+      # -- Secret containing the passwords for root usernames postgres and non-root username ichub.
+      existingSecret: "ichub-postgres-secret"
     architecture: standalone
   externalDatabase:
     # -- External PostgreSQL configuration

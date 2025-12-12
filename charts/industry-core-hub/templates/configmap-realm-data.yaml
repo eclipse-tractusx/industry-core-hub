@@ -20,6 +20,51 @@
 * SPDX-License-Identifier: Apache-2.0
 */}}
 {{- if and .Values.keycloak.enabled .Values.keycloak.realmImport.enabled }}
+{{- $realmData := .Files.Get "files/realm-export.json" | fromJson }}
+
+{{- /* Update client redirect URIs and web origins */ -}}
+{{- if .Values.keycloak.realm.clients }}
+{{- range $client := $realmData.clients }}
+  {{- if eq $client.clientId "industry-core-hub-frontend" }}
+    {{- if $.Values.keycloak.realm.clients.frontend }}
+      {{- $_ := set $client "redirectUris" $.Values.keycloak.realm.clients.frontend.redirectUris }}
+      {{- $_ := set $client "webOrigins" $.Values.keycloak.realm.clients.frontend.webOrigins }}
+      {{- $postLogoutUris := join "##" (concat $.Values.keycloak.realm.clients.frontend.redirectUris) }}
+      {{- $_ := set $client.attributes "post.logout.redirect.uris" $postLogoutUris }}
+    {{- end }}
+  {{- else if eq $client.clientId "industry-core-hub-api" }}
+    {{- if $.Values.keycloak.realm.clients.backend }}
+      {{- $_ := set $client "redirectUris" $.Values.keycloak.realm.clients.backend.redirectUris }}
+      {{- $_ := set $client "webOrigins" $.Values.keycloak.realm.clients.backend.webOrigins }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{- /* Update realm users */ -}}
+{{- $_ := set $realmData "users" list }}
+{{- range $user := .Values.keycloak.realm.users }}
+{{- $passwordVar := printf "$(%s_PASSWORD)" ($user.username | upper | replace "-" "_") }}
+{{- $credentials := list (dict "type" "password" "value" $passwordVar "temporary" false) }}
+{{- $newUser := dict 
+  "username" $user.username
+  "enabled" (default true $user.enabled)
+  "totp" false
+  "emailVerified" (default true $user.emailVerified)
+  "firstName" (default "" $user.firstName)
+  "lastName" (default "" $user.lastName)
+  "email" $user.email
+  "attributes" (default dict $user.attributes)
+  "credentials" $credentials
+  "disableableCredentialTypes" list
+  "requiredActions" list
+  "realmRoles" (default (list "default-roles-ichub") $user.realmRoles)
+  "clientRoles" (default dict $user.clientRoles)
+  "notBefore" 0
+  "groups" (default list $user.groups)
+}}
+{{- $_ := set $realmData "users" (append $realmData.users $newUser) }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -28,7 +73,9 @@ metadata:
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak
+  annotations:
+    "argocd.argoproj.io/sync-wave": "1"
 data:
   realm-export.json: |
-{{ (.Files.Get "files/realm-export.json") | indent 4 }}
+{{ $realmData | toPrettyJson | indent 4 }}
 {{- end }}

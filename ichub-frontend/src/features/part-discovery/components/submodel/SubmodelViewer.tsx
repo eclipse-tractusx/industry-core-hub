@@ -49,6 +49,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import DescriptionIcon from '@mui/icons-material/Description';
 import DownloadIcon from '@mui/icons-material/Download';
+import { downloadJson } from '../../../../utils/downloadJson';
 import EmailIcon from '@mui/icons-material/Email';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -470,16 +471,8 @@ export const SubmodelViewer: React.FC<SubmodelViewerProps> = ({
 
   const handleDownloadJson = () => {
     if (submodelData?.submodel) {
-      const jsonString = JSON.stringify(submodelData.submodel, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `submodel-${submodel.id}-${submodel.idShort || 'data'}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const filename = `submodel-${submodel.id}-${submodel.idShort || 'data'}.json`;
+      downloadJson(submodelData.submodel, filename);
     }
   };
 
