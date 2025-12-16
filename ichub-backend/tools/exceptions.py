@@ -70,6 +70,13 @@ class InvalidError(BaseError):
     def __init__(self, message: str):
         super().__init__(status_code=400, message=message)
 
+class NotAuthorizedError(BaseError):
+    """
+    Exception raised when a user is not authorized to perform an action.
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=403, message=message)
+
 class NotFoundError(BaseError):
     """
     Exception raised when a requested resource is not found.
