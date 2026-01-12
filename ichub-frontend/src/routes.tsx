@@ -22,16 +22,25 @@
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
-import { getAllRoutes } from "./features/main";
+import { kitFeaturesFeature } from "./features/kit-features/routes";
+import { FeatureProvider, useFeatures } from "./contexts/FeatureContext";
+import { FeatureRouteGuard } from "./components/routing/FeatureRouteGuard";
 
-export default function AppRoutes() {
-  const featureRoutes = getAllRoutes();
+function DynamicRoutes() {
+  const { enabledFeatures } = useFeatures();
+  
+  // Get all enabled routes dynamically
+  const featureRoutes = enabledFeatures.flatMap(feature => feature.routes);
+  
+  // Add KIT Features routes
+  const allRoutes = [...featureRoutes, ...kitFeaturesFeature.routes];
 
   return (
-    <BrowserRouter>
+    <>
+      <FeatureRouteGuard />
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          {featureRoutes.map((route, index) => (
+          {allRoutes.map((route, index) => (
             <Route
               key={index}
               path={route.path}
@@ -41,6 +50,16 @@ export default function AppRoutes() {
           ))}
         </Route>
       </Routes>
+    </>
+  );
+}
+
+export default function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <FeatureProvider>
+        <DynamicRoutes />
+      </FeatureProvider>
     </BrowserRouter>
   );
 }

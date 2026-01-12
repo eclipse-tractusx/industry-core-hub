@@ -22,6 +22,7 @@
 ********************************************************************************/
 
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -29,38 +30,16 @@ import {
   Snackbar,
   IconButton
 } from '@mui/material';
-import Grid2 from '@mui/material/Grid2';
 import {
-  Hub,
-  Recycling,
-  Link,
-  Security,
-  Analytics,
-  DeviceHub,
-  Timeline,
-  Inventory,
-  AccountTree,
-  Cloud,
-  Build,
-  Engineering,
-  VerifiedUser,
-  Science,
-  QrCode,
-  LocalShipping,
   ChevronLeft,
   ChevronRight
 } from '@mui/icons-material';
 import KitCard from '../components/KitCard';
 import { KitFeature } from '../types';
-import IndustryCoreKitImage from '../../../assets/kit-images/industry-core-kit.svg';
-import PcfKitImage from '../../../assets/kit-images/pcf-kit.svg';
-import DataChainKitImage from '../../../assets/kit-images/data-chain-kit.svg';
-import BusinessPartnerKitImage from '../../../assets/kit-images/business-partner-kit.svg';
-import DcmKitImage from '../../../assets/kit-images/dcm-kit.svg';
-import EcoPassKitImage from '../../../assets/kit-images/eco-pass-kit.svg';
-import TraceabilityKitImage from '../../../assets/kit-images/traceability-kit.svg';
+import { kits as kitsData } from '../../main';
 
 const KitFeaturesPage: React.FC = () => {
+  const location = useLocation();
   const [kits, setKits] = useState<KitFeature[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -69,133 +48,21 @@ const KitFeaturesPage: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-
-  // Mock data for KITs in specific order for carousel
-  const mockKits: KitFeature[] = [
-    // 1. Industry Core KIT
-    {
-      id: 'industry-core',
-      name: 'Industry Core KIT',
-      description: 'Core functionality for industrial data management, partner discovery, and catalog management.',
-      status: 'available',
-      icon: <Hub />,
-      image: IndustryCoreKitImage,
-      features: [
-        { id: 'catalog-management', name: 'Catalog Management', description: 'Manage service catalogs and registrations', enabled: true },
-        { id: 'serialized-parts', name: 'Serialized Parts', description: 'Track and manage serialized components', enabled: true },
-        { id: 'dataspace-discovery', name: 'Dataspace Discovery', description: 'Discover and connect to data spaces', enabled: true },
-        { id: 'participants', name: 'Participants Management', description: 'Manage ecosystem participants', enabled: true }
-      ],
-      category: 'core',
-      version: '1.0.0',
-      lastUpdated: '2024-10-15'
-    },
-    // 2. PCF KIT
-    {
-      id: 'pcf',
-      name: 'PCF KIT',
-      description: 'Product Carbon Footprint calculation and lifecycle assessment tools.',
-      status: 'available',
-      icon: <Science />,
-      image: PcfKitImage,
-      features: [
-        { id: 'carbon-calculation', name: 'Carbon Calculation', description: 'Calculate product carbon footprints', enabled: false },
-        { id: 'lifecycle-assessment', name: 'Lifecycle Assessment', description: 'Perform comprehensive LCA analysis', enabled: false },
-        { id: 'emission-tracking', name: 'Emission Tracking', description: 'Track and monitor emissions', enabled: false },
-        { id: 'reports', name: 'Sustainability Reports', description: 'Generate detailed sustainability reports', enabled: false }
-      ],
-      category: 'sustainability',
-      version: '0.9.0',
-      lastUpdated: '2024-10-10'
-    },
-    // 3. Data Chain KIT
-    {
-      id: 'data-chain',
-      name: 'Data Chain KIT',
-      description: 'Secure data sharing and interoperability across automotive value chains.',
-      status: 'coming-soon',
-      icon: <Link />,
-      image: DataChainKitImage,
-      features: [
-        { id: 'data-sharing', name: 'Data Sharing', description: 'Secure data sharing capabilities', enabled: false },
-        { id: 'interoperability', name: 'Interoperability', description: 'Cross-platform interoperability', enabled: false },
-        { id: 'chain-management', name: 'Chain Management', description: 'Manage data chains', enabled: false },
-        { id: 'data-governance', name: 'Data Governance', description: 'Data governance and policies', enabled: false }
-      ],
-      category: 'collaboration'
-    },
-    // 4. Business Partner KIT
-    {
-      id: 'business-partner',
-      name: 'Business Partner KIT',
-      description: 'Comprehensive business partner data management and validation.',
-      status: 'coming-soon',
-      icon: <Build />,
-      image: BusinessPartnerKitImage,
-      features: [
-        { id: 'partner-data', name: 'Partner Data', description: 'Manage partner information', enabled: false },
-        { id: 'validation', name: 'Validation', description: 'Validate partner data', enabled: false },
-        { id: 'master-data', name: 'Master Data', description: 'Master data management', enabled: false },
-        { id: 'golden-record', name: 'Golden Record', description: 'Create golden records', enabled: false }
-      ],
-      category: 'core'
-    },
-    // 5. DCM KIT
-    {
-      id: 'dcm',
-      name: 'DCM KIT',
-      description: 'Demand and Capacity Management for optimizing supply chain operations.',
-      status: 'coming-soon',
-      icon: <DeviceHub />,
-      image: DcmKitImage,
-      features: [
-        { id: 'demand-planning', name: 'Demand Planning', description: 'Plan and forecast demand', enabled: false },
-        { id: 'capacity-planning', name: 'Capacity Planning', description: 'Optimize capacity planning', enabled: false },
-        { id: 'resource-optimization', name: 'Resource Optimization', description: 'Optimize resource allocation', enabled: false },
-        { id: 'analytics', name: 'Analytics', description: 'Advanced analytics and insights', enabled: false }
-      ],
-      category: 'core'
-    },
-    // 6. Eco Pass KIT
-    {
-      id: 'eco-pass',
-      name: 'Eco Pass KIT',
-      description: 'Environmental sustainability tracking and carbon footprint management for supply chains.',
-      status: 'coming-soon',
-      icon: <Recycling />,
-      image: EcoPassKitImage,
-      features: [
-        { id: 'carbon-footprint', name: 'Carbon Footprint', description: 'Environmental impact tracking', enabled: false },
-        { id: 'environmental-impact', name: 'Environmental Impact', description: 'Assess environmental impacts', enabled: false },
-        { id: 'sustainability-reports', name: 'Sustainability Reports', description: 'Generate sustainability reports', enabled: false },
-        { id: 'green-metrics', name: 'Green Metrics', description: 'Track green performance metrics', enabled: false }
-      ],
-      category: 'sustainability'
-    },
-    // 7. Traceability KIT
-    {
-      id: 'traceability',
-      name: 'Traceability KIT',
-      description: 'End-to-end traceability of parts and components throughout the supply chain.',
-      status: 'available',
-      icon: <Timeline />,
-      image: TraceabilityKitImage,
-      features: [
-        { id: 'part-tracking', name: 'Part Tracking', description: 'Track parts through supply chain', enabled: false },
-        { id: 'supply-chain-visibility', name: 'Supply Chain Visibility', description: 'Full supply chain visibility', enabled: false },
-        { id: 'origin-verification', name: 'Origin Verification', description: 'Verify part origins', enabled: false },
-        { id: 'recall-management', name: 'Recall Management', description: 'Manage product recalls', enabled: false }
-      ],
-      category: 'traceability',
-      version: '1.0.0',
-      lastUpdated: '2024-10-24'
-    }
-  ];
-
   useEffect(() => {
-    // Simular carga de datos  
-    setKits(mockKits);
+    // Load KITs data
+    setKits(kitsData);
   }, []);
+
+  // Restore carousel position when navigating back from kit detail
+  useEffect(() => {
+    const state = location.state as { fromKitId?: string } | null;
+    if (state?.fromKitId && kits.length > 0) {
+      const kitIndex = kits.findIndex(kit => kit.id === state.fromKitId);
+      if (kitIndex !== -1) {
+        setCurrentIndex(kitIndex);
+      }
+    }
+  }, [location.state, kits]);
 
   const handleFeatureToggle = (kitId: string, featureId: string, enabled: boolean) => {
     setKits(prevKits => 
@@ -287,6 +154,7 @@ const KitFeaturesPage: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAnimating]);
 
   // Optional: Auto-play carousel (uncomment to enable)
@@ -323,39 +191,124 @@ const KitFeaturesPage: React.FC = () => {
   }, [currentIndex, isAnimating, sortedKits.length]);
 
   return (
-        <Box 
+    <Box 
       className="kit-features-page"
       sx={{ 
         width: "100%", 
         height: "100vh", 
         display: "flex", 
         flexDirection: "column", 
-        p: 3,
-        overflow: 'hidden', // Prevent any overflow scroll
-        boxSizing: 'border-box' // Include padding in height calculation
+        overflow: 'hidden',
+        position: 'relative',
+        background: `
+          radial-gradient(circle at 20% 50%, rgba(66, 165, 245, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(25, 118, 210, 0.15) 0%, transparent 50%),
+          radial-gradient(circle at 40% 20%, rgba(13, 71, 161, 0.1) 0%, transparent 40%),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 100%)
+        `,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: `
+            linear-gradient(90deg, rgba(66, 165, 245, 0.03) 1px, transparent 1px),
+            linear-gradient(rgba(66, 165, 245, 0.03) 1px, transparent 1px)!important
+          `,
+          backgroundSize: '60px 60px',
+          opacity: 0.4,
+          pointerEvents: 'none'
+        },
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '2px',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(66, 165, 245, 0.5) 50%, transparent 100%)!important',
+          animation: 'shimmer 3s ease-in-out infinite'
+        },
+        '@keyframes shimmer': {
+          '0%, 100%': { opacity: 0.3 },
+          '50%': { opacity: 1 }
+        }
       }}
     >
-      {/* Header Section - Same format as Catalog Parts */}
-      <Box sx={{ mt: 2, mb: 4 }}>
-        <Grid2 container direction="column" alignItems="center" sx={{ mb: 3 }}>
-          <Grid2 className="product-catalog title flex flex-content-center">
-            <Typography className="text">KIT Features</Typography>
-          </Grid2>
-        </Grid2>
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography 
-            variant="body1" 
-            className="kit-features-subtitle" 
-            sx={{ 
-              textAlign: 'center',
-              maxWidth: '800px',
-              margin: '0 auto',
-              fontSize: '1rem'
-            }}
-          >
-            Manage and configure Tractus-X KITs. Enable or disable specific features within each KIT to customize your application capabilities.
-          </Typography>
-        </Box>
+      {/* Hero Header Section */}
+      <Box sx={{ 
+        pt: 6, 
+        pb: 3,
+        px: 4,
+        textAlign: 'center',
+        position: 'relative',
+        zIndex: 1,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '90%',
+          height: '100%',
+          background: `
+            radial-gradient(ellipse at center, rgba(66, 165, 245, 0.15) 0%, transparent 70%),
+            radial-gradient(ellipse at 30% 50%, rgba(25, 118, 210, 0.12) 0%, transparent 60%),
+            radial-gradient(ellipse at 70% 50%, rgba(13, 71, 161, 0.12) 0%, transparent 60%)
+          `,
+          filter: 'blur(40px)',
+          zIndex: -1,
+          pointerEvents: 'none'
+        }
+      }}>
+        <Typography 
+          variant="h2" 
+          sx={{ 
+            fontSize: { xs: '2.5rem', md: '3.5rem' },
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #42a5f5 0%, #1976d2 50%, #0d47a1 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 2,
+            letterSpacing: '-0.02em',
+            textShadow: '0 0 40px rgba(66, 165, 245, 0.3)'
+          }}
+        >
+          Welcome to Industry Core Hub
+        </Typography>
+        
+        <Typography 
+          variant="h5"
+          sx={{ 
+            color: 'rgba(255, 255, 255, 0.9)',
+            maxWidth: '900px',
+            margin: '0 auto',
+            fontSize: { xs: '1.1rem', md: '1.3rem' },
+            fontWeight: 500,
+            lineHeight: 1.6,
+            mb: 1
+          }}
+        >
+          The Eclipse Tractus-X KITs & Use Cases Speed Way
+        </Typography>
+
+        <Typography 
+          variant="body1"
+          sx={{ 
+            color: 'rgba(255, 255, 255, 0.6)',
+            maxWidth: '750px',
+            margin: '0 auto',
+            fontSize: { xs: '0.95rem', md: '1.05rem' },
+            lineHeight: 1.8,
+            fontWeight: 400
+          }}
+        >
+          Enable or disable specific features within a KIT to unlock the complete potential of dataspaces.<br />
+          Explore the carousel below to discover available features.
+        </Typography>
       </Box>
 
       {/* Center Carousel Container */}
@@ -488,7 +441,15 @@ const KitFeaturesPage: React.FC = () => {
                 return (
                   <Box
                     key={`${kit.id}-${copyIndex}-${kitIndex}`}
-                    onClick={() => !isCenter && handleCardClick(kitIndex)} // Only allow click if not centered
+                    onClick={(e) => {
+                      // Don't intercept clicks on centered cards to allow button navigation
+                      if (isCenter) return;
+                      // For non-centered cards, check if click is on the card background (not buttons)
+                      const target = e.target as HTMLElement;
+                      if (!target.closest('button')) {
+                        handleCardClick(kitIndex);
+                      }
+                    }}
                     sx={{
                       flex: '0 0 320px',
                       width: '320px',

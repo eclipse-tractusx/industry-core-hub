@@ -240,13 +240,6 @@ function resolveRef(ref: string, schema: JSONSchema): JSONSchemaProperty | null 
     const schemaName = ref.replace('#/components/schemas/', '');
     const resolved = schema.components?.schemas?.[schemaName] || null;
     
-    // DEBUG: Log resolution of Metadata and Sustainability schemas
-    if (schemaName === 'MetadataCharacteristic' || schemaName === 'SustainabilityCharacteristic') {
-      console.log(`🔍 Resolving schema: ${schemaName}`);
-      console.log(`   Required fields:`, resolved?.required);
-      console.log(`   Properties keys:`, resolved?.properties ? Object.keys(resolved.properties) : 'none');
-    }
-    
     return resolved;
   }
   
@@ -304,11 +297,6 @@ function createContextualRequiredMapping(
     const isRequiredInThisContext = requiredFields.includes(key);
     requiredMapping.set(fullPath, isRequiredInThisContext);
     
-    // Log for debugging critical fields
-    if (key === 'status' || fullPath.includes('status')) {
-      console.log(`📋 Mapping ${fullPath}: required=${isRequiredInThisContext} (context: [${requiredFields.join(', ')}])`);
-    }
-    
     // Recursively process nested objects with their own required fields
     const resolvedProperty = resolveSchemaProperty(property, schema);
     if (resolvedProperty.type === 'object' && resolvedProperty.properties) {
@@ -334,23 +322,10 @@ function createContextualRequiredMapping(
  * DEBUG FUNCTION: Analyzes required fields throughout the schema
  */
 function debugRequiredFields(schema: JSONSchema, path: string = ''): void {
-  console.log(`🔍 REQUIRED FIELDS ANALYSIS for ${path || 'ROOT'}:`);
-  
-  if (schema.required) {
-    console.log(`   Required at ${path || 'root'}: [${schema.required.join(', ')}]`);
-    const hasStatus = schema.required.includes('status');
-    console.log(`   ⭐ 'status' is ${hasStatus ? 'REQUIRED' : 'NOT REQUIRED'} at ${path || 'root'}`);
-  }
-  
+  // Debug function - console logs removed for production
   if (schema.properties) {
     Object.entries(schema.properties).forEach(([key, property]) => {
       const fullPath = path ? `${path}.${key}` : key;
-      
-      if (property.required) {
-        console.log(`   Required at ${fullPath}: [${property.required.join(', ')}]`);
-        const hasStatus = property.required.includes('status');
-        console.log(`   ⭐ 'status' is ${hasStatus ? 'REQUIRED' : 'NOT REQUIRED'} at ${fullPath}`);
-      }
       
       // Recurse into nested objects
       if (property.type === 'object' && property.properties) {
@@ -503,29 +478,11 @@ function processProperties(
     parentKey
   );
   
-  // DEBUG: Log required fields processing for metadata and status
-  const debugPath = parentKey || 'root';
-  if (debugPath.includes('metadata') || debugPath.includes('sustainability') || depth === 0) {
-    console.log(`🔍 Processing ${debugPath}: required=[${requiredFields.join(', ')}]`);
-    console.log(`🗺️  Contextual mapping created with ${contextualRequiredMapping.size} entries`);
-  }
-  
   for (const [key, property] of Object.entries(properties)) {
     const fullKey = parentKey ? `${parentKey}.${key}` : key;
     
     // ENHANCED: Use contextual mapping for accurate required field determination
     const isRequired = contextualRequiredMapping.get(fullKey) || false;
-    
-    // DEBUG: Enhanced logging with context information
-    if (key === 'status' || fullKey.includes('status')) {
-      console.log(`🎯 Processing ${fullKey}:`);
-      console.log(`   • Field name: "${key}"`);
-      console.log(`   • Full path: "${fullKey}"`);
-      console.log(`   • Parent context: "${parentKey || 'root'}"`);
-      console.log(`   • Required fields in this context: [${requiredFields.join(', ')}]`);
-      console.log(`   • Contextual mapping lookup: ${contextualRequiredMapping.get(fullKey)}`);
-      console.log(`   • Final determination: ${isRequired ? '✅ REQUIRED' : '❌ OPTIONAL'}`);
-    }
     
     // Resolve all possible references and compositions
     let resolvedProperty = resolveSchemaProperty(property, schema);
@@ -545,17 +502,6 @@ function processProperties(
     );
     
     fields.push(...processedFields);
-  }
-  
-  // DEBUG: Log summary of processed fields for this context
-  if (debugPath.includes('metadata') || debugPath.includes('sustainability')) {
-    const processedStatusFields = fields.filter(f => f.key.includes('status'));
-    if (processedStatusFields.length > 0) {
-      console.log(`� Summary for ${debugPath}:`);
-      processedStatusFields.forEach(field => {
-        console.log(`   • ${field.key}: ${field.required ? '✅ Required' : '❌ Optional'}`);
-      });
-    }
   }
   
   // VALIDATION: Ensure contextual mapping worked correctly for status fields
@@ -580,22 +526,8 @@ function resolveSchemaProperty(property: JSONSchemaProperty, schema: JSONSchema)
   if (property.$ref) {
     const refResolved = resolveRef(property.$ref, schema);
     if (refResolved) {
-      // DEBUG: Log $ref resolution for status-related schemas
-      if (property.$ref.includes('Metadata') || property.$ref.includes('Sustainability')) {
-        console.log(`🔄 Resolving $ref: ${property.$ref}`);
-        console.log(`   Original property:`, property);
-        console.log(`   Resolved reference:`, refResolved);
-        console.log(`   RefResolved required:`, refResolved.required);
-      }
-      
       resolved = { ...refResolved, ...resolved };
       delete resolved.$ref;
-      
-      // DEBUG: Log after merging
-      if (property.$ref.includes('Metadata') || property.$ref.includes('Sustainability')) {
-        console.log(`   After merging:`, resolved);
-        console.log(`   Final required:`, resolved.required);
-      }
     }
   }
   
@@ -626,11 +558,6 @@ function resolveSchemaProperty(property: JSONSchemaProperty, schema: JSONSchema)
  * Merges two schema properties
  */
 function mergeSchemas(base: JSONSchemaProperty, overlay: JSONSchemaProperty): JSONSchemaProperty {
-  // DEBUG: Log schema merging for debugging
-  const baseRequiredStatus = base.required?.includes('status') ? 'HAS status' : 'NO status';
-  const overlayRequiredStatus = overlay.required?.includes('status') ? 'HAS status' : 'NO status';
-  console.log(`🔄 Merging schemas: base(${baseRequiredStatus}) + overlay(${overlayRequiredStatus})`);
-  
   const merged = { ...base, ...overlay };
   
   // Merge properties
@@ -642,10 +569,6 @@ function mergeSchemas(base: JSONSchemaProperty, overlay: JSONSchemaProperty): JS
   if (base.required && overlay.required) {
     const combined = [...base.required, ...overlay.required];
     merged.required = combined.filter((item, index) => combined.indexOf(item) === index);
-    
-    // DEBUG: Log required field merging
-    const mergedStatusRequired = merged.required?.includes('status') ? 'REQUIRED' : 'OPTIONAL';
-    console.log(`🔄 Merged required: [${merged.required?.join(', ')}] -> status is ${mergedStatusRequired}`);
   }
   
   return merged;

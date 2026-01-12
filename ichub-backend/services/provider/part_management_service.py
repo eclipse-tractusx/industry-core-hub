@@ -102,7 +102,7 @@ class PartManagementService():
             # Prepare the result object
             result = CatalogPartDetailsReadWithStatus(
                 **catalog_part_create.model_dump(by_alias=True),
-                status=0,  # Default status is draft
+                status=2,  # Default status is registered (active)
             )
 
             # Check if we already should create some customer part IDs for the given catalog part
@@ -679,11 +679,19 @@ class PartManagementService():
     ) -> Tuple[LegalEntity, CatalogPart]:
         """
         Helper method to find a catalog part by its manufacturer ID and part ID.
+        Auto-creates Legal Entity if it doesn't exist (similar to create_catalog_part).
         """
         # Check if the legal entity exists for the given manufacturer ID
         db_legal_entity = repos.legal_entity_repository.get_by_bpnl(manufacturer_id)
         if not db_legal_entity:
-            raise NotFoundError(f"Legal Entity with manufacturer BPNL '{manufacturer_id}' does not exist. Please create it first.")
+            # Auto-create Legal Entity if it doesn't exist
+            logger.warning(f"Legal Entity with manufacturer BPNL '{manufacturer_id}' not found. Creating a new one!")
+            db_legal_entity = LegalEntity(
+                bpnl=manufacturer_id,
+                name=f"Manufacturer {manufacturer_id}"  # Default name
+            )
+            repos.legal_entity_repository.create(db_legal_entity)
+            repos.legal_entity_repository.commit()
 
         # Check if the corresponding catalog part already exists
         db_catalog_part = repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id(

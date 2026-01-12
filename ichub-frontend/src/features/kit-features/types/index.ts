@@ -25,7 +25,10 @@ export interface KitFeatureItem {
   id: string;
   name: string;
   description: string;
+  icon?: React.ReactElement; // Icon for the feature
   enabled: boolean;
+  default?: boolean; // If true, this feature cannot be toggled off
+  module?: any; // The imported feature module (FeatureConfig)
 }
 
 export interface KitFeature {
@@ -36,9 +39,11 @@ export interface KitFeature {
   icon: React.ReactElement;
   image?: string;
   features: KitFeatureItem[];
-  category: 'core' | 'sustainability' | 'quality' | 'traceability' | 'collaboration';
+  domain: 'core' | 'sustainability' | 'supply-chain' | 'participant-management' | 'industry-core';
   version?: string;
+  createdAt?: string;
   lastUpdated?: string;
+  documentation?: string;
 }
 
 export interface KitFeaturesState {

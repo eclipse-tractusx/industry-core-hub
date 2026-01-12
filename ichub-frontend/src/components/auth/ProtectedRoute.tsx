@@ -44,22 +44,24 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, user, hasRole, hasPermission, error } = useAuth();
 
-  // Show loading spinner while authentication is being initialized
+  // Show loading state FIRST - don't mount children until auth is ready
+  // This prevents pages from mounting and showing their own loading states
+  // while authentication is still being checked
   if (isLoading) {
-    return fallback || (
-      <Box 
-        display="flex" 
+    return (
+      <Box
+        display="flex"
         flexDirection="column"
-        justifyContent="center" 
-        alignItems="center" 
+        justifyContent="center"
+        alignItems="center"
         minHeight="100vh"
         gap={3}
-        sx={{ 
-          background: 'black',
-          color: 'white'
+        sx={{
+          background: 'white',
+          color: 'black'
         }}
       >
-        <CircularProgress size={80} sx={{ color: 'white' }} />
+        <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
           Industry Core Hub
         </Typography>
@@ -87,7 +89,7 @@ export function ProtectedRoute({
     );
   }
 
-  // If not authenticated, Keycloak will redirect to login page
+  // If not authenticated and not loading, Keycloak will redirect to login page
   // This is handled by the AuthService initialization with onLoad: 'login-required'
   if (!isAuthenticated) {
     return fallback || (
@@ -119,27 +121,16 @@ export function ProtectedRoute({
     const hasRequiredRole = requireRoles.some(role => hasRole(role));
     if (!hasRequiredRole) {
       return (
-        <Box 
-          display="flex" 
-          flexDirection="column"
-          justifyContent="center" 
-          alignItems="center" 
-          minHeight="60vh"
-          gap={2}
-        >
-          <Typography variant="h5" color="warning.main">
-            Access Denied
-          </Typography>
-          <Typography variant="body1" color="textSecondary" textAlign="center">
-            You don't have the required role to access this content.
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Required roles: {requireRoles.join(', ')}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Your roles: {user?.roles.join(', ') || 'None'}
-          </Typography>
-        </Box>
+        <ErrorPage
+          title="Access Denied"
+          message="You don't have the required role to access this content."
+          causes={[
+            `Required roles: ${requireRoles.join(', ')}`,
+            `Your roles: ${user?.roles.join(', ') || 'None'}`
+          ]}
+          showRefreshButton={false}
+          helpText="Please contact your administrator if you believe you should have access to this content."
+        />
       );
     }
   }
@@ -149,27 +140,16 @@ export function ProtectedRoute({
     const hasRequiredPermission = requirePermissions.some(permission => hasPermission(permission));
     if (!hasRequiredPermission) {
       return (
-        <Box 
-          display="flex" 
-          flexDirection="column"
-          justifyContent="center" 
-          alignItems="center" 
-          minHeight="60vh"
-          gap={2}
-        >
-          <Typography variant="h5" color="warning.main">
-            Access Denied
-          </Typography>
-          <Typography variant="body1" color="textSecondary" textAlign="center">
-            You don't have the required permissions to access this content.
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Required permissions: {requirePermissions.join(', ')}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Your permissions: {user?.permissions.join(', ') || 'None'}
-          </Typography>
-        </Box>
+        <ErrorPage
+          title="Access Denied"
+          message="You don't have the required permissions to access this content."
+          causes={[
+            `Required permissions: ${requirePermissions.join(', ')}`,
+            `Your permissions: ${user?.permissions.join(', ') || 'None'}`
+          ]}
+          showRefreshButton={false}
+          helpText="Please contact your administrator if you believe you should have access to this content."
+        />
       );
     }
   }

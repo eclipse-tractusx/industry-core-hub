@@ -26,6 +26,7 @@ from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 import os
 
 from tools.exceptions import BaseError, ValidationError
@@ -45,6 +46,7 @@ from .routers.consumer.v1 import (
     connection_management,
     discovery_management
 )
+from .routers.addons import addons
 
 tags_metadata = [
     {
@@ -74,6 +76,14 @@ tags_metadata = [
     {
         "name": "Part Discovery Management",
         "description": "Management of the discovery of parts, searching for digital twins and digital twins registries"
+    },
+    {
+        "name": "Add-Ons Microservices",
+        "description": "Auxiliary add-ons such as Eco Pass Kit"
+    },
+    {
+        "name": "EcoPass KIT Microservices",
+        "description": "Provider-side EcoPass KIT endpoints"
     }
 ]
 
@@ -148,9 +158,55 @@ v1_router.include_router(submodel_dispatcher.router)
 v1_router.include_router(sharing_handler.router)
 v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
+v1_router.include_router(addons.router)
 
 # Include the API version 1 router into the main app
 app.include_router(v1_router)
+
+
+def custom_openapi():
+    """
+    Add custom tag grouping so add-ons appear nested under the Add-Ons section.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=tags_metadata,
+    )
+
+    openapi_schema["x-tagGroups"] = [
+        {
+            "name": "Core Services",
+            "tags": [
+                "Part Management",
+                "Sharing Functionality",
+                "Partner Management",
+                "Twin Management",
+                "Submodel Dispatcher",
+                "Open Connection Management",
+                "Part Discovery Management",
+            ],
+        },
+        {
+            "name": "Add-Ons",
+            "tags": [
+                "Add-Ons Microservices",
+                "EcoPass KIT Microservices",
+                "EcoPass KIT Consumer Microservices",
+            ],
+        },
+    ]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 @app.exception_handler(BaseError)
 async def base_error_exception_handler(

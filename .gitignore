@@ -33,8 +33,11 @@ log
 *.log
 
 ### Local Data Files Backend ###
-data
+/ichub-backend/data
+/ichub-frontend/src/data
 *.lst
+# Allow frontend features data folder
+!/ichub-frontend/src/features/data
 
 ### Local Temporal Files Backend ###
 tmp

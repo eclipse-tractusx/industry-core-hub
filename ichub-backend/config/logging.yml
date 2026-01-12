@@ -46,15 +46,15 @@ loggers:
         propagate: no
 
     staging:
-        level: INFO
+        level: DEBUG
         handlers: [console, file]
         propagate: no
 
     production:
-        level: WARNING
+        level: DEBUG
         handlers: [file]
         propagate: no
 
 root:
-    level: INFO
+    level: DEBUG
     handlers: [console, file]
