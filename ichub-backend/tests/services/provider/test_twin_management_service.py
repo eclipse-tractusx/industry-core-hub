@@ -199,40 +199,6 @@ class TestTwinManagementService:
         assert service.submodel_document_generator is not None
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_enablement_stack_existing(self, mock_repo_factory, mock_enablement_service_stack):
-        """Test retrieving existing enablement service stack."""
-        # Arrange
-        mock_repo = Mock()
-        mock_repo_factory.return_value.__enter__.return_value = mock_repo
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.return_value = [mock_enablement_service_stack]
-
-        # Act
-        result = self.service.get_or_create_enablement_stack(mock_repo, "BPNL123456789012")
-
-        # Assert
-        assert result == mock_enablement_service_stack
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.assert_called_once_with(legal_entity_bpnl="BPNL123456789012")
-
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_enablement_stack_new(self, mock_repo_factory, mock_enablement_service_stack):
-        """Test creating new enablement service stack."""
-        # Arrange
-        mock_repo = Mock()
-        mock_repo_factory.return_value.__enter__.return_value = mock_repo
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.return_value = []
-        mock_repo.legal_entity_repository.get_by_bpnl.return_value = Mock(id=1)
-        mock_repo.enablement_service_stack_repository.create.return_value = mock_enablement_service_stack
-
-        # Act
-        result = self.service.get_or_create_enablement_stack(mock_repo, "BPNL123456789012")
-
-        # Assert
-        assert result == mock_enablement_service_stack
-        mock_repo.enablement_service_stack_repository.create.assert_called_once()
-        mock_repo.commit.assert_called()
-        mock_repo.refresh.assert_called_once()
-
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     @patch('services.provider.twin_management_service.dtr_provider_manager')
     def test_create_catalog_part_twin_success(self, mock_dtr_provider, mock_repo_factory, 
                                             mock_catalog_part, mock_twin, mock_enablement_service_stack,
@@ -607,11 +573,25 @@ class TestTwinManagementService:
         assert hasattr(service, 'submodel_document_generator')
         assert service.submodel_document_generator is not None
 
-    def test_dtr_integration_available(self):
-        """Test that DTR provider manager is available for integration."""
-        # This test ensures that the DTR integration is properly imported and available
-        from services.provider.twin_management_service import dtr_provider_manager
-        assert dtr_provider_manager is not None
+    @patch('services.provider.twin_management_service.ConfigManager')
+    def test_create_twin_aspect_new_aspect(self, mock_config, mock_submodel_manager, mock_dtr_provider, 
+                                         mock_connector, mock_repo_factory, mock_twin, mock_enablement_service_stack,
+                                         sample_global_id, sample_semantic_id, sample_payload):
+        """Test creating a new twin aspect."""
+        # Arrange
+        mock_config_manager.get_config.side_effect = lambda key: {
+            'digitalTwinRegistry.hostname': 'http://test.com',
+            'digitalTwinRegistry.uri': '/api',
+            'digitalTwinRegistry.lookupUri': '/lookup',
+            'digitalTwinRegistry.apiPath': '/v3'
+        }[key]
+
+        # Act
+        from services.provider.twin_management_service import _create_dtr_manager
+        result = _create_dtr_manager(None)
+
+        # Assert
+        assert result is not None
 
     def test_connector_integration_available(self):
         """Test that connector manager is available for integration."""

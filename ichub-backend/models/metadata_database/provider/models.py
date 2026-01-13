@@ -493,27 +493,91 @@ class DataExchangeContract(SQLModel, table=True):
 
     __tablename__ = "data_exchange_contract"
 
+class ConnectorControlPlane(SQLModel, table=True):
+    """
+    Represents a Connector Control Plane.
+    It holds information about the Connector Control Plane, including its ID, name, and connection settings.
+    It is linked to the enablement_service_stack by a foreign key (enablement_service_stack_id).
+    Also it refers the legal entity under whose BPNL the Connector is registered.
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the Connector Control Plane.
+        name (str): The name of the Connector Control Plane.
+        dataspace_version (str): The version of the dataspace release.
+        dma_path (str): The path to the Connector management API.
+        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON.
+        legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
+
+    Relationships:
+        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this Connector service.
+
+    Table Name:
+        connector_control_plane
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True, description="The name of the Connector Control Plane.")
+    dataspace_version: str = Field(default="jupiter", description="The version of the dataspace release.")
+    dma_path: str = Field(default="/management", description="The path to the Connector management API.")
+    connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
+    legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
+
+    # Relationships
+    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="connector_control_plane")
+    legal_entity: LegalEntity = Relationship()
+    twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="connector_control_plane")
+
+    __tablename__ = "connector_control_plane"
+
+
+class TwinRegistry(SQLModel, table=True):
+    """
+    Represents a Digital Twin Registry (DTR).
+    It holds information about the Twin Registry, including its ID, name, and connection settings.
+    It is linked to the enablement_service_stack by a foreign key (enablement_service_stack_id).
+
+    Attributes:
+        id (Optional[int]): The unique identifier for the Twin Registry.
+        name (str): The name of the Twin Registry.
+        version (str): The version of the Twin Registry.
+        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON.
+
+    Relationships:
+        enablement_service_stack (EnablementServiceStack): The enablement service stack associated with this DTR service.
+        twin_aspect_registrations (List["TwinAspectRegistration"]): The twin aspect registrations associated with this service stack.
+
+    Table Name:
+        twin_registry
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True, unique=True, description="The name of the Twin Registry.")
+    version: str = Field(default="3.0", description="The version of the Twin Registry.")
+    connection_settings: Optional[Dict[str, Any]] = Field(sa_column=Column(JSON), description="Connection settings stored as JSON")
+
+    # Relationships
+    enablement_service_stack: Optional["EnablementServiceStack"] = Relationship(back_populates="twin_registry")
+    twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="twin_registry")
+    twin_registrations: List["TwinRegistration"] = Relationship(back_populates="twin_registry")
+
+    __tablename__ = "twin_registry"
+
 
 class EnablementServiceStack(SQLModel, table=True):
     """
     An instance/installation of the `Enablement services` stack.
     The `Enablement services` stack is a set of services that are used to enable standardized exchange of data between partners.
-    For this implementation, it needs to consist at least of an Eclipse Dataspace Connector (EDC)
-    and a Digital Twin Registry (DTR) connection.
-    It is linked to legal_entity through a foreign key (legal_entity_id) depicting that the EDC and DTR
-    are related to the respective (company-owned) BPNL of the data provider 
+    For this implementation, it needs to consist at least of one unique Connector Control Plane
+    and one (sharable) Digital Twin Registry (DTR).
 
     Attributes:
         id (Optional[int]): The unique identifier for the enablement service stack.
         name (str): The name of the enablement service stack.
-        connection_settings (Optional[Dict[str, Any]]): Connection settings stored as JSON. 
-			In the future could contain all necessary config to connect to the DTR/EDC/Submodel service. 
-			For the moment we only have one DTR/EDC/Submodel service and it will be statically provided.
-        legal_entity_id (int): The ID of the associated legal entity (foreign key to legal_entity).
+        settings (Optional[Dict[str, Any]]): Any stack specific settings stored as JSON. 
+        connector_control_plane_id (int): The ID of the associated Connector control plane (foreign key to connector_control_plane).
+        twin_registry_id (int): The ID of the associated twin registry (foreign key to twin_registry).
 
     Relationships:
-        legal_entity (LegalEntity): The legal entity associated with this service stack.
-        twin_aspect_registrations (List["TwinAspectRegistration"]): The twin aspect registrations associated with this service stack.
+        connector_control_plane (ConnectorControlPlane): The Connector control plane associated with this enablement service stack.
+        twin_registry (TwinRegistry): The twin registry associated with this enablement service stack.
         twin_registrations (List["TwinRegistration"]): The twin registrations associated with this service stack.
 
     Table Name:
@@ -522,17 +586,16 @@ class EnablementServiceStack(SQLModel, table=True):
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True, description="The name of the enablement service stack.")
-    connection_settings: Optional[Dict[str, Any]] = Field(
+    settings: Optional[Dict[str, Any]] = Field(
         sa_column=Column(JSON),  # Specify JSON column type
-        description="Connection settings stored as JSON"
+        description="Any stack specific settings stored as JSON"
     )
-    legal_entity_id: int = Field(index=True, foreign_key="legal_entity.id", description="The ID of the associated legal entity.")
+    connector_control_plane_id: int = Field(index=True, unique=True, foreign_key="connector_control_plane.id", description="The ID of the associated connector control plane.")
+    twin_registry_id: int = Field(index=True, foreign_key="twin_registry.id", description="The ID of the associated twin registry.")
 
     # Relationships
-    legal_entity: LegalEntity = Relationship(back_populates="enablement_service_stacks")
-    twin_aspect_registrations: List["TwinAspectRegistration"] = Relationship(back_populates="enablement_service_stack")
-    twin_registrations: List["TwinRegistration"] = Relationship(back_populates="enablement_service_stack")
-
+    connector_control_plane: ConnectorControlPlane = Relationship(back_populates="enablement_service_stack")
+    twin_registry: TwinRegistry = Relationship(back_populates="enablement_service_stack")
 
     __tablename__ = "enablement_service_stack"
 
@@ -572,25 +635,25 @@ class TwinAspect(SQLModel, table=True):
 
     __tablename__ = "twin_aspect"
 
-    def find_registration_by_stack_id(self, enablement_service_stack_id: int) -> Optional["TwinAspectRegistration"]:
-        """Find the registration for a given enablement service stack."""
+    def find_registration_by_twin_registry_id(self, twin_registry_id: int) -> Optional["TwinAspectRegistration"]:
+        """Find the registration for a given twin registry."""
         for registration in self.twin_aspect_registrations:
-            if registration.enablement_service_stack_id == enablement_service_stack_id:
+            if registration.twin_registry_id == twin_registry_id:
                 return registration
         return None
 
 
 class TwinAspectRegistration(SQLModel, table=True):
     """
-    Represents the relation between a twin_aspect and an enablement_service_stack
-    through their ids (twin_aspect_id and enablement_service_stack_id).
+    Represents the relation between a twin_aspect and a twin_registry
+    through their ids (twin_aspect_id and twin_registry_id).
     It holds information about the status, the registration mode and creation and update dates.
 
     Attributes:
         twin_aspect_id (int): The ID of the associated twin aspect (foreign key to twin_aspect).
-        enablement_service_stack_id (int): The ID of the associated enablement service stack (foreign key).
+        twin_registry_id (int): The ID of the associated twin registry (foreign key).
         status (int): The status of the registration.
-			It‘s actually the status for all 3 services DTR/EDC/Submodel Service (number). It will be set by the system internally.
+			It's actually the status for all 3 services DTR/EDC/Submodel Service (number). It will be set by the system internally.
         registration_mode (int): The registration mode. It indicates asset bundling (yes or no). 
 			In the first version, there is no asset bundling. Later provided by the API caller
         created_date (datetime): The creation date of the registration. Auto-generated in the DB.
@@ -598,7 +661,7 @@ class TwinAspectRegistration(SQLModel, table=True):
 
     Relationships:
         twin_aspect (TwinAspect): The twin aspect being registered.
-        enablement_service_stack (EnablementServiceStack): The enablement service stack used for registration.
+        twin_registry (TwinRegistry): The twin registry used for registration.
 
     Table Name:
         twin_aspect_registration
@@ -606,7 +669,8 @@ class TwinAspectRegistration(SQLModel, table=True):
    
     """
     twin_aspect_id: int = Field(foreign_key="twin_aspect.id", primary_key=True, description="The ID of the associated twin aspect.")
-    enablement_service_stack_id: int = Field(foreign_key="enablement_service_stack.id", primary_key=True, description="The ID of the associated enablement service stack.")
+    twin_registry_id: int = Field(foreign_key="twin_registry.id", primary_key=True, description="The ID of the associated twin registry.")
+    connector_control_plane_id: int = Field(index=True, foreign_key="connector_control_plane.id", description="The ID of the associated connector control plane.")
     status: int = Field(index=True, default=0, description="The status of the registration.", sa_type=SmallInteger) # TODO: Use Enum for status
     registration_mode: int = Field(index=True, default=0, description="The registration mode.", sa_type=SmallInteger) # TODO: Use Enum for registration mode
     created_date: datetime = Field(index=True, default_factory=datetime.utcnow, description="The creation date of the registration.")
@@ -614,7 +678,8 @@ class TwinAspectRegistration(SQLModel, table=True):
 
     # Relationships
     twin_aspect: TwinAspect = Relationship(back_populates="twin_aspect_registrations")
-    enablement_service_stack: EnablementServiceStack = Relationship(back_populates="twin_aspect_registrations")
+    twin_registry: TwinRegistry = Relationship(back_populates="twin_aspect_registrations")
+    connector_control_plane: ConnectorControlPlane = Relationship(back_populates="twin_aspect_registrations")
 
     __tablename__ = "twin_aspect_registration"
 
@@ -654,29 +719,29 @@ class TwinExchange(SQLModel, table=True):
 
 class TwinRegistration(SQLModel, table=True):
     """
-    Represents the relation between s twin and an enablement_service_stack
-    through their ids (twin_id and enablement_service_stack_id).
-    It also indicates if the twin is registered in the DTR using a boolean (dtr_registered).
+    Represents the relation between a twin and a twin registry
+    through their ids (twin_id and twin_registry_id).
+    It also indicates if the twin is registered in the twin registry using a boolean (twin_registered).
 
     Attributes:
         twin_id (int): The ID of the associated twin (foreign key to twin).
-        enablement_service_stack_id (int): The ID of the associated enablement service stack (foreign key).
-        dtr_registered (bool): Whether the twin is registered in the DTR.
+        twin_registry_id (int): The ID of the associated twin registry (foreign key).
+        dtr_registered (bool): Whether the twin is registered in the twin registry.
 
     Relationships:
         twin (Twin): The twin being registered.
-        enablement_service_stack (EnablementServiceStack): The enablement service stack used for registration.
+        twin_registry (TwinRegistry): The twin registry used for registration.
 
     Table Name:
         twin_registration
 
     """
     twin_id: int = Field(foreign_key="twin.id", primary_key=True, description=TWIN_ID_DESCRIPTION)
-    enablement_service_stack_id: int = Field(foreign_key="enablement_service_stack.id", primary_key=True, description="The ID of the associated enablement service stack.")
-    dtr_registered: bool = Field(index=True, default=False, description="Whether the twin is registered in the DTR.")
+    twin_registry_id: int = Field(foreign_key="twin_registry.id", primary_key=True, description="The ID of the associated twin registry.")
+    dtr_registered: bool = Field(index=True, default=False, description="Whether the twin is registered in the twin registry.")
 
     # Relationships
     twin: Twin = Relationship(back_populates="twin_registrations")
-    enablement_service_stack: EnablementServiceStack = Relationship(back_populates="twin_registrations")
+    twin_registry: TwinRegistry = Relationship(back_populates="twin_registrations")
 
     __tablename__ = "twin_registration"

@@ -66,11 +66,19 @@ class TwinsAspectRegistrationMode(enum.Enum):
     DISPATCHED = 2
     """No extra asset has been generated within the Eclipse Dataspace Connector for the aspect document - instead there is a bundle asset that points to a dispatching service"""
 
+class TwinRegistryRegistrationData(BaseModel):
+    """Represents endpoint data for a twin registration within a DTR."""
 
-class TwinAspectRegistration(BaseModel):
-    """Represents the registration of a twin aspect within an enablement service stack."""
+    twin_registry_name: str = Field(alias="twinRegistryName", description="The name of the Digital Twin Registry where the digital twin should be registered.")
 
-    enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect is registered.")
+class ConnectorRegistrationData(BaseModel):
+    """Represents endpoint data for a twin aspect registration within a DTR."""
+
+    connector_control_plane_name: str = Field(alias="connectorControlPlaneName", description="The name of the connector control plane where the aspect is registered.")
+    
+class TwinAspectRegistration(ConnectorRegistrationData, TwinRegistryRegistrationData):
+    """Represents the registration of a twin aspect within a DTR."""
+
     status: TwinAspectRegistrationStatus = Field(description="The current status of the aspect registration process.")
     mode: TwinsAspectRegistrationMode = Field(description="The current mode of the aspect registration process.")
     created_date: datetime = Field(alias="createdDate", description="The date when the aspect was initially registered.")
@@ -79,13 +87,12 @@ class TwinAspectRegistration(BaseModel):
 class TwinAspectRead(BaseModel):
     semantic_id: str = Field(alias="semanticId", description="The semantic ID of the aspect determining the structure of the associated payload data.")
     submodel_id: UUID = Field(alias="submodelId", description="The ID of the submodel descriptor within the DTR shell descriptor for the associated twin.")
-    registrations: Optional[Dict[str, TwinAspectRegistration]] = Field(description="A map of registration information for the aspect in different enablement service stacks. The key is the name of the enablement service stack.", default={})
+    registrations: Optional[Dict[str, TwinAspectRegistration]] = Field(description="A map of registration information for the aspect in different twin registries. The key is the name of the twin registry.", default={})
 
-class TwinAspectCreate(BaseModel):
+class TwinAspectCreate(ConnectorRegistrationData, TwinRegistryRegistrationData):
     global_id: UUID = Field(alias="globalId", description="The Catena-X ID / global ID of the digital twin to which the new aspect belongs.")
     semantic_id: str = Field(alias="semanticId", description="The semantic ID of the new aspect determining the structure of the associated payload data.")
     submodel_id: Optional[UUID] = Field(alias="submodelId", description="The optional ID of the submodel descriptor within the DTR shell descriptor for the associated twin. If not specified, a new UUID will be created automatically.", default=None) 
-    #enablement_service_stack_name: str = Field(alias="enablementServiceStackName", description="The name of the enablement service stack where the twin aspect should be registered.")
     payload: Dict[str, Any] = Field(description="The payload data of the new aspect. This is a JSON object that contains the actual data of the aspect. The structure of this object is determined by the semantic ID of the aspect.")
 
 class TwinRead(BaseModel):
@@ -97,15 +104,16 @@ class TwinRead(BaseModel):
     modified_date: datetime = Field(alias="modifiedDate", description="The date when the digital twin was last modified.")
     shares: Optional[List[DataExchangeAgreementRead]] = Field(description="A list of data exchange agreements the digital twin is shared via.", default=None)
 
-class TwinCreateBase(BaseModel):
+class TwinCreateBase(TwinRegistryRegistrationData):
     """Represents a digital twin to be created within the Digital Twin Registry."""
 
     global_id: Optional[UUID] = Field(alias="globalId", description="Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.", default=None)
     dtr_aas_id: Optional[UUID] = Field(alias="dtrAasId", description="Optionally the shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry. If not specified, a new UUID will be created automatically.", default=None)
     id_short: Optional[str] = Field(alias="idShort", description="Optionally the idShort of the digital twin in the Digital Twin Registry. If not specified, a default value 'Twin-{globalId}' will be used.", default=None)
+
 class TwinDetailsReadBase(BaseModel):
     additional_context: Optional[Dict[str, Any]] = Field(alias="additionalContext", description="Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.", default=None)
-    registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.", default=None)
+    registrations: Optional[Dict[str, bool]] = Field(description="A map of registration information for the digital twin in different DTRs. The key is the name of the DTR.", default=None)
     all_aspects: Optional[List[TwinAspectRead]] = Field(alias="allAspects", description="A complete list of all aspect information for the digital twin, including multiple aspects with the same semantic ID.", default=None)
     aspects: Optional[Dict[str, TwinAspectRead]] = Field(description="A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect. For backward compatibility, only the first aspect of each semantic type is included.", default=None)
 
