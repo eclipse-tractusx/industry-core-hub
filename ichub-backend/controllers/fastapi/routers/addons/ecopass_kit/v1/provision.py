@@ -36,6 +36,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from services.provider.twin_management_service import TwinManagementService
 from models.services.provider.twin_management import SerializedPartTwinShareCreate
+from models.services.addons.ecopass_kit.v1 import ShareDppRequest, ShareDppResponse
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -43,37 +44,6 @@ router = APIRouter(
     prefix="/provision",
     dependencies=[Depends(get_authentication_dependency())]
 )
-
-
-class ShareDppRequest(BaseModel):
-    """Request model for sharing a Digital Product Passport"""
-    dpp_id: str = Field(
-        alias="dppId",
-        description="The passport ID of the Digital Product Passport to share (format: CX:manufacturerPartId:partInstanceId)"
-    )
-    business_partner_number: str = Field(
-        alias="businessPartnerNumber",
-        description="The BPNL of the business partner to share the DPP with"
-    )
-
-    class Config:
-        populate_by_name = True
-
-
-class ShareDppResponse(BaseModel):
-    """Response model for DPP sharing operation"""
-    dpp_id: str = Field(alias="dppId", description="The passport ID of the shared DPP")
-    business_partner_number: str = Field(
-        alias="businessPartnerNumber",
-        description="The BPNL the DPP was shared with"
-    )
-    bpn_discovery_registered: bool = Field(
-        alias="bpnDiscoveryRegistered",
-        description="Whether the manufacturer part ID was successfully registered in BPN Discovery"
-    )
-
-    class Config:
-        populate_by_name = True
 
 
 @router.post("/share", response_model=ShareDppResponse, status_code=status.HTTP_200_OK)

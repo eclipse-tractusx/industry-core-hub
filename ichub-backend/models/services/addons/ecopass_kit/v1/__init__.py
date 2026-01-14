@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2025 LKS NEXT
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -10,7 +11,7 @@
 # terms of the Apache License, Version 2.0 which is available at
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
-# Unless required by applicable law or agreed in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the
@@ -20,17 +21,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Depends
-
-from .v1 import discovery, provision, passports
-
-from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
-
-router = APIRouter(
-    prefix="/ecopass-kit",
-    tags=["EcoPass KIT Microservices"],
-    dependencies=[Depends(get_authentication_dependency())]
-)
-router.include_router(passports.router)
-router.include_router(provision.router)
-router.include_router(discovery.router)
+from .discovery import DiscoverDppRequest, DiscoveryStatus, DiscoverDppResponse
+from .passports import DigitalProductPassport, TwinAssociation
+from .provision import ShareDppRequest, ShareDppResponse

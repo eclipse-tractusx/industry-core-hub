@@ -20,55 +20,18 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import List, Optional
-from uuid import UUID
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.metadata_database.manager import RepositoryManagerFactory
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
+from models.services.addons.ecopass_kit.v1 import DigitalProductPassport, TwinAssociation
 
 router = APIRouter(
     prefix="/passports",
     dependencies=[Depends(get_authentication_dependency())]
 )
-
-
-class TwinAssociation(BaseModel):
-    """Association between DPP and Digital Twin"""
-    twin_id: str = Field(alias="twinId")
-    aas_id: Optional[str] = Field(alias="aasId", default=None)
-    manufacturer_part_id: str = Field(alias="manufacturerPartId")
-    part_instance_id: str = Field(alias="partInstanceId")
-    twin_name: Optional[str] = Field(alias="twinName", default=None)
-    asset_id: Optional[str] = Field(alias="assetId", default=None)
-
-    class Config:
-        populate_by_name = True
-
-
-class DigitalProductPassport(BaseModel):
-    """Digital Product Passport model"""
-    id: str
-    passport_id: str = Field(alias="passportId")  # UUID from metadata.passportId
-    manufacturer_part_id: Optional[str] = Field(alias="manufacturerPartId", default=None)  # For BPN Discovery
-    part_instance_id: Optional[str] = Field(alias="partInstanceId", default=None)  # Part Instance ID
-    part_type: Optional[str] = Field(alias="partType", default=None)  # "catalog" or "serialized"
-    name: str
-    version: str
-    semantic_id: str = Field(alias="semanticId")
-    status: str
-    issue_date: Optional[str] = Field(alias="issueDate", default=None)  # Issue date from DPP
-    expiration_date: Optional[str] = Field(alias="expirationDate", default=None)  # Expiration date from DPP
-    twin_association: Optional[TwinAssociation] = Field(alias="twinAssociation", default=None)
-    submodel_id: str = Field(alias="submodelId")
-    created_at: str = Field(alias="createdAt")
-    updated_at: str = Field(alias="updatedAt")
-
-    class Config:
-        populate_by_name = True
-
 
 @router.get("", response_model=List[DigitalProductPassport])
 async def get_all_passports():

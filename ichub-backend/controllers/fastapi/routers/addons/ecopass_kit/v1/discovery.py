@@ -25,7 +25,6 @@ import uuid
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from pydantic import BaseModel, Field
 
 from connector import discovery_oauth
 from tractusx_sdk.industry.services.discovery.bpn_discovery_service import BpnDiscoveryService
@@ -34,6 +33,7 @@ from tractusx_sdk.dataspace.services.discovery import DiscoveryFinderService
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
+from models.services.addons.ecopass_kit.v1 import DiscoverDppRequest, DiscoveryStatus, DiscoverDppResponse
 
 from dtr import dtr_manager
 
@@ -47,71 +47,6 @@ router = APIRouter(
 # In-memory storage for discovery task statuses
 # In production, this should use Redis or similar
 _discovery_tasks: Dict[str, Dict[str, Any]] = {}
-
-
-class DiscoverDppRequest(BaseModel):
-    """Request model for discovering a Digital Product Passport"""
-    id: str = Field(
-        description="The identifier in format 'CX:<manufacturerPartId>:<partInstanceId>'"
-    )
-    semantic_id: str = Field(
-        alias="semanticId",
-        description="The semantic ID of the submodel to retrieve (e.g., 'urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport')"
-    )
-    dtr_policies: Optional[List[Dict[str, Any]]] = Field(
-        None,
-        alias="dtrPolicies",
-        description="Policies to apply for DTR (Digital Twin Registry) access"
-    )
-    governance: Optional[Dict[str, Any]] = Field(
-        None,
-        description="Governance policies for submodel consumption (passport data access)"
-    )
-
-    class Config:
-        populate_by_name = True
-
-
-class DiscoveryStatus(BaseModel):
-    """Status model for discovery progress"""
-    status: str = Field(
-        description="Current status: 'in_progress', 'completed', 'failed'"
-    )
-    step: str = Field(
-        description="Current step: 'parsing', 'discovering_bpn', 'retrieving_twin', 'looking_up_submodel', 'consuming_data', 'complete'"
-    )
-    message: str = Field(
-        description="Human-readable status message"
-    )
-    progress: int = Field(
-        description="Progress percentage (0-100)"
-    )
-
-    class Config:
-        populate_by_name = True
-
-
-class DiscoverDppResponse(BaseModel):
-    """Response model for DPP discovery operation"""
-    task_id: str = Field(
-        alias="taskId",
-        description="Unique identifier for tracking this discovery task"
-    )
-    status: DiscoveryStatus = Field(
-        description="Current discovery status"
-    )
-    digital_twin: Optional[Dict[str, Any]] = Field(
-        None,
-        alias="digitalTwin",
-        description="The discovered digital twin shell descriptor"
-    )
-    data: Optional[Dict[str, Any]] = Field(
-        None,
-        description="The consumed DPP data"
-    )
-
-    class Config:
-        populate_by_name = True
 
 
 @router.post("/", response_model=DiscoverDppResponse, status_code=status.HTTP_202_ACCEPTED)
