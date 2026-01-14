@@ -21,3 +21,4 @@
 #################################################################################
 
 from .discovery import discovery_manager
+from .passports import passports_manager
