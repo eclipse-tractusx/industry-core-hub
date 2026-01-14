@@ -37,5 +37,7 @@ from .exceptions import (
     AlreadyExistsError,
     NotAvailableError,
     ExternalAPIError,
-    SubmodelNotSharedWithBusinessPartnerError
+    SubmodelNotSharedWithBusinessPartnerError,
+    DppNotFoundError,
+    DppShareError
 )
