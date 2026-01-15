@@ -21,9 +21,10 @@
 #################################################################################
 
 from typing import Dict, Any, Optional
+import html
 
 from sqlmodel import select
-from sqlalchemy.orm import selectinload, joinedload
+from sqlalchemy.orm import selectinload
 
 from connector import discovery_oauth
 
@@ -92,7 +93,7 @@ class ProvisionManager:
             DppShareError: If sharing fails
         """
         logger.info(
-            f"Initiating DPP sharing for DPP ID: {dpp_id} with partner: {business_partner_number}"
+            f"Initiating DPP sharing for DPP ID: {html.escape(dpp_id)} with partner: {html.escape(business_partner_number)}"
         )
 
         # Try to find as catalog part first, then as serialized part
@@ -100,15 +101,15 @@ class ProvisionManager:
         is_catalog_part = False
 
         try:
-            logger.info(f"Attempting to find catalog part twin for DPP ID: {dpp_id}")
+            logger.info(f"Attempting to find catalog part twin for DPP ID: {html.escape(dpp_id)}")
             twin_data = self.get_catalog_part_twin_by_dpp_id(dpp_id)
             is_catalog_part = True
-            logger.info(f"Found catalog part twin for DPP {dpp_id}: {twin_data}")
+            logger.info(f"Found catalog part twin for DPP {html.escape(dpp_id)}: {twin_data}")
         except DppNotFoundError:
             # Not a catalog part, try serialized part
-            logger.info(f"Not a catalog part, trying serialized part for DPP {dpp_id}")
+            logger.info(f"Not a catalog part, trying serialized part for DPP {html.escape(dpp_id)}")
             twin_data = self.get_serialized_part_twin_by_dpp_id(dpp_id)
-            logger.info(f"Found serialized part twin for DPP {dpp_id}: {twin_data}")
+            logger.info(f"Found serialized part twin for DPP {html.escape(dpp_id)}: {twin_data}")
 
         # Share the twin
         if is_catalog_part:
@@ -125,7 +126,7 @@ class ProvisionManager:
                 partner=business_partner_number,
             )
 
-        logger.info(f"Successfully shared twin for DPP {dpp_id}")
+        logger.info(f"Successfully shared twin for DPP {html.escape(dpp_id)}")
 
         return {
             "twin_data": twin_data,
@@ -233,7 +234,7 @@ class ProvisionManager:
                     dpp_id=dpp_id,
                 )
 
-            logger.info(f"Searching for catalog part twin with DPP ID: {dpp_id}")
+            logger.info(f"Searching for catalog part twin with DPP ID: {html.escape(dpp_id)}")
 
             for dpp_aspect in dpp_aspects:
                 try:
@@ -340,8 +341,8 @@ class ProvisionManager:
                     message="No DPPs found on serialized part twins",
                     dpp_id=dpp_id,
                 )
-
-            logger.info(f"Searching for serialized part twin with DPP ID: {dpp_id}")
+            
+            logger.info(f"Searching for serialized part twin with DPP ID: {html.escape(dpp_id)}")
 
             for dpp_aspect in dpp_aspects:
                 try:
@@ -456,7 +457,7 @@ class ProvisionManager:
             )
 
             logger.info(
-                f"Successfully registered manufacturer part ID in BPN Discovery: {manufacturer_part_id}"
+                f"Successfully registered manufacturer part ID in BPN Discovery: {html.escape(manufacturer_part_id)}"
             )
             return True
 
