@@ -111,3 +111,21 @@ class SubmodelNotSharedWithBusinessPartnerError(BaseError):
     """
     def __init__(self, message: str):
         super().__init__(status_code=403, message=message)
+
+class DppNotFoundError(Exception):
+    """Exception raised when a DPP is not found."""
+
+    def __init__(self, message: str, dpp_id: str):
+        self.message = message
+        self.dpp_id = dpp_id
+        super().__init__(self.message)
+
+
+class DppShareError(Exception):
+    """Exception raised when DPP sharing fails."""
+
+    def __init__(self, message: str, dpp_id: str, partner: str):
+        self.message = message
+        self.dpp_id = dpp_id
+        self.partner = partner
+        super().__init__(self.message)

@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-hostname: "https://backend-ichub.int.catena-x.net"
+hostname: "http://localhost:9000"
 
 authorization:
   enabled: true
@@ -36,6 +36,8 @@ authorization:
     retry:
       max_retries: 3
       retry_delay: 2
+      # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
+      background_retry_interval: 60
 agreements:
   - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
     usage:
@@ -180,14 +182,14 @@ cors:
 consumer:
   discovery:
     discovery_finder:
-      url: "https://semantics.int.catena-x.net/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+      url: "https://<discovery-finder>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
     connector_discovery:
       key: "bpn"
     oauth:
-      url: "https://centralidp.int.catena-x.net/auth/"
+      url: "https://<centralidp.url>/auth/"
       realm: "CX-Central"
-      client_id: "sa307"
-      client_secret: "fZItup0SGJGSpQaVbNLlJ6RBt2XvlxjJ"
+      client_id: "<client-id>"
+      client_secret: "<client-secret>"
     digitalTwinRegistry:
       dct_type_key: "dct:type"
       dct_type_filter:
@@ -198,9 +200,9 @@ consumer:
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: https://edc-consumer-ichub-control.int.catena-x.net
+      hostname: "https://<control-plane-edc-consumer>"
       apiKeyHeader: X-Api-Key
-      apiKey: ACA176440A8BDD3954FCEC3552BF8985AFB75608A57B9121EA809791854AAA2BEDBF85333572E8DECE9537D69697D6BA28EA26174085242CB536B7877E219CAC
+      apiKey: "<api-key-edc-consumer>"
       managementPath: /management
       protocolPath: /api/v1/dsp
       catalogPath: /catalog
@@ -210,17 +212,17 @@ provider:
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: https://edc-provider-ichub-control.int.catena-x.net
+      hostname: "https://<provider-edc-control-plane>"
       apiKeyHeader: X-Api-Key
-      apiKey: ACA176440A8BDD3954FCEC3552BF8985AFB75608A57B9121EA809791854AAA2BEDBF85333572E8DECE9537D69697D6BA28EA26174085242CB536B7877E219CAC
+      apiKey: "<api-key-controlplane>"
       managementPath: /management
       protocolPath: /api/v1/dsp
     dataplane:
-      hostname: https://edc-provider-ichub-dataplane.int.catena-x.net
+      hostname: "https://<provider-edc-dataplane>"
       publicPath: "/api/public"
 
   digitalTwinRegistry:
-    hostname: https://dtr-ichub.int.catena-x.net
+    hostname: "https://<provider-digital-twin-registry>"
     apiPath: /api/v3
     uri: ""
     asset_config:

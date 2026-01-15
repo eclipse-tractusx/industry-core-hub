@@ -20,24 +20,5 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""
-This module contains utility functions and classes for working with the Eclipse Tractus-X Industry Core Hub Backend.
-
-:copyright: (c) 2025 Eclipse Foundation
-:license: Apache License, Version 2.0, see LICENSE for more details.
-"""
-
-# Package-level variables
-__author__ = 'Eclipse Tractus-X Contributors'
-__license__ = "Apache License, Version 2.0"
-
-from .exceptions import (
-    InvalidError,
-    NotFoundError,
-    AlreadyExistsError,
-    NotAvailableError,
-    ExternalAPIError,
-    SubmodelNotSharedWithBusinessPartnerError,
-    DppNotFoundError,
-    DppShareError
-)
+from .discovery import discovery_manager
+from .passports import passports_manager
