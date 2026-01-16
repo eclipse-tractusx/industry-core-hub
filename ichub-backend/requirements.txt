@@ -62,7 +62,7 @@ async-property==0.2.2
 attrs==25.3.0
 cached-property==1.5.2
 ecdsa==0.19.1
-filelock==3.19.1
+filelock==3.20.1
 httpx==0.26.0
 keycloak==3.1.5
 pyasn1==0.6.1
