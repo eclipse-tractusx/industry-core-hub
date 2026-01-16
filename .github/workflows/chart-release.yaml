@@ -59,6 +59,37 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pre-pull OCI dependencies
+        run: |
+          export HELM_EXPERIMENTAL_OCI=1
+
+          chart="charts/industry-core-hub/Chart.yaml"
+
+          oci_block=$(awk '
+            /- name:/ {current=""}
+            /repository: oci:\/\// {current=1}
+            current {print}
+          ' "$chart")
+
+          repo=$(echo "$oci_block"   | grep "repository:" | awk '{print $2}')
+          alias=$(echo "$oci_block"  | grep "alias:"      | awk '{print $2}')
+          version=$(echo "$oci_block"| grep "version:"    | awk '{print $2}')
+
+          if [[ -n "$repo" ]]; then
+            echo "Found OCI dependency: $alias $version from $repo"
+
+            mkdir -p charts/industry-core-hub/charts
+
+            helm pull "$repo/postgres" \
+              --version "$version" \
+              --untar \
+              --untardir charts/industry-core-hub/charts \
+              --username ${{ secrets.DOCKER_HUB_USER }} \
+              --password ${{ secrets.DOCKER_HUB_TOKEN }}
+          else
+            echo "No OCI dependencies found."
+          fi
+
       - name: Update helm dependencies
         run: |
           cd charts/industry-core-hub

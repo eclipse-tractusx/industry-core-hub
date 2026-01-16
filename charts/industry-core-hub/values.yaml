@@ -834,54 +834,53 @@ frontend:
       memory: 256Mi
       ephemeral-storage: "1Gi"
 
-# -- PostgreSQL chart configuration
+# -- PostgreSQL chart configuration (cloudpirates)
 postgresql:
   # -- Switch to enable or disable the PostgreSQL helm chart
   enabled: true
-  fullnameOverride: ""
+  # -- String to partially override postgres.fullname
   nameOverride: ""
+  # -- String to fully override postgres.fullname
+  fullnameOverride: ""
+  # -- PostgreSQL image configuration
   image:
-    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
-    repository: bitnamilegacy/postgresql
-    # -- workaround to use bitnamilegacy chart for version 12.12.x till committers align on new postgresql charts
-    tag: 15.4.0-debian-11-r45
+    # -- PostgreSQL image registry
+    registry: docker.io
+    # -- PostgreSQL image repository
+    repository: postgres
+  # -- PostgreSQL Authentication (postgres admin user)
   auth:
-    # -- Database name
+    # -- Password for postgres admin user (stored in existingSecret with key 'postgres-password')
+    password: ""
+    # -- Default database to create
     database: "ichub-postgres"
-    # -- Database port number
-    port: 5432
-    # -- Secret containing the passwords for root usernames postgres and non-root usernames repl_user and ichub.
+    # -- Existing secret containing passwords
     existingSecret: "ichub-postgres-secret"
-    # -- Key in the existing secret that contains database password for postgres user
-    secretKeys:
-      adminPasswordKey: "postgres-password"
-    # -- Non-root username for ichub.
+    # -- Username for  ichub user
     ichubUser: "ichub"
     # -- Password for the non-root username 'ichub'. Secret-key 'ichub-password'.
     ichubPassword: ""
     # -- Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. There are [six modes](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE)
     sslMode: "prefer"
-  audit:
-    pgAuditLog: "write, ddl"
-    logLinePrefix: "%m %u %d "
-  primary:
-    # -- Extended PostgreSQL Primary configuration (increase of max_connections recommended - default is 100)
-    extendedConfiguration: ""
-    initdb:
-      scriptsConfigMap: "{{ .Release.Name }}-cm-postgres"
-    extraEnvVars:
-      - name: "DATABASE_PASSWORD"
-        valueFrom:
-          secretKeyRef:
-            name: "{{ .Values.auth.existingSecret }}"
-            key: "ichub-password"
-    persistence:
-      # -- Enable persistent storage
-      enabled: true
-      # -- Size of persistent volume
-      size: 10Gi
-      # -- StorageClass name (use default if not specified)
-      storageClass: ""
+  # -- Extra environment variables for init scripts
+  extraEnvVars:
+    - name: "DATABASE_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          name: "ichub-postgres-secret"
+          key: "ichub-password"
+  # -- Initdb configuration - runs scripts to create ichub and ichub_keycloak users
+  initdb:
+    # -- ConfigMap with scripts to be run at first boot
+    scriptsConfigMap: "{{ .Release.Name }}-cm-postgres"
+  # -- Persistence configuration
+  persistence:
+    # -- Enable persistence using Persistent Volume Claims
+    enabled: false
+    # -- Storage class for the volume claim
+    size: 10Gi
+    # -- Persistent Volume storage class
+    torageClass: ""
 
 # -- pgAdmin4 configuration
 pgadmin4:
