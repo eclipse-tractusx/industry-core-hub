@@ -46,6 +46,11 @@
 {{- range $user := .Values.keycloak.realm.users }}
 {{- $passwordVar := printf "$(%s_PASSWORD)" ($user.username | upper | replace "-" "_") }}
 {{- $credentials := list (dict "type" "password" "value" $passwordVar "temporary" false) }}
+{{- $attrs := default dict $user.attributes }}
+{{- if hasKey $attrs "BPN" }}
+  {{- $_ := set $attrs "bpn" (index $attrs "BPN") }}
+  {{- $_ := unset $attrs "BPN" }}
+{{- end }}
 {{- $newUser := dict 
   "username" $user.username
   "enabled" (default true $user.enabled)
@@ -54,7 +59,7 @@
   "firstName" (default "" $user.firstName)
   "lastName" (default "" $user.lastName)
   "email" $user.email
-  "attributes" (default dict $user.attributes)
+  "attributes" $attrs
   "credentials" $credentials
   "disableableCredentialTypes" list
   "requiredActions" list

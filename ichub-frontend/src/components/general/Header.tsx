@@ -35,18 +35,17 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import { Divider, ListItemIcon, Typography, Tooltip } from '@mui/material';
 import { Logout, Settings, ContentCopy } from '@mui/icons-material';
-import { getParticipantId } from '../../services/EnvironmentService';
+import { getBpn } from '../../services/EnvironmentService';
 import useAuth from '../../hooks/useAuth';
 
 export default function PrimarySearchAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [participantId, setParticipantId] = useState<string>('CX-Operator');
   const [copied, setCopied] = useState(false);
   
-  // Auth hook
   const { isAuthenticated, user, logout } = useAuth();
+  const bpn = getBpn();
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -78,7 +77,7 @@ export default function PrimarySearchAppBar() {
   };
 
   const handleCopyParticipantId = () => {
-    navigator.clipboard.writeText(participantId);
+    navigator.clipboard.writeText(bpn);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -90,22 +89,6 @@ export default function PrimarySearchAppBar() {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const fetchParticipantId = async () => {
-      try {
-        const id = await getParticipantId();
-        if (id) {
-          setParticipantId(id);
-        }
-      } catch (error) {
-        console.warn('Could not fetch participant ID:', error);
-        // Keep default value "CX-Operator"
-      }
-    };
-
-    fetchParticipantId();
   }, []);
 
   const menuId = 'primary-search-account-menu';
@@ -125,7 +108,9 @@ export default function PrimarySearchAppBar() {
             color: 'text.primary'
           }}
         >
-          Mathias Brunkow Moser
+          {isAuthenticated && user ? 
+            `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username || 'User' 
+            : 'Guest'}
         </Typography>
         <Typography 
           variant="body2" 
@@ -135,7 +120,7 @@ export default function PrimarySearchAppBar() {
             fontSize: '0.875rem'
           }}
         >
-          {isAuthenticated && user ? user.username : 'Guest'}
+          {isAuthenticated && user ? user.username : 'Not logged in'}
         </Typography>
         {isAuthenticated && user?.email && (
           <Typography 
@@ -173,7 +158,7 @@ export default function PrimarySearchAppBar() {
               flex: 1
             }}
           >
-            Company ID: {participantId}
+            Company ID: {bpn}
           </Typography>
           <Tooltip title={copied ? "Copied!" : "Copy ID"} arrow>
             <IconButton

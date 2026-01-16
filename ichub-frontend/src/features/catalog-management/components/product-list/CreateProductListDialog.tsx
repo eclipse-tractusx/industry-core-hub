@@ -75,7 +75,7 @@ import {
   LengthUnit,
 } from "../../types/types";
 import { mapPartInstanceToApiPartData } from "../../utils/utils";
-import { getParticipantId } from "../../../../services/EnvironmentService";
+import { getBpn } from "../../../../services/EnvironmentService";
 import { useEscapeDialog } from "../../../../hooks/useEscapeKey";
 
 // Define props for ProductListDialog
@@ -86,7 +86,7 @@ interface ProductListDialogProps {
 }
 
 const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogProps) => {
-  const manufacturerId = getParticipantId();
+  const manufacturerId = getBpn();
   const lengthUnits = Object.values(LengthUnit);
   const weightUnits = Object.values(WeightUnit);
 
@@ -274,7 +274,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
     const payload = {
       ...formData,
-      manufacturerId: getParticipantId(),
+      manufacturerId: getBpn(),
       materials: namedMaterials,
     };
 
