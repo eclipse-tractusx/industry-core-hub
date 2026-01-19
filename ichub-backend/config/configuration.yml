@@ -169,7 +169,7 @@ agreements:
       obligation: []
 
 database:
-  connectionString: "postgresql://user:password@localhost:5432/ichub"
+  connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
   timeout: 8
   retry_interval: 5
