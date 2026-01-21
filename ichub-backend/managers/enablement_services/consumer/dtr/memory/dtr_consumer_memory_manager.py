@@ -28,21 +28,16 @@ import logging
 import threading
 import json
 import base64
-import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 from tractusx_sdk.dataspace.tools import op
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
-from tractusx_sdk.industry.services import AasService
-from tractusx_sdk.industry.models.aas.v3 import SpecificAssetId
-from managers.config.config_manager import ConfigManager
 from managers.enablement_services.consumer.base_dtr_consumer_manager import BaseDtrConsumerManager
 from managers.enablement_services.consumer.dtr.pagination_manager import PaginationManager, DtrPaginationState, PageState
 if TYPE_CHECKING:
     from managers.enablement_services.connector_manager import BaseConnectorConsumerManager
 from requests import Response
 from tractusx_sdk.dataspace.models.connector.base_catalog_model import BaseCatalogModel
-from models.services.consumer.discovery_management import QuerySpec
 from tractusx_sdk.dataspace.tools import HttpTools
 
 class DtrConsumerMemoryManager(BaseDtrConsumerManager):
@@ -89,7 +84,9 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             asset_id (str): Asset ID of the DTR (used as unique key)
             policies (List[str]): List of policies for this DTR
         """
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (add_dtr)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (add_dtr)")
             if bpn not in self.known_dtrs:
                 self.known_dtrs[bpn] = {}
 
@@ -112,7 +109,8 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             if(self.logger and self.verbose):
                 total_dtrs = len(self.known_dtrs[bpn][self.DTR_DATA_KEY])
                 self.logger.info(f"[DTR Manager] [{bpn}] Added DTR to the cache! Asset ID: [{asset_id}] (Total DTRs: {total_dtrs}) Next refresh at [{op.timestamp_to_datetime(self.known_dtrs[bpn][self.REFRESH_INTERVAL_KEY])}] UTC")
-            
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (add_dtr)")    
+        
         return
 
     def _create_dtr_cache_entry(self, connector_url: str, asset_id: str, policies: List[Union[str, Dict[str, Any]]]) -> dict:
@@ -204,7 +202,9 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         Returns:
             Dict: Updated cache state after deletion
         """
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (delete_dtr)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (delete_dtr)")
             if bpn in self.known_dtrs and self.DTR_DATA_KEY in self.known_dtrs[bpn]:
                 dtr_dict = self.known_dtrs[bpn][self.DTR_DATA_KEY]
                 if isinstance(dtr_dict, dict) and asset_id in dtr_dict:
@@ -214,6 +214,7 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                         self.logger.info(f"[DTR Manager] [{bpn}] Deleted DTR with asset ID [{asset_id}] from cache (Remaining DTRs: {remaining_dtrs})")
             
             return self.get_known_dtrs()
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (delete_dtr)")
 
     def purge_bpn(self, bpn: str) -> None:
         """
@@ -222,11 +223,14 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         Args:
             bpn (str): The Business Partner Number to purge from cache
         """
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (purge_bpn)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (purge_bpn)")
             if bpn in self.known_dtrs:
                 del self.known_dtrs[bpn]
                 if(self.logger and self.verbose):
                     self.logger.info(f"[DTR Manager] [{bpn}] Purged all DTRs from cache")
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (purge_bpn)")
 
     def purge_cache(self) -> None:
         """
@@ -236,12 +240,18 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         effectively resetting the cache to an empty state.
         """
         # Need both locks since we're clearing everything
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire locks (purge_cache)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired locks (purge_cache)")
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (purge_cache - shells)")
             with self._shells_lock:
+                self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (purge_cache - shells)")
                 self.known_dtrs.clear()
                 self.shell_descriptors.clear()
                 if(self.logger and self.verbose):
                     self.logger.info("[DTR Manager] Purged entire DTR cache and shell descriptors")
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (purge_cache - shells)")        
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released locks (purge_cache)")
 
     def get_dtrs_by_connector(self, bpn: str, connector_url: str) -> List[Dict]:
         """
@@ -549,8 +559,7 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 return {
                     "shellDescriptors": [],
                     "dtrs": [],
-                    "error": f"Cursor was created with limit {current_page.limit} but request has limit {limit}. Please start pagination from the beginning.",
-                    "error": "LIMIT_MISMATCH"
+                    "error": f"Cursor was created with limit {current_page.limit} but request has limit {limit}. Please start pagination from the beginning."+ "\n" +"LIMIT_MISMATCH"
                 }
         else:
             # Initialize first page
@@ -652,8 +661,11 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
     def _process_dtr_parallel(self, connector_service, counter_party_id: str, dtr: Dict, query_spec: List[Dict], dtr_policies: Optional[List[Dict]] = None, dtr_results: List = None, limit: Optional[int] = None, cursor: Optional[str] = None) -> None:
         """Process a single DTR in parallel and append result to shared list."""
         dtr = self._process_dtr_with_retry(connector_service, counter_party_id, dtr, query_spec, dtr_policies, limit=limit, cursor=cursor)
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (_process_dtr_parallel)")
         with self._list_lock:  # Thread-safe append to shared list
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (_process_dtr_parallel)")
             dtr_results.append(dtr)
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (_process_dtr_parallel)")
 
     def _process_dtr_with_retry(self, connector_service, counter_party_id: str, dtr: Dict, query_spec: List[Dict], dtr_policies: Optional[List[Dict]] = None, max_retries: int = 2, limit: Optional[int] = None, cursor: Optional[str] = None) -> Dict:
         """Process a single DTR with retry mechanism."""
@@ -845,8 +857,11 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             try:
                 shell = self._fetch_shell_descriptor(shell_uuid, dataplane_url, access_token)
                 if shell:
+                    self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (fetch_single_shell)")
                     with self._list_lock:  # Thread-safe append
+                        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (fetch_single_shell)")
                         results_list.append(shell)
+                    self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (fetch_single_shell)")
             except Exception:
                 # Silently continue on error
                 pass
@@ -883,13 +898,16 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         )
         
         # Also remove the DTR from known_dtrs to avoid retrying problematic DTRs
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Trying to acquire lock (_delete_connection)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Acquired lock (_delete_connection)")
             if bpn in self.known_dtrs and self.DTR_DATA_KEY in self.known_dtrs[bpn]:
                 dtr_dict = self.known_dtrs[bpn][self.DTR_DATA_KEY]
                 if isinstance(dtr_dict, dict) and asset_id in dtr_dict:
                     del dtr_dict[asset_id]
                     if self.logger and self.verbose:
                         self.logger.info(f"[DTR Manager] [{bpn}] Removed failed DTR with asset ID [{asset_id}] from cache")
+        self.logger.debug(f"[DTR Manager] [{threading.get_ident()}] Released lock (_delete_connection)")
 
     def discover_shell(self, counter_party_id: str, id: str, dtr_policies: Optional[List[Dict]] = None) -> Dict:
         """
@@ -1534,9 +1552,6 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
     def _create_semantic_ids_base64(self, submodel: Dict) -> str:
         """Create base64 encoded semantic IDs from submodel descriptor."""
         try:
-            import base64
-            import json
-            
             semantic_id_obj = submodel.get("semanticId", {})
             if semantic_id_obj:
                 # Convert semantic ID object to JSON string then encode to base64

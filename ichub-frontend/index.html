@@ -55,18 +55,18 @@
         API_KEY_EXPIRY_WARNING_DAYS: "7",
         
         // Authentication configuration
-        AUTH_ENABLED: "false",
-        AUTH_PROVIDER: "none",
+        AUTH_ENABLED: "true",
+        AUTH_PROVIDER: "keycloak",
         
         // Keycloak configuration
-        KEYCLOAK_URL: "",
-        KEYCLOAK_REALM: "",
-        KEYCLOAK_CLIENT_ID: "",
+        KEYCLOAK_URL: "http://localhost:8080",
+        KEYCLOAK_REALM: "ICHub",
+        KEYCLOAK_CLIENT_ID: "industry-core-hub-frontend",
         KEYCLOAK_ON_LOAD: "check-sso",
-        KEYCLOAK_CHECK_LOGIN_IFRAME: "true",
+        KEYCLOAK_CHECK_LOGIN_IFRAME: "false",
         KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: "",
         KEYCLOAK_PKCE_METHOD: "S256",
-        KEYCLOAK_ENABLE_LOGGING: "false",
+        KEYCLOAK_ENABLE_LOGGING: "true",
         KEYCLOAK_MIN_VALIDITY: "30",
         KEYCLOAK_CHECK_LOGIN_IFRAME_INTERVAL: "5",
         KEYCLOAK_FLOW: "standard",
@@ -105,10 +105,20 @@
       
       window.ENV = ENV;
       
-      // Performance monitoring (development only)
-      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true') {
+      // Conditional debug output controlled by `ENABLE_DEV_TOOLS`
+      if (ENV.ENABLE_DEV_TOOLS === 'true') {
+        try {
+          console.log('🔧 CONFIG LOADED:', {
+            AUTH_ENABLED: ENV.AUTH_ENABLED,
+            AUTH_PROVIDER: ENV.AUTH_PROVIDER,
+            timestamp: new Date().toISOString()
+          });
+        } catch (e) {}
+      }
+      // Conditional performance monitoring (development only)
+      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true' && ENV.ENABLE_DEV_TOOLS === 'true') {
         window.addEventListener('load', () => {
-          console.info('App loaded in:', performance.now(), 'ms');
+          try { console.info('App loaded in:', performance.now(), 'ms'); } catch(e) {}
         });
       }
     </script>

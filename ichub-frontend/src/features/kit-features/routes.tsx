@@ -21,13 +21,13 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { Apps } from '@mui/icons-material';
 import KitFeaturesPage from './pages/KitFeaturesPage';
 import { FeatureConfig } from '../../types/routing';
+import CustomAppsIcon from '../../components/icons/CustomAppsIcon';
 
 export const kitFeaturesFeature: FeatureConfig = {
   name: 'KIT Features',
-  icon: <Apps />,
+  icon: <CustomAppsIcon />,
   navigationPath: '/kit-features',
   disabled: false,
   routes: [

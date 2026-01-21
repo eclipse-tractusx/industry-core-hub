@@ -28,16 +28,25 @@ export class ConfigFactory {
   private static readonly CACHE_VERSION = '1.0.0';
 
   static create(): AppConfig {
+    // TEMPORARY: Disable caching for debugging
+    this.instance = null;
+    try {
+      localStorage.removeItem(this.CACHE_KEY);
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+    
     if (this.instance) {
       return this.instance;
     }
 
     // Try to load from cache first (for performance)
-    const cached = this.loadFromCache();
-    if (cached) {
-      this.instance = cached;
-      return cached;
-    }
+    // TEMPORARY: Disabled for debugging
+    // const cached = this.loadFromCache();
+    // if (cached) {
+    //   this.instance = cached;
+    //   return cached;
+    // }
 
     // Build fresh configuration
     const rawConfig = this.getRawEnvironmentConfig();
@@ -47,7 +56,8 @@ export class ConfigFactory {
     this.validateConfig(config);
     
     // Cache for subsequent calls
-    this.saveToCache(config);
+    // TEMPORARY: Disabled for debugging
+    // this.saveToCache(config);
     this.instance = config;
     
     return config;
@@ -57,6 +67,10 @@ export class ConfigFactory {
     // Priority: window.ENV (runtime) > import.meta.env (build-time) > defaults
     const windowEnv = (window as any)?.ENV || {};
     const viteEnv = (import.meta as any).env || {};
+    
+    console.log('🔍 ConfigFactory getRawEnvironmentConfig:');
+    console.log('  windowEnv.AUTH_ENABLED:', windowEnv.AUTH_ENABLED);
+    console.log('  windowEnv.AUTH_PROVIDER:', windowEnv.AUTH_PROVIDER);
     
     return {
       // Core application
@@ -129,7 +143,7 @@ export class ConfigFactory {
       
       api: {
         ichubBackendUrl: raw.VITE_ICHUB_BACKEND_URL || (isDevelopment ? 'http://localhost:9000/v1' : ''),
-        timeout: parseInt(raw.VITE_API_TIMEOUT || '30000', 10),
+        timeout: Number(raw.VITE_API_TIMEOUT || '30000'),
         retryAttempts: parseInt(raw.VITE_API_RETRY_ATTEMPTS || '3', 10),
         requireHttpsUrlPattern: raw.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false',
         
@@ -143,7 +157,14 @@ export class ConfigFactory {
       // Authentication configuration
       auth: {
         enabled: raw.VITE_AUTH_ENABLED === 'true',
-        provider: (raw.VITE_AUTH_PROVIDER as 'keycloak' | 'none') || 'none',
+        provider: (() => {
+          console.log('🔍 Setting auth provider:');
+          console.log('  raw.VITE_AUTH_PROVIDER:', raw.VITE_AUTH_PROVIDER);
+          console.log('  Type:', typeof raw.VITE_AUTH_PROVIDER);
+          const provider = (raw.VITE_AUTH_PROVIDER as 'keycloak' | 'none') || 'none';
+          console.log('  Final provider:', provider);
+          return provider;
+        })(),
         
         // Keycloak configuration (only if auth is enabled and provider is keycloak)
         keycloak: raw.VITE_AUTH_ENABLED === 'true' && raw.VITE_AUTH_PROVIDER === 'keycloak' ? {
@@ -161,8 +182,8 @@ export class ConfigFactory {
         } : undefined,
         
         // Session management
-        sessionTimeout: parseInt(raw.VITE_AUTH_SESSION_TIMEOUT || '3600000', 10), // 1 hour default
-        renewTokenMinValidity: parseInt(raw.VITE_AUTH_RENEW_TOKEN_MIN_VALIDITY || '300', 10), // 5 minutes default
+        sessionTimeout: Number(raw.VITE_AUTH_SESSION_TIMEOUT || '3600000'), // 1 hour default
+        renewTokenMinValidity: Number(raw.VITE_AUTH_RENEW_TOKEN_MIN_VALIDITY || '300'), // 5 minutes default
         logoutRedirectUri: raw.VITE_AUTH_LOGOUT_REDIRECT_URI,
       },
       

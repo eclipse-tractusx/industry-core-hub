@@ -112,7 +112,6 @@ export function createSubmodelAddonRegistry(): SubmodelAddonRegistry {
       }
       
       addons.set(config.id, config);
-      `);
     },
 
     getAddon(semanticId: string): SubmodelAddonConfig | null {

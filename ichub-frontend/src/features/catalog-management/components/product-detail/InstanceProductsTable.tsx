@@ -25,6 +25,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
+import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
@@ -68,7 +69,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
   const dataLoadedRef = useRef(false);
   
   const [rows, setRows] = useState<SerializedPartWithStatus[]>([]);
-  const [twinCreatingId, setTwinCreatingId] = useState<number | null>(null);
+  const [twinCreatingId, setTwinCreatingId] = useState<string | number | null>(null);
   const [twinSharingId, setTwinSharingId] = useState<number | null>(null);
   const [twinUnsharingId, setTwinUnsharingId] = useState<number | null>(null);
   const [partDeletingId, setPartDeletingId] = useState<number | null>(null);
@@ -211,20 +212,57 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       ]);
 
       const rowsWithStatus = serializedParts.map((serializedPart, index) => {
-        const { status, globalId } = determineTwinStatus(serializedPart, twins);
+        const { status, globalId, dtrAasId } = determineTwinStatus(serializedPart, twins);
         return {
           ...serializedPart,
           id: serializedPart.id || index,
           twinStatus: status,
           globalId,
+          dtrAasId,
         };
       });
 
       setRows(rowsWithStatus);
     } catch (error) {
       console.error("Error creating twin:", error);
-      
-      // Extract meaningful error message
+      // After error (e.g., 404), refetch and decide success vs error based on updated status
+      try {
+        // small delay allows backend propagation
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+        const [serializedPartsAfter, twinsAfter] = await Promise.all([
+          fetchSerializedParts(part.manufacturerId, part.manufacturerPartId),
+          fetchSerializedPartTwinsForCatalogPart(part.manufacturerId, part.manufacturerPartId)
+        ]);
+
+        const refreshedRows = serializedPartsAfter.map((sp, index) => {
+          const { status, globalId, dtrAasId } = determineTwinStatus(sp, twinsAfter);
+          return {
+            ...sp,
+            id: sp.id || index,
+            twinStatus: status,
+            globalId,
+            dtrAasId,
+          };
+        });
+        setRows(refreshedRows);
+
+        const updatedRow = refreshedRows.find(
+          (r) =>
+            r.manufacturerId === row.manufacturerId &&
+            r.manufacturerPartId === row.manufacturerPartId &&
+            r.partInstanceId === row.partInstanceId
+        );
+
+        if (updatedRow && updatedRow.twinStatus === StatusVariants.registered) {
+          showSuccess('Twin registered successfully!');
+          return; // suppress original error
+        }
+      } catch (recheckError) {
+        console.warn('Twin status recheck after error failed:', recheckError);
+        // Fall through to normal error handling
+      }
+
+      // Extract meaningful error message if status remains draft
       let errorMessage = 'Failed to register twin. Please try again.';
       
       if (error instanceof Error) {
@@ -262,12 +300,13 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       ]);
 
       const rowsWithStatus = serializedParts.map((serializedPart, index) => {
-        const { status, globalId } = determineTwinStatus(serializedPart, twins);
+        const { status, globalId, dtrAasId } = determineTwinStatus(serializedPart, twins);
         return {
           ...serializedPart,
           id: serializedPart.id || index,
           twinStatus: status,
           globalId,
+          dtrAasId,
         };
       });
 
@@ -329,12 +368,13 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       ]);
 
       const rowsWithStatus = serializedParts.map((serializedPart, index) => {
-        const { status, globalId } = determineTwinStatus(serializedPart, updatedTwins);
+        const { status, globalId, dtrAasId } = determineTwinStatus(serializedPart, updatedTwins);
         return {
           ...serializedPart,
           id: serializedPart.id || index,
           twinStatus: status,
           globalId,
+          dtrAasId,
         };
       });
 
@@ -475,7 +515,11 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                   transition: 'all 0.2s ease-in-out',
                 }}
               >
-                <CloudUploadIcon fontSize="small" />
+                {twinCreatingId === row.id ? (
+                  <CircularProgress size={16} sx={{ color: '#1976d2' }} />
+                ) : (
+                  <CloudUploadIcon fontSize="small" />
+                )}
               </IconButton>
             </Tooltip>
           );

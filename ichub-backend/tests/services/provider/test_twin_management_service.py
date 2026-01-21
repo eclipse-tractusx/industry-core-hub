@@ -22,7 +22,7 @@
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from uuid import UUID, uuid4
+from uuid import UUID
 from datetime import datetime
 import sys
 
@@ -67,7 +67,6 @@ from models.services.provider.twin_management import (
     CatalogPartTwinShareCreate,
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
-    SerializedPartTwinShareCreate,
     TwinRead,
     TwinAspectCreate,
     TwinAspectRead,
@@ -75,7 +74,6 @@ from models.services.provider.twin_management import (
     TwinsAspectRegistrationMode,
 )
 from models.services.provider.part_management import SerializedPartQuery
-from models.services.provider.partner_management import BusinessPartnerRead
 
 # Mock the exceptions as real exception classes
 class NotFoundError(Exception):

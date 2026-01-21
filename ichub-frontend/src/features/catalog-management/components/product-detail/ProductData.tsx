@@ -42,8 +42,10 @@ import { SharedPartner } from '../../types/types';
 import SharedTable from './SharedTable';
 import SubmodelViewer from './SubmodelViewer';
 import DarkSubmodelViewer from './DarkSubmodelViewer';
+import { SchemaSelector, SubmodelCreator } from '../../../../components/submodel-creation';
+import { SchemaDefinition } from '../../../../schemas';
 import { useEffect, useState } from 'react';
-import { fetchCatalogPartTwinDetails, registerCatalogPartTwin } from '../../api';
+import { fetchCatalogPartTwinDetails, registerCatalogPartTwin, createTwinAspect } from '../../api';
 import { CatalogPartTwinDetailsRead, CatalogPartTwinCreateType } from '../../types/twin-types';
 
 interface ProductDataProps {
@@ -74,6 +76,12 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     } | null>(null);
     const [selectedSubmodelId, setSelectedSubmodelId] = useState<string>('');
     const [selectedSemanticId, setSelectedSemanticId] = useState<string>('');
+
+    // Submodel creation dialog state
+    const [schemaSelectorOpen, setSchemaSelectorOpen] = useState(false);
+    const [submodelCreatorOpen, setSubmodelCreatorOpen] = useState(false);
+    const [selectedSchema, setSelectedSchema] = useState<SchemaDefinition | null>(null);
+    const [selectedSchemaKey, setSelectedSchemaKey] = useState<string>('');
 
     const handleRegisterTwin = async () => {
         try {
@@ -173,6 +181,81 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             });
         } catch {
             return 'Invalid date';
+        }
+    };
+
+    // Submodel creation handlers
+    const handleCreateSubmodel = () => {
+        setSchemaSelectorOpen(true);
+    };
+
+    const handleSchemaSelect = (schemaKey: string, schema: SchemaDefinition) => {
+        setSelectedSchemaKey(schemaKey);
+        setSelectedSchema(schema);
+        setSchemaSelectorOpen(false);
+        setSubmodelCreatorOpen(true);
+    };
+
+    const handleBackToSchemaSelector = () => {
+        setSubmodelCreatorOpen(false);
+        setSchemaSelectorOpen(true);
+    };
+
+    const handleCloseSchemaSelector = () => {
+        setSchemaSelectorOpen(false);
+        setSelectedSchema(null);
+        setSelectedSchemaKey('');
+    };
+
+    const handleCloseSubmodelCreator = () => {
+        setSubmodelCreatorOpen(false);
+        setSelectedSchema(null);
+        setSelectedSchemaKey('');
+    };
+
+    const handleCreateSubmodelSubmit = async (submodelData: any) => {
+        try {
+            if (!selectedSchema) {
+                throw new Error('No schema selected');
+            }
+
+            // Check if twin exists
+            if (!twinDetails || !twinDetails.globalId) {
+                throw new Error('Twin must be created before adding submodels. Please create a twin first.');
+            }
+
+            // Call the API to create the twin aspect
+            const result = await createTwinAspect(
+                twinDetails.globalId,
+                selectedSchema.metadata.semanticId,
+                submodelData
+            );
+
+            if (result.success) {
+                setCopySnackbar({ 
+                    open: true, 
+                    message: `Submodel created successfully with ${selectedSchema.metadata.name} schema!`, 
+                    severity: 'success' 
+                });
+                
+                // Close the creator dialog
+                handleCloseSubmodelCreator();
+                
+                // Refresh twin details to show the new submodel
+                if (onPartUpdated) {
+                    onPartUpdated();
+                }
+            } else {
+                throw new Error(result.message || 'Failed to create submodel');
+            }
+        } catch (error) {
+            console.error('Error creating submodel:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Failed to create submodel';
+            setCopySnackbar({ 
+                open: true, 
+                message: errorMessage, 
+                severity: 'error' 
+            });
         }
     };
 
@@ -955,6 +1038,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 setSelectedSemanticId(semanticId);
                                 setSubmodelViewerOpen(true);
                             }}
+                            onCreateSubmodel={handleCreateSubmodel}
                         />
                     </CardContent>
                 </Card>
@@ -988,6 +1072,27 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     semanticId={selectedSemanticId}
                 />
             )}
+
+            {/* Schema Selector Dialog */}
+            <SchemaSelector
+                open={schemaSelectorOpen}
+                onClose={handleCloseSchemaSelector}
+                onSchemaSelect={handleSchemaSelect}
+                manufacturerPartId={part.manufacturerPartId}
+            />
+
+            {/* Submodel Creator Dialog */}
+            <SubmodelCreator
+                open={submodelCreatorOpen}
+                onClose={handleCloseSubmodelCreator}
+                onBack={handleBackToSchemaSelector}
+                onCreateSubmodel={handleCreateSubmodelSubmit}
+                selectedSchema={selectedSchema}
+                schemaKey={selectedSchemaKey}
+                manufacturerPartId={part.manufacturerPartId}
+                twinId={twinDetails?.globalId}
+                dtrAasId={twinDetails?.dtrAasId}
+            />
         </Box>
         
     );

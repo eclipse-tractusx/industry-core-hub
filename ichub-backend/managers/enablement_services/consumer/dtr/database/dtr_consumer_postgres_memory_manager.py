@@ -23,15 +23,13 @@
 
 import threading
 import hashlib
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import List, Dict, TYPE_CHECKING
 import json
 from datetime import datetime
-from abc import abstractmethod
 from sqlmodel import select, delete, Session, SQLModel
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 from ..memory import DtrConsumerMemoryManager
-from tractusx_sdk.dataspace.tools import op
 from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownDtrs
@@ -152,7 +150,9 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
         """
         Reload known_dtrs from the DB and restore them to memory.
         """
+        self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (load_from_db)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (load_from_db)")
             try:
                 loaded_dtrs = 0
                 with Session(self.engine) as session:
@@ -202,12 +202,15 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
             except SQLAlchemyError as e:
                 if self.logger and self.verbose:
                     self.logger.error(f"[DtrConsumerPostgresMemoryManager] Error loading from db: {e}")
+        self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Released lock (load_from_db)")
           
     def _save_to_db(self):
         """
         Persist current in-memory known_dtrs to the DB only if changes are detected.
         """
+        self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Trying to acquire lock (save_to_db)")
         with self._dtrs_lock:
+            self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Acquired lock (save_to_db)")
             current_hash = hashlib.sha256(json.dumps(self.known_dtrs, sort_keys=True, default=str).encode()).hexdigest()
             if current_hash == self._last_saved_hash:
                 return
@@ -245,6 +248,7 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
             except SQLAlchemyError as e:
                 if self.logger and self.verbose:
                     self.logger.error(f"[DtrConsumerPostgresMemoryManager] Error saving to db: {e}")
+        self.logger.debug(f"[DtrConsumerPostgresMemoryManager] [{threading.get_ident()}] Released lock (save_to_db)")
 
     def stop(self):
         """

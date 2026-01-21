@@ -20,24 +20,23 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 import uvicorn
-import os
-import yaml
 from controllers.fastapi import app as api
 from tractusx_sdk.dataspace.tools.utils import get_arguments
 from managers.config.log_manager import LoggingManager
 from managers.config.config_manager import ConfigManager
-from tractusx_sdk.dataspace.managers import AuthManager
 from connector import connector_start_up_error
 from dtr import dtr_start_up_error
-app = api
 
-## In memory authentication manager service
-auth_manager: AuthManager
+# Set up asyncio default thread pool for blocking operations
+import asyncio
+import concurrent.futures
+
+app = api
 
 
 def start():
     ## Load in memory data storages and authentication manager
-    global auth_manager, logger
+    global logger
     
     # Initialize the server environment and get the comand line arguments
     args = get_arguments()
@@ -46,9 +45,6 @@ def start():
     logger = LoggingManager.get_logger('staging')
     if(args.debug):
         logger = LoggingManager.get_logger('development')
-
-    ## Start the authentication manager
-    auth_manager = AuthManager()
     
     ## Once initial checks and configurations are done here is the place where it shall be included
     logger.info("[INIT] Application Startup Initialization Completed!")
@@ -74,10 +70,6 @@ def start():
         logger.info(f"[UVICORN] Starting server with {max_workers} worker(s)")
         logger.info(f"[UVICORN] Thread pool size: {worker_threads}")
         logger.info(f"[UVICORN] Timeouts: keep_alive={timeout_keep_alive}s, graceful_shutdown={timeout_graceful_shutdown}s")
-        
-        # Set up asyncio default thread pool for blocking operations
-        import asyncio
-        import concurrent.futures
         
         # Configure asyncio's default thread pool executor globally
         loop = asyncio.new_event_loop()

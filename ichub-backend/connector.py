@@ -27,7 +27,6 @@ from database import engine, wait_for_db_connection
 from managers.enablement_services import ConnectorManager
 from managers.enablement_services.provider import ConnectorProviderManager
 from managers.config.config_manager import ConfigManager
-from managers.config.log_manager import LoggingManager
 from tractusx_sdk.dataspace.managers import OAuth2Manager
 
 from managers.enablement_services.consumer import ConsumerConnectorSyncPostgresMemoryManager

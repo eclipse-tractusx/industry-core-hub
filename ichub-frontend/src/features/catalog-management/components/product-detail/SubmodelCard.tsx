@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 
 import { TwinAspectRead } from '../../types/twin-types';
+import { parseSemanticId } from '../../../../utils/semantics';
 
 interface SubmodelCardProps {
     semanticId: string;
@@ -60,50 +61,6 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
     aspect,
     onViewDetails
 }) => {
-    // Parse semantic ID to extract version and model name (inspired by SingleTwinResult)
-    const parseSemanticId = (semanticId: string) => {
-        try {
-            // Handle different URN formats:
-            // urn:bamm:io.catenax.single_level_bom_as_built:3.0.0#SingleLevelBomAsBuilt
-            // urn:samm:io.catenax.generic.digital_product_passport:5.0.0#DigitalProductPassport
-            
-            const parts = semanticId.split(':');
-            if (parts.length >= 4) {
-                const lastPart = parts[parts.length - 1]; // "3.0.0#SingleLevelBomAsBuilt"
-                const [version, modelName] = lastPart.split('#');
-                
-                // Extract model name from the namespace if no # separator
-                let displayName = modelName || '';
-                if (!displayName && parts.length >= 3) {
-                    const namespacePart = parts[parts.length - 2]; // "io.catenax.single_level_bom_as_built"
-                    const nameParts = namespacePart.split('.');
-                    displayName = nameParts[nameParts.length - 1]
-                        .split('_')
-                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                        .join(' ');
-                }
-                
-                return {
-                    version: version || 'Unknown',
-                    name: displayName || 'Unknown Model',
-                    namespace: parts.slice(2, -1).join(':')
-                };
-            }
-            
-            return {
-                version: 'Unknown',
-                name: 'Unknown Model',
-                namespace: semanticId
-            };
-        } catch (error) {
-            console.warn('Error parsing semantic ID:', error);
-            return {
-                version: 'Unknown',
-                name: 'Unknown Model',
-                namespace: semanticId
-            };
-        }
-    };
 
     const formatSemanticId = (semanticId: string): string => {
         if (semanticId.length > 40) {

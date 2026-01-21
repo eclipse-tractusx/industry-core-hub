@@ -26,14 +26,51 @@ authorization:
   enabled: true
   api_key:
     key: "X-Api-Key"
-    value: <<example>>
+    value: "<<example>>"
   keycloak:
     enabled: false
     auth_url: "https://<central-idp-url>/auth/"
     realm: "<realm>"
     client_id: "<client-id>"
     client_secret: "<client-secret>"
+    retry:
+      max_retries: 5
+      retry_delay: 10
+      # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
+      background_retry_interval: 60
 agreements:
+  - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
+    usage:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          LogicalConstraint: odrl:and
+          constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+            - leftOperand: cx-policy:UsagePurpose
+              operator: odrl:eq
+              rightOperand: cx.circular.dpp:1
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          constraints:
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+      prohibition: []
+      obligation: []
   - semanticid: urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation
     usage:
       context:

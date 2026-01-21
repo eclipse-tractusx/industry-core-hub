@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from typing import List, Optional
 
 from services.provider.part_management_service import PartManagementService
@@ -38,8 +38,13 @@ from models.services.provider.part_management import (
 )
 from tools.exceptions import exception_responses
 from fastapi.responses import JSONResponse
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
-router = APIRouter(prefix="/part-management", tags=["Part Management"])
+router = APIRouter(
+    prefix="/part-management",
+    tags=["Part Management"],
+    dependencies=[Depends(get_authentication_dependency())]
+)
 part_management_service = PartManagementService()
 
 

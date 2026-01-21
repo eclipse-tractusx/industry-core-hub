@@ -41,6 +41,10 @@ data:
         realm: {{ .Values.backend.configuration.authorization.keycloak.realm | quote }}
         client_id: {{ .Values.backend.configuration.authorization.keycloak.clientId | quote }}
         client_secret: {{ .Values.backend.configuration.authorization.keycloak.clientSecret | quote }}
+        retry:
+          max_retries: {{ .Values.backend.configuration.authorization.keycloak.retry.maxRetries }}
+          retry_delay: {{ .Values.backend.configuration.authorization.keycloak.retry.retryDelay }}
+          background_retry_interval: {{ .Values.backend.configuration.authorization.keycloak.retry.backgroundRetryInterval }}
     agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
     database:
       connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}

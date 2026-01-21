@@ -48,6 +48,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import SecurityIcon from '@mui/icons-material/Security';
 import LockIcon from '@mui/icons-material/Lock';
 import { SubmodelViewer } from '../submodel/SubmodelViewer';
+import { parseSemanticId } from '../../../../utils/semantics';
 
 interface SingleTwinResultProps {
   counterPartyId: string;
@@ -141,51 +142,6 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
   
   // Calculate items per slide for carousel - show fewer items to enable navigation
   const itemsPerSlide = isMobile ? 2 : 3;
-
-  // Parse semantic ID to extract version and model name
-  const parseSemanticId = (semanticId: string) => {
-    try {
-      // Handle different URN formats:
-      // urn:bamm:io.catenax.single_level_bom_as_built:3.0.0#SingleLevelBomAsBuilt
-      // urn:samm:io.catenax.generic.digital_product_passport:5.0.0#DigitalProductPassport
-      
-      const parts = semanticId.split(':');
-      if (parts.length >= 4) {
-        const lastPart = parts[parts.length - 1]; // "3.0.0#SingleLevelBomAsBuilt"
-        const [version, modelName] = lastPart.split('#');
-        
-        // Extract model name from the namespace if no # separator
-        let displayName = modelName || '';
-        if (!displayName && parts.length >= 3) {
-          const namespacePart = parts[parts.length - 2]; // "io.catenax.single_level_bom_as_built"
-          const nameParts = namespacePart.split('.');
-          displayName = nameParts[nameParts.length - 1]
-            .split('_')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-        }
-        
-        return {
-          version: version || 'Unknown',
-          name: displayName || 'Unknown Model',
-          namespace: parts.slice(2, -1).join(':')
-        };
-      }
-      
-      return {
-        version: 'Unknown',
-        name: 'Unknown Model',
-        namespace: semanticId
-      };
-    } catch (error) {
-      console.warn('Error parsing semantic ID:', error);
-      return {
-        version: 'Unknown',
-        name: 'Unknown Model',
-        namespace: semanticId
-      };
-    }
-  };
 
   // Detect and parse verifiable credentials from semantic IDs
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

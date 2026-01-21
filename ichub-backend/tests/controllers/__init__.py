@@ -1,5 +1,5 @@
 ###############################################################
-# Eclipse Tractus-X - Industry Core Hub
+# Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
@@ -18,34 +18,3 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
-
-version: '3.8'
-
-services:
-  postgres:
-    image: postgres:16
-    container_name: local_postgres
-    restart: always
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: ichub
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: local_pgadmin
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-
-volumes:
-  postgres_data:

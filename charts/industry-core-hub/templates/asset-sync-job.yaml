@@ -1,0 +1,189 @@
+#################################################################################
+# Eclipse Tractus-X - Industry Core Hub Backend
+#
+# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the
+# License for the specific language govern in permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+
+{{- if .Values.backend.jobs.assetSync.enabled }}
+{{- if eq .Values.backend.jobs.assetSync.type "cronjob" }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "industry-core-hub.fullname" . }}-asset-sync
+  labels:
+    {{- include "industry-core-hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: asset-sync-job
+spec:
+  schedule: {{ .Values.backend.jobs.assetSync.schedule | quote }}
+  startingDeadlineSeconds: {{ .Values.backend.jobs.assetSync.startingDeadlineSeconds | default 200 }}
+  concurrencyPolicy: {{ .Values.backend.jobs.assetSync.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.backend.jobs.assetSync.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.backend.jobs.assetSync.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.backend.jobs.assetSync.backoffLimit }}
+      template:
+        metadata:
+          labels:
+            {{- include "industry-core-hub.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: asset-sync-job
+        spec:
+          restartPolicy: {{ .Values.backend.jobs.assetSync.restartPolicy }}
+          {{- with .Values.backend.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.backend.podSecurityContext | nindent 12 }}
+          containers:
+          - name: asset-sync
+            image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+            # The command/args below OVERRIDE the Dockerfile's CMD to run the sync script instead of main.py
+            command: ["python"]
+            args: ["jobs/run_asset_sync.py"]
+            securityContext:
+              {{- toYaml .Values.backend.securityContext | nindent 14 }}
+            env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "industry-core-hub.postgresql.secretName" . }}
+                  key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+            {{- range $key, $value := .Values.backend.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.backend.envFrom }}
+            envFrom:
+              {{- toYaml .Values.backend.envFrom | nindent 14 }}
+            {{- end }}
+            resources:
+              {{- toYaml .Values.backend.jobs.assetSync.resources | nindent 14 }}
+            volumeMounts:
+            - name: config
+              mountPath: /industry-core-hub/config
+              readOnly: true
+            - name: logs-tmpfs
+              mountPath: /industry-core-hub/logs
+            {{- if .Values.backend.extraVolumeMounts }}
+            {{- toYaml .Values.backend.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+          volumes:
+          - name: config
+            configMap:
+              name: {{ .Release.Name }}-config
+          - name: logs-tmpfs
+            emptyDir: {}
+          {{- if .Values.backend.extraVolumes }}
+          {{- toYaml .Values.backend.extraVolumes | nindent 10 }}
+          {{- end }}
+          {{- with .Values.backend.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backend.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.backend.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- else }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "industry-core-hub.fullname" . }}-asset-sync-{{ now | unixEpoch }}
+  labels:
+    {{- include "industry-core-hub.labels" . | nindent 4 }}
+    app.kubernetes.io/component: asset-sync-job
+spec:
+  backoffLimit: {{ .Values.backend.jobs.assetSync.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "industry-core-hub.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: asset-sync-job
+    spec:
+      restartPolicy: {{ .Values.backend.jobs.assetSync.restartPolicy }}
+      {{- with .Values.backend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
+      containers:
+      - name: asset-sync
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        # The command/args below OVERRIDE the Dockerfile's CMD to run the sync script instead of main.py
+        command: ["python"]
+        args: ["jobs/run_asset_sync.py"]
+        securityContext:
+          {{- toYaml .Values.backend.securityContext | nindent 10 }}
+        env:
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "industry-core-hub.postgresql.secretName" . }}
+              key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+        {{- range $key, $value := .Values.backend.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- if .Values.backend.envFrom }}
+        envFrom:
+          {{- toYaml .Values.backend.envFrom | nindent 10 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.backend.jobs.assetSync.resources | nindent 10 }}
+        volumeMounts:
+        - name: config
+          mountPath: /industry-core-hub/config
+          readOnly: true
+        - name: logs-tmpfs
+          mountPath: /industry-core-hub/logs
+        {{- if .Values.backend.extraVolumeMounts }}
+        {{- toYaml .Values.backend.extraVolumeMounts | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Release.Name }}-config
+      - name: logs-tmpfs
+        emptyDir: {}
+      {{- if .Values.backend.extraVolumes }}
+      {{- toYaml .Values.backend.extraVolumes | nindent 6 }}
+      {{- end }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
