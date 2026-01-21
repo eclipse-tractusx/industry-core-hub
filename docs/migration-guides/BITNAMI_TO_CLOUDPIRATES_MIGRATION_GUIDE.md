@@ -2,11 +2,24 @@
 
 **Estimated Time**: 15-60 minutes depending on database size
 
+> ⚠️ **Important**: This migration requires downtime. Schedule a maintenance window.
+
 ## Prerequisites
 
 - Kubernetes cluster access with `kubectl`
 - Helm 3.x installed
 - Maintenance window scheduled
+- Access to the PR/branch with CloudPirates changes (or update Chart.yaml/values.yaml manually)
+
+## Key Information
+
+| Item | Value |
+|------|-------|
+| Database name | `ichub-postgres` |
+| PostgreSQL pod | `industry-core-hub-postgresql-0` |
+| Secret name | `ichub-postgres-secret` |
+| Source version | PostgreSQL 15.x (Bitnami) |
+| Target version | PostgreSQL 18.x (CloudPirates) |
 
 ---
 
@@ -19,24 +32,25 @@
 mkdir -p ~/ichub-migration-backup && cd ~/ichub-migration-backup
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
 
-# Get the password
+# Get the password from the secret
 POSTGRES_PASSWORD=$(kubectl get secret ichub-postgres-secret -o jsonpath="{.data.postgres-password}" | base64 --decode)
 
-```bash
-# Create full backup
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} pg_dumpall -U postgres" > backup_${BACKUP_DATE}.sql
+# Create full backup using pg_dumpall
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" pg_dumpall -U postgres > backup_${BACKUP_DATE}.sql
 
-# Verify backup
+# Verify backup file was created
 ls -lh backup_${BACKUP_DATE}.sql
 head -n 20 backup_${BACKUP_DATE}.sql
 
-# Document current data (example with business_partner table)
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -d ichub-postgres -c 'SELECT COUNT(*) FROM business_partner;'"
+# Document current data counts (for verification after migration)
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres -d ichub-postgres -c \
+  "SELECT 'business_partner' as table_name, COUNT(*) FROM business_partner
+   UNION ALL SELECT 'twin', COUNT(*) FROM twin;"
 ```
 
-**Expected**: File size > 0, should show SQL statements
+**Expected**: File size > 0, should show SQL statements starting with `-- PostgreSQL database cluster dump`
 
 ---
 
@@ -100,14 +114,14 @@ helm dependency update
 helm install industry-core-hub .
 
 # Wait for pods to be ready
-kubectl wait --for=condition=ready pod --all --timeout=300s
+kubectl wait --for=condition=ready pod/industry-core-hub-postgresql-0 --timeout=300s
 
-# Get the password
+# Get the password (same secret is reused)
 POSTGRES_PASSWORD=$(kubectl get secret ichub-postgres-secret -o jsonpath="{.data.postgres-password}" | base64 --decode)
 
 # Verify PostgreSQL 18.0
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -c 'SELECT version();'"
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres -c 'SELECT version();'
 ```
 
 **Expected**: PostgreSQL 18.0 (Debian 18.0-1.pgdg13+3)
@@ -120,39 +134,40 @@ kubectl exec industry-core-hub-postgresql-0 -- bash -c \
 # Navigate to backup directory
 cd ~/ichub-migration-backup
 
-# IMPORTANT: Truncate existing tables to avoid duplicate key errors (optional if starting fresh)
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -d ichub-postgres -c \
-  'TRUNCATE TABLE batch, batch_business_partner, business_partner, catalog_part, data_exchange_agreement, data_exchange_contract, enablement_service_stack, legal_entity, partner_catalog_part, twin, twin_aspect, twin_aspect_registration, twin_exchange, twin_registration, jis_part, serialized_part CASCADE;'"
-
 # Restore backup (this will take time for large databases)
+# Note: The BACKUP_DATE variable should match the backup file created in Step 1
 cat backup_${BACKUP_DATE}.sql | kubectl exec -i industry-core-hub-postgresql-0 -- \
-  bash -c "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres"
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres
 
-# Note: You may see warnings like "database already exists" - this is normal
+# Note: You may see warnings like "role already exists" or "database already exists"
+# These are expected and safe to ignore. Look for "COPY X" messages which indicate
+# successful data restoration (e.g., "COPY 3" means 3 rows were inserted)
 ```
 
-**Monitor progress**: Watch for `COPY 4` messages indicating data rows are being inserted
+**Monitor progress**: Watch for `COPY N` messages indicating data rows are being inserted
 
 ---
 
 ### 6. Verify Migration
 
 ```bash
-# Verify PostgreSQL version
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -c 'SELECT version();'"
+# Verify PostgreSQL version is 18.x
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres -c 'SELECT version();'
 
-# Verify data counts (example tables)
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -d ichub-postgres -c 'SELECT COUNT(*) FROM business_partner;'"
+# Verify data counts match pre-migration values
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres -d ichub-postgres -c \
+  "SELECT 'business_partner' as table_name, COUNT(*) FROM business_partner
+   UNION ALL SELECT 'twin', COUNT(*) FROM twin
+   ORDER BY table_name;"
 
-# Verify tables
-kubectl exec industry-core-hub-postgresql-0 -- bash -c \
-  "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres -d ichub-postgres -c '\dt'"
+# Verify all tables exist
+kubectl exec industry-core-hub-postgresql-0 -- \
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres -d ichub-postgres -c '\dt'
 ```
 
-**Expected**: All data should match pre-migration counts
+**Expected**: All data counts should match pre-migration state (from Step 1)
 
 ---
 
@@ -173,28 +188,29 @@ kubectl get pvc
 
 ## Quick Rollback
 
-If issues occur:
+If issues occur after migration:
 
 ```bash
-# 1. Stop CloudPirates
+# 1. Stop CloudPirates deployment
 helm uninstall industry-core-hub
 
-# 2. Delete only PostgreSQL PVC (backend PVCs remain intact)
+# 2. Delete PostgreSQL PVC (backend PVCs remain intact)
 kubectl delete pvc data-industry-core-hub-postgresql-0
 
 # 3. Restore Bitnami chart configuration
-# (revert Chart.yaml and values.yaml changes)
+# Revert Chart.yaml and values.yaml to Bitnami configuration (git checkout or manual edit)
 
 # 4. Deploy Bitnami
 helm dependency update
 helm install industry-core-hub .
 
-# Get the password
-POSTGRES_PASSWORD=$(kubectl get secret ichub-postgres-secret -o jsonpath="{.data.postgres-password}" | base64 --decode)
+# 5. Wait for PostgreSQL to be ready
+kubectl wait --for=condition=ready pod/industry-core-hub-postgresql-0 --timeout=300s
 
-# 5. Restore backup
+# 6. Get the password and restore backup
+POSTGRES_PASSWORD=$(kubectl get secret ichub-postgres-secret -o jsonpath="{.data.postgres-password}" | base64 --decode)
 cat backup_${BACKUP_DATE}.sql | kubectl exec -i industry-core-hub-postgresql-0 -- \
-  bash -c "PGPASSWORD=${POSTGRES_PASSWORD} psql -U postgres"
+  env PGPASSWORD="${POSTGRES_PASSWORD}" psql -U postgres
 ```
 
 ## NOTICE
