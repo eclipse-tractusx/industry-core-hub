@@ -41,7 +41,7 @@ pypi/pypi/-/packaging/24.2, (Apache-2.0 OR BSD-2-Clause) AND MIT, approved, #198
 pypi/pypi/-/pip/25.0.1, MIT AND ISC AND Apache-2.0 AND (BSD-2-Clause OR Apache-2.0) AND BSD-2-Clause AND BSD-3-Clause AND Python-2.0 AND MPL-2.0, approved, #20397
 pypi/pypi/-/pluggy/1.5.0, MIT, approved, clearlydefined
 pypi/pypi/-/psycopg2-binary/2.9.10, (LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) AND ((LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) OR Zlib) AND LicenseRef-Public-domain, approved, #20738
-pypi/pypi/-/pyasn1/0.6.1, BSD-2-Clause AND (BSD-2-Clause AND BSD-3-Clause) AND (BSD-2-Clause AND MIT) AND BSD-3-Clause, approved, #22426
+pypi/pypi/-/pyasn1/0.6.2, BSD-2-Clause AND (BSD-2-Clause AND BSD-3-Clause) AND (BSD-2-Clause AND MIT) AND BSD-3-Clause, approved, #22426
 pypi/pypi/-/pycparser/2.22, LGPL-2.0-or-later AND BSD-3-Clause, approved, #14636
 pypi/pypi/-/pydantic/2.11.2, MIT, approved, clearlydefined
 pypi/pypi/-/pydantic_core/2.33.1, MIT, approved, clearlydefined
