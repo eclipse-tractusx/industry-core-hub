@@ -23,16 +23,17 @@ apiVersion: v2
 name: industry-core-hub
 type: application
 appVersion: "v0.4.0"
-version: 0.4.0
+version: 0.4.1
 description: A Helm chart for Eclipse Tractus-X - Industry Core Hub
 home: https://github.com/eclipse-tractusx/industry-core-hub
 sources:
   - https://github.com/eclipse-tractusx/industry-core-hub
 dependencies:
   - condition: postgresql.enabled
-    name: postgresql
-    repository: https://charts.bitnami.com/bitnami
-    version: 12.12.x
+    alias: postgresql
+    name: postgres
+    repository: oci://registry-1.docker.io/cloudpirates
+    version: 0.11.0
   - condition: pgadmin4.enabled
     name: pgadmin4
     repository: https://helm.runix.net
