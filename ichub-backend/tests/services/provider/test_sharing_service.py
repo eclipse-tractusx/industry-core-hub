@@ -176,7 +176,6 @@ class TestSharingService:
         mock_create_part_type_info.return_value = {"test": "document"}
         
         # Mock twin management service methods
-        self.service.twin_management_service.get_or_create_enablement_stack = Mock()
         self.service.twin_management_service.create_twin_aspect = Mock()
         self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
         
@@ -495,7 +494,6 @@ class TestSharingService:
             mock_create_part_type_info.return_value = {"test": "document"}
             
             # Mock twin management service
-            self.service.twin_management_service.get_or_create_enablement_stack = Mock()
             self.service.twin_management_service.create_twin_aspect = Mock()
             self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
             
@@ -563,7 +561,6 @@ class TestSharingService:
             # Mock part type info document
             mock_create_part_type_info.return_value = {"test": "document"}
 
-            self.service.twin_management_service.get_or_create_enablement_stack = Mock()
             self.service.twin_management_service.create_twin_aspect = Mock()
             self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
             
