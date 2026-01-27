@@ -22,7 +22,6 @@
 
 from fastapi import APIRouter, Depends
 
-from fastapi.responses import Response
 from .v1 import discovery, provision, passports
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
