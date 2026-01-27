@@ -34,6 +34,7 @@
 import { loadSchemas } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
 import UsTariffInformationSchema from './UsTariffInformation-schema.json';
+import batteryPassportSchema from './BatteryPass-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -47,11 +48,19 @@ export interface SchemaMetadata {
   namespace?: string; // Optional namespace for schema identification
 }
 
+export interface SectionConfig {
+  order?: string[]; // Explicit section order override
+  displayNames?: Record<string, string>; // Custom display names per section
+  defaultSection?: string; // Default section for fields without explicit section
+}
+
 export interface SchemaDefinition<T = any> {
   metadata: SchemaMetadata;
   formFields: any[];
+  sectionConfig?: SectionConfig; // Optional section customization
   createDefault: (params?: any) => Partial<T>;
   validate?: (data: Partial<T>) => { isValid: boolean; errors: string[] };
+  properties?: Record<string, any>; // Schema properties for section detection
 }
 
 /**
@@ -66,7 +75,8 @@ export interface SchemaDefinition<T = any> {
  */
 const schemasToLoad = [
   digitalProductPassportSchema as JSONSchema,
-  UsTariffInformationSchema as JSONSchema
+  UsTariffInformationSchema as JSONSchema,
+  batteryPassportSchema as JSONSchema
   // Add more schemas here:
   // serialPartSchema as JSONSchema,
   // batchSchema as JSONSchema,

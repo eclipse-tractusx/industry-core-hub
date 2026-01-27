@@ -120,6 +120,7 @@ export function loadSchema(
     return {
         metadata,
         formFields: interpreted.formFields,
+        properties: jsonSchema.properties, // Store schema properties for dynamic section detection
         createDefault: interpreted.createDefault,
         validate: interpreted.validate
     };

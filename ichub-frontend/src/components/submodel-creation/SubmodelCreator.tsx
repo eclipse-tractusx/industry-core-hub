@@ -21,9 +21,14 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createInitialFormData } from '../../utils/schemaUtils';
 import JsonImportDialog from './JsonImportDialog';
+import { 
+    processValidationErrors, 
+    StructuredValidationError,
+    ValidationErrorResult 
+} from '../../utils/validation-error-manager';
 import {
     Dialog,
     DialogContent,
@@ -81,6 +86,7 @@ import {
     Upload as UploadIcon
 } from '@mui/icons-material';
 import { getAvailableSchemas, SchemaDefinition } from '../../schemas';
+import { FormField } from '../../schemas/json-schema-interpreter';
 import SchemaSelector from './SchemaSelector';
 import DynamicForm, { DynamicFormRef } from './DynamicForm';
 import JsonPreview from './JsonPreview';
@@ -201,9 +207,15 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
             const rootKeys = Array.from(new Set(selectedSchema.formFields.map(f => f.key.split('.')[0])));
             const result: Record<string, any> = {};
             for (const key of rootKeys) {
-                const sectionFields = selectedSchema.formFields.filter(f => f.key.startsWith(key + '.'));
-                const isArray = sectionFields.some(f => f.type === 'array' && f.key === key);
-                result[key] = isArray ? [] : {};
+                const field = selectedSchema.formFields.find(f => f.key === key);
+                // Initialize based on sectionType
+                if (field?.sectionType === 'primitive') {
+                    result[key] = ''; // Primitive sections get empty string
+                } else if (field?.type === 'array') {
+                    result[key] = []; // Arrays get empty array
+                } else {
+                    result[key] = {}; // Objects get empty object
+                }
             }
             return result;
         }
@@ -215,11 +227,21 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     const [validationState, setValidationState] = useState<ValidationState>('initial');
     const [rulesSearchTerm, setRulesSearchTerm] = useState<string>('');
     const [fieldErrors, setFieldErrors] = useState<Set<string>>(new Set());
+    const [directFieldErrors, setDirectFieldErrors] = useState<Set<string>>(new Set());
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [jsonImportOpen, setJsonImportOpen] = useState(false);
     const [jsonImportError, setJsonImportError] = useState<string | undefined>(undefined);
     const formRef = useRef<DynamicFormRef>(null);
     const containerRef = React.useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+
+    // Unified error processing using the centralized validation-error-manager
+    // This provides a single source of truth for both ErrorViewer and DynamicForm
+    const processedValidationResult = useMemo<ValidationErrorResult | null>(() => {
+        if (validationErrors.length === 0 || !selectedSchema) {
+            return null;
+        }
+        return processValidationErrors(validationErrors, selectedSchema);
+    }, [validationErrors, selectedSchema]);
 
     const handleFieldFocus = (fieldKey: string) => {
         setFocusedField(fieldKey);
@@ -233,264 +255,23 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
         }
     };
 
-    interface ParsedError {
-        message: string;
-        fieldKey?: string;
-        fieldLabel?: string;
-        fieldPath?: string;
-        section?: string;
-        severity: 'error' | 'warning' | 'info';
-        context?: string;
-        arrayIndex?: number;
-    }
-
+    /**
+     * ErrorViewer Component - Displays validation errors using the unified error manager
+     * 
+     * This component now uses processedValidationResult from the useMemo above,
+     * which is processed by the centralized validation-error-manager.
+     * This ensures consistency between error display and field highlighting.
+     */
     const ErrorViewer: React.FC<{ 
-        errors: string[], 
         onNavigateToField: (fieldKey: string) => void,
         onSearchInRules: (fieldKey: string) => void
-    }> = ({ errors, onNavigateToField, onSearchInRules }) => {
+    }> = ({ onNavigateToField, onSearchInRules }) => {
         
         // State for controlling which error groups are expanded
         const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
-        // Schema-aware error parsing function
-        const parseValidationError = (error: string): ParsedError => {
-            // Extract field information using schema structure
-            const findFieldInSchema = (fieldName: string): { key: string, label: string, path: string, section: string } | null => {
-                if (!selectedSchema?.formFields) return null;
-                // 1. Exact match by key (full path)
-                const exactKeyMatch = selectedSchema.formFields.find(field => field.key === fieldName);
-                if (exactKeyMatch) {
-                    return {
-                        key: exactKeyMatch.key,
-                        label: exactKeyMatch.label,
-                        path: exactKeyMatch.key,
-                        section: exactKeyMatch.section || 'General'
-                    };
-                }
-                // 2. Exact match by label
-                const exactLabelMatch = selectedSchema.formFields.find(field => field.label === fieldName);
-                if (exactLabelMatch) {
-                    return {
-                        key: exactLabelMatch.key,
-                        label: exactLabelMatch.label,
-                        path: exactLabelMatch.key,
-                        section: exactLabelMatch.section || 'General'
-                    };
-                }
-                // 3. Ends with (for nested fields)
-                const endsWithMatch = selectedSchema.formFields.find(field => field.key.endsWith(`.${fieldName}`));
-                if (endsWithMatch) {
-                    return {
-                        key: endsWithMatch.key,
-                        label: endsWithMatch.label,
-                        path: endsWithMatch.key,
-                        section: endsWithMatch.section || 'General'
-                    };
-                }
-                // 4. Partial match (fallback, less priority)
-                const partialMatch = selectedSchema.formFields.find(field => 
-                    field.key.toLowerCase().includes(fieldName.toLowerCase()) ||
-                    field.label.toLowerCase().includes(fieldName.toLowerCase())
-                );
-                if (partialMatch) {
-                    return {
-                        key: partialMatch.key,
-                        label: partialMatch.label,
-                        path: partialMatch.key,
-                        section: partialMatch.section || 'General'
-                    };
-                }
-                return null;
-            };
-            
-            // Extract field name from error message with multiple patterns
-            let fieldName: string | null = null;
-            let fieldInfo: { key: string, label: string, path: string, section: string } | null = null;
-            let arrayIndex: number | undefined = undefined;
-            
-            // Try different patterns to extract field name
-            const patterns = [
-                // Array patterns
-                /(\w+)\[(\d+)\]\.(\w+)\s+is required/i,  // field[0].subfield is required
-                /(\w+)\[(\d+)\]\s+is required/i,        // field[0] is required
-                // Nested field patterns
-                /(\w+)\.(\w+)\.(\w+)\s+is required/i,   // group.subgroup.field is required
-                /(\w+)\.(\w+)\s+is required/i,          // group.field is required
-                // Simple patterns
-                /(\w+)\s+is required/i,                 // field is required
-                /(\w+)\s+field is required/i,           // field field is required
-                /(\w+)\s+must be/i,                     // field must be
-                /(\w+)\s+format is invalid/i,           // field format is invalid
-                // Quoted patterns
-                /'([^']+)'\s+is required/i,             // 'field' is required
-                /"([^"]+)"\s+is required/i,             // "field" is required
-                // Property patterns
-                /field\s+'([^']+)'/i,                   // field 'name'
-                /property\s+'([^']+)'/i,                // property 'name'
-            ];
-            
-            for (const pattern of patterns) {
-                const match = error.match(pattern);
-                if (match) {
-                    if (pattern.source.includes('\\[(\\d+)\\]')) {
-                        // Array field match
-                        fieldName = match[1];
-                        arrayIndex = parseInt(match[2]);
-                        if (match[3]) {
-                            fieldName = `${match[1]}.${match[3]}`;
-                        }
-                    } else if (match[3]) {
-                        // Triple nested match
-                        fieldName = `${match[1]}.${match[2]}.${match[3]}`;
-                    } else if (match[2]) {
-                        // Double nested match
-                        fieldName = `${match[1]}.${match[2]}`;
-                    } else {
-                        // Simple field match
-                        fieldName = match[1];
-                    }
-                    
-                    fieldInfo = findFieldInSchema(fieldName);
-                    if (fieldInfo) break;
-                    
-                    // If no direct match, try simpler versions
-                    if (!fieldInfo && fieldName.includes('.')) {
-                        const simpleName = fieldName.split('.').pop();
-                        if (simpleName) {
-                            fieldInfo = findFieldInSchema(simpleName);
-                            if (fieldInfo) {
-                                fieldName = simpleName;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // If no field found, try to extract from the end of the message
-            if (!fieldInfo && error.includes('required')) {
-                const words = error.split(' ');
-                for (let i = words.length - 1; i >= 0; i--) {
-                    const word = words[i].replace(/['"]/g, '');
-                    fieldInfo = findFieldInSchema(word);
-                    if (fieldInfo) {
-                        fieldName = word;
-                        break;
-                    }
-                }
-            }
-            
-            // Create more specific error messages based on schema context
-            let specificMessage = error;
-            let context = '';
-            
-            if (fieldInfo) {
-                const pathParts = fieldInfo.path.split('.');
-                if (pathParts.length > 1) {
-                    context = pathParts.slice(0, -1).join(' → ');
-                    
-                    // Create more user-friendly messages
-                    if (error.includes('is required')) {
-                        specificMessage = `${fieldInfo.label} is required`;
-                        if (arrayIndex !== undefined) {
-                            specificMessage += ` (item ${arrayIndex + 1})`;
-                        }
-                    } else if (error.includes('format is invalid')) {
-                        specificMessage = `${fieldInfo.label} has an invalid format`;
-                    } else if (error.includes('must be')) {
-                        specificMessage = error.replace(fieldName || '', fieldInfo.label);
-                    }
-                }
-            }
-            
-            return {
-                message: specificMessage,
-                fieldKey: fieldInfo?.key,
-                fieldLabel: fieldInfo?.label,
-                fieldPath: fieldInfo?.path,
-                section: fieldInfo?.section || 'General',
-                severity: 'error',
-                context,
-                arrayIndex
-            };
-        };
-
-        const parsedErrors = errors.map(parseValidationError);
-
-        // Define section order (matches DynamicForm sections order)
-        const sectionOrder = [
-            'Metadata',
-            'Identification',
-            'Operation',
-            'Handling',
-            'Product Characteristics',
-            'Commercial Information',
-            'Materials',
-            'Sustainability',
-            'Sources & Documentation',
-            'Additional Data',
-            'General Information',
-            'General'
-        ];
-
-        // Group errors by section
-        const groupedErrors = parsedErrors.reduce((acc, error) => {
-            const section = error.section || 'General';
-            if (!acc[section]) {
-                acc[section] = [];
-            }
-            acc[section].push(error);
-            return acc;
-        }, {} as Record<string, ParsedError[]>);
-
-        // Sort grouped errors by section order
-        const sortedGroupedErrors = Object.entries(groupedErrors).sort(([sectionA], [sectionB]) => {
-            const indexA = sectionOrder.indexOf(sectionA);
-            const indexB = sectionOrder.indexOf(sectionB);
-            
-            // If both sections are in the order array, sort by their positions
-            if (indexA !== -1 && indexB !== -1) {
-                return indexA - indexB;
-            }
-            // If only sectionA is in the order array, it comes first
-            if (indexA !== -1) return -1;
-            // If only sectionB is in the order array, it comes first
-            if (indexB !== -1) return 1;
-            // If neither is in the order array, sort alphabetically
-            return sectionA.localeCompare(sectionB);
-        });
-
-        // Get section display name
-        const getSectionDisplayName = (sectionName: string): string => {
-            const sectionNames: Record<string, string> = {
-                'Metadata': 'Metadata',
-                'Identification': 'Identification',
-                'Operation': 'Operation',
-                'Handling': 'Handling',
-                'Characteristics': 'Product Characteristics',
-                'Product Characteristics': 'Product Characteristics',
-                'Commercial': 'Commercial Information',
-                'Commercial Information': 'Commercial Information',
-                'Materials': 'Materials',
-                'Sustainability': 'Sustainability',
-                'Sources & Documentation': 'Sources & Documentation',
-                'Additional Data': 'Additional Data',
-                'General Information': 'General Information',
-                'General': 'General'
-            };
-            return sectionNames[sectionName] || sectionName.replace(/([A-Z])/g, ' $1').trim();
-        };
-
-        // Toggle group expansion
-        const toggleGroup = (sectionName: string) => {
-            setExpandedGroups(prev => ({
-                ...prev,
-                [sectionName]: !prev[sectionName]
-            }));
-        };
-
-        if (parsedErrors.length === 0) {
+        // If no processed errors, show success state
+        if (!processedValidationResult || processedValidationResult.errors.length === 0) {
             return (
                 <Box sx={{ 
                     display: 'flex', 
@@ -518,12 +299,21 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
             );
         }
 
+        const { errors: processedErrors, errorsBySection, sectionsWithErrors } = processedValidationResult;
+
+        // Toggle group expansion
+        const toggleGroup = (sectionName: string) => {
+            setExpandedGroups(prev => ({
+                ...prev,
+                [sectionName]: !prev[sectionName]
+            }));
+        };
+
         return (
             <Box sx={{ height: '100%', overflow: 'auto' }}>
-                {/* Grouped Errors - Now sorted by section order */}
-                {sortedGroupedErrors.map(([sectionName, sectionErrors]) => {
+                {/* Grouped Errors by Section */}
+                {Array.from(errorsBySection.entries()).map(([sectionName, sectionErrors]) => {
                     const isExpanded = expandedGroups[sectionName] ?? false; // Default collapsed
-                    const displayName = getSectionDisplayName(sectionName);
                     
                     return (
                         <Accordion
@@ -555,7 +345,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                         fontWeight: 600,
                                         color: 'error.main'
                                     }}>
-                                        {displayName}
+                                        {sectionName}
                                     </Typography>
                                     <Chip
                                         label={`${sectionErrors.length} error${sectionErrors.length !== 1 ? 's' : ''}`}
@@ -572,7 +362,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 2, pt: 1 }}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                    {sectionErrors.map((parsedError, index) => (
+                                    {sectionErrors.map((structuredError: StructuredValidationError, index: number) => (
                                         <Card key={index} sx={{
                                             backgroundColor: 'rgba(244, 67, 54, 0.05)',
                                             border: '1px solid rgba(244, 67, 54, 0.2)',
@@ -607,11 +397,11 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                                                 mb: 1
                                                             }}
                                                         >
-                                                            {parsedError.message}
+                                                            {structuredError.displayMessage}
                                                         </Typography>
                                                         
                                                         {/* Field path */}
-                                                        {parsedError.fieldPath && (
+                                                        {structuredError.fullPath && (
                                                             <Typography 
                                                                 variant="caption" 
                                                                 sx={{ 
@@ -626,21 +416,20 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                                                     mt: 0.5
                                                                 }}
                                                             >
-                                                                {parsedError.fieldPath}
-                                                                {parsedError.arrayIndex !== undefined && ` [${parsedError.arrayIndex}]`}
+                                                                {structuredError.fullPath}
                                                             </Typography>
                                                         )}
                                                     </Box>
                                                     
                                                     {/* Action buttons */}
-                                                    {parsedError.fieldKey && (
+                                                    {structuredError.fieldKey && (
                                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0 }}>
                                                             <Tooltip title="Go to field in form" placement="left">
                                                                 <IconButton
                                                                     size="small"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        onNavigateToField(parsedError.fieldKey!);
+                                                                        onNavigateToField(structuredError.fieldKey!);
                                                                     }}
                                                                     sx={{
                                                                         backgroundColor: 'rgba(96, 165, 250, 0.1)',
@@ -658,7 +447,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                                                     size="small"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        onSearchInRules(parsedError.fieldKey!);
+                                                                        onSearchInRules(structuredError.fieldKey!);
                                                                     }}
                                                                     sx={{
                                                                         backgroundColor: 'rgba(96, 165, 250, 0.1)',
@@ -692,7 +481,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                     border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}>
                     <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center', mb: 1 }}>
-                        <strong>{parsedErrors.length}</strong> validation issue{parsedErrors.length !== 1 ? 's' : ''} found across <strong>{Object.keys(groupedErrors).length}</strong> section{Object.keys(groupedErrors).length !== 1 ? 's' : ''}
+                        <strong>{processedErrors.length}</strong> validation issue{processedErrors.length !== 1 ? 's' : ''} found across <strong>{sectionsWithErrors.size}</strong> section{sectionsWithErrors.size !== 1 ? 's' : ''}
                     </Typography>
                     <Typography variant="caption" sx={{ color: 'text.secondary', textAlign: 'center', display: 'block' }}>
                         Use the action buttons to navigate to fields or search rules. Expand sections to view details.
@@ -740,42 +529,25 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
             return;
         }
 
-    const validation = selectedSchema.validate(formData);
-    // Debug: log all errors before and after deduplication
-    // eslint-disable-next-line no-console
-    // Debug: ALL validation.errors
-    const uniqueErrors = Array.from(new Set(validation.errors));
-    // eslint-disable-next-line no-console
-    // Debug: UNIQUE validation.errors
-    setValidationErrors(uniqueErrors);
+        const validation = selectedSchema.validate(formData);
+        const uniqueErrors = Array.from(new Set(validation.errors));
+        setValidationErrors(uniqueErrors);
 
-        // Extract field keys from errors and store them
-        const errorFieldKeys = new Set<string>();
-        uniqueErrors.forEach(error => {
-            // Extract field key from error message using similar logic to ErrorViewer
-            const patterns = [
-                /Field '([^']+)' is required/i,
-                /'([^']+)'\s+is required/i,
-                /"([^"]+)"\s+is required/i,
-            ];
-            
-            for (const pattern of patterns) {
-                const match = error.match(pattern);
-                if (match && match[1]) {
-                    errorFieldKeys.add(match[1]);
-                    break;
-                }
-            }
-        });
-        setFieldErrors(errorFieldKeys);
-
-        if (validation.isValid) {
-            setValidationState('validated');
-            setFieldErrors(new Set()); // Clear field errors when valid
-            setViewMode('json'); // Show JSON on successful validation
-        } else {
+        // Use the unified validation-error-manager for consistent error processing
+        // This ensures both ErrorViewer and DynamicForm use the same logic
+        if (uniqueErrors.length > 0) {
+            const processed = processValidationErrors(uniqueErrors, selectedSchema);
+            // pathsWithErrors includes parents for navigation/highlighting
+            setFieldErrors(processed.pathsWithErrors);
+            // directErrorPaths only has actual errors (not parents) for marking containers in red
+            setDirectFieldErrors(processed.directErrorPaths);
             setValidationState('errors');
             setViewMode('errors'); // Show errors on failed validation
+        } else {
+            setValidationState('validated');
+            setFieldErrors(new Set()); // Clear field errors when valid
+            setDirectFieldErrors(new Set());
+            setViewMode('json'); // Show JSON on successful validation
         }
     };
 
@@ -805,8 +577,12 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     };
 
     const handleSearchInRules = (fieldKey: string) => {
+        // Normalize the field key to match schema format (replace [0], [1], etc. with [item])
+        // This ensures consistency between error paths and schema paths
+        const normalizedKey = fieldKey.replace(/\[\d+\]/g, '[item]');
+        
         // Set the search term and switch to rules view
-        setRulesSearchTerm(fieldKey);
+        setRulesSearchTerm(normalizedKey);
         setViewMode('rules');
     };
 
@@ -816,6 +592,11 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     // Local loading states for block-level spinners
     const [formLoading, setFormLoading] = useState(false);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
+    
+    // Handlers for navigation state (used by DynamicForm)
+    const handleNavigationStart = () => setIsNavigating(true);
+    const handleNavigationEnd = () => setIsNavigating(false);
 
     // Show global loading if submitting or loading prop is true
     const globalLoading = isSubmitting || loading;
@@ -1428,6 +1209,40 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                     {/* Form Content - No scroll logic */}
                                     <Box sx={{ p: 3, position: 'relative' }}>
                                         {formLoading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 2 }} />}
+                                        
+                                        {/* Navigation loading overlay */}
+                                        {isNavigating && (
+                                            <Box sx={{ 
+                                                position: 'absolute', 
+                                                top: 0, 
+                                                left: 0, 
+                                                right: 0, 
+                                                bottom: 0, 
+                                                backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                zIndex: 10,
+                                                borderRadius: 1
+                                            }}>
+                                                <Box sx={{ 
+                                                    display: 'flex', 
+                                                    flexDirection: 'column', 
+                                                    alignItems: 'center', 
+                                                    gap: 1,
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                                    px: 3,
+                                                    py: 2,
+                                                    borderRadius: 2
+                                                }}>
+                                                    <CircularProgress size={24} color="primary" />
+                                                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                        Navigating to field...
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        )}
+                                        
                                         {selectedSchema && (
                                             <DynamicForm
                                                 ref={formRef}
@@ -1436,16 +1251,14 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                                 onChange={handleFormChange}
                                                 errors={validationErrors}
                                                 fieldErrors={fieldErrors}
+                                                directFieldErrors={directFieldErrors}
                                                 focusedField={focusedField}
                                                 onFieldFocus={handleFieldFocus}
                                                 onFieldBlur={() => setFocusedField(null)}
-                                                onInfoIconClick={(fieldKey) => {
-                                                    if (viewMode !== 'rules') {
-                                                        setViewMode('rules');
-                                                    }
-                                                    setRulesSearchTerm(fieldKey);
-                                                }}
+                                                onInfoIconClick={handleSearchInRules}
                                                 onlyRequired={requestedActive}
+                                                onNavigationStart={handleNavigationStart}
+                                                onNavigationEnd={handleNavigationEnd}
                                             />
                                         )}
                                     </Box>
@@ -1563,7 +1376,6 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                             )}
                                             {viewMode === 'errors' && (
                                                 <ErrorViewer 
-                                                    errors={validationErrors}
                                                     onNavigateToField={handleNavigateToField}
                                                     onSearchInRules={handleSearchInRules}
                                                 />

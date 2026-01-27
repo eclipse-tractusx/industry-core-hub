@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography } from '@mui/material';
 
 interface JsonImportDialogProps {
@@ -34,6 +34,15 @@ interface JsonImportDialogProps {
 const JsonImportDialog: React.FC<JsonImportDialogProps> = ({ open, onClose, onImport, error }) => {
   const [rawJson, setRawJson] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
+
+  // Clear the JSON content when the dialog is closed or when it opens
+  useEffect(() => {
+    if (!open) {
+      // When dialog closes, clear the content
+      setRawJson('');
+      setFileError(null);
+    }
+  }, [open]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,6 +63,9 @@ const JsonImportDialog: React.FC<JsonImportDialogProps> = ({ open, onClose, onIm
     try {
       const parsed = JSON.parse(rawJson);
       onImport(parsed);
+      // Clear the content after successful import
+      setRawJson('');
+      setFileError(null);
     } catch (err) {
       setFileError('Invalid JSON');
     }

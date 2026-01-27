@@ -352,10 +352,18 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
 
                                                                     {isLong && (
                                                                         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                                            <Box component="button"
+                                                                            <Box component="span"
                                                                                 onClick={(e: any) => toggleExpanded(schemaKey, e)}
+                                                                                role="button"
+                                                                                tabIndex={0}
                                                                                 aria-expanded={expanded}
                                                                                 aria-controls={`desc-${schemaKey}`}
+                                                                                onKeyDown={(e: any) => {
+                                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                                        e.preventDefault();
+                                                                                        toggleExpanded(schemaKey, e);
+                                                                                    }
+                                                                                }}
                                                                                 sx={{
                                                                                     background: 'transparent',
                                                                                     border: 'none',
@@ -396,6 +404,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                 leaveDelay={0}
                                                             >
                                                                 <Chip
+                                                                    component="div"
                                                                     label={schema.metadata.namespace}
                                                                     size="medium"
                                                                     variant="outlined"

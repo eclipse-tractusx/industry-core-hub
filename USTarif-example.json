@@ -1,0 +1,69 @@
+{
+  "partId": "6f1c9d92-3b4a-4e9c-9e2f-8b0d9a7c1234",
+  "partWeight": {
+    "value": 8.75,
+    "unit": "unit:kilogram"
+  },
+  "materialList": [
+    {
+      "material": {
+        "classificationType": "ISO",
+        "classificationId": "ISO-3522",
+        "materialName": "Aluminum Alloy EN AC-46000"
+      },
+      "currency": "USD",
+      "value": 42.80,
+      "htsCode": "7604-29-1000",
+      "htsCodingSystem": "US-HTS-2024",
+      "referenceNumber": "ASN-2025-04-01587",
+      "origin": [
+        {
+          "originCountry": "CA",
+          "valuePercentage": 60,
+          "originWeight": {
+            "value": 5.25,
+            "unit": "unit:kilogram"
+          }
+        },
+        {
+          "originCountry": "MX",
+          "valuePercentage": 40,
+          "originWeight": {
+            "value": 3.50,
+            "unit": "unit:kilogram"
+          }
+        }
+      ],
+      "processing": [
+        {
+          "processingId": 1,
+          "processingCountry": "CA",
+          "processingType": "Smelting",
+          "certificateId": "https://supplier-a.example.com/certificates/iso14001",
+          "successor": [
+            {
+              "successorId": 2
+            }
+          ]
+        },
+        {
+          "processingId": 2,
+          "processingCountry": "MX",
+          "processingType": "Melting",
+          "certificateId": "https://supplier-b.example.com/certificates/iatf16949",
+          "successor": [
+            {
+              "successorId": 3
+            }
+          ]
+        },
+        {
+          "processingId": 3,
+          "processingCountry": "US",
+          "processingType": "Pourring",
+          "certificateId": "https://tier1.example.com/certificates/iso9001"
+        }
+      ]
+    }
+  ]
+}

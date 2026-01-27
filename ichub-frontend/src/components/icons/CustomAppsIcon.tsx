@@ -31,7 +31,7 @@ const CustomAppsIcon: React.FC<CustomAppsIconProps> = ({ isActive = false, ...pr
   const baseSize = 3.5;
   const baseRadius = 0.4;
   
-  // Posiciones base (más centradas)
+  // Base positions (more centered)
   const positions = [
     { x: 4, y: 4 },   // Top-left
     { x: 10, y: 4 },  // Top-center  
@@ -44,17 +44,17 @@ const CustomAppsIcon: React.FC<CustomAppsIconProps> = ({ isActive = false, ...pr
     { x: 16, y: 16 }  // Bottom-right
   ];
 
-  // Ajustes para el estado activo (se "despliegan" hacia afuera)
+  // Adjustments for active state (they "expand" outward)
   const activeAdjustments = [
-    { dx: -0.8, dy: -0.8 }, // Top-left: hacia arriba-izquierda
-    { dx: 0, dy: -0.8 },    // Top-center: hacia arriba
-    { dx: 0.8, dy: -0.8 },  // Top-right: hacia arriba-derecha
-    { dx: -0.8, dy: 0 },    // Middle-left: hacia izquierda
-    { dx: 0, dy: 0 },       // Middle-center: se queda
-    { dx: 0.8, dy: 0 },     // Middle-right: hacia derecha
-    { dx: -0.8, dy: 0.8 },  // Bottom-left: hacia abajo-izquierda
-    { dx: 0, dy: 0.8 },     // Bottom-center: hacia abajo
-    { dx: 0.8, dy: 0.8 }    // Bottom-right: hacia abajo-derecha
+    { dx: -0.8, dy: -0.8 }, // Top-left: towards up-left
+    { dx: 0, dy: -0.8 },    // Top-center: towards up
+    { dx: 0.8, dy: -0.8 },  // Top-right: towards up-right
+    { dx: -0.8, dy: 0 },    // Middle-left: towards left
+    { dx: 0, dy: 0 },       // Middle-center: stays
+    { dx: 0.8, dy: 0 },     // Middle-right: towards right
+    { dx: -0.8, dy: 0.8 },  // Bottom-left: towards down-left
+    { dx: 0, dy: 0.8 },     // Bottom-center: towards down
+    { dx: 0.8, dy: 0.8 }    // Bottom-right: towards down-right
   ];
 
   return (

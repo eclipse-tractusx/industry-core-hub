@@ -25,3 +25,4 @@ export { default as SchemaSelector } from './SchemaSelector';
 export { default as SubmodelCreator } from './SubmodelCreator';
 export { default as DynamicForm } from './DynamicForm';
 export { default as JsonPreview } from './JsonPreview';
+export { default as ComplexFieldPanel } from './ComplexFieldPanel';

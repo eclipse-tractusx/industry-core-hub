@@ -1,0 +1,205 @@
+{
+  "metadata": {
+    "version": "example",
+    "expirationDate": "2025-11-17",
+    "issueDate": "2025-11-17",
+    "economicOperatorId": "BPNL0000000000AA",
+    "passportIdentifier": "a42e51bd-14a3-44f6-8127-092281596e26",
+    "predecessor": "aa1ed46b-65ed-4041-9379-ab6d83109b77",
+    "backupReference": "example",
+    "language": "example"
+  },
+  "identification": {
+    "type": {
+      "manufacturerPartId": "example",
+      "nameAtManufacturer": "example"
+    },
+    "codes": [
+      {
+        "key": "example",
+        "value": "example"
+      }
+    ],
+    "dataCarrier": {
+      "carrierType": "example",
+      "carrierLayout": "example"
+    },
+    "classification": [
+      {
+        "classificationStandard": "example",
+        "classificationID": "example"
+      }
+    ]
+  },
+  "operation": {
+    "manufacturer": {
+      "facility": [
+        {
+          "facility": "BPNA0000000000AA"
+        }
+      ],
+      "manufacturer": "BPNL0000000000AA"
+    },
+    "import": {
+      "content": {
+        "eori": "EU123456",
+        "id": "BPNL0000000000AA"
+      },
+      "applicable": true
+    }
+  },
+  "handling": {
+    "content": {
+      "producer": [
+        {
+          "id": "BPNL0000000000AA"
+        }
+      ],
+      "sparePart": [
+        {
+          "manufacturerPartId": "example",
+          "nameAtManufacturer": "example"
+        }
+      ]
+    },
+    "applicable": true
+  },
+  "characteristics": {
+    "lifespan": [
+      {
+        "unit": "unit:day",
+        "value": 1,
+        "key": "guaranteed lifetime"
+      }
+    ],
+    "physicalDimension": {
+      "grossWeight": {
+        "value": 1,
+        "unit": "unit:gram"
+      },
+      "grossVolume": {
+        "value": 1,
+        "unit": "unit:cubicMetre"
+      },
+      "weight": {
+        "value": 1,
+        "unit": "unit:gram"
+      },
+      "volume": {
+        "value": 1,
+        "unit": "unit:cubicMetre"
+      }
+    }
+  },
+  "commercial": {
+    "purpose": [
+      "example"
+    ],
+    "recallInformation": {
+      "applicable": true
+    }
+  },
+  "materials": {
+    "substancesOfConcern": {
+      "applicable": true,
+      "content": [
+        {
+          "location": "example",
+          "unit": "unit:partPerMillion",
+          "concentration": 0.0,
+          "exemption": "example",
+          "hazardClassification": {
+            "category": "example",
+            "class": "example",
+            "statement": "example"
+          },
+          "concentrationRange": [
+            {
+              "max": 0.0
+            }
+          ],
+          "id": [
+            {
+              "id": "example",
+              "type": "CAS",
+              "name": "example"
+            }
+          ],
+          "documentation": [
+            {
+              "content": "example",
+              "contentType": "example",
+              "header": "example"
+            }
+          ]
+        }
+      ]
+    },
+    "materialComposition": {
+      "applicable": true,
+      "content": [
+        {
+          "recycled": 0.0,
+          "renewable": 0.0,
+          "unit": "unit:partPerMillion",
+          "id": [
+            {
+              "id": "example",
+              "type": "CAS",
+              "name": "example"
+            }
+          ],
+          "critical": true,
+          "concentration": 0.0,
+          "documentation": [
+            {
+              "content": "example",
+              "contentType": "example",
+              "header": "example"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sustainability": {
+    "status": "original",
+    "productFootprint": {
+      "carbon": [
+        {
+          "value": 0.0,
+          "rulebook": [
+            {
+              "content": "example",
+              "contentType": "example",
+              "header": "example"
+            }
+          ],
+          "lifecycle": "example",
+          "unit": "example",
+          "type": "Climate Change Total",
+          "manufacturingPlant": [
+            {
+              "facility": "BPNA0000000000AA"
+            }
+          ],
+          "declaration": [
+            {
+              "content": "example",
+              "contentType": "example",
+              "header": "example"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "content": "example",
+      "category": "Product Specifications",
+      "type": "example",
+      "header": "example"
+    }
+  ]
+}
