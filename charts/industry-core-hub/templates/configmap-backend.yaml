@@ -47,7 +47,7 @@ data:
           background_retry_interval: {{ .Values.backend.configuration.authorization.keycloak.retry.backgroundRetryInterval }}
     agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
     database:
-      connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
+      connection_string: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
       echo: {{ .Values.backend.configuration.database.echo }}
       timeout: {{ .Values.backend.configuration.database.timeout }}
       retry_interval: {{ .Values.backend.configuration.database.retry_interval }}

@@ -26,7 +26,7 @@ from sqlmodel import SQLModel, create_engine, text
 from tools import env_tools
 import time
 
-base_dsn = ConfigManager.get_config("database.connectionString", default={})
+base_dsn = ConfigManager.get_config("database.connection_string", default={})
 logger = LoggingManager.get_logger(__name__)
 # Substitute the environment variables in the connection string if available
 connection_string = env_tools.substitute_env_vars(string=base_dsn)
