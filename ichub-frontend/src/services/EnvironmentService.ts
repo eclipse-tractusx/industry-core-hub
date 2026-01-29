@@ -304,11 +304,35 @@ class EnvironmentService {
   }
 }
 
+/**
+ * Gets BPN with priority: token -> env -> 'CX-Operator'
+ */
+export const getBpn = (): string => {
+  try {
+    const authService = (window as any).__authService;
+    if (authService) {
+      const user = authService.getUser();
+      if (user?.attributes?.bpn) {
+        return user.attributes.bpn;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to retrieve BPN from token:', error);
+  }
+
+  const envBpn = window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID;
+  if (envBpn) return envBpn;
+
+  return 'CX-Operator';
+};
+
 // Legacy function exports for backward compatibility
 export const isRequireHttpsUrlPattern = () =>
   import.meta.env.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
 export const getIchubBackendUrl = () => window?.ENV?.ICHUB_BACKEND_URL ?? import.meta.env.VITE_ICHUB_BACKEND_URL ?? '';
+
+/** @deprecated Use getBpn() instead */
 export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
 export const getGovernanceConfig = (): GovernanceConfig[] => {

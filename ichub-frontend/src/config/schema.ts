@@ -54,6 +54,10 @@ export interface AuthUser {
   lastName?: string;
   roles: string[];
   permissions: string[];
+  attributes?: {
+    bpn?: string;
+    [key: string]: any;
+  };
 }
 
 export interface AuthTokens {

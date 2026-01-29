@@ -63,9 +63,9 @@ services:
     environment:
       ICHUB_ADMIN_PASSWORD: ${ICHUB_ADMIN_PASSWORD:-changeme}
     volumes:
-      - /Users/matbmoser/eclipse-tractusx/IndustryCoreHub/industry-core-hub/charts/industry-core-hub/files/realm-export.json:/realm-template.json:ro
+      - ../../../charts/industry-core-hub/files/realm-export.json:/realm-template.json:ro
       - keycloak_import:/output
-      - /Users/matbmoser/eclipse-tractusx/IndustryCoreHub/industry-core-hub/deployment/local/db/prepare-realm.sh:/prepare-realm.sh:ro
+      - ./prepare-realm.sh:/prepare-realm.sh:ro
     command: /bin/sh /prepare-realm.sh
     networks:
       - local-network
