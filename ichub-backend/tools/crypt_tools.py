@@ -30,3 +30,19 @@ def blake2b_128bit(data: str | bytes) -> str:
         data = data.encode()
     digest = hashlib.blake2b(data, digest_size=16).digest()
     return base64.urlsafe_b64encode(digest).decode().rstrip("=")
+
+def encode_base64(input_str: str) -> str:
+    """Encodes a string to a base64-encoded string."""
+    return base64.b64encode(input_str.encode('utf-8')).decode('utf-8')
+
+def encode_url_base64(input_str: str) -> str:
+    """Encodes a string to a base64-encoded string."""
+    return base64.urlsafe_b64encode(input_str.encode('utf-8')).decode('utf-8')
+
+def decode_base64(encoded_str: str) -> str:
+    """Decodes a base64-encoded string back to a regular string."""
+    return base64.b64decode(encoded_str.encode('utf-8')).decode('utf-8')
+
+def decode_url_base64(encoded_str: str) -> str:
+    """Decodes a base64-encoded string back to a regular string."""
+    return base64.urlsafe_b64decode(encoded_str.encode('utf-8')).decode('utf-8')
