@@ -77,11 +77,7 @@ try:
 
     dtr_provider_manager = DtrProviderManager(
         dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
-        api_path=str(dtr_api_path),
-        connector_controlplane_hostname=ConfigManager.get_config("provider.connector.controlplane.hostname"),
-        connector_controlplane_catalog_path=ConfigManager.get_config("provider.connector.controlplane.protocolPath"),
-        connector_dataplane_hostname=ConfigManager.get_config("provider.connector.dataplane.hostname"),
-        connector_dataplane_public_path=ConfigManager.get_config("provider.connector.dataplane.publicPath")
+        api_path=str(dtr_api_path)
     )
 
     dtr_manager = DtrManager(

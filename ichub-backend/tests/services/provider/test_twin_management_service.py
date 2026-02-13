@@ -2,6 +2,8 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2025 LKS NEXT
+# Copyright (c) 2025 DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -193,49 +195,40 @@ class TestTwinManagementService:
         stack.legal_entity.bpnl = "BPNL123456789012"
         return stack
 
+    @pytest.fixture
+    def mock_digital_twin_registry(self):
+        """Mock digital twin registry entity."""
+        registry = Mock()
+        registry.id = 1
+        registry.name = "TestRegistry"
+        registry.version = "0.4"
+        registry.connection_settings = {}
+        return registry
+    
+    @pytest.fixture
+    def mock_connector_control_plane(self):
+        """Mock connector control plane entity."""
+
+        legal_entity = Mock()
+        legal_entity.id = 1
+        legal_entity.bpnl = "BPNL123456789012"
+
+        control_plane = Mock()
+        control_plane.id = 1
+        control_plane.name = "TestConnector"
+        control_plane.legal_entity = legal_entity
+
+        return control_plane
+
     def test_service_initialization(self):
         """Test that the service initializes correctly."""
         service = TwinManagementService()
         assert service.submodel_document_generator is not None
 
+    @patch('services.provider.system_management_service.dtr_provider_manager')
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_enablement_stack_existing(self, mock_repo_factory, mock_enablement_service_stack):
-        """Test retrieving existing enablement service stack."""
-        # Arrange
-        mock_repo = Mock()
-        mock_repo_factory.return_value.__enter__.return_value = mock_repo
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.return_value = [mock_enablement_service_stack]
-
-        # Act
-        result = self.service.get_or_create_enablement_stack(mock_repo, "BPNL123456789012")
-
-        # Assert
-        assert result == mock_enablement_service_stack
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.assert_called_once_with(legal_entity_bpnl="BPNL123456789012")
-
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_enablement_stack_new(self, mock_repo_factory, mock_enablement_service_stack):
-        """Test creating new enablement service stack."""
-        # Arrange
-        mock_repo = Mock()
-        mock_repo_factory.return_value.__enter__.return_value = mock_repo
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.return_value = []
-        mock_repo.legal_entity_repository.get_by_bpnl.return_value = Mock(id=1)
-        mock_repo.enablement_service_stack_repository.create.return_value = mock_enablement_service_stack
-
-        # Act
-        result = self.service.get_or_create_enablement_stack(mock_repo, "BPNL123456789012")
-
-        # Assert
-        assert result == mock_enablement_service_stack
-        mock_repo.enablement_service_stack_repository.create.assert_called_once()
-        mock_repo.commit.assert_called()
-        mock_repo.refresh.assert_called_once()
-
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    @patch('services.provider.twin_management_service.dtr_provider_manager')
-    def test_create_catalog_part_twin_success(self, mock_dtr_provider, mock_repo_factory, 
-                                            mock_catalog_part, mock_twin, mock_enablement_service_stack,
+    def test_create_catalog_part_twin_success(self, mock_repo_factory, mock_dtr_provider,
+                                            mock_catalog_part, mock_twin, mock_digital_twin_registry,
                                             sample_global_id, sample_aas_id, sample_manufacturer_id, 
                                             sample_manufacturer_part_id):
         """Test successful catalog part twin creation."""
@@ -251,18 +244,18 @@ class TestTwinManagementService:
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
         mock_repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id.return_value = [(mock_catalog_part, None)]
         mock_repo.twin_repository.create_new.return_value = mock_twin
-        mock_repo.twin_registration_repository.get_by_twin_id_enablement_service_stack_id.return_value = None
+        mock_repo.twin_registration_repository.get_by_twin_id_twin_registry_id.return_value = None
         mock_repo.twin_registration_repository.create_new.return_value = Mock(dtr_registered=False)
-
+        mock_repo.twin_registry_repository.get_default.return_value = mock_digital_twin_registry
+        
         # Act
-        with patch.object(self.service, 'get_or_create_enablement_stack', return_value=mock_enablement_service_stack):
-            result = self.service.create_catalog_part_twin(create_input)
+        result = self.service.create_catalog_part_twin(create_input)
 
-            # Assert
-            assert isinstance(result, TwinRead)
-            assert result.global_id == sample_global_id
-            mock_repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id.assert_called_once()
-            mock_dtr_provider.create_or_update_shell_descriptor.assert_called_once()
+        # Assert
+        assert isinstance(result, TwinRead)
+        assert result.global_id == sample_global_id
+        mock_repo.catalog_part_repository.find_by_manufacturer_id_manufacturer_part_id.assert_called_once()
+        mock_dtr_provider.create_or_update_shell_descriptor.assert_called_once()
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     def test_create_catalog_part_twin_not_found(self, mock_repo_factory, sample_manufacturer_id, sample_manufacturer_part_id):
@@ -328,8 +321,9 @@ class TestTwinManagementService:
             assert result is True
             mock_create_exchange.assert_called_once()
 
+    @patch('services.provider.system_management_service.dtr_provider_manager')
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_create_serialized_part_twin_success(self, mock_repo_factory, mock_twin, mock_enablement_service_stack,
+    def test_create_serialized_part_twin_success(self, mock_repo_factory, mock_dtr_provider, mock_twin,
                                                 sample_manufacturer_id, sample_manufacturer_part_id, 
                                                 sample_part_instance_id, sample_global_id, sample_aas_id):
         """Test successful serialized part twin creation."""
@@ -339,7 +333,7 @@ class TestTwinManagementService:
             manufacturerPartId=sample_manufacturer_part_id,
             partInstanceId=sample_part_instance_id,
             globalId=sample_global_id,
-            dtrAasId=sample_aas_id
+            dtrAasId=sample_aas_id,
         )
 
         mock_serialized_part = Mock()
@@ -351,6 +345,7 @@ class TestTwinManagementService:
         mock_catalog_part.category = "product"
         mock_catalog_part.name = "Test Part"
         mock_catalog_part.description = "Test Description"
+        mock_catalog_part.bpns = "BPNS123456789012"
         
         # Create mock business partner
         mock_business_partner = Mock()
@@ -364,22 +359,26 @@ class TestTwinManagementService:
         
         mock_serialized_part.partner_catalog_part = mock_partner_catalog_part
 
+        # Create mock twin registry
+        mock_digital_twin_registry = Mock()
+        mock_digital_twin_registry.id = 1
+        mock_digital_twin_registry.name = "TestRegistry"
+
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
         mock_repo.serialized_part_repository.find.return_value = [mock_serialized_part]
-        mock_repo.enablement_service_stack_repository.find_by_legal_entity_bpnl.return_value = [mock_enablement_service_stack]
         mock_repo.twin_repository.create_new.return_value = mock_twin
-        mock_repo.twin_registration_repository.get_by_twin_id_enablement_service_stack_id.return_value = None
+        mock_repo.twin_registration_repository.get_by_twin_id_twin_registry_id.return_value = None
         mock_repo.twin_registration_repository.create_new.return_value = Mock(dtr_registered=False)
+        mock_repo.twin_registry_repository.get_default.return_value = mock_digital_twin_registry
 
         # Act
-        with patch('services.provider.twin_management_service.dtr_provider_manager') as mock_dtr_provider:
-            result = self.service.create_serialized_part_twin(create_input)
+        result = self.service.create_serialized_part_twin(create_input)
 
-            # Assert
-            assert isinstance(result, TwinRead)
-            assert result.global_id == sample_global_id
-            mock_dtr_provider.create_or_update_shell_descriptor.assert_called_once()
+        # Assert
+        assert isinstance(result, TwinRead)
+        assert result.global_id == sample_global_id
+        mock_dtr_provider.create_or_update_shell_descriptor.assert_called_once()
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     def test_get_serialized_part_twins_success(self, mock_repo_factory, mock_twin):
@@ -536,13 +535,13 @@ class TestTwinManagementService:
         assert len(twin_result.shares) == 1
         assert twin_result.shares[0].name == "Test Agreement"
 
-    def test_fill_registrations(self, mock_twin):
+    def test_fill_registrations(self, mock_twin, mock_digital_twin_registry):
         """Test filling registrations in twin result."""
         # Arrange
         mock_registration = Mock()
-        mock_registration.enablement_service_stack = Mock()
-        mock_registration.enablement_service_stack.name = "EDC/DTR Default"
+        mock_registration.twin_registry = mock_digital_twin_registry
         mock_registration.dtr_registered = True
+
         mock_twin.twin_registrations = [mock_registration]
 
         twin_result = Mock()
@@ -552,14 +551,14 @@ class TestTwinManagementService:
         TwinManagementService._fill_registrations(mock_twin, twin_result)
 
         # Assert
-        assert twin_result.registrations["EDC/DTR Default"] is True
+        assert twin_result.registrations["TestRegistry"] is True
 
-    def test_fill_aspects(self, mock_twin):
+    def test_fill_aspects(self, mock_twin, mock_digital_twin_registry, mock_connector_control_plane):
         """Test filling aspects in twin result."""
         # Arrange
         mock_aspect_registration = Mock()
-        mock_aspect_registration.enablement_service_stack = Mock()
-        mock_aspect_registration.enablement_service_stack.name = "EDC/DTR Default"
+        mock_aspect_registration.twin_registry = mock_digital_twin_registry
+        mock_aspect_registration.connector_control_plane = mock_connector_control_plane
         mock_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
         mock_aspect_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_aspect_registration.created_date = datetime.now()
@@ -610,13 +609,13 @@ class TestTwinManagementService:
     def test_dtr_integration_available(self):
         """Test that DTR provider manager is available for integration."""
         # This test ensures that the DTR integration is properly imported and available
-        from services.provider.twin_management_service import dtr_provider_manager
+        from services.provider.system_management_service import dtr_provider_manager
         assert dtr_provider_manager is not None
 
     def test_connector_integration_available(self):
         """Test that connector manager is available for integration."""
         # This test ensures that the connector integration is properly imported and available
-        from services.provider.twin_management_service import connector_manager
+        from services.provider.system_management_service import connector_manager
         assert connector_manager is not None
 
     def test_create_submodel_service_manager(self):
@@ -628,14 +627,13 @@ class TestTwinManagementService:
         # Assert
         assert result is not None
 
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    @patch('services.provider.twin_management_service.connector_manager')
-    @patch('services.provider.twin_management_service.dtr_provider_manager')
+    @patch('services.provider.system_management_service.ConfigManager')
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
-    @patch('services.provider.twin_management_service.ConfigManager')
-    def test_create_twin_aspect_new_aspect(self, mock_config, mock_submodel_manager, mock_dtr_provider, 
-                                         mock_connector, mock_repo_factory, mock_twin, mock_enablement_service_stack,
-                                         sample_global_id, sample_semantic_id, sample_payload):
+    @patch('services.provider.system_management_service.connector_manager')
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_create_twin_aspect_new_aspect(self, mock_repo_factory, mock_connector,
+                                         mock_submodel_manager, mock_config, mock_twin, mock_digital_twin_registry,
+                                         mock_connector_control_plane, sample_global_id, sample_semantic_id, sample_payload):
         """Test creating a new twin aspect."""
         # Arrange
         twin_aspect_create = TwinAspectCreate(
@@ -646,14 +644,26 @@ class TestTwinManagementService:
         
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
+        
+        # Setup twin with registration
+        mock_twin_registration = Mock()
+        mock_twin_registration.twin_registry_id = mock_digital_twin_registry.id
+        mock_twin.twin_registrations = [mock_twin_registration]
+        
         mock_repo.twin_repository.find_by_global_id.return_value = mock_twin
         mock_repo.twin_aspect_repository.get_by_twin_id_semantic_id.return_value = None
         
+        # Setup twin registry mock
+        mock_repo.twin_registry_repository.find_by_id.return_value = mock_digital_twin_registry
+        
+        # Setup connector control plane mock
+        mock_repo.connector_control_plane_repository.get_by_id.return_value = mock_connector_control_plane
+
         mock_new_aspect = Mock()
         mock_new_aspect.id = 1
         mock_new_aspect.semantic_id = sample_semantic_id
         mock_new_aspect.submodel_id = UUID("12345678-1234-1234-1234-123456789012")
-        mock_new_aspect.find_registration_by_stack_id.return_value = None
+        mock_new_aspect.find_registration_by_twin_registry_id.return_value = None
         mock_repo.twin_aspect_repository.create_new.return_value = mock_new_aspect
         
         mock_registration = Mock()
@@ -661,10 +671,8 @@ class TestTwinManagementService:
         mock_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_registration.created_date = datetime.now()
         mock_registration.modified_date = datetime.now()
+        mock_registration.twin_registry = mock_digital_twin_registry
         mock_repo.twin_aspect_registration_repository.create_new.return_value = mock_registration
-        
-        # Mock the find_registration_by_stack_id to return the registration after creation
-        mock_new_aspect.find_registration_by_stack_id.return_value = mock_registration
         
         # Mock configuration
         mock_config.get_config.return_value = {
@@ -683,24 +691,24 @@ class TestTwinManagementService:
         mock_submodel_service = Mock()
         mock_submodel_manager.return_value = mock_submodel_service
         
-        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value="BPNL123456789012"):
-            with patch.object(self.service, 'get_or_create_enablement_stack', return_value=mock_enablement_service_stack):
-                # Act
-                result = self.service.create_twin_aspect(twin_aspect_create)
-                
-                # Assert
-                assert isinstance(result, TwinAspectRead)
-                assert result.semantic_id == sample_semantic_id
-                mock_repo.twin_aspect_repository.create_new.assert_called_once()
-                mock_submodel_service.upload_twin_aspect_document.assert_called_once()
+        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value=mock_connector_control_plane.legal_entity.bpnl):
+            # Act
+            result = self.service.create_twin_aspect(twin_aspect_create,
+                                                     mock_digital_twin_registry.id,
+                                                     mock_connector_control_plane.id)
+            
+            # Assert
+            assert isinstance(result, TwinAspectRead)
+            assert result.semantic_id == sample_semantic_id
+            mock_repo.twin_aspect_repository.create_new.assert_called_once()
+            mock_submodel_service.upload_twin_aspect_document.assert_called_once()
 
-    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    @patch('services.provider.twin_management_service.connector_manager')
-    @patch('services.provider.twin_management_service.dtr_provider_manager')
+    @patch('services.provider.system_management_service.ConfigManager')
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
-    @patch('services.provider.twin_management_service.ConfigManager')
-    def test_create_or_update_twin_aspect_not_default_new(self, mock_config, mock_submodel_manager, mock_dtr_provider, 
-                                                        mock_connector, mock_repo_factory, mock_twin, mock_enablement_service_stack,
+    @patch('services.provider.system_management_service.connector_manager')
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_create_or_update_twin_aspect_not_default_new(self, mock_repo_factory, mock_connector,mock_submodel_manager, mock_config, 
+                                                        mock_twin, mock_digital_twin_registry, mock_connector_control_plane,
                                                         sample_global_id, sample_semantic_id, sample_payload):
         """Test creating a new twin aspect using the non-default method."""
         # Arrange
@@ -717,7 +725,6 @@ class TestTwinManagementService:
         mock_new_aspect2.id = 1
         mock_new_aspect2.semantic_id = sample_semantic_id
         mock_new_aspect2.submodel_id = UUID("12345678-1234-1234-1234-123456789012")
-        mock_new_aspect2.find_registration_by_stack_id.return_value = None
         mock_repo.twin_aspect_repository.create_new.return_value = mock_new_aspect2
         
         mock_registration = Mock()
@@ -725,10 +732,18 @@ class TestTwinManagementService:
         mock_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_registration.created_date = datetime.now()
         mock_registration.modified_date = datetime.now()
+        mock_registration.twin_registry = mock_digital_twin_registry
+        mock_registration.connector_control_plane_id = mock_connector_control_plane.id
         mock_repo.twin_aspect_registration_repository.create_new.return_value = mock_registration
+
+        # Setup twin registry mock
+        mock_repo.twin_registry_repository.find_by_id.return_value = mock_digital_twin_registry
         
-        # Mock the find_registration_by_stack_id to return the registration after creation
-        mock_new_aspect2.find_registration_by_stack_id.return_value = mock_registration
+        # Setup connector control plane mock
+        mock_repo.connector_control_plane_repository.get_by_id.return_value = mock_connector_control_plane
+
+        # Mock the find_registration_by_twin_registry_id to return None (new registration)
+        mock_new_aspect2.find_registration_by_twin_registry_id.return_value = None
         
         # Mock configuration
         mock_config.get_config.return_value = {
@@ -747,20 +762,21 @@ class TestTwinManagementService:
         mock_submodel_service = Mock()
         mock_submodel_manager.return_value = mock_submodel_service
         
-        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value="BPNL123456789012"):
-            with patch.object(self.service, 'get_or_create_enablement_stack', return_value=mock_enablement_service_stack):
-                # Act
-                result = self.service.create_or_update_twin_aspect_not_default(twin_aspect_create)
-                
-                # Assert
-                assert isinstance(result, TwinAspectRead)
-                assert result.semantic_id == sample_semantic_id
-                mock_repo.twin_aspect_repository.create_new.assert_called_once()
+        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value=mock_connector_control_plane.legal_entity.bpnl):
+            # Act
+            result = self.service.create_or_update_twin_aspect_not_default(twin_aspect_create,
+                                                                           mock_digital_twin_registry.id,
+                                                                           mock_connector_control_plane.id)
+            
+            # Assert
+            assert isinstance(result, TwinAspectRead)
+            assert result.semantic_id == sample_semantic_id
+            mock_repo.twin_aspect_repository.create_new.assert_called_once()
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
-    def test_create_or_update_twin_aspect_not_default_update_existing(self, mock_submodel_manager, mock_repo_factory, 
-                                                                    mock_twin, mock_enablement_service_stack,
+    def test_create_or_update_twin_aspect_not_default_update_existing(self, mock_submodel_manager, mock_repo_factory, mock_twin, 
+                                                                    mock_digital_twin_registry, mock_connector_control_plane,
                                                                     sample_global_id, sample_semantic_id, sample_payload):
         """Test updating an existing twin aspect using the non-default method."""
         # Arrange
@@ -782,30 +798,38 @@ class TestTwinManagementService:
         mock_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_registration.created_date = datetime.now()
         mock_registration.modified_date = datetime.now()
-        mock_existing_aspect.registrations = [mock_registration]
+        mock_registration.twin_registry = mock_digital_twin_registry
+        mock_existing_aspect.twin_aspect_registrations = [mock_registration]
         
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
         mock_repo.twin_repository.find_by_global_id.return_value = mock_twin
         mock_repo.twin_aspect_repository.get_by_twin_id_semantic_id_submodel_id.return_value = mock_existing_aspect
         
+        # Setup twin registry mock
+        mock_repo.twin_registry_repository.find_by_id.return_value = mock_digital_twin_registry
+        
+        # Setup connector control plane mock
+        mock_repo.connector_control_plane_repository.get_by_id.return_value = mock_connector_control_plane
+
         # Mock submodel service manager
         mock_submodel_service = Mock()
         mock_submodel_manager.return_value = mock_submodel_service
         
-        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value="BPNL123456789012"):
-            with patch.object(self.service, 'get_or_create_enablement_stack', return_value=mock_enablement_service_stack):
-                # Act
-                result = self.service.create_or_update_twin_aspect_not_default(twin_aspect_create)
-                
-                # Assert
-                assert isinstance(result, TwinAspectRead)
-                assert result.semantic_id == sample_semantic_id
-                mock_submodel_service.upload_twin_aspect_document.assert_called_once()
+        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value=mock_connector_control_plane.legal_entity.bpnl):
+            # Act
+            result = self.service.create_or_update_twin_aspect_not_default(twin_aspect_create,
+                                                                           mock_digital_twin_registry.id,
+                                                                           mock_connector_control_plane.id)
+            
+            # Assert
+            assert isinstance(result, TwinAspectRead)
+            assert result.semantic_id == sample_semantic_id
+            mock_submodel_service.upload_twin_aspect_document.assert_called_once()
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     def test_create_or_update_twin_aspect_not_default_update_wrong_status(self, mock_repo_factory, mock_twin, 
-                                                                        mock_enablement_service_stack,
+                                                                        mock_digital_twin_registry, mock_connector_control_plane,
                                                                         sample_global_id, sample_semantic_id, sample_payload):
         """Test updating an existing twin aspect with wrong status raises error."""
         # Arrange
@@ -831,26 +855,25 @@ class TestTwinManagementService:
         mock_repo.twin_repository.find_by_global_id.return_value = mock_twin
         mock_repo.twin_aspect_repository.get_by_twin_id_semantic_id_submodel_id.return_value = mock_existing_aspect
         
-        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value="BPNL123456789012"):
-            with patch.object(self.service, 'get_or_create_enablement_stack', return_value=mock_enablement_service_stack):
-                # Act & Assert
-                with pytest.raises(Exception):  # Should raise NotAvailableError
-                    self.service.create_or_update_twin_aspect_not_default(twin_aspect_create)
-
-    def test_fill_aspects_multiple_submodels_same_type(self, mock_twin):
+        with patch.object(self.service, '_get_manufacturer_id_from_twin', return_value=mock_connector_control_plane.legal_entity.bpnl):
+            # Act & Assert
+            with pytest.raises(Exception):  # Should raise NotAvailableError
+                self.service.create_or_update_twin_aspect_not_default(twin_aspect_create)
+    
+    def test_fill_aspects_multiple_submodels_same_type(self, mock_twin, mock_digital_twin_registry, mock_connector_control_plane):
         """Test filling aspects with multiple submodels of the same semantic type."""
         # Arrange
         mock_aspect_registration1 = Mock()
-        mock_aspect_registration1.enablement_service_stack = Mock()
-        mock_aspect_registration1.enablement_service_stack.name = "EDC/DTR Default"
+        mock_aspect_registration1.twin_registry = mock_digital_twin_registry
+        mock_aspect_registration1.connector_control_plane = mock_connector_control_plane
         mock_aspect_registration1.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
         mock_aspect_registration1.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_aspect_registration1.created_date = datetime.now()
         mock_aspect_registration1.modified_date = datetime.now()
 
         mock_aspect_registration2 = Mock()
-        mock_aspect_registration2.enablement_service_stack = Mock()
-        mock_aspect_registration2.enablement_service_stack.name = "EDC/DTR Default"
+        mock_aspect_registration2.twin_registry = mock_digital_twin_registry
+        mock_aspect_registration2.connector_control_plane = mock_connector_control_plane
         mock_aspect_registration2.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
         mock_aspect_registration2.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_aspect_registration2.created_date = datetime.now()
@@ -889,20 +912,20 @@ class TestTwinManagementService:
 
 
 
-    def test_fill_aspects_different_semantic_types(self, mock_twin):
+    def test_fill_aspects_different_semantic_types(self, mock_twin, mock_digital_twin_registry, mock_connector_control_plane):
         """Test filling aspects with different semantic types."""
         # Arrange
         mock_aspect_registration1 = Mock()
-        mock_aspect_registration1.enablement_service_stack = Mock()
-        mock_aspect_registration1.enablement_service_stack.name = "EDC/DTR Default"
+        mock_aspect_registration1.twin_registry = mock_digital_twin_registry
+        mock_aspect_registration1.connector_control_plane = mock_connector_control_plane
         mock_aspect_registration1.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
         mock_aspect_registration1.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_aspect_registration1.created_date = datetime.now()
         mock_aspect_registration1.modified_date = datetime.now()
 
         mock_aspect_registration2 = Mock()
-        mock_aspect_registration2.enablement_service_stack = Mock()
-        mock_aspect_registration2.enablement_service_stack.name = "EDC/DTR Default"
+        mock_aspect_registration2.twin_registry = mock_digital_twin_registry
+        mock_aspect_registration2.connector_control_plane = mock_connector_control_plane
         mock_aspect_registration2.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value
         mock_aspect_registration2.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_aspect_registration2.created_date = datetime.now()
@@ -941,29 +964,30 @@ class TestTwinManagementService:
         assert mock_aspect2.semantic_id in twin_result.aspects
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_twin_aspect_registration_existing(self, mock_repo_factory, mock_enablement_service_stack):
+    def test_get_or_create_twin_aspect_registration_existing(self, mock_repo_factory, mock_digital_twin_registry, mock_connector_control_plane):
         """Test getting an existing twin aspect registration."""
         # Arrange
         mock_aspect = Mock()
         mock_existing_registration = Mock()
-        mock_aspect.find_registration_by_stack_id.return_value = mock_existing_registration
+        mock_existing_registration.connector_control_plane_id = mock_connector_control_plane.id
+        mock_aspect.find_registration_by_twin_registry_id.return_value = mock_existing_registration
 
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
 
         # Act
-        result = self.service._get_or_create_twin_aspect_registration(mock_repo, mock_aspect, mock_enablement_service_stack)
+        result = self.service._get_or_create_twin_aspect_registration(mock_repo, mock_aspect, mock_digital_twin_registry, mock_connector_control_plane)
 
         # Assert
         assert result == mock_existing_registration
-        mock_aspect.find_registration_by_stack_id.assert_called_once_with(mock_enablement_service_stack.id)
+        mock_aspect.find_registration_by_twin_registry_id.assert_called_once_with(mock_digital_twin_registry.id)
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_get_or_create_twin_aspect_registration_new(self, mock_repo_factory, mock_enablement_service_stack):
+    def test_get_or_create_twin_aspect_registration_new(self, mock_repo_factory, mock_digital_twin_registry, mock_connector_control_plane):
         """Test creating a new twin aspect registration."""
         # Arrange
         mock_aspect = Mock()
-        mock_aspect.find_registration_by_stack_id.return_value = None
+        mock_aspect.find_registration_by_twin_registry_id.return_value = None
         mock_new_registration = Mock()
 
         mock_repo = Mock()
@@ -971,7 +995,7 @@ class TestTwinManagementService:
         mock_repo.twin_aspect_registration_repository.create_new.return_value = mock_new_registration
 
         # Act
-        result = self.service._get_or_create_twin_aspect_registration(mock_repo, mock_aspect, mock_enablement_service_stack)
+        result = self.service._get_or_create_twin_aspect_registration(mock_repo, mock_aspect, mock_digital_twin_registry, mock_connector_control_plane)
 
         # Assert
         assert result == mock_new_registration
@@ -979,45 +1003,7 @@ class TestTwinManagementService:
         mock_repo.commit.assert_called()
         mock_repo.refresh.assert_called()
 
-    @patch('services.provider.twin_management_service.ConfigManager')
-    @patch('services.provider.twin_management_service.connector_manager')
-    def test_ensure_dtr_asset_registration_success(self, mock_connector, mock_config):
-        """Test successful DTR asset registration."""
-        # Arrange
-        mock_config.get_config.return_value = {
-            "hostname": "http://test-dtr",
-            "uri": "/api",
-            "apiPath": "/v3",
-            "policy": {},
-            "asset_config": {"dct_type": "test", "existing_asset_id": None}
-        }
-        mock_connector.provider.register_dtr_offer.return_value = ("dtr_asset_id", None, None, None)
-
-        # Act
-        self.service._ensure_dtr_asset_registration()
-
-        # Assert
-        mock_connector.provider.register_dtr_offer.assert_called_once()
-
-    @patch('services.provider.twin_management_service.ConfigManager')
-    @patch('services.provider.twin_management_service.connector_manager')
-    def test_ensure_dtr_asset_registration_failure(self, mock_connector, mock_config):
-        """Test DTR asset registration failure."""
-        # Arrange
-        mock_config.get_config.return_value = {
-            "hostname": "http://test-dtr",
-            "uri": "/api",
-            "apiPath": "/v3",
-            "policy": {},
-            "asset_config": {"dct_type": "test", "existing_asset_id": None}
-        }
-        mock_connector.provider.register_dtr_offer.return_value = (None, None, None, None)  # Failure
-
-        # Act & Assert
-        with pytest.raises(Exception):  # Should raise NotAvailableError
-            self.service._ensure_dtr_asset_registration()
-
-    def test_create_twin_aspect_read_response(self, mock_enablement_service_stack):
+    def test_create_twin_aspect_read_response(self, mock_digital_twin_registry, mock_connector_control_plane):
         """Test creating twin aspect read response."""
         # Arrange
         mock_aspect = Mock()
@@ -1031,16 +1017,16 @@ class TestTwinManagementService:
         mock_registration.modified_date = datetime.now()
 
         # Act
-        result = self.service._create_twin_aspect_read_response(mock_aspect, mock_enablement_service_stack, mock_registration)
+        result = self.service._create_twin_aspect_read_response(mock_aspect, mock_digital_twin_registry, mock_connector_control_plane, mock_registration)
 
         # Assert
         assert isinstance(result, TwinAspectRead)
         assert result.semantic_id == mock_aspect.semantic_id
         assert result.submodel_id == mock_aspect.submodel_id
-        assert mock_enablement_service_stack.name in result.registrations
+        assert mock_digital_twin_registry.name in result.registrations
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_create_twin_aspect_entity_db(self, mock_repo_factory, mock_twin, sample_global_id, sample_semantic_id):
+    def test_create_twin_aspect_entity_db(self, mock_repo_factory, mock_twin, mock_digital_twin_registry, mock_connector_control_plane, sample_global_id, sample_semantic_id):
         """Test creating twin aspect entity in database."""
         # Arrange
         twin_aspect_create = TwinAspectCreate(

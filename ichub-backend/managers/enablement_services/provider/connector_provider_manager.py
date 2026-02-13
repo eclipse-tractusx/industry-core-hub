@@ -40,6 +40,10 @@ class ConnectorProviderManager:
                  connector_provider_service: BaseConnectorProviderService,
                  ichub_url: str,
                  agreements: list,
+                 connector_controlplane_hostname: str,
+                 connector_controlplane_catalog_path: str,
+                 connector_dataplane_hostname: str,
+                 connector_dataplane_public_path: str,
                  path_submodel_dispatcher: str = "/submodel-dispatcher",
                  authorization: bool = False,
                  backend_api_key: str = "X-Api-Key",
@@ -49,6 +53,11 @@ class ConnectorProviderManager:
         self.path_submodel_dispatcher = path_submodel_dispatcher
         self.agreements = agreements
         self.backend_submodel_dispatcher = self.ichub_url + self.path_submodel_dispatcher
+
+        self.connector_controlplane_hostname = connector_controlplane_hostname
+        self.connector_controlplane_catalog_path = connector_controlplane_catalog_path
+        self.connector_dataplane_hostname = connector_dataplane_hostname
+        self.connector_dataplane_public_path = connector_dataplane_public_path
 
         # Initialize authorization attributes from parameters
         self.authorization = authorization
