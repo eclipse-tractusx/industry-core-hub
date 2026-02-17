@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
  
-hostname: "https://ichub-backend.tx.test"
+hostname: "https://hackathon2-ichub-backend.esauto-x.com/v1"
  
 authorization:
   enabled: false
