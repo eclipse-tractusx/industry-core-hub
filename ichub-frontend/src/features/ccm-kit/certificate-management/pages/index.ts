@@ -21,3 +21,4 @@
  ********************************************************************************/
 
 export { default as CertificateManagement } from './CertificateManagement';
+export { default as CertificateDetail } from './CertificateDetail';
