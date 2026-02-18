@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 
-participantId: "BPNL000000000342"
+participantId: "BPNL00000000024R"
 deploymentMode: "helm"
 
 backend:
