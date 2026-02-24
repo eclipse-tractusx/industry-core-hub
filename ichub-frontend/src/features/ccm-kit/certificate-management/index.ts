@@ -18,11 +18,20 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'ProductDetail';
-@forward 'ProductList';
-@forward 'PartnersList';
-@forward 'PartsDiscovery';
-@forward 'KitFeatures';
-@forward 'CertificateManagement';
+// Export pages
+export * from './pages';
+
+// Export routes
+export * from './routes';
+
+// Export API
+export * from './api';
+
+// Export configuration
+export * from './config';
+
+// Export types
+export * from './types/types';
+export * from './types/dialog-types';

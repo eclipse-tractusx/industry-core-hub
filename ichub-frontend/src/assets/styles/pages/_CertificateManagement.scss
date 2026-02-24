@@ -1,0 +1,330 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Industry Core Hub Frontend
+ *
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+@use '@/assets/styles/config/variables' as *;
+@use '@/assets/styles/config/mixins';
+
+.certificate-management {
+  padding: 24px;
+  color: $brand-text;
+
+  // Reset MUI Grid2 spacing padding
+  .MuiGrid2-root {
+    padding-top: 0 !important;
+  }
+
+  &__header {
+    margin-bottom: 24px;
+  }
+
+  &__title-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  &__icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+
+    @media (min-width: 600px) {
+      width: 52px;
+      height: 52px;
+    }
+  }
+
+  &__icon {
+    font-size: 24px !important;
+    color: #fff !important;
+
+    @media (min-width: 600px) {
+      font-size: 28px !important;
+    }
+  }
+
+  &__title {
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 1.25rem !important;
+
+    @media (min-width: 600px) {
+      font-size: 1.35rem !important;
+    }
+
+    @media (min-width: 900px) {
+      font-size: 1.5rem !important;
+    }
+  }
+
+  &__subtitle {
+    color: rgba(255, 255, 255, 0.6) !important;
+    font-size: 0.875rem !important;
+
+    @media (min-width: 600px) {
+      font-size: 1rem !important;
+    }
+  }
+
+  &__tabs {
+    border-bottom: 1px solid rgba($brand-text, 0.2);
+    margin-bottom: 16px;
+
+    .MuiTabs-root {
+      min-height: 48px;
+      padding-top: 10px !important;
+    }
+
+    .MuiTab-root {
+      text-transform: none !important;
+      font-weight: 500 !important;
+      font-size: 14px !important;
+      min-height: 48px;
+      color: rgba($brand-text, 0.7) !important;
+      
+      &.Mui-selected {
+        color: $brand-light-blue !important;
+      }
+    }
+
+    .MuiTabs-indicator {
+      background-color: $brand-light-blue !important;
+      height: 3px;
+    }
+  }
+
+  &__tab-placeholder {
+    color: rgba($brand-text, 0.7) !important;
+  }
+
+  &__filters {
+    margin-bottom: 16px;
+
+    .MuiTextField-root,
+    .MuiFormControl-root {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      border-radius: 4px;
+      
+      .MuiInputBase-root {
+        color: $brand-text !important;
+        background-color: transparent !important;
+      }
+      
+      .MuiInputLabel-root {
+        color: rgba($brand-text, 0.7) !important;
+      }
+      
+      .MuiOutlinedInput-notchedOutline {
+        border-color: rgba($brand-text, 0.3) !important;
+      }
+      
+      &:hover .MuiOutlinedInput-notchedOutline {
+        border-color: rgba($brand-text, 0.5) !important;
+      }
+
+      .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+        border-color: $brand-light-blue !important;
+      }
+      
+      .MuiSelect-icon {
+        color: $brand-text !important;
+      }
+
+      .MuiInputBase-input {
+        color: $brand-text !important;
+        
+        &::placeholder {
+          color: rgba($brand-text, 0.5) !important;
+          opacity: 1 !important;
+        }
+      }
+    }
+
+    &-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .MuiButton-contained {
+      background: $gradient-blue-light !important;
+      text-transform: none;
+      font-weight: 500;
+      color: white !important;
+      
+      &:hover {
+        background: $brand-light-blue !important;
+      }
+    }
+  }
+}
+
+// Stats Card
+.stats-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 1px solid rgba($brand-text, 0.2);
+  background-color: rgba(255, 255, 255, 0.05);
+  min-width: 80px;
+
+  &__value {
+    font-size: 24px;
+    font-weight: 600;
+    // Color is set dynamically via inline style prop
+  }
+
+  &__label {
+    font-size: 12px;
+    color: rgba($brand-text, 0.7) !important;
+    margin-top: 4px;
+  }
+}
+
+// Certificate Table
+.certificate-table {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .MuiTableHead-root {
+    background-color: rgba($brand-primary, 0.5) !important;
+
+    .MuiTableCell-head {
+      font-weight: 600 !important;
+      color: $brand-text !important;
+      border-bottom: 1px solid rgba($brand-text, 0.2) !important;
+    }
+  }
+
+  .MuiTableBody-root {
+    .MuiTableRow-root {
+      &:hover {
+        background-color: rgba($brand-light-blue, 0.1) !important;
+      }
+
+      &:last-child .MuiTableCell-root {
+        border-bottom: none !important;
+      }
+    }
+    
+    .MuiTableCell-root {
+      color: $brand-text !important;
+      border-bottom: 1px solid rgba($brand-text, 0.1) !important;
+    }
+  }
+
+  &__status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+
+    &--valid {
+      background-color: rgba(46, 125, 50, 0.2);
+      color: #81c784;
+    }
+
+    &--expiring {
+      background-color: rgba(237, 108, 2, 0.2);
+      color: #ffb74d;
+    }
+
+    &--expired {
+      background-color: rgba(211, 47, 47, 0.2);
+      color: #e57373;
+    }
+  }
+
+  &__shared-count {
+    color: $brand-light-blue;
+    font-weight: 500;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+
+    .MuiButton-root {
+      text-transform: none !important;
+      font-size: 12px !important;
+      color: $brand-text !important;
+      border-color: rgba($brand-text, 0.3) !important;
+      
+      &:hover {
+        border-color: $brand-light-blue !important;
+        background-color: rgba($brand-light-blue, 0.1) !important;
+      }
+      
+      &.MuiButton-colorError {
+        color: #e57373 !important;
+        border-color: rgba(229, 115, 115, 0.3) !important;
+        
+        &:hover {
+          border-color: #e57373 !important;
+          background-color: rgba(229, 115, 115, 0.1) !important;
+        }
+      }
+    }
+  }
+
+  &__empty {
+    padding: 48px;
+    text-align: center;
+    color: rgba($brand-text, 0.5) !important;
+    
+    .MuiTypography-root {
+      color: rgba($brand-text, 0.5) !important;
+    }
+  }
+
+  &__pagination {
+    color: $brand-text !important;
+    border-top: 1px solid rgba($brand-text, 0.1) !important;
+    
+    .MuiTablePagination-selectLabel,
+    .MuiTablePagination-displayedRows {
+      color: rgba($brand-text, 0.7) !important;
+    }
+    
+    .MuiTablePagination-select {
+      color: $brand-text !important;
+    }
+    
+    .MuiTablePagination-actions button {
+      color: $brand-text !important;
+      
+      &.Mui-disabled {
+        color: rgba($brand-text, 0.3) !important;
+      }
+    }
+  }
+}

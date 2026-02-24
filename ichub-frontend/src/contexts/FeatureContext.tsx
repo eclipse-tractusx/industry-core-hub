@@ -41,24 +41,27 @@ const FEATURE_STORAGE_KEY = 'ichub_feature_states';
 export const FeatureProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // Initialize feature states from localStorage or kits configuration
   const [featureStates, setFeatureStates] = useState<FeatureState>(() => {
-    // Try to load from localStorage first
+    // Get default states from kits configuration
+    const defaultStates: FeatureState = {};
+    kits.forEach(kit => {
+      kit.features.forEach(feature => {
+        defaultStates[feature.id] = feature.enabled;
+      });
+    });
+
+    // Try to load from localStorage and merge with defaults
     const stored = localStorage.getItem(FEATURE_STORAGE_KEY);
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const storedStates = JSON.parse(stored);
+        // Merge stored states with defaults (defaults for new features, stored for existing)
+        return { ...defaultStates, ...storedStates };
       } catch (error) {
         console.error('Failed to parse stored feature states:', error);
       }
     }
     
-    // Fallback to default states from kits configuration
-    const states: FeatureState = {};
-    kits.forEach(kit => {
-      kit.features.forEach(feature => {
-        states[feature.id] = feature.enabled;
-      });
-    });
-    return states;
+    return defaultStates;
   });
 
   // Persist feature states to localStorage whenever they change

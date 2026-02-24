@@ -35,7 +35,8 @@ import {
   GroupAdd,
   Badge,
   Policy,
-  PostAdd
+  PostAdd,
+  ReceiptLong
 } from '@mui/icons-material';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
@@ -50,6 +51,7 @@ import PcfKitImage from '@/features/kit-features/assets/kit-images/pcf-kit.svg';
 import DataChainKitImage from '@/features/kit-features/assets/kit-images/data-chain-kit.svg';
 import DcmKitImage from '@/features/kit-features/assets/kit-images/dcm-kit.svg';
 import TraceabilityKitImage from '@/features/kit-features/assets/kit-images/traceability-kit.svg';
+import CcmKitImage from '@/features/kit-features/assets/kit-images/certificate-management-kit.svg';
 
 // Import feature modules
 import { catalogManagementFeature } from './industry-core-kit/catalog-management/routes';
@@ -58,6 +60,7 @@ import { partnerManagementFeature } from './business-partner-kit/partner-managem
 import { serializedPartsFeature } from './industry-core-kit/serialized-parts/routes';
 import { passportConsumptionFeature } from './eco-pass-kit/passport-consumption/routes';
 import { passportProvisionFeature } from './eco-pass-kit/passport-provision/routes';
+import { certificateManagementFeature } from './ccm-kit/certificate-management/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -218,6 +221,28 @@ export const kits: KitFeature[] = [
     version: '0.0.0',
     domain: 'industry-core',
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/Traceability%20Kit/Adoption%20View%20Traceability%20Kit'
+  },
+  {
+    id: 'ccm',
+    name: 'CCM KIT',
+    description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
+    status: 'available',
+    icon: <ReceiptLong />,
+    image: CcmKitImage,
+    features: [
+      {
+        module: certificateManagementFeature,
+        id: 'certificate-management',
+        name: 'Certificate Management',
+        description: 'Upload, manage, share and consume compliance certificates across the supply chain.',
+        icon: <ReceiptLong />,
+        enabled: true,
+        default: true
+      }
+    ],
+    version: '1.0.0',
+    domain: 'compliance',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/certificate-management-kit/adoption-view'
   }
 ];
 

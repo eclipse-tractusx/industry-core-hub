@@ -18,11 +18,25 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'ProductDetail';
-@forward 'ProductList';
-@forward 'PartnersList';
-@forward 'PartsDiscovery';
-@forward 'KitFeatures';
-@forward 'CertificateManagement';
+import { Box, Typography } from '@mui/material';
+
+interface StatsCardProps {
+  label: string;
+  value: number;
+  color: string;
+}
+
+export const StatsCard = ({ label, value, color }: StatsCardProps) => {
+  return (
+    <Box className="stats-card">
+      <Typography className="stats-card__value" style={{ color }}>
+        {value}
+      </Typography>
+      <Typography className="stats-card__label">
+        {label}
+      </Typography>
+    </Box>
+  );
+};

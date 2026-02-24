@@ -18,11 +18,7 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'ProductDetail';
-@forward 'ProductList';
-@forward 'PartnersList';
-@forward 'PartsDiscovery';
-@forward 'KitFeatures';
-@forward 'CertificateManagement';
+export { StatsCard } from './StatsCard';
+export { CertificateTable } from './CertificateTable';

@@ -18,11 +18,9 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'ProductDetail';
-@forward 'ProductList';
-@forward 'PartnersList';
-@forward 'PartsDiscovery';
-@forward 'KitFeatures';
-@forward 'CertificateManagement';
+export { UploadCertificateDialog } from './UploadCertificateDialog';
+export { ShareCertificateDialog } from './ShareCertificateDialog';
+export { ViewCertificateDialog } from './ViewCertificateDialog';
+export { DeleteCertificateDialog } from './DeleteCertificateDialog';

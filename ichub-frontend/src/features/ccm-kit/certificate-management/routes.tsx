@@ -18,11 +18,23 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'ProductDetail';
-@forward 'ProductList';
-@forward 'PartnersList';
-@forward 'PartsDiscovery';
-@forward 'KitFeatures';
-@forward 'CertificateManagement';
+import CertificateManagement from './pages/CertificateManagement';
+import { FeatureConfig } from '@/types/routing';
+
+export const certificateManagementFeature: FeatureConfig = {
+  name: 'certificateManagement',
+  navigationPath: '/certificates',
+  disabled: false,
+  routes: [
+    {
+      path: '/certificates',
+      element: <CertificateManagement />,
+      meta: {
+        title: 'Certificate Management',
+        description: 'Manage, share and consume compliance certificates'
+      }
+    }
+  ]
+};
