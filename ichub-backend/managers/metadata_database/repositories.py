@@ -42,8 +42,9 @@ from models.metadata_database.provider.models import (
     CatalogPart,
     SerializedPart,
     PartnerCatalogPart,
-    DataExchangeAgreement
+    DataExchangeAgreement,
 )
+from models.metadata_database.addons.ccm_kit.v1.models import Ccm
 
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
@@ -662,3 +663,47 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         )
         self.create(twin_registration)
         return twin_registration
+
+
+class CcmRepository(BaseRepository[Ccm]):
+    def create_new(
+        self,
+        certificate_type: str,
+        certificate_name: str,
+        issuer_or_certification: str,
+        valid_from: str,
+        valid_to: str,
+        bpn: str,
+        description: str,
+        doc: bytes
+    ) -> Ccm:
+        """
+        Create a new CCM (Company Certificate Management) record.
+        
+        Args:
+            certificate_type: Type of certificate (e.g., ISO 9001, IATF 16949)
+            certificate_name: Name of the certificate
+            issuer_or_certification: Certification body or authority
+            valid_from: Start date of certificate validity
+            valid_to: End date of certificate validity
+            bpn: Business Partner Number (BPN-L) of the holder
+            description: Optional description
+            doc: Binary PDF document content (stored as BYTEA in PostgreSQL)
+            
+        Returns:
+            Ccm: The created CCM record
+        """
+        ccm = Ccm(
+            certificate_type=certificate_type,
+            certificate_name=certificate_name,
+            issuer_or_certification=issuer_or_certification,
+            valid_from=valid_from,
+            valid_to=valid_to,
+            bpn=bpn,
+            description=description,
+            doc=doc
+        )
+        self.create(ccm)
+        return ccm
+    
+
