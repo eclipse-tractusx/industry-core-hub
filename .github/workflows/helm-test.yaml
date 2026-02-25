@@ -65,7 +65,7 @@ jobs:
         uses: container-tools/kind-action@0ad70e2299366b0e1552c7240f4e4567148f723e # v2.0.4
         with:
           # upgrade version, default (v0.17.0) uses node image v1.21.1 and doesn't work with more recent node image versions
-          version: v0.20.0
+          version: v0.27.0
           # default value for event_name != workflow_dispatch
           node_image: ${{ github.event.inputs.node_image || 'kindest/node:v1.27.3' }}
 
@@ -78,19 +78,8 @@ jobs:
         with:
           python-version: "3.9"
           check-latest: true
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@0d28d3144d3a25ea2cc349d6e59901c4ff469b3b # v2.7.0
-
-      - name: Run chart-testing (list-changed)
-        id: list-changed
-        run: |
-          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-          if [[ -n "$changed" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Run chart-testing (lint)
-        run: ct lint --validate-maintainers=false --target-branch ${{ github.event.repository.default_branch }}
+      - name: Helm lint
+        run: helm lint charts/industry-core-hub -f charts/industry-core-hub/values.yaml
 
       - name: Setup Helm repos
         run: |
@@ -98,14 +87,34 @@ jobs:
           helm repo add bitnami-full-index https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
           helm repo add runix https://helm.runix.net
 
-      - name: Copy values file to chart ci directory
+      - name: Build and load backend image into KinD
         run: |
-          mkdir -p charts/industry-core-hub/ci
-          cp charts/test-helm-values-ichub.yaml charts/industry-core-hub/ci/ci-values.yaml
+          docker build -t kind-registry:5000/ichub-backend:ci ./ichub-backend
+          kind load docker-image kind-registry:5000/ichub-backend:ci
+
+      - name: Build and load frontend image into KinD
+        run: |
+          docker build -t kind-registry:5000/ichub-frontend:ci ./ichub-frontend
+          kind load docker-image kind-registry:5000/ichub-frontend:ci
+
 
       - name: Run chart-testing (install)
-        run: ct install --charts charts/industry-core-hub --helm-extra-args "--timeout 900s" --target-branch ${{ github.event.repository.default_branch }}
-        if: github.event_name != 'pull_request' || steps.list-changed.outputs.changed == 'true'
+        run: |
+          helm dependency update charts/industry-core-hub
+          helm install test-release charts/industry-core-hub \
+            --values charts/test-helm-values-ichub.yaml \
+            --set backend.image.repository=kind-registry:5000/ichub-backend \
+            --set backend.image.tag=ci \
+            --set backend.image.pullPolicy=IfNotPresent \
+            --set frontend.image.repository=kind-registry:5000/ichub-frontend \
+            --set frontend.image.tag=ci \
+            --set frontend.image.pullPolicy=IfNotPresent \
+            --timeout 900s \
+            --wait
+
+      - name: Helm uninstall
+        if: always()
+        run: helm uninstall test-release
 
         # Upgrade the released chart version with the locally available chart
       - name: Run helm upgrade
@@ -116,5 +125,13 @@ jobs:
          helm repo add tractusx-dev https://eclipse-tractusx.github.io/charts/dev
          helm install industry-core-hub tractusx-dev/industry-core-hub --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }} --values charts/test-helm-values-ichub.yaml --timeout 600s --wait
          helm dependency update charts/industry-core-hub
-         helm upgrade industry-core-hub charts/industry-core-hub --values charts/test-helm-values-ichub.yaml --timeout 900s --wait --atomic
-        if: github.event_name != 'pull_request' || steps.list-changed.outputs.changed == 'true'
+         helm upgrade industry-core-hub charts/industry-core-hub \
+           --values charts/test-helm-values-ichub.yaml \
+           --set backend.image.repository=kind-registry:5000/ichub-backend \
+           --set backend.image.tag=ci \
+           --set backend.image.pullPolicy=IfNotPresent \
+           --set frontend.image.repository=kind-registry:5000/ichub-frontend \
+           --set frontend.image.tag=ci \
+           --set frontend.image.pullPolicy=IfNotPresent \
+           --timeout 900s --wait --atomic
+        if: github.event_name != 'pull_request'

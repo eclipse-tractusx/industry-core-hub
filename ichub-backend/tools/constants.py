@@ -22,6 +22,7 @@
 
 # ================ CONSTANTS =========================
 TYPE = "@type"
+JSON_EXTENSION = ".json"
 
 # ================= CONTEXTS =========================
 ODRL_CONTEXT = "http://www.w3.org/ns/odrl/2/"

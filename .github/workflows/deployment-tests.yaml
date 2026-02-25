@@ -31,18 +31,8 @@ on:
 
 jobs:
 
-  test-prepare:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cache ContainerD Image Layers
-        uses: actions/cache@v4
-        with:
-          path: /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs
-          key: ${{ runner.os }}-io.containerd.snapshotter.v1.overlayfs
-
   ichub-deployment:
     runs-on: ubuntu-latest
-    needs: test-prepare
     strategy:
       fail-fast: false
       # this will verify that the official distribution of the Tractus-X Industry Core Helm chart runs on the last 3 Kubernetes versions
@@ -67,25 +57,25 @@ jobs:
       - name: Create KinD cluster with registry
         uses: container-tools/kind-action@0ad70e2299366b0e1552c7240f4e4567148f723e # v2.0.4
         with:
-          version: v0.22.0
+          version: v0.27.0
           node_image: kindest/node:${{ matrix.k8s-version }}
           cluster_name: ichub-test-cluster
           wait: 300s
           registry: true
       
-      - name: Build and push backend image
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
-        with:
-          context: ./ichub-backend
-          push: true
-          tags: kind-registry:5000/ichub-backend:test
+      - name: Build and load backend image
+        run: |
+          docker build -t kind-registry:5000/ichub-backend:test ./ichub-backend
+          kind load docker-image kind-registry:5000/ichub-backend:test --name ichub-test-cluster
+        env:
+          KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER: overlayfs
 
-      - name: Build and push frontend image  
-        uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
-        with:
-          context: ./ichub-frontend
-          push: true
-          tags: kind-registry:5000/ichub-frontend:test
+      - name: Build and load frontend image
+        run: |
+          docker build -t kind-registry:5000/ichub-frontend:test ./ichub-frontend
+          kind load docker-image kind-registry:5000/ichub-frontend:test --name ichub-test-cluster
+        env:
+          KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER: overlayfs
 
       - name: Wait for cluster to be ready
         run: |

@@ -98,7 +98,10 @@ interface SubmodelCreatorProps {
     manufacturerPartId?: string;
     twinId?: string;
     dtrAasId?: string;
+    serializedPartTwin?: any; // Complete serialized part twin data
     loading?: boolean;
+    initialData?: any;
+    saveButtonLabel?: string;
 }
 
 // Dark theme matching the application style
@@ -185,9 +188,12 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     manufacturerPartId,
     twinId,
     dtrAasId,
-    loading = false
+    serializedPartTwin,
+    loading = false,
+    initialData,
+    saveButtonLabel = 'Create Submodel'
 }) => {
-    const [formData, setFormData] = useState<any>({});
+    const [formData, setFormData] = useState<any>(initialData || {});
     const [requestedActive, setRequestedActive] = useState(false);
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const getDefaultJson = () => {
@@ -699,13 +705,20 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     // Initialize form data with default values when schema changes
     useEffect(() => {
         if (selectedSchema && open) {
-            // Use generic utility to create initial form data structure from schema
-            const initialData = createInitialFormData(selectedSchema);
-            setFormData(initialData); // JSON starts with empty objects for required groups using schema keys
-            setValidationState('initial');
-            setValidationErrors([]);
+            if (initialData) {
+                // Use provided initial data if available
+                setFormData(initialData);
+                setValidationState('initial');
+                setValidationErrors([]);
+            } else {
+                // Use generic utility to create initial form data structure from schema
+                const newInitialData = createInitialFormData(selectedSchema);
+                setFormData(newInitialData); // JSON starts with empty objects for required groups using schema keys
+                setValidationState('initial');
+                setValidationErrors([]);
+            }
         }
-    }, [selectedSchema, manufacturerPartId, open]);
+    }, [selectedSchema, manufacturerPartId, open, initialData]);
 
     const handleFormChange = (newData: any, changedFieldKey?: string) => {
         setFormData(newData);
@@ -994,18 +1007,174 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                                 </Tooltip>
                                             )}
 
-                                            {/* Fallback message when no twin */}
-                                            {(!twinId && !dtrAasId) && (
+                                            {/* Additional Serialized Part Information */}
+                                            {serializedPartTwin && (
+                                                <>
+                                                    {/* Part Instance ID */}
+                                                    {serializedPartTwin.partInstanceId && (
+                                                        <Tooltip title="Click to copy Part Instance ID (Serial Number)">
+                                                            <Chip
+                                                                icon={<FingerprintIcon />}
+                                                                label={`Serial Number: ${serializedPartTwin.partInstanceId}`}
+                                                                variant="outlined"
+                                                                size="medium"
+                                                                clickable
+                                                                onClick={() => handleCopy(serializedPartTwin.partInstanceId, 'Part Instance ID')}
+                                                                sx={{
+                                                                    height: '36px',
+                                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                                                    color: '#ffffff',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                                    },
+                                                                    '& .MuiChip-icon': {
+                                                                        color: '#ffffff'
+                                                                    },
+                                                                    '& .MuiChip-label': {
+                                                                        color: '#ffffff !important',
+                                                                        fontSize: '14px',
+                                                                        fontWeight: 500,
+                                                                        px: 1
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+
+                                                    {/* Part Name */}
+                                                    {serializedPartTwin.name && (
+                                                        <Chip
+                                                            icon={<InventoryIcon />}
+                                                            label={`Part Name: ${serializedPartTwin.name}`}
+                                                            variant="outlined"
+                                                            size="medium"
+                                                            sx={{
+                                                                height: '36px',
+                                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                                borderColor: 'rgba(255, 255, 255, 0.3)',
+                                                                color: '#ffffff',
+                                                                '& .MuiChip-icon': {
+                                                                    color: '#ffffff'
+                                                                },
+                                                                '& .MuiChip-label': {
+                                                                    color: '#ffffff !important',
+                                                                    fontSize: '14px',
+                                                                    fontWeight: 500,
+                                                                    px: 1
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+
+                                                    {/* Manufacturer ID */}
+                                                    {serializedPartTwin.manufacturerId && (
+                                                        <Tooltip title="Click to copy Manufacturer ID (BPNL)">
+                                                            <Chip
+                                                                icon={<PlaceIcon />}
+                                                                label={`Manufacturer: ${serializedPartTwin.manufacturerId}`}
+                                                                variant="outlined"
+                                                                size="medium"
+                                                                clickable
+                                                                onClick={() => handleCopy(serializedPartTwin.manufacturerId, 'Manufacturer ID')}
+                                                                sx={{
+                                                                    height: '36px',
+                                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                                                    color: '#ffffff',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                                    },
+                                                                    '& .MuiChip-icon': {
+                                                                        color: '#ffffff'
+                                                                    },
+                                                                    '& .MuiChip-label': {
+                                                                        color: '#ffffff !important',
+                                                                        fontSize: '14px',
+                                                                        fontWeight: 500,
+                                                                        px: 1
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+
+                                                    {/* VAN */}
+                                                    {serializedPartTwin.van && (
+                                                        <Tooltip title="Click to copy VAN (Vehicle Anonymized Number)">
+                                                            <Chip
+                                                                icon={<FingerprintIcon />}
+                                                                label={`VAN: ${serializedPartTwin.van}`}
+                                                                variant="outlined"
+                                                                size="medium"
+                                                                clickable
+                                                                onClick={() => handleCopy(serializedPartTwin.van, 'VAN')}
+                                                                sx={{
+                                                                    height: '36px',
+                                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                                                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                                                                    color: '#ffffff',
+                                                                    '&:hover': {
+                                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
+                                                                    },
+                                                                    '& .MuiChip-icon': {
+                                                                        color: '#ffffff'
+                                                                    },
+                                                                    '& .MuiChip-label': {
+                                                                        color: '#ffffff !important',
+                                                                        fontSize: '14px',
+                                                                        fontWeight: 500,
+                                                                        px: 1
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {/* Twin Status - shows if twin is registered or not */}
+                                            {(twinId && dtrAasId) ? (
                                                 <Chip 
+                                                    icon={<CheckCircleIcon />}
+                                                    label="Twin Status: Registered" 
+                                                    variant="outlined" 
+                                                    size="medium" 
+                                                    sx={{ 
+                                                        height: '36px',
+                                                        color: '#22c55e',
+                                                        borderColor: 'rgba(34, 197, 94, 0.5)',
+                                                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                                                        '& .MuiChip-icon': {
+                                                            color: '#22c55e'
+                                                        },
+                                                        '& .MuiChip-label': {
+                                                            fontSize: '14px',
+                                                            fontWeight: 600,
+                                                            px: 2
+                                                        }
+                                                    }}
+                                                />
+                                            ) : (
+                                                <Chip 
+                                                    icon={<WarningIcon />}
                                                     label="Twin Status: Not yet created" 
                                                     variant="outlined" 
                                                     size="medium" 
                                                     sx={{ 
                                                         height: '36px',
-                                                        color: 'rgba(255, 255, 255, 0.7)',
-                                                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                                                        color: '#f59e0b',
+                                                        borderColor: 'rgba(245, 158, 11, 0.5)',
+                                                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                                        '& .MuiChip-icon': {
+                                                            color: '#f59e0b'
+                                                        },
                                                         '& .MuiChip-label': {
                                                             fontSize: '14px',
+                                                            fontWeight: 600,
                                                             px: 2
                                                         }
                                                     }}
@@ -1116,7 +1285,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                             transition: 'all 0.2s ease-in-out',
                                         }}
                                     >
-                                        {isSubmitting ? 'Creating Submodel...' : 'Create Submodel'}
+                                        {isSubmitting ? `Saving...` : saveButtonLabel}
                                     </Button>
                                     </span>
                                 </Tooltip>

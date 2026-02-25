@@ -29,7 +29,38 @@ const httpClient: AxiosInstance = axios.create({
   timeout: environmentService.getApiConfig().timeout || 30000,
 });
 
-httpClient.interceptors.request.use((config) => {
+/**
+ * Wait for authentication to be ready before making API requests.
+ * This prevents 401 errors from requests made before the token is available.
+ */
+const waitForAuth = async (maxWaitMs: number = 5000): Promise<void> => {
+  if (!environmentService.isAuthEnabled()) {
+    return; // No auth needed
+  }
+
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    const authState = authService.getAuthState();
+    
+    // If authenticated, proceed with the request
+    if (authState.isAuthenticated) {
+      return;
+    }
+    
+    // If there's an error or not loading anymore, stop waiting to avoid blocking forever
+    if (authState.error || !authState.isLoading) {
+      return;
+    }
+    
+    // Wait a bit before checking again
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+};
+
+httpClient.interceptors.request.use(async (config) => {
+  // Wait for authentication to be ready before making the request
+  await waitForAuth();
+  
   const envHeaders = environmentService.getApiHeaders();
   const authHeaders = authService.getAuthHeaders();
   config.headers = {

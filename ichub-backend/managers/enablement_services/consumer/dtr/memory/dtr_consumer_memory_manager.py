@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -26,11 +27,13 @@ import copy
 import hashlib
 import logging
 import threading
+import time
 import json
 import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any
 from tractusx_sdk.dataspace.tools import op
+from sqlmodel import Session
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
 from managers.enablement_services.consumer.base_dtr_consumer_manager import BaseDtrConsumerManager
 from managers.enablement_services.consumer.dtr.pagination_manager import PaginationManager, DtrPaginationState, PageState
@@ -1088,6 +1091,9 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 "submodel": {},
                 "dtr": None
             }
+        else:
+            self.logger.debug(f"[DTR Manager] [{counter_party_id}] Found {len(dtrs)} DTR(s) for submodel discovery")
+            self.logger.debug(f"[DTR Manager] [{counter_party_id}] DTRs: {dtrs}")
 
         connector_service: BaseConnectorConsumerService = self.connector_consumer_manager.connector_service
 
@@ -1111,9 +1117,13 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                     policies=policies_to_use,
                     filter_expression=filter_expression
                 )
+                self.logger.debug(f"[DTR Manager] [{counter_party_id}] Connected to DTR at {connector_url} for submodel discovery")
+                self.logger.debug(f"[DTR Manager] [{counter_party_id}] Using policies: {policies_to_use}")
+                self.logger.debug(f"[DTR Manager] [{counter_party_id}] Dataplane URL: {dataplane_url}")
 
                 # Direct API call to fetch specific submodel descriptor
                 submodel_descriptor = self._fetch_submodel_descriptor(id, submodel_id, dataplane_url, access_token)
+                self.logger.debug(f"[DTR Manager] [{counter_party_id}] Fetched submodel descriptor for submodel ID {submodel_id} from DTR at {connector_url}: {submodel_descriptor}")
                 
                 if submodel_descriptor is not None:
                     return self._process_submodel_descriptor(
@@ -1330,17 +1340,19 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 response["submodelDescriptor"]["error"] = "This submodel asset does not exists or is not accesible via Connector with your permissions."
                 return response
              
-            if self.logger and self.verbose:
-                self.logger.info(f"[DTR Manager] [{counter_party_id}] Purged cached asset token for asset ID [{asset_id}] due to data fetch failure, repeating negotiation...")
+            if self.logger:
+                self.logger.info(
+                    f"[DTR Manager] [{counter_party_id}] Purged cached asset token for asset ID [{asset_id}] due to data fetch failure. Waiting 5s before retry..."
+                )
 
-            # Retry negotiation
+            time.sleep(5)
+
             access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
             if not access_token:
                 response["submodelDescriptor"]["status"] = "error"
                 response["submodelDescriptor"]["error"] = "Asset negotiation failed. You may not have enough access permissions to this submodel."
                 return response
             
-            # Fetch the submodel data
             data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
             if data:
                 response["submodel"] = data
@@ -1352,6 +1364,34 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 return response
                 
         except Exception as e:
+            try:
+                if self.logger:
+                    self.logger.info(
+                        f"[DTR Manager] [{counter_party_id}] Exception during submodel fetch, purging asset cache for [{asset_id}]"
+                    )
+                self._purge_asset_cache(counter_party_id, asset_id, connector_url, policies)
+                if self.logger:
+                    self.logger.info(
+                        f"[DTR Manager] [{counter_party_id}] Waiting 5s before retry after exception for asset [{asset_id}]"
+                    )
+                time.sleep(5)
+
+                access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
+                if access_token:
+                    data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
+                    if data:
+                        if self.logger:
+                            self.logger.info(
+                                f"[DTR Manager] [{counter_party_id}] Retry after exception succeeded for asset [{asset_id}]"
+                            )
+                        response["submodel"] = data
+                        response["submodelDescriptor"]["status"] = "success"
+                        return response
+            except Exception as purge_exc:
+                if self.logger:
+                    self.logger.warning(
+                        f"[DTR Manager] [{counter_party_id}] Failed to purge asset cache after exception for [{asset_id}]: {purge_exc}"
+                    )
             response["submodelDescriptor"]["status"] = "error"
             response["submodelDescriptor"]["error"] = f"Asset negotiation failed. You may not have enough access permissions to this submodel. {str(e)}"
             if self.logger and self.verbose:
@@ -1431,7 +1471,7 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         
         if not fetch_tasks:
             return
-            
+
         with ThreadPoolExecutor(max_workers=min(len(fetch_tasks), 20)) as executor:
             future_to_submodel = {
                 executor.submit(
@@ -1533,6 +1573,8 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 if "SUBMODEL-3.0" in interface:
                     # Extract href
                     href = endpoint.get("protocolInformation", {}).get("href", "unknown")
+                    if href and isinstance(href, str):
+                        href = href.replace("urn:uuid:", "")
                     
                     # Extract asset_id and connector_url from subprotocolBody
                     subprotocol_body = endpoint.get("protocolInformation", {}).get("subprotocolBody", "")
@@ -1589,17 +1631,123 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         return access_token
 
     def _purge_asset_cache(self, counter_party_id: str, asset_id: str, dsp_endpoint_url: str, policies: List[Dict]) -> bool:
-        """Negotiate access to a single asset and return the access token."""
+        """Purge asset from memory cache and delete from database."""
+        if self.logger:
+            self.logger.info(f"[DTR Manager] [{counter_party_id}] PURGE: Starting purge for asset [{asset_id}]")
+        
         connector_service: BaseConnectorConsumerService = self.connector_consumer_manager.connector_service
         policies_checksum = hashlib.sha3_256(str(policies).encode('utf-8')).hexdigest()
         filter_checksum = hashlib.sha3_256(str(connector_service.get_filter_expression(key="https://w3id.org/edc/v0.0.1/ns/id", value=asset_id)).encode('utf-8')).hexdigest()
 
-        return connector_service.connection_manager.delete_connection(
+        # Try to delete from memory cache (may fail if checksums don't match)
+        deleted_from_memory = connector_service.connection_manager.delete_connection(
             counter_party_id=counter_party_id,
             counter_party_address=dsp_endpoint_url,
             query_checksum=filter_checksum,
             policy_checksum=policies_checksum
         )
+        
+        if self.logger:
+            if deleted_from_memory:
+                self.logger.info(f"[DTR Manager] [{counter_party_id}] PURGE: Standard deletion from memory succeeded for asset [{asset_id}]")
+            else:
+                self.logger.info(f"[DTR Manager] [{counter_party_id}] PURGE: Standard deletion failed (checksum mismatch), trying force-removal for asset [{asset_id}]")
+        
+        # If memory deletion failed, try to force-remove from SDK's internal cache
+        if not deleted_from_memory:
+            try:
+                # Try to access the SDK's _edr_tracked dictionary
+                if hasattr(connector_service.connection_manager, '_edr_tracked'):
+                    edr_tracked = connector_service.connection_manager._edr_tracked
+                    keys_to_remove = []
+                    
+                    # Find keys matching the asset_id
+                    for key, edr_entry in edr_tracked.items():
+                        if isinstance(edr_entry, dict):
+                            edr_data = edr_entry.get('edr_data') or edr_entry
+                            if edr_data.get('assetId') == asset_id:
+                                keys_to_remove.append(key)
+                    
+                    # Remove matched keys
+                    for key in keys_to_remove:
+                        del edr_tracked[key]
+                        deleted_from_memory = True
+                        if self.logger:
+                            self.logger.info(
+                                f"[DTR Manager] [{counter_party_id}] PURGE: Force-removed EDR from SDK _edr_tracked for asset [{asset_id}], key: {key}"
+                            )
+                
+                # Also try _connection_cache if it exists
+                if hasattr(connector_service.connection_manager, '_connection_cache') and not deleted_from_memory:
+                    cache = connector_service.connection_manager._connection_cache
+                    keys_to_remove = []
+                    for key, value in cache.items():
+                        if isinstance(value, dict) and value.get('assetId') == asset_id:
+                            keys_to_remove.append(key)
+                    
+                    for key in keys_to_remove:
+                        del cache[key]
+                        deleted_from_memory = True
+                        if self.logger:
+                            self.logger.info(
+                                f"[DTR Manager] [{counter_party_id}] PURGE: Force-removed EDR from SDK _connection_cache for asset [{asset_id}]"
+                            )
+            except Exception as exc:
+                if self.logger:
+                    self.logger.warning(
+                        f"[DTR Manager] [{counter_party_id}] PURGE: Could not force-remove from memory cache: {exc}"
+                    )
+        
+        # Always attempt database deletion, even if memory deletion failed
+        manager = connector_service.connection_manager
+        deleted_from_db = False
+        
+        if hasattr(manager, "engine"):
+            try:
+                with Session(manager.engine) as session:
+                    from sqlalchemy import text
+                    
+                    # Try by assetId first (more reliable for submodels)
+                    if self.logger and self.verbose:
+                        self.logger.debug(
+                            f"[DTR Manager] [{counter_party_id}] PURGE: Attempting DB deletion by assetId: {asset_id}"
+                        )
+                    
+                    result = session.execute(
+                        text("DELETE FROM edr_connections WHERE counter_party_id = :cpid AND edr_data->>'assetId' = :asset_id"),
+                        {"cpid": counter_party_id, "asset_id": asset_id}
+                    )
+                    session.commit()
+                    deleted_from_db = result.rowcount > 0
+                    
+                    if self.logger:
+                        action = "✓ Purged from DB" if deleted_from_db else "✗ Not found in DB"
+                        self.logger.info(
+                            f"[DTR Manager] [{counter_party_id}] PURGE: {action} (memory: {deleted_from_memory}) for asset [{asset_id}]"
+                        )
+                    
+                    # Force reload EDRs from database after deletion
+                    if deleted_from_db and hasattr(manager, 'load_from_db'):
+                        try:
+                            manager.load_from_db()
+                            if self.logger:
+                                self.logger.info(
+                                    f"[DTR Manager] [{counter_party_id}] PURGE: Forced SDK to reload EDRs from DB after deletion"
+                                )
+                        except Exception as reload_exc:
+                            if self.logger:
+                                self.logger.warning(
+                                    f"[DTR Manager] [{counter_party_id}] PURGE: Could not force reload from DB: {reload_exc}"
+                                )
+            except Exception as exc:
+                if self.logger:
+                    self.logger.error(
+                        f"[DTR Manager] [{counter_party_id}] PURGE: Failed to delete from DB for asset [{asset_id}]: {exc}",
+                        exc_info=True
+                    )
+        
+        # Return True if deleted from either location
+        return deleted_from_memory or deleted_from_db
             
     def _fetch_submodel_data_with_token(self, submodel_id: str, href: str, access_token: str) -> Optional[Dict]:
         """Fetch submodel data using a pre-negotiated access token."""

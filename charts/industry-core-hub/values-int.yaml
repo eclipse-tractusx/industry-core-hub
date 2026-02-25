@@ -167,7 +167,7 @@ backend:
         value: <path:industry-core-hub/data/backend#apiKey>
       keycloak:
         enabled: true
-        authUrl: "https://ichub-iam.int.catena-x.net/auth"
+        authUrl: "https://ichub-iam.int.catena-x.net/auth/"
         realm: "ICHub"
         clientId: "industry-core-hub-api"
         clientSecret: "ichub-client-secret-2024"

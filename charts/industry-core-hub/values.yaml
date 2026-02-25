@@ -294,10 +294,33 @@ backend:
                     rightOperand: active
             prohibition: []
             obligation: []
-    # -- EDC (Eclipse Dataspace Connector) configuration
-    submodel_dispatcher:
-      path: "/industry-core-hub/data/submodels"
-      apiPath: "/submodel-dispatcher"
+      # -- Submodel Dispatcher configuration
+      submodel_dispatcher:
+        # -- Storage mode: "filesystem" (local storage) or "http" (external service)
+        mode: "filesystem"
+        # -- Local filesystem path for submodels (used when mode=filesystem)
+        path: "/industry-core-hub/data/submodels"
+        apiPath: "/submodel-dispatcher"
+        # -- External HTTP submodel service configuration (used when mode=http)
+        http:
+          # -- Base URL of the external ICHub-compatible submodel service
+          base_url: "https://external-ichub.example.com"
+          # -- Optional API path prefix
+          api_path: ""
+          # -- Authentication configuration
+          auth:
+            # -- Enable authentication
+            enabled: false
+            # -- Authentication type: "bearer" or "apikey"
+            type: "apikey"
+            # -- Authentication token/key (can use $KUBE_ENV_VAR syntax for secrets)
+            token: ""
+            # -- Header name for API key (required when type="apikey")
+            key_name: "X-Api-Key"
+          # -- Request timeout in seconds
+          timeout: 30
+          # -- SSL certificate verification
+          verify_ssl: true
 
   podAnnotations: {}
 
@@ -491,7 +514,7 @@ frontend:
 
     # API and backend configuration
     ichubBackendUrl: "https://<backend-hostname>/v1"
-    apiTimeout: 30000
+    apiTimeout: 300000
     apiRetryAttempts: 3
     requireHttpsUrlPattern: false
 

@@ -23,7 +23,6 @@
 ## Code created partially using a LLM and reviewed by a human committer
 
 import sys
-import logging
 from pathlib import Path
 
 # Add parent directory to path to import modules
@@ -38,7 +37,7 @@ logger = LoggingManager.get_logger(__name__)
 
 ConfigManager.load_config()
 
-from database import engine, wait_for_db_connection
+from database import wait_for_db_connection
 from tractusx_sdk.dataspace.services.connector import ServiceFactory
 from managers.enablement_services.provider import ConnectorProviderManager
 from jobs.asset_sync_job import AssetSyncJob

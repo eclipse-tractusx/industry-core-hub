@@ -171,7 +171,7 @@ class EnvironmentService {
     const keycloakConfig = this.getKeycloakConfig();
     return {
       onLoad: keycloakConfig.onLoad || 'check-sso',
-      checkLoginIframe: keycloakConfig.checkLoginIframe !== false,
+      checkLoginIframe: false, // Disable to prevent session checking issues during navigation
       silentCheckSsoRedirectUri: keycloakConfig.silentCheckSsoRedirectUri,
       pkceMethod: keycloakConfig.pkceMethod || 'S256',
       enableLogging: keycloakConfig.enableLogging || false,

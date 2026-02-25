@@ -68,10 +68,6 @@ export class ConfigFactory {
     const windowEnv = (window as any)?.ENV || {};
     const viteEnv = (import.meta as any).env || {};
     
-    console.log('🔍 ConfigFactory getRawEnvironmentConfig:');
-    console.log('  windowEnv.AUTH_ENABLED:', windowEnv.AUTH_ENABLED);
-    console.log('  windowEnv.AUTH_PROVIDER:', windowEnv.AUTH_PROVIDER);
-    
     return {
       // Core application
       VITE_APP_ENVIRONMENT: windowEnv.APP_ENVIRONMENT || viteEnv.VITE_APP_ENVIRONMENT,
@@ -157,14 +153,7 @@ export class ConfigFactory {
       // Authentication configuration
       auth: {
         enabled: raw.VITE_AUTH_ENABLED === 'true',
-        provider: (() => {
-          console.log('🔍 Setting auth provider:');
-          console.log('  raw.VITE_AUTH_PROVIDER:', raw.VITE_AUTH_PROVIDER);
-          console.log('  Type:', typeof raw.VITE_AUTH_PROVIDER);
-          const provider = (raw.VITE_AUTH_PROVIDER as 'keycloak' | 'none') || 'none';
-          console.log('  Final provider:', provider);
-          return provider;
-        })(),
+        provider: (raw.VITE_AUTH_PROVIDER as 'keycloak' | 'none') || 'none',
         
         // Keycloak configuration (only if auth is enabled and provider is keycloak)
         keycloak: raw.VITE_AUTH_ENABLED === 'true' && raw.VITE_AUTH_PROVIDER === 'keycloak' ? {

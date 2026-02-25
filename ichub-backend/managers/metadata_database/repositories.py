@@ -25,7 +25,7 @@
 
 from sqlalchemy import case
 from sqlmodel import SQLModel, Session, select, desc
-from sqlalchemy.orm import selectinload, aliased
+from sqlalchemy.orm import selectinload
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
