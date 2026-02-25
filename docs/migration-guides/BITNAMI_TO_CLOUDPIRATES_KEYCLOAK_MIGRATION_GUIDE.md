@@ -113,26 +113,79 @@ Industry Core Hub handles these CloudPirates requirements automatically:
 
 ### Step 1: Backup Your Data
 
+#### 1a. Export Realm from Keycloak Admin Console
+
 ```bash
 # Set your namespace
 NAMESPACE=ichub
 RELEASE=ichub
 
-# Port forward to Keycloak
+# Port forward to Keycloak (skip if using ingress)
 kubectl port-forward svc/${RELEASE}-keycloak 8080:80 -n ${NAMESPACE} &
-
-# Export realm from Admin Console:
-# 1. Navigate to http://localhost:8080/auth/admin
-# 2. Login with admin credentials
-# 3. Select ICHub realm
-# 4. Go to Realm Settings → Action → Partial Export
-# 5. Check all options, click Export
-# 6. Save the JSON file
-
-# Backup database
-kubectl exec ${RELEASE}-postgresql-0 -n ${NAMESPACE} -- \
-  pg_dump -U ichub_keycloak -d ichub-postgres > keycloak_backup.sql
 ```
+
+1. Navigate to the Keycloak Admin Console (e.g., `https://ichub-iam.int.catena-x.net/auth/admin` or `http://localhost:8080/auth/admin`)
+2. Login with admin credentials
+3. Select the **ICHub** realm
+4. Go to **Realm Settings → Action → Partial Export**
+5. Check all options and click **Export**
+6. Save the JSON file (e.g., `ichub-realm-export.json`)
+
+#### 1b. Backup Database Using pgAdmin
+
+> 💡 **pgAdmin is already deployed** as part of Industry Core Hub. If you have ingress configured, access it directly at your pgAdmin URL (e.g., `https://pgadmin-ichub.int.catena-x.net`).
+>
+> The pgAdmin deployment is controlled via `values.yaml`:
+> ```yaml
+> pgadmin4:
+>   enabled: true
+>   env:
+>     email: <your-admin-email>
+>     password: <your-admin-password>
+> ```
+>
+> If pgAdmin is not yet deployed or you prefer a local instance, enable it with `pgadmin4.enabled: true` and redeploy, or use a local pgAdmin installation.
+
+**Register the PostgreSQL server in pgAdmin:**
+
+1. Open pgAdmin and log in
+2. Right-click **Servers** → **Register** → **Server...**
+3. In the **General** tab, set a name (e.g., `ICHub PostgreSQL`)
+4. In the **Connection** tab, fill in:
+
+| Field | Value |
+|-------|-------|
+| **Host name/address** | `<release-name>-postgresql` (e.g., `ichub-postgresql`) — pgAdmin can resolve this directly since both run in the same cluster |
+| **Port** | `5432` |
+| **Maintenance database** | `ichub-postgres` |
+| **Username** | `ichub_keycloak` |
+| **Password** | *(retrieve from secret, see below)* |
+| **Save password** | ✅ (optional) |
+
+> If pgAdmin runs **outside** the cluster, create a port-forward first:
+> ```bash
+> kubectl port-forward svc/${RELEASE}-postgresql 5432:5432 -n ${NAMESPACE} &
+> ```
+> Then use `localhost` as the host.
+
+To retrieve the current database password:
+```bash
+kubectl get secret ichub-postgres-secret -n ${NAMESPACE} -o jsonpath='{.data.ichub_keycloak}' | base64 -d
+```
+
+**Create the backup in pgAdmin:**
+
+1. In the pgAdmin browser tree, expand **Servers → ICHub PostgreSQL → Databases**
+2. Right-click on `ichub-postgres` → **Backup...**
+3. Configure the backup:
+   - **Filename**: `keycloak_backup` (pgAdmin will add the extension)
+   - **Format**: `Custom` (recommended, supports selective restore) or `Plain` (SQL text)
+   - **Encoding**: `UTF8`
+4. In the **Data/Objects** tab:
+   - Enable **Include CREATE DATABASE statement** if you want a full restore option
+   - Enable **Use Column Inserts** for maximum compatibility *(optional)*
+5. Click **Backup**
+6. Verify the backup completed successfully in the pgAdmin notifications panel (bell icon, bottom-right)
 
 ### Step 2: Uninstall Current Deployment
 
