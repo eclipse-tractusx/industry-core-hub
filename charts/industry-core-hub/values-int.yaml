@@ -260,7 +260,7 @@ backend:
               port: 8000
 
 keycloak:
-  realm:
+  ichubRealm:
     users:
       - username: "ichub-admin"
         password: "changeme"
@@ -298,9 +298,16 @@ keycloak:
   ingress:
     # -- Enable ingress record generation
     enabled: true
-    # -- Provide default path for the ingress record.
-    hostname: "ichub-iam.int.catena-x.net"
-    # -- Enable TLS/SSL for ingress (boolean)
-    tls: true
+    # -- Ingress hosts configuration (CloudPirates format)
+    hosts:
+      - host: "ichub-iam.int.catena-x.net"
+        paths:
+          - path: /
+            pathType: Prefix
+    # -- Enable TLS/SSL for ingress
+    tls:
+      - hosts:
+          - "ichub-iam.int.catena-x.net"
+        secretName: "ichub-iam-tls"
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod 
