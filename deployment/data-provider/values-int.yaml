@@ -188,7 +188,8 @@ digital-twin-registry:
 
 simple-data-backend:
   enabled: true
-  imagePullPolicy: Always
+  image:
+    pullPolicy: Always
   nameOverride: jupiter-ichub-dataprovider-submodelserver
   ingress:
     enabled: true
