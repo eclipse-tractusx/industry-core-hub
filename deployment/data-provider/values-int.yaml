@@ -179,6 +179,7 @@ digital-twin-registry:
 
 simple-data-backend:
   enabled: true
+  imagePullPolicy: Always
   nameOverride: ichub-dataprovider-submodelserver
   ingress:
     enabled: true
