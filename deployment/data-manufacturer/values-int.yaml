@@ -192,3 +192,4 @@ digital-twin-registry:
 
 simple-data-backend:
   enabled: false
+  imagePullPolicy: Always
