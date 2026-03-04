@@ -68,6 +68,9 @@ backend:
       - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
+    # -- Hostname for the backend service. If empty, it will use the ingress URL automatically.
+    # Set this to override the hostname with a custom value (e.g., "https://my-custom-backend.example.com")
+    hostname: ""
     agreements:
       - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
         usage:

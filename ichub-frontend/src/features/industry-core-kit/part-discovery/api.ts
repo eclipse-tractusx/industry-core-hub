@@ -49,15 +49,42 @@ const governancePoliciesCache: Map<string, PolicyCache> = new Map();
 let defaultGovernancePolicyCache: PolicyCache | null = null;
 
 /**
+ * Simple hash function fallback for when crypto.subtle is unavailable
+ */
+const simpleHash = (str: string): string => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16);
+};
+
+/**
  * Generate a SHA-256 hash from an object for cache invalidation
+ * Falls back to simple hash if crypto.subtle is unavailable (non-secure context)
  */
 const generateConfigHash = async (config: unknown): Promise<string> => {
   const configString = JSON.stringify(config, null, 0);
-  const encoder = new TextEncoder();
-  const data = encoder.encode(configString);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  // Check if crypto.subtle is available (requires secure context)
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    try {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(configString);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+      console.warn('crypto.subtle.digest failed, using fallback hash:', error);
+      return simpleHash(configString);
+    }
+  }
+  
+  // Fallback for non-secure contexts or when crypto.subtle is unavailable
+  console.warn('crypto.subtle is not available (non-secure context?), using simple hash fallback');
+  return simpleHash(configString);
 };
 
 /**

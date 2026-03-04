@@ -1,7 +1,6 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -20,23 +19,23 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-
-hostname: "http://localhost:9000"
-
+ 
+hostname: "https://hackathon2-ichub-backend.esauto-x.com/v1"
+ 
 authorization:
-  enabled: true
+  enabled: false
   api_key:
     key: "X-Api-Key"
     value: <<example>>
   keycloak:
-    enabled: true
-    auth_url: "http://localhost:8080"
+    enabled: false
+    auth_url: "https://ichub-keycloak.tx.test/auth/"
     realm: "ICHub"
     client_id: "industry-core-hub-api"
     client_secret: "ichub-client-secret-2024"
     retry:
-      max_retries: 3
-      retry_delay: 2
+      max_retries: 5
+      retry_delay: 10
       # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
       background_retry_interval: 60
 agreements:
@@ -47,10 +46,49 @@ agreements:
         cx-policy: https://w3id.org/catenax/policy/
       permission:
         - action: odrl:use
+          LogicalConstraint: odrl:and
           constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
             - leftOperand: cx-policy:UsagePurpose
               operator: odrl:eq
               rightOperand: cx.circular.dpp:1
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          constraints:
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+      prohibition: []
+      obligation: []
+  - semanticid: urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation
+    usage:
+      context:
+        odrl: http://www.w3.org/ns/odrl/2/
+        cx-policy: https://w3id.org/catenax/policy/
+      permission:
+        - action: odrl:use
+          LogicalConstraint: odrl:and
+          constraints:
+            - leftOperand: cx-policy:FrameworkAgreement
+              operator: odrl:eq
+              rightOperand: DataExchangeGovernance:1.0
+            - leftOperand: cx-policy:Membership
+              operator: odrl:eq
+              rightOperand: active
+            - leftOperand: cx-policy:UsagePurpose
+              operator: odrl:eq
+              rightOperand: cx.core.industrycore:1
       prohibition: []
       obligation: []
     access:
@@ -97,7 +135,7 @@ agreements:
               rightOperand: active
       prohibition: []
       obligation: []
-  - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+  - semanticid: urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation
     usage:
       context:
         odrl: http://www.w3.org/ns/odrl/2/
@@ -129,36 +167,13 @@ agreements:
               rightOperand: active
       prohibition: []
       obligation: []
-  - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
-    usage:
-      context:
-        odrl: http://www.w3.org/ns/odrl/2/
-        cx-policy: https://w3id.org/catenax/policy/
-      permission:
-        - action: odrl:use
-          constraints:
-            - leftOperand: cx-policy:UsagePurpose
-              operator: odrl:eq
-              rightOperand: cx.core.industrycore:1
-      prohibition: []
-      obligation: []
-    access:
-      context:
-        odrl: http://www.w3.org/ns/odrl/2/
-        cx-policy: https://w3id.org/catenax/policy/
-      permission:
-        - action: odrl:use
-          constraints:
-            - leftOperand: cx-policy:Membership
-              operator: odrl:eq
-              rightOperand: active
-      prohibition: []
-      obligation: []
-
+ 
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
-
+  timeout: 8
+  retry_interval: 5
+ 
 cors:
   enabled: true
   allow_origins:
@@ -168,7 +183,7 @@ cors:
     - "http://127.0.0.1:5173"     # Alternative localhost notation
     - "http://127.0.0.1:3000"
     - "http://127.0.0.1:8080"
-    - "http://localhost:4173"
+    - "https://ichub-frontend.tx.test"  # Deployed frontend
   allow_credentials: true
   allow_methods:
     - "GET"
@@ -179,18 +194,29 @@ cors:
     - "PATCH"
   allow_headers:
     - "*"
-
+ 
+server:
+  # Worker configuration
+  workers:
+    max_workers: 1                        # Single worker for optimal in-memory state
+    worker_threads: 200                   # High thread count for blocking operations
+ 
+  # Timeout configuration (in seconds)
+  timeouts:
+    keep_alive: 300                       # 5 minutes for DTR operations
+    graceful_shutdown: 30    
+ 
 consumer:
   discovery:
     discovery_finder:
-      url: "https://<discovery-finder>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+      url: "https://semantics.esauto-x.com/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
     connector_discovery:
       key: "bpn"
     oauth:
-      url: "https://<centralidp.url>/auth/"
+      url: "https://centralidp.esauto-x.com/auth/"
       realm: "CX-Central"
-      client_id: "<client-id>"
-      client_secret: "<client-secret>"
+      client_id: "sa4"
+      client_secret: "4iqIcPYNNdwNLNnXlii54V1PI11B5ND8"
     digitalTwinRegistry:
       dct_type_key: "dct:type"
       dct_type_filter:
@@ -201,29 +227,91 @@ consumer:
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: "https://<control-plane-edc-consumer>"
-      apiKeyHeader: X-Api-Key
-      apiKey: "<api-key-edc-consumer>"
+      hostname: "https://hackathon2-connector-controlplane.esauto-x.com"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "HACKATHON2"
       managementPath: /management
       protocolPath: /api/v1/dsp
       catalogPath: /catalog
-
+  governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies:
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#SerialPart"
+        policies:
+          - strict: false #-- Enable here the permutations of constraints (order not matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.core.industrycore:1
+            prohibition: []
+            obligation: []
+          - strict: true #-- Disable here the permutations of constraints (order matters)
+            permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+            prohibition: []
+            obligation: []
 provider:
-  connector: 
+  connector:
     dataspace:
       version: "jupiter"
     controlplane:
-      hostname: "https://<provider-edc-control-plane>"
-      apiKeyHeader: X-Api-Key
-      apiKey: "<api-key-controlplane>"
+      hostname: "https://hackathon2-connector-controlplane.esauto-x.com"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "HACKATHON2"
       managementPath: /management
       protocolPath: /api/v1/dsp
     dataplane:
-      hostname: "https://<provider-edc-dataplane>"
+      hostname: "https://hackathon2-connector-dataplane.esauto-x.com"
       publicPath: "/api/public"
-
+ 
   digitalTwinRegistry:
-    hostname: "https://<provider-digital-twin-registry>"
+    hostname: "https://hackathon2-connector-dtr.esauto-x.com"
     apiPath: /api/v3
     uri: ""
     asset_config:
@@ -234,8 +322,8 @@ provider:
     policy:
       usage:
         context:
-          odrl: http://www.w3.org/ns/odrl/2/
-          cx-policy: https://w3id.org/catenax/policy/
+          odrl: "http://www.w3.org/ns/odrl/2/"
+          cx-policy: "https://w3id.org/catenax/policy/"
         permission:
           - action: odrl:use
             LogicalConstraint: odrl:and
@@ -253,8 +341,8 @@ provider:
         obligation: []
       access:
         context:
-          odrl: http://www.w3.org/ns/odrl/2/
-          cx-policy: https://w3id.org/catenax/policy/
+          odrl: "http://www.w3.org/ns/odrl/2/"
+          cx-policy: "https://w3id.org/catenax/policy/"
         permission:
           - action: odrl:use
             constraints:
@@ -263,29 +351,19 @@ provider:
                 rightOperand: active
         prohibition: []
         obligation: []
-
+ 
   submodel_dispatcher:
-    # Mode selection: "filesystem" (local storage) or "http" (external service)
-    mode: "filesystem"
-    # Local filesystem configuration (used when mode=filesystem)
+    mode: "http"
     path: "./data/submodels"
     apiPath: /submodel-dispatcher
-    # External HTTP service configuration (used when mode=http)
     http:
-      # Base URL of the external ICHub-compatible submodel service
-      base_url: "https://<submodel-service-hostname>"
-      # Optional API path prefix (e.g., "/api/v1" or empty string)
+      base_url: "https://hackathon2-ichub-backend.esauto-x.com"
       api_path: "/v1/submodel-dispatcher"
-      # Authentication configuration
       auth:
-        enabled: false
-        # Authentication type: "bearer" (Bearer token) or "apikey" (API Key)
+        enabled: true
         type: "apikey"
-        # Authentication token/key - can use environment variable: ${SUBMODEL_SERVICE_TOKEN}
-        token: ""
-        # Header name for API key (required when type="apikey", e.g., "X-Api-Key")
+        token: "HACKATHON2-HACKATHON2-HACKATHON2"
         key_name: "X-Api-Key"
-      # Request timeout in seconds
       timeout: 30
-      # SSL certificate verification (set to false only for development)
       verify_ssl: true
+ 
