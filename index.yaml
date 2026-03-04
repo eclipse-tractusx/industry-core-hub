@@ -2,6 +2,33 @@ apiVersion: v1
 entries:
   industry-core-hub:
   - apiVersion: v2
+    appVersion: v0.5.0-rc2
+    created: "2026-03-04T12:51:17.02317264Z"
+    dependencies:
+    - alias: postgresql
+      condition: postgresql.enabled
+      name: postgres
+      repository: oci://registry-1.docker.io/cloudpirates
+      version: 0.11.0
+    - condition: pgadmin4.enabled
+      name: pgadmin4
+      repository: https://helm.runix.net
+      version: 1.25.x
+    - condition: keycloak.enabled
+      name: keycloak
+      repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
+      version: 23.0.0
+    description: A Helm chart for Eclipse Tractus-X - Industry Core Hub
+    digest: 450b780257997b492db56daae9385903ac008267c6702474189271051180e342
+    home: https://github.com/eclipse-tractusx/industry-core-hub
+    name: industry-core-hub
+    sources:
+    - https://github.com/eclipse-tractusx/industry-core-hub
+    type: application
+    urls:
+    - https://github.com/eclipse-tractusx/industry-core-hub/releases/download/industry-core-hub-v0.5.0-rc2/industry-core-hub-v0.5.0-rc2.tgz
+    version: v0.5.0-rc2
+  - apiVersion: v2
     appVersion: v0.5.0-rc1
     created: "2026-02-22T18:26:43.09849723Z"
     dependencies:
@@ -727,4 +754,4 @@ entries:
     urls:
     - https://github.com/eclipse-tractusx/industry-core-hub/releases/download/industry-core-hub-0.1.3/industry-core-hub-0.1.3.tgz
     version: 0.1.3
-generated: "2026-02-22T18:26:43.098774055Z"
+generated: "2026-03-04T12:51:17.023416515Z"
