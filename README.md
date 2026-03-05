@@ -114,7 +114,9 @@ Proving the same "motor" of implementation for infinite add-ons of use cases tha
 
 ## Installation
 
-For installing the Industry Core Hub please consult our [Intallation Guide](./INSTALL.md).
+**New Users?** Start with our **[Quickstart Guide](./docs/QUICKSTART.md)** for a guided walkthrough.
+
+For detailed installation instructions, please consult our [Installation Guide](./INSTALL.md).
 
 
 ### Found a bug?
@@ -145,6 +147,7 @@ Please follow the [Security Issue Reporting Guidelines](https://eclipse-tractusx
 This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
 - SPDX-License-Identifier: CC-BY-4.0
+- SPDX-FileCopyrightText: 2026 LKS Next
 - SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
 - Source URL: https://github.com/eclipse-tractusx/industry-core-hub
 
