@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { PartnerInstance } from '@/features/business-partner-kit/partner-management/types/types';
@@ -47,6 +48,8 @@ export const PartnerSearch: React.FC<PartnerSearchProps> = ({
   onSearch,
   isLoading
 }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
+  
   return (
     <>
       <PartnerAutocomplete
@@ -56,8 +59,8 @@ export const PartnerSearch: React.FC<PartnerSearchProps> = ({
         isLoadingPartners={isLoadingPartners}
         partnersError={false} // This component doesn't handle partner loading errors
         hasError={false}
-        label="Partner BPNL"
-        placeholder="Select from available partners or enter a custom Business Partner Number Legal Entity"
+        label={t('search.partnerBpnl')}
+        placeholder={t('search.partnerPlaceholder')}
         required={false}
         onBpnlChange={onBpnlChange}
         onPartnerChange={onSelectedPartnerChange}
@@ -91,7 +94,7 @@ export const PartnerSearch: React.FC<PartnerSearchProps> = ({
           transition: 'all 0.3s ease'
         }}
       >
-        Start Discovery
+        {t('search.startDiscovery')}
       </Button>
     </>
   );

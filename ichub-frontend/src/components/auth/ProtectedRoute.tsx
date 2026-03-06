@@ -23,6 +23,7 @@
 
 import React from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useAuth from '../../hooks/useAuth';
 import ErrorPage from '../common/ErrorPage';
 
@@ -42,6 +43,7 @@ export function ProtectedRoute({
   requireRoles = [], 
   requirePermissions = [] 
 }: ProtectedRouteProps) {
+  const { t } = useTranslation('common');
   const { isAuthenticated, isLoading, user, hasRole, hasPermission, error } = useAuth();
 
   // Show loading state FIRST - don't mount children until auth is ready
@@ -63,10 +65,10 @@ export function ProtectedRoute({
       >
         <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
-          Industry Core Hub
+          {t('app.name')}
         </Typography>
         <Typography variant="h6">
-          Authenticating...
+          {t('auth.authenticating')}
         </Typography>
       </Box>
     );
@@ -76,15 +78,15 @@ export function ProtectedRoute({
   if (error) {
     return (
       <ErrorPage
-        title="Authentication Error"
+        title={t('auth.authError')}
         message={error}
         causes={[
-          'Session expired or invalid',
-          'Authentication service unavailable',
-          'Permission denied'
+          t('auth.causes.sessionExpired'),
+          t('auth.causes.serviceUnavailable'),
+          t('auth.causes.permissionDenied')
         ]}
         showRefreshButton={true}
-        helpText="Please try refreshing the page or contact support if the problem persists."
+        helpText={t('auth.tryRefresh')}
       />
     );
   }
@@ -107,10 +109,10 @@ export function ProtectedRoute({
       >
         <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
-          Industry Core Hub
+          {t('app.name')}
         </Typography>
         <Typography variant="h6">
-          Redirecting to login...
+          {t('auth.redirectingToLogin')}
         </Typography>
       </Box>
     );
@@ -122,14 +124,14 @@ export function ProtectedRoute({
     if (!hasRequiredRole) {
       return (
         <ErrorPage
-          title="Access Denied"
-          message="You don't have the required role to access this content."
+          title={t('auth.accessDenied')}
+          message={t('auth.noRequiredRole')}
           causes={[
-            `Required roles: ${requireRoles.join(', ')}`,
-            `Your roles: ${user?.roles.join(', ') || 'None'}`
+            t('auth.requiredRoles', { roles: requireRoles.join(', ') }),
+            t('auth.yourRoles', { roles: user?.roles.join(', ') || 'None' })
           ]}
           showRefreshButton={false}
-          helpText="Please contact your administrator if you believe you should have access to this content."
+          helpText={t('auth.contactAdminAccess')}
         />
       );
     }
@@ -141,14 +143,14 @@ export function ProtectedRoute({
     if (!hasRequiredPermission) {
       return (
         <ErrorPage
-          title="Access Denied"
-          message="You don't have the required permissions to access this content."
+          title={t('auth.accessDenied')}
+          message={t('auth.noRequiredPermission')}
           causes={[
-            `Required permissions: ${requirePermissions.join(', ')}`,
-            `Your permissions: ${user?.permissions.join(', ') || 'None'}`
+            t('auth.requiredPermissions', { permissions: requirePermissions.join(', ') }),
+            t('auth.yourPermissions', { permissions: user?.permissions.join(', ') || 'None' })
           ]}
           showRefreshButton={false}
-          helpText="Please contact your administrator if you believe you should have access to this content."
+          helpText={t('auth.contactAdminAccess')}
         />
       );
     }

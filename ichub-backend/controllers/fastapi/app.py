@@ -46,6 +46,10 @@ from .routers.consumer.v1 import (
     connection_management,
     discovery_management
 )
+from .routers.notifications.v1 import (
+    digital_twin_event_api,
+    notifications_management
+)
 from .routers.addons import addons
 
 tags_metadata = [
@@ -76,6 +80,14 @@ tags_metadata = [
     {
         "name": "Part Discovery Management",
         "description": "Management of the discovery of parts, searching for digital twins and digital twins registries"
+    },
+    {
+        "name": "Digital Twin Event Management",
+        "description": "Endpoints for receiving notifications about events related to digital twins, such as updates or changes in the twin data"
+    },
+    {
+        "name": "Notifications Management",
+        "description": "Endpoints for managing notifications, such as retrieving, deleting or marking notifications related to digital twins and part sharing"
     },
     {
         "name": "Add-Ons Microservices",
@@ -158,6 +170,8 @@ v1_router.include_router(submodel_dispatcher.router)
 v1_router.include_router(sharing_handler.router)
 v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
+v1_router.include_router(digital_twin_event_api.router)
+v1_router.include_router(notifications_management.router)
 v1_router.include_router(addons.router)
 
 # Include the API version 1 router into the main app
@@ -190,6 +204,8 @@ def custom_openapi():
                 "Submodel Dispatcher",
                 "Open Connection Management",
                 "Part Discovery Management",
+                "Digital Twin Event Management",
+                "Notifications Management"
             ],
         },
         {

@@ -32,6 +32,7 @@ import {
   InputAdornment,
   IconButton
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import SearchIcon from '@mui/icons-material/Search';
 import { PartnerInstance } from '@/features/business-partner-kit/partner-management/types/types';
 
@@ -79,10 +80,10 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
   isLoadingPartners,
   partnersError,
   hasError = false,
-  label = "Partner BPNL",
-  placeholder = "Select partner or enter custom BPNL (e.g., BPNL0000000093Q7)",
-  helperText = "Select from available partners or enter a custom Business Partner Number Legal Entity",
-  errorMessage = "BPNL is required",
+  label,
+  placeholder,
+  helperText,
+  errorMessage,
   showSearchIcon = false,
   disabled = false,
   required = true,
@@ -91,6 +92,14 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
   onRetryLoadPartners,
   onSearchClick
 }) => {
+  const { t } = useTranslation(['partnerManagement', 'common']);
+  
+  // Use translations with fallbacks to props
+  const displayLabel = label ?? t('fields.partnerBpnl');
+  const displayPlaceholder = placeholder ?? t('autocomplete.placeholder');
+  const displayHelperText = helperText ?? t('autocomplete.helperText');
+  const displayErrorMessage = errorMessage ?? t('common:validation.required', { field: t('fields.bpnl') });
+
   // Safely validate and filter partners to prevent crashes from corrupted data
   const safePartners = React.useMemo(() => {
     if (!Array.isArray(availablePartners)) {
@@ -200,7 +209,7 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
   };
 
   const shouldShowError = hasError && (!value || !value.trim());
-  const displayHelperText = shouldShowError ? errorMessage : helperText;
+  const finalHelperText = shouldShowError ? displayErrorMessage : displayHelperText;
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -215,13 +224,13 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
               onClick={onRetryLoadPartners}
               disabled={isLoadingPartners}
             >
-              Retry
+              {t('common:errors.retry')}
             </Button>
           }
           sx={{ mb: 2 }}
         >
           <Typography variant="body2">
-            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+            {t('autocomplete.loadError')}
           </Typography>
         </Alert>
       )}
@@ -237,11 +246,11 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label={label}
-            placeholder={placeholder}
+            label={displayLabel}
+            placeholder={displayPlaceholder}
             variant="outlined"
             error={shouldShowError}
-            helperText={displayHelperText}
+            helperText={finalHelperText}
             required={required}
             slotProps={{
               input: {
@@ -281,8 +290,8 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
         )}
         renderOption={renderOption}
         loading={isLoadingPartners}
-        loadingText="Loading partners..."
-        noOptionsText="No partners found. You can still enter a custom BPNL."
+        loadingText={t('autocomplete.loadingPartners')}
+        noOptionsText={t('autocomplete.noPartnersFound')}
         sx={{ width: '100%' }}
       />
     </Box>

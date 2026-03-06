@@ -1,0 +1,323 @@
+{
+  "page": {
+    "title": "カタログ部品",
+    "createButton": "カタログ部品を作成"
+  },
+  "productCard": {
+    "noPartsAvailable": "カタログ部品がありません。ichub-backendの接続/設定を確認してください",
+    "registerPart": "部品を登録",
+    "sharePart": "部品を共有"
+  },
+  "messages": {
+    "registerSuccess": "部品ツインが正常に登録されました！",
+    "registerError": "部品ツインの登録に失敗しました！",
+    "submodelCreatedSuccess": "{{schemaName}}スキーマでサブモデルが正常に作成されました！",
+    "submodelCreatedError": "サブモデルの作成に失敗しました"
+  },
+  "createDialog": {
+    "title": "新しいカタログ部品を作成",
+    "successMessage": "カタログ部品が正常に作成されました。",
+    "errorMessage": "カタログ部品の作成に失敗しました。",
+    "materialSharesError": "材料の割合は合計で正確に100%である必要があります (現在{{total}}%)。作成前にパーセンテージを調整してください。",
+    "manufacturerIdChip": "あなたのメーカーID: {{id}}",
+    "basicInformation": {
+      "title": "基本情報",
+      "description": "ID、名前、説明、カテゴリー、製造場所を含むカタログ部品の基本的な識別情報。"
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "メーカー部品ID",
+        "placeholder": "一意の部品識別子を入力",
+        "description": "メーカーがこの特定の部品に割り当てた一意の識別子。このIDは組織内で一意である必要があります。"
+      },
+      "name": {
+        "label": "部品名",
+        "placeholder": "部品名を入力",
+        "description": "部品の商用名または技術名。カタログとリストでメイン識別子として表示されます。"
+      },
+      "description": {
+        "label": "説明",
+        "placeholder": "部品の目的、機能、主要な特性を説明してください",
+        "description": "目的、機能、主要な特性を含む部品の詳細な説明。ユーザーが部品の用途を理解するのに役立ちます。"
+      },
+      "category": {
+        "label": "カテゴリー",
+        "placeholder": "カテゴリーを選択または入力",
+        "description": "類似の部品をグループ化する分類カテゴリー。一般的なカテゴリーから選択するか、カスタムカテゴリーを作成できます。"
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "ビジネスパートナー番号サイト",
+        "description": "ビジネスパートナー番号サイト - この部品が製造される特定の製造場所またはサイトを識別します。"
+      }
+    },
+    "measurements": {
+      "title": "寸法",
+      "description": "幅、高さ、長さ、重量を含む部品の物理的な寸法。互換性と物流計画に役立ちます。",
+      "width": "幅",
+      "widthUnit": "幅の単位",
+      "height": "高さ",
+      "heightUnit": "高さの単位",
+      "length": "長さ",
+      "lengthUnit": "長さの単位",
+      "weight": "重量",
+      "weightUnit": "重量の単位"
+    },
+    "materials": {
+      "title": "材料",
+      "description": "パーセンテージ内訳を含む部品の材料構成。この情報はリサイクル、互換性、規制コンプライアンスに不可欠です。",
+      "addMaterial": "材料を追加",
+      "autoAdjust": "100%に自動調整",
+      "total": "合計: {{total}}%",
+      "perfectTotal": "完璧! 材料の割合が100%になりました",
+      "adjustWarning": "パーセンテージを自由に設定してください。部品を作成するには合計が100%である必要があります (現在{{total}}%)",
+      "materialName": {
+        "label": "材料名",
+        "description": "この部品で使用される特定の材料の名前 (例: 鋼、アルミニウム、プラスチックなど)"
+      },
+      "share": {
+        "label": "割合",
+        "exactLabel": "正確な割合 (%)",
+        "description": "部品全体の構成におけるこの材料のパーセンテージまたは割合。すべての材料の割合の合計は100%になる必要があります。",
+        "exactHint": "正確なパーセンテージ値を入力"
+      },
+      "distribution": {
+        "title": "材料分布",
+        "description": "この部品で使用されるさまざまな材料のパーセンテージ分布を示す材料構成の視覚的表現。",
+        "emptyMessage": "分布チャートを表示するには、名前と割合を含む材料を追加してください"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "機械部品",
+      "electronicSensor": "電子センサー",
+      "bodyPart": "ボディパーツ"
+    }
+  },
+  "details": {
+    "notFound": "製品が見つかりません",
+    "partNotFound": "404 部品が見つかりません",
+    "backToCatalog": "カタログに戻る",
+    "update": "更新",
+    "viewSubmodels": "サブモデルを表示"
+  },
+  "shareDialog": {
+    "title": "パートナーと共有 ({{partName}})",
+    "partNameFallback": "部品名を取得できませんでした",
+    "noPartnersTitle": "利用可能なパートナーがありません",
+    "noPartnersDescription": "利用可能なパートナーがありません。部品を共有するには、パートナービューでパートナーを追加してください。",
+    "shareInfoTitle": "部品情報の共有",
+    "shareInfoDescription": "部品を共有するパートナーを選択してください",
+    "partnerLabel": "パートナー",
+    "partnerPlaceholder": "部品を共有するパートナーを選択",
+    "partnerHelperText": "利用可能なパートナーから選択",
+    "partnerRequired": "パートナーの選択は必須です",
+    "addCustomPartId": "カスタム顧客部品IDを追加",
+    "customerPartIdLabel": "顧客部品ID",
+    "customerPartIdPlaceholder": "カスタム部品識別子を入力",
+    "addPartner": "パートナーを追加",
+    "shareSuccess": "部品が{{bpnl}}と正常に共有されました",
+    "shareError": "部品の共有に失敗しました。",
+    "validationError": "検証に失敗しました。",
+    "partDataNotAvailable": "部品データが利用できません。"
+  },
+  "productDetail": {
+    "addSerializedPartDialog": {
+      "title": "シリアライズ部品を追加",
+      "sharingPartner": "共有パートナー",
+      "selectPartner": "共有パートナーを選択",
+      "selectPartnerPlaceholder": "共有するパートナーを選択",
+      "optionalFields": "オプションフィールド",
+      "includeVan": "VANフィールドを含める",
+      "includeCustomerPartId": "顧客部品IDフィールドを含める",
+      "successMessage": "シリアライズ部品が正常に作成されました",
+      "errorMessage": "シリアライズ部品の作成に失敗しました: {{error}}"
+    },
+    "instanceProductsTable": {
+      "title": "インスタンス製品",
+      "subtitle": "個々の製品インスタンスを管理・追跡",
+      "selectPartMessage": "カタログから部品を選択して、個々の製品インスタンスを表示・管理します。",
+      "addButton": "インスタンス製品を追加",
+      "noInstancesFound": "インスタンス製品が見つかりません",
+      "addFirstInstance": "最初のインスタンス製品を追加して、個々のアイテムの追跡を開始します",
+      "columns": {
+        "status": "ステータス",
+        "actions": "アクション"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "シリアライズ部品を削除"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "ツインが正常に登録されました！",
+        "registrationFailed": "登録に失敗しました: {{error}}",
+        "sharingFailed": "共有に失敗しました: {{error}}",
+        "unsharingFailed": "共有解除に失敗しました: {{error}}",
+        "deletionFailed": "削除に失敗しました: {{error}}",
+        "failedToRegisterTwin": "ツインの登録に失敗しました。再試行してください。",
+        "failedToShareTwin": "ツインの共有に失敗しました。再試行してください。",
+        "failedToUnshareTwin": "ツインの共有解除に失敗しました。再試行してください。",
+        "failedToDeletePart": "部品の削除に失敗しました。再試行してください。",
+        "unableToDelete": "削除できません: 無効な部品データ"
+      },
+      "deleteDialog": {
+        "title": "シリアライズ部品を削除",
+        "message": "このシリアライズ部品を削除してもよろしいですか？",
+        "warning": "この操作は元に戻せません。",
+        "deleting": "削除中...",
+        "warningRegistered": "この部品には登録済みのツインがあります。削除するとツイン登録も削除されます。",
+        "warningShared": "この部品は現在パートナーと共有されています。削除するとすべての共有が取り消されます。"
+      }
+    },
+    "productData": {
+      "updatingStatus": "部品ステータスを更新中...",
+      "pleaseWait": "ツイン情報を更新中です。お待ちください",
+      "registerPartTwin": "部品ツインを登録",
+      "loadingAasId": "AAS IDを読み込み中...",
+      "loadingTwinId": "ツインIDを読み込み中...",
+      "noTwinIds": "ツインIDがありません",
+      "twinDataUnavailable": "ツインデータが利用できません",
+      "partDetails": "部品詳細",
+      "invalidDate": "無効な日付",
+      "twinTimestamps": {
+        "title": "ツインタイムスタンプ",
+        "notYetCreated": "まだ作成されていません"
+      },
+      "sharing": {
+        "title": "共有先",
+        "notYetSharedWarning": "この部品はまだ共有されていませんが、共有用の顧客部品IDが準備されています。",
+        "noSharingInsights": "現在、共有情報はありません。パートナーとこの部品を共有すると、ここに情報が表示されます。"
+      },
+      "moreInformation": {
+        "title": "詳細情報",
+        "materials": "材料:",
+        "noMaterials": "材料データがありません",
+        "dimensions": "寸法:",
+        "height": "高さ",
+        "length": "長さ",
+        "weight": "重量"
+      },
+      "partInfo": {
+        "noDescription": "説明がありません",
+        "uncategorized": "未分類",
+        "noBpns": "BPNSがありません"
+      },
+      "sections": {
+        "specifications": "仕様",
+        "dimensions": "寸法",
+        "materials": "材料",
+        "sharedWith": "共有先",
+        "submodels": "サブモデル"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "クリックして原産地をコピー"
+      },
+      "labels": {
+        "siteOfOrigin": "原産地"
+      },
+      "specifications": {
+        "manufacturerId": "メーカーID",
+        "createdAt": "作成日時",
+        "updatedAt": "更新日時",
+        "notAvailable": "利用不可"
+      },
+      "dimensions": {
+        "height": "高さ",
+        "length": "長さ",
+        "weight": "重量",
+        "notSpecified": "未指定"
+      },
+      "materials": {
+        "title": "材料",
+        "composition": "構成",
+        "noMaterials": "材料が指定されていません"
+      },
+      "submodels": {
+        "title": "サブモデル",
+        "createSubmodel": "サブモデルを作成",
+        "noSubmodels": "サブモデルがありません",
+        "createFirst": "最初のサブモデルを作成して詳細な仕様を追加します",
+        "twinRequiredTitle": "ツインが必要です",
+        "twinRequiredMessage": "サブモデルを追加する前にツインを作成する必要があります。上の登録ボタンを使用して最初にツインを作成してください。",
+        "viewDetails": "詳細を表示"
+      },
+      "warnings": {
+        "noShares": "この部品はまだパートナーと共有されていません",
+        "noSubmodels": "この部品のサブモデルはまだ作成されていません"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "部品ツインが正常に登録されました！",
+        "twinRegistrationFailed": "部品ツインの登録に失敗しました！",
+        "submodelCreatedSuccess": "{{schemaName}}スキーマでサブモデルが正常に作成されました！",
+        "submodelCreationFailed": "サブモデルの作成に失敗しました",
+        "twinRequired": "サブモデルを追加する前にツインを作成する必要があります。最初にツインを作成してください。",
+        "noSchemaSelected": "スキーマが選択されていません"
+      }
+    },
+    "sharedTable": {
+      "columns": {
+        "companyName": "会社名",
+        "partnerName": "会社名",
+        "bpnl": "BPNL"
+      }
+    },
+    "submodelCard": {
+      "version": "v{{version}}",
+      "namespace": "名前空間"
+    },
+    "submodelsGrid": {
+      "title": "デジタルツインサブモデル",
+      "submodelsAvailable": "個のサブモデルが利用可能",
+      "addSubmodel": "サブモデルを追加",
+      "createNewSubmodel": "新しいサブモデルアスペクトを作成",
+      "noSubmodels": "サブモデルがありません",
+      "noSubmodelsDescription": "このデジタルツインには表示可能なサブモデルアスペクトがありません。",
+      "submodelsDisplayed": "{{count}}個のデジタルツインサブモデルを表示"
+    },
+    "jsonViewer": {
+      "title": "JSONビューア",
+      "copyJson": "JSONをコピー"
+    },
+    "shareDropdown": {
+      "share": "共有",
+      "options": {
+        "viewDetails": "完全な詳細を表示",
+        "edit": "製品を編集",
+        "register": "ツインを登録",
+        "share": "パートナーと共有",
+        "copy": "一意のIDをコピー",
+        "copyAasId": "AAS IDをコピー",
+        "download": "JSONをダウンロード",
+        "export": "データをエクスポート",
+        "delete": "製品を削除"
+      },
+      "messages": {
+        "globalAssetIdCopied": "グローバルアセットIDをクリップボードにコピーしました",
+        "partIdCopied": "部品IDをクリップボードにコピーしました",
+        "copyFailed": "{{label}}のコピーに失敗しました",
+        "aasIdCopied": "AAS IDをクリップボードにコピーしました",
+        "aasIdNotAvailable": "AAS IDが利用できません",
+        "copyAasIdFailed": "AAS IDのコピーに失敗しました",
+        "twinRegisteredSuccess": "部品ツインが正常に登録されました！",
+        "twinRegistrationFailed": "部品ツインの登録に失敗しました！"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "サブモデルビューア",
+      "semanticId": "セマンティックID",
+      "jsonData": "JSONデータ",
+      "structured": "構造化",
+      "json": "JSON",
+      "failedToLoad": "サブモデルコンテンツの読み込みに失敗しました",
+      "noDataAvailable": "サブモデルデータがないか、データを取得できませんでした。",
+      "unknownDataType": "不明なデータタイプ"
+    },
+    "submodelViewer": {
+      "title": "デジタルツインサブモデル",
+      "newSubmodel": "新しいサブモデル",
+      "noSubmodelsAvailable": "サブモデルがありません",
+      "noSubmodelsDescription": "このデジタルツインには利用可能なサブモデルアスペクトがありません。",
+      "registrationInfo": "登録情報",
+      "noRegistration": "登録なし",
+      "viewSubmodel": "サブモデルを表示"
+    }
+  }
+}

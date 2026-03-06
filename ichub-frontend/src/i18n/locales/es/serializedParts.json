@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Piezas Serializadas",
+    "loading": "Cargando piezas serializadas..."
+  },
+  "table": {
+    "subtitle": "Ver y gestionar instancias de piezas serializadas ({{count}} en total)",
+    "addSerializedPart": "Añadir Pieza Serializada",
+    "columns": {
+      "businessPartnerBpnl": "BPNL del Socio Comercial"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "Eliminar Pieza Serializada"
+    },
+    "messages": {
+      "twinRegistered": "¡Gemelo registrado correctamente!",
+      "twinShared": "¡Gemelo compartido correctamente!",
+      "twinUnshared": "¡Gemelo dejado de compartir correctamente!",
+      "partDeleted": "¡Pieza serializada eliminada correctamente!",
+      "dataRefreshed": "¡Datos actualizados correctamente!",
+      "registerFailed": "Error en el registro",
+      "shareFailed": "Error al compartir",
+      "unshareFailed": "Error al dejar de compartir",
+      "deleteFailed": "Error al eliminar",
+      "refreshFailed": "Error al actualizar",
+      "globalAssetIdCopied": "¡ID de Activo Global copiado!",
+      "aasIdCopied": "¡ID de AAS copiado!",
+      "failedToCopy": "Error al copiar"
+    },
+    "loading": {
+      "title": "Cargando datos de gemelos...",
+      "subtitle": "Obteniendo información de gemelos para piezas serializadas"
+    },
+    "empty": {
+      "title": "No se encontraron piezas serializadas",
+      "subtitle": "Actualmente no hay piezas serializadas para mostrar. Las piezas aparecerán aquí una vez que se creen."
+    },
+    "deleteDialog": {
+      "title": "Eliminar Pieza Serializada",
+      "confirmation": "¿Está seguro de que desea eliminar esta pieza serializada?",
+      "warning": "Esta acción no se puede deshacer."
+    }
+  },
+  "addDialog": {
+    "title": "Añadir una pieza serializada",
+    "form": {
+      "manufacturerPartIdPlaceholder": "Seleccione o introduzca un ID de pieza del fabricante",
+      "manufacturerPartIdHelper": "Seleccione de piezas de catálogo existentes o introduzca uno nuevo",
+      "sharingPartner": "Socio para Compartir",
+      "noPartnersWarning": "No hay socios disponibles. Necesita crear al menos un socio antes de crear una pieza serializada.",
+      "createPartnerButton": "Crear Socio en Lista de Contactos",
+      "selectSharingPartner": "Seleccionar Socio para Compartir",
+      "selectPartnerPlaceholder": "Seleccione un socio con quien compartir",
+      "optionalFields": "Campos Opcionales",
+      "includeVanField": "Incluir campo VAN",
+      "includeCustomerPartIdField": "Incluir campo ID de Pieza del Cliente"
+    },
+    "messages": {
+      "noPartnersAvailable": "No hay socios disponibles. Por favor, cree un socio primero.",
+      "manufacturerPartIdRequired": "El ID de Pieza del Fabricante es obligatorio y no puede estar vacío",
+      "partCreatedSuccess": "Pieza serializada creada correctamente",
+      "catalogPartNotFound": "Pieza de catálogo no encontrada. ¿Cómo desea crearla?",
+      "catalogPartNotFoundOnServer": "No se pudo encontrar la pieza de catálogo seleccionada en el servidor. Por favor, actualice el catálogo o inténtelo de nuevo.",
+      "createFailed": "Error al crear la pieza serializada",
+      "catalogAndPartCreated": "Pieza de catálogo y pieza serializada creadas correctamente",
+      "createCatalogFailed": "Error al crear la pieza de catálogo"
+    },
+    "choiceStep": {
+      "title": "Elegir método de creación de pieza de catálogo",
+      "description": "La pieza de catálogo <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> no fue encontrada. ¿Cómo desea crearla?",
+      "quickCreation": {
+        "title": "Creación Rápida",
+        "recommended": "Recomendado",
+        "description": "Crear pieza de catálogo aquí con detalles básicos (nombre, categoría, bpns)",
+        "subtitle": "Rápido y Simple"
+      },
+      "detailedCreation": {
+        "title": "Creación Detallada",
+        "description": "Ir a la vista de piezas de catálogo para crear con todos los detalles y luego volver",
+        "subtitle": "Control Total"
+      }
+    },
+    "catalogForm": {
+      "title": "Crear Pieza de Catálogo",
+      "description": "La pieza de catálogo <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> no fue encontrada. Por favor, proporcione los detalles requeridos para crearla.",
+      "nameHelper": "El nombre para la pieza de catálogo",
+      "categoryHelper": "Categoría opcional para la pieza de catálogo",
+      "bpnsHelper": "Número de Sitio del Socio Comercial opcional"
+    }
+  }
+}

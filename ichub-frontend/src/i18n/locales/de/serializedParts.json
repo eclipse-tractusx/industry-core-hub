@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Serialisierte Teile",
+    "loading": "Serialisierte Teile werden geladen..."
+  },
+  "table": {
+    "subtitle": "Serialisierte Teileinstanzen anzeigen und verwalten ({{count}} insgesamt)",
+    "addSerializedPart": "Serialisiertes Teil hinzufügen",
+    "columns": {
+      "businessPartnerBpnl": "Geschäftspartner BPNL"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "Serialisiertes Teil löschen"
+    },
+    "messages": {
+      "twinRegistered": "Zwilling erfolgreich registriert!",
+      "twinShared": "Zwilling erfolgreich geteilt!",
+      "twinUnshared": "Zwilling erfolgreich nicht mehr geteilt!",
+      "partDeleted": "Serialisiertes Teil erfolgreich gelöscht!",
+      "dataRefreshed": "Daten erfolgreich aktualisiert!",
+      "registerFailed": "Registrierung fehlgeschlagen",
+      "shareFailed": "Teilen fehlgeschlagen",
+      "unshareFailed": "Aufheben der Freigabe fehlgeschlagen",
+      "deleteFailed": "Löschen fehlgeschlagen",
+      "refreshFailed": "Aktualisierung fehlgeschlagen",
+      "globalAssetIdCopied": "Global Asset ID kopiert!",
+      "aasIdCopied": "AAS ID kopiert!",
+      "failedToCopy": "Kopieren fehlgeschlagen"
+    },
+    "loading": {
+      "title": "Zwillingsdaten werden geladen...",
+      "subtitle": "Zwillingsinformationen für serialisierte Teile werden abgerufen"
+    },
+    "empty": {
+      "title": "Keine serialisierten Teile gefunden",
+      "subtitle": "Derzeit gibt es keine serialisierten Teile anzuzeigen. Teile werden hier angezeigt, sobald sie erstellt wurden."
+    },
+    "deleteDialog": {
+      "title": "Serialisiertes Teil löschen",
+      "confirmation": "Sind Sie sicher, dass Sie dieses serialisierte Teil löschen möchten?",
+      "warning": "Diese Aktion kann nicht rückgängig gemacht werden."
+    }
+  },
+  "addDialog": {
+    "title": "Ein serialisiertes Teil hinzufügen",
+    "form": {
+      "manufacturerPartIdPlaceholder": "Hersteller-Teilenummer auswählen oder eingeben",
+      "manufacturerPartIdHelper": "Aus vorhandenen Katalogteilen auswählen oder neue eingeben",
+      "sharingPartner": "Freigabepartner",
+      "noPartnersWarning": "Keine Partner verfügbar. Sie müssen mindestens einen Partner erstellen, bevor Sie ein serialisiertes Teil erstellen können.",
+      "createPartnerButton": "Partner in Kontaktliste erstellen",
+      "selectSharingPartner": "Freigabepartner auswählen",
+      "selectPartnerPlaceholder": "Wählen Sie einen Partner zum Teilen",
+      "optionalFields": "Optionale Felder",
+      "includeVanField": "VAN-Feld einschließen",
+      "includeCustomerPartIdField": "Kundenteilenummer-Feld einschließen"
+    },
+    "messages": {
+      "noPartnersAvailable": "Keine Partner verfügbar. Bitte erstellen Sie zuerst einen Partner.",
+      "manufacturerPartIdRequired": "Hersteller-Teilenummer ist erforderlich und darf nicht leer sein",
+      "partCreatedSuccess": "Serialisiertes Teil erfolgreich erstellt",
+      "catalogPartNotFound": "Katalogteil nicht gefunden. Wie möchten Sie es erstellen?",
+      "catalogPartNotFoundOnServer": "Das ausgewählte Katalogteil konnte auf dem Server nicht gefunden werden. Bitte aktualisieren Sie den Katalog oder versuchen Sie es erneut.",
+      "createFailed": "Serialisiertes Teil konnte nicht erstellt werden",
+      "catalogAndPartCreated": "Katalogteil und serialisiertes Teil erfolgreich erstellt",
+      "createCatalogFailed": "Katalogteil konnte nicht erstellt werden"
+    },
+    "choiceStep": {
+      "title": "Erstellungsmethode für Katalogteil wählen",
+      "description": "Das Katalogteil <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> wurde nicht gefunden. Wie möchten Sie es erstellen?",
+      "quickCreation": {
+        "title": "Schnellerstellung",
+        "recommended": "Empfohlen",
+        "description": "Katalogteil hier mit Grunddetails erstellen (Name, Kategorie, BPNS)",
+        "subtitle": "Schnell & Einfach"
+      },
+      "detailedCreation": {
+        "title": "Detaillierte Erstellung",
+        "description": "Zur Katalogteile-Ansicht gehen, um mit allen Details zu erstellen und dann zurückkehren",
+        "subtitle": "Volle Kontrolle"
+      }
+    },
+    "catalogForm": {
+      "title": "Katalogteil erstellen",
+      "description": "Das Katalogteil <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> wurde nicht gefunden. Bitte geben Sie die erforderlichen Details ein.",
+      "nameHelper": "Der Name für das Katalogteil",
+      "categoryHelper": "Optionale Kategorie für das Katalogteil",
+      "bpnsHelper": "Optionale Geschäftspartner-Standortnummer"
+    }
+  }
+}

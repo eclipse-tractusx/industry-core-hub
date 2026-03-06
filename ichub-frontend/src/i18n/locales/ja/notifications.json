@@ -1,0 +1,100 @@
+{
+  "copiedToClipboard": "{{field}}をクリップボードにコピーしました！",
+  "failedToCopy": "{{field}}のコピーに失敗しました",
+  "panel": {
+    "title": "通知",
+    "collapse": "パネルを折りたたむ",
+    "expand": "パネルを展開",
+    "close": "閉じる"
+  },
+  "inbox": {
+    "title": "受信トレイ",
+    "unread": "未読",
+    "notVerified": "未検証",
+    "verified": "検証済み",
+    "feedbackSent": "フィードバック送信済み",
+    "archived": "アーカイブ済み",
+    "noNotificationsFound": "通知は見つかりませんでした",
+    "searchPlaceholder": "連絡先、メッセージを検索...",
+    "markAsRead": "既読にする",
+    "markAsUnread": "未読にする",
+    "markAllAsRead": "すべて既読にする",
+    "archive": "アーカイブ",
+    "unarchive": "アーカイブ解除",
+    "select": "選択",
+    "listView": "リスト表示",
+    "groupBySender": "送信者でグループ化",
+    "addToContacts": "連絡先に追加",
+    "digitalTwinNotificationReceived": "デジタルツイン通知を受信",
+    "now": "今"
+  },
+  "sorting": {
+    "date": "日付",
+    "deadline": "期限",
+    "priority": "優先度",
+    "dateReceived": "受信日",
+    "responseDeadline": "回答期限"
+  },
+  "detail": {
+    "viewTwin": "ツインを表示",
+    "viewDigitalTwin": "デジタルツインを表示",
+    "overdue": "期限超過",
+    "verifyAll": "すべて検証",
+    "sendFeedback": "フィードバックを送信",
+    "pendingVerification": "検証待ち",
+    "sent": "送信済み",
+    "viewTechnicalDetails": "技術詳細を表示",
+    "copy": "コピー",
+    "knownContact": "既知の連絡先",
+    "failedToDiscoverTwin": "デジタルツインの検出に失敗しました"
+  },
+  "verification": {
+    "accessible": "アクセス可能",
+    "notAccessible": "アクセス不可",
+    "error": "エラー",
+    "notVerified": "未検証",
+    "verifying": "検証中..."
+  },
+  "itemTypes": {
+    "serializedPart": "シリアル化パーツ",
+    "batch": "バッチ",
+    "jisPart": "JISパーツ",
+    "part": "パーツ",
+    "unknownItem": "不明なアイテム"
+  },
+  "fields": {
+    "manufacturerId": "製造者ID",
+    "manufacturerPartId": "製造者パーツID",
+    "customerPartId": "顧客パーツID",
+    "serialNumber": "シリアル番号",
+    "batchId": "バッチID",
+    "jisNumber": "JIS番号",
+    "jisCallDate": "JIS呼び出し日",
+    "messageId": "メッセージID",
+    "context": "コンテキスト",
+    "version": "バージョン",
+    "relatedMessage": "関連メッセージ",
+    "senderBpn": "送信者BPN",
+    "receiverBpn": "受信者BPN",
+    "expectedResponse": "期待される応答",
+    "bpnl": "BPNL"
+  },
+  "feedback": {
+    "title": "フィードバックを送信",
+    "composeFeedback": "フィードバックを作成",
+    "responseStatus": "応答ステータス",
+    "sending": "送信中...",
+    "cancel": "キャンセル",
+    "ok": "OK",
+    "error": "エラー",
+    "pending": "保留中",
+    "okDescription": "デジタルツインはアクセス可能で正常に処理されました",
+    "errorDescription": "デジタルツインにアクセスできないか、処理に失敗しました",
+    "pendingDescription": "検証保留中 - デジタルツインはまだ処理されていません",
+    "addMessagePlaceholder": "メッセージを追加...",
+    "enterStatusMessagePlaceholder": "ステータスメッセージを入力...",
+    "message": "メッセージ",
+    "itemDetails": "アイテム詳細",
+    "status": "ステータス"
+  }
+}

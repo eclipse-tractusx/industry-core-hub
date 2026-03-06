@@ -1,0 +1,100 @@
+{
+  "copiedToClipboard": "{{field}} in die Zwischenablage kopiert!",
+  "failedToCopy": "Fehler beim Kopieren von {{field}}",
+  "panel": {
+    "title": "Benachrichtigungen",
+    "collapse": "Panel einklappen",
+    "expand": "Panel erweitern",
+    "close": "Schließen"
+  },
+  "inbox": {
+    "title": "Posteingang",
+    "unread": "Ungelesen",
+    "notVerified": "Nicht verifiziert",
+    "verified": "Verifiziert",
+    "feedbackSent": "Feedback gesendet",
+    "archived": "Archiviert",
+    "noNotificationsFound": "Keine Benachrichtigungen gefunden",
+    "searchPlaceholder": "Kontakte, Nachrichten suchen...",
+    "markAsRead": "Als gelesen markieren",
+    "markAsUnread": "Als ungelesen markieren",
+    "markAllAsRead": "Alle als gelesen markieren",
+    "archive": "Archivieren",
+    "unarchive": "Dearchivieren",
+    "select": "Auswählen",
+    "listView": "Listenansicht",
+    "groupBySender": "Nach Absender gruppieren",
+    "addToContacts": "Zu Kontakten hinzufügen",
+    "digitalTwinNotificationReceived": "Digital Twin Benachrichtigung empfangen",
+    "now": "Jetzt"
+  },
+  "sorting": {
+    "date": "Datum",
+    "deadline": "Frist",
+    "priority": "Priorität",
+    "dateReceived": "Empfangsdatum",
+    "responseDeadline": "Antwortfrist"
+  },
+  "detail": {
+    "viewTwin": "Twin ansehen",
+    "viewDigitalTwin": "Digital Twin ansehen",
+    "overdue": "Überfällig",
+    "verifyAll": "Alle verifizieren",
+    "sendFeedback": "Feedback senden",
+    "pendingVerification": "Verifizierung ausstehend",
+    "sent": "Gesendet",
+    "viewTechnicalDetails": "Technische Details anzeigen",
+    "copy": "Kopieren",
+    "knownContact": "Bekannter Kontakt",
+    "failedToDiscoverTwin": "Fehler beim Entdecken des Digital Twin"
+  },
+  "verification": {
+    "accessible": "Zugänglich",
+    "notAccessible": "Nicht zugänglich",
+    "error": "Fehler",
+    "notVerified": "Nicht verifiziert",
+    "verifying": "Wird verifiziert..."
+  },
+  "itemTypes": {
+    "serializedPart": "Serialisiertes Teil",
+    "batch": "Charge",
+    "jisPart": "JIS-Teil",
+    "part": "Teil",
+    "unknownItem": "Unbekanntes Element"
+  },
+  "fields": {
+    "manufacturerId": "Hersteller-ID",
+    "manufacturerPartId": "Herstellerteil-ID",
+    "customerPartId": "Kundenteil-ID",
+    "serialNumber": "Seriennummer",
+    "batchId": "Chargen-ID",
+    "jisNumber": "JIS-Nummer",
+    "jisCallDate": "JIS-Abrufdatum",
+    "messageId": "Nachrichten-ID",
+    "context": "Kontext",
+    "version": "Version",
+    "relatedMessage": "Verwandte Nachricht",
+    "senderBpn": "Absender-BPN",
+    "receiverBpn": "Empfänger-BPN",
+    "expectedResponse": "Erwartete Antwort",
+    "bpnl": "BPNL"
+  },
+  "feedback": {
+    "title": "Feedback senden",
+    "composeFeedback": "Feedback verfassen",
+    "responseStatus": "Antwortstatus",
+    "sending": "Wird gesendet...",
+    "cancel": "Abbrechen",
+    "ok": "OK",
+    "error": "FEHLER",
+    "pending": "AUSSTEHEND",
+    "okDescription": "Digital Twin zugänglich und erfolgreich verarbeitet",
+    "errorDescription": "Digital Twin nicht zugänglich oder Verarbeitung fehlgeschlagen",
+    "pendingDescription": "Überprüfung ausstehend - Digital Twin noch nicht verarbeitet",
+    "addMessagePlaceholder": "Nachricht hinzufügen...",
+    "enterStatusMessagePlaceholder": "Statusmeldung eingeben...",
+    "message": "Nachricht",
+    "itemDetails": "Elementdetails",
+    "status": "Status"
+  }
+}

@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -22,6 +23,7 @@
 
 from urllib.parse import quote
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
+from tractusx_sdk.extensions.notification_api import NotificationService
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import NotFoundError
 from tools.constants import ODRL_CONTEXT, CX_POLICY_CONTEXT, TYPE
@@ -57,6 +59,7 @@ class ConnectorProviderManager:
 
         self.empty_policy = self.get_empty_policy_config()
         self.connector_service = connector_provider_service
+        self.notification_service = NotificationService(connector_provider_service)
 
     def get_empty_policy_config(self) -> dict:
         """Returns an empty policy template."""
@@ -367,4 +370,83 @@ class ConnectorProviderManager:
                 "proxyMethod": "true",
                 "proxyBody": "true"
             }
+        )
+    
+    def register_digital_twin_event_offer(
+        self,
+        digital_twin_event_url: str,
+        digital_twin_event_policy_config: dict = None,
+        existing_asset_id: str = None,
+        version: str = "3.0",
+        headers: dict = None
+    ) -> tuple[str, str, str, str]:
+        """
+        Register a digital twin event asset, create policies and contract for it.
+        Returns a tuple: (asset_id, usage_policy_id, access_policy_id, contract_id)
+        """
+        # Step 1: Create or get the digital twin event asset
+        asset_id = self.get_or_create_digital_twin_event_asset(
+            digital_twin_event_url=digital_twin_event_url,
+            existing_asset_id=existing_asset_id,
+            version=version,
+            headers=headers
+        )
+
+        # Step 2: Create or get policies and contract
+        policy_config = digital_twin_event_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=policy_config
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+
+    def get_or_create_digital_twin_event_asset(
+        self,
+        digital_twin_event_url: str,
+        existing_asset_id: str = None,
+        headers: dict = None,
+        version: str = "3.0"
+    ) -> str:
+        """
+        Get or create a digital twin event asset.
+        """
+        if not existing_asset_id:
+            existing_asset_id = self.generate_digital_twin_event_asset_id(digital_twin_event_url=digital_twin_event_url)
+        # Check if the asset already exists
+        existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
+        if existing_asset.status_code == 200:
+            logger.debug(f"[DigitalTwinEvent] Asset with ID {existing_asset_id} already exists.")
+            return existing_asset_id
+        # If it doesn't exist, create it
+        logger.info(f"[DigitalTwinEvent] Creating new asset with ID {existing_asset_id}.")
+        asset = self.create_digital_twin_event_asset(
+            asset_id=existing_asset_id,
+            notification_endpoint_url=digital_twin_event_url,
+            version=version,
+            headers=headers
+        )
+        return asset.get("@id", existing_asset_id)
+
+    def generate_digital_twin_event_asset_id(self, digital_twin_event_url: str) -> str:
+        """
+        Generate a unique asset ID for a digital twin event asset.
+        """
+        return "ichub:asset:digitaltwin-event:" + blake2b_128bit(digital_twin_event_url)
+
+    def create_digital_twin_event_asset(
+        self,
+        asset_id: str,
+        notification_endpoint_url: str,
+        version: str = "3.0",
+        headers: dict = None
+    ):
+        """
+        Create the digital twin event asset using the notification service.
+        """
+        return self.notification_service.ensure_notification_asset_exists(
+            asset_id=asset_id,
+            notification_endpoint_url=notification_endpoint_url,
+            version=version,
+            headers=headers
         )

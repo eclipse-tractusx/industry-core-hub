@@ -28,6 +28,7 @@ import {
     Paper,
     Tooltip
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
     ContentCopy as ContentCopyIcon,
     Check as CheckIcon,
@@ -48,6 +49,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
     filename = 'data.json',
     height = '100%'
 }) => {
+    const { t } = useTranslation('common');
     const [copySuccess, setCopySuccess] = useState(false);
 
     const handleCopyJson = () => {
@@ -220,7 +222,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
                     {filename}
                 </Typography>
                 <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-                    <Tooltip title={copySuccess ? "Copied!" : "Copy JSON"}>
+                    <Tooltip title={copySuccess ? t('actions.copied') : t('jsonViewer.copyJson')}>
                         <IconButton
                             size="small"
                             onClick={handleCopyJson}
@@ -238,7 +240,7 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
                             {copySuccess ? <CheckIcon fontSize="small" /> : <ContentCopyIcon fontSize="small" />}
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Download JSON">
+                    <Tooltip title={t('jsonViewer.downloadJson')}>
                         <IconButton
                             size="small"
                             onClick={handleDownloadJson}

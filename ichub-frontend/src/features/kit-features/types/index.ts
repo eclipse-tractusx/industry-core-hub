@@ -39,7 +39,7 @@ export interface KitFeature {
   icon: React.ReactElement;
   image?: string;
   features: KitFeatureItem[];
-  domain: 'core' | 'sustainability' | 'supply-chain' | 'participant-management' | 'industry-core';
+  domain: 'core' | 'sustainability' | 'supply-chain' | 'participant-management' | 'industry-core' | 'dataspace-foundation';
   version?: string;
   createdAt?: string;
   lastUpdated?: string;

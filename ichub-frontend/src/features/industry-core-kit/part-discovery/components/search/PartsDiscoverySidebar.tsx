@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -72,6 +73,8 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
   partInstanceId,
   onPartInstanceIdChange
 }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
+  
   const sidebarStyles = {
     textField: {
       '& .MuiOutlinedInput-root': {
@@ -121,7 +124,7 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
       {/* Digital Twin Type Section */}
       <Box sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={sidebarStyles.sectionTitle}>
-          Digital Twin Type
+          {t('sidebar.digitalTwinType')}
         </Typography>
         <RadioGroup 
           value={partType} 
@@ -158,21 +161,21 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
             }
           }}
         >
-          <FormControlLabel value="Catalog" control={<Radio />} label="Part Type (Catalog)" />
-          <FormControlLabel value="Serialized" control={<Radio />} label="Part Instance (Serialized)" />
+          <FormControlLabel value="Catalog" control={<Radio />} label={t('sidebar.partTypeCatalog')} />
+          <FormControlLabel value="Serialized" control={<Radio />} label={t('sidebar.partInstanceSerialized')} />
         </RadioGroup>
       </Box>
 
       {/* Results per Page Section */}
       <Box sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={sidebarStyles.sectionTitle}>
-          Results per Page
+          {t('sidebar.resultsPerPage')}
         </Typography>
         <FormControl fullWidth size="small" sx={{ mt: 1, ...sidebarStyles.textField }}>
-          <InputLabel>Results per Page</InputLabel>
+          <InputLabel>{t('sidebar.resultsPerPage')}</InputLabel>
           <Select
             value={isCustomLimit ? 'custom' : pageLimit}
-            label="Results per Page"
+            label={t('sidebar.resultsPerPage')}
             onChange={(e) => {
               const value = e.target.value;
               if (value === 'custom') {
@@ -194,8 +197,8 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
             <MenuItem value={20}>20</MenuItem>
             <MenuItem value={50}>50</MenuItem>
             <MenuItem value={100}>100</MenuItem>
-            <MenuItem value="custom">Custom</MenuItem>
-            <MenuItem value={0}>No Limit</MenuItem>
+            <MenuItem value="custom">{t('sidebar.custom')}</MenuItem>
+            <MenuItem value={0}>{t('sidebar.noLimit')}</MenuItem>
           </Select>
         </FormControl>
 
@@ -204,16 +207,16 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
             <TextField
               fullWidth
               size="small"
-              label="Custom Limit"
-              placeholder="Enter number of results per page"
+              label={t('sidebar.customLimit')}
+              placeholder={t('sidebar.customLimitPlaceholder')}
               type="number"
               value={customLimit}
               onChange={(e) => onCustomLimitChange(e.target.value)}
               inputProps={{ min: 1, max: 1000 }}
               helperText={
                 customLimit && (isNaN(parseInt(customLimit)) || parseInt(customLimit) < 1 || parseInt(customLimit) > 1000)
-                  ? "Please enter a valid number between 1 and 1000"
-                  : "Enter a number between 1 and 1000"
+                  ? t('sidebar.validNumberError')
+                  : t('sidebar.validNumberHint')
               }
               error={customLimit !== '' && (isNaN(parseInt(customLimit)) || parseInt(customLimit) < 1 || parseInt(customLimit) > 1000)}
               sx={sidebarStyles.textField}
@@ -221,7 +224,7 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
             
             <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
               <Typography variant="caption" sx={{ width: '100%', mb: 0.5, color: 'rgba(255, 255, 255, 0.8)', fontWeight: '500', fontSize: '0.7rem' }}>
-                Quick select:
+                {t('sidebar.quickSelect')}:
               </Typography>
               {[25, 75, 150, 200, 500].map((value) => (
                 <Chip
@@ -254,40 +257,40 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
       {/* Advanced Options Section */}
       <Box sx={{ p: 2 }}>
         <Typography variant="subtitle2" sx={sidebarStyles.sectionTitle}>
-          Advanced Options
+          {t('sidebar.advancedOptions')}
         </Typography>
         
         <TextField
           fullWidth
           size="small"
-          label="Customer Part ID (Optional)"
-          placeholder="Enter Customer Part ID"
+          label={t('sidebar.customerPartId')}
+          placeholder={t('sidebar.customerPartIdPlaceholder')}
           value={customerPartId}
           onChange={(e) => onCustomerPartIdChange(e.target.value)}
           sx={{ mb: 2, ...sidebarStyles.textField }}
-          helperText="Search by specific Customer Part identifier"
+          helperText={t('sidebar.customerPartIdHelper')}
         />
         
         <TextField
           fullWidth
           size="small"
-          label="Manufacturer Part ID (Optional)"
-          placeholder="Enter Manufacturer Part ID"
+          label={t('sidebar.manufacturerPartId')}
+          placeholder={t('sidebar.manufacturerPartIdPlaceholder')}
           value={manufacturerPartId}
           onChange={(e) => onManufacturerPartIdChange(e.target.value)}
           sx={{ mb: 2, ...sidebarStyles.textField }}
-          helperText="Search by specific Manufacturer Part identifier"
+          helperText={t('sidebar.manufacturerPartIdHelper')}
         />
         
         <TextField
           fullWidth
           size="small"
-          label="Global Asset ID (Optional)"
-          placeholder="Enter Global Asset ID"
+          label={t('sidebar.globalAssetId')}
+          placeholder={t('sidebar.globalAssetIdPlaceholder')}
           value={globalAssetId}
           onChange={(e) => onGlobalAssetIdChange(e.target.value)}
           sx={{ mb: 2, ...sidebarStyles.textField }}
-          helperText="Global Asset ID of the Digital Twin"
+          helperText={t('sidebar.globalAssetIdHelper')}
         />
         
         {/* Part Instance ID - Only shown when Part Instance is selected */}
@@ -295,12 +298,12 @@ const PartsDiscoverySidebar: React.FC<PartsDiscoverySidebarProps> = ({
           <TextField
             fullWidth
             size="small"
-            label="Part Instance ID (Optional)"
-            placeholder="Enter Part Instance identifier"
+            label={t('sidebar.partInstanceId')}
+            placeholder={t('sidebar.partInstanceIdPlaceholder')}
             value={partInstanceId}
             onChange={(e) => onPartInstanceIdChange(e.target.value)}
             sx={{ mb: 2, ...sidebarStyles.textField }}
-            helperText="Search by specific Part Instance identifier"
+            helperText={t('sidebar.partInstanceIdHelper')}
           />
         )}
       </Box>

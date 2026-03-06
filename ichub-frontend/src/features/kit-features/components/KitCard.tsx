@@ -22,6 +22,7 @@
 ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   CardContent,
@@ -42,6 +43,8 @@ interface KitCardProps {
 }
 
 const KitCard: React.FC<KitCardProps> = ({ kit, isCenter = false }) => {
+  const { t } = useTranslation('kits');
+  const { t: tCommon } = useTranslation('common');
   const navigate = useNavigate();
 
   const handleViewFeatures = () => {
@@ -191,7 +194,7 @@ const KitCard: React.FC<KitCardProps> = ({ kit, isCenter = false }) => {
                 }
               }}
             >
-              View Features ({kit.features.length})
+              {t('kitCard.viewFeatures')} ({kit.features.length})
             </Button>
           </Box>
         ) : (
@@ -215,7 +218,7 @@ const KitCard: React.FC<KitCardProps> = ({ kit, isCenter = false }) => {
                 }
               }}
             >
-              Coming Soon (0)
+              {tCommon('status.comingSoon')} (0)
             </Button>
           </Box>
         )}

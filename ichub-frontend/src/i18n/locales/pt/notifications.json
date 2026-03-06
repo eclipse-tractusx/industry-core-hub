@@ -1,0 +1,100 @@
+{
+  "copiedToClipboard": "{{field}} copiado para a área de transferência!",
+  "failedToCopy": "Falha ao copiar {{field}}",
+  "panel": {
+    "title": "Notificações",
+    "collapse": "Recolher painel",
+    "expand": "Expandir painel",
+    "close": "Fechar"
+  },
+  "inbox": {
+    "title": "Caixa de entrada",
+    "unread": "Não lidas",
+    "notVerified": "Não verificadas",
+    "verified": "Verificadas",
+    "feedbackSent": "Feedback enviado",
+    "archived": "Arquivadas",
+    "noNotificationsFound": "Nenhuma notificação encontrada",
+    "searchPlaceholder": "Pesquisar contatos, mensagens...",
+    "markAsRead": "Marcar como lida",
+    "markAsUnread": "Marcar como não lida",
+    "markAllAsRead": "Marcar todas como lidas",
+    "archive": "Arquivar",
+    "unarchive": "Desarquivar",
+    "select": "Selecionar",
+    "listView": "Vista de lista",
+    "groupBySender": "Agrupar por remetente",
+    "addToContacts": "Adicionar aos contatos",
+    "digitalTwinNotificationReceived": "Notificação de Gêmeo Digital recebida",
+    "now": "Agora"
+  },
+  "sorting": {
+    "date": "Data",
+    "deadline": "Prazo",
+    "priority": "Prioridade",
+    "dateReceived": "Data de recebimento",
+    "responseDeadline": "Prazo de resposta"
+  },
+  "detail": {
+    "viewTwin": "Ver Gêmeo",
+    "viewDigitalTwin": "Ver Gêmeo Digital",
+    "overdue": "Atrasado",
+    "verifyAll": "Verificar tudo",
+    "sendFeedback": "Enviar feedback",
+    "pendingVerification": "Verificação pendente",
+    "sent": "Enviado",
+    "viewTechnicalDetails": "Ver detalhes técnicos",
+    "copy": "Copiar",
+    "knownContact": "Contato conhecido",
+    "failedToDiscoverTwin": "Falha ao descobrir o gêmeo digital"
+  },
+  "verification": {
+    "accessible": "Acessível",
+    "notAccessible": "Não acessível",
+    "error": "Erro",
+    "notVerified": "Não verificado",
+    "verifying": "Verificando..."
+  },
+  "itemTypes": {
+    "serializedPart": "Peça serializada",
+    "batch": "Lote",
+    "jisPart": "Peça JIS",
+    "part": "Peça",
+    "unknownItem": "Item desconhecido"
+  },
+  "fields": {
+    "manufacturerId": "ID do fabricante",
+    "manufacturerPartId": "ID da peça do fabricante",
+    "customerPartId": "ID da peça do cliente",
+    "serialNumber": "Número de série",
+    "batchId": "ID do lote",
+    "jisNumber": "Número JIS",
+    "jisCallDate": "Data de chamada JIS",
+    "messageId": "ID da mensagem",
+    "context": "Contexto",
+    "version": "Versão",
+    "relatedMessage": "Mensagem relacionada",
+    "senderBpn": "BPN do remetente",
+    "receiverBpn": "BPN do destinatário",
+    "expectedResponse": "Resposta esperada",
+    "bpnl": "BPNL"
+  },
+  "feedback": {
+    "title": "Enviar feedback",
+    "composeFeedback": "Compor Feedback",
+    "responseStatus": "Status da Resposta",
+    "sending": "Enviando...",
+    "cancel": "Cancelar",
+    "ok": "OK",
+    "error": "ERRO",
+    "pending": "PENDENTE",
+    "okDescription": "Gêmeo Digital acessível e processado com sucesso",
+    "errorDescription": "Gêmeo Digital não acessível ou falha no processamento",
+    "pendingDescription": "Verificação pendente - Gêmeo Digital ainda não processado",
+    "addMessagePlaceholder": "Adicionar uma mensagem...",
+    "enterStatusMessagePlaceholder": "Digite a mensagem de status...",
+    "message": "Mensagem",
+    "itemDetails": "Detalhes do Item",
+    "status": "Status"
+  }
+}

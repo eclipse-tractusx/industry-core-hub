@@ -22,6 +22,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -123,6 +124,7 @@ const getPassportTypeLabel = (dpp: DPPListItem): 'Type' | 'Instance' => {
 
 const PassportProvisionList: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['passportProvision', 'common']);
   const [dpps, setDpps] = useState<DPPListItem[]>([]);
   const [filteredDpps, setFilteredDpps] = useState<DPPListItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -462,7 +464,7 @@ const PassportProvisionList: React.FC = () => {
                 fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' }
               }}
             >
-              Digital Product Passports
+              {t('list.title')}
             </Typography>
             <Typography
               variant="body1"
@@ -471,7 +473,7 @@ const PassportProvisionList: React.FC = () => {
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}
             >
-              Manage and share your product passports
+              {t('list.subtitle')}
             </Typography>
           </Box>
           <Button
@@ -485,7 +487,7 @@ const PassportProvisionList: React.FC = () => {
               py: 1.5
             }}
           >
-            Create Passport
+            {t('list.createPassport')}
           </Button>
         </Box>
 
@@ -502,7 +504,7 @@ const PassportProvisionList: React.FC = () => {
             mb: 2
           }}
         >
-          Create Passport
+          {t('list.createPassport')}
         </Button>
       </Box>
 
@@ -523,7 +525,7 @@ const PassportProvisionList: React.FC = () => {
       >
         <TextField
           fullWidth
-          placeholder="Search by name, manufacturer part ID, or instance ID..."
+          placeholder={t('list.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -684,12 +686,12 @@ const PassportProvisionList: React.FC = () => {
             <Box sx={{ textAlign: 'center', py: 8, width: '100%' }}>
               <DescriptionIcon sx={{ fontSize: 64, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
               <Typography variant="h6" sx={{ color: '#fff', mb: 1 }}>
-                {searchQuery ? 'No passports found' : 'No passports yet'}
+                {searchQuery ? t('list.noPassportsFound') : t('list.noPassportsYet')}
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', mb: 3 }}>
                 {searchQuery
-                  ? 'Try adjusting your search criteria'
-                  : 'Create your first digital product passport to get started'}
+                  ? t('list.adjustSearch')
+                  : t('list.createFirstPassport')}
               </Typography>
               {!searchQuery && (
                 <Button
@@ -714,7 +716,7 @@ const PassportProvisionList: React.FC = () => {
                     }
                   }}
                 >
-                  Get Started
+                  {t('list.getStarted')}
                 </Button>
               )}
             </Box>
@@ -756,7 +758,7 @@ const PassportProvisionList: React.FC = () => {
                   />
                   <Box className="custom-card-header-buttons">
                     {dpp.status === 'pending' && (
-                      <Tooltip title="Register passport" arrow>
+                      <Tooltip title={t('actions.registerPassport')} arrow>
                         <span>
                           <IconButton
                             onClick={(e) => {
@@ -771,7 +773,7 @@ const PassportProvisionList: React.FC = () => {
                       </Tooltip>
                     )}
                     {(dpp.status === 'active' || dpp.status === 'shared' || dpp.status === 'draft') && (
-                      <Tooltip title={dpp.status === 'shared' ? "Unshare passport" : "Share passport"} arrow>
+                      <Tooltip title={dpp.status === 'shared' ? t('actions.unsharePassport') : t('actions.sharePassport')} arrow>
                         <IconButton
                           onClick={(e) => {
                             e.stopPropagation();
@@ -793,7 +795,7 @@ const PassportProvisionList: React.FC = () => {
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="More options" arrow>
+                    <Tooltip title={t('common:actions.moreOptions')} arrow>
                       <IconButton
                         onClick={(e) => {
                           e.stopPropagation();
@@ -855,7 +857,7 @@ const PassportProvisionList: React.FC = () => {
                         display: 'block'
                       }}
                     >
-                      Passport Discovery ID
+                      {t('list.passportDiscoveryId')}
                     </Typography>
                     <Tooltip title={dpp.manufacturerPartId && dpp.partInstanceId ? `CX:${dpp.manufacturerPartId}:${dpp.partInstanceId}` : 'N/A'} arrow placement="top">
                       <Typography 
@@ -895,7 +897,7 @@ const PassportProvisionList: React.FC = () => {
                           display: 'block'
                         }}
                       >
-                        Passport ID
+                        {t('list.passportId')}
                       </Typography>
                       <Tooltip title={dpp.passportIdentifier} arrow placement="top">
                         <Typography 
@@ -935,7 +937,7 @@ const PassportProvisionList: React.FC = () => {
                           mb: '2px'
                         }}
                       >
-                        Passport Type
+                        {t('list.passportType')}
                       </Typography>
                       <Typography 
                         sx={{ 
@@ -959,7 +961,7 @@ const PassportProvisionList: React.FC = () => {
                           mb: '2px'
                         }}
                       >
-                        Expiration
+                        {t('list.expiration')}
                       </Typography>
                       <Typography 
                         sx={{ 
@@ -969,7 +971,7 @@ const PassportProvisionList: React.FC = () => {
                           letterSpacing: '0.1px'
                         }}
                       >
-                        {dpp.expirationDate ? formatShortDate(dpp.expirationDate) : 'No Expiration'}
+                        {dpp.expirationDate ? formatShortDate(dpp.expirationDate) : t('list.noExpiration')}
                       </Typography>
                     </Box>
                   </Box>
@@ -1000,7 +1002,7 @@ const PassportProvisionList: React.FC = () => {
                         textTransform: 'uppercase'
                       }}
                     >
-                      Version {getVersionDisplay(dpp.version)}
+                      {t('list.version', { version: getVersionDisplay(dpp.version) })}
                     </Typography>
                     <Typography
                       sx={{
@@ -1083,7 +1085,7 @@ const PassportProvisionList: React.FC = () => {
               }
             }}
           >
-            See All ({filteredDpps.length})
+            {t('list.seeAll', { count: filteredDpps.length })}
           </Button>
         </Box>
       )}
@@ -1118,10 +1120,10 @@ const PassportProvisionList: React.FC = () => {
             <GridViewIcon sx={{ fontSize: 32, color: '#fff' }} />
             <Box>
               <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#fff' }}>
-                All Digital Product Passports
+                {t('list.allPassports')}
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                {filteredDpps.length} passport{filteredDpps.length !== 1 ? 's' : ''} available
+                {t('list.passportsAvailable', { count: filteredDpps.length })}
               </Typography>
             </Box>
           </Box>
@@ -1136,7 +1138,7 @@ const PassportProvisionList: React.FC = () => {
                 border: '1px solid rgba(255, 255, 255, 0.1)',
               }}
             >
-              <Tooltip title="Card View" arrow>
+              <Tooltip title={t('list.cardView')} arrow>
                 <IconButton
                   onClick={() => setDialogViewMode('cards')}
                   sx={{
@@ -1159,7 +1161,7 @@ const PassportProvisionList: React.FC = () => {
                   <ViewModuleIcon sx={{ fontSize: 20, color: 'white' }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Table View" arrow>
+              <Tooltip title={t('list.tableView')} arrow>
                 <IconButton
                   onClick={() => setDialogViewMode('grid')}
                   sx={{
@@ -1215,7 +1217,7 @@ const PassportProvisionList: React.FC = () => {
             <Box sx={{ maxWidth: '1600px', mx: 'auto' }}>
               <TextField
                 fullWidth
-                placeholder="Search by name, ID, or discovery ID..."
+                placeholder={t('list.searchDialogPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
@@ -1307,7 +1309,7 @@ const PassportProvisionList: React.FC = () => {
                   </Box>
                   <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
                     {dpp.status === 'pending' && (
-                      <Tooltip title="Register" arrow>
+                      <Tooltip title={t('actions.register')} arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -1321,7 +1323,7 @@ const PassportProvisionList: React.FC = () => {
                       </Tooltip>
                     )}
                     {(dpp.status === 'active' || dpp.status === 'shared' || dpp.status === 'draft') && (
-                      <Tooltip title={dpp.status === 'shared' ? "Unshare" : "Share"} arrow>
+                      <Tooltip title={dpp.status === 'shared' ? t('actions.unsharePassport') : t('actions.sharePassport')} arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -1345,7 +1347,7 @@ const PassportProvisionList: React.FC = () => {
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="More options" arrow>
+                    <Tooltip title={t('common:actions.moreOptions')} arrow>
                       <IconButton
                         size="small"
                         onClick={(e) => {
@@ -1458,7 +1460,7 @@ const PassportProvisionList: React.FC = () => {
                           mb: 0.5,
                         }}
                       >
-                        Passport ID
+                        {t('list.passportId')}
                       </Typography>
                       <Tooltip title={dpp.passportIdentifier} arrow>
                         <Typography 
@@ -1499,7 +1501,7 @@ const PassportProvisionList: React.FC = () => {
                           mb: 0.5,
                         }}
                       >
-                        Type
+                        {t('list.type')}
                       </Typography>
                       <Tooltip title={getPassportType(dpp.semanticId)} arrow>
                         <Typography 
@@ -1535,7 +1537,7 @@ const PassportProvisionList: React.FC = () => {
                           mb: 0.5,
                         }}
                       >
-                        Expires
+                        {t('list.expires')}
                       </Typography>
                       <Typography 
                         sx={{ 
@@ -1544,7 +1546,7 @@ const PassportProvisionList: React.FC = () => {
                           fontWeight: 500,
                         }}
                       >
-                        {dpp.expirationDate ? formatShortDate(dpp.expirationDate) : 'No Expiration'}
+                        {dpp.expirationDate ? formatShortDate(dpp.expirationDate) : t('list.noExpiration')}
                       </Typography>
                     </Box>
                   </Box>
@@ -1700,7 +1702,7 @@ const PassportProvisionList: React.FC = () => {
                               mb: 0.3,
                             }}
                           >
-                            Discovery ID
+                            {t('list.discoveryId')}
                           </Typography>
                           <Typography 
                             sx={{ 
@@ -1728,7 +1730,7 @@ const PassportProvisionList: React.FC = () => {
                                 mb: 0.3,
                               }}
                             >
-                              Passport ID
+                              {t('list.passportId')}
                             </Typography>
                             <Typography 
                               sx={{ 
@@ -1753,7 +1755,7 @@ const PassportProvisionList: React.FC = () => {
                               mb: 0.3,
                             }}
                           >
-                            Version
+                            {t('list.versionLabel')}
                           </Typography>
                           <Typography 
                             sx={{ 
@@ -1776,7 +1778,7 @@ const PassportProvisionList: React.FC = () => {
                               mb: 0.3,
                             }}
                           >
-                            Created
+                            {t('labels.created', { ns: 'common' })}
                           </Typography>
                           <Typography 
                             sx={{ 
@@ -1793,7 +1795,7 @@ const PassportProvisionList: React.FC = () => {
                     {/* Actions */}
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexShrink: 0 }}>
                       {(dpp.status === 'draft' || dpp.status === 'pending') && (
-                        <Tooltip title="Register" arrow>
+                        <Tooltip title={t('actions.register')} arrow>
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1811,7 +1813,7 @@ const PassportProvisionList: React.FC = () => {
                         </Tooltip>
                       )}
                       {dpp.status !== 'draft' && dpp.status !== 'pending' && (
-                        <Tooltip title="Share" arrow>
+                        <Tooltip title={t('common:actions.share')} arrow>
                           <IconButton
                             size="small"
                             onClick={(e) => {
@@ -1824,7 +1826,7 @@ const PassportProvisionList: React.FC = () => {
                           </IconButton>
                         </Tooltip>
                       )}
-                      <Tooltip title="More options" arrow>
+                      <Tooltip title={t('common:actions.moreOptions')} arrow>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -1906,10 +1908,10 @@ const PassportProvisionList: React.FC = () => {
               )}
               <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>
                 {sharingInProgress.has(selectedDppForMenu.id) 
-                  ? 'Processing...' 
+                  ? t('actions.processing') 
                   : selectedDppForMenu.status === 'shared' 
-                  ? 'Unshare passport' 
-                  : 'Share passport'}
+                  ? t('actions.unsharePassport') 
+                  : t('actions.sharePassport')}
               </Box>
             </MenuItem>
             <MenuItem
@@ -1945,7 +1947,7 @@ const PassportProvisionList: React.FC = () => {
                 color: copySuccess[selectedDppForMenu.id] ? 'white' : 'black',
                 transition: 'color 0.3s ease'
               }}>
-                {copySuccess[selectedDppForMenu.id] ? 'Copied!' : 'Copy Discovery ID'}
+                {copySuccess[selectedDppForMenu.id] ? t('common:actions.copied') : t('actions.copyDiscoveryId')}
               </Box>
             </MenuItem>
             <MenuItem
@@ -1963,7 +1965,7 @@ const PassportProvisionList: React.FC = () => {
             >
               <PictureAsPdfIcon fontSize="small" sx={{ marginRight: 1, color: '#000000 !important', fill: '#000000 !important' }} />
               <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>
-                Export PDF
+                {t('actions.exportPdf')}
               </Box>
             </MenuItem>
             <MenuItem
@@ -1981,7 +1983,7 @@ const PassportProvisionList: React.FC = () => {
             >
               <DeleteIcon fontSize="small" sx={{ marginRight: 1, color: '#000000 !important', fill: '#000000 !important' }} />
               <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>
-                Delete passport
+                {t('actions.deletePassport')}
               </Box>
             </MenuItem>
           </>
@@ -2000,11 +2002,11 @@ const PassportProvisionList: React.FC = () => {
         }}
       >
         <DialogTitle sx={{ color: '#fff', fontWeight: 600 }}>
-          Delete Digital Product Passport
+          {t('deleteDialog.title')}
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-            Are you sure you want to delete "{dppToDelete?.name}"? This action cannot be undone.
+            {t('deleteDialog.confirmMessage', { name: dppToDelete?.name })}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -2013,7 +2015,7 @@ const PassportProvisionList: React.FC = () => {
             disabled={isDeleting}
             sx={darkCardStyles.button.outlined}
           >
-            Cancel
+            {t('common:actions.cancel')}
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -2026,7 +2028,7 @@ const PassportProvisionList: React.FC = () => {
               }
             }}
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? t('deleteDialog.deleting') : t('common:actions.delete')}
           </Button>
         </DialogActions>
       </Dialog>

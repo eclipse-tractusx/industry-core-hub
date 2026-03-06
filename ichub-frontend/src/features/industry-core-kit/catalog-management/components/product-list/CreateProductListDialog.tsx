@@ -68,6 +68,7 @@ import AspectRatioIcon from "@mui/icons-material/AspectRatio";
 import HeightIcon from "@mui/icons-material/Height";
 import LinearScaleIcon from "@mui/icons-material/LinearScale";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { useTranslation } from 'react-i18next';
 import { createCatalogPart } from "@/features/industry-core-kit/catalog-management/api";
 import {
   PartType,
@@ -86,28 +87,30 @@ interface ProductListDialogProps {
 }
 
 const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogProps) => {
+  const { t } = useTranslation('catalogManagement');
+  const { t: tCommon } = useTranslation('common');
   const manufacturerId = getParticipantId();
   const lengthUnits = Object.values(LengthUnit);
   const weightUnits = Object.values(WeightUnit);
 
   const categoryOptions = [
-    'Mechanical Component',
-    'Electronic Sensor',
-    'Body Part'
+    t('createDialog.categories.mechanicalComponent'),
+    t('createDialog.categories.electronicSensor'),
+    t('createDialog.categories.bodyPart')
   ];
 
   const fieldDescriptions = {
-    basicInformation: "Essential identifying information for the catalog part including ID, name, description, category, and manufacturing location.",
-    manufacturerPartId: "Unique identifier assigned by the manufacturer to this specific part. This ID should be unique within your organization.",
-    name: "Commercial or technical name of the part. This will be displayed as the main identifier in catalogs and listings.",
-    description: "Detailed description of the part including its purpose, functionality, and key characteristics. This helps users understand what the part is for.",
-    category: "Classification category that groups similar parts together. Select from common categories or create your own custom category.",
-    bpns: "Business Partner Number Site - identifies the specific manufacturing location or site where this part is produced.",
-    dimensions: "Physical measurements of the part including width, height, length, and weight. These help with compatibility and logistics planning.",
-    materials: "Material composition of the part with percentage breakdown. This information is crucial for recycling, compatibility, and regulatory compliance.",
-    materialDistribution: "Visual representation of material composition showing the percentage distribution of different materials used in this part.",
-    materialName: "Name of the specific material used in this part (e.g., Steel, Aluminum, Plastic, etc.)",
-    materialShare: "Percentage or proportion of this material in the overall composition of the part. All material shares should add up to 100%."
+    basicInformation: t('createDialog.basicInformation.description'),
+    manufacturerPartId: t('createDialog.fields.manufacturerPartId.description'),
+    name: t('createDialog.fields.name.description'),
+    description: t('createDialog.fields.description.description'),
+    category: t('createDialog.fields.category.description'),
+    bpns: t('createDialog.fields.bpns.description'),
+    dimensions: t('createDialog.measurements.description'),
+    materials: t('createDialog.materials.description'),
+    materialDistribution: t('createDialog.materials.distribution.description'),
+    materialName: t('createDialog.materials.materialName.description'),
+    materialShare: t('createDialog.materials.share.description')
   };
 
   const FieldLabelWithTooltip = ({ label, tooltip }: { label: string; tooltip: string }) => (
@@ -268,7 +271,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     if (namedMaterials.length > 0 && Math.abs(totalShare - 100) > 0.01) {
       // Clear success message and show error
       setSuccessMessage("");
-      setApiErrorMessage(`Material shares must total exactly 100% (currently ${totalShare.toFixed(1)}%). Please adjust the percentages before creating.`);
+      setApiErrorMessage(t('createDialog.materialSharesError', { total: totalShare.toFixed(1) }));
       return;
     }
 
@@ -283,7 +286,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
       await createCatalogPart(mapPartInstanceToApiPartData(payload as PartType));
       // Clear any existing error message first
       setApiErrorMessage("");
-      setSuccessMessage("Catalog part created successfully.");
+      setSuccessMessage(t('createDialog.successMessage'));
       setTimeout(() => {
         setSuccessMessage("");
         onSave?.({ part: payload as PartType });
@@ -293,7 +296,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     } catch (error: unknown) {
       setIsLoading(false);
       console.error("Error creating catalog part:", error);
-      let errorMessage = "Failed to create catalog part.";
+      let errorMessage = t('createDialog.errorMessage');
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -342,7 +345,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           position: 'relative'
         }}
       >
-        Create New Catalog Part
+        {t('createDialog.title')}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -426,7 +429,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             }}>
               <Chip
                 icon={<BusinessIcon sx={{color: "black!important"}}/>}
-                label={`Your Manufacturer ID: ${manufacturerId}`}
+                label={t('createDialog.manufacturerIdChip', { id: manufacturerId })}
                 variant="filled"
                 color="secondary"
                 size="medium"
@@ -457,7 +460,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                Basic Information
+                {t('createDialog.basicInformation.title')}
               </Typography>
               <Tooltip title={fieldDescriptions.basicInformation} placement="top">
                 <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
@@ -467,7 +470,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <FieldLabelWithTooltip 
-              label="Manufacturer Part ID *" 
+              label={`${t('createDialog.fields.manufacturerPartId.label')} *`} 
               tooltip={fieldDescriptions.manufacturerPartId} 
             />
             <TextField
@@ -477,7 +480,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               required
               variant="outlined"
               size="medium"
-              placeholder="Enter unique part identifier"
+              placeholder={t('createDialog.fields.manufacturerPartId.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -490,7 +493,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <FieldLabelWithTooltip 
-              label="Part Name *" 
+              label={`${t('createDialog.fields.name.label')} *`} 
               tooltip={fieldDescriptions.name} 
             />
             <TextField
@@ -500,7 +503,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               required
               variant="outlined"
               size="medium"
-              placeholder="Enter part name"
+              placeholder={t('createDialog.fields.name.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -513,7 +516,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={12}>
             <FieldLabelWithTooltip 
-              label="Description" 
+              label={t('createDialog.fields.description.label')} 
               tooltip={fieldDescriptions.description} 
             />
             <TextField
@@ -524,7 +527,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               rows={3}
               variant="outlined"
               size="medium"
-              placeholder="Describe the part's purpose, functionality, and key characteristics"
+              placeholder={t('createDialog.fields.description.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 2 }}>
@@ -545,7 +548,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <FieldLabelWithTooltip 
-              label="Category" 
+              label={t('createDialog.fields.category.label')} 
               tooltip={fieldDescriptions.category} 
             />
             <Autocomplete
@@ -559,7 +562,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   {...params}
                   variant="outlined"
                   size="medium"
-                  placeholder="Select or enter a category"
+                  placeholder={t('createDialog.fields.category.placeholder')}
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
@@ -592,7 +595,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 12, sm: 6 }}>
             <FieldLabelWithTooltip 
-              label="BPNS" 
+              label={t('createDialog.fields.bpns.label')} 
               tooltip={fieldDescriptions.bpns} 
             />
             <TextField
@@ -601,7 +604,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               fullWidth
               variant="outlined"
               size="medium"
-              placeholder="Business Partner Number Site"
+              placeholder={t('createDialog.fields.bpns.placeholder')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -621,7 +624,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                Measurements
+                {t('createDialog.measurements.title')}
               </Typography>
               <Tooltip 
                 title={fieldDescriptions.dimensions} 
@@ -642,7 +645,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
-              label="Width"
+              label={t('createDialog.measurements.width')}
               type="number"
               value={formData.width?.value === 0 ? "" : formData.width?.value || ""}
               onChange={(e) => handleMeasurementChange("width", "value", e.target.value)}
@@ -662,7 +665,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
               select
-              label="Width Unit"
+              label={t('createDialog.measurements.widthUnit')}
               value={formData.width?.unit || LengthUnit.MM}
               onChange={(e) => handleMeasurementChange("width", "unit", e.target.value)}
               fullWidth
@@ -679,7 +682,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
-              label="Height"
+              label={t('createDialog.measurements.height')}
               type="number"
               value={formData.height?.value === 0 ? "" : formData.height?.value || ""}
               onChange={(e) => handleMeasurementChange("height", "value", e.target.value)}
@@ -699,7 +702,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
               select
-              label="Height Unit"
+              label={t('createDialog.measurements.heightUnit')}
               value={formData.height?.unit || LengthUnit.MM}
               onChange={(e) => handleMeasurementChange("height", "unit", e.target.value)}
               fullWidth
@@ -716,7 +719,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
-              label="Length"
+              label={t('createDialog.measurements.length')}
               type="number"
               value={formData.length?.value === 0 ? "" : formData.length?.value || ""}
               onChange={(e) => handleMeasurementChange("length", "value", e.target.value)}
@@ -736,7 +739,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
               select
-              label="Length Unit"
+              label={t('createDialog.measurements.lengthUnit')}
               value={formData.length?.unit || LengthUnit.MM}
               onChange={(e) => handleMeasurementChange("length", "unit", e.target.value)}
               fullWidth
@@ -753,7 +756,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
 
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
-              label="Weight"
+              label={t('createDialog.measurements.weight')}
               type="number"
               value={formData.weight?.value === 0 ? "" : formData.weight?.value || ""}
               onChange={(e) => handleMeasurementChange("weight", "value", e.target.value)}
@@ -773,7 +776,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           <Grid2 size={{ xs: 6, sm: 3 }}>
             <TextField
               select
-              label="Weight Unit"
+              label={t('createDialog.measurements.weightUnit')}
               value={formData.weight?.unit || WeightUnit.KG}
               onChange={(e) => handleMeasurementChange("weight", "unit", e.target.value)}
               fullWidth
@@ -797,7 +800,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                Materials
+                {t('createDialog.materials.title')}
               </Typography>
               <Tooltip title={fieldDescriptions.materials} placement="top">
                 <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
@@ -812,7 +815,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 <Grid2 container spacing={2} alignItems="center">
                   <Grid2 size={{ xs: 12, sm: 5 }}>
                     <TextField
-                      label={<FieldLabelWithTooltip label="Material Name" tooltip={fieldDescriptions.materialName} />}
+                      label={<FieldLabelWithTooltip label={t('createDialog.materials.materialName.label')} tooltip={fieldDescriptions.materialName} />}
                       value={material.name}
                       onChange={(e) => handleMaterialChange(index, "name", e.target.value)}
                       fullWidth
@@ -833,7 +836,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   <Grid2 size={{ xs: 8, sm: 5 }}>
                     <Box sx={{ px: 1 }}>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
-                        Share: {material.share.toFixed(1)}%
+                        {t('createDialog.materials.share.label')}: {material.share.toFixed(1)}%
                       </Typography>
                       <Slider
                         value={material.share}
@@ -890,7 +893,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                     <Collapse in={expandedMaterial === index}>
                       <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                         <TextField
-                          label={<FieldLabelWithTooltip label="Exact Share (%)" tooltip={fieldDescriptions.materialShare} />}
+                          label={<FieldLabelWithTooltip label={t('createDialog.materials.share.exactLabel')} tooltip={fieldDescriptions.materialShare} />}
                           type="number"
                           value={material.share === 0 ? "" : material.share}
                           onChange={(e) => handleMaterialChange(index, "share", e.target.value)}
@@ -907,7 +910,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                           }}
                         />
                         <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                          Enter precise percentage value
+                          {t('createDialog.materials.share.exactHint')}
                         </Typography>
                       </Box>
                     </Collapse>
@@ -923,7 +926,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 variant="outlined"
                 size="small"
               >
-                Add Material
+                {t('createDialog.materials.addMaterial')}
               </Button>
               
               {getNamedMaterials().length > 1 && Math.abs(getTotalShare() - 100) > 0.01 && (
@@ -935,12 +938,12 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   color="warning"
                   sx={{ fontSize: '0.75rem' }}
                 >
-                  Auto-adjust to 100%
+                  {t('createDialog.materials.autoAdjust')}
                 </Button>
               )}
               
               <Chip
-                label={`Total: ${getTotalShare().toFixed(1)}%`}
+                label={t('createDialog.materials.total', { total: getTotalShare().toFixed(1) })}
                 color={getNamedMaterials().length === 0 ? "default" : (Math.abs(getTotalShare() - 100) < 0.01 ? "success" : "warning")}
                 variant="filled"
                 size="small"
@@ -954,8 +957,8 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                 sx={{ mt: 1, display: 'block', fontStyle: 'italic' }}
               >
                 {Math.abs(getTotalShare() - 100) < 0.01 
-                  ? "✓ Perfect! Material shares add up to 100%" 
-                  : `Set your desired percentages freely. Total must equal 100% to create the part (currently ${getTotalShare().toFixed(1)}%)`
+                  ? `✓ ${t('createDialog.materials.perfectTotal')}` 
+                  : t('createDialog.materials.adjustWarning', { total: getTotalShare().toFixed(1) })
                 }
               </Typography>
             )}
@@ -981,7 +984,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   fontSize: '1rem',
                   fontWeight: 500
                 }}>
-                  Material Distribution
+                  {t('createDialog.materials.distribution.title')}
                 </Typography>
                 <Tooltip title={fieldDescriptions.materialDistribution} placement="top">
                   <InfoOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', cursor: 'help' }} />
@@ -1013,7 +1016,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   textAlign: 'center'
                 }}>
                   <Typography variant="body2">
-                    Add materials with names and shares to see the distribution chart
+                    {t('createDialog.materials.distribution.emptyMessage')}
                   </Typography>
                 </Box>
               )}
@@ -1042,7 +1045,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             fontWeight: 500
           }}
         >
-          Cancel
+          {tCommon('actions.cancel')}
         </Button>
         <Button 
           onClick={handleSave}
@@ -1058,7 +1061,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
         >
-          {isLoading ? 'Creating...' : 'Create'}
+          {isLoading ? tCommon('actions.creating') : tCommon('actions.create')}
         </Button>
       </DialogActions>
     </Dialog>

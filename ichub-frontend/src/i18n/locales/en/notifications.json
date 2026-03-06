@@ -1,0 +1,100 @@
+{
+  "copiedToClipboard": "{{field}} copied to clipboard!",
+  "failedToCopy": "Failed to copy {{field}}",
+  "panel": {
+    "title": "Notifications",
+    "collapse": "Collapse panel",
+    "expand": "Expand panel",
+    "close": "Close"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "unread": "Unread",
+    "notVerified": "Not Verified",
+    "verified": "Verified",
+    "feedbackSent": "Feedback Sent",
+    "archived": "Archived",
+    "noNotificationsFound": "No notifications found",
+    "searchPlaceholder": "Search contacts, messages...",
+    "markAsRead": "Mark as read",
+    "markAsUnread": "Mark as unread",
+    "markAllAsRead": "Mark all as read",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "select": "Select",
+    "listView": "List view",
+    "groupBySender": "Group by sender",
+    "addToContacts": "Add to contacts",
+    "digitalTwinNotificationReceived": "Digital Twin notification received",
+    "now": "Now"
+  },
+  "sorting": {
+    "date": "Date",
+    "deadline": "Deadline",
+    "priority": "Priority",
+    "dateReceived": "Date received",
+    "responseDeadline": "Response deadline"
+  },
+  "detail": {
+    "viewTwin": "View Twin",
+    "viewDigitalTwin": "View Digital Twin",
+    "overdue": "Overdue",
+    "verifyAll": "Verify All",
+    "sendFeedback": "Send Feedback",
+    "pendingVerification": "Pending Verification",
+    "sent": "Sent",
+    "viewTechnicalDetails": "View technical details",
+    "copy": "Copy",
+    "knownContact": "Known contact",
+    "failedToDiscoverTwin": "Failed to discover digital twin"
+  },
+  "verification": {
+    "accessible": "Accessible",
+    "notAccessible": "Not Accessible",
+    "error": "Error",
+    "notVerified": "Not Verified",
+    "verifying": "Verifying..."
+  },
+  "itemTypes": {
+    "serializedPart": "Serialized Part",
+    "batch": "Batch",
+    "jisPart": "JIS Part",
+    "part": "Part",
+    "unknownItem": "Unknown Item"
+  },
+  "fields": {
+    "manufacturerId": "Manufacturer ID",
+    "manufacturerPartId": "Manufacturer Part ID",
+    "customerPartId": "Customer Part ID",
+    "serialNumber": "Serial Number",
+    "batchId": "Batch ID",
+    "jisNumber": "JIS Number",
+    "jisCallDate": "JIS Call Date",
+    "messageId": "Message ID",
+    "context": "Context",
+    "version": "Version",
+    "relatedMessage": "Related Message",
+    "senderBpn": "Sender BPN",
+    "receiverBpn": "Receiver BPN",
+    "expectedResponse": "Expected Response",
+    "bpnl": "BPNL"
+  },
+  "feedback": {
+    "title": "Send Feedback",
+    "composeFeedback": "Compose Feedback",
+    "responseStatus": "Response Status",
+    "sending": "Sending...",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "error": "ERROR",
+    "pending": "PENDING",
+    "okDescription": "Digital Twin accessible and processed successfully",
+    "errorDescription": "Digital Twin not accessible or processing failed",
+    "pendingDescription": "Verification pending - Digital Twin not yet processed",
+    "addMessagePlaceholder": "Add a message...",
+    "enterStatusMessagePlaceholder": "Enter status message...",
+    "message": "Message",
+    "itemDetails": "Item Details",
+    "status": "Status"
+  }
+}

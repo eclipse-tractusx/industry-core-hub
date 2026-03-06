@@ -1,0 +1,323 @@
+{
+  "page": {
+    "title": "Katalogteile",
+    "createButton": "Katalogteil erstellen"
+  },
+  "productCard": {
+    "noPartsAvailable": "Keine Katalogteile verfügbar, bitte überprüfen Sie die ichub-backend Verbindung/Konfiguration",
+    "registerPart": "Teil registrieren",
+    "sharePart": "Teil teilen"
+  },
+  "messages": {
+    "registerSuccess": "Teil-Twin erfolgreich registriert!",
+    "registerError": "Fehler beim Registrieren des Teil-Twins!",
+    "submodelCreatedSuccess": "Submodell erfolgreich mit {{schemaName}}-Schema erstellt!",
+    "submodelCreatedError": "Fehler beim Erstellen des Submodells"
+  },
+  "createDialog": {
+    "title": "Neues Katalogteil erstellen",
+    "successMessage": "Katalogteil erfolgreich erstellt.",
+    "errorMessage": "Fehler beim Erstellen des Katalogteils.",
+    "materialSharesError": "Materialanteile müssen genau 100% ergeben (derzeit {{total}}%). Bitte passen Sie die Prozentsätze vor dem Erstellen an.",
+    "manufacturerIdChip": "Ihre Hersteller-ID: {{id}}",
+    "basicInformation": {
+      "title": "Grundinformationen",
+      "description": "Wesentliche Identifikationsinformationen für das Katalogteil einschließlich ID, Name, Beschreibung, Kategorie und Fertigungsstandort."
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "Hersteller-Teilenummer",
+        "placeholder": "Eindeutige Teilekennung eingeben",
+        "description": "Eindeutige Kennung, die vom Hersteller diesem spezifischen Teil zugewiesen wird. Diese ID sollte innerhalb Ihrer Organisation eindeutig sein."
+      },
+      "name": {
+        "label": "Teilename",
+        "placeholder": "Teilename eingeben",
+        "description": "Handels- oder technischer Name des Teils. Dieser wird als Hauptkennung in Katalogen und Listen angezeigt."
+      },
+      "description": {
+        "label": "Beschreibung",
+        "placeholder": "Beschreiben Sie Zweck, Funktionalität und wichtige Eigenschaften des Teils",
+        "description": "Detaillierte Beschreibung des Teils einschließlich Zweck, Funktionalität und wichtiger Eigenschaften. Dies hilft Benutzern zu verstehen, wofür das Teil gedacht ist."
+      },
+      "category": {
+        "label": "Kategorie",
+        "placeholder": "Kategorie auswählen oder eingeben",
+        "description": "Klassifizierungskategorie, die ähnliche Teile gruppiert. Wählen Sie aus gängigen Kategorien oder erstellen Sie Ihre eigene benutzerdefinierte Kategorie."
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "Geschäftspartner-Standortnummer",
+        "description": "Business Partner Number Site - identifiziert den spezifischen Fertigungsstandort, an dem dieses Teil hergestellt wird."
+      }
+    },
+    "measurements": {
+      "title": "Maße",
+      "description": "Physische Maße des Teils einschließlich Breite, Höhe, Länge und Gewicht. Diese helfen bei Kompatibilität und Logistikplanung.",
+      "width": "Breite",
+      "widthUnit": "Breiteneinheit",
+      "height": "Höhe",
+      "heightUnit": "Höheneinheit",
+      "length": "Länge",
+      "lengthUnit": "Längeneinheit",
+      "weight": "Gewicht",
+      "weightUnit": "Gewichtseinheit"
+    },
+    "materials": {
+      "title": "Materialien",
+      "description": "Materialzusammensetzung des Teils mit prozentualer Aufschlüsselung. Diese Informationen sind wichtig für Recycling, Kompatibilität und Compliance.",
+      "addMaterial": "Material hinzufügen",
+      "autoAdjust": "Automatisch auf 100% anpassen",
+      "total": "Gesamt: {{total}}%",
+      "perfectTotal": "Perfekt! Materialanteile ergeben 100%",
+      "adjustWarning": "Legen Sie die gewünschten Prozentsätze frei fest. Gesamt muss 100% betragen um das Teil zu erstellen (derzeit {{total}}%)",
+      "materialName": {
+        "label": "Materialname",
+        "description": "Name des spezifischen Materials, das in diesem Teil verwendet wird (z.B. Stahl, Aluminium, Kunststoff, etc.)"
+      },
+      "share": {
+        "label": "Anteil",
+        "exactLabel": "Genauer Anteil (%)",
+        "description": "Prozentsatz oder Anteil dieses Materials an der Gesamtzusammensetzung des Teils. Alle Materialanteile sollten zusammen 100% ergeben.",
+        "exactHint": "Genauen Prozentwert eingeben"
+      },
+      "distribution": {
+        "title": "Materialverteilung",
+        "description": "Visuelle Darstellung der Materialzusammensetzung, die die prozentuale Verteilung der verschiedenen Materialien in diesem Teil zeigt.",
+        "emptyMessage": "Fügen Sie Materialien mit Namen und Anteilen hinzu, um das Verteilungsdiagramm zu sehen"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "Mechanische Komponente",
+      "electronicSensor": "Elektronischer Sensor",
+      "bodyPart": "Karosserieteil"
+    }
+  },
+  "details": {
+    "notFound": "Produkt nicht gefunden",
+    "partNotFound": "404 TEIL NICHT GEFUNDEN",
+    "backToCatalog": "Zurück zum Katalog",
+    "update": "Aktualisieren",
+    "viewSubmodels": "Submodelle anzeigen"
+  },
+  "shareDialog": {
+    "title": "Mit Partner teilen ({{partName}})",
+    "partNameFallback": "Teilename nicht erhalten",
+    "noPartnersTitle": "Keine Partner verfügbar",
+    "noPartnersDescription": "Keine Partner verfügbar. Bitte fügen Sie Partner in der Partner-Ansicht hinzu, um Teile zu teilen.",
+    "shareInfoTitle": "Teil-Informationen teilen",
+    "shareInfoDescription": "Wählen Sie einen Partner, um das Teil zu teilen",
+    "partnerLabel": "Partner",
+    "partnerPlaceholder": "Wählen Sie einen Partner, um das Teil zu teilen",
+    "partnerHelperText": "Aus verfügbaren Partnern auswählen",
+    "partnerRequired": "Partnerauswahl ist erforderlich",
+    "addCustomPartId": "Benutzerdefinierte Kunden-Teil-ID hinzufügen",
+    "customerPartIdLabel": "Kunden-Teil-ID",
+    "customerPartIdPlaceholder": "Geben Sie Ihre benutzerdefinierte Teil-Kennung ein",
+    "addPartner": "Partner hinzufügen",
+    "shareSuccess": "Teil erfolgreich mit {{bpnl}} geteilt",
+    "shareError": "Fehler beim Teilen des Teils.",
+    "validationError": "Validierung fehlgeschlagen.",
+    "partDataNotAvailable": "Teil-Daten sind nicht verfügbar."
+  },
+  "productDetail": {
+    "addSerializedPartDialog": {
+      "title": "Serialisiertes Teil hinzufügen",
+      "sharingPartner": "Teilungspartner",
+      "selectPartner": "Teilungspartner auswählen",
+      "selectPartnerPlaceholder": "Partner zum Teilen auswählen",
+      "optionalFields": "Optionale Felder",
+      "includeVan": "VAN-Feld einbeziehen",
+      "includeCustomerPartId": "Kunden-Teil-ID-Feld einbeziehen",
+      "successMessage": "Serialisiertes Teil erfolgreich erstellt",
+      "errorMessage": "Fehler beim Erstellen des serialisierten Teils: {{error}}"
+    },
+    "instanceProductsTable": {
+      "title": "Instanzprodukte",
+      "subtitle": "Individuelle Produktinstanzen verwalten und verfolgen",
+      "selectPartMessage": "Wählen Sie ein Teil aus dem Katalog aus, um seine einzelnen Produktinstanzen anzuzeigen und zu verwalten.",
+      "addButton": "Instanzprodukt hinzufügen",
+      "noInstancesFound": "Keine Instanzprodukte gefunden",
+      "addFirstInstance": "Beginnen Sie, indem Sie Ihr erstes Instanzprodukt hinzufügen, um einzelne Artikel zu verfolgen",
+      "columns": {
+        "status": "Status",
+        "actions": "Aktionen"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "Serialisiertes Teil löschen"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Twin erfolgreich registriert!",
+        "registrationFailed": "Registrierung fehlgeschlagen: {{error}}",
+        "sharingFailed": "Teilen fehlgeschlagen: {{error}}",
+        "unsharingFailed": "Freigabe aufheben fehlgeschlagen: {{error}}",
+        "deletionFailed": "Löschen fehlgeschlagen: {{error}}",
+        "failedToRegisterTwin": "Twin-Registrierung fehlgeschlagen. Bitte erneut versuchen.",
+        "failedToShareTwin": "Twin teilen fehlgeschlagen. Bitte erneut versuchen.",
+        "failedToUnshareTwin": "Twin-Freigabe aufheben fehlgeschlagen. Bitte erneut versuchen.",
+        "failedToDeletePart": "Teil löschen fehlgeschlagen. Bitte erneut versuchen.",
+        "unableToDelete": "Löschen nicht möglich: ungültige Teil-Daten"
+      },
+      "deleteDialog": {
+        "title": "Serialisiertes Teil löschen",
+        "message": "Sind Sie sicher, dass Sie dieses serialisierte Teil löschen möchten?",
+        "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+        "deleting": "WIRD GELÖSCHT...",
+        "warningRegistered": "Dieses Teil hat einen registrierten Twin. Beim Löschen wird auch die Twin-Registrierung entfernt.",
+        "warningShared": "Dieses Teil wird derzeit mit Partnern geteilt. Beim Löschen werden alle Freigaben widerrufen."
+      }
+    },
+    "productData": {
+      "updatingStatus": "Teil-Status wird aktualisiert...",
+      "pleaseWait": "Bitte warten Sie, während wir die Twin-Informationen aktualisieren",
+      "registerPartTwin": "Teil-Twin registrieren",
+      "loadingAasId": "AAS-ID wird geladen...",
+      "loadingTwinId": "Twin-ID wird geladen...",
+      "noTwinIds": "Keine Twin-IDs",
+      "twinDataUnavailable": "Twin-Daten nicht verfügbar",
+      "partDetails": "Teil-Details",
+      "invalidDate": "Ungültiges Datum",
+      "twinTimestamps": {
+        "title": "Twin-Zeitstempel",
+        "notYetCreated": "Noch nicht erstellt"
+      },
+      "sharing": {
+        "title": "Geteilt mit",
+        "notYetSharedWarning": "Dieses Teil ist noch nicht geteilt, hat aber bereits eine vorbereitete Kunden-Teil-ID zum Teilen.",
+        "noSharingInsights": "Keine Freigabeinformationen verfügbar. Teilen Sie dieses Teil mit einem Partner um die Informationen hier zu sehen."
+      },
+      "moreInformation": {
+        "title": "Weitere Informationen",
+        "materials": "Materialien:",
+        "noMaterials": "Keine Materialdaten verfügbar",
+        "dimensions": "Abmessungen:",
+        "height": "Höhe",
+        "length": "Länge",
+        "weight": "Gewicht"
+      },
+      "partInfo": {
+        "noDescription": "Keine Beschreibung verfügbar",
+        "uncategorized": "Nicht kategorisiert",
+        "noBpns": "Kein BPNS verfügbar"
+      },
+      "sections": {
+        "specifications": "Spezifikationen",
+        "dimensions": "Abmessungen",
+        "materials": "Materialien",
+        "sharedWith": "Geteilt mit",
+        "submodels": "Submodelle"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "Klicken um Produktionsstandort zu kopieren"
+      },
+      "labels": {
+        "siteOfOrigin": "Produktionsstandort"
+      },
+      "specifications": {
+        "manufacturerId": "Hersteller-ID",
+        "createdAt": "Erstellt am",
+        "updatedAt": "Aktualisiert am",
+        "notAvailable": "Nicht verfügbar"
+      },
+      "dimensions": {
+        "height": "Höhe", 
+        "length": "Länge",
+        "weight": "Gewicht",
+        "notSpecified": "Nicht angegeben"
+      },
+      "materials": {
+        "title": "Materialien",
+        "composition": "Zusammensetzung",
+        "noMaterials": "Keine Materialien angegeben"
+      },
+      "submodels": {
+        "title": "Submodelle",
+        "createSubmodel": "Submodell erstellen",
+        "noSubmodels": "Keine Submodelle verfügbar",
+        "createFirst": "Erstellen Sie Ihr erstes Submodell um detaillierte Spezifikationen hinzuzufügen",
+        "twinRequiredTitle": "Twin erforderlich",
+        "twinRequiredMessage": "Sie müssen einen Twin erstellen, bevor Sie Submodelle hinzufügen können. Verwenden Sie die Registrierungs-Schaltfläche oben um zuerst einen Twin zu erstellen.",
+        "viewDetails": "Details anzeigen"
+      },
+      "warnings": {
+        "noShares": "Dieses Teil wurde noch mit keinen Partnern geteilt",
+        "noSubmodels": "Für dieses Teil wurden keine Submodelle erstellt"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Teil-Twin erfolgreich registriert!",
+        "twinRegistrationFailed": "Teil-Twin-Registrierung fehlgeschlagen!",
+        "submodelCreatedSuccess": "Submodell erfolgreich mit {{schemaName}}-Schema erstellt!",
+        "submodelCreationFailed": "Submodell-Erstellung fehlgeschlagen",
+        "twinRequired": "Twin muss vor dem Hinzufügen von Submodellen erstellt werden. Bitte erstellen Sie zuerst einen Twin.",
+        "noSchemaSelected": "Kein Schema ausgewählt"
+      }
+    },
+    "sharedTable": {
+      "columns": {
+        "companyName": "Firmenname",
+        "partnerName": "Firmenname",
+        "bpnl": "BPNL"
+      }
+    },
+    "submodelCard": {
+      "version": "v{{version}}",
+      "namespace": "Namensraum"
+    },
+    "submodelsGrid": {
+      "title": "Digitale Zwilling Submodelle",
+      "submodelsAvailable": "Submodell(e) verfügbar",
+      "addSubmodel": "Submodell hinzufügen",
+      "createNewSubmodel": "Neuen Submodell-Aspekt erstellen",
+      "noSubmodels": "Keine Submodelle Verfügbar",
+      "noSubmodelsDescription": "Dieser digitale Zwilling hat keine Submodell-Aspekte zur Ansicht verfügbar.",
+      "submodelsDisplayed": "{{count}} digitale Zwilling Submodell(e) angezeigt"
+    },
+    "jsonViewer": {
+      "title": "JSON-Viewer",
+      "copyJson": "JSON kopieren"
+    },
+    "shareDropdown": {
+      "share": "TEILEN",
+      "options": {
+        "viewDetails": "Vollständige Details anzeigen",
+        "edit": "Produkt bearbeiten",
+        "register": "Twin registrieren",
+        "share": "Mit Partner teilen",
+        "copy": "Eindeutige ID kopieren",
+        "copyAasId": "AAS-ID kopieren",
+        "download": "JSON herunterladen",
+        "export": "Daten exportieren",
+        "delete": "Produkt löschen"
+      },
+      "messages": {
+        "globalAssetIdCopied": "Globale Asset-ID in Zwischenablage kopiert",
+        "partIdCopied": "Teil-ID in Zwischenablage kopiert",
+        "copyFailed": "Kopieren von {{label}} fehlgeschlagen",
+        "aasIdCopied": "AAS-ID in Zwischenablage kopiert",
+        "aasIdNotAvailable": "AAS-ID nicht verfügbar",
+        "copyAasIdFailed": "Kopieren der AAS-ID fehlgeschlagen",
+        "twinRegisteredSuccess": "Teil-Twin erfolgreich registriert!",
+        "twinRegistrationFailed": "Teil-Twin-Registrierung fehlgeschlagen!"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "Submodell-Viewer",
+      "semanticId": "Semantische ID",
+      "jsonData": "JSON-Daten",
+      "structured": "Strukturiert",
+      "json": "JSON",
+      "failedToLoad": "Submodell-Inhalt konnte nicht geladen werden",
+      "noDataAvailable": "Keine Submodell-Daten verfügbar oder Daten konnten nicht abgerufen werden.",
+      "unknownDataType": "Unbekannter Datentyp"
+    },
+    "submodelViewer": {
+      "title": "Digitale Zwilling Submodelle",
+      "newSubmodel": "Neues Submodell",
+      "noSubmodelsAvailable": "Keine Submodelle Verfügbar",
+      "noSubmodelsDescription": "Dieser digitale Zwilling hat keine Submodell-Aspekte verfügbar.",
+      "registrationInfo": "Registrierungsinfo",
+      "noRegistration": "Keine Registrierung",
+      "viewSubmodel": "Submodell anzeigen"
+    }
+  }
+}

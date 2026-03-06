@@ -23,6 +23,7 @@
 /** Created using an LLM (Github Copilot) review by a human committer */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Grid2,
@@ -141,6 +142,7 @@ const getDtrColor = (dtrIndex: number) => {
 };
 
 const PartsDiscovery = () => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const { showSidebar, hideSidebar, isVisible } = useAdditionalSidebar();
   
   // Ref to prevent duplicate API calls in React StrictMode
@@ -458,12 +460,12 @@ const PartsDiscovery = () => {
   // Handle single twin search
   const handleSingleTwinSearch = async () => {
     if (!bpnl.trim()) {
-      setError('Please enter a partner BPNL');
+      setError(t('errors.enterBpnl'));
       return;
     }
     
     if (!singleTwinAasId.trim()) {
-      setError('Please enter an AAS ID');
+      setError(t('errors.enterAasId'));
       return;
     }
 
@@ -540,24 +542,24 @@ const PartsDiscovery = () => {
     const filters = [
       {
         value: customerPartId,
-        label: 'Customer Part ID',
-        tooltip: 'Customer Part ID'
+        label: t('common:fields.customerPartId'),
+        tooltip: t('common:fields.customerPartId')
       },
       {
         value: manufacturerPartId,
-        label: 'Manufacturer Part ID',
-        tooltip: 'Manufacturer Part ID'
+        label: t('common:fields.manufacturerPartId'),
+        tooltip: t('common:fields.manufacturerPartId')
       },
       {
         value: globalAssetId,
-        label: 'Global Asset ID',
-        tooltip: 'Global Asset ID'
+        label: t('common:fields.globalAssetId'),
+        tooltip: t('common:fields.globalAssetId')
       },
       // Only show Part Instance ID filter when Part Instance is selected
       ...(partType === 'Serialized' ? [{
         value: partInstanceId,
-        label: 'Part Instance ID',
-        tooltip: 'Part Instance Identifier'
+        label: t('common:fields.partInstanceId'),
+        tooltip: t('common:fields.partInstanceId')
       }] : [])
       // Future filters can be easily added here:
       // {
@@ -684,19 +686,19 @@ const PartsDiscovery = () => {
 
   const handleSearch = async () => {
     if (!bpnl.trim()) {
-      setError('Please enter a partner BPNL');
+      setError(t('errors.enterBpnl'));
       return;
     }
 
     // Validate custom limit
     if (isCustomLimit) {
       if (!customLimit.trim()) {
-        setError('Please enter a custom limit or select a predefined option');
+        setError(t('errors.customLimitRequired'));
         return;
       }
       const customLimitNum = parseInt(customLimit);
       if (isNaN(customLimitNum) || customLimitNum < 1 || customLimitNum > 1000) {
-        setError('Custom limit must be a number between 1 and 1000');
+        setError(t('errors.customLimitRange'));
         return;
       }
     }
@@ -810,9 +812,9 @@ const PartsDiscovery = () => {
       if (response.error) {
         // Handle specific error cases with user-friendly messages
         if (response.error.toLowerCase().includes('no dtrs found')) {
-          setError(`No Digital Twin Registries found for partner "${bpnl}". Please verify the BPNL is correct and if the partner has a Connector (with a reachable DTR) connected in the same dataspace as you.`);
+          setError(t('errors.noDtrsFound', { bpnl }));
         } else {
-          setError(`Search failed: ${response.error}`);
+          setError(`${t('errors.searchFailed')}: ${response.error}`);
         }
         stopProgress(true);
         setIsLoading(false);
@@ -821,7 +823,7 @@ const PartsDiscovery = () => {
       
       // Check if no shell descriptors were found
       if (!response.shellDescriptors || response.shellDescriptors.length === 0) {
-        setError('No digital twins found for the specified criteria. Please try different search parameters.');
+        setError(t('errors.noDigitalTwinsFound'));
         stopProgress(true);
         setIsLoading(false);
         return;
@@ -840,7 +842,7 @@ const PartsDiscovery = () => {
         if (errorDtrs.length > 0) {
           console.warn('DTR errors found:', errorDtrs);
           const errorMessages = errorDtrs.map(dtr => `DTR ${dtr.connectorUrl}: ${dtr.status}`);
-          setError(`DTR issues detected: ${errorMessages.join(', ')}`);
+          setError(t('errors.dtrIssuesDetected', { errors: errorMessages.join(', ') }));
           // Don't return here - continue processing in case there are still valid results
         }
       }
@@ -952,7 +954,7 @@ const PartsDiscovery = () => {
       } else {
         // For non-sequential navigation, show a helpful message
         // Cursor-based pagination doesn't support random page access efficiently
-        setError(`Direct navigation to page ${page} is not supported. Please use next/previous navigation.`);
+        setError(t('errors.directNavigationNotSupported', { page }));
         return;
       }
 
@@ -960,9 +962,9 @@ const PartsDiscovery = () => {
         // Check if the pagination response contains an error
         if (newResponse.error) {
           if (newResponse.error.toLowerCase().includes('no dtrs found')) {
-            setError(`No Digital Twin Registries found for partner "${bpnl}" on page ${page}. Please verify the BPNL is correct and the partner has registered digital twins.`);
+            setError(t('errors.noDtrsFound', { bpnl }));
           } else {
-            setError(`Pagination failed: ${newResponse.error}`);
+            setError(t('errors.paginationFailed', { message: newResponse.error }));
           }
           return;
         }
@@ -982,31 +984,31 @@ const PartsDiscovery = () => {
           setSerializedParts(serialized);
         }
       } else {
-        setError('No more pages available in that direction.');
+        setError(t('errors.noMorePages'));
       }
     } catch (err) {
       console.error('Pagination error:', err);
       
       // Extract meaningful error message from pagination errors
-      let errorMessage = 'Error loading page. Please try again.';
+      let errorMessage = t('errors.errorLoadingPage');
       
       if (err instanceof Error) {
-        errorMessage = `Pagination failed: ${err.message}`;
+        errorMessage = t('errors.paginationFailed', { message: err.message });
       } else if (typeof err === 'string') {
-        errorMessage = `Pagination failed: ${err}`;
+        errorMessage = t('errors.paginationFailed', { message: err });
       } else if (err && typeof err === 'object') {
         if ('response' in err && err.response) {
           const axiosErr = err as { response: { data?: { error?: string; message?: string }; status: number; statusText: string } };
           if (axiosErr.response.data?.error) {
-            errorMessage = `Pagination API Error: ${axiosErr.response.data.error}`;
+            errorMessage = t('errors.paginationFailed', { message: axiosErr.response.data.error });
           } else if (axiosErr.response.data?.message) {
-            errorMessage = `Pagination API Error: ${axiosErr.response.data.message}`;
+            errorMessage = t('errors.paginationFailed', { message: axiosErr.response.data.message });
           } else {
-            errorMessage = `Pagination HTTP ${axiosErr.response.status}: ${axiosErr.response.statusText}`;
+            errorMessage = t('errors.paginationFailed', { message: `HTTP ${axiosErr.response.status}: ${axiosErr.response.statusText}` });
           }
         } else if ('message' in err) {
           const errWithMessage = err as { message: string };
-          errorMessage = `Pagination failed: ${errWithMessage.message}`;
+          errorMessage = t('errors.paginationFailed', { message: errWithMessage.message });
         }
       }
       
@@ -1134,7 +1136,7 @@ const PartsDiscovery = () => {
                       }
                     }}
                   >
-                    Back to Results
+                    {t('results.backToResults')}
                   </Button>
                 ) : (
                   <Button
@@ -1152,7 +1154,7 @@ const PartsDiscovery = () => {
                       }
                     }}
                   >
-                    New Search
+                    {t('results.newSearch')}
                   </Button>
                 )}
               </Box>
@@ -1166,7 +1168,7 @@ const PartsDiscovery = () => {
                   textAlign: 'center'
                 }}
               >
-                Dataspace Discovery
+                {t('page.dataspaceDiscovery')}
               </Typography>
             </Grid2>
             <Grid2 size={3}>
@@ -1244,7 +1246,7 @@ const PartsDiscovery = () => {
                   }
                 }}
               >
-                Display Filters
+                {t('common:actions.displayFilters')}
               </Button>
             )}
 
@@ -1274,7 +1276,7 @@ const PartsDiscovery = () => {
                   }
                 }}
               >
-                Hide Filters
+                {t('common:actions.hideFilters')}
               </Button>
             )}
 
@@ -1290,7 +1292,7 @@ const PartsDiscovery = () => {
                 }}
                 onClick={() => setSearchMode('discovery')}
               >
-              Discovery Mode
+              {t('searchModes.discoveryMode')}
             </Typography>
             <Box
               sx={{
@@ -1328,7 +1330,7 @@ const PartsDiscovery = () => {
               }}
               onClick={() => setSearchMode('single')}
             >
-              Single Twin
+              {t('searchModes.singleTwin')}
             </Typography>
             </Box>
           </Box>
@@ -1371,7 +1373,7 @@ const PartsDiscovery = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 >
-                  Dataspace Discovery
+                  {t('page.dataspaceDiscovery')}
                 </Typography>
                 <Typography 
                   variant="h6" 
@@ -1385,7 +1387,7 @@ const PartsDiscovery = () => {
                     mx: 'auto'
                   }}
                 >
-                  Discover and explore digital twin parts in a Tractus-X network
+                  {t('page.dataspaceDiscoverySubtitle')}
                 </Typography>
 
                 {/* Centered Search Card */}
@@ -1424,13 +1426,13 @@ const PartsDiscovery = () => {
                               onClick={retryLoadPartners}
                               disabled={isLoadingPartners}
                             >
-                              Retry
+                              {t('common:actions.retry')}
                             </Button>
                           }
                           sx={{ mb: 2 }}
                         >
                           <Typography variant="body2">
-                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                            {t('errors.unableToLoadPartners')}
                           </Typography>
                         </Alert>
                       )}
@@ -1475,7 +1477,7 @@ const PartsDiscovery = () => {
                         }
                       }}
                     >
-                      {isLoading ? 'Searching...' : 'Start Discovery'}
+                      {isLoading ? t('search.searching') : t('search.startDiscovery')}
                     </Button>
                     </Box>
                   )}
@@ -1507,7 +1509,7 @@ const PartsDiscovery = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 >
-                  Single Digital Twin
+                  {t('page.singleDigitalTwin')}
                 </Typography>
                 <Typography 
                   variant="h6" 
@@ -1521,7 +1523,7 @@ const PartsDiscovery = () => {
                     mx: 'auto'
                   }}
                 >
-                  Search for a specific digital twin by providing its Asset Administration Shell (AAS) ID
+                  {t('page.singleDigitalTwinSubtitle')}
                 </Typography>
 
                 {/* Centered Search Card */}
@@ -1560,13 +1562,13 @@ const PartsDiscovery = () => {
                               onClick={retryLoadPartners}
                               disabled={isLoadingPartners}
                             >
-                              Retry
+                              {t('common:actions.retry')}
                             </Button>
                           }
                           sx={{ mb: 2 }}
                         >
                           <Typography variant="body2">
-                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                            {t('errors.unableToLoadPartners')}
                           </Typography>
                         </Alert>
                       )}
@@ -1587,16 +1589,16 @@ const PartsDiscovery = () => {
                     {/* AAS ID Field */}
                     <TextField
                       fullWidth
-                      label="Asset Administration Shell ID *"
-                      placeholder="Enter AAS ID (e.g., urn:uuid:35bb3960-70f8-4ff4-bd9f-0670f3beb39d)"
+                      label={t('search.aasIdLabel')}
+                      placeholder={t('search.aasIdPlaceholderFull')}
                       variant="outlined"
                       value={singleTwinAasId}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSingleTwinAasId(e.target.value)}
                       error={!!error && !singleTwinAasId.trim()}
                       helperText={
                         !!error && !singleTwinAasId.trim() 
-                          ? 'AAS ID is required' 
-                          : 'Enter the unique identifier for the Asset Administration Shell'
+                          ? t('search.aasIdRequired') 
+                          : t('search.aasIdHelperText')
                       }
                       sx={{
                         '& .MuiOutlinedInput-root': {
@@ -1643,7 +1645,7 @@ const PartsDiscovery = () => {
                         }
                       }}
                     >
-                      {isLoading ? 'Searching...' : 'Search Digital Twin'}
+                      {isLoading ? t('search.searching') : t('search.searchDigitalTwin')}
                     </Button>
                     </Box>
                   )}
@@ -1719,7 +1721,7 @@ const PartsDiscovery = () => {
                             letterSpacing: '0.02em'
                           }}
                         >
-                          {partType === 'Catalog' ? 'Catalog Parts' : 'Serialized Parts'}
+                          {partType === 'Catalog' ? t('results.catalogParts') : t('results.serializedParts')}
                         </Typography>
                       </Box>
 
@@ -1801,7 +1803,7 @@ const PartsDiscovery = () => {
                           fontSize: '0.9rem'
                         }}
                       >
-                        Digital Twin Registries ({currentResponse.dtrs.length})
+                        {t('dtr.title')} ({currentResponse.dtrs.length})
                       </Typography>
                       <IconButton size="small" sx={{ color: 'text.secondary' }}>
                         {dtrSectionVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -1817,7 +1819,7 @@ const PartsDiscovery = () => {
                             {currentResponse.dtrs.length > dtrItemsPerSlide && (
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                  {Math.floor(dtrCarouselIndex / dtrItemsPerSlide) + 1} of {Math.ceil(currentResponse.dtrs.length / dtrItemsPerSlide)} • {currentResponse.dtrs.length} total
+                                  {t('dtr.carousel.pageOf', { current: Math.floor(dtrCarouselIndex / dtrItemsPerSlide) + 1, total: Math.ceil(currentResponse.dtrs.length / dtrItemsPerSlide), count: currentResponse.dtrs.length })}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                   <IconButton
@@ -1885,7 +1887,7 @@ const PartsDiscovery = () => {
                                         <Box sx={{ flex: 1 }}>
                                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                             <Chip
-                                              label={`DTR ${actualIndex + 1}`}
+                                              label={t('dtr.dtrLabel', { index: actualIndex + 1 })}
                                               size="small"
                                               sx={{
                                                 backgroundColor: dtrColor.bg,
@@ -1913,7 +1915,7 @@ const PartsDiscovery = () => {
                                         {/* Shells Found - Top Right Corner */}
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3 }}>
-                                            Shells Found
+                                            {t('dtr.shellsFoundLabel')}
                                           </Typography>
                                           <Chip
                                             label={dtr.shellsFound}
@@ -1929,11 +1931,10 @@ const PartsDiscovery = () => {
                                         </Box>
                                       </Box>
                                       
-                                      {/* Connector URL and Asset ID Grid */}
                                       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 1.5, mb: 1.5 }}>
                                         <Box>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3, display: 'block' }}>
-                                            Connector URL:
+                                            {t('dtr.connectorUrl')}
                                           </Typography>
                                           <Box sx={{ 
                                             display: 'flex', 
@@ -1975,7 +1976,7 @@ const PartsDiscovery = () => {
                                         
                                         <Box>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3, display: 'block' }}>
-                                            Asset ID:
+                                            {t('dtr.assetIdLabel')}
                                           </Typography>
                                           <Box sx={{ 
                                             display: 'flex', 
@@ -2067,7 +2068,7 @@ const PartsDiscovery = () => {
                           <SerializedPartsTable parts={serializedParts} onView={handleSerializedPartView} />
                         ) : !isLoading && currentResponse ? (
                           <Box textAlign="center" py={4}>
-                            <Typography color="textSecondary">No serialized parts found</Typography>
+                            <Typography color="textSecondary">{t('serializedParts.noSerializedPartsFound')}</Typography>
                           </Box>
                         ) : null}
                       </>
@@ -2091,7 +2092,7 @@ const PartsDiscovery = () => {
                           />
                         ) : !isLoading && currentResponse ? (
                           <Box textAlign="center" py={4}>
-                            <Typography color="textSecondary">No catalog parts found</Typography>
+                            <Typography color="textSecondary">{t('catalogParts.noCatalogPartsFound')}</Typography>
                           </Box>
                         ) : null}
                       </>
@@ -2142,7 +2143,7 @@ const PartsDiscovery = () => {
                           }
                         }}
                       >
-                        Previous
+                        {t('common:actions.previous')}
                       </Button>
                     )}
                     
@@ -2160,11 +2161,11 @@ const PartsDiscovery = () => {
                       }}
                     >
                       <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: '500', fontSize: '0.8rem' }}>
-                        Page {currentPage}
+                        {t('results.page', { current: currentPage })}
                       </Typography>
                       {totalPages > 1 && (
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                          of {totalPages}
+                          {t('results.pageOf', { total: totalPages })}
                         </Typography>
                       )}
                     </Box>
@@ -2201,7 +2202,7 @@ const PartsDiscovery = () => {
                           }
                         }}
                       >
-                        Next
+                        {t('common:actions.next')}
                       </Button>
                     )}
                   </Box>

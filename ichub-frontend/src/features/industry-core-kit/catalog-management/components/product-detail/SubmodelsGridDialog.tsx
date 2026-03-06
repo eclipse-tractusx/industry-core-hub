@@ -43,6 +43,7 @@ import {
     Schema as SchemaIcon,
     Add as AddIcon
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { CatalogPartTwinDetailsRead } from '@/features/industry-core-kit/catalog-management/types/twin-types';
 import SubmodelCard from './SubmodelCard';
 import DarkSubmodelViewer from './DarkSubmodelViewer';
@@ -103,6 +104,8 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
     partName,
     onCreateSubmodel
 }) => {
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
     const [selectedSubmodel, setSelectedSubmodel] = useState<{
         id: string;
         idShort: string;
@@ -169,10 +172,10 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                             <ViewModuleIcon sx={{ fontSize: 28 }} />
                             <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    Digital Twin Submodels
+                                    {t('productDetail.submodelsGrid.title')}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                                    {partName ? `${partName} • ` : ''}{submodelsCount} submodel{submodelsCount !== 1 ? 's' : ''} available
+                                    {partName ? `${partName} • ` : ''}{submodelsCount} {t('productDetail.submodelsGrid.submodelsAvailable', { count: submodelsCount })}
                                 </Typography>
                             </Box>
                         </Box>
@@ -219,13 +222,13 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                         mb: 1,
                                         fontWeight: 500
                                     }}>
-                                        No Submodels Available
+                                        {t('productDetail.submodelsGrid.noSubmodels')}
                                     </Typography>
                                     <Typography variant="body1" sx={{ 
                                         color: 'text.secondary',
                                         maxWidth: 400
                                     }}>
-                                        This digital twin doesn't have any submodel aspects available for viewing.
+                                        {t('productDetail.submodelsGrid.noSubmodelsDescription')}
                                     </Typography>
                                 </Box>
                             </Box>
@@ -274,7 +277,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                             >
                                                 <AddIcon sx={{ fontSize: 48, color: '#42a5f5' }} />
                                             </Box>
-                                            <Typography
+                            <Typography
                                                 variant="h6"
                                                 sx={{
                                                     color: 'primary.main',
@@ -282,7 +285,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                                     textAlign: 'center',
                                                 }}
                                             >
-                                                Add Submodel
+                                                {t('productDetail.submodelsGrid.addSubmodel')}
                                             </Typography>
                                             <Typography
                                                 variant="body2"
@@ -292,7 +295,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                                     px: 2,
                                                 }}
                                             >
-                                                Create a new submodel aspect
+                                                {t('productDetail.submodelsGrid.createNewSubmodel')}
                                             </Typography>
                                         </Box>
                                     </Grid2>
@@ -330,7 +333,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                         gap: 1
                     }}>
                         <SchemaIcon fontSize="small" />
-                        {submodelsCount} digital twin submodel{submodelsCount !== 1 ? 's' : ''} displayed
+                        {t('productDetail.submodelsGrid.submodelsDisplayed', { count: submodelsCount })}
                     </Typography>
                     <Button 
                         onClick={onClose} 
@@ -341,7 +344,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                             px: 3
                         }}
                     >
-                        Close
+                        {tCommon('actions.close')}
                     </Button>
                 </DialogActions>
 

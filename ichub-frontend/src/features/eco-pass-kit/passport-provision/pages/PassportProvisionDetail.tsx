@@ -22,6 +22,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import { getDPPById } from '../api/provisionApi';
 import { PassportTypeRegistry } from '../../passport-consumption/passport-types';
@@ -36,6 +37,7 @@ const PassportProvisionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('passportProvision');
   const stateData = location.state as { 
     dppData?: any; 
     submodelContent?: any;
@@ -137,7 +139,7 @@ const PassportProvisionDetail: React.FC = () => {
             mb: 1
           }}
         >
-          Error Loading DPP
+          {t('detail.errorLoading')}
         </Typography>
         <Typography
           variant="body1"
@@ -147,7 +149,7 @@ const PassportProvisionDetail: React.FC = () => {
             maxWidth: 500
           }}
         >
-          {error || 'Unable to load DPP data'}
+          {error || t('detail.unableToLoad')}
         </Typography>
         <Box
           component="button"
@@ -170,7 +172,7 @@ const PassportProvisionDetail: React.FC = () => {
             }
           }}
         >
-          Go Back
+          {t('detail.goBack')}
         </Box>
       </Box>
     );
@@ -213,7 +215,7 @@ const PassportProvisionDetail: React.FC = () => {
             mb: 1
           }}
         >
-          Unable to Determine Passport Type
+          {t('detail.unableToDetermineType')}
         </Typography>
         <Typography
           variant="body1"
@@ -222,7 +224,7 @@ const PassportProvisionDetail: React.FC = () => {
             textAlign: 'center'
           }}
         >
-          The passport data format is not recognized
+          {t('detail.dataNotRecognized')}
         </Typography>
         <Box
           component="button"
@@ -245,7 +247,7 @@ const PassportProvisionDetail: React.FC = () => {
             }
           }}
         >
-          Go Back
+          {t('detail.goBack')}
         </Box>
       </Box>
     );

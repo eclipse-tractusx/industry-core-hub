@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -23,6 +24,8 @@
 # ================ CONSTANTS =========================
 TYPE = "@type"
 JSON_EXTENSION = ".json"
+INTERNAL_SERVER_ERROR = "Internal server error"
+SEM_ID_NOTIFICATION = "urn:samm:io.tractusx.industry-core-hub.notifications:1.0.0#Notification"
 
 # ================= CONTEXTS =========================
 ODRL_CONTEXT = "http://www.w3.org/ns/odrl/2/"
@@ -36,3 +39,9 @@ VAN_DESCRIPTION = "The optional VAN (Vehicle Assembly Number) of the serialized 
 
 # ==================== API VERSIONS =========================
 API_V1 = "v1"
+
+# ==================== USE CASE =========================
+CCM = "CCM"
+TRACEABILITY = "Traceability"
+INDUSTRY_CORE_HUB = "Industry Core Hub"
+PCF = "PCF"

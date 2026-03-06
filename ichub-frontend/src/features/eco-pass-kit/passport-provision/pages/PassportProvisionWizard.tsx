@@ -22,6 +22,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Container,
@@ -70,10 +71,17 @@ import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-
 import { StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
 import AddSerializedPartDialog from '@/features/industry-core-kit/serialized-parts/components/AddSerializedPartDialog';
 
-const steps = ['Select Version', 'Twin Association', 'DPP Data', 'Review & Create'];
-
 const PassportProvisionWizard: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['passportProvision', 'common']);
+  
+  const steps = [
+    t('wizard.steps.selectVersion'),
+    t('wizard.steps.twinAssociation'),
+    t('wizard.steps.dppData'),
+    t('wizard.steps.reviewCreate')
+  ];
+  
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,23 +125,23 @@ const PassportProvisionWizard: React.FC = () => {
     } else if (activeStep === 1) {
       // Twin association step
       if (!selectedPart) {
-        setError('Please select a serialized part to associate with this DPP');
+        setError(t('wizard.errors.selectPart'));
         return;
       }
       // Check if part is registered
       if (partRegistrationStatus !== StatusVariants.registered && partRegistrationStatus !== StatusVariants.shared) {
-        setError('The selected serialized part must be registered before creating a DPP. Please register it first.');
+        setError(t('wizard.errors.partMustBeRegistered'));
         return;
       }
       setActiveStep(2);
     } else if (activeStep === 2) {
       // DPP Data step - require validated data before advancing
       if (!dppData) {
-        setError('Please provide DPP data before proceeding. You can create it using the form or upload a JSON file.');
+        setError(t('wizard.errors.provideDppData'));
         return;
       }
       if (!dppValidated) {
-        setError('Please validate the DPP data before proceeding.');
+        setError(t('wizard.errors.validateFirst'));
         return;
       }
       setActiveStep(3);
@@ -258,7 +266,7 @@ const PassportProvisionWizard: React.FC = () => {
       });
 
       // Show success message immediately after registration
-      setSuccessMessage('Twin registered successfully!');
+      setSuccessMessage(t('wizard.step2.twinRegisteredSuccess'));
       setTimeout(() => setSuccessMessage(null), 4000);
 
       // Reload the serialized parts list to get the updated twin data with globalId and dtrAasId
@@ -316,7 +324,7 @@ const PassportProvisionWizard: React.FC = () => {
       await checkPartRegistrationStatus(partToSelect);
       
       // Show success message
-      setSuccessMessage('Serialized part created successfully');
+      setSuccessMessage(t('wizard.step2.partCreatedSuccess'));
       setTimeout(() => setSuccessMessage(null), 4000);
     } else {
       await loadSerializedParts();
@@ -449,7 +457,7 @@ const PassportProvisionWizard: React.FC = () => {
         setDppValidated(false);
         setValidationStatus('idle');
         setUploadError(null);
-        setSuccessMessage('DPP file loaded successfully! Click "Validate" to verify against schema.');
+        setSuccessMessage(t('wizard.step3.fileLoadedSuccess'));
         
         // Clear success message after 4 seconds
         setTimeout(() => {
@@ -486,7 +494,7 @@ const PassportProvisionWizard: React.FC = () => {
           setDppValidated(true);
           setValidationStatus('success');
           setUploadError(null);
-          setSuccessMessage('DPP validated successfully!');
+          setSuccessMessage(t('wizard.step3.validatedSuccess'));
           setTimeout(() => {
             setSuccessMessage(null);
           }, 4000);
@@ -494,7 +502,7 @@ const PassportProvisionWizard: React.FC = () => {
       } else {
         setDppValidated(true);
         setValidationStatus('success');
-        setSuccessMessage('No schema available. DPP accepted.');
+        setSuccessMessage(t('wizard.step3.noSchemaAccepted'));
       }
     } catch (err: any) {
       setUploadError(`Validation error: ${err?.message || 'Unknown error occurred'}`);
@@ -511,7 +519,7 @@ const PassportProvisionWizard: React.FC = () => {
         return (
           <Box>
             <Typography variant="h6" sx={{ color: '#fff', mb: 3 }}>
-              Select DPP Version
+              {t('wizard.step1.title')}
             </Typography>
             <Grid2 container spacing={2}>
               {DPP_VERSION_REGISTRY.map((version) => (
@@ -596,7 +604,7 @@ const PassportProvisionWizard: React.FC = () => {
         return (
           <Box>
             <Typography variant="h6" sx={{ color: '#fff', mb: 3 }}>
-              Associate with Serialized Part
+              {t('wizard.step2.title')}
             </Typography>
 
             <Box sx={{ mb: 3 }}>
@@ -608,7 +616,7 @@ const PassportProvisionWizard: React.FC = () => {
                   color: '#60a5fa',
                 }}
               >
-                Select an existing serialized part, or create a new one to link with this Digital Product Passport
+                {t('wizard.step2.infoAlert')}
               </Alert>
             </Box>
 
@@ -621,10 +629,10 @@ const PassportProvisionWizard: React.FC = () => {
                 <CardContent sx={{ textAlign: 'center', py: 6 }}>
                   <Warning sx={{ fontSize: 64, color: '#f59e0b', mb: 2 }} />
                   <Typography variant="h6" sx={{ color: '#fff', mb: 1 }}>
-                    No Serialized Parts Available
+                    {t('wizard.step2.noPartsTitle')}
                   </Typography>
                   <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 3 }}>
-                    You need to create a serialized part before you can provision a DPP
+                    {t('wizard.step2.noPartsDescription')}
                   </Typography>
                   <Button
                     variant="contained"
@@ -632,7 +640,7 @@ const PassportProvisionWizard: React.FC = () => {
                     onClick={() => setShowAddPartDialog(true)}
                     sx={darkCardStyles.button.primary}
                   >
-                    Create Serialized Part
+                    {t('wizard.step2.createSerializedPart')}
                   </Button>
                 </CardContent>
               </Card>
@@ -677,8 +685,8 @@ const PassportProvisionWizard: React.FC = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Select Serialized Part"
-                        placeholder="Choose a serialized part..."
+                        label={t('wizard.step2.selectSerializedPart')}
+                        placeholder={t('wizard.step2.chooseSerializedPart')}
                         sx={{
                           ...darkCardStyles.textField,
                           '& .MuiInputLabel-root': {
@@ -697,7 +705,7 @@ const PassportProvisionWizard: React.FC = () => {
                             {option.name}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Manufacturer Part ID: {option.manufacturerPartId} • Part Instance ID: {option.partInstanceId}
+                            {t('common:fields.manufacturerPartId')}: {option.manufacturerPartId} • {t('common:fields.partInstanceId')}: {option.partInstanceId}
                           </Typography>
                           {option.van && (
                             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', display: 'block' }}>
@@ -712,22 +720,22 @@ const PassportProvisionWizard: React.FC = () => {
                   {selectedPart && (
                     <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1 }}>
                       <Typography variant="body2" sx={{ color: '#fff', mb: 1 }}>
-                        Selected Part:
+                        {t('wizard.step2.selectedPart')}:
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                         <Chip
                           icon={<LinkIcon />}
-                          label={`Name: ${selectedPart.name}`}
+                          label={`${t('common:fields.name')}: ${selectedPart.name}`}
                           size="small"
                           sx={darkCardStyles.chip.active}
                         />
                         <Chip
-                          label={`Manufacturer Part ID: ${selectedPart.manufacturerPartId}`}
+                          label={`${t('common:fields.manufacturerPartId')}: ${selectedPart.manufacturerPartId}`}
                           size="small"
                           sx={darkCardStyles.chip.default}
                         />
                         <Chip
-                          label={`Part Instance ID: ${selectedPart.partInstanceId}`}
+                          label={`${t('common:fields.partInstanceId')}: ${selectedPart.partInstanceId}`}
                           size="small"
                           sx={darkCardStyles.chip.default}
                         />
@@ -740,14 +748,14 @@ const PassportProvisionWizard: React.FC = () => {
                         )}
                         {(selectedPart as any)?.globalId && (
                           <Chip
-                            label={`Global Asset ID: ${(selectedPart as any).globalId}`}
+                            label={`${t('common:fields.globalAssetId')}: ${(selectedPart as any).globalId}`}
                             size="small"
                             sx={darkCardStyles.chip.active}
                           />
                         )}
                         {(selectedPart as any)?.dtrAasId && (
                           <Chip
-                            label={`AAS ID: ${(selectedPart as any).dtrAasId}`}
+                            label={`${t('common:fields.aasId')}: ${(selectedPart as any).dtrAasId}`}
                             size="small"
                             sx={darkCardStyles.chip.active}
                           />
@@ -758,14 +766,14 @@ const PassportProvisionWizard: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <CircularProgress size={16} />
                           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Checking registration status...
+                            {t('wizard.step2.checkingRegistration')}
                           </Typography>
                         </Box>
                       ) : partRegistrationStatus ? (
                         <Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                              Registration Status:
+                              {t('wizard.step2.registrationStatus')}:
                             </Typography>
                             <Chip
                               label={partRegistrationStatus}
@@ -791,7 +799,7 @@ const PassportProvisionWizard: React.FC = () => {
                                 mb: 2
                               }}
                             >
-                              This serialized part must be registered as a digital twin before you can provision a DPP.
+                              {t('wizard.step2.mustBeRegisteredWarning')}
                             </Alert>
                           )}
                           {(partRegistrationStatus === StatusVariants.draft || partRegistrationStatus === StatusVariants.pending) && (
@@ -809,7 +817,7 @@ const PassportProvisionWizard: React.FC = () => {
                                 }
                               }}
                             >
-                              {registering ? 'Registering...' : 'Register Serialized Part'}
+                              {registering ? t('wizard.step2.registering') : t('wizard.step2.registerSerializedPart')}
                             </Button>
                           )}
                         </Box>
@@ -834,7 +842,7 @@ const PassportProvisionWizard: React.FC = () => {
                           }
                         }}
                       >
-                        Create New Serialized Part
+                        {t('wizard.step2.createNewSerializedPart')}
                       </Button>
                     </>
                   )}
@@ -848,7 +856,7 @@ const PassportProvisionWizard: React.FC = () => {
         return (
           <Box>
             <Typography variant="h6" sx={{ color: '#fff', mb: 3 }}>
-              DPP Data Entry
+              {t('wizard.step3.title')}
             </Typography>
 
             {!dppData ? (
@@ -872,13 +880,13 @@ const PassportProvisionWizard: React.FC = () => {
                   <CardContent sx={{ textAlign: 'center', py: 6 }}>
                     <CloudUpload sx={{ fontSize: 64, color: isDragging ? '#3b82f6' : 'rgba(255,255,255,0.5)', mb: 2 }} />
                     <Typography variant="h6" sx={{ color: '#fff', mb: 1 }}>
-                      {isDragging ? 'Drop DPP file here' : 'Drag & Drop DPP File'}
+                      {isDragging ? t('wizard.step3.dropDppHere') : t('wizard.step3.dragDropDppFile')}
                     </Typography>
                     <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
-                      or click to browse for a JSON file
+                      {t('wizard.step3.clickToBrowse')}
                     </Typography>
                     <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', mb: 1 }}>
-                      Supported format: JSON
+                      {t('wizard.step3.supportedFormat')}
                     </Typography>
                     <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', fontFamily: 'monospace' }}>
                       Semantic ID: {selectedVersion.semanticId}
@@ -902,7 +910,7 @@ const PassportProvisionWizard: React.FC = () => {
                 {/* Divider with OR */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Divider sx={{ flex: 1, bgcolor: 'rgba(255,255,255,0.1)' }} />
-                  <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>OR</Typography>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>{t('wizard.step3.or')}</Typography>
                   <Divider sx={{ flex: 1, bgcolor: 'rgba(255,255,255,0.1)' }} />
                 </Box>
 
@@ -918,7 +926,7 @@ const PassportProvisionWizard: React.FC = () => {
                     fontSize: '1rem',
                   }}
                 >
-                  Create DPP from Form
+                  {t('wizard.step3.createDppFromForm')}
                 </Button>
               </Box>
             ) : (
@@ -942,17 +950,17 @@ const PassportProvisionWizard: React.FC = () => {
                       fontSize: '2rem'
                     }} />
                     <Typography variant="h6" sx={{ color: '#fff' }}>
-                      {validationStatus === 'success' ? 'DPP Data Validated' 
-                        : validationStatus === 'error' ? 'Validation Failed' 
-                        : 'DPP Data Loaded'}
+                      {validationStatus === 'success' ? t('wizard.step3.dppDataValidated') 
+                        : validationStatus === 'error' ? t('wizard.step3.validationFailed') 
+                        : t('wizard.step3.dppDataLoaded')}
                     </Typography>
                   </Box>
                   <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
                     {validationStatus === 'success'
-                      ? 'All required data has been validated. Review in the next step.'
+                      ? t('wizard.step3.validatedDescription')
                       : validationStatus === 'error'
-                      ? `Validation Failed. Your DPP JSON file semantic is not matching all the mandatory fields from the "${selectedVersion.semanticId}" semantic model. Please edit the DPP data to fix validation errors.`
-                      : 'Data uploaded successfully. Please validate before proceeding.'}
+                      ? t('wizard.step3.validationFailedDescription', { semanticId: selectedVersion.semanticId })
+                      : t('wizard.step3.dataUploadedDescription')}
                   </Typography>
                   {uploadError && validationStatus === 'error' && (
                     <Alert severity="error" sx={{ bgcolor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', mb: 2 }}>
@@ -1000,11 +1008,11 @@ const PassportProvisionWizard: React.FC = () => {
                       {validating ? (
                         <CircularProgress size={24} />
                       ) : validationStatus === 'success' ? (
-                        'Validated ✓'
+                        t('wizard.step3.validated')
                       ) : validationStatus === 'error' ? (
-                        'Validation Failed ✗'
+                        t('wizard.step3.validationFailedButton')
                       ) : (
-                        'Validate DPP'
+                        t('wizard.step3.validateDpp')
                       )}
                     </Button>
                     <Button
@@ -1020,7 +1028,7 @@ const PassportProvisionWizard: React.FC = () => {
                         },
                       }}
                     >
-                      Edit DPP Data
+                      {t('wizard.step3.editDppData')}
                     </Button>
                     <Button
                       variant="outlined"
@@ -1042,7 +1050,7 @@ const PassportProvisionWizard: React.FC = () => {
                         },
                       }}
                     >
-                      Remove
+                      {t('common:actions.remove')}
                     </Button>
                   </Box>
                 </CardContent>
@@ -1055,14 +1063,14 @@ const PassportProvisionWizard: React.FC = () => {
         return (
           <Box>
             <Typography variant="h6" sx={{ color: '#fff', mb: 3 }}>
-              Review & Create
+              {t('wizard.step4.title')}
             </Typography>
 
             <Card sx={darkCardStyles.card}>
               <CardContent>
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
-                    DPP Version
+                    {t('wizard.step4.dppVersion')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box
@@ -1092,7 +1100,7 @@ const PassportProvisionWizard: React.FC = () => {
 
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
-                    Serialized Part Association
+                    {t('wizard.step4.serializedPartAssociation')}
                   </Typography>
                   {selectedPart ? (
                     <Box>
@@ -1103,12 +1111,12 @@ const PassportProvisionWizard: React.FC = () => {
                           sx={darkCardStyles.chip.active}
                         />
                         <Chip
-                          label={`Part ID: ${selectedPart.manufacturerPartId}`}
+                          label={`${t('common:fields.partId')}: ${selectedPart.manufacturerPartId}`}
                           size="small"
                           sx={darkCardStyles.chip.default}
                         />
                         <Chip
-                          label={`Serial: ${selectedPart.partInstanceId}`}
+                          label={`${t('wizard.step4.serial')}: ${selectedPart.partInstanceId}`}
                           size="small"
                           sx={darkCardStyles.chip.default}
                         />
@@ -1120,7 +1128,7 @@ const PassportProvisionWizard: React.FC = () => {
                       )}
                     </Box>
                   ) : (
-                    <Chip label="No part selected" size="small" sx={darkCardStyles.chip.draft} />
+                    <Chip label={t('wizard.step4.noPartSelected')} size="small" sx={darkCardStyles.chip.draft} />
                   )}
                 </Box>
 
@@ -1129,44 +1137,44 @@ const PassportProvisionWizard: React.FC = () => {
                 {/* Digital Twin Information */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
-                    Digital Twin Information
+                    {t('wizard.step4.digitalTwinInfo')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {selectedPart && selectedPart.manufacturerPartId && selectedPart.partInstanceId ? (
                       <Chip
-                        label={`Discovery ID: CX:${selectedPart.manufacturerPartId}:${selectedPart.partInstanceId}`}
+                        label={`${t('wizard.step4.discoveryId')}: CX:${selectedPart.manufacturerPartId}:${selectedPart.partInstanceId}`}
                         size="small"
                         sx={darkCardStyles.chip.active}
                       />
                     ) : (
                       <Chip
-                        label="Discovery ID: Not available"
+                        label={`${t('wizard.step4.discoveryId')}: ${t('wizard.step4.notAvailable')}`}
                         size="small"
                         sx={darkCardStyles.chip.draft}
                       />
                     )}
                     {(selectedPart as any)?.globalId ? (
                       <Chip
-                        label={`Global Asset ID: ${(selectedPart as any).globalId}`}
+                        label={`${t('common:fields.globalAssetId')}: ${(selectedPart as any).globalId}`}
                         size="small"
                         sx={darkCardStyles.chip.active}
                       />
                     ) : (
                       <Chip
-                        label="Global Asset ID: Not available"
+                        label={`${t('common:fields.globalAssetId')}: ${t('wizard.step4.notAvailable')}`}
                         size="small"
                         sx={darkCardStyles.chip.draft}
                       />
                     )}
                     {(selectedPart as any)?.dtrAasId ? (
                       <Chip
-                        label={`AAS ID: ${(selectedPart as any).dtrAasId}`}
+                        label={`${t('common:fields.aasId')}: ${(selectedPart as any).dtrAasId}`}
                         size="small"
                         sx={darkCardStyles.chip.active}
                       />
                     ) : (
                       <Chip
-                        label="AAS ID: Not available"
+                        label={`${t('common:fields.aasId')}: ${t('wizard.step4.notAvailable')}`}
                         size="small"
                         sx={darkCardStyles.chip.draft}
                       />
@@ -1178,7 +1186,7 @@ const PassportProvisionWizard: React.FC = () => {
 
                 <Box>
                   <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.6)', mb: 1 }}>
-                    Status
+                    {t('common:fields.status')}
                   </Typography>
                   <Chip
                     label={status.toUpperCase()}
@@ -1217,7 +1225,7 @@ const PassportProvisionWizard: React.FC = () => {
                         },
                       }}
                     >
-                      Preview Passport
+                      {t('wizard.step4.previewPassport')}
                     </Button>
                   </Box>
                 )}
@@ -1233,7 +1241,7 @@ const PassportProvisionWizard: React.FC = () => {
                 color: '#10b981',
               }}
             >
-              Ready to create your Digital Product Passport
+              {t('wizard.step4.readyToCreate')}
             </Alert>
           </Box>
         );
@@ -1263,13 +1271,13 @@ const PassportProvisionWizard: React.FC = () => {
               '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
             }}
           >
-            Back to List
+            {t('wizard.header.backToList')}
           </Button>
           <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600 }}>
-            Create Digital Product Passport
+            {t('wizard.header.title')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)', mt: 0.5 }}>
-            Follow the steps to create and provision a new DPP
+            {t('wizard.header.subtitle')}
           </Typography>
         </Box>
 
@@ -1380,7 +1388,7 @@ const PassportProvisionWizard: React.FC = () => {
             startIcon={<ArrowBack />}
             sx={darkCardStyles.button.outlined}
           >
-            Back
+            {t('wizard.buttons.back')}
           </Button>
           <Button
             variant="contained"
@@ -1399,9 +1407,9 @@ const PassportProvisionWizard: React.FC = () => {
             {loading ? (
               <CircularProgress size={24} />
             ) : activeStep === 3 ? (
-              'Create DPP'
+              t('wizard.buttons.createDpp')
             ) : (
-              'Next'
+              t('wizard.buttons.next')
             )}
           </Button>
         </Box>
@@ -1421,7 +1429,7 @@ const PassportProvisionWizard: React.FC = () => {
           dtrAasId={(selectedPart as any)?.dtrAasId}
           serializedPartTwin={selectedPart}
           initialData={dppData}
-          saveButtonLabel="Save Submodel"
+          saveButtonLabel={t('wizard.step3.saveSubmodel')}
         />
       )}
 
@@ -1472,7 +1480,7 @@ const PassportProvisionWizard: React.FC = () => {
             </Box>
           ) : (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 4 }}>
-              <Typography sx={{ color: '#fff' }}>No data available for preview</Typography>
+              <Typography sx={{ color: '#fff' }}>{t('wizard.preview.noDataAvailable')}</Typography>
             </Box>
           )}
         </DialogContent>
@@ -1498,17 +1506,17 @@ const PassportProvisionWizard: React.FC = () => {
           pb: 2,
           textAlign: 'center'
         }}>
-          {!publishingResult ? 'Publishing DPP...' : publishingResult.success ? 'DPP Published Successfully' : 'Publishing Failed'}
+          {!publishingResult ? t('wizard.publishing.publishingDpp') : publishingResult.success ? t('wizard.publishing.publishedSuccessfully') : t('wizard.publishing.publishingFailed')}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           {!publishingResult ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
               <CircularProgress size={60} sx={{ color: '#8b5cf6', mb: 2 }} />
               <Typography sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
-                Creating Digital Product Passport...
+                {t('wizard.publishing.creatingDpp')}
               </Typography>
               <Typography sx={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center', mt: 1, fontSize: '0.875rem' }}>
-                Please wait while we register your DPP
+                {t('wizard.publishing.pleaseWait')}
               </Typography>
             </Box>
           ) : publishingResult.success ? (
@@ -1525,12 +1533,12 @@ const PassportProvisionWizard: React.FC = () => {
                   color: '#10b981',
                 }}
               >
-                Your Digital Product Passport has been successfully published!
+                {t('wizard.publishing.successMessage')}
               </Alert>
               {publishingResult.submodelId && (
                 <Box sx={{ mt: 2 }}>
                   <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 1, fontSize: '0.875rem' }}>
-                    Submodel ID:
+                    {t('common:fields.submodelId')}:
                   </Typography>
                   <Box sx={{ 
                     bgcolor: 'rgba(139, 92, 246, 0.1)',
@@ -1551,10 +1559,10 @@ const PassportProvisionWizard: React.FC = () => {
               <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                   <Typography sx={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
-                    Current Status:
+                    {t('wizard.publishing.currentStatus')}:
                   </Typography>
                   <Chip
-                    label="Registered"
+                    label={t('common:status.registered')}
                     size="small"
                     sx={{
                       bgcolor: 'rgba(16, 185, 129, 0.1)',
@@ -1566,7 +1574,7 @@ const PassportProvisionWizard: React.FC = () => {
                 </Box>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
                 <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 2, fontSize: '0.9rem' }}>
-                  Now you can share it with your partner!
+                  {t('wizard.publishing.sharePrompt')}
                 </Typography>
                 <Button
                   fullWidth
@@ -1584,7 +1592,7 @@ const PassportProvisionWizard: React.FC = () => {
                     }
                   }}
                 >
-                  Share DPP
+                  {t('common:actions.share')} DPP
                 </Button>
               </Box>
             </Box>
@@ -1601,7 +1609,7 @@ const PassportProvisionWizard: React.FC = () => {
                   color: '#ef4444',
                 }}
               >
-                {publishingResult.error || 'An error occurred while publishing the DPP'}
+                {publishingResult.error || t('wizard.publishing.errorOccurred')}
               </Alert>
             </Box>
           )}
@@ -1621,7 +1629,7 @@ const PassportProvisionWizard: React.FC = () => {
                 }
               }}
             >
-              Close
+              {t('common:actions.close')}
             </Button>
           </DialogActions>
         )}
@@ -1642,7 +1650,7 @@ const PassportProvisionWizard: React.FC = () => {
                 }
               }}
             >
-              Back to List
+              {t('wizard.header.backToList')}
             </Button>
           </DialogActions>
         )}

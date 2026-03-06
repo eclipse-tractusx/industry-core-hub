@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Bienvenue sur Industry Core Hub",
+    "subtitle": "La voie rapide des KITs et Cas d'Usage Eclipse Tractus-X",
+    "description": "Activez ou désactivez des fonctionnalités spécifiques au sein d'un KIT pour libérer tout le potentiel des dataspaces.",
+    "exploreCarousel": "Explorez le carrousel ci-dessous pour découvrir les fonctionnalités disponibles.",
+    "featureToggled": "{{featureName}} dans {{kitName}} a été {{status}}"
+  },
+  "kitCard": {
+    "viewFeatures": "Voir les fonctionnalités"
+  },
+  "featuresPanel": {
+    "title": "Fonctionnalités Disponibles",
+    "footer": "Développez les KITs pour activer/désactiver les fonctionnalités"
+  },
+  "kitDetail": {
+    "backToKitFeatures": "Retour aux Fonctionnalités KIT",
+    "kitNotFound": "KIT non trouvé",
+    "goToDocumentation": "Aller à la Documentation KIT"
+  },
+  "featureCard": {
+    "defaultTooltip": "Les fonctionnalités par défaut ne peuvent pas être désactivées"
+  },
+  "items": {
+    "industryCore": {
+      "name": "Industry Core KIT",
+      "description": "Fonctionnalité centrale pour la gestion des données industrielles, la découverte de partenaires et la gestion de catalogues.",
+      "features": {
+        "catalogManagement": {
+          "name": "Fournir des pièces Catalogue/Type",
+          "description": "Fournir, Partager et Gérer des Pièces au niveau Catalogue / Type."
+        },
+        "serializedParts": {
+          "name": "Fournir des pièces Sérialisées/Instance",
+          "description": "Fournir, Partager et Gérer des Pièces au niveau Sérialisé / Instance"
+        },
+        "dataspaceDiscovery": {
+          "name": "Consommer des données via la découverte Dataspace",
+          "description": "Rechercher, Découvrir et Visualiser des Digital Twins et Submodels de vos partenaires connectés au même dataspace"
+        }
+      }
+    },
+    "businessPartner": {
+      "name": "Business Partner KIT",
+      "description": "Gestion complète des données des partenaires commerciaux, liste de contacts et validation des participants.",
+      "features": {
+        "participants": {
+          "name": "Liste de contacts",
+          "description": "Gérez votre liste de contacts de partenaires dataspace pour faciliter la consommation et la collaboration."
+        }
+      }
+    },
+    "ecoPass": {
+      "name": "Eco Pass KIT",
+      "description": "Exploitez la transparence des passeports numériques de produits pour renforcer la durabilité et la conformité.",
+      "features": {
+        "passConsumption": {
+          "name": "Consommation et Visualisation de Passeport",
+          "description": "Récupérer un passeport d'un participant dataspace via code QR ou ID et l'afficher."
+        },
+        "passProvision": {
+          "name": "Fourniture et Gestion de Passeport",
+          "description": "Créer, gérer et partager des passeports numériques de produits avec des partenaires dataspace."
+        }
+      }
+    },
+    "dataGovernance": {
+      "name": "Data Governance KIT",
+      "description": "Gérez votre souveraineté des données, politiques, contrats, conformité et gouvernance."
+    },
+    "pcf": {
+      "name": "PCF KIT",
+      "description": "Calcul de l'empreinte carbone du produit et outils d'évaluation du cycle de vie."
+    },
+    "dataChain": {
+      "name": "Data Chain KIT",
+      "description": "Accéder aux données distribuées à travers le dataspace."
+    },
+    "dcm": {
+      "name": "DCM KIT",
+      "description": "Gestion de la demande et de la capacité pour optimiser les opérations de la chaîne d'approvisionnement."
+    },
+    "traceability": {
+      "name": "Traceability KIT",
+      "description": "Traçabilité de bout en bout des pièces, alertes et composants tout au long de la chaîne d'approvisionnement."
+    }
+  }
+}

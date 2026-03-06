@@ -43,6 +43,7 @@ import LinkOffIcon from '@mui/icons-material/LinkOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
 
 import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
@@ -65,6 +66,8 @@ interface InstanceProductsTableProps {
 }
 
 export default function InstanceProductsTable({ part, onAddClick }: Readonly<InstanceProductsTableProps>) {
+  const { t } = useTranslation('catalogManagement');
+  const { t: tCommon } = useTranslation('common');
   // Ref to prevent duplicate API calls in React StrictMode
   const dataLoadedRef = useRef(false);
   
@@ -466,7 +469,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
   const columns: GridColDef[] = [
     {
       field: 'twinStatus',
-      headerName: 'Status',
+      headerName: t('productDetail.instanceProductsTable.columns.status'),
       width: 140,
       headerAlign: 'center',
       align: 'center',
@@ -479,7 +482,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('productDetail.instanceProductsTable.columns.actions'),
       width: 100,
       headerAlign: 'center',
       align: 'center',
@@ -490,7 +493,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
 
         if (row.twinStatus === StatusVariants.draft) {
           actions.push(
-            <Tooltip title="Register Twin" key="register" arrow>
+            <Tooltip title={t('common:tooltips.registerTwin')} key="register" arrow>
               <IconButton
                 size="small"
                 onClick={() => handleCreateTwin(row)}
@@ -527,7 +530,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
 
         if (row.twinStatus === StatusVariants.registered) {
           actions.push(
-            <Tooltip title="Share Twin" key="share" arrow>
+            <Tooltip title={t('common:tooltips.shareTwin')} key="share" arrow>
               <IconButton
                 size="small"
                 onClick={() => handleShareTwin(row)}
@@ -559,7 +562,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
           
           // Add delete button for registered twins
           actions.push(
-            <Tooltip title="Delete Serialized Part" key="delete" arrow>
+            <Tooltip title={t('productDetail.instanceProductsTable.tooltips.deleteSerializedPart')} key="delete" arrow>
               <IconButton
                 size="small"
                 onClick={() => {
@@ -595,7 +598,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
 
         if (row.twinStatus === StatusVariants.shared) {
           actions.push(
-            <Tooltip title="Unshare Twin" key="unshare" arrow>
+            <Tooltip title={t('common:tooltips.unshareTwin')} key="unshare" arrow>
               <IconButton
                 size="small"
                 onClick={() => handleUnshareTwin(row)}
@@ -627,7 +630,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
           
           // Add delete button for shared twins
           actions.push(
-            <Tooltip title="Delete Serialized Part" key="delete" arrow>
+            <Tooltip title={t('productDetail.instanceProductsTable.tooltips.deleteSerializedPart')} key="delete" arrow>
               <IconButton
                 size="small"
                 onClick={() => {
@@ -670,7 +673,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
     },
     {
       field: 'partInstanceId',
-      headerName: 'Part Instance ID',
+      headerName: t('common:fields.partInstanceId'),
       width: 400,
       headerAlign: 'center',
       renderCell: (params) => (
@@ -687,7 +690,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
     },
     {
       field: 'globalId',
-      headerName: 'Global Asset ID',
+      headerName: t('common:fields.globalAssetId'),
       width: 350,
       headerAlign: 'center',
       renderCell: (params) => {
@@ -702,7 +705,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 fontStyle: 'italic'
               }}
             >
-              No Global Asset ID
+              {t('common:tooltips.noGlobalAssetId')}
             </Typography>
           );
         }
@@ -716,7 +719,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-            <Tooltip title="Click to copy Global Asset ID" arrow>
+            <Tooltip title={t('common:tooltips.copyGlobalAssetId')} arrow>
               <Typography
                 variant="body2"
                 sx={{ 
@@ -737,7 +740,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 {displayValue}
               </Typography>
             </Tooltip>
-            <Tooltip title="Copy Global Asset ID" arrow>
+            <Tooltip title={t('common:tooltips.copyGlobalAssetId')} arrow>
               <IconButton
                 size="small"
                 onClick={handleCopy}
@@ -760,7 +763,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
     },
     {
       field: 'dtrAasId',
-      headerName: 'AAS ID',
+      headerName: t('common:fields.aasId'),
       width: 350,
       headerAlign: 'center',
       renderCell: (params) => {
@@ -775,7 +778,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 fontStyle: 'italic'
               }}
             >
-              No AAS ID
+              {t('common:tooltips.noAasId')}
             </Typography>
           );
         }
@@ -789,7 +792,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
 
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-            <Tooltip title="Click to copy AAS ID" arrow>
+            <Tooltip title={t('common:tooltips.copyAasId')} arrow>
               <Typography
                 variant="body2"
                 sx={{ 
@@ -810,7 +813,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 {displayValue}
               </Typography>
             </Tooltip>
-            <Tooltip title="Copy AAS ID" arrow>
+            <Tooltip title={t('common:tooltips.copyAasId')} arrow>
               <IconButton
                 size="small"
                 onClick={handleCopy}
@@ -833,7 +836,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
     },
     {
       field: 'customerPartId',
-      headerName: 'Customer Part ID',
+      headerName: t('common:fields.customerPartId'),
       width: 300,
       headerAlign: 'center',
       renderCell: (params) => (
@@ -935,7 +938,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
             mb: 2,
           }}
         >
-          Instance Products
+          {t('productDetail.instanceProductsTable.title')}
         </Typography>
         <Typography 
           variant="body1"
@@ -946,7 +949,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
             lineHeight: 1.6,
           }}
         >
-          Select a part from the catalog to view and manage its individual product instances.
+          {t('productDetail.instanceProductsTable.selectPartMessage')}
         </Typography>
       </Box>
     );
@@ -992,7 +995,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                   letterSpacing: '-0.02em',
                 }}
               >
-                Instance Products
+                {t('productDetail.instanceProductsTable.title')}
               </Typography>
               <Typography
                 variant="body2"
@@ -1001,7 +1004,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                   mt: 0.5,
                 }}
               >
-                Manage and track individual product instances
+                {t('productDetail.instanceProductsTable.subtitle')}
               </Typography>
             </Box>
           </Box>
@@ -1025,7 +1028,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 transition: 'all 0.2s ease-in-out',
               }}
             >
-              Add Instance Product
+              {t('productDetail.instanceProductsTable.addButton')}
             </Button>
           </Box>
         </Box>
@@ -1200,10 +1203,10 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                     <AddIcon sx={{ fontSize: 32, color: 'rgba(25, 118, 210, 0.8)' }} />
                   </Box>
                   <Typography variant="h6" sx={{ color: 'rgb(248, 249, 250)', fontWeight: 600 }}>
-                    No instance products found
+                    {t('productDetail.instanceProductsTable.noInstancesFound')}
                   </Typography>
                   <Typography variant="body2" sx={{ color: 'rgba(248, 249, 250, 0.6)', textAlign: 'center', maxWidth: 300 }}>
-                    {part ? 'Start by adding your first instance product to track individual items' : 'Select a part to view and manage its instance products'}
+                    {part ? t('productDetail.instanceProductsTable.addFirstInstance') : t('productDetail.instanceProductsTable.selectPartMessage')}
                   </Typography>
                 </Box>
               ),
@@ -1278,7 +1281,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
           fontSize: '1.5rem',
           fontWeight: 600,
         }}>
-          Delete Serialized Part
+          {t('productDetail.instanceProductsTable.deleteDialog.title')}
         </DialogTitle>
         <DialogContent sx={{ pb: 2 }}>
           <DialogContentText id="delete-dialog-description" sx={{ 
@@ -1286,7 +1289,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
             fontSize: '1rem',
             mb: 2
           }}>
-            Are you sure you want to delete this serialized part?
+            {t('productDetail.instanceProductsTable.deleteDialog.message')}
           </DialogContentText>
           {deleteConfirmDialog.row && (
             <Box sx={{ 
@@ -1302,7 +1305,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 display: 'flex',
                 justifyContent: 'space-between'
               }}>
-                <span style={{ fontWeight: 600 }}>Part Instance ID:</span>
+                <span style={{ fontWeight: 600 }}>{t('productDetail.instanceProductsTable.columns.partInstanceId')}:</span>
                 <span>{deleteConfirmDialog.row.partInstanceId}</span>
               </Typography>
               <Typography variant="body2" sx={{ 
@@ -1310,7 +1313,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
                 display: 'flex',
                 justifyContent: 'space-between'
               }}>
-                <span style={{ fontWeight: 600 }}>Manufacturer ID:</span>
+                <span style={{ fontWeight: 600 }}>{t('common:fields.manufacturerId')}:</span>
                 <span>{deleteConfirmDialog.row.manufacturerId}</span>
               </Typography>
             </Box>
@@ -1325,7 +1328,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
             background: 'rgba(244, 67, 54, 0.1)',
             border: '1px solid rgba(244, 67, 54, 0.2)',
           }}>
-            ⚠️ This action cannot be undone.
+            ⚠️ {t('productDetail.instanceProductsTable.deleteDialog.warning')}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ 
@@ -1350,7 +1353,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
               }
             }}
           >
-            CANCEL
+            {tCommon('actions.cancel')}
           </Button>
           <Button 
             onClick={() => {
@@ -1378,7 +1381,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
               }
             }}
           >
-            {partDeletingId === deleteConfirmDialog.row?.id ? 'DELETING...' : 'DELETE'}
+            {partDeletingId === deleteConfirmDialog.row?.id ? t('productDetail.instanceProductsTable.deleteDialog.deleting') : tCommon('actions.delete')}
           </Button>
         </DialogActions>
       </Dialog>

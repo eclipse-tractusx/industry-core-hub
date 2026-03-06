@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Contact List",
+    "noPartnersYet": "No partners were added yet, use the green button above to create one.",
+    "loadError": "Failed to load partners. Please check backend connectivity.",
+    "requestTimeout": "Request timeout after 30 seconds"
+  },
+  "dialog": {
+    "createTitle": "Create new partner",
+    "editTitle": "Edit partner",
+    "partnerInfo": "Partner Information",
+    "partnerInfoDescription": "Introduce the partner name and BPNL"
+  },
+  "fields": {
+    "partnerName": "Partner Name",
+    "partnerBpnl": "Partner BPNL"
+  },
+  "autocomplete": {
+    "placeholder": "Select partner or enter custom BPNL (e.g., BPNL0000000093Q7)",
+    "helperText": "Select from available partners or enter a custom Business Partner Number Legal Entity",
+    "loadingPartners": "Loading partners...",
+    "noPartnersFound": "No partners found. You can still enter a custom BPNL.",
+    "loadError": "Unable to load partner list from backend. You can still enter a custom BPNL manually."
+  },
+  "messages": {
+    "createSuccess": "Partner {{name}} created successfully [{{bpnl}}]",
+    "updateSuccess": "Partner {{name}} updated successfully [{{bpnl}}] (local update)",
+    "createError": "Failed to create partner.",
+    "bpnlConflict": "Partner with this BPNL already exists."
+  }
+}

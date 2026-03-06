@@ -22,6 +22,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Button,
     Dialog,
@@ -50,6 +51,7 @@ import {
 
 import PageNotification from '@/components/general/PageNotification';
 import { addSerializedPart } from '@/features/industry-core-kit/serialized-parts/api';
+import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
 import { PartnerInstance } from '@/features/business-partner-kit/partner-management/types/types';
 import { PartnerAutocomplete } from '@/features/business-partner-kit/partner-management/components';
@@ -64,6 +66,7 @@ interface AddSerializedPartDialogProps {
     onClose: () => void;
     onSuccess?: (createdPart?: SerializedPart) => void;
 }const AddSerializedPartDialog = ({ open, onClose, onSuccess }: AddSerializedPartDialogProps) => {
+    const { t } = useTranslation(['serializedParts', 'common']);
     const manufacturerId = getParticipantId();
     const navigate = useNavigate();
     
@@ -183,7 +186,7 @@ interface AddSerializedPartDialogProps {
             setNotification({
                 open: true,
                 severity: 'error',
-                title: 'No partners available. Please create a partner first.',
+                title: t('addDialog.messages.noPartnersAvailable'),
             });
             setTimeout(() => setNotification(null), 6000);
             return;
@@ -194,7 +197,7 @@ interface AddSerializedPartDialogProps {
             setNotification({
                 open: true,
                 severity: 'error',
-                title: 'Manufacturer Part ID is required and cannot be empty',
+                title: t('addDialog.messages.manufacturerPartIdRequired'),
             });
             setTimeout(() => setNotification(null), 6000);
             return;
@@ -210,7 +213,7 @@ interface AddSerializedPartDialogProps {
             setNotification({
                 open: true,
                 severity: 'success',
-                title: 'Serialized part created successfully',
+                title: t('addDialog.messages.partCreatedSuccess'),
             });
             
             // Call onSuccess callback to refresh the table
@@ -234,14 +237,14 @@ interface AddSerializedPartDialogProps {
                 setNotification({
                     open: true,
                     severity: 'error',
-                    title: 'Catalog part not found. How would you like to create it?',
+                    title: t('addDialog.messages.catalogPartNotFound'),
                 });
             } else {
                 // Other errors
                 setNotification({
                     open: true,
                     severity: 'error',
-                    title: `Failed to create serialized part: ${errorMessage}`,
+                    title: `${t('addDialog.messages.createFailed')}: ${errorMessage}`,
                 });
             }
             // If backend says not found but we had a matching pair locally, treat as error, not creation flow
@@ -249,13 +252,13 @@ interface AddSerializedPartDialogProps {
                 setNotification({
                     open: true,
                     severity: 'error',
-                    title: 'Selected catalog part could not be found on server. Please refresh catalog or try again.',
+                    title: t('addDialog.messages.catalogPartNotFoundOnServer'),
                 });
             } else {
                 setNotification({
                     open: true,
                     severity: 'error',
-                    title: `Failed to create serialized part: ${errorMessage}`,
+                    title: `${t('addDialog.messages.createFailed')}: ${errorMessage}`,
                 });
             }
             setTimeout(() => setNotification(null), 6000);
@@ -279,7 +282,7 @@ interface AddSerializedPartDialogProps {
             setNotification({
                 open: true,
                 severity: 'success',
-                title: 'Catalog part and serialized part created successfully',
+                title: t('addDialog.messages.catalogAndPartCreated'),
             });
             
             // Call onSuccess callback to refresh the table
@@ -298,7 +301,7 @@ interface AddSerializedPartDialogProps {
             setNotification({
                 open: true,
                 severity: 'error',
-                title: `Failed to create catalog part: ${errorMessage}`,
+                title: `${t('addDialog.messages.createCatalogFailed')}: ${errorMessage}`,
             });
             setTimeout(() => setNotification(null), 6000);
         }
@@ -331,10 +334,10 @@ interface AddSerializedPartDialogProps {
                 }}
             >
                 {currentStep === 'serialized-part' 
-                    ? 'Add a serialized part' 
+                    ? t('addDialog.title') 
                     : currentStep === 'choice'
-                    ? 'Choose catalog part creation method'
-                    : 'Create catalog part'}
+                    ? t('addDialog.choiceStep.title')
+                    : t('addDialog.catalogForm.title')}
             </DialogTitle>
             <IconButton
                 aria-label="close"
@@ -396,7 +399,7 @@ interface AddSerializedPartDialogProps {
                                 mb: 1
                             }}>
                                 <Chip
-                                    label={`Manufacturer ID: ${formData.manufacturerId}`}
+                                    label={`${t('common:fields.manufacturerId')}: ${formData.manufacturerId}`}
                                     variant="filled"
                                     color="secondary"
                                     size="medium"
@@ -428,12 +431,12 @@ interface AddSerializedPartDialogProps {
                                 renderInput={(params) => (
                                     <TextField
                                         {...params}
-                                        label="Manufacturer Part ID"
+                                        label={t('common:fields.manufacturerPartId')}
                                         required
                                         variant="outlined"
                                         size="medium"
-                                        placeholder="Select or enter a manufacturer part ID"
-                                        helperText="Select from existing catalog parts or enter a new one"
+                                        placeholder={t('addDialog.form.manufacturerPartIdPlaceholder')}
+                                        helperText={t('addDialog.form.manufacturerPartIdHelper')}
                                     />
                                 )}
                                 sx={{
@@ -461,7 +464,7 @@ interface AddSerializedPartDialogProps {
                                 fontSize: '1.1rem',
                                 fontWeight: 500
                             }}>
-                                Sharing Partner
+                                {t('addDialog.form.sharingPartner')}
                             </Typography>
                             {partners.length === 0 ? (
                                 <Box sx={{ 
@@ -476,7 +479,7 @@ interface AddSerializedPartDialogProps {
                                     gap: 2
                                 }}>
                                     <Typography variant="body1" color="warning.dark" textAlign="center">
-                                        No partners available. You need to create at least one partner before creating a serialized part.
+                                        {t('addDialog.form.noPartnersWarning')}
                                     </Typography>
                                     <Button
                                         variant="contained"
@@ -491,7 +494,7 @@ interface AddSerializedPartDialogProps {
                                             fontWeight: 500
                                         }}
                                     >
-                                        Create Partner in Contact List
+                                        {t('addDialog.form.createPartnerButton')}
                                     </Button>
                                 </Box>
                             ) : (
@@ -502,8 +505,8 @@ interface AddSerializedPartDialogProps {
                                     isLoadingPartners={false}
                                     partnersError={false}
                                     hasError={false}
-                                    label="Select Sharing Partner"
-                                    placeholder="Select a partner to share with"
+                                    label={t('addDialog.form.selectSharingPartner')}
+                                    placeholder={t('addDialog.form.selectPartnerPlaceholder')}
                                     required={true}
                                     onBpnlChange={(bpnl) => setFormData({ ...formData, businessPartnerNumber: bpnl })}
                                     onPartnerChange={setSelectedPartner}
@@ -513,7 +516,7 @@ interface AddSerializedPartDialogProps {
 
                         <Grid item xs={12}>
                             <TextField
-                                label="Part Instance ID"
+                                label={t('common:fields.partInstanceId')}
                                 value={formData.partInstanceId}
                                 onChange={(e) => setFormData({ ...formData, partInstanceId: e.target.value })}
                                 fullWidth
@@ -531,7 +534,7 @@ interface AddSerializedPartDialogProps {
                                     fontSize: '1.1rem',
                                     fontWeight: 500
                                 }}>
-                                    Optional Fields
+                                    {t('addDialog.form.optionalFields')}
                                 </Typography>
                                 <FormControlLabel
                                     control={
@@ -541,13 +544,13 @@ interface AddSerializedPartDialogProps {
                                             color="primary"
                                         />
                                     }
-                                    label="Include VAN field"
+                                    label={t('addDialog.form.includeVanField')}
                                     sx={{ mb: 2, color: 'text.primary' }}
                                 />
                                 
                                 {showVanField && (
                                     <TextField
-                                        label="VAN"
+                                        label={t('common:fields.van')}
                                         value={formData.van}
                                         onChange={(e) => setFormData({ ...formData, van: e.target.value })}
                                         fullWidth
@@ -565,13 +568,13 @@ interface AddSerializedPartDialogProps {
                                             color="primary"
                                         />
                                     }
-                                    label="Include Customer Part ID field"
+                                    label={t('addDialog.form.includeCustomerPartIdField')}
                                     sx={{ mb: 2, color: 'text.primary' }}
                                 />
                                 
                                 {showCustomerPartIdField && (
                                     <TextField
-                                        label="Customer Part ID"
+                                        label={t('common:fields.customerPartId')}
                                         value={formData.customerPartId}
                                         onChange={(e) => setFormData({ ...formData, customerPartId: e.target.value })}
                                         fullWidth
@@ -587,8 +590,7 @@ interface AddSerializedPartDialogProps {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
-                                The catalog part <strong>{formData.manufacturerId}/{formData.manufacturerPartId}</strong> was not found. 
-                                How would you like to create it?
+                                {t('addDialog.choiceStep.description', { manufacturerId: formData.manufacturerId, manufacturerPartId: formData.manufacturerPartId })}
                             </Typography>
                         </Grid>
                         
@@ -645,9 +647,9 @@ interface AddSerializedPartDialogProps {
                                                     alignItems: 'center',
                                                     gap: 1
                                                 }}>
-                                                    Quick Creation
+                                                    {t('addDialog.choiceStep.quickCreation.title')}
                                                     <Chip 
-                                                        label="Recommended" 
+                                                        label={t('addDialog.choiceStep.quickCreation.recommended')} 
                                                         size="small" 
                                                         sx={{ 
                                                             backgroundColor: '#1976d2',
@@ -658,7 +660,7 @@ interface AddSerializedPartDialogProps {
                                                     />
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                    Create catalog part here with basic details (name, category, bpns)
+                                                    {t('addDialog.choiceStep.quickCreation.description')}
                                                 </Typography>
                                                 <Typography variant="caption" sx={{ 
                                                     display: 'flex', 
@@ -667,7 +669,7 @@ interface AddSerializedPartDialogProps {
                                                     color: '#1976d2',
                                                     fontWeight: 500
                                                 }}>
-                                                    Fast & Simple <ArrowForwardIcon sx={{ fontSize: 14 }} />
+                                                    {t('addDialog.choiceStep.quickCreation.subtitle')} <ArrowForwardIcon sx={{ fontSize: 14 }} />
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -725,10 +727,10 @@ interface AddSerializedPartDialogProps {
                                                     mb: 0.5,
                                                     color: 'text.primary'
                                                 }}>
-                                                    Detailed Creation
+                                                    {t('addDialog.choiceStep.detailedCreation.title')}
                                                 </Typography>
                                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                    Go to catalog parts view to create with full details and then return
+                                                    {t('addDialog.choiceStep.detailedCreation.description')}
                                                 </Typography>
                                                 <Typography variant="caption" sx={{ 
                                                     display: 'flex', 
@@ -737,7 +739,7 @@ interface AddSerializedPartDialogProps {
                                                     color: '#4caf50',
                                                     fontWeight: 500
                                                 }}>
-                                                    Full Control <ArrowForwardIcon sx={{ fontSize: 14 }} />
+                                                    {t('addDialog.choiceStep.detailedCreation.subtitle')} <ArrowForwardIcon sx={{ fontSize: 14 }} />
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -751,45 +753,44 @@ interface AddSerializedPartDialogProps {
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <Typography variant="body1" sx={{ mb: 2, color: 'text.secondary' }}>
-                                The catalog part <strong>{formData.manufacturerId}/{formData.manufacturerPartId}</strong> was not found. 
-                                Please provide the required details to create it.
+                                {t('addDialog.catalogForm.description', { manufacturerId: formData.manufacturerId, manufacturerPartId: formData.manufacturerPartId })}
                             </Typography>
                         </Grid>
                         
                         <Grid item xs={12}>
                             <TextField
-                                label="Name"
+                                label={t('common:fields.name')}
                                 value={catalogPartData.name}
                                 onChange={(e) => setCatalogPartData({ ...catalogPartData, name: e.target.value })}
                                 fullWidth
                                 required
                                 variant="outlined"
                                 size="medium"
-                                helperText="The name for the catalog part"
+                                helperText={t('addDialog.catalogForm.nameHelper')}
                             />
                         </Grid>
                         
                         <Grid item xs={12}>
                             <TextField
-                                label="Category"
+                                label={t('common:fields.category')}
                                 value={catalogPartData.category}
                                 onChange={(e) => setCatalogPartData({ ...catalogPartData, category: e.target.value })}
                                 fullWidth
                                 variant="outlined"
                                 size="medium"
-                                helperText="Optional category for the catalog part"
+                                helperText={t('addDialog.catalogForm.categoryHelper')}
                             />
                         </Grid>
                         
                         <Grid item xs={12}>
                             <TextField
-                                label="BPNS"
+                                label={t('common:fields.bpns')}
                                 value={catalogPartData.bpns}
                                 onChange={(e) => setCatalogPartData({ ...catalogPartData, bpns: e.target.value })}
                                 fullWidth
                                 variant="outlined"
                                 size="medium"
-                                helperText="Optional Business Partner Number Site"
+                                helperText={t('addDialog.catalogForm.bpnsHelper')}
                             />
                         </Grid>
                     </Grid>
@@ -814,7 +815,7 @@ interface AddSerializedPartDialogProps {
                         fontWeight: 500
                     }}
                 >
-                    Cancel
+                    {t('common:actions.cancel')}
                 </Button>
                 {currentStep === 'serialized-part' ? (
                     <Button 
@@ -830,7 +831,7 @@ interface AddSerializedPartDialogProps {
                             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                         }}
                     >
-                        Save
+                        {t('common:actions.save')}
                     </Button>
                 ) : currentStep === 'choice' ? (
                     <Button 
@@ -846,7 +847,7 @@ interface AddSerializedPartDialogProps {
                             borderColor: '#1976d2'
                         }}
                     >
-                        Back
+                        {t('common:actions.back')}
                     </Button>
                 ) : (
                     <>
@@ -863,7 +864,7 @@ interface AddSerializedPartDialogProps {
                                 borderColor: '#1976d2'
                             }}
                         >
-                            Back
+                            {t('common:actions.back')}
                         </Button>
                         <Button 
                             onClick={handleCatalogPartSubmit}
@@ -878,7 +879,7 @@ interface AddSerializedPartDialogProps {
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}
                         >
-                            Create & Save
+                            {t('common:actions.createAndSave')}
                         </Button>
                     </>
                 )}

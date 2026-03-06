@@ -20,8 +20,9 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@mui/material';
 import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Checkbox, FormControlLabel, Typography, Grid2, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -37,7 +38,9 @@ import { fetchPartners } from '@/features/business-partner-kit/partner-managemen
 import { useEscapeDialog } from '@/hooks/useEscapeKey';
 
 const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
-  const title = partData?.name ?? "Part name not obtained";
+  const { t } = useTranslation('catalogManagement');
+  const { t: tCommon } = useTranslation('common');
+  const title = partData?.name ?? t('shareDialog.partNameFallback');
   const navigate = useNavigate();
 
   const [bpnl, setBpnl] = useState('');
@@ -76,22 +79,6 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     }
   }, [open, partData]);
 
-  const handlePartnerSelection = (_event: React.SyntheticEvent, value: PartnerInstance | null) => {
-    
-    if (value && 'bpnl' in value) {
-      // User selected a partner from the dropdown
-      
-      setBpnl(value.bpnl); // Only BPNL for backend
-    } else {
-      // Value is null
-      
-      setBpnl('');
-    }
-    setError(false); // Clear validation error on change
-    setApiErrorMessage(''); // Clear API error on change
-    setSuccessMessage(''); // Clear success message on change
-  };
-
   const handleShare = async () => {
     
     if (!bpnl.trim()) {
@@ -103,7 +90,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
     setApiErrorMessage('');
 
     if (!partData) {
-      setApiErrorMessage("Part data is not available.");
+      setApiErrorMessage(t('shareDialog.partDataNotAvailable'));
       return;
     }
 
@@ -116,7 +103,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
         customPartId.trim() || undefined
       );
       
-      setSuccessMessage(`Part shared successfully with ${bpnl.trim()}`);
+      setSuccessMessage(t('shareDialog.shareSuccess', { bpnl: bpnl.trim() }));
 
       setTimeout(() => {
         setSuccessMessage('');
@@ -130,14 +117,14 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
       setIsLoading(false);
       console.error('Error sharing part:', axiosError);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let errorMessage = (axiosError as any).message || 'Failed to share part.';
+      let errorMessage = (axiosError as any).message || t('shareDialog.shareError');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const errorResponse = (axiosError as any).response;
 
       if (errorResponse?.status === 422) {
         errorMessage = errorResponse?.data?.detail?.[0]?.msg
                       ?? JSON.stringify(errorResponse?.data?.detail?.[0])
-                      ?? 'Validation failed.';
+                      ?? t('shareDialog.validationError');
       } else if (errorResponse?.data?.message) {
         errorMessage = errorResponse.data.message;
       } else if (errorResponse?.data) {
@@ -182,7 +169,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
           fontWeight: 600
         }}
       >
-        Share with partner ({title})
+        {t('shareDialog.title', { partName: title })}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -237,10 +224,10 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                No Partners Available
+                {t('shareDialog.noPartnersTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center', py: 4 }}>
-                No partners available. Please add partners in the Partner View to share parts.
+                {t('shareDialog.noPartnersDescription')}
               </Typography>
             </Grid2>
           </Grid2>
@@ -253,10 +240,10 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                Share Part Information
+                {t('shareDialog.shareInfoTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Select a partner to share the part with
+                {t('shareDialog.shareInfoDescription')}
               </Typography>
             </Grid2>
             
@@ -268,10 +255,10 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
                 isLoadingPartners={false}
                 partnersError={false}
                 hasError={error}
-                label="Partner"
-                placeholder="Select a partner to share the part with"
-                helperText="Select from available partners"
-                errorMessage="Partner selection is required"
+                label={t('shareDialog.partnerLabel')}
+                placeholder={t('shareDialog.partnerPlaceholder')}
+                helperText={t('shareDialog.partnerHelperText')}
+                errorMessage={t('shareDialog.partnerRequired')}
                 onBpnlChange={setBpnl}
                 onPartnerChange={(partner) => {
                   setSelectedPartner(partner);
@@ -373,20 +360,20 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
                         color: 'primary.main',
                       }
                     }}>
-                      Add custom customer part Id
+                      {t('shareDialog.addCustomPartId')}
                     </Typography>
                   }
                 />
                 {showCustomPartId && (
                   <Box sx={{ mt: 2 }}>
                     <TextField
-                      label="Customer Part Id"
+                      label={t('shareDialog.customerPartIdLabel')}
                       variant="outlined"
                       size="medium"
                       fullWidth
                       value={customPartId}
                       onChange={(e) => setCustomPartId(e.target.value)}
-                      placeholder="Enter your custom part identifier"
+                      placeholder={t('shareDialog.customerPartIdPlaceholder')}
                     />
                   </Box>
                 )}
@@ -425,7 +412,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
             fontWeight: 500
           }}
         >
-          CLOSE
+          {tCommon('actions.close')}
         </Button>
         {partnersList.length === 0 ? (
           <Button 
@@ -441,7 +428,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
           >
-            Add a Partner
+            {t('shareDialog.addPartner')}
           </Button>
         ) : (
           <Button 
@@ -458,7 +445,7 @@ const ShareDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
           >
-            {isLoading ? 'Sharing...' : 'Share'}
+            {isLoading ? tCommon('actions.sharing') : tCommon('actions.share')}
           </Button>
         )}
       </DialogActions>

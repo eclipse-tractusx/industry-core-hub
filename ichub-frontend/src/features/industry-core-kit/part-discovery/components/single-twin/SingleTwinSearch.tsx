@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Grid2, TextField, Button, CircularProgress } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -37,12 +38,14 @@ export const SingleTwinSearch: React.FC<SingleTwinSearchProps> = ({
   onSearch,
   isLoading
 }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
+  
   return (
     <Grid2 container spacing={2} alignItems="end">
       <Grid2 size={8}>
         <TextField
-          label="AAS ID"
-          placeholder="Enter Asset Administration Shell ID"
+          label={t('common:fields.aasId')}
+          placeholder={t('search.aasIdPlaceholder')}
           variant="outlined"
           fullWidth
           value={singleTwinAasId}
@@ -91,7 +94,7 @@ export const SingleTwinSearch: React.FC<SingleTwinSearchProps> = ({
             transition: 'all 0.3s ease'
           }}
         >
-          Search Twin
+          {t('singleTwin.searchTwin')}
         </Button>
       </Grid2>
     </Grid2>

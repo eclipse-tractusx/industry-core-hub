@@ -1,0 +1,100 @@
+{
+  "copiedToClipboard": "{{field}} copié dans le presse-papiers !",
+  "failedToCopy": "Échec de la copie de {{field}}",
+  "panel": {
+    "title": "Notifications",
+    "collapse": "Réduire le panneau",
+    "expand": "Développer le panneau",
+    "close": "Fermer"
+  },
+  "inbox": {
+    "title": "Boîte de réception",
+    "unread": "Non lues",
+    "notVerified": "Non vérifiées",
+    "verified": "Vérifiées",
+    "feedbackSent": "Feedback envoyé",
+    "archived": "Archivées",
+    "noNotificationsFound": "Aucune notification trouvée",
+    "searchPlaceholder": "Rechercher contacts, messages...",
+    "markAsRead": "Marquer comme lu",
+    "markAsUnread": "Marquer comme non lu",
+    "markAllAsRead": "Marquer tout comme lu",
+    "archive": "Archiver",
+    "unarchive": "Désarchiver",
+    "select": "Sélectionner",
+    "listView": "Vue liste",
+    "groupBySender": "Grouper par expéditeur",
+    "addToContacts": "Ajouter aux contacts",
+    "digitalTwinNotificationReceived": "Notification Digital Twin reçue",
+    "now": "Maintenant"
+  },
+  "sorting": {
+    "date": "Date",
+    "deadline": "Date limite",
+    "priority": "Priorité",
+    "dateReceived": "Date de réception",
+    "responseDeadline": "Délai de réponse"
+  },
+  "detail": {
+    "viewTwin": "Voir Jumeau",
+    "viewDigitalTwin": "Voir Jumeau Numérique",
+    "overdue": "En retard",
+    "verifyAll": "Tout vérifier",
+    "sendFeedback": "Envoyer feedback",
+    "pendingVerification": "Vérification en attente",
+    "sent": "Envoyé",
+    "viewTechnicalDetails": "Voir détails techniques",
+    "copy": "Copier",
+    "knownContact": "Contact connu",
+    "failedToDiscoverTwin": "Échec de la découverte du jumeau numérique"
+  },
+  "verification": {
+    "accessible": "Accessible",
+    "notAccessible": "Non accessible",
+    "error": "Erreur",
+    "notVerified": "Non vérifié",
+    "verifying": "Vérification en cours..."
+  },
+  "itemTypes": {
+    "serializedPart": "Pièce sérialisée",
+    "batch": "Lot",
+    "jisPart": "Pièce JIS",
+    "part": "Pièce",
+    "unknownItem": "Élément inconnu"
+  },
+  "fields": {
+    "manufacturerId": "ID Fabricant",
+    "manufacturerPartId": "ID Pièce Fabricant",
+    "customerPartId": "ID Pièce Client",
+    "serialNumber": "Numéro de série",
+    "batchId": "ID Lot",
+    "jisNumber": "Numéro JIS",
+    "jisCallDate": "Date d'appel JIS",
+    "messageId": "ID Message",
+    "context": "Contexte",
+    "version": "Version",
+    "relatedMessage": "Message associé",
+    "senderBpn": "BPN Expéditeur",
+    "receiverBpn": "BPN Destinataire",
+    "expectedResponse": "Réponse attendue",
+    "bpnl": "BPNL"
+  },
+  "feedback": {
+    "title": "Envoyer feedback",
+    "composeFeedback": "Rédiger un retour",
+    "responseStatus": "Statut de réponse",
+    "sending": "Envoi en cours...",
+    "cancel": "Annuler",
+    "ok": "OK",
+    "error": "ERREUR",
+    "pending": "EN ATTENTE",
+    "okDescription": "Jumeau numérique accessible et traité avec succès",
+    "errorDescription": "Jumeau numérique non accessible ou échec du traitement",
+    "pendingDescription": "Vérification en attente - Jumeau numérique pas encore traité",
+    "addMessagePlaceholder": "Ajouter un message...",
+    "enterStatusMessagePlaceholder": "Entrer un message de statut...",
+    "message": "Message",
+    "itemDetails": "Détails de l'élément",
+    "status": "Statut"
+  }
+}

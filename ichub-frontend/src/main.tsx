@@ -27,6 +27,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import AuthProvider from './components/auth/AuthProvider.tsx'
 import environmentService from './services/EnvironmentService';
 
+// Initialize i18n
+import './i18n';
+
 import App from './App.tsx'
 
 // Check if authentication is enabled

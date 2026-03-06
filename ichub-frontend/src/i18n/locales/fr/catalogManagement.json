@@ -1,0 +1,360 @@
+{
+  "page": {
+    "title": "Pièces du Catalogue",
+    "createButton": "Créer une Pièce de Catalogue"
+  },
+  "productCard": {
+    "noPartsAvailable": "Aucune pièce de catalogue disponible, veuillez vérifier la connexion/configuration du ichub-backend",
+    "registerPart": "Enregistrer pièce",
+    "sharePart": "Partager pièce"
+  },
+  "messages": {
+    "registerSuccess": "Twin de pièce enregistré avec succès !",
+    "registerError": "Échec de l'enregistrement du twin de pièce !",
+    "submodelCreatedSuccess": "Submodèle créé avec succès avec le schéma {{schemaName}} !",
+    "submodelCreatedError": "Échec de la création du submodèle"
+  },
+  "createDialog": {
+    "title": "Créer une Nouvelle Pièce de Catalogue",
+    "successMessage": "Pièce de catalogue créée avec succès.",
+    "errorMessage": "Échec de la création de la pièce de catalogue.",
+    "materialSharesError": "Les parts de matériaux doivent totaliser exactement 100% (actuellement {{total}}%). Veuillez ajuster les pourcentages avant de créer.",
+    "manufacturerIdChip": "Votre ID Fabricant : {{id}}",
+    "basicInformation": {
+      "title": "Informations de Base",
+      "description": "Informations d'identification essentielles pour la pièce de catalogue incluant ID, nom, description, catégorie et lieu de fabrication."
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "ID de Pièce Fabricant",
+        "placeholder": "Entrez l'identifiant unique de la pièce",
+        "description": "Identifiant unique attribué par le fabricant à cette pièce spécifique. Cet ID doit être unique au sein de votre organisation."
+      },
+      "name": {
+        "label": "Nom de la Pièce",
+        "placeholder": "Entrez le nom de la pièce",
+        "description": "Nom commercial ou technique de la pièce. Celui-ci sera affiché comme identifiant principal dans les catalogues et les listes."
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Décrivez l'objectif, la fonctionnalité et les caractéristiques clés de la pièce",
+        "description": "Description détaillée de la pièce incluant son objectif, sa fonctionnalité et ses caractéristiques clés. Cela aide les utilisateurs à comprendre à quoi sert la pièce."
+      },
+      "category": {
+        "label": "Catégorie",
+        "placeholder": "Sélectionnez ou entrez une catégorie",
+        "description": "Catégorie de classification qui regroupe les pièces similaires. Sélectionnez parmi les catégories courantes ou créez votre propre catégorie personnalisée."
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "Numéro de Partenaire Commercial du Site",
+        "description": "Business Partner Number Site - identifie l'emplacement ou le site de fabrication spécifique où cette pièce est produite."
+      }
+    },
+    "measurements": {
+      "title": "Mesures",
+      "description": "Mesures physiques de la pièce incluant largeur, hauteur, longueur et poids. Celles-ci aident à la compatibilité et à la planification logistique.",
+      "width": "Largeur",
+      "widthUnit": "Unité de Largeur",
+      "height": "Hauteur",
+      "heightUnit": "Unité de Hauteur",
+      "length": "Longueur",
+      "lengthUnit": "Unité de Longueur",
+      "weight": "Poids",
+      "weightUnit": "Unité de Poids"
+    },
+    "materials": {
+      "title": "Matériaux",
+      "description": "Composition matérielle de la pièce avec répartition en pourcentage. Ces informations sont cruciales pour le recyclage, la compatibilité et la conformité réglementaire.",
+      "addMaterial": "Ajouter un Matériau",
+      "autoAdjust": "Ajuster automatiquement à 100%",
+      "total": "Total : {{total}}%",
+      "perfectTotal": "Parfait ! Les parts de matériaux totalisent 100%",
+      "adjustWarning": "Définissez vos pourcentages librement. Le total doit être égal à 100% pour créer la pièce (actuellement {{total}}%)",
+      "materialName": {
+        "label": "Nom du Matériau",
+        "description": "Nom du matériau spécifique utilisé dans cette pièce (ex. Acier, Aluminium, Plastique, etc.)"
+      },
+      "share": {
+        "label": "Part",
+        "exactLabel": "Part Exacte (%)",
+        "description": "Pourcentage ou proportion de ce matériau dans la composition globale de la pièce. Toutes les parts de matériaux doivent totaliser 100%.",
+        "exactHint": "Entrez la valeur de pourcentage précise"
+      },
+      "distribution": {
+        "title": "Distribution des Matériaux",
+        "description": "Représentation visuelle de la composition des matériaux montrant la distribution en pourcentage des différents matériaux utilisés dans cette pièce.",
+        "emptyMessage": "Ajoutez des matériaux avec des noms et des parts pour voir le graphique de distribution"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "Composant Mécanique",
+      "electronicSensor": "Capteur Électronique",
+      "bodyPart": "Pièce de Carrosserie"
+    }
+  },
+  "details": {
+    "notFound": "Produit non trouvé",
+    "partNotFound": "404 PIÈCE NON TROUVÉE",
+    "backToCatalog": "Retour au Catalogue",
+    "update": "Mettre à jour",
+    "viewSubmodels": "Voir les Submodèles"
+  },
+  "shareDialog": {
+    "title": "Partager avec un partenaire ({{partName}})",
+    "partNameFallback": "Nom de pièce non obtenu",
+    "noPartnersTitle": "Aucun Partenaire Disponible",
+    "noPartnersDescription": "Aucun partenaire disponible. Veuillez ajouter des partenaires dans la Vue Partenaires pour partager des pièces.",
+    "shareInfoTitle": "Partager les Informations de la Pièce",
+    "shareInfoDescription": "Sélectionnez un partenaire pour partager la pièce",
+    "partnerLabel": "Partenaire",
+    "partnerPlaceholder": "Sélectionnez un partenaire pour partager la pièce",
+    "partnerHelperText": "Sélectionnez parmi les partenaires disponibles",
+    "partnerRequired": "La sélection du partenaire est obligatoire",
+    "addCustomPartId": "Ajouter un ID de pièce client personnalisé",
+    "customerPartIdLabel": "ID de Pièce Client",
+    "customerPartIdPlaceholder": "Entrez votre identifiant de pièce personnalisé",
+    "addPartner": "Ajouter un Partenaire",
+    "shareSuccess": "Pièce partagée avec succès avec {{bpnl}}",
+    "shareError": "Échec du partage de la pièce.",
+    "validationError": "Échec de la validation.",
+    "partDataNotAvailable": "Les données de la pièce ne sont pas disponibles."
+  },
+  "productDetail": {
+    "addSerializedPart": {
+      "title": "Ajouter une Pièce Sérialisée",
+      "sharingPartner": "Partenaire de Partage",
+      "selectPartner": "Sélectionner un partenaire",
+      "partInstanceIdPlaceholder": "Entrez l'ID d'instance de pièce",
+      "partInstanceIdRequired": "L'ID d'instance de pièce est requis",
+      "optionalFields": "Champs Optionnels",
+      "includeVan": "Inclure VAN",
+      "vanPlaceholder": "Entrez le VAN",
+      "includeCustomerPartId": "Inclure l'ID Pièce Client",
+      "customerPartIdPlaceholder": "Entrez l'ID pièce client",
+      "successMessage": "Pièce sérialisée ajoutée avec succès",
+      "errorMessage": "Échec de l'ajout de la pièce sérialisée"
+    },
+    "instanceProductsTable": {
+      "title": "Produits d'Instance",
+      "subtitle": "Gérer et suivre les instances individuelles de produits",
+      "selectPartMessage": "Sélectionnez une pièce dans le catalogue pour afficher et gérer ses instances de produits individuelles.",
+      "addButton": "Ajouter un Produit d'Instance",
+      "noInstancesFound": "Aucun produit d'instance trouvé",
+      "addFirstInstance": "Commencez par ajouter votre premier produit d'instance pour suivre les articles individuels",
+      "columns": {
+        "status": "Statut",
+        "actions": "Actions"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "Supprimer la Pièce Sérialisée"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Twin enregistré avec succès !",
+        "registrationFailed": "Échec de l'enregistrement : {{error}}",
+        "sharingFailed": "Échec du partage : {{error}}",
+        "unsharingFailed": "Échec de l'annulation du partage : {{error}}",
+        "deletionFailed": "Échec de la suppression : {{error}}",
+        "failedToRegisterTwin": "Échec de l'enregistrement du twin. Veuillez réessayer.",
+        "failedToShareTwin": "Échec du partage du twin. Veuillez réessayer.",
+        "failedToUnshareTwin": "Échec de l'annulation du partage du twin. Veuillez réessayer.",
+        "failedToDeletePart": "Échec de la suppression de la pièce. Veuillez réessayer.",
+        "unableToDelete": "Impossible de supprimer : données de pièce invalides"
+      },
+      "deleteDialog": {
+        "title": "Supprimer la Pièce Sérialisée",
+        "message": "Êtes-vous sûr de vouloir supprimer cette pièce sérialisée ?",
+        "warning": "Cette action est irréversible.",
+        "deleting": "SUPPRESSION...",
+        "warningRegistered": "Cette pièce a un twin enregistré. La suppression supprimera également l'enregistrement du twin.",
+        "warningShared": "Cette pièce est actuellement partagée avec des partenaires. La suppression révoquera tous les partages."
+      }
+    },
+    "instanceTable": {
+      "title": "Instances de Pièces",
+      "addButton": "Ajouter une Pièce Sérialisée",
+      "columns": {
+        "partInstanceId": "ID Instance de Pièce"
+      },
+      "tooltips": {
+        "share": "Partager cette pièce",
+        "viewSubmodels": "Voir les sous-modèles",
+        "delete": "Supprimer cette pièce"
+      },
+      "messages": {
+        "noInstances": "Aucune instance de pièce trouvée",
+        "loadError": "Échec du chargement des instances de pièces"
+      },
+      "deleteDialog": {
+        "title": "Supprimer l'Instance de Pièce",
+        "message": "Êtes-vous sûr de vouloir supprimer cette instance de pièce ? Cette action est irréversible.",
+        "confirm": "Supprimer",
+        "successMessage": "Instance de pièce supprimée avec succès",
+        "errorMessage": "Échec de la suppression de l'instance de pièce"
+      }
+    },
+    "productData": {
+      "updatingStatus": "Mise à jour du statut de la pièce...",
+      "pleaseWait": "Veuillez patienter pendant que nous mettons à jour les informations du twin",
+      "registerPartTwin": "Enregistrer le twin de la pièce",
+      "loadingAasId": "Chargement de l'ID AAS...",
+      "loadingTwinId": "Chargement de l'ID du Twin...",
+      "noTwinIds": "Pas d'IDs de Twin",
+      "twinDataUnavailable": "Données du twin non disponibles",
+      "partDetails": "Détails de la Pièce",
+      "invalidDate": "Date invalide",
+      "twinTimestamps": {
+        "title": "Horodatages du Twin",
+        "notYetCreated": "Pas encore créé"
+      },
+      "sharing": {
+        "title": "Partagé Avec",
+        "notYetSharedWarning": "Cette pièce n'est pas encore partagée, mais a déjà un ID de pièce client préparé pour le partage.",
+        "noSharingInsights": "Aucune information de partage disponible. Partagez cette pièce avec un partenaire pour voir les informations ici."
+      },
+      "moreInformation": {
+        "title": "Plus d'Informations",
+        "materials": "Matériaux :",
+        "noMaterials": "Aucune donnée de matériau disponible",
+        "dimensions": "Dimensions :",
+        "height": "Hauteur",
+        "length": "Longueur",
+        "weight": "Poids"
+      },
+      "partInfo": {
+        "noDescription": "Aucune description disponible",
+        "uncategorized": "Non catégorisé",
+        "noBpns": "Aucun BPNS disponible"
+      },
+      "sections": {
+        "specifications": "Spécifications",
+        "dimensions": "Dimensions",
+        "materials": "Matériaux",
+        "sharedWith": "Partagé Avec",
+        "submodels": "Sous-modèles"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "Cliquer pour copier le site d'origine"
+      },
+      "labels": {
+        "siteOfOrigin": "Site d'Origine"
+      },
+      "specifications": {
+        "manufacturerId": "ID du Fabricant",
+        "createdAt": "Créé le",
+        "updatedAt": "Mis à jour le",
+        "notAvailable": "Non disponible"
+      },
+      "dimensions": {
+        "height": "Hauteur", 
+        "length": "Longueur",
+        "weight": "Poids",
+        "notSpecified": "Non spécifié"
+      },
+      "materials": {
+        "title": "Matériaux",
+        "composition": "Composition",
+        "noMaterials": "Aucun matériau spécifié"
+      },
+      "submodels": {
+        "title": "Sous-modèles",
+        "createSubmodel": "Créer un Sous-modèle",
+        "noSubmodels": "Aucun sous-modèle disponible",
+        "createFirst": "Créez votre premier sous-modèle pour ajouter des spécifications détaillées",
+        "twinRequiredTitle": "Twin Requis",
+        "twinRequiredMessage": "Vous devez créer un twin avant d'ajouter des sous-modèles. Utilisez le bouton d'enregistrement ci-dessus pour créer d'abord un twin.",
+        "viewDetails": "Voir les Détails"
+      },
+      "warnings": {
+        "noShares": "Cette pièce n'a pas encore été partagée avec des partenaires",
+        "noSubmodels": "Aucun sous-modèle n'a été créé pour cette pièce"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Twin de pièce enregistré avec succès !",
+        "twinRegistrationFailed": "Échec de l'enregistrement du twin de pièce !",
+        "submodelCreatedSuccess": "Sous-modèle créé avec succès avec le schéma {{schemaName}} !",
+        "submodelCreationFailed": "Échec de la création du sous-modèle",
+        "twinRequired": "Le twin doit être créé avant d'ajouter des sous-modèles. Veuillez d'abord créer un twin.",
+        "noSchemaSelected": "Aucun schéma sélectionné"
+      }
+    },
+    "sharedTable": {
+      "title": "Partenaires de Partage",
+      "columns": {
+        "bpnl": "BPNL",
+        "partnerName": "Nom du Partenaire",
+        "companyName": "Nom de l'entreprise",
+        "sharedAt": "Partagé le",
+        "status": "Statut"
+      },
+      "messages": {
+        "noShares": "Aucun partenaire de partage trouvé"
+      }
+    },
+    "submodelCard": {
+      "title": "Sous-modèle",
+      "semanticId": "ID Sémantique",
+      "idShort": "ID Court",
+      "namespace": "Espace de noms",
+      "viewJson": "Voir JSON",
+      "copyJson": "Copier JSON",
+      "noSubmodels": "Aucun sous-modèle disponible"
+    },
+    "submodelsGrid": {
+      "title": "Sous-modèles du Jumeau Numérique",
+      "submodelsAvailable": "sous-modèle(s) disponible(s)",
+      "addSubmodel": "Ajouter un Sous-modèle",
+      "createNewSubmodel": "Créer un nouvel aspect de sous-modèle",
+      "noSubmodels": "Aucun Sous-modèle Disponible",
+      "noSubmodelsDescription": "Ce jumeau numérique n'a aucun aspect de sous-modèle disponible pour l'affichage.",
+      "submodelsDisplayed": "{{count}} sous-modèle(s) de jumeau numérique affiché(s)"
+    },
+    "jsonViewer": {
+      "title": "Visionneuse JSON",
+      "copyJson": "Copier JSON"
+    },
+    "shareDropdown": {
+      "share": "PARTAGER",
+      "options": {
+        "viewDetails": "Voir tous les détails",
+        "edit": "Modifier le produit",
+        "register": "Enregistrer le Twin",
+        "share": "Partager avec un partenaire",
+        "copy": "Copier l'ID unique",
+        "copyAasId": "Copier l'ID AAS",
+        "download": "Télécharger JSON",
+        "export": "Exporter les données",
+        "delete": "Supprimer le produit"
+      },
+      "messages": {
+        "globalAssetIdCopied": "ID d'actif global copié dans le presse-papiers",
+        "partIdCopied": "ID de pièce copié dans le presse-papiers",
+        "copyFailed": "Échec de la copie de {{label}}",
+        "aasIdCopied": "ID AAS copié dans le presse-papiers",
+        "aasIdNotAvailable": "ID AAS non disponible",
+        "copyAasIdFailed": "Échec de la copie de l'ID AAS",
+        "twinRegisteredSuccess": "Twin de pièce enregistré avec succès !",
+        "twinRegistrationFailed": "Échec de l'enregistrement du twin de pièce !"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "Visionneuse de Sous-modèle",
+      "semanticId": "ID Sémantique",
+      "jsonData": "Données JSON",
+      "structured": "Structuré",
+      "json": "JSON",
+      "failedToLoad": "Échec du chargement du contenu du sous-modèle",
+      "noDataAvailable": "Aucune donnée de sous-modèle disponible ou les données n'ont pas pu être récupérées.",
+      "unknownDataType": "Type de données inconnu"
+    },
+    "submodelViewer": {
+      "title": "Sous-modèles du Jumeau Numérique",
+      "newSubmodel": "Nouveau Sous-modèle",
+      "noSubmodelsAvailable": "Aucun Sous-modèle Disponible",
+      "noSubmodelsDescription": "Ce jumeau numérique n'a aucun aspect de sous-modèle disponible.",
+      "registrationInfo": "Info d'Enregistrement",
+      "noRegistration": "Pas d'Enregistrement",
+      "viewSubmodel": "Voir le Sous-modèle"
+    }
+  }
+}

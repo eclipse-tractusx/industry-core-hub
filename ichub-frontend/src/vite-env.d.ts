@@ -145,6 +145,10 @@ declare global {
       ENABLE_PERFORMANCE_MONITORING?: string;
       ENABLE_DEV_TOOLS?: string;
       
+      // Notifications
+      NOTIFICATIONS_MOCK_ENABLED?: string;
+      NOTIFICATIONS_POLL_INTERVAL?: string;
+      
       // UI configuration
       UI_THEME?: string;
       UI_LOCALE?: string;

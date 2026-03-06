@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -129,3 +130,38 @@ class DppShareError(Exception):
         self.dpp_id = dpp_id
         self.partner = partner
         super().__init__(self.message)
+
+class NotificationCreationError(BaseError):
+    """
+    Exception raised when notification creation fails.
+    """
+    def __init__(self, message: str = "Failed to create notification."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationUpdateStatusError(BaseError):
+    """
+    Exception raised when updating notification status fails.
+    """
+    def __init__(self, message: str = "Failed to update notification status."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationRetrievalError(BaseError):
+    """
+    Exception raised when retrieving notifications fails.
+    """
+    def __init__(self, message: str = "Failed to retrieve notifications."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationDeleteError(BaseError):
+    """
+    Exception raised when deleting a notification fails.
+    """
+    def __init__(self, message: str = "Failed to delete notification."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationSendingError(BaseError):
+    """
+    Exception raised when sending a notification fails.
+    """
+    def __init__(self, message: str = "Failed to send notification."):
+        super().__init__(status_code=502, message=message)

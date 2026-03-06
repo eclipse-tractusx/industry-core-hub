@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "インダストリーコアハブへようこそ",
+    "subtitle": "Eclipse Tractus-X KITとユースケースのスピードウェイ",
+    "description": "KIT内の特定の機能を有効または無効にして、データスペースの可能性を最大限に引き出します。",
+    "exploreCarousel": "下のカルーセルを探索して、利用可能な機能を発見してください。",
+    "featureToggled": "{{kitName}}の{{featureName}}が{{status}}されました"
+  },
+  "kitCard": {
+    "viewFeatures": "機能を表示"
+  },
+  "featuresPanel": {
+    "title": "利用可能な機能",
+    "footer": "KITを展開して機能を有効/無効にします"
+  },
+  "kitDetail": {
+    "backToKitFeatures": "KIT機能に戻る",
+    "kitNotFound": "KITが見つかりません",
+    "goToDocumentation": "KITドキュメントを見る"
+  },
+  "featureCard": {
+    "defaultTooltip": "デフォルト機能は無効にできません"
+  },
+  "items": {
+    "industryCore": {
+      "name": "インダストリーコアKIT",
+      "description": "産業データ管理、パートナー発見、カタログ管理のコア機能。",
+      "features": {
+        "catalogManagement": {
+          "name": "カタログ/タイプ部品の提供",
+          "description": "カタログ/タイプレベルで部品を提供、共有、管理します。"
+        },
+        "serializedParts": {
+          "name": "シリアライズ/インスタンス部品の提供",
+          "description": "シリアライズ/インスタンスレベルで部品を提供、共有、管理します"
+        },
+        "dataspaceDiscovery": {
+          "name": "データスペース発見によるデータ消費",
+          "description": "同じデータスペースに接続されているパートナーからデジタルツインとサブモデルを検索、発見、可視化します"
+        }
+      }
+    },
+    "businessPartner": {
+      "name": "ビジネスパートナーKIT",
+      "description": "包括的なビジネスパートナーデータ管理、連絡先リスト、参加者の検証。",
+      "features": {
+        "participants": {
+          "name": "連絡先リスト",
+          "description": "シンプルなデータスペースパートナーの連絡先リストを管理し、より簡単な消費とコラボレーションを可能にします。"
+        }
+      }
+    },
+    "ecoPass": {
+      "name": "エコパスKIT",
+      "description": "デジタル製品パスポートの透明性を活用して、持続可能性とコンプライアンスを強化します。",
+      "features": {
+        "passConsumption": {
+          "name": "パスポートの消費と可視化",
+          "description": "QRコードまたはIDを使用してデータスペース参加者からパスポートを取得し、表示します。"
+        },
+        "passProvision": {
+          "name": "パスポートの提供と管理",
+          "description": "デジタル製品パスポートを作成、管理し、データスペースパートナーと共有します。"
+        }
+      }
+    },
+    "dataGovernance": {
+      "name": "データガバナンスKIT",
+      "description": "データ主権、ポリシー、契約、コンプライアンス、ガバナンスを管理します。"
+    },
+    "pcf": {
+      "name": "PCF KIT",
+      "description": "製品カーボンフットプリント計算とライフサイクル評価ツール。"
+    },
+    "dataChain": {
+      "name": "データチェーンKIT",
+      "description": "データスペース全体に分散されたデータにアクセスします。"
+    },
+    "dcm": {
+      "name": "DCM KIT",
+      "description": "サプライチェーン運営を最適化するための需要と生産能力の管理。"
+    },
+    "traceability": {
+      "name": "トレーサビリティKIT",
+      "description": "サプライチェーン全体での部品、アラート、コンポーネントのエンドツーエンドのトレーサビリティ。"
+    }
+  }
+}

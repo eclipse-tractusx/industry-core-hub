@@ -1,0 +1,323 @@
+{
+  "page": {
+    "title": "Piezas del Catálogo",
+    "createButton": "Crear Pieza de Catálogo"
+  },
+  "productCard": {
+    "noPartsAvailable": "No hay piezas de catálogo disponibles, revisa la conexión/configuración del ichub-backend",
+    "registerPart": "Registrar pieza",
+    "sharePart": "Compartir pieza"
+  },
+  "messages": {
+    "registerSuccess": "¡Twin de pieza registrado correctamente!",
+    "registerError": "¡Error al registrar el twin de pieza!",
+    "submodelCreatedSuccess": "¡Submodelo creado correctamente con el esquema {{schemaName}}!",
+    "submodelCreatedError": "Error al crear el submodelo"
+  },
+  "createDialog": {
+    "title": "Crear Nueva Pieza de Catálogo",
+    "successMessage": "Pieza de catálogo creada correctamente.",
+    "errorMessage": "Error al crear la pieza de catálogo.",
+    "materialSharesError": "Los porcentajes de materiales deben sumar exactamente 100% (actualmente {{total}}%). Por favor ajusta los porcentajes antes de crear.",
+    "manufacturerIdChip": "Tu ID de Fabricante: {{id}}",
+    "basicInformation": {
+      "title": "Información Básica",
+      "description": "Información esencial de identificación para la pieza de catálogo incluyendo ID, nombre, descripción, categoría y ubicación de fabricación."
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "ID de Pieza del Fabricante",
+        "placeholder": "Introduce el identificador único de la pieza",
+        "description": "Identificador único asignado por el fabricante a esta pieza específica. Este ID debe ser único dentro de tu organización."
+      },
+      "name": {
+        "label": "Nombre de la Pieza",
+        "placeholder": "Introduce el nombre de la pieza",
+        "description": "Nombre comercial o técnico de la pieza. Se mostrará como el identificador principal en catálogos y listados."
+      },
+      "description": {
+        "label": "Descripción",
+        "placeholder": "Describe el propósito, funcionalidad y características clave de la pieza",
+        "description": "Descripción detallada de la pieza incluyendo su propósito, funcionalidad y características clave. Ayuda a los usuarios a entender para qué sirve la pieza."
+      },
+      "category": {
+        "label": "Categoría",
+        "placeholder": "Selecciona o introduce una categoría",
+        "description": "Categoría de clasificación que agrupa piezas similares. Selecciona de categorías comunes o crea tu propia categoría personalizada."
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "Número de Socio de Negocio del Sitio",
+        "description": "Business Partner Number Site - identifica la ubicación o sitio de fabricación específico donde se produce esta pieza."
+      }
+    },
+    "measurements": {
+      "title": "Medidas",
+      "description": "Medidas físicas de la pieza incluyendo ancho, alto, largo y peso. Ayudan con la compatibilidad y planificación logística.",
+      "width": "Ancho",
+      "widthUnit": "Unidad de Ancho",
+      "height": "Alto",
+      "heightUnit": "Unidad de Alto",
+      "length": "Largo",
+      "lengthUnit": "Unidad de Largo",
+      "weight": "Peso",
+      "weightUnit": "Unidad de Peso"
+    },
+    "materials": {
+      "title": "Materiales",
+      "description": "Composición material de la pieza con desglose de porcentajes. Esta información es crucial para reciclaje, compatibilidad y cumplimiento normativo.",
+      "addMaterial": "Añadir Material",
+      "autoAdjust": "Auto-ajustar a 100%",
+      "total": "Total: {{total}}%",
+      "perfectTotal": "¡Perfecto! Los porcentajes de materiales suman 100%",
+      "adjustWarning": "Establece los porcentajes libremente. El total debe ser igual a 100% para crear la pieza (actualmente {{total}}%)",
+      "materialName": {
+        "label": "Nombre del Material",
+        "description": "Nombre del material específico usado en esta pieza (ej. Acero, Aluminio, Plástico, etc.)"
+      },
+      "share": {
+        "label": "Porcentaje",
+        "exactLabel": "Porcentaje Exacto (%)",
+        "description": "Porcentaje o proporción de este material en la composición total de la pieza. Todos los porcentajes deben sumar 100%.",
+        "exactHint": "Introduce el valor de porcentaje preciso"
+      },
+      "distribution": {
+        "title": "Distribución de Materiales",
+        "description": "Representación visual de la composición de materiales mostrando la distribución porcentual de los diferentes materiales usados en esta pieza.",
+        "emptyMessage": "Añade materiales con nombres y porcentajes para ver el gráfico de distribución"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "Componente Mecánico",
+      "electronicSensor": "Sensor Electrónico",
+      "bodyPart": "Pieza de Carrocería"
+    }
+  },
+  "details": {
+    "notFound": "Producto no encontrado",
+    "partNotFound": "404 PIEZA NO ENCONTRADA",
+    "backToCatalog": "Volver al Catálogo",
+    "update": "Actualizar",
+    "viewSubmodels": "Ver Submodelos"
+  },
+  "shareDialog": {
+    "title": "Compartir con socio ({{partName}})",
+    "partNameFallback": "Nombre de pieza no obtenido",
+    "noPartnersTitle": "No hay Socios Disponibles",
+    "noPartnersDescription": "No hay socios disponibles. Por favor, añade socios en la Vista de Socios para compartir piezas.",
+    "shareInfoTitle": "Compartir Información de Pieza",
+    "shareInfoDescription": "Selecciona un socio para compartir la pieza",
+    "partnerLabel": "Socio",
+    "partnerPlaceholder": "Selecciona un socio para compartir la pieza",
+    "partnerHelperText": "Selecciona de los socios disponibles",
+    "partnerRequired": "La selección de socio es obligatoria",
+    "addCustomPartId": "Añadir ID de pieza de cliente personalizado",
+    "customerPartIdLabel": "ID de Pieza de Cliente",
+    "customerPartIdPlaceholder": "Introduce tu identificador de pieza personalizado",
+    "addPartner": "Añadir un Socio",
+    "shareSuccess": "Pieza compartida correctamente con {{bpnl}}",
+    "shareError": "Error al compartir la pieza.",
+    "validationError": "Error de validación.",
+    "partDataNotAvailable": "Los datos de la pieza no están disponibles."
+  },
+  "productDetail": {
+    "addSerializedPartDialog": {
+      "title": "Añadir una pieza serializada",
+      "sharingPartner": "Socio de Compartición",
+      "selectPartner": "Seleccionar Socio de Compartición",
+      "selectPartnerPlaceholder": "Selecciona un socio para compartir",
+      "optionalFields": "Campos Opcionales",
+      "includeVan": "Incluir campo VAN",
+      "includeCustomerPartId": "Incluir campo ID de Pieza de Cliente",
+      "successMessage": "Pieza serializada creada correctamente",
+      "errorMessage": "Error al crear pieza serializada: {{error}}"
+    },
+    "instanceProductsTable": {
+      "title": "Productos de Instancia",
+      "subtitle": "Gestionar y rastrear instancias individuales de productos",
+      "selectPartMessage": "Selecciona una pieza del catálogo para ver y gestionar sus instancias individuales de productos.",
+      "addButton": "Añadir Producto de Instancia",
+      "noInstancesFound": "No se encontraron productos de instancia",
+      "addFirstInstance": "Comienza añadiendo tu primer producto de instancia para rastrear elementos individuales",
+      "columns": {
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "Eliminar Pieza Serializada"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "¡Twin registrado correctamente!",
+        "registrationFailed": "Error en el registro: {{error}}",
+        "sharingFailed": "Error al compartir: {{error}}",
+        "unsharingFailed": "Error al dejar de compartir: {{error}}",
+        "deletionFailed": "Error al eliminar: {{error}}",
+        "failedToRegisterTwin": "Error al registrar twin. Por favor, inténtalo de nuevo.",
+        "failedToShareTwin": "Error al compartir twin. Por favor, inténtalo de nuevo.",
+        "failedToUnshareTwin": "Error al dejar de compartir twin. Por favor, inténtalo de nuevo.",
+        "failedToDeletePart": "Error al eliminar pieza. Por favor, inténtalo de nuevo.",
+        "unableToDelete": "No se puede eliminar: datos de pieza inválidos"
+      },
+      "deleteDialog": {
+        "title": "Eliminar Pieza Serializada",
+        "message": "¿Estás seguro de que quieres eliminar esta pieza serializada?",
+        "warning": "Esta acción no se puede deshacer.",
+        "deleting": "ELIMINANDO...",
+        "warningRegistered": "Esta pieza tiene un twin registrado. Al eliminarla también se eliminará el registro del twin.",
+        "warningShared": "Esta pieza está actualmente compartida con socios. Al eliminarla se revocarán todos los compartidos."
+      }
+    },
+    "productData": {
+      "updatingStatus": "Actualizando estado de la pieza...",
+      "pleaseWait": "Por favor espera mientras actualizamos la información del twin",
+      "registerPartTwin": "Registrar twin de pieza",
+      "loadingAasId": "Cargando ID de AAS...",
+      "loadingTwinId": "Cargando ID de Twin...",
+      "noTwinIds": "Sin IDs de Twin",
+      "twinDataUnavailable": "Datos de twin no disponibles",
+      "partDetails": "Detalles de la Pieza",
+      "invalidDate": "Fecha inválida",
+      "twinTimestamps": {
+        "title": "Marcas de Tiempo del Twin",
+        "notYetCreated": "Aún no creado"
+      },
+      "sharing": {
+        "title": "Compartido Con",
+        "notYetSharedWarning": "Esta pieza aún no está compartida, pero ya tiene un ID de pieza de cliente preparado para compartir.",
+        "noSharingInsights": "No hay información de compartición disponible. Comparte esta pieza con un socio para ver la información aquí."
+      },
+      "moreInformation": {
+        "title": "Más Información",
+        "materials": "Materiales:",
+        "noMaterials": "No hay datos de materiales disponibles",
+        "dimensions": "Dimensiones:",
+        "height": "Alto",
+        "length": "Largo",
+        "weight": "Peso"
+      },
+      "partInfo": {
+        "noDescription": "Sin descripción disponible",
+        "uncategorized": "Sin categorizar",
+        "noBpns": "Sin BPNS disponible"
+      },
+      "sections": {
+        "specifications": "Especificaciones",
+        "dimensions": "Dimensiones",
+        "materials": "Materiales",
+        "sharedWith": "Compartido Con",
+        "submodels": "Submodelos"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "Clic para copiar Sitio de Origen"
+      },
+      "labels": {
+        "siteOfOrigin": "Sitio de Origen"
+      },
+      "specifications": {
+        "manufacturerId": "ID de Fabricante",
+        "createdAt": "Creado En",
+        "updatedAt": "Actualizado En",
+        "notAvailable": "No disponible"
+      },
+      "dimensions": {
+        "height": "Alto", 
+        "length": "Largo",
+        "weight": "Peso",
+        "notSpecified": "No especificado"
+      },
+      "materials": {
+        "title": "Materiales",
+        "composition": "Composición",
+        "noMaterials": "Sin materiales especificados"
+      },
+      "submodels": {
+        "title": "Submodelos",
+        "createSubmodel": "Crear Submodelo",
+        "noSubmodels": "Sin submodelos disponibles",
+        "createFirst": "Crea tu primer submodelo para añadir especificaciones detalladas",
+        "twinRequiredTitle": "Twin Requerido",
+        "twinRequiredMessage": "Necesitas crear un twin antes de añadir submodelos. Usa el botón de registro de arriba para crear un twin primero.",
+        "viewDetails": "Ver Detalles"
+      },
+      "warnings": {
+        "noShares": "Esta pieza no ha sido compartida con ningún socio aún",
+        "noSubmodels": "No se han creado submodelos para esta pieza"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "¡Twin de pieza registrado correctamente!",
+        "twinRegistrationFailed": "¡Error al registrar twin de pieza!",
+        "submodelCreatedSuccess": "¡Submodelo creado correctamente con esquema {{schemaName}}!",
+        "submodelCreationFailed": "Error al crear submodelo",
+        "twinRequired": "El twin debe ser creado antes de añadir submodelos. Por favor, crea un twin primero.",
+        "noSchemaSelected": "Sin esquema seleccionado"
+      }
+    },
+    "sharedTable": {
+      "columns": {
+        "companyName": "Nombre de Empresa",
+        "partnerName": "Nombre de Empresa",
+        "bpnl": "BPNL"
+      }
+    },
+    "submodelCard": {
+      "version": "v{{version}}",
+      "namespace": "Espacio de nombres"
+    },
+    "submodelsGrid": {
+      "title": "Submodelos del Gemelo Digital",
+      "submodelsAvailable": "submodelo(s) disponible(s)",
+      "addSubmodel": "Agregar Submodelo",
+      "createNewSubmodel": "Crear un nuevo aspecto de submodelo",
+      "noSubmodels": "No Hay Submodelos Disponibles",
+      "noSubmodelsDescription": "Este gemelo digital no tiene aspectos de submodelo disponibles para visualizar.",
+      "submodelsDisplayed": "{{count}} submodelo(s) de gemelo digital mostrado(s)"
+    },
+    "jsonViewer": {
+      "title": "Visor JSON",
+      "copyJson": "Copiar JSON"
+    },
+    "shareDropdown": {
+      "share": "COMPARTIR",
+      "options": {
+        "viewDetails": "Ver todos los detalles",
+        "edit": "Editar producto",
+        "register": "Registrar Twin",
+        "share": "Compartir con socio",
+        "copy": "Copiar ID único",
+        "copyAasId": "Copiar ID de AAS",
+        "download": "Descargar JSON",
+        "export": "Exportar datos",
+        "delete": "Eliminar producto"
+      },
+      "messages": {
+        "globalAssetIdCopied": "ID de Activo Global copiado al portapapeles",
+        "partIdCopied": "ID de Pieza copiado al portapapeles",
+        "copyFailed": "Error al copiar {{label}}",
+        "aasIdCopied": "ID de AAS copiado al portapapeles",
+        "aasIdNotAvailable": "ID de AAS no disponible",
+        "copyAasIdFailed": "Error al copiar ID de AAS",
+        "twinRegisteredSuccess": "¡Twin de pieza registrado correctamente!",
+        "twinRegistrationFailed": "¡Error al registrar twin de pieza!"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "Visor de Submodelo",
+      "semanticId": "ID Semántico",
+      "jsonData": "Datos JSON",
+      "structured": "Estructurado",
+      "json": "JSON",
+      "failedToLoad": "Error al cargar contenido del submodelo",
+      "noDataAvailable": "No hay datos de submodelo disponibles o no se pudieron recuperar.",
+      "unknownDataType": "Tipo de datos desconocido"
+    },
+    "submodelViewer": {
+      "title": "Submodelos del Gemelo Digital",
+      "newSubmodel": "Nuevo Submodelo",
+      "noSubmodelsAvailable": "Sin Submodelos Disponibles",
+      "noSubmodelsDescription": "Este gemelo digital no tiene aspectos de submodelo disponibles.",
+      "registrationInfo": "Info de Registro",
+      "noRegistration": "Sin Registro",
+      "viewSubmodel": "Ver Submodelo"
+    }
+  }
+}

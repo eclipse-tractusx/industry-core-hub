@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -102,6 +103,7 @@ interface SingleTwinResultProps {
 }
 
 export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterPartyId, singleTwinResult }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const [dtrInfoOpen, setDtrInfoOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -124,7 +126,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="error">
-          Invalid digital twin data: Missing shell descriptor
+          {t('singleTwin.invalidDataMissingDescriptor')}
         </Typography>
       </Box>
     );
@@ -134,7 +136,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
         <Typography color="error">
-          Invalid digital twin data: Missing submodel descriptors
+          {t('singleTwin.invalidDataMissingSubmodels')}
         </Typography>
       </Box>
     );
@@ -344,7 +346,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                 {/* Show asset type if available */}
                 {descriptor.assetType && (
                   <Chip
-                    label={`Asset Type: ${descriptor.assetType}`}
+                    label={`${t('common:fields.assetType')}: ${descriptor.assetType}`}
                     variant="outlined"
                     size="small"
                     sx={{
@@ -371,7 +373,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
             const descriptor = singleTwinResult.shell_descriptor as any;
             return descriptor.assetKind && (
               <Chip
-                label={`Asset Kind: ${descriptor.assetKind}`}
+                label={`${t('common:fields.assetKind')}: ${descriptor.assetKind}`}
                 variant="outlined"
                 size="small"
                 sx={{
@@ -386,7 +388,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
             );
           })()}
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            DTR Details
+            {t('singleTwin.dtrDetails')}
           </Typography>
           <IconButton
             onClick={() => setDtrInfoOpen(true)}
@@ -410,7 +412,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
           <Box sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: '600', color: 'primary.main' }}>
-                Digital Twin Information
+                {t('singleTwin.digitalTwinInfo')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 <Chip
@@ -437,7 +439,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                 return (
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 0.5 }}>
-                      Description:
+                      {t('common:fields.description')}:
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.primary', fontStyle: 'italic' }}>
                       {descriptor.description[0].text}
@@ -458,7 +460,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                 <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <LabelIcon sx={{ color: 'success.main', fontSize: '1.1rem' }} />
-                    Asset Identifiers
+                    {t('singleTwin.assetIdentifiers')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {singleTwinResult.shell_descriptor.specificAssetIds.map((assetId, index) => (
@@ -479,7 +481,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                             }
                         }}
                         />
-                        <Tooltip title={`Copy ${assetId.name}`}>
+                        <Tooltip title={`${t('common:actions.copy')} ${assetId.name}`}>
                         <IconButton
                             size="small"
                             onClick={() => handleCopyToClipboard(assetId.value)}
@@ -506,7 +508,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
         <Card sx={{ flex: 1 }}>
           <Box sx={{ p: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: '600', color: 'primary.main', mb: 2 }}>
-              Identifiers
+              {t('singleTwin.identifiers')}
             </Typography>
             
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -520,7 +522,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                   return (
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 0.5 }}>
-                        ID Short:
+                        {t('common:fields.idShort')}:
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Chip
@@ -540,7 +542,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                             }
                           }}
                         />
-                        <Tooltip title="Copy ID Short">
+                        <Tooltip title={t('common:tooltips.copyIdShort')}>
                           <IconButton
                             size="small"
                             onClick={() => handleCopyToClipboard(idShort)}
@@ -565,7 +567,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
               {/* AAS ID */}
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 0.5 }}>
-                  AAS ID:
+                  {t('common:fields.aasId')}:
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Chip
@@ -585,7 +587,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                       }
                     }}
                   />
-                  <Tooltip title="Copy AAS ID">
+                  <Tooltip title={t('common:tooltips.copyAasId')}>
                     <IconButton
                       size="small"
                       onClick={() => handleCopyToClipboard(singleTwinResult.shell_descriptor.id)}
@@ -606,7 +608,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
               {/* Global Asset ID */}
               <Box>
                 <Typography variant="body2" sx={{ fontWeight: '600', color: 'text.secondary', mb: 1 }}>
-                  Global Asset ID:
+                  {t('common:fields.globalAssetId')}:
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Chip
@@ -626,7 +628,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                       }
                     }}
                   />
-                  <Tooltip title="Copy Global Asset ID">
+                  <Tooltip title={t('common:tooltips.copyGlobalAssetId')}>
                     <IconButton
                       size="small"
                       onClick={() => handleCopyToClipboard(singleTwinResult.shell_descriptor.globalAssetId)}
@@ -653,10 +655,10 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography variant="subtitle1" sx={{ fontWeight: '600', color: 'primary.main' }}>
-              Available Submodels
+              {t('singleTwin.availableSubmodels')}
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: '500' }}>
-              {singleTwinResult.shell_descriptor.submodelDescriptors.length} submodel(s) available
+              {t('singleTwin.submodelsAvailable', { count: singleTwinResult.shell_descriptor.submodelDescriptors.length })}
             </Typography>
           </Box>
           {/* View All Submodels button moved to top right */}
@@ -674,7 +676,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
                 fontWeight: '500'
               }}
             >
-              View All Submodels
+              {t('singleTwin.viewAllSubmodels')}
             </Button>
           )}
         </Box>

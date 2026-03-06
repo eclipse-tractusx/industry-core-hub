@@ -23,6 +23,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -34,7 +35,6 @@ import {
   Button
 } from '@mui/material';
 import { Lock, Visibility } from '@mui/icons-material';
-import { useFeatures } from '@/contexts/FeatureContext';
 
 interface Feature {
   id: string;
@@ -53,6 +53,8 @@ interface FeatureCardProps {
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation('kits');
+  const { t: tCommon } = useTranslation('common');
 
   const handleGoToView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -190,7 +192,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
             zIndex: 1}}>
           {feature.default && (
             <Chip
-              label="Default"
+              label={tCommon('labels.default')}
               size="small"
               sx={{
                 height: 24,
@@ -202,7 +204,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
             />
           )}
           <Tooltip 
-            title={feature.default ? "Default features cannot be disabled" : ""} 
+            title={feature.default ? t('featureCard.defaultTooltip') : ""} 
             arrow
             disableHoverListener={!feature.default}
           >
@@ -230,7 +232,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
             </Box>
           </Tooltip>
           {feature.default && (
-            <Tooltip title="Default features cannot be disabled" arrow>
+            <Tooltip title={t('featureCard.defaultTooltip')} arrow>
               <Box sx={{ display: 'flex', alignItems: 'center', color: '#42a5f5' }}>
                 <Lock sx={{ fontSize: '1.2rem' }} />
               </Box>
@@ -260,7 +262,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
               }
             }}
           >
-            View
+            {tCommon('actions.view')}
           </Button>
         )}
       </CardContent>
