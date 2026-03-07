@@ -110,7 +110,7 @@ const getVersionDisplay = (version: string | undefined): string => {
 const getStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
     'draft': 'Draft',
-    'active': 'Shared',
+    'active': 'Registered',
     'shared': 'Shared',
     'pending': 'Pending'
   };

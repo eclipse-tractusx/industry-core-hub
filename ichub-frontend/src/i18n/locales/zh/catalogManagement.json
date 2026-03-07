@@ -147,8 +147,8 @@
         "deleteSerializedPart": "删除序列化零件"
       },
       "messages": {
-        "twinRegisteredSuccess": "孪生共享成功！",
-        "registrationFailed": "共享失败：{{error}}",
+        "twinRegisteredSuccess": "孪生注册成功！",
+        "registrationFailed": "注册失败：{{error}}",
         "sharingFailed": "分享失败：{{error}}",
         "unsharingFailed": "取消分享失败：{{error}}",
         "deletionFailed": "删除失败：{{error}}",

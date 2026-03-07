@@ -87,23 +87,18 @@
       "selectSerializedPart": "选择序列化零件",
       "chooseSerializedPart": "选择一个序列化零件...",
       "selectedPart": "已选零件",
-      "checkingRegistration": "正在检查共享状态...",
+      "checkingRegistration": "正在检查注册状态...",
       "registrationStatus": "注册状态",
-      "sharingStatus": "共享状态",
-      "notRegistered": "未共享",
+      "notRegistered": "未注册",
       "alreadyHasDpp": "已有DPP",
       "noDppAssigned": "未分配DPP",
       "mustBeRegisteredWarning": "此序列化零件必须先注册为数字孪生才能配置DPP。",
-      "mustBeSharedWarning": "此序列化零件必须先作为数字孪生共享才能配置DPP。",
       "registerSerializedPart": "注册序列化零件",
-      "shareSerializedPart": "共享序列化零件",
       "registerThisPart": "注册此零件",
       "registering": "注册中...",
-      "sharing": "共享中...",
       "orCreateNewPart": "或创建新零件：",
       "createNewSerializedPart": "创建新序列化零件",
-      "twinRegisteredSuccess": "孪生共享成功！",
-      "twinSharedSuccess": "孪生共享成功！",
+      "twinRegisteredSuccess": "孪生注册成功！",
       "partCreatedSuccess": "序列化零件创建成功"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "请选择要与此DPP关联的序列化零件",
       "partMustBeRegistered": "所选序列化零件必须先注册才能创建DPP。请先注册。",
-      "partMustBeShared": "所选序列化零件必须先共享才能创建DPP。请先共享。",
       "provideDppData": "请在继续之前提供DPP数据。您可以使用表单创建或上传JSON文件。",
       "validateFirst": "请在继续之前验证DPP数据。"
     },
@@ -165,7 +159,6 @@
       "successMessage": "您的数字产品护照已成功发布！",
       "currentStatus": "当前状态",
       "sharePrompt": "现在您可以与合作伙伴分享它！",
-      "alreadyShared": "此DPP已与您的合作伙伴共享。",
       "errorOccurred": "发布DPP时发生错误"
     },
     "preview": {

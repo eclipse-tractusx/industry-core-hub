@@ -150,8 +150,8 @@
         "deleteSerializedPart": "Supprimer la Pièce Sérialisée"
       },
       "messages": {
-        "twinRegisteredSuccess": "Jumeau partagé avec succès !",
-        "registrationFailed": "Échec du partage : {{error}}",
+        "twinRegisteredSuccess": "Jumeau enregistré avec succès !",
+        "registrationFailed": "Échec de l'enregistrement : {{error}}",
         "sharingFailed": "Échec du partage : {{error}}",
         "unsharingFailed": "Échec de l'annulation du partage : {{error}}",
         "deletionFailed": "Échec de la suppression : {{error}}",

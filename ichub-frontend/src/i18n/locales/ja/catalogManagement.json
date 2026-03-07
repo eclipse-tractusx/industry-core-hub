@@ -147,8 +147,8 @@
         "deleteSerializedPart": "シリアライズ部品を削除"
       },
       "messages": {
-        "twinRegisteredSuccess": "ツインが正常に共有されました！",
-        "registrationFailed": "共有に失敗しました: {{error}}",
+        "twinRegisteredSuccess": "ツインが正常に登録されました！",
+        "registrationFailed": "登録に失敗しました: {{error}}",
         "sharingFailed": "共有に失敗しました: {{error}}",
         "unsharingFailed": "共有解除に失敗しました: {{error}}",
         "deletionFailed": "削除に失敗しました: {{error}}",

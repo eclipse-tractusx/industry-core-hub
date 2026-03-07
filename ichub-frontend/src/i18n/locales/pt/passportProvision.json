@@ -87,23 +87,18 @@
       "selectSerializedPart": "Selecionar Peça Serializada",
       "chooseSerializedPart": "Escolha uma peça serializada...",
       "selectedPart": "Peça Selecionada",
-      "checkingRegistration": "A verificar estado de partilha...",
+      "checkingRegistration": "A verificar estado de registo...",
       "registrationStatus": "Estado de Registo",
-      "sharingStatus": "Estado de Partilha",
-      "notRegistered": "Não Partilhado",
+      "notRegistered": "Não Registado",
       "alreadyHasDpp": "Já tem DPP",
       "noDppAssigned": "Nenhum DPP atribuído",
       "mustBeRegisteredWarning": "Esta peça serializada deve ser registada como gémeo digital antes de poder configurar um DPP.",
-      "mustBeSharedWarning": "Esta peça serializada deve ser partilhada como gémeo digital antes de poder configurar um DPP.",
       "registerSerializedPart": "Registar Peça Serializada",
-      "shareSerializedPart": "Partilhar Peça Serializada",
       "registerThisPart": "Registar Esta Peça",
       "registering": "A registar...",
-      "sharing": "A partilhar...",
       "orCreateNewPart": "Ou criar uma nova peça:",
       "createNewSerializedPart": "Criar Nova Peça Serializada",
-      "twinRegisteredSuccess": "Gémeo partilhado com sucesso!",
-      "twinSharedSuccess": "Gémeo partilhado com sucesso!",
+      "twinRegisteredSuccess": "Gémeo registado com sucesso!",
       "partCreatedSuccess": "Peça serializada criada com sucesso"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "Por favor, selecione uma peça serializada para associar a este DPP",
       "partMustBeRegistered": "A peça serializada selecionada deve ser registada antes de criar um DPP. Por favor, registe-a primeiro.",
-      "partMustBeShared": "A peça serializada selecionada deve ser partilhada antes de criar um DPP. Por favor, partilhe-a primeiro.",
       "provideDppData": "Por favor, forneça dados do DPP antes de continuar. Pode criá-los usando o formulário ou carregar um ficheiro JSON.",
       "validateFirst": "Por favor, valide os dados do DPP antes de continuar."
     },
@@ -165,7 +159,6 @@
       "successMessage": "O seu Passaporte Digital de Produto foi publicado com sucesso!",
       "currentStatus": "Estado Atual",
       "sharePrompt": "Agora pode partilhá-lo com o seu parceiro!",
-      "alreadyShared": "Este DPP já está partilhado com o seu parceiro.",
       "errorOccurred": "Ocorreu um erro ao publicar o DPP"
     },
     "preview": {

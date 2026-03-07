@@ -147,8 +147,8 @@
         "deleteSerializedPart": "Delete Serialized Part"
       },
       "messages": {
-        "twinRegisteredSuccess": "Twin shared successfully!",
-        "registrationFailed": "Sharing failed: {{error}}",
+        "twinRegisteredSuccess": "Twin registered successfully!",
+        "registrationFailed": "Registration failed: {{error}}",
         "sharingFailed": "Sharing failed: {{error}}",
         "unsharingFailed": "Unsharing failed: {{error}}",
         "deletionFailed": "Deletion failed: {{error}}",
