@@ -311,6 +311,12 @@ export const isRequireHttpsUrlPattern = () =>
 export const getIchubBackendUrl = () => window?.ENV?.ICHUB_BACKEND_URL ?? import.meta.env.VITE_ICHUB_BACKEND_URL ?? '';
 export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
+/** Polling interval in ms for fetching notifications (default 30s) */
+export const getNotificationsPollInterval = (): number => {
+  const value = window?.ENV?.NOTIFICATIONS_POLL_INTERVAL ?? import.meta.env.VITE_NOTIFICATIONS_POLL_INTERVAL ?? '30000';
+  return parseInt(value, 10) || 30000;
+};
+
 export const getGovernanceConfig = (): GovernanceConfig[] => {
   return parseConfig<GovernanceConfig[]>(
     'GOVERNANCE_CONFIG',

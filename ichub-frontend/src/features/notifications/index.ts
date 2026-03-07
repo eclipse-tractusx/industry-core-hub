@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -18,12 +19,20 @@
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
-********************************************************************************/
+ ********************************************************************************/
 
-@forward 'CustomCardList';
-@forward 'Dialog';
-@forward 'SharedTable';
-@forward 'InstanceTable';
-@forward 'part-discovery';
-@forward 'CustomDataGrid';
-@forward 'notifications';
+// Export components
+export { default as NotificationsPanel } from './components/NotificationsPanel';
+export { default as NotificationInbox } from './components/NotificationInbox';
+export { default as NotificationDetail } from './components/NotificationDetail';
+export { default as FeedbackForm } from './components/FeedbackForm';
+
+// Export context and hook
+export { NotificationProvider, useNotifications } from './contexts/NotificationContext';
+
+// Export types
+export * from './types';
+
+// Export services
+export { notificationApiService } from './services/notificationApiService';
+export { mapApiResponseToInboxNotification, mapApiResponsesToNotifications } from './services/notificationMapper';
