@@ -28,8 +28,25 @@ INTERNAL_SERVER_ERROR = "Internal server error"
 SEM_ID_NOTIFICATION = "urn:samm:io.tractusx.industry-core-hub.notifications:1.0.0#Notification"
 
 # ================= CONTEXTS =========================
+# Jupiter / EDC v0.8-0.10 (legacy DSP HTTP) ODRL contexts
 ODRL_CONTEXT = "http://www.w3.org/ns/odrl/2/"
 CX_POLICY_CONTEXT = "https://w3id.org/catenax/policy/"
+
+# Saturn / EDC v0.11+ (DSP 2025-1) ODRL contexts
+SATURN_ODRL_CONTEXT_URL = "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+SATURN_CX_CONTEXT_URL = "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+EDC_VOCAB_NS = "https://w3id.org/edc/v0.0.1/ns/"
+
+# =============== DATASPACE VERSIONS =================
+DATASPACE_VERSION_JUPITER = "jupiter"
+DATASPACE_VERSION_SATURN = "saturn"
+
+# DCAT / ODRL catalog keys by version
+# Jupiter uses JSON-LD prefixed keys; Saturn uses unprefixed keys (@vocab expansion)
+JUPITER_DCAT_DATASET_KEY = "dcat:dataset"
+JUPITER_ODRL_HAS_POLICY_KEY = "odrl:hasPolicy"
+SATURN_DCAT_DATASET_KEY = "dataset"
+SATURN_ODRL_HAS_POLICY_KEY = "hasPolicy"
 
 # ==================== DESCRIPTIONS =========================
 TWIN_ID_DESCRIPTION = "The ID of the associated twin."

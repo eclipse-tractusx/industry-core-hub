@@ -308,7 +308,7 @@ class EnvironmentService {
 export const isRequireHttpsUrlPattern = () =>
   import.meta.env.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
-export const getIchubBackendUrl = () => window?.ENV?.ICHUB_BACKEND_URL ?? import.meta.env.VITE_ICHUB_BACKEND_URL ?? '';
+export const getIchubBackendUrl = () => import.meta.env.VITE_ICHUB_BACKEND_URL || window?.ENV?.ICHUB_BACKEND_URL || '';
 export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
 export const getGovernanceConfig = (): GovernanceConfig[] => {

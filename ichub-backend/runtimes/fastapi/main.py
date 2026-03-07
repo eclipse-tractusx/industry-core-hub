@@ -34,7 +34,7 @@ import concurrent.futures
 app = api
 
 
-def start():
+def start(config_path=None):
     ## Load in memory data storages and authentication manager
     global logger
     
@@ -51,8 +51,8 @@ def start():
 
     # Only start the Uvicorn server if not in test mode
     if not args.test_mode:
-        # Load configuration using ConfigManager
-        ConfigManager.load_config()
+        # Load configuration using ConfigManager (use explicit path if provided via --config)
+        ConfigManager.load_config(config_path=config_path)
         
         # Get server configuration with fallbacks to environment variables and then defaults
         server_config = ConfigManager.get_config('server', {})

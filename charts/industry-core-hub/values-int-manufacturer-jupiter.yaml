@@ -23,7 +23,10 @@
 
 deploymentMode: "argocd"
 
-participantId : "<path:industry-core-hub/data/edc-provider#bpn>"
+nameOverride: "manufacturer-ichub"
+fullnameOverride: "manufacturer-ichub"
+
+participantId : "<path:industry-core-hub/data/edc#bpn>"
 
 postgresql:
   auth:
@@ -31,34 +34,24 @@ postgresql:
     password: <path:industry-core-hub/data/db#rootPass>
     ## Industry Core User Password
     ichubPassword: <path:industry-core-hub/data/db#ichubPass>
-# -- pgAdmin4 configuration
-pgadmin4:
+    existingSecret: "ichub-manufacturer-db-secret"
+      # -- Switch to enable or disable the PostgreSQL helm chart
   enabled: true
-  env:
-    email: <path:industry-core-hub/data/pgadmin#email>
-    password: <path:industry-core-hub/data/pgadmin#password>
-  ingress:
-    enabled: true
-    ingressClassName: "nginx"
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-    hosts:
-      - host: pgadmin-ichub.int.catena-x.net
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-       - secretName: "pgadmin-ichub.int.catena-x.net-tls"
-         hosts:
-           - "pgadmin-ichub.int.catena-x.net" 
-frontend: 
+  fullnameOverride: "ichub-manufacturer-db"
+  nameOverride: "ichub-manufacturer-db"
+
+# -- pgAdmin4 configuration
+frontend:
+  name: "manufacturer-ichub-frontend"
+  nameOverride: "manufacturer-ichub-frontend"
+  fullnameOverride: "manufacturer-ichub-frontend"
   config:
     # Core application
     environment: "integration"
     version: "1.0.0"
     
     # API configuration
-    ichubBackendUrl: "https://backend-ichub.int.catena-x.net/v1"
+    ichubBackendUrl: "https://backend-ichub-manufacturer.int.catena-x.net/v1"
     apiTimeout: 20000
     apiRetryAttempts: 2
     requireHttpsUrlPattern: true
@@ -69,16 +62,16 @@ frontend:
     enableApiKeyRotation: false
     apiKeyExpiryWarningDays: 7
     
-    # Authentication configuration
+    # Authentication configuration (disabled for integration)
     authEnabled: true
     authProvider: keycloak
     authSessionTimeout: 3600000  # 1 hour in milliseconds
     authRenewTokenMinValidity: 70  # Renew token when 70 seconds validity remains
-    authLogoutRedirectUri: "https://frontend-ichub.int.catena-x.net"
+    authLogoutRedirectUri: "https://frontend-ichub-manufacturer.int.catena-x.net"
     
     # Keycloak configuration
     keycloak:
-      url: "https://ichub-iam.int.catena-x.net/auth"
+      url: "https://ichub-iam-manufacturer.int.catena-x.net/auth"
       realm: "ICHub"
       clientId: "industry-core-hub-frontend"
       realmImport:
@@ -88,10 +81,30 @@ frontend:
           timeout: "120s"
           delay: "5s"
     
+    
+    # Feature flags for integration environment
+    enableAdvancedLogging: true
+    enablePerformanceMonitoring: true
+    enableDevTools: false
+    
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+    
+    # Governance configuration
+    governanceApiUrl: ""
+    governanceTimeout: 30000
+    governanceRetryAttempts: 2
+    
+    # Participant configuration  
+    participantApiUrl: ""
+    participantTimeout: 30000
+    participantRetryAttempts: 2
   
   env:
     # Legacy backend URL (maintained for backward compatibility)
-    backendUrl: "https://backend-ichub.int.catena-x.net/v1"
+    backendUrl: "https://backend-ichub-manufacturer.int.catena-x.net/v1"
   ingress:
       enabled: true
       className: "nginx"
@@ -105,29 +118,33 @@ frontend:
       #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
       # -- Ingress TLS configuration
       tls:
-       - secretName: "frontend-ichub.int.catena-x.net-tls"
+       - secretName: "frontend-ichub-manufacturer.int.catena-x.net-tls"
          hosts:
-           - "frontend-ichub.int.catena-x.net" 
+           - "frontend-ichub-manufacturer.int.catena-x.net"
         # # -- Provide tls secret.
         # - secretName: ""
         #   # -- Provide host for tls secret.
         #   hosts:
         #     - ""
       hosts:
-        - host: "frontend-ichub.int.catena-x.net"
+        - host: "frontend-ichub-manufacturer.int.catena-x.net"
           paths:
             - path: /(.*)
               pathType: ImplementationSpecific
               backend:
-                service: "frontend"
+                service: "frontend-manufacturer"
                 port: 8080
+
 backend:
   apiVersion: v1
+  name: "manufacturer-ichub-backend"
+  nameOverride: "manufacturer-ichub-backend"
+  fullnameOverride: "manufacturer-ichub-backend"
   cors:
     enabled: true
     allow_origins:
-      - "https://frontend-ichub.int.catena-x.net"
-      - "https://backend-ichub.int.catena-x.net"
+      - "https://frontend-ichub-manufacturer.int.catena-x.net"
+      - "https://backend-ichub-manufacturer.int.catena-x.net"
     allow_credentials: true
     allow_methods:
       - "GET"
@@ -155,6 +172,7 @@ backend:
       # -- Enable logs persistence
       enabled: true
       # -- Storage size for logs
+      size: 1Gi
       # -- Access mode for logs volume
       accessMode: ReadWriteOnce
       # -- Storage class for logs volume
@@ -167,7 +185,7 @@ backend:
         value: <path:industry-core-hub/data/backend#apiKey>
       keycloak:
         enabled: true
-        authUrl: "https://ichub-iam.int.catena-x.net/auth/"
+        authUrl: "https://ichub-iam-manufacturer.int.catena-x.net/auth/"
         realm: "ICHub"
         clientId: "industry-core-hub-api"
         clientSecret: "ichub-client-secret-2024"
@@ -175,36 +193,31 @@ backend:
           maxRetries: 10
           retryDelay: 15
           backgroundRetryInterval: 60
-    # -- Agreements define the ODRL policies for each semantic model (Saturn format).
-      agreements:
+    # -- Agreements define the ODRL policies for each semantic model (Jupiter format).
+    agreements:
       - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
         usage:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
             - action: "use"
               constraint:
-                and:
-                  - leftOperand: "FrameworkAgreement"
-                    operator: "eq"
-                    rightOperand: "DataExchangeGovernance:1.0"
-                  - leftOperand: "Membership"
-                    operator: "eq"
-                    rightOperand: "active"
-                  - leftOperand: "UsagePurpose"
-                    operator: "isAnyOf"
-                    rightOperand: "cx.circular.dpp:1"
+                leftOperand: "UsagePurpose"
+                operator: "eq"
+                rightOperand: "cx.circular.dpp:1"
           prohibitions: []
           obligations: []
         access:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
-            - action: access
+            - action: "use"
               constraint:
                 leftOperand: "Membership"
                 operator: "eq"
@@ -214,9 +227,10 @@ backend:
       - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
         usage:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
             - action: "use"
               constraint:
@@ -228,17 +242,18 @@ backend:
                     operator: "eq"
                     rightOperand: "active"
                   - leftOperand: "UsagePurpose"
-                    operator: "isAnyOf"
+                    operator: "eq"
                     rightOperand: "cx.core.industrycore:1"
           prohibitions: []
           obligations: []
         access:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
-            - action: "access"
+            - action: "use"
               constraint:
                 leftOperand: "Membership"
                 operator: "eq"
@@ -248,9 +263,10 @@ backend:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         usage:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
             - action: "use"
               constraint:
@@ -262,17 +278,18 @@ backend:
                     operator: "eq"
                     rightOperand: "active"
                   - leftOperand: "UsagePurpose"
-                    operator: "isAnyOf"
+                    operator: "eq"
                     rightOperand: "cx.core.industrycore:1"
           prohibitions: []
           obligations: []
         access:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
-            - action: "access"
+            - action: "use"
               constraint:
                 leftOperand: "Membership"
                 operator: "eq"
@@ -282,37 +299,33 @@ backend:
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         usage:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
             - action: "use"
               constraint:
-                and:
-                  - leftOperand: "FrameworkAgreement"
-                    operator: "eq"
-                    rightOperand: "DataExchangeGovernance:1.0"
-                  - leftOperand: "Membership"
-                    operator: "eq"
-                    rightOperand: "active"
-                  - leftOperand: "UsagePurpose"
-                    operator: "isAnyOf"
-                    rightOperand: "cx.core.industrycore:1"
+                leftOperand: "UsagePurpose"
+                operator: "eq"
+                rightOperand: "cx.core.industrycore:1"
           prohibitions: []
           obligations: []
         access:
           context:
-            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permissions:
-            - action: "access"
+            - action: "use"
               constraint:
                 leftOperand: "Membership"
                 operator: "eq"
                 rightOperand: "active"
           prohibitions: []
           obligations: []
+    # -- Consumer configuration
     consumer:
       discovery:
         discovery_finder:
@@ -332,9 +345,9 @@ backend:
             operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
       connector:
         dataspace:
-          version: "saturn"
+          version: "jupiter"
         controlplane:
-          hostname: "https://edc-provider-ichub-control.int.catena-x.net"
+          hostname: "https://edc-consumer-ichub-control.int.catena-x.net"
           apiKeyHeader: "X-Api-Key"
           apiKey: <path:industry-core-hub/data/edc-consumer#authKey>
           managementPath: "/management"
@@ -344,31 +357,31 @@ backend:
     provider:
       connector: 
         dataspace:
-          version: "saturn"
+          version: "jupiter"
         controlplane:
-          hostname: "https://edc-provider-ichub-control.int.catena-x.net"
+          hostname: "https://edc-consumer-ichub-control.int.catena-x.net"
           apiKeyHeader: "X-Api-Key"
           apiKey: <path:industry-core-hub/data/edc-provider#authKey>
           managementPath: "/management"
           protocolPath: "/api/v1/dsp"
         dataplane:
-          hostname: "https://edc-provider-ichub-dataplane.int.catena-x.net"
+          hostname: "https://edc-consumer-ichub-dataplane.int.catena-x.net"
           publicPath: "/api/public"
       digitalTwinRegistry:
-        hostname: "https://dtr-ichub.int.catena-x.net"
+        hostname: "https://dtr-consumer-ichub.int.catena-x.net"
         apiPath: "/api/v3"
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
-          # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
         lookup:
           uri: ""
         policy:
           usage:
             context:
-              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permissions:
               - action: "use"
                 constraint:
@@ -380,17 +393,18 @@ backend:
                       operator: "eq"
                       rightOperand: "active"
                     - leftOperand: "UsagePurpose"
-                      operator: "isAnyOf"
+                      operator: "eq"
                       rightOperand: "cx.core.digitalTwinRegistry:1"
             prohibitions: []
             obligations: []
           access:
             context:
-              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permissions:
-              - action: "access"
+              - action: "use"
                 constraint:
                   leftOperand: "Membership"
                   operator: "eq"
@@ -398,20 +412,20 @@ backend:
             prohibitions: []
             obligations: []
       digitalTwinEventAPI:
-        hostname: "https://dtr-ichub.int.catena-x.net"
+        hostname: "https://dtr-consumer-ichub.int.catena-x.net"
         apiPath: "/api/v3"
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
-          # existing_asset_id: <event-asset> # -- In case an existing DT Event asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
         lookup:
           uri: ""
         policy:
           usage:
             context:
-              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permissions:
               - action: "use"
                 constraint:
@@ -423,15 +437,16 @@ backend:
                       operator: "eq"
                       rightOperand: "active"
                     - leftOperand: "UsagePurpose"
-                      operator: "isAnyOf"
+                      operator: "eq"
                       rightOperand: "cx.core.industrycore:1"
             prohibitions: []
             obligations: []
           access:
             context:
-              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
-              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
-              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permissions:
               - action: "use"
                 constraint:
@@ -453,25 +468,25 @@ backend:
       #   nginx.ingress.kubernetes.io/use-regex: "true"
        nginx.ingress.kubernetes.io/enable-cors: "true"
       #   # -- Provide CORS allowed origin.
-       nginx.ingress.kubernetes.io/cors-allow-origin: "https://frontend-ichub.int.catena-x.net, *"
+       nginx.ingress.kubernetes.io/cors-allow-origin: "https://frontend-ichub-manufacturer.int.catena-x.net, *"
        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
       # -- Ingress TLS configuration
       tls:
-       - secretName: "backend-ichub.int.catena-x.net-tls"
+       - secretName: "backend-ichub-manufacturer.int.catena-x.net-tls"
          hosts:
-           - "backend-ichub.int.catena-x.net" 
+           - "backend-ichub-manufacturer.int.catena-x.net" 
         # # -- Provide tls secret.
         # - secretName: ""
         #   # -- Provide host for tls secret.
         #   hosts:
         #     - ""
       hosts:
-      - host: "backend-ichub.int.catena-x.net"
+      - host: "backend-ichub-manufacturer.int.catena-x.net"
         paths:
           - path: /
             pathType: ImplementationSpecific
             backend:
-              service: "backend"
+              service: "backend-manufacturer"
               port: 8000
 
 keycloak:
@@ -495,26 +510,35 @@ keycloak:
         redirectUris:
           - "http://localhost:3000/*"
           - "http://localhost:5173/*"
-          - "https://frontend-ichub.int.catena-x.net/*"
+          - "https://frontend-ichub-manufacturer.int.catena-x.net/*"
         webOrigins:
           - "http://localhost:3000"
           - "http://localhost:5173"
-          - "https://frontend-ichub.int.catena-x.net"
+          - "https://frontend-ichub-manufacturer.int.catena-x.net"
       backend:
         redirectUris:
           - "http://localhost:8000/*"
           - "http://localhost:9000/*"
-          - "https://backend-ichub.int.catena-x.net/*"
+          - "https://backend-ichub-manufacturer.int.catena-x.net/*"
         webOrigins:
           - "http://localhost:8000"
           - "http://localhost:9000"
-          - "https://backend-ichub.int.catena-x.net"
+          - "https://backend-ichub-manufacturer.int.catena-x.net"
   
+  externalDatabase:
+    # Override the default host to use the correct PostgreSQL service name
+    host: "ichub-manufacturer-db"
+    port: 5432
+    user: "ichub_keycloak"
+    database: "ichub-postgres"
+    password: <path:industry-core-hub/data/db#ichubPass>
+    existingSecret: ""
+    existingSecretPasswordKey: ""
   ingress:
     # -- Enable ingress record generation
     enabled: true
     # -- Provide default path for the ingress record.
-    hostname: "ichub-iam.int.catena-x.net"
+    hostname: "ichub-iam-manufacturer.int.catena-x.net"
     # -- Enable TLS/SSL for ingress (boolean)
     tls: true
     annotations:

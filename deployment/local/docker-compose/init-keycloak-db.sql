@@ -29,3 +29,16 @@ GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
 -- Connect to keycloak database and grant schema privileges
 \c keycloak
 GRANT ALL ON SCHEMA public TO keycloak;
+
+-- Switch back to default db before creating the next database
+\c ichub
+
+-- Create manufacturer ichub database
+CREATE DATABASE manufacturerichub;
+
+-- Grant privileges
+GRANT ALL PRIVILEGES ON DATABASE manufacturerichub TO "user";
+
+-- Connect to manufacturerichub database and grant schema privileges
+\c manufacturerichub
+GRANT ALL ON SCHEMA public TO "user";

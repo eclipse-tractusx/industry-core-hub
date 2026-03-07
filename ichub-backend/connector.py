@@ -104,7 +104,8 @@ try:
             path_submodel_dispatcher=path_submodel_dispatcher,
             authorization=authorization_enabled,
             backend_api_key=backend_api_key,
-            backend_api_key_value=backend_api_key_value
+            backend_api_key_value=backend_api_key_value,
+            dataspace_version=provider_dataspace_version,
         )
     
     

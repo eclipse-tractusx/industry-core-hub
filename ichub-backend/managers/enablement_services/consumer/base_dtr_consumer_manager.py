@@ -59,10 +59,42 @@ class BaseDtrConsumerManager(ABC):
         self.dct_type_key = dct_type_key
         self.operator = operator
         self.dct_type = dct_type
-        # DCAT catalog constants from EDC catalog structure
+        # DCAT catalog constants from EDC catalog structure.
+        # Kept for backwards compatibility — prefer the helper methods below,
+        # which try both Saturn (unprefixed) and Jupiter (prefixed) keys.
         self.DCAT_DATASET_KEY = "dcat:dataset"
         self.ODRL_HAS_POLICY_KEY = "odrl:hasPolicy"
         self.ID_KEY = "@id"
+        # Saturn counterparts (DSP 2025-1 / unprefixed)
+        self.SATURN_DCAT_DATASET_KEY = "dataset"
+        self.SATURN_ODRL_HAS_POLICY_KEY = "hasPolicy"
+
+    # ------------------------------------------------------------------
+    # Catalog key helpers — version-agnostic retrieval
+    # Try Saturn (unprefixed, DSP 2025-1) first; fall back to Jupiter
+    # (prefixed, legacy DSP HTTP).  Mirrors the approach used in the SDK's
+    # DspTools.filter_assets_and_policies().
+    # ------------------------------------------------------------------
+
+    def _get_catalog_datasets(self, catalog: dict) -> list:
+        """
+        Return the dataset list from a DCAT catalog, supporting both
+        Saturn (``dataset``) and Jupiter (``dcat:dataset``) key formats.
+        """
+        value = catalog.get(self.SATURN_DCAT_DATASET_KEY) or catalog.get(self.DCAT_DATASET_KEY, [])
+        if not isinstance(value, list):
+            return [value] if value else []
+        return value
+
+    def _get_dataset_policies(self, dataset: dict) -> list:
+        """
+        Return the policy list from a DCAT dataset, supporting both
+        Saturn (``hasPolicy``) and Jupiter (``odrl:hasPolicy``) key formats.
+        """
+        value = dataset.get(self.SATURN_ODRL_HAS_POLICY_KEY) or dataset.get(self.ODRL_HAS_POLICY_KEY, [])
+        if not isinstance(value, list):
+            return [value] if value else []
+        return value
 
     @abstractmethod
     def add_dtr(self, bpn: str, edc_url: str, asset_id: str, policies: List[str]) -> None:

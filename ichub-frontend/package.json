@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:9000": "VITE_ICHUB_BACKEND_URL=http://localhost:9000/v1 VITE_PARTICIPANT_ID=BPNL0000000093Q7 vite --port 5173",
+    "dev:9001": "VITE_ICHUB_BACKEND_URL=http://localhost:9001/v1 VITE_PARTICIPANT_ID=BPNL00000003CRHK vite --port 5174",
     "build": "vite build",
     "build:full": "tsc -b && vite build",
     "typecheck": "tsc --noEmit",

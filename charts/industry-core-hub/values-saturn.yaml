@@ -20,7 +20,14 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 
-# Default values for industry-core-hub.
+# Saturn-specific values for industry-core-hub.
+# This file contains overrides for a Saturn dataspace deployment.
+# All policies use the native Saturn ODRL format:
+#   - Plain keys (action, constraint, leftOperand, operator, rightOperand)
+#   - No @id wrappers, no ODRL prefixes on keys
+#   - Logical operators: and/or (not odrl:and/odrl:or)
+#   - Context uses @vocab; SDK auto-prepends ODRL JSONLD URLs
+#
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -68,10 +75,6 @@ backend:
       - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
-    # -- Agreements define the ODRL policies for each semantic model.
-    # The format follows the Tractus-X SDK TCK reference (plain keys).
-    # Both Jupiter and Saturn use identical rule structures — only the context differs.
-    # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
     agreements:
       - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
         usage:
@@ -654,31 +657,34 @@ frontend:
 
   podLabels: {}
 
+  # -- Frontend consumption policies use Saturn native format.
+  # These are used for policy matching when consuming data from other participants.
+  # leftOperand values use plain strings — the JSON-LD context handles expansion.
   consumption:
     digitalTwinRegistry:
       policies:
         - permission:
-          - action: odrl:use
-            LogicalConstraint: odrl:and
-            constraints:
-              - leftOperand: cx-policy:FrameworkAgreement
-                operator: odrl:eq
-                rightOperand: DataExchangeGovernance:1.0
-              - leftOperand: cx-policy:Membership
-                operator: odrl:eq
-                rightOperand: active
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
+          - action: use
+            constraint:
+              and:
+                - leftOperand: FrameworkAgreement
+                  operator: eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: Membership
+                  operator: eq
+                  rightOperand: active
+                - leftOperand: UsagePurpose
+                  operator: eq
+                  rightOperand: cx.core.digitalTwinRegistry:1
           prohibition: []
           obligation: []
           strict: false
         - permission:
-          - action: odrl:use
-            constraints:
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
+          - action: use
+            constraint:
+              leftOperand: UsagePurpose
+              operator: eq
+              rightOperand: cx.core.digitalTwinRegistry:1
           prohibition: []
           obligation: []
     governance:
@@ -687,42 +693,42 @@ frontend:
           # -- Enable here the permutations of constraints (order not matters)
           - strict: false
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
+                  - leftOperand: UsagePurpose
+                    operator: eq
+                    rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
           # -- Disable here the permutations of constraints (order matters)
           - strict: true
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
             prohibition: []
             obligation: []
           # -- Enable here the permutations of constraints (order not matters)
           - strict: false
             permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                leftOperand: UsagePurpose
+                operator: eq
+                rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
@@ -730,42 +736,42 @@ frontend:
           # -- Enable here the permutations of constraints (order not matters)
           - strict: false
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
+                  - leftOperand: UsagePurpose
+                    operator: eq
+                    rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
           # -- Disable here the permutations of constraints (order matters)
           - strict: true
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
             prohibition: []
             obligation: []
           # -- Enable here the permutations of constraints (order not matters)
           - strict: false
             permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                leftOperand: UsagePurpose
+                operator: eq
+                rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport"
@@ -773,69 +779,69 @@ frontend:
           # -- Enable here the permutations of constraints (order not matters)
           - strict: false
             permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
+            - action: use
+              constraint:
+                leftOperand: UsagePurpose
+                operator: eq
+                rightOperand: cx.circular.dpp:1
             prohibition: []
             obligation: []
           # -- Disable here the permutations of constraints (order matters)
           - strict: false
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
+                  - leftOperand: UsagePurpose
+                    operator: eq
+                    rightOperand: cx.circular.dpp:1
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         policies:
           - strict: false
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
+                  - leftOperand: UsagePurpose
+                    operator: eq
+                    rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
           # -- Disable here the permutations of constraints (order matters)
           - strict: true
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: use
+              constraint:
+                and:
+                  - leftOperand: FrameworkAgreement
+                    operator: eq
+                    rightOperand: DataExchangeGovernance:1.0
+                  - leftOperand: Membership
+                    operator: eq
+                    rightOperand: active
             prohibition: []
             obligation: []
           - strict: false
             permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: use
+              constraint:
+                leftOperand: UsagePurpose
+                operator: eq
+                rightOperand: cx.core.industrycore:1
             prohibition: []
             obligation: []
 
