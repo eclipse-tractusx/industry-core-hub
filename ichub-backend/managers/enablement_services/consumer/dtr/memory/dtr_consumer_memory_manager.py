@@ -614,12 +614,12 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         
         for attempt in range(max_retries + 1):
             try:
-                # Establish connection
-                dataplane_url, access_token = connector_service.do_dsp_with_bpnl(
+                # Establish connection using the generic BPNL-based negotiation
+                dataplane_url, access_token = self._negotiate_edr_with_bpnl(
                     bpnl=counter_party_id,
                     counter_party_address=connector_url,
-                    policies=policies_to_use,
-                    filter_expression=filter_expression
+                    filter_expression=filter_expression,
+                    policies=policies_to_use
                 )
                 
                 # Search for shells
@@ -855,12 +855,12 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             )
             
             try:
-                # Establish connection
-                dataplane_url, access_token = connector_service.do_dsp_with_bpnl(
+                # Establish connection using the generic BPNL-based negotiation
+                dataplane_url, access_token = self._negotiate_edr_with_bpnl(
                     bpnl=counter_party_id,
                     counter_party_address=connector_url,
-                    policies=policies_to_use,
-                    filter_expression=filter_expression
+                    filter_expression=filter_expression,
+                    policies=policies_to_use
                 )
                 
                 # Fetch specific shell descriptor
@@ -1021,12 +1021,12 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             )
             
             try:
-                # Establish connection
-                dataplane_url, access_token = connector_service.do_dsp_with_bpnl(
+                # Establish connection using the generic BPNL-based negotiation
+                dataplane_url, access_token = self._negotiate_edr_with_bpnl(
                     bpnl=counter_party_id,
                     counter_party_address=connector_url,
-                    policies=policies_to_use,
-                    filter_expression=filter_expression
+                    filter_expression=filter_expression,
+                    policies=policies_to_use
                 )
                 self.logger.debug(f"[DTR Manager] [{counter_party_id}] Connected to DTR at {connector_url} for submodel discovery")
                 self.logger.debug(f"[DTR Manager] [{counter_party_id}] Using policies: {policies_to_use}")
@@ -1530,13 +1530,50 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         except Exception:
             return None
 
-    def _negotiate_asset(self, counter_party_id: str, asset_id: str, dsp_endpoint_url: str, policies: List[Dict]) -> Optional[str]:
-        """Negotiate access to a single asset and return the access token."""
+    def _negotiate_edr_with_bpnl(self, bpnl: str, counter_party_address: str, filter_expression: Union[Dict, List[Dict]], policies: List[Dict]) -> tuple[str, str]:
+        """
+        Generic EDR negotiation using the BPNL-based approach.
+
+        Uses ``do_dsp_with_bpnl`` to handle both Jupiter (BPNL as counter-party ID) and
+        Saturn (automatic DID resolution from BPNL) EDC connector versions uniformly.
+        This replaces direct ``do_dsp`` / ``do_dsp_by_asset_id`` calls and ensures consistent
+        negotiation behavior with EDR caching for all asset types (DTR and submodel).
+
+        Args:
+            bpnl (str): The Business Partner Number of the counterparty.
+            counter_party_address (str): The DSP URL of the EDC provider.
+            filter_expression (Union[Dict, List[Dict]]): A single filter dict or a list of
+                filter dicts to apply when querying the provider catalog.
+            policies (List[Dict]): Accepted usage policies for contract negotiation.
+
+        Returns:
+            tuple[str, str]: ``(dataplane_url, access_token)`` for accessing data through the dataplane.
+
+        Raises:
+            Exception: If the EDR negotiation fails or the EDR entry cannot be retrieved.
+        """
         connector_service: BaseConnectorConsumerService = self.connector_consumer_manager.connector_service
-        dataplane_url, access_token = connector_service.do_dsp_by_asset_id(
-            counter_party_id=counter_party_id,
+        return connector_service.do_dsp_with_bpnl(
+            bpnl=bpnl,
+            counter_party_address=counter_party_address,
+            filter_expression=filter_expression,
+            policies=policies
+        )
+
+    def _negotiate_asset(self, counter_party_id: str, asset_id: str, dsp_endpoint_url: str, policies: List[Dict]) -> Optional[str]:
+        """Negotiate access to a single asset and return the access token using the BPNL-based approach."""
+        connector_service: BaseConnectorConsumerService = self.connector_consumer_manager.connector_service
+        # Build an asset-ID filter expression so the catalog query targets the exact asset.
+        # Using do_dsp_with_bpnl (via _negotiate_edr_with_bpnl) ensures Saturn DID-resolution
+        # is applied automatically, making this compatible with both Jupiter and Saturn connectors.
+        filter_expression = connector_service.get_filter_expression(
+            key=connector_service.DEFAULT_ID_KEY,
+            value=asset_id
+        )
+        dataplane_url, access_token = self._negotiate_edr_with_bpnl(
+            bpnl=counter_party_id,
             counter_party_address=dsp_endpoint_url,
-            asset_id=asset_id,
+            filter_expression=filter_expression,
             policies=policies
         )
         return access_token
