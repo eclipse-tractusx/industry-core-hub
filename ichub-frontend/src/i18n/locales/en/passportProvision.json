@@ -87,23 +87,18 @@
       "selectSerializedPart": "Select Serialized Part",
       "chooseSerializedPart": "Choose a serialized part...",
       "selectedPart": "Selected Part",
-      "checkingRegistration": "Checking sharing status...",
+      "checkingRegistration": "Checking registration status...",
       "registrationStatus": "Registration Status",
-      "sharingStatus": "Sharing Status",
-      "notRegistered": "Not Shared",
+      "notRegistered": "Not Registered",
       "alreadyHasDpp": "Already has DPP",
       "noDppAssigned": "No DPP assigned",
       "mustBeRegisteredWarning": "This serialized part must be registered as a digital twin before you can provision a DPP.",
-      "mustBeSharedWarning": "This serialized part must be shared as a digital twin before you can provision a DPP.",
       "registerSerializedPart": "Register Serialized Part",
-      "shareSerializedPart": "Share Serialized Part",
       "registerThisPart": "Register This Part",
       "registering": "Registering...",
-      "sharing": "Sharing...",
       "orCreateNewPart": "Or create a new part:",
       "createNewSerializedPart": "Create New Serialized Part",
-      "twinRegisteredSuccess": "Twin shared successfully!",
-      "twinSharedSuccess": "Twin shared successfully!",
+      "twinRegisteredSuccess": "Twin registered successfully!",
       "partCreatedSuccess": "Serialized part created successfully"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "Please select a serialized part to associate with this DPP",
       "partMustBeRegistered": "The selected serialized part must be registered before creating a DPP. Please register it first.",
-      "partMustBeShared": "The selected serialized part must be shared before creating a DPP. Please share it first.",
       "provideDppData": "Please provide DPP data before proceeding. You can create it using the form or upload a JSON file.",
       "validateFirst": "Please validate the DPP data before proceeding."
     },
@@ -165,7 +159,6 @@
       "successMessage": "Your Digital Product Passport has been successfully published!",
       "currentStatus": "Current Status",
       "sharePrompt": "Now you can share it with your partner!",
-      "alreadyShared": "This DPP is already shared with your partner.",
       "errorOccurred": "An error occurred while publishing the DPP"
     },
     "preview": {

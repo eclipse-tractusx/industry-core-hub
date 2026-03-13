@@ -111,10 +111,6 @@
     "submodelId": "Submodell-ID",
     "width": "Breite"
   },
-  "notifications": {
-    "copiedToClipboard": "{{field}} in die Zwischenablage kopiert!",
-    "failedToCopy": "Fehler beim Kopieren von {{field}}"
-  },
   "tooltips": {
     "copyAasId": "AAS-ID kopieren",
     "copyShellId": "Shell-ID kopieren",
@@ -174,7 +170,9 @@
     "guest": "Gast",
     "language": "Sprache: {{language}}",
     "notificationsComingSoon": "Benachrichtigungen kommen bald",
-    "policyComingSoon": "Richtlinien-/Governance-Konfiguration kommt bald"
+    "policyComingSoon": "Richtlinien-/Governance-Konfiguration kommt bald",
+    "openMessages": "Nachrichten öffnen",
+    "closeMessages": "Nachrichten schließen"
   },
   "validation": {
     "required": "{{field}} ist erforderlich",

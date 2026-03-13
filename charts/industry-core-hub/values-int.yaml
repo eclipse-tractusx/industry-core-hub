@@ -83,7 +83,7 @@ frontend:
       clientId: "industry-core-hub-frontend"
       realmImport:
         enabled: true
-        method: "startup"
+        method: "job"
         availabilityCheck:
           timeout: "120s"
           delay: "5s"
@@ -183,7 +183,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -203,7 +203,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: access
               constraint:
                 leftOperand: "Membership"
@@ -217,7 +217,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -237,7 +237,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -251,7 +251,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -271,7 +271,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -285,7 +285,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -305,7 +305,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -369,7 +369,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -389,7 +389,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "access"
                 constraint:
                   leftOperand: "Membership"
@@ -403,7 +403,6 @@ backend:
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
-          # existing_asset_id: <event-asset> # -- In case an existing DT Event asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
         lookup:
           uri: ""
         policy:
@@ -412,7 +411,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -432,8 +431,8 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
-              - action: "use"
+            permission:
+              - action: "access"
                 constraint:
                   leftOperand: "Membership"
                   operator: "eq"

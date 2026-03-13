@@ -425,6 +425,49 @@ class BaseDtrConsumerManager(ABC):
         """
         pass
     
+    def purge_edr(self, counter_party_id: str, asset_id: str) -> int:
+        """
+        Remove a stale or expired EDR for the given counter_party_id + asset_id
+        from both in-memory SDK caches and the persistent backend (if any).
+
+        This is the single reusable entry point for EDR cleanup.  Call it from
+        any layer (service, controller/API, retry logic) whenever an EDR token
+        is detected as invalid or has expired::
+
+            rows = dtr_manager.consumer.purge_edr(bpnl, asset_id)
+
+        Args:
+            counter_party_id (str): Business Partner Number of the data provider.
+            asset_id (str): EDC asset ID of the EDR to remove.
+
+        Returns:
+            int: Number of persistent records deleted (0 if no persistent backend
+                 or the EDR was not found).
+        """
+        # Default: in-memory-only implementations have no persistent layer.
+        return 0
+
+    def purge_edrs_matching(self, counter_party_id: str, asset_id_pattern: str) -> int:
+        """
+        Remove all stale EDRs whose asset ID matches a SQL LIKE pattern.
+
+        Useful when multiple EDRs share a common prefix, e.g. cleaning up all
+        DigitalTwinEventAPI EDRs for a provider before sending a notification::
+
+            rows = dtr_manager.consumer.purge_edrs_matching(
+                bpnl, "ichub:asset:digitaltwin-event:%"
+            )
+
+        Args:
+            counter_party_id (str): Business Partner Number of the data provider.
+            asset_id_pattern (str): SQL LIKE pattern (``%`` and ``_`` wildcards).
+
+        Returns:
+            int: Number of persistent records deleted (0 if no persistent backend).
+        """
+        # Default: in-memory-only implementations have no persistent layer.
+        return 0
+
     def _is_cache_expired(self, bpn: str) -> bool:
         """
         Helper method to check if cache for a specific BPN has expired.

@@ -295,7 +295,7 @@ const ProductsDetails = () => {
     }}>
       <Grid2 container className="productDetail" sx={{ flexGrow: 1 }}>
         <Grid2 size={4} display="flex" justifyContent="start" alignItems="center">
-          {getStatusTag(partType.status ?? PRODUCT_STATUS.DRAFT)}
+          {getStatusTag(partType?.status ?? PRODUCT_STATUS.DRAFT)}
         </Grid2>
         <Grid2 size={4} display="flex" justifyContent="center" alignItems="center">
           <Button size="small" className="update-button" endIcon={<EditIcon />}>            

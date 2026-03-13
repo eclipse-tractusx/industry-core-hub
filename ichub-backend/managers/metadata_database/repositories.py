@@ -49,7 +49,7 @@ from models.metadata_database.notification.models import (
     NotificationDirection,
     NotificationStatus
 )
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 

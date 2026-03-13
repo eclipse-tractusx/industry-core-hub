@@ -87,23 +87,18 @@
       "selectSerializedPart": "Serialisiertes Teil auswählen",
       "chooseSerializedPart": "Wählen Sie ein serialisiertes Teil...",
       "selectedPart": "Ausgewähltes Teil",
-      "checkingRegistration": "Freigabestatus wird überprüft...",
+      "checkingRegistration": "Registrierungsstatus wird überprüft...",
       "registrationStatus": "Registrierungsstatus",
-      "sharingStatus": "Freigabestatus",
-      "notRegistered": "Nicht geteilt",
+      "notRegistered": "Nicht registriert",
       "alreadyHasDpp": "Hat bereits DPP",
       "noDppAssigned": "Kein DPP zugewiesen",
       "mustBeRegisteredWarning": "Dieses serialisierte Teil muss als digitaler Zwilling registriert werden, bevor Sie einen DPP bereitstellen können.",
-      "mustBeSharedWarning": "Dieses serialisierte Teil muss als digitaler Zwilling geteilt werden, bevor Sie einen DPP bereitstellen können.",
       "registerSerializedPart": "Serialisiertes Teil registrieren",
-      "shareSerializedPart": "Serialisiertes Teil teilen",
       "registerThisPart": "Dieses Teil registrieren",
       "registering": "Registrieren...",
-      "sharing": "Teilen...",
       "orCreateNewPart": "Oder neues Teil erstellen:",
       "createNewSerializedPart": "Neues serialisiertes Teil erstellen",
-      "twinRegisteredSuccess": "Zwilling erfolgreich geteilt!",
-      "twinSharedSuccess": "Zwilling erfolgreich geteilt!",
+      "twinRegisteredSuccess": "Zwilling erfolgreich registriert!",
       "partCreatedSuccess": "Serialisiertes Teil erfolgreich erstellt"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "Bitte wählen Sie ein serialisiertes Teil aus, um es mit diesem DPP zu verknüpfen",
       "partMustBeRegistered": "Das ausgewählte serialisierte Teil muss registriert sein, bevor ein DPP erstellt werden kann. Bitte registrieren Sie es zuerst.",
-      "partMustBeShared": "Das ausgewählte serialisierte Teil muss geteilt sein, bevor ein DPP erstellt werden kann. Bitte teilen Sie es zuerst.",
       "provideDppData": "Bitte geben Sie DPP-Daten an, bevor Sie fortfahren. Sie können diese über das Formular erstellen oder eine JSON-Datei hochladen.",
       "validateFirst": "Bitte validieren Sie die DPP-Daten, bevor Sie fortfahren."
     },
@@ -165,7 +159,6 @@
       "successMessage": "Ihr Digitaler Produktpass wurde erfolgreich veröffentlicht!",
       "currentStatus": "Aktueller Status",
       "sharePrompt": "Jetzt können Sie ihn mit Ihrem Partner teilen!",
-      "alreadyShared": "Dieser DPP wird bereits mit Ihrem Partner geteilt.",
       "errorOccurred": "Beim Veröffentlichen des DPP ist ein Fehler aufgetreten"
     },
     "preview": {

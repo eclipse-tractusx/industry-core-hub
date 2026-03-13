@@ -147,8 +147,8 @@
         "deleteSerializedPart": "Serialisiertes Teil löschen"
       },
       "messages": {
-        "twinRegisteredSuccess": "Zwilling erfolgreich geteilt!",
-        "registrationFailed": "Teilen fehlgeschlagen: {{error}}",
+        "twinRegisteredSuccess": "Zwilling erfolgreich registriert!",
+        "registrationFailed": "Registrierung fehlgeschlagen: {{error}}",
         "sharingFailed": "Teilen fehlgeschlagen: {{error}}",
         "unsharingFailed": "Freigabe aufheben fehlgeschlagen: {{error}}",
         "deletionFailed": "Löschen fehlgeschlagen: {{error}}",

@@ -202,7 +202,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "UsagePurpose"
@@ -216,7 +216,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -231,7 +231,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -252,7 +252,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -267,7 +267,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -288,7 +288,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -303,7 +303,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "UsagePurpose"
@@ -317,7 +317,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -382,7 +382,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -403,7 +403,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   leftOperand: "Membership"
@@ -426,7 +426,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -447,7 +447,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   leftOperand: "Membership"

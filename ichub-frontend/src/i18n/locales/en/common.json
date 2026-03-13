@@ -111,10 +111,6 @@
     "submodelId": "Submodel ID",
     "width": "Width"
   },
-  "notifications": {
-    "copiedToClipboard": "{{field}} copied to clipboard!",
-    "failedToCopy": "Failed to copy {{field}}"
-  },
   "tooltips": {
     "copyAasId": "Copy AAS ID",
     "copyShellId": "Copy Shell ID",
@@ -174,7 +170,9 @@
     "guest": "Guest",
     "language": "Language: {{language}}",
     "notificationsComingSoon": "Notifications are coming soon",
-    "policyComingSoon": "Policy/Governance Configuration is coming soon"
+    "policyComingSoon": "Policy/Governance Configuration is coming soon",
+    "openMessages": "Open messages",
+    "closeMessages": "Close messages"
   },
   "validation": {
     "required": "{{field}} is required",

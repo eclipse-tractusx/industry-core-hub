@@ -76,7 +76,7 @@ frontend:
       clientId: "industry-core-hub-frontend"
       realmImport:
         enabled: true
-        method: "startup"
+        method: "job"
         availabilityCheck:
           timeout: "120s"
           delay: "5s"
@@ -201,7 +201,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -221,7 +221,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: access
               constraint:
                 leftOperand: "Membership"
@@ -235,7 +235,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -255,7 +255,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -269,7 +269,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -289,7 +289,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -303,7 +303,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -323,7 +323,7 @@ backend:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
             - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
             - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "access"
               constraint:
                 leftOperand: "Membership"
@@ -387,7 +387,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -407,7 +407,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "access"
                 constraint:
                   leftOperand: "Membership"
@@ -429,7 +429,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -449,7 +449,7 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "access"
                 constraint:
                   leftOperand: "Membership"

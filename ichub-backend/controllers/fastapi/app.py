@@ -22,16 +22,67 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os
+import logging
 
 from tools.exceptions import BaseError, ValidationError
 from tools.constants import API_V1
 from managers.config.config_manager import ConfigManager
+
+startup_logger = logging.getLogger("app.startup")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run startup tasks before serving requests."""
+    _sync_digital_twin_event_asset_on_startup()
+    yield
+
+
+def _sync_digital_twin_event_asset_on_startup() -> None:
+    """
+    Register the Digital Twin Event asset in the EDC on every backend startup.
+    This ensures the notification endpoint is always advertised in the connector
+    catalog, even if the Kubernetes sync Job has not run yet.
+    Failures are logged but do not prevent the backend from starting.
+    """
+    try:
+        # Import here to avoid circular imports at module load time.
+        from connector import connector_provider_manager, connector_start_up_error
+
+        if connector_start_up_error or connector_provider_manager is None:
+            startup_logger.warning(
+                "[Startup] Connector is not available. Skipping Digital Twin Event asset sync."
+            )
+            return
+
+        dte_config = ConfigManager.get_config("provider.digitalTwinEventAPI")
+        if not dte_config:
+            startup_logger.warning(
+                "[Startup] No 'provider.digitalTwinEventAPI' config found. "
+                "Skipping Digital Twin Event asset sync."
+            )
+            return
+
+        asset_config = dte_config.get("asset_config", {})
+        dte_asset_id, _, _, _ = connector_provider_manager.register_digital_twin_event_offer(
+            digital_twin_event_url=dte_config.get("hostname"),
+            digital_twin_event_policy_config=dte_config.get("policy"),
+            existing_asset_id=asset_config.get("existing_asset_id"),
+        )
+        startup_logger.info(
+            f"[Startup] Digital Twin Event asset synced successfully: {dte_asset_id}"
+        )
+    except Exception as e:
+        startup_logger.error(
+            f"[Startup] Failed to sync Digital Twin Event asset: {e}", exc_info=True
+        )
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -99,7 +150,7 @@ tags_metadata = [
     }
 ]
 
-app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata)
+app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata, lifespan=lifespan)
 
 # Configure CORS middleware based on environment and configuration
 def get_cors_origins():

@@ -244,12 +244,13 @@ class DiscoveryManager:
             governance: Optional governance policies for submodel consumption
         """
         try:
-            # Convert policies from simplified format to ODRL format
-            odrl_dtr_policies = convert_policies_to_odrl(dtr_policies)
-            odrl_governance = convert_governance_to_odrl(governance)
+            # Policies are passed through as-is — normalization is the frontend's responsibility.
+            # governance wraps policies in {"policies": [...]}; unwrap to get the list discover_submodel expects.
+            odrl_dtr_policies = dtr_policies
+            odrl_governance = governance.get("policies") if governance else None
             
-            logger.debug(f"[Task {task_id}] Converted DTR policies: {odrl_dtr_policies}")
-            logger.debug(f"[Task {task_id}] Converted governance policies: {odrl_governance}")
+            logger.debug(f"[Task {task_id}] DTR policies: {odrl_dtr_policies}")
+            logger.debug(f"[Task {task_id}] Governance policies: {odrl_governance}")
             
             # Step 1: Parse the ID
             logger.info(f"[Task {task_id}] Step 1: Parsing identifier: {id_str}")
@@ -475,6 +476,7 @@ class DiscoveryManager:
             If successful: (shell, bpn, None)
             If failed: (None, None, error_message)
         """
+        print(dtr_policies)
         shell_tasks = [
             asyncio.to_thread(
                 dtr_manager.consumer.discover_shells,
@@ -603,123 +605,6 @@ class DiscoveryManager:
             logger.warning(f"[Task {task_id}] No submodel data retrieved. Submodel descriptor: {submodel_result.get('submodelDescriptor', {})}")
         
         return submodel_data
-
-
-def convert_simplified_policy_to_odrl(simplified_policy: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Convert a simplified policy format to full ODRL format.
-    
-    The frontend sends policies in a simplified format that needs to be converted
-    to the full ODRL format expected by the connector service.
-    
-    Simplified format:
-        {
-            "permission": [{"action": "odrl:use", "constraints": [...]}],
-            "prohibition": [],
-            "obligation": []
-        }
-    
-    ODRL format:
-        {
-            "odrl:permission": {"odrl:action": {"@id": "odrl:use"}, "odrl:constraint": {...}},
-            "odrl:prohibition": [],
-            "odrl:obligation": []
-        }
-    
-    Args:
-        simplified_policy: Policy in simplified format
-        
-    Returns:
-        Policy converted to ODRL format
-    """
-    # Check if it's already in ODRL format (has odrl: prefixed keys)
-    if any(key.startswith("odrl:") for key in simplified_policy.keys()):
-        return simplified_policy
-    
-    odrl_policy = {}
-    
-    # Convert permission
-    permissions = simplified_policy.get("permission", [])
-    if permissions:
-        # Take the first permission (typical case)
-        perm = permissions[0] if isinstance(permissions, list) else permissions
-        
-        odrl_permission = {
-            "odrl:action": {"@id": perm.get("action", "odrl:use")}
-        }
-        
-        # Convert constraints
-        constraints = perm.get("constraints", [])
-        if constraints:
-            logical_constraint = perm.get("LogicalConstraint", "odrl:and")
-            
-            odrl_constraints = []
-            for constraint in constraints:
-                odrl_constraint = {
-                    "odrl:leftOperand": {"@id": constraint.get("leftOperand", "")},
-                    "odrl:operator": {"@id": constraint.get("operator", "odrl:eq")},
-                    "odrl:rightOperand": constraint.get("rightOperand", "")
-                }
-                odrl_constraints.append(odrl_constraint)
-            
-            # Use the logical constraint (odrl:and or odrl:or)
-            if len(odrl_constraints) == 1:
-                odrl_permission["odrl:constraint"] = odrl_constraints[0]
-            else:
-                odrl_permission["odrl:constraint"] = {
-                    logical_constraint: odrl_constraints
-                }
-        
-        odrl_policy["odrl:permission"] = odrl_permission
-    
-    # Convert prohibition (usually empty)
-    odrl_policy["odrl:prohibition"] = simplified_policy.get("prohibition", [])
-    
-    # Convert obligation (usually empty)
-    odrl_policy["odrl:obligation"] = simplified_policy.get("obligation", [])
-    
-    return odrl_policy
-
-
-def convert_policies_to_odrl(policies: Optional[List[Dict[str, Any]]]) -> Optional[List[Dict[str, Any]]]:
-    """
-    Convert a list of simplified policies to ODRL format.
-    
-    Args:
-        policies: List of policies in simplified format
-        
-    Returns:
-        List of policies in ODRL format, or None if input is None
-    """
-    if not policies:
-        return policies
-    
-    return [convert_simplified_policy_to_odrl(policy) for policy in policies]
-
-
-def convert_governance_to_odrl(governance: Optional[Dict[str, Any]]) -> Optional[List[Dict[str, Any]]]:
-    """
-    Convert governance object to ODRL policy list format.
-    
-    The governance object comes as:
-        {"policies": [{...}, {...}]}
-    
-    And needs to be converted to a list of ODRL policies.
-    
-    Args:
-        governance: Governance object with policies
-        
-    Returns:
-        List of ODRL policies, or None if input is None
-    """
-    if not governance:
-        return None
-    
-    policies = governance.get("policies", [])
-    if not policies:
-        return None
-    
-    return convert_policies_to_odrl(policies)
 
 
 def extract_semantic_id(submodel: Dict[str, Any]) -> str:

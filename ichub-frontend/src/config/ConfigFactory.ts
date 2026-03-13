@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { AppConfig, RawEnvironmentConfig, ConfigurationError, GovernancePolicy } from './schema';
+import { AppConfig, RawEnvironmentConfig, ConfigurationError, AgreementConfig, DtrPolicyConfig } from './schema';
 
 export class ConfigFactory {
   private static instance: AppConfig | null = null;
@@ -182,8 +182,8 @@ export class ConfigFactory {
       },
       
       governance: {
-        config: this.parseJsonConfig(raw.VITE_GOVERNANCE_CONFIG, []),
-        dtrPolicies: this.parseJsonConfig(raw.VITE_DTR_POLICIES_CONFIG, []),
+        agreements: this.parseJsonConfig<AgreementConfig[]>(raw.VITE_GOVERNANCE_CONFIG, []),
+        dtrPolicy: this.parseJsonConfig<DtrPolicyConfig>(raw.VITE_DTR_POLICIES_CONFIG, []),
       },
       
       features: {

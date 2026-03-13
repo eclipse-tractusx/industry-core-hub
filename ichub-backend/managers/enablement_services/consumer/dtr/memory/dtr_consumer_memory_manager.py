@@ -613,6 +613,8 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         )
         
         for attempt in range(max_retries + 1):
+            if attempt > 0:
+                self.logger.info(f"[DTR Manager] [{counter_party_id}] Retrying DTR [{asset_id}] at [{connector_url}] (attempt {attempt + 1}/{max_retries + 1})...")
             try:
                 # Establish connection
                 dataplane_url, access_token = connector_service.do_dsp_with_bpnl(
@@ -659,16 +661,20 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                 else:
                     # Delete failed connection for retry
                     self._delete_connection(connector_service, counter_party_id, connector_url, policies_to_use, filter_expression, counter_party_id, asset_id)
-                    
+
                     if attempt == max_retries:
                         dtr["error"] = f"HTTP {response.status_code} after {max_retries + 1} attempts"
-                    
+                    else:
+                        self.logger.warning(f"[DTR Manager] [{counter_party_id}] DTR [{asset_id}] returned HTTP {response.status_code}, will retry ({attempt + 1}/{max_retries + 1})...")
+
             except Exception as e:
                 # Delete failed connection for retry
                 self._delete_connection(connector_service, counter_party_id, connector_url, policies_to_use, filter_expression, counter_party_id, asset_id)
-                
+
                 if attempt == max_retries:
                     dtr["error"] = str(e)
+                else:
+                    self.logger.warning(f"[DTR Manager] [{counter_party_id}] DTR [{asset_id}] attempt {attempt + 1}/{max_retries + 1} failed with exception: {e}, will retry...")
         
         return dtr
     
@@ -813,15 +819,24 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         Only the connection/EDR is removed — the DTR cache entry is intentionally
         kept because the DTR itself was validly discovered in the catalog. A
         transient dataplane error (e.g. HTTP 500) does not mean the DTR is invalid.
+        
+        Both the in-memory SDK cache and the persistent edr_connections DB table
+        are cleaned up so that a stale EDR is not reloaded after a restart.
         """
         policies_checksum = hashlib.sha3_256(str(policies).encode('utf-8')).hexdigest()
         filter_checksum = hashlib.sha3_256(str(filter_expression).encode('utf-8')).hexdigest()
+
+        # 1. Remove from SDK in-memory cache
         connector_service.connection_manager.delete_connection(
             counter_party_id=counter_party_id,
             counter_party_address=connector_url,
             query_checksum=filter_checksum,
             policy_checksum=policies_checksum
         )
+
+        # 2. Remove from the persistent edr_connections DB table so the stale
+        #    EDR is not reloaded on the next startup or request.
+        self._purge_edr_from_db(counter_party_id, asset_id)
 
     def discover_shell(self, counter_party_id: str, id: str, dtr_policies: Optional[List[Dict]] = None) -> Dict:
         """
@@ -1226,87 +1241,151 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             response["submodelDescriptor"]["error"] = "Invalid asset ID"
             return response
         
-        try:
-            # Negotiate access to the asset
-            access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
-            
-            purge_cache = False
-            if not access_token:
-                response["submodelDescriptor"]["status"] = "error"
-                response["submodelDescriptor"]["error"] = "Asset negotiation failed. You may not have enough access permissions to this submodel."
-                purge_cache = True
+        # --- Step 1: Contract negotiation (with one stale-EDR retry) ---
+        access_token = None
+        for _neg_attempt in range(2):  # attempt 0 = first try, attempt 1 = retry after purge
+            try:
+                access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
+                break  # success – exit the retry loop
+            except Exception as neg_exc:
+                if self.logger:
+                    self.logger.error(
+                        f"[DTR Manager] [{counter_party_id}] Contract negotiation exception for asset [{asset_id}] "
+                        f"(attempt {_neg_attempt + 1}/2): {neg_exc}"
+                    )
 
-            if(not purge_cache):
-                # Fetch the submodel data
-                data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
-
-                if data:
-                    response["submodel"] = data
-                    response["submodelDescriptor"]["status"] = "success"
+                if _neg_attempt == 0:
+                    # First failure — the cached EDR may be stale.  Purge and retry.
+                    purge_ok = False
+                    try:
+                        purge_ok = self._purge_asset_cache(counter_party_id, asset_id, connector_url, policies)
+                    except Exception as purge_exc:
+                        if self.logger:
+                            self.logger.debug(
+                                f"[DTR Manager] [{counter_party_id}] Purge after failed negotiation raised: {purge_exc}"
+                            )
+                    if purge_ok:
+                        if self.logger:
+                            self.logger.info(
+                                f"[DTR Manager] [{counter_party_id}] Stale EDR purged for asset [{asset_id}]. "
+                                f"Waiting 5 s before retry negotiation..."
+                            )
+                        time.sleep(5)
+                        continue  # retry negotiation
+                    else:
+                        # Nothing was cached – not a stale-EDR problem; fail immediately.
+                        response["submodelDescriptor"]["status"] = "error"
+                        response["submodelDescriptor"]["error"] = (
+                            f"Contract negotiation failed for asset [{asset_id}]. "
+                            f"Access was denied — verify that the governance policies configured for this semantic ID "
+                            f"match the policies offered by the data provider. Detail: {neg_exc}"
+                        )
+                        return response
+                else:
+                    # Second failure – give up.
+                    response["submodelDescriptor"]["status"] = "error"
+                    response["submodelDescriptor"]["error"] = (
+                        f"Contract negotiation failed on retry for asset [{asset_id}] after purging the stale EDR. "
+                        f"The provider's connector may be temporarily unavailable. Detail: {neg_exc}"
+                    )
                     return response
-            
-            existed = self._purge_asset_cache(counter_party_id, asset_id, connector_url, policies)
-            if(not existed):
-                response["submodelDescriptor"]["status"] = "error"
-                response["submodelDescriptor"]["error"] = "This submodel asset does not exists or is not accesible via Connector with your permissions."
-                return response
-             
-            if self.logger:
-                self.logger.info(
-                    f"[DTR Manager] [{counter_party_id}] Purged cached asset token for asset ID [{asset_id}] due to data fetch failure. Waiting 5s before retry..."
-                )
 
-            time.sleep(5)
+        if not access_token:
+            response["submodelDescriptor"]["status"] = "error"
+            response["submodelDescriptor"]["error"] = (
+                f"Contract negotiation failed for asset [{asset_id}]. "
+                f"No access token was returned — verify that the governance policies configured for this semantic ID "
+                f"match the policies offered by the data provider."
+            )
+            return response
 
-            access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
-            if not access_token:
-                response["submodelDescriptor"]["status"] = "error"
-                response["submodelDescriptor"]["error"] = "Asset negotiation failed. You may not have enough access permissions to this submodel."
-                return response
-            
+        # --- Step 2: Data fetch (first attempt) ---
+        fetch_error = None
+        try:
             data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
             if data:
                 response["submodel"] = data
                 response["submodelDescriptor"]["status"] = "success"
                 return response
+        except RuntimeError as fetch_exc:
+            fetch_error = str(fetch_exc)
+            if self.logger:
+                self.logger.warning(
+                    f"[DTR Manager] [{counter_party_id}] Data fetch failed for asset [{asset_id}] "
+                    f"(contract negotiation succeeded). Purging cache and retrying. Error: {fetch_error}"
+                )
+
+        # --- Step 3: Purge stale EDR and retry ---
+        try:
+            existed = self._purge_asset_cache(counter_party_id, asset_id, connector_url, policies)
+            if not existed:
+                response["submodelDescriptor"]["status"] = "error"
+                response["submodelDescriptor"]["error"] = (
+                    f"Contract negotiation succeeded for asset [{asset_id}], but the EDR token could not be "
+                    f"found in the cache for purging. The provider's connector or dataplane may not be reachable "
+                    f"or the asset registration may be incorrect."
+                    + (f" Original fetch error: {fetch_error}" if fetch_error else "")
+                )
+                return response
+        except Exception as purge_exc:
+            if self.logger:
+                self.logger.warning(
+                    f"[DTR Manager] [{counter_party_id}] Cache purge failed for asset [{asset_id}]: {purge_exc}"
+                )
+
+        if self.logger:
+            self.logger.info(
+                f"[DTR Manager] [{counter_party_id}] Purged cached EDR for asset [{asset_id}]. Waiting 5s before retry..."
+            )
+        time.sleep(5)
+
+        try:
+            access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
+        except Exception as neg_retry_exc:
+            response["submodelDescriptor"]["status"] = "error"
+            response["submodelDescriptor"]["error"] = (
+                f"Contract negotiation failed on retry for asset [{asset_id}]. "
+                f"Detail: {neg_retry_exc}"
+            )
+            return response
+
+        if not access_token:
+            response["submodelDescriptor"]["status"] = "error"
+            response["submodelDescriptor"]["error"] = (
+                f"Contract negotiation returned no token on retry for asset [{asset_id}]. "
+                f"The provider's connector may have revoked access or the policies no longer match."
+            )
+            return response
+
+        try:
+            data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
+            if data:
+                if self.logger:
+                    self.logger.info(
+                        f"[DTR Manager] [{counter_party_id}] Retry succeeded for asset [{asset_id}]"
+                    )
+                response["submodel"] = data
+                response["submodelDescriptor"]["status"] = "success"
+                return response
             else:
                 response["submodelDescriptor"]["status"] = "error"
-                response["submodelDescriptor"]["error"] = "Data fetch returned no data after one retry, probably no data is registered behind this submodel descriptor endpoint, or the href of the submodel is incorrect."
-                return response
-                
-        except Exception as e:
-            try:
-                if self.logger:
-                    self.logger.info(
-                        f"[DTR Manager] [{counter_party_id}] Exception during submodel fetch, purging asset cache for [{asset_id}]"
-                    )
-                self._purge_asset_cache(counter_party_id, asset_id, connector_url, policies)
-                if self.logger:
-                    self.logger.info(
-                        f"[DTR Manager] [{counter_party_id}] Waiting 5s before retry after exception for asset [{asset_id}]"
-                    )
-                time.sleep(5)
-
-                access_token = self._negotiate_asset(counter_party_id, asset_id, connector_url, policies)
-                if access_token:
-                    data = self._fetch_submodel_data_with_token(submodel_id, href, access_token)
-                    if data:
-                        if self.logger:
-                            self.logger.info(
-                                f"[DTR Manager] [{counter_party_id}] Retry after exception succeeded for asset [{asset_id}]"
-                            )
-                        response["submodel"] = data
-                        response["submodelDescriptor"]["status"] = "success"
-                        return response
-            except Exception as purge_exc:
-                if self.logger:
-                    self.logger.warning(
-                        f"[DTR Manager] [{counter_party_id}] Failed to purge asset cache after exception for [{asset_id}]: {purge_exc}"
-                    )
+                response["submodelDescriptor"]["error"] = (
+                    f"Contract negotiation succeeded for asset [{asset_id}], but the submodel endpoint "
+                    f"returned no data after retry. The provider may not have registered any data behind "
+                    f"this submodel descriptor href, or the href [{href}] may be incorrect."
+                )
+        except RuntimeError as fetch_retry_exc:
             response["submodelDescriptor"]["status"] = "error"
-            response["submodelDescriptor"]["error"] = f"Asset negotiation failed. You may not have enough access permissions to this submodel. {str(e)}"
-            if self.logger and self.verbose:
-                self.logger.error(f"[DTR Manager] Error fetching single submodel {submodel_id}: {e}")
+            response["submodelDescriptor"]["error"] = (
+                f"Contract negotiation succeeded for asset [{asset_id}], but the provider's dataplane "
+                f"returned an error after retry. The provider's administrator must verify the dataplane "
+                f"registration and backend service configuration for this asset. "
+                f"Detail: {fetch_retry_exc}"
+            )
+            if self.logger:
+                self.logger.error(
+                    f"[DTR Manager] [{counter_party_id}] Dataplane error on retry for asset [{asset_id}]: {fetch_retry_exc}"
+                )
         return response    
     
     def _group_submodels_by_asset(self, submodels_to_fetch: List[Dict]) -> Dict[str, Dict]:
@@ -1403,12 +1482,26 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                         response["submodelDescriptors"][submodel_id]["status"] = "success"
                     else:
                         response["submodelDescriptors"][submodel_id]["status"] = "error"
-                        response["submodelDescriptors"][submodel_id]["error"] = "Data fetch returned no data"
+                        response["submodelDescriptors"][submodel_id]["error"] = (
+                            "Contract negotiation succeeded but the submodel endpoint returned no data. "
+                            "The provider may not have registered data for this submodel descriptor href."
+                        )
+                except RuntimeError as e:
+                    response["submodelDescriptors"][submodel_id]["status"] = "error"
+                    response["submodelDescriptors"][submodel_id]["error"] = (
+                        f"Contract negotiation succeeded, but the provider's dataplane returned an error. "
+                        f"The provider's administrator must verify the dataplane registration and backend "
+                        f"service configuration for this asset. Detail: {e}"
+                    )
+                    if self.logger:
+                        self.logger.error(f"[DTR Manager] Dataplane error fetching submodel {submodel_id}: {e}")
                 except Exception as e:
                     response["submodelDescriptors"][submodel_id]["status"] = "error"
-                    response["submodelDescriptors"][submodel_id]["error"] = f"Data fetch failed: {str(e)}"
+                    response["submodelDescriptors"][submodel_id]["error"] = (
+                        f"Unexpected error during submodel data fetch: {e}"
+                    )
                     if self.logger and self.verbose:
-                        self.logger.error(f"[DTR Manager] Error fetching submodel {submodel_id}: {e}")
+                        self.logger.error(f"[DTR Manager] Unexpected error fetching submodel {submodel_id}: {e}")
     
     def _mark_remaining_pending_as_failed(self, submodels_to_fetch: List[Dict], response: Dict) -> None:
         """Mark any remaining pending submodels as failed."""
@@ -1530,14 +1623,232 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
         except Exception:
             return None
 
+    # ------------------------------------------------------------------
+    # EDR lifecycle helpers — single authoritative source for EDR cleanup
+    # ------------------------------------------------------------------
+
+    def _purge_edr_from_db(self, counter_party_id: str, asset_id: str) -> int:
+        """Delete stale EDR rows from the persistent edr_connections table.
+
+        This is the low-level, DB-only primitive.  It is intentionally private
+        so that callers go through ``purge_edr`` (the public API) unless they
+        already handle the in-memory side themselves (as ``_delete_connection``
+        and ``_purge_asset_cache`` do).
+
+        .. note::
+            The ``counter_party_id`` column stores the full DID of the provider
+            (e.g. ``did:web:...staticdata:did:BPNL00000003CRHK``), not the raw
+            BPNL.  The filter therefore uses a ``LIKE '%' || :cpid`` (ends-with)
+            expression so that callers can pass either the raw BPNL or the full
+            DID and the match will succeed in both cases.
+
+        Args:
+            counter_party_id: BPNL or full DID of the data provider.
+            asset_id: EDC asset ID whose EDR rows should be deleted.
+
+        Returns:
+            int: Number of rows deleted (0 if no DB engine available or not found).
+        """
+        manager = self.connector_consumer_manager.connector_service.connection_manager
+        if not hasattr(manager, "engine"):
+            return 0  # In-memory-only SDK — nothing persistent to clean up
+
+        try:
+            from sqlalchemy import text as sa_text
+            with Session(manager.engine) as db_session:
+                result = db_session.execute(
+                    sa_text(
+                        "DELETE FROM edr_connections "
+                        "WHERE counter_party_id LIKE '%' || :cpid "
+                        "AND edr_data->>'assetId' = :asset_id"
+                    ),
+                    {"cpid": counter_party_id, "asset_id": asset_id},
+                )
+                db_session.commit()
+                rowcount = result.rowcount
+                if self.logger:
+                    if rowcount > 0:
+                        self.logger.info(
+                            f"[DTR Manager] [{counter_party_id}] Removed {rowcount} stale EDR(s) "
+                            f"from DB for asset [{asset_id}]"
+                        )
+                    else:
+                        self.logger.debug(
+                            f"[DTR Manager] [{counter_party_id}] No stale EDR found in DB "
+                            f"for asset [{asset_id}] (already clean)"
+                        )
+                return rowcount
+        except Exception as db_exc:
+            if self.logger:
+                self.logger.warning(
+                    f"[DTR Manager] [{counter_party_id}] Could not remove stale EDR from DB "
+                    f"for asset [{asset_id}]: {db_exc}"
+                )
+            return 0
+
+    def purge_edr(self, counter_party_id: str, asset_id: str) -> int:
+        """Remove a stale or expired EDR from both in-memory caches and the DB.
+
+        This is the **public, reusable entry point** for EDR cleanup.  Use it
+        whenever you detect that an EDR token is no longer valid::
+
+            # From a service or controller:
+            dtr_manager.consumer.purge_edr(provider_bpnl, asset_id)
+
+            # From internal retry logic:
+            self.purge_edr(counter_party_id, asset_id)
+
+        It performs two steps in order:
+
+        1. **Memory eviction** — scans and removes matching entries from the
+           SDK's internal caches (``_edr_tracked``, ``_connection_cache``) by
+           ``assetId`` value without needing policy/filter checksums.
+        2. **DB deletion** — delegates to :meth:`_purge_edr_from_db` so the
+           stale row is not reloaded on the next startup or request.
+
+        Args:
+            counter_party_id: Business Partner Number of the data provider.
+            asset_id: EDC asset ID whose EDR should be evicted.
+
+        Returns:
+            int: Number of DB rows deleted (0 if not found or no DB backend).
+        """
+        if self.logger:
+            self.logger.info(
+                f"[DTR Manager] [{counter_party_id}] purge_edr called for asset [{asset_id}]"
+            )
+
+        # Step 1 — Evict from SDK in-memory caches (best-effort; no checksums needed)
+        manager = self.connector_consumer_manager.connector_service.connection_manager
+        for cache_attr in ("_edr_tracked", "_connection_cache"):
+            if not hasattr(manager, cache_attr):
+                continue
+            try:
+                cache = getattr(manager, cache_attr)
+                keys_to_remove = [
+                    k for k, v in cache.items()
+                    if isinstance(v, dict)
+                    and (v.get("edr_data") or v).get("assetId") == asset_id
+                ]
+                for key in keys_to_remove:
+                    del cache[key]
+                    if self.logger:
+                        self.logger.info(
+                            f"[DTR Manager] [{counter_party_id}] Evicted EDR from "
+                            f"{cache_attr} for asset [{asset_id}] (key: {key})"
+                        )
+            except Exception as mem_exc:
+                if self.logger:
+                    self.logger.warning(
+                        f"[DTR Manager] [{counter_party_id}] Could not evict from "
+                        f"{cache_attr} for asset [{asset_id}]: {mem_exc}"
+                    )
+
+        # Step 2 — Persist the deletion to the DB
+        return self._purge_edr_from_db(counter_party_id, asset_id)
+
+    def purge_edrs_matching(self, counter_party_id: str, asset_id_pattern: str) -> int:
+        """Remove all stale EDRs whose asset ID matches a SQL LIKE pattern.
+
+        This covers cases where multiple EDRs share a common prefix, such as
+        all DigitalTwinEventAPI EDRs for a provider::
+
+            # From a service before sending a notification:
+            dtr_manager.consumer.purge_edrs_matching(
+                provider_bpnl, "ichub:asset:digitaltwin-event:%"
+            )
+
+        Memory eviction is best-effort (scans by prefix); the DB deletion is
+        authoritative.
+
+        Args:
+            counter_party_id: BPN of the data provider.
+            asset_id_pattern: SQL LIKE pattern (``%`` and ``_`` wildcards).
+
+        Returns:
+            int: Number of DB rows deleted.
+        """
+        if self.logger:
+            self.logger.info(
+                f"[DTR Manager] [{counter_party_id}] purge_edrs_matching "
+                f"called for pattern [{asset_id_pattern}]"
+            )
+
+        # Best-effort in-memory eviction — match on prefix (strip trailing %)
+        prefix = asset_id_pattern.rstrip("%")
+        manager = self.connector_consumer_manager.connector_service.connection_manager
+        for cache_attr in ("_edr_tracked", "_connection_cache"):
+            if not hasattr(manager, cache_attr):
+                continue
+            try:
+                cache = getattr(manager, cache_attr)
+                keys_to_remove = [
+                    k for k, v in cache.items()
+                    if isinstance(v, dict)
+                    and (v.get("edr_data") or v).get("assetId", "").startswith(prefix)
+                ]
+                for key in keys_to_remove:
+                    del cache[key]
+                    if self.logger:
+                        self.logger.info(
+                            f"[DTR Manager] [{counter_party_id}] Evicted EDR from "
+                            f"{cache_attr} matching [{asset_id_pattern}] (key: {key})"
+                        )
+            except Exception as mem_exc:
+                if self.logger:
+                    self.logger.warning(
+                        f"[DTR Manager] [{counter_party_id}] Could not evict from "
+                        f"{cache_attr} matching [{asset_id_pattern}]: {mem_exc}"
+                    )
+
+        # Authoritative DB deletion using a LIKE pattern.
+        # counter_party_id column stores the full DID, so match with ends-with.
+        if not hasattr(manager, "engine"):
+            return 0
+        try:
+            from sqlalchemy import text as sa_text
+            with Session(manager.engine) as db_session:
+                result = db_session.execute(
+                    sa_text(
+                        "DELETE FROM edr_connections "
+                        "WHERE counter_party_id LIKE '%' || :cpid "
+                        "AND edr_data->>'assetId' LIKE :pattern"
+                    ),
+                    {"cpid": counter_party_id, "pattern": asset_id_pattern},
+                )
+                db_session.commit()
+                rowcount = result.rowcount
+                if self.logger:
+                    if rowcount > 0:
+                        self.logger.info(
+                            f"[DTR Manager] [{counter_party_id}] Removed {rowcount} stale EDR(s) "
+                            f"from DB matching pattern [{asset_id_pattern}]"
+                        )
+                    else:
+                        self.logger.debug(
+                            f"[DTR Manager] [{counter_party_id}] No stale EDRs found in DB "
+                            f"matching pattern [{asset_id_pattern}] (already clean)"
+                        )
+                return rowcount
+        except Exception as db_exc:
+            if self.logger:
+                self.logger.warning(
+                    f"[DTR Manager] [{counter_party_id}] Could not remove stale EDRs from DB "
+                    f"matching pattern [{asset_id_pattern}]: {db_exc}"
+                )
+            return 0
+
     def _negotiate_asset(self, counter_party_id: str, asset_id: str, dsp_endpoint_url: str, policies: List[Dict]) -> Optional[str]:
         """Negotiate access to a single asset and return the access token."""
         connector_service: BaseConnectorConsumerService = self.connector_consumer_manager.connector_service
-        dataplane_url, access_token = connector_service.do_dsp_by_asset_id(
-            counter_party_id=counter_party_id,
+        filter_expression = connector_service.get_filter_expression(
+            key="https://w3id.org/edc/v0.0.1/ns/id", value=asset_id
+        )
+        dataplane_url, access_token = connector_service.do_dsp_with_bpnl(
+            bpnl=counter_party_id,
             counter_party_address=dsp_endpoint_url,
-            asset_id=asset_id,
-            policies=policies
+            policies=policies,
+            filter_expression=filter_expression
         )
         return access_token
 
@@ -1609,59 +1920,26 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
                         f"[DTR Manager] [{counter_party_id}] PURGE: Could not force-remove from memory cache: {exc}"
                     )
         
-        # Always attempt database deletion, even if memory deletion failed
-        manager = connector_service.connection_manager
-        deleted_from_db = False
-        
-        if hasattr(manager, "engine"):
-            try:
-                with Session(manager.engine) as session:
-                    from sqlalchemy import text
-                    
-                    # Try by assetId first (more reliable for submodels)
-                    if self.logger and self.verbose:
-                        self.logger.debug(
-                            f"[DTR Manager] [{counter_party_id}] PURGE: Attempting DB deletion by assetId: {asset_id}"
-                        )
-                    
-                    result = session.execute(
-                        text("DELETE FROM edr_connections WHERE counter_party_id = :cpid AND edr_data->>'assetId' = :asset_id"),
-                        {"cpid": counter_party_id, "asset_id": asset_id}
-                    )
-                    session.commit()
-                    deleted_from_db = result.rowcount > 0
-                    
-                    if self.logger:
-                        action = "✓ Purged from DB" if deleted_from_db else "✗ Not found in DB"
-                        self.logger.info(
-                            f"[DTR Manager] [{counter_party_id}] PURGE: {action} (memory: {deleted_from_memory}) for asset [{asset_id}]"
-                        )
-                    
-                    # Force reload EDRs from database after deletion
-                    if deleted_from_db and hasattr(manager, 'load_from_db'):
-                        try:
-                            manager.load_from_db()
-                            if self.logger:
-                                self.logger.info(
-                                    f"[DTR Manager] [{counter_party_id}] PURGE: Forced SDK to reload EDRs from DB after deletion"
-                                )
-                        except Exception as reload_exc:
-                            if self.logger:
-                                self.logger.warning(
-                                    f"[DTR Manager] [{counter_party_id}] PURGE: Could not force reload from DB: {reload_exc}"
-                                )
-            except Exception as exc:
-                if self.logger:
-                    self.logger.error(
-                        f"[DTR Manager] [{counter_party_id}] PURGE: Failed to delete from DB for asset [{asset_id}]: {exc}",
-                        exc_info=True
-                    )
-        
+        # Always attempt database deletion, even if memory deletion failed.
+        # Delegate to the shared helper so the logic lives in one place.
+        deleted_from_db = self._purge_edr_from_db(counter_party_id, asset_id) > 0
+
+        if self.logger:
+            action = "✓ Purged from DB" if deleted_from_db else "✗ Not found in DB"
+            self.logger.info(
+                f"[DTR Manager] [{counter_party_id}] PURGE: {action} "
+                f"(memory: {deleted_from_memory}) for asset [{asset_id}]"
+            )
+
         # Return True if deleted from either location
         return deleted_from_memory or deleted_from_db
             
     def _fetch_submodel_data_with_token(self, submodel_id: str, href: str, access_token: str) -> Optional[Dict]:
-        """Fetch submodel data using a pre-negotiated access token."""
+        """Fetch submodel data using a pre-negotiated access token.
+        
+        Raises RuntimeError with HTTP status details when the dataplane returns a non-200 response,
+        so callers can distinguish dataplane configuration errors from empty responses.
+        """
         try:
             headers = {"Authorization": f"{access_token}"}
             response = HttpTools.do_get(href, headers=headers)
@@ -1669,13 +1947,27 @@ class DtrConsumerMemoryManager(BaseDtrConsumerManager):
             if response.status_code == 200:
                 return response.json()
             else:
-                if self.logger and self.verbose:
-                    self.logger.debug(f"[DTR Manager] Failed to fetch submodel {submodel_id} from {href}, status: {response.status_code}")
-                return None
+                # Try to extract a meaningful body snippet for the error
+                try:
+                    body_preview = response.text[:300] if response.text else "(empty body)"
+                except Exception:
+                    body_preview = "(unreadable body)"
+                error_msg = (
+                    f"Dataplane returned HTTP {response.status_code} from [{href}]. "
+                    f"Response: {body_preview}"
+                )
+                if self.logger:
+                    self.logger.warning(
+                        f"[DTR Manager] Submodel [{submodel_id}] fetch failed — "
+                        f"HTTP {response.status_code} from [{href}]: {body_preview}"
+                    )
+                raise RuntimeError(error_msg)
+        except RuntimeError:
+            raise
         except Exception as e:
             if self.logger and self.verbose:
                 self.logger.error(f"[DTR Manager] Error fetching submodel {submodel_id}: {e}")
-            return None
+            raise RuntimeError(f"Network or connection error while fetching submodel [{submodel_id}] from [{href}]: {e}") from e
 
     def _is_dtr_asset(self, dataset: Dict) -> bool:
         """

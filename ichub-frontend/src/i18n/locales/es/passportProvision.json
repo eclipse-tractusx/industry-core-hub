@@ -87,23 +87,18 @@
       "selectSerializedPart": "Seleccionar Pieza Serializada",
       "chooseSerializedPart": "Elige una pieza serializada...",
       "selectedPart": "Pieza Seleccionada",
-      "checkingRegistration": "Verificando estado de compartición...",
+      "checkingRegistration": "Verificando estado de registro...",
       "registrationStatus": "Estado de Registro",
-      "sharingStatus": "Estado de Compartición",
-      "notRegistered": "No Compartido",
+      "notRegistered": "No Registrado",
       "alreadyHasDpp": "Ya tiene DPP",
       "noDppAssigned": "Sin DPP asignado",
       "mustBeRegisteredWarning": "Esta pieza serializada debe registrarse como gemelo digital antes de poder aprovisionar un DPP.",
-      "mustBeSharedWarning": "Esta pieza serializada debe compartirse como gemelo digital antes de poder aprovisionar un DPP.",
       "registerSerializedPart": "Registrar Pieza Serializada",
-      "shareSerializedPart": "Compartir Pieza Serializada",
       "registerThisPart": "Registrar Esta Pieza",
       "registering": "Registrando...",
-      "sharing": "Compartiendo...",
       "orCreateNewPart": "O crea una nueva pieza:",
       "createNewSerializedPart": "Crear Nueva Pieza Serializada",
-      "twinRegisteredSuccess": "¡Gemelo compartido exitosamente!",
-      "twinSharedSuccess": "¡Gemelo compartido exitosamente!",
+      "twinRegisteredSuccess": "¡Gemelo registrado exitosamente!",
       "partCreatedSuccess": "Pieza serializada creada exitosamente"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "Por favor selecciona una pieza serializada para asociar con este DPP",
       "partMustBeRegistered": "La pieza serializada seleccionada debe estar registrada antes de crear un DPP. Por favor regístrala primero.",
-      "partMustBeShared": "La pieza serializada seleccionada debe estar compartida antes de crear un DPP. Por favor compártala primero.",
       "provideDppData": "Por favor proporciona datos del DPP antes de continuar. Puedes crearlos usando el formulario o subir un archivo JSON.",
       "validateFirst": "Por favor valida los datos del DPP antes de continuar."
     },
@@ -165,7 +159,6 @@
       "successMessage": "¡Tu Pasaporte Digital de Producto ha sido publicado exitosamente!",
       "currentStatus": "Estado Actual",
       "sharePrompt": "¡Ahora puedes compartirlo con tu socio!",
-      "alreadyShared": "Este DPP ya está compartido con tu socio.",
       "errorOccurred": "Ocurrió un error al publicar el DPP"
     },
     "preview": {

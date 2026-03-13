@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from uuid import UUID
 from enum import Enum
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 class NotificationDirection(str, Enum):
     INCOMING = "incoming"

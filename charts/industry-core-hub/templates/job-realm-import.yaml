@@ -23,7 +23,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-realm-import-{{ now | date "20060102-150405" }}
+  name: {{ .Release.Name }}-realm-import
   namespace: {{ .Release.Namespace | default "default" | quote }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}

@@ -147,8 +147,8 @@
         "deleteSerializedPart": "Eliminar Pieza Serializada"
       },
       "messages": {
-        "twinRegisteredSuccess": "¡Gemelo compartido correctamente!",
-        "registrationFailed": "Error al compartir: {{error}}",
+        "twinRegisteredSuccess": "¡Gemelo registrado correctamente!",
+        "registrationFailed": "Error al registrar: {{error}}",
         "sharingFailed": "Error al compartir: {{error}}",
         "unsharingFailed": "Error al dejar de compartir: {{error}}",
         "deletionFailed": "Error al eliminar: {{error}}",

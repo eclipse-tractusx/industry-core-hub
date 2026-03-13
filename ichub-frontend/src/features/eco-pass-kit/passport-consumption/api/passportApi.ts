@@ -102,7 +102,7 @@ export interface DiscoveryResponse {
 export interface DiscoverRequest {
   id: string;
   semanticId: string;
-  dtrPolicies?: Array<Record<string, unknown>>;
+  dtrPolicies?: Record<string, unknown>;
   governance?: Record<string, unknown>;
 }
 
@@ -151,7 +151,7 @@ export const discoverPassport = async (
   id: string,
   semanticId: string,
   onProgress?: (status: DiscoveryStatus) => void,
-  dtrPolicies?: Array<Record<string, unknown>>,
+  dtrPolicies?: Record<string, unknown>,
   governance?: Record<string, unknown>
 ): Promise<PassportResponse> => {
   // Initiate discovery

@@ -87,23 +87,18 @@
       "selectSerializedPart": "シリアライズ部品を選択",
       "chooseSerializedPart": "シリアライズ部品を選択...",
       "selectedPart": "選択された部品",
-      "checkingRegistration": "共有ステータスを確認中...",
+      "checkingRegistration": "登録ステータスを確認中...",
       "registrationStatus": "登録ステータス",
-      "sharingStatus": "共有ステータス",
-      "notRegistered": "未共有",
+      "notRegistered": "未登録",
       "alreadyHasDpp": "既にDPPがあります",
       "noDppAssigned": "DPPが割り当てられていません",
       "mustBeRegisteredWarning": "このシリアライズ部品はDPPを設定する前にデジタルツインとして登録する必要があります。",
-      "mustBeSharedWarning": "このシリアライズ部品はDPPを設定する前にデジタルツインとして共有する必要があります。",
       "registerSerializedPart": "シリアライズ部品を登録",
-      "shareSerializedPart": "シリアライズ部品を共有",
       "registerThisPart": "この部品を登録",
       "registering": "登録中...",
-      "sharing": "共有中...",
       "orCreateNewPart": "または新しい部品を作成:",
       "createNewSerializedPart": "新しいシリアライズ部品を作成",
-      "twinRegisteredSuccess": "ツインが正常に共有されました！",
-      "twinSharedSuccess": "ツインが正常に共有されました！",
+      "twinRegisteredSuccess": "ツインが正常に登録されました！",
       "partCreatedSuccess": "シリアライズ部品が正常に作成されました"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "このDPPに関連付けるシリアライズ部品を選択してください",
       "partMustBeRegistered": "選択されたシリアライズ部品はDPPを作成する前に登録する必要があります。まず登録してください。",
-      "partMustBeShared": "選択されたシリアライズ部品はDPPを作成する前に共有する必要があります。まず共有してください。",
       "provideDppData": "続行する前にDPPデータを提供してください。フォームを使用して作成するか、JSONファイルをアップロードできます。",
       "validateFirst": "続行する前にDPPデータを検証してください。"
     },
@@ -165,7 +159,6 @@
       "successMessage": "デジタル製品パスポートが正常に公開されました！",
       "currentStatus": "現在のステータス",
       "sharePrompt": "パートナーと共有できます！",
-      "alreadyShared": "このDPPはすでにパートナーと共有されています。",
       "errorOccurred": "DPPの公開中にエラーが発生しました"
     },
     "preview": {

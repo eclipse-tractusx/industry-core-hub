@@ -147,8 +147,8 @@
         "deleteSerializedPart": "Eliminar Peça Serializada"
       },
       "messages": {
-        "twinRegisteredSuccess": "Gémeo partilhado com sucesso!",
-        "registrationFailed": "Partilha falhou: {{error}}",
+        "twinRegisteredSuccess": "Gémeo registado com sucesso!",
+        "registrationFailed": "Registo falhou: {{error}}",
         "sharingFailed": "Partilha falhou: {{error}}",
         "unsharingFailed": "Anulação de partilha falhou: {{error}}",
         "deletionFailed": "Eliminação falhou: {{error}}",

@@ -23,7 +23,7 @@
 
 from urllib.parse import quote
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
-from tractusx_sdk.extensions.notification_api import NotificationService
+from tractusx_sdk.industry.services.notifications import NotificationService
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import NotFoundError
 from tools.constants import (
@@ -50,12 +50,24 @@ class ConnectorProviderManager:
                  authorization: bool = False,
                  backend_api_key: str = "X-Api-Key",
                  backend_api_key_value: str = "",
-                 dataspace_version: str = DATASPACE_VERSION_JUPITER):
+                 dataspace_version: str = DATASPACE_VERSION_JUPITER,
+                 submodel_mode: str = "filesystem",
+                 submodel_asset_headers: dict = None):
 
-        self.ichub_url = ichub_url  # for the circular submodel bundles.
+        self.ichub_url = ichub_url  # base URL of the submodel service (local or external)
         self.path_submodel_dispatcher = path_submodel_dispatcher
         self.agreements = agreements
         self.backend_submodel_dispatcher = self.ichub_url + self.path_submodel_dispatcher
+
+        # "filesystem" = local ICHub backend serves submodels directly
+        # "http"       = an external submodel service is used; EDC asset data-address
+        #                must carry that service's own auth header
+        self.submodel_mode = submodel_mode
+
+        # Pre-built headers to inject into the EDC data-address for submodel assets.
+        # Built by the caller (connector.py / run_asset_sync.py) based on mode and
+        # auth config; None means no auth header is added (filesystem mode or auth disabled).
+        self.submodel_asset_headers = submodel_asset_headers
 
         # Initialize authorization attributes from parameters
         self.authorization = authorization
@@ -180,9 +192,14 @@ class ConnectorProviderManager:
         
         return usage_policy_id, access_policy_id
         
-    def register_submodel_bundle_circular_offer(self, semantic_id: str) -> tuple[str, str, str, str]:
+    def register_submodel_bundle_circular_offer(self, semantic_id: str, headers: dict = None) -> tuple[str, str, str, str]:
+        # Use the pre-configured submodel auth headers when the caller does not
+        # supply explicit ones (covers the normal startup/sync code paths).
+        if headers is None:
+            headers = self.submodel_asset_headers
+
         ## step 1: Create the submodel bundle asset
-        asset_id = self.get_or_create_circular_submodel_asset(semantic_id)
+        asset_id = self.get_or_create_circular_submodel_asset(semantic_id, headers=headers)
 
         ## step 2: Lookup corresponding policy configuration
         policy_entry = next((entry for entry in self.agreements if entry.get("semanticid") == semantic_id), None)
@@ -305,21 +322,20 @@ class ConnectorProviderManager:
         logger.info(f"[DTR] Successfully registered asset with ID {existing_asset_id}.")
         return asset.get("@id", existing_asset_id)
     
-    def get_or_create_circular_submodel_asset(self, semantic_id:str) -> str:
-        
-        standard_asset_id = self.generate_asset_id(semantic_id=semantic_id)
+    def get_or_create_circular_submodel_asset(self, semantic_id: str, headers: dict = None) -> str:
         """Get or create a circular submodel asset."""
+        standard_asset_id = self.generate_asset_id(semantic_id=semantic_id)
+
         # Check if the asset already exists
         existing_asset = self.connector_service.assets.get_by_id(oid=standard_asset_id)
-        
         if existing_asset.status_code == 200:
             logger.debug(f"Asset with ID {standard_asset_id} already exists.")
             return standard_asset_id
-        
+
         # If it doesn't exist, create it
         logger.info(f"Creating new asset with ID {standard_asset_id}.")
         try:
-            asset = self.create_circular_submodel_asset(semantic_id)
+            asset = self.create_circular_submodel_asset(semantic_id, headers=headers)
         except ValueError as e:
             logger.error(f"Failed to register submodel bundle asset with ID {standard_asset_id} for semantic ID '{semantic_id}'. Error: {e}")
             raise
@@ -330,20 +346,24 @@ class ConnectorProviderManager:
         return self.backend_submodel_dispatcher + "/" + quote(semantic_id, safe="")
     
     def generate_asset_id(self, semantic_id: str):
-        return "ichub:asset:"+blake2b_128bit(self.build_dispatcher_url(semantic_id=semantic_id))
+        # Include the submodel mode in the hash so that a "filesystem" asset and
+        # an "http" asset for the same semantic ID produce distinct EDC asset IDs,
+        # even if the resolved dispatcher URLs happen to collide.
+        return "ichub:asset:" + blake2b_128bit(
+            self.submodel_mode + self.build_dispatcher_url(semantic_id=semantic_id)
+        )
     
     def generate_dtr_asset_id(self, dtr_url:str):
         return "ichub:asset:dtr:"+blake2b_128bit(dtr_url)
     
-    def create_circular_submodel_asset(self, semantic_id: str):
-        headers = None
-        
-        # In case the authorization is enabled, we need to add the backend API key to the headers
-        if(self.authorization):
-            headers = {
-                self.backend_api_key: self.backend_api_key_value
-            }
-        
+    def create_circular_submodel_asset(self, semantic_id: str, headers: dict = None):
+        """Create a SubmodelBundle asset in the EDC.
+
+        The ``headers`` dict is forwarded verbatim into the data-address
+        ``header:*`` properties so the EDC data-plane can authenticate against
+        the submodel service.  Pass the headers from the caller; this method
+        does not inspect configuration itself.
+        """
         submodel_dispatcher_url = self.build_dispatcher_url(semantic_id=semantic_id)
             
         return self.create_submodel_bundle_asset(

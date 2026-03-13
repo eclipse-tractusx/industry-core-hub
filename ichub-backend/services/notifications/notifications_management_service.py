@@ -24,10 +24,10 @@
 from uuid import UUID
 from typing import List, Optional, Dict
 
-from tractusx_sdk.extensions.notification_api.models import Notification
-from tractusx_sdk.extensions.notification_api import NotificationConsumerService, NotificationError
+from tractusx_sdk.industry.models.notifications import Notification
+from tractusx_sdk.industry.services.notifications import NotificationConsumerService
+from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 from tractusx_sdk.dataspace.services.connector.base_connector_consumer import BaseConnectorConsumerService
-from sqlalchemy import text
 
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
@@ -38,6 +38,7 @@ from tools.exceptions import NotificationCreationError, NotificationUpdateStatus
 from tools.constants import SEM_ID_NOTIFICATION
 
 from connector import connector_manager
+from dtr import dtr_manager
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -57,17 +58,20 @@ class NotificationsManagementService():
         """
         return f"{SEM_ID_NOTIFICATION}:{message_id}"
 
-    def _remove_existing_edr_for_digital_twin_event_api(self, repos, provider_bpn: str):
+    def _remove_existing_edr_for_digital_twin_event_api(self, provider_bpn: str) -> None:
         """
-        Before sending a notification, we must remove any edr_connection that we have store in the database related with the DigitalTwinEventAPI
-        to ensure that we are not using an old edr_connection.
+        Before sending a notification, remove any cached EDR for the
+        DigitalTwinEventAPI asset of this provider so we never reuse a stale token.
+        Delegates to the DTR manager's reusable purge helper.
         """
-        session = repos._session
-        session.execute(
-            text("DELETE FROM edr_connections WHERE counter_party_id = :cpid AND edr_data->>'assetId' LIKE :asset_id"),
-            params={"cpid": provider_bpn, "asset_id": "ichub:asset:digitaltwin-event:%"}
+        rows = dtr_manager.purge_edrs_matching(
+            counter_party_id=provider_bpn,
+            asset_id_pattern="ichub:asset:digitaltwin-event:%",
         )
-        session.commit()
+        logger.debug(
+            f"[Notifications] Purged {rows} stale DigitalTwinEventAPI EDR(s) "
+            f"for provider [{provider_bpn}]"
+        )
 
     def create_notification(self, notification: Notification, direction: NotificationDirection, use_case: str = None) -> NotificationEntity:
         """
@@ -174,7 +178,7 @@ class NotificationsManagementService():
         """
         try:
             with RepositoryManagerFactory().create() as repos:
-                self._remove_existing_edr_for_digital_twin_event_api(repos, provider_bpn)
+                self._remove_existing_edr_for_digital_twin_event_api(provider_bpn)
                 db_notification = repos.notification_repository.find_by_message_id(
                     message_id=message_id
                 )

@@ -252,6 +252,7 @@ export interface ShellDiscoveryResponse {
   shellsFound: number;
   pagination: PaginationInfo;
   error?: string; // Optional error field for API error responses
+  errorDetails?: string[]; // Aggregated DTR error messages and per-policy diff lines
 }
 
 export interface DTRInfo {
@@ -260,6 +261,7 @@ export interface DTRInfo {
   status: string;
   shellsFound: number;
   shells: string[];
+  error?: string; // Optional error message from connector negotiation / policy check
   paging_metadata: {
     cursor?: string;
   };

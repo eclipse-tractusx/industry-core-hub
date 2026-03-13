@@ -40,6 +40,7 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import IosShare from '@mui/icons-material/IosShare';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -170,9 +171,13 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
       return { status: StatusVariants.draft };
     }
 
-    // For SerializedParts, registration already makes the twin visible to the partner
-    // (partner BPN is added to DTR shell descriptor), so both 'registered' and 'shared' are treated as 'shared'
-    return { status: StatusVariants.shared, globalId: twin.globalId?.toString(), dtrAasId: twin.dtrAasId?.toString() };
+    // If twin has shares, it's shared; otherwise it's only registered
+    const hasShares = twin.shares && twin.shares.length > 0;
+    return {
+      status: hasShares ? StatusVariants.shared : StatusVariants.registered,
+      globalId: twin.globalId?.toString(),
+      dtrAasId: twin.dtrAasId?.toString(),
+    };
   };
 
   useEffect(() => {
@@ -262,26 +267,14 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
   const handleCreateTwin = async (row: SerializedPartWithStatus) => {
     setTwinCreatingId(row.id);
     try {
-      // Step 1: Register the twin (this already makes it visible in DTR to the partner)
+      // Register the twin in the DTR
       await createSerializedPartTwin({
         manufacturerId: row.manufacturerId,
         manufacturerPartId: row.manufacturerPartId,
         partInstanceId: row.partInstanceId,
       });
-
-      // Step 2: Automatically create TwinExchange record so the DB state reflects the shared reality
-      try {
-        await shareSerializedPartTwin({
-          manufacturerId: row.manufacturerId,
-          manufacturerPartId: row.manufacturerPartId,
-          partInstanceId: row.partInstanceId,
-        });
-      } catch (shareErr) {
-        // Share may fail if TwinExchange already exists — not critical since DTR visibility is already set
-        console.warn('Auto-share after registration warning:', shareErr);
-      }
       
-      // Refresh twin data after successful creation
+      // Refresh twin data after successful registration
       const updatedTwins = await fetchTwinsOnce();
       const relevantTwins = getRelevantTwins(updatedTwins);
       
@@ -300,7 +293,7 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
       setRows(rowsWithStatus);
       
       // Show success message
-      showSuccess(t('table.messages.twinShared'));
+      showSuccess(t('table.messages.twinRegistered'));
     } catch (error) {
       console.error("Error creating twin:", error);
       // After error (e.g., 404), refetch and decide success vs error based on updated status
@@ -330,7 +323,7 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
             r.partInstanceId === row.partInstanceId
         );
         if (updatedRow && (updatedRow.twinStatus === StatusVariants.shared || updatedRow.twinStatus === StatusVariants.registered)) {
-          showSuccess(t('table.messages.twinShared'));
+          showSuccess(t('table.messages.twinRegistered'));
           return; // suppress original error
         }
       } catch (recheckError) {
@@ -338,15 +331,15 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
       }
 
       // Extract meaningful error message if status remains draft
-      let errorMessage = t('table.messages.shareFailed');
+      let errorMessage = t('table.messages.registerFailed');
       if (error instanceof Error) {
-        errorMessage = `${t('table.messages.shareFailed')}: ${error.message}`;
+        errorMessage = `${t('table.messages.registerFailed')}: ${error.message}`;
       } else if (typeof error === 'object' && error !== null && 'response' in error) {
         const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
         if (axiosError.response?.data?.message) {
-          errorMessage = `${t('table.messages.shareFailed')}: ${axiosError.response.data.message}`;
+          errorMessage = `${t('table.messages.registerFailed')}: ${axiosError.response.data.message}`;
         } else if (axiosError.response?.data?.error) {
-          errorMessage = `${t('table.messages.shareFailed')}: ${axiosError.response.data.error}`;
+          errorMessage = `${t('table.messages.registerFailed')}: ${axiosError.response.data.error}`;
         }
       }
       showError(errorMessage);
@@ -639,11 +632,48 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
 
         if (row.twinStatus === StatusVariants.draft) {
           actions.push(
-            <Tooltip title={t('common:tooltips.shareTwin')} key="share" arrow>
+            <Tooltip title={t('common:tooltips.registerTwin')} key="register" arrow>
               <IconButton
                 size="small"
                 onClick={() => handleCreateTwin(row)}
                 disabled={twinCreatingId === row.id}
+                sx={{
+                  backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                  color: '#1976d2',
+                  borderRadius: '8px',
+                  width: 36,
+                  height: 36,
+                  border: '1px solid rgba(25, 118, 210, 0.3)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+                  },
+                  '&:disabled': {
+                    backgroundColor: 'rgba(248, 249, 250, 0.1)',
+                    color: 'rgba(248, 249, 250, 0.3)',
+                    border: '1px solid rgba(248, 249, 250, 0.1)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                {twinCreatingId === row.id ? (
+                  <CircularProgress size={16} sx={{ color: '#1976d2' }} />
+                ) : (
+                  <CloudUploadIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          );
+        }
+
+        if (row.twinStatus === StatusVariants.registered) {
+          actions.push(
+            <Tooltip title={t('common:tooltips.shareTwin')} key="share" arrow>
+              <IconButton
+                size="small"
+                onClick={() => handleShareTwin(row)}
+                disabled={twinSharingId === row.id}
                 sx={{
                   backgroundColor: 'rgba(156, 39, 176, 0.1)',
                   color: '#9c27b0',
@@ -664,11 +694,42 @@ const SerializedPartsTable = ({ parts, onRefresh }: SerializedPartsTableProps) =
                   transition: 'all 0.2s ease-in-out',
                 }}
               >
-                {twinCreatingId === row.id ? (
-                  <CircularProgress size={16} sx={{ color: '#9c27b0' }} />
-                ) : (
-                  <IosShare fontSize="small" />
-                )}
+                <IosShare fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          );
+          
+          // Add delete button for registered twins
+          actions.push(
+            <Tooltip title={t('table.tooltips.deleteSerializedPart')} key="delete" arrow>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  
+                  showDeleteConfirmation(row);
+                }}
+                disabled={partDeletingId === row.id}
+                sx={{
+                  backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                  color: '#f44336',
+                  borderRadius: '8px',
+                  width: 36,
+                  height: 36,
+                  border: '1px solid rgba(244, 67, 54, 0.3)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                  },
+                  '&:disabled': {
+                    backgroundColor: 'rgba(248, 249, 250, 0.1)',
+                    color: 'rgba(248, 249, 250, 0.3)',
+                    border: '1px solid rgba(248, 249, 250, 0.1)',
+                  },
+                  transition: 'all 0.2s ease-in-out',
+                }}
+              >
+                <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           );

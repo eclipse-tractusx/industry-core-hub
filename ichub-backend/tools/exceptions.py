@@ -22,10 +22,13 @@
 #################################################################################
 
 from pydantic import BaseModel
+from typing import Optional
 
 class ErrorDetail(BaseModel):
     status: int
     message: str
+    details: Optional[list[str]] = None
+    """Optional structured details (e.g. per-policy diff lines) for human-readable diagnostics."""
 
 exception_responses ={
         400: {
@@ -59,9 +62,9 @@ exception_responses ={
     }
 
 class BaseError(Exception):
-    def __init__(self, status_code: int, message: str):
+    def __init__(self, status_code: int, message: str, details: Optional[list[str]] = None):
         self.status_code = status_code
-        self.detail = ErrorDetail(status=status_code, message=message)
+        self.detail = ErrorDetail(status=status_code, message=message, details=details)
         super().__init__(message)
 
 class InvalidError(BaseError):
@@ -165,3 +168,24 @@ class NotificationSendingError(BaseError):
     """
     def __init__(self, message: str = "Failed to send notification."):
         super().__init__(status_code=502, message=message)
+
+
+class PolicyMismatchError(BaseError):
+    """
+    Exception raised when no allowed policy matches the catalog's available policies.
+
+    Carries per-policy diff details captured from the SDK's DEBUG-level diagnostic
+    log messages (``tractusx_sdk.dataspace.tools.dsp_tools``) so the frontend can
+    display them in a human-readable dropdown without requiring the operator to dig
+    through server logs.
+
+    Example details entry::
+
+        "Allowed policy [0] differences:\n"
+        "  - permission.constraint.and[2]: constraint mismatch\n"
+        "  Catalog:  'UsagePurpose' 'isAnyOf' 'cx.core.digitalTwinRegistry:1'\n"
+        "  Allowed:  'UsagePurpose' 'isAnyOf' 'cx.core.digitalTwinRegistry:2'"
+    """
+
+    def __init__(self, message: str, details: Optional[list[str]] = None) -> None:
+        super().__init__(status_code=403, message=message, details=details)

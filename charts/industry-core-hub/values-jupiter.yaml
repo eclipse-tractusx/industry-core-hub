@@ -80,7 +80,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "UsagePurpose"
@@ -94,7 +94,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -109,7 +109,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -130,7 +130,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -145,7 +145,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 and:
@@ -166,7 +166,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -181,7 +181,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "UsagePurpose"
@@ -195,7 +195,7 @@ backend:
             - "http://www.w3.org/ns/odrl.jsonld"
             - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
               "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-          permissions:
+          permission:
             - action: "use"
               constraint:
                 leftOperand: "Membership"
@@ -289,7 +289,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -310,7 +310,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   leftOperand: "Membership"
@@ -334,7 +334,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   and:
@@ -355,7 +355,7 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
-            permissions:
+            permission:
               - action: "use"
                 constraint:
                   leftOperand: "Membership"
@@ -654,188 +654,156 @@ frontend:
 
   consumption:
     digitalTwinRegistry:
+      # -- DTR policy configuration (Jupiter format — odrl: prefixed keys, @id wrappers)
+      # Array of policy definitions sent to the backend for DTR access negotiation.
+      # The JSON-LD @context + @id wrappers resolve the compact IRIs at runtime.
       policies:
-        - permission:
-          - action: odrl:use
-            LogicalConstraint: odrl:and
-            constraints:
-              - leftOperand: cx-policy:FrameworkAgreement
-                operator: odrl:eq
-                rightOperand: DataExchangeGovernance:1.0
-              - leftOperand: cx-policy:Membership
-                operator: odrl:eq
-                rightOperand: active
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
-          prohibition: []
-          obligation: []
-          strict: false
-        - permission:
-          - action: odrl:use
-            constraints:
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
-          prohibition: []
-          obligation: []
+        - "@context":
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          "odrl:permission":
+            - "odrl:action":
+                "@id": "odrl:use"
+              "odrl:constraint":
+                "odrl:and":
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:FrameworkAgreement"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:Membership"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "active"
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:UsagePurpose"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "cx.core.digitalTwinRegistry:1"
+          "odrl:prohibition": []
+          "odrl:obligation": []
+    # -- Governance policies for consumption (Jupiter format — odrl: prefixed keys, @id wrappers)
+    # Each entry maps a semantic ID to its usage and access policies.
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
       - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
       - semanticid: "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
-            prohibition: []
-            obligation: []
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.circular.dpp:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         policies:
-          - strict: false
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
 
   healthChecks:
     startup:

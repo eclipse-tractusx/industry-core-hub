@@ -13,12 +13,12 @@
       "deleteSerializedPart": "シリアライズ部品を削除"
     },
     "messages": {
-      "twinRegistered": "ツインが正常に共有されました!",
+      "twinRegistered": "ツインが正常に登録されました!",
       "twinShared": "ツインが正常に共有されました!",
       "twinUnshared": "ツインの共有が正常に解除されました!",
       "partDeleted": "シリアライズ部品が正常に削除されました!",
       "dataRefreshed": "データが正常に更新されました!",
-      "registerFailed": "共有に失敗しました",
+      "registerFailed": "登録に失敗しました",
       "shareFailed": "共有に失敗しました",
       "unshareFailed": "共有解除に失敗しました",
       "deleteFailed": "削除に失敗しました",

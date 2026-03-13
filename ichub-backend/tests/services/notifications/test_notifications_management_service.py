@@ -41,7 +41,7 @@ from tools.exceptions import (
     NotificationSendingError
 )
 from tools.constants import SEM_ID_NOTIFICATION
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 
 class TestNotificationsManagementService:
@@ -472,7 +472,7 @@ class TestNotificationsManagementService:
     def test_send_notification_notification_error(self, mock_repo_factory, mock_notification_consumer_service):
         """Test send_notification with NotificationError."""
         # Arrange
-        from tractusx_sdk.extensions.notification_api import NotificationError
+        from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 
         message_id = uuid4()
         endpoint_url = "/test/endpoint"
