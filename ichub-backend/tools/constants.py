@@ -56,6 +56,7 @@ VAN_DESCRIPTION = "The optional VAN (Vehicle Assembly Number) of the serialized 
 
 # ==================== API VERSIONS =========================
 API_V1 = "v1"
+API_V2 = "v2"
 
 # ==================== USE CASE =========================
 CCM = "CCM"

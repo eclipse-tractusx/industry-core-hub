@@ -74,6 +74,16 @@ try:
     agreements = ConfigManager.get_config("agreements")
     path_submodel_dispatcher = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
 
+    provider_connector_controlplane_catalog_path=ConfigManager.get_config("provider.connector.controlplane.protocolPath"),
+    provider_connector_dataplane_hostname=ConfigManager.get_config("provider.connector.dataplane.hostname"),
+    provider_connector_dataplane_public_path=ConfigManager.get_config("provider.connector.dataplane.publicPath")
+
+
+    provider_connector_controlplane_catalog_path=ConfigManager.get_config("provider.connector.controlplane.protocolPath"),
+    provider_connector_dataplane_hostname=ConfigManager.get_config("provider.connector.dataplane.hostname"),
+    provider_connector_dataplane_public_path=ConfigManager.get_config("provider.connector.dataplane.publicPath")
+
+
     # Authorization configuration — defaults to local backend auth
     authorization_enabled = ConfigManager.get_config("authorization.enabled", False)
     backend_api_key = ConfigManager.get_config("authorization.api_key.key", "X-Api-Key")
@@ -123,6 +133,10 @@ try:
             connector_provider_service=provider_connector_service,
             ichub_url=ichub_url,
             agreements=agreements,
+            connector_controlplane_hostname=provider_connector_controlplane_hostname,
+            connector_controlplane_catalog_path=provider_connector_controlplane_catalog_path,
+            connector_dataplane_hostname=provider_connector_dataplane_hostname,
+            connector_dataplane_public_path=provider_connector_dataplane_public_path,
             path_submodel_dispatcher=path_submodel_dispatcher,
             authorization=authorization_enabled,
             backend_api_key=backend_api_key,

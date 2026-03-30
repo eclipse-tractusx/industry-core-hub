@@ -32,7 +32,7 @@ import os
 import logging
 
 from tools.exceptions import BaseError, ValidationError
-from tools.constants import API_V1
+from tools.constants import API_V1, API_V2
 from managers.config.config_manager import ConfigManager
 
 startup_logger = logging.getLogger("app.startup")
@@ -91,7 +91,8 @@ from .routers.provider.v1 import (
     partner_management,
     twin_management,
     submodel_dispatcher,
-    sharing_handler
+    sharing_handler,
+    system_management,
 )
 from .routers.consumer.v1 import (
     connection_management,
@@ -102,6 +103,11 @@ from .routers.notifications.v1 import (
     notifications_management
 )
 from .routers.addons import addons
+
+from .routers.provider.v2 import (
+    twin_management as twin_management_v2,
+    sharing_handler as sharing_handler_v2,
+)
 
 tags_metadata = [
     {
@@ -123,6 +129,10 @@ tags_metadata = [
     {
         "name": "Submodel Dispatcher",
         "description": "Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service"
+    },
+    {
+        "name": "System Management",
+        "description": "Management of integrated system components (EDC, DTR, etc.)"
     },
     {
         "name": "Open Connection Management",
@@ -147,7 +157,7 @@ tags_metadata = [
     {
         "name": "EcoPass KIT Microservices",
         "description": "Provider-side EcoPass KIT endpoints"
-    }
+    },
 ]
 
 app = FastAPI(title="Industry Core Hub Backend API", version="0.0.1", openapi_tags=tags_metadata, lifespan=lifespan)
@@ -219,14 +229,21 @@ v1_router.include_router(partner_management.router)
 v1_router.include_router(twin_management.router)
 v1_router.include_router(submodel_dispatcher.router)
 v1_router.include_router(sharing_handler.router)
+v1_router.include_router(system_management.router)
 v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
 v1_router.include_router(digital_twin_event_api.router)
 v1_router.include_router(notifications_management.router)
 v1_router.include_router(addons.router)
 
+# API Version 2
+v2_router = APIRouter(prefix=f"/{API_V2}")
+v2_router.include_router(twin_management_v2.router)
+v2_router.include_router(sharing_handler_v2.router)
+
 # Include the API version 1 router into the main app
 app.include_router(v1_router)
+app.include_router(v2_router)
 
 
 def custom_openapi():
