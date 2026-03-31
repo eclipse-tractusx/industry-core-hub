@@ -220,6 +220,26 @@ class TestTwinManagementService:
 
         return control_plane
 
+    @pytest.fixture
+    def patched_aspect_registration_managers(self):
+        """Patch manager wrappers with reusable connector and DTR mocks for aspect registration tests."""
+        mock_connector_provider = Mock()
+        mock_connector_provider.connector_dataplane_hostname = "https://edc.example"
+        mock_connector_provider.connector_dataplane_public_path = "/api/public"
+        mock_connector_provider.connector_controlplane_hostname = "https://edc.example"
+        mock_connector_provider.connector_controlplane_catalog_path = "/api/catalog"
+        mock_connector_provider.register_submodel_bundle_circular_offer.return_value = (
+            "asset_id", "policy_id", "access_id", "contract_id"
+        )
+
+        mock_dtr_manager = Mock()
+        mock_dtr_manager.create_submodel_descriptor.return_value = Mock()
+
+        with patch('services.provider.twin_management_service.SystemManagementService.ensure_dtr_asset_registration', return_value=None), \
+             patch('services.provider.twin_management_service.SystemManagementService.get_connector_manager', return_value=mock_connector_provider), \
+             patch('services.provider.twin_management_service.SystemManagementService.get_dtr_manager', return_value=mock_dtr_manager):
+            yield mock_connector_provider, mock_dtr_manager
+
     def test_service_initialization(self):
         """Test that the service initializes correctly."""
         service = TwinManagementService()
@@ -630,14 +650,15 @@ class TestTwinManagementService:
         # Assert
         assert result is not None
 
-    @patch('services.provider.system_management_service.ConfigManager')
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
-    @patch('services.provider.system_management_service.connector_manager')
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_create_twin_aspect_new_aspect(self, mock_repo_factory, mock_connector,
-                                         mock_submodel_manager, mock_config, mock_twin, mock_digital_twin_registry,
-                                         mock_connector_control_plane, sample_global_id, sample_semantic_id, sample_payload):
+    def test_create_twin_aspect_new_aspect(self, mock_repo_factory, mock_submodel_manager,
+                                         mock_twin, mock_digital_twin_registry,
+                                         mock_connector_control_plane, sample_global_id, sample_semantic_id, sample_payload,
+                                         patched_aspect_registration_managers):
         """Test creating a new twin aspect."""
+        _ = patched_aspect_registration_managers
+
         # Arrange
         twin_aspect_create = TwinAspectCreate(
             globalId=sample_global_id,
@@ -677,19 +698,6 @@ class TestTwinManagementService:
         mock_registration.twin_registry = mock_digital_twin_registry
         mock_repo.twin_aspect_registration_repository.create_new.return_value = mock_registration
         
-        # Mock configuration
-        mock_config.get_config.return_value = {
-            "hostname": "http://test-dtr",
-            "uri": "/api",
-            "apiPath": "/v3",
-            "policy": {},
-            "asset_config": {"dct_type": "test", "existing_asset_id": None}
-        }
-        
-        # Mock connector and DTR responses
-        mock_connector.provider.register_dtr_offer.return_value = ("dtr_asset_id", None, None, None)
-        mock_connector.provider.register_submodel_bundle_circular_offer.return_value = ("asset_id", "policy_id", "access_id", "contract_id")
-        
         # Mock submodel service manager
         mock_submodel_service = Mock()
         mock_submodel_manager.return_value = mock_submodel_service
@@ -706,14 +714,15 @@ class TestTwinManagementService:
             mock_repo.twin_aspect_repository.create_new.assert_called_once()
             mock_submodel_service.upload_twin_aspect_document.assert_called_once()
 
-    @patch('services.provider.system_management_service.ConfigManager')
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
-    @patch('services.provider.system_management_service.connector_manager')
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
-    def test_create_or_update_twin_aspect_not_default_new(self, mock_repo_factory, mock_connector,mock_submodel_manager, mock_config, 
+    def test_create_or_update_twin_aspect_not_default_new(self, mock_repo_factory, mock_submodel_manager,
                                                         mock_twin, mock_digital_twin_registry, mock_connector_control_plane,
-                                                        sample_global_id, sample_semantic_id, sample_payload):
+                                                        sample_global_id, sample_semantic_id, sample_payload,
+                                                        patched_aspect_registration_managers):
         """Test creating a new twin aspect using the non-default method."""
+        _ = patched_aspect_registration_managers
+
         # Arrange
         twin_aspect_create = TwinAspectCreate(
             globalId=sample_global_id,
@@ -748,19 +757,6 @@ class TestTwinManagementService:
         # Mock the find_registration_by_twin_registry_id to return None (new registration)
         mock_new_aspect2.find_registration_by_twin_registry_id.return_value = None
         
-        # Mock configuration
-        mock_config.get_config.return_value = {
-            "hostname": "http://test-dtr",
-            "uri": "/api",
-            "apiPath": "/v3",
-            "policy": {},
-            "asset_config": {"dct_type": "test", "existing_asset_id": None}
-        }
-        
-        # Mock connector and DTR responses
-        mock_connector.provider.register_dtr_offer.return_value = ("dtr_asset_id", None, None, None)
-        mock_connector.provider.register_submodel_bundle_circular_offer.return_value = ("asset_id", "policy_id", "access_id", "contract_id")
-        
         # Mock submodel service manager
         mock_submodel_service = Mock()
         mock_submodel_manager.return_value = mock_submodel_service
@@ -780,8 +776,11 @@ class TestTwinManagementService:
     @patch('services.provider.twin_management_service._create_submodel_service_manager')
     def test_create_or_update_twin_aspect_not_default_update_existing(self, mock_submodel_manager, mock_repo_factory, mock_twin, 
                                                                     mock_digital_twin_registry, mock_connector_control_plane,
-                                                                    sample_global_id, sample_semantic_id, sample_payload):
+                                                                    sample_global_id, sample_semantic_id, sample_payload,
+                                                                    patched_aspect_registration_managers):
         """Test updating an existing twin aspect using the non-default method."""
+        _ = patched_aspect_registration_managers
+
         # Arrange
         submodel_id = UUID("12345678-1234-1234-1234-123456789012")
         twin_aspect_create = TwinAspectCreate(
