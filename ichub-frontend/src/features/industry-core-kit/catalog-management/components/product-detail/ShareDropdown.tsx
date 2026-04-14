@@ -42,13 +42,12 @@ import {
   Delete as DeleteIcon,
   GetApp as ExportIcon,
   Visibility as ViewDetailsIcon,
-  MoreVert as MoreVertIcon,
   CloudUpload as RegisterIcon
 } from '@mui/icons-material';
-import { PRODUCT_OPTIONS } from '@/features/industry-core-kit/catalog-management/types/shared';
 import { PartType, StatusVariants } from "@/features/industry-core-kit/catalog-management/types/types";
 import { CatalogPartTwinDetailsRead, CatalogPartTwinCreateType } from '@/features/industry-core-kit/catalog-management/types/twin-types';
 import { registerCatalogPartTwin } from "@/features/industry-core-kit/catalog-management/api";
+import { useTranslation } from 'react-i18next';
 
 interface ShareDropdownProps {
   partData: PartType;
@@ -75,6 +74,7 @@ interface ShareDropdownProps {
 }: ShareDropdownProps) => {
   const [open, setOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { t } = useTranslation('catalogManagement');
 
   const handleToggle = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -96,7 +96,7 @@ interface ShareDropdownProps {
   // Internal copy handler - copies global asset ID if available, otherwise part ID
   const handleCopy = () => {
     const textToCopy = twinDetails?.globalId || `${partData.manufacturerId}#${partData.manufacturerPartId}`;
-    const copyLabel = twinDetails?.globalId ? "Global Asset ID" : "Part ID";
+    const isGlobalAssetId = !!twinDetails?.globalId;
     
     navigator.clipboard.writeText(textToCopy)
       .then(() => {
@@ -104,15 +104,18 @@ interface ShareDropdownProps {
         onNotification?.({
           open: true,
           severity: "success",
-          title: `${copyLabel} copied to clipboard`,
+          title: isGlobalAssetId 
+            ? t('productDetail.shareDropdown.messages.globalAssetIdCopied')
+            : t('productDetail.shareDropdown.messages.partIdCopied'),
         });
       })
       .catch((error) => {
-        console.error(`Failed to copy ${copyLabel}:`, error);
+        const label = isGlobalAssetId ? "Global Asset ID" : "Part ID";
+        console.error(`Failed to copy ${label}:`, error);
         onNotification?.({
           open: true,
           severity: "error",
-          title: `Failed to copy ${copyLabel}`,
+          title: t('productDetail.shareDropdown.messages.copyFailed', { label }),
         });
       });
   };
@@ -123,7 +126,7 @@ interface ShareDropdownProps {
       onNotification?.({
         open: true,
         severity: "error",
-        title: "AAS ID not available",
+        title: t('productDetail.shareDropdown.messages.aasIdNotAvailable'),
       });
       return;
     }
@@ -134,7 +137,7 @@ interface ShareDropdownProps {
         onNotification?.({
           open: true,
           severity: "success",
-          title: "AAS ID copied to clipboard",
+          title: t('productDetail.shareDropdown.messages.aasIdCopied'),
         });
       })
       .catch((error) => {
@@ -142,7 +145,7 @@ interface ShareDropdownProps {
         onNotification?.({
           open: true,
           severity: "error",
-          title: "Failed to copy AAS ID",
+          title: t('productDetail.shareDropdown.messages.copyAasIdFailed'),
         });
       });
   };
@@ -200,7 +203,7 @@ interface ShareDropdownProps {
       onNotification?.({
         open: true,
         severity: "success",
-        title: "Part twin registered successfully!",
+        title: t('productDetail.shareDropdown.messages.twinRegisteredSuccess'),
       });
 
       // Refresh the parent component data after successful registration
@@ -213,7 +216,7 @@ interface ShareDropdownProps {
       onNotification?.({
         open: true,
         severity: "error",
-        title: "Failed to register part twin!",
+        title: t('productDetail.shareDropdown.messages.twinRegistrationFailed'),
       });
     }
   };
@@ -228,7 +231,7 @@ interface ShareDropdownProps {
         className="actions-button"
         endIcon={<IosShareIcon />}
       >
-        SHARE
+        {t('productDetail.shareDropdown.share')}
       </Button>
       <Popper
         open={open}
@@ -258,7 +261,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <ViewDetailsIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.VIEW_DETAILS} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.viewDetails')} />
                     </MenuItem>
                   )}
 
@@ -268,7 +271,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <EditIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.EDIT} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.edit')} />
                     </MenuItem>
                   )}
 
@@ -278,7 +281,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <RegisterIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.REGISTER} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.register')} />
                     </MenuItem>
                   )}
 
@@ -290,7 +293,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <ShareIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.SHARE} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.share')} />
                     </MenuItem>
                   )}
 
@@ -300,7 +303,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <ContentCopyIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.COPY} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.copy')} />
                     </MenuItem>
                   )}
 
@@ -310,7 +313,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <ContentCopyIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.COPY_AAS_ID} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.copyAasId')} />
                     </MenuItem>
                   )}
 
@@ -321,7 +324,7 @@ interface ShareDropdownProps {
                     <ListItemIcon>
                       <FileDownloadIcon fontSize="small" />
                     </ListItemIcon>
-                    <ListItemText primary={PRODUCT_OPTIONS.DOWNLOAD} />
+                    <ListItemText primary={t('productDetail.shareDropdown.options.download')} />
                   </MenuItem>
 
                   {/* Export */}
@@ -330,7 +333,7 @@ interface ShareDropdownProps {
                       <ListItemIcon>
                         <ExportIcon fontSize="small" />
                       </ListItemIcon>
-                      <ListItemText primary={PRODUCT_OPTIONS.EXPORT} />
+                      <ListItemText primary={t('productDetail.shareDropdown.options.export')} />
                     </MenuItem>
                   )}
 
@@ -345,7 +348,7 @@ interface ShareDropdownProps {
                         <ListItemIcon>
                           <DeleteIcon fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText primary={PRODUCT_OPTIONS.DELETE} />
+                        <ListItemText primary={t('productDetail.shareDropdown.options.delete')} />
                       </MenuItem>
                     </>
                   )}

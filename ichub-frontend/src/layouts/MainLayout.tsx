@@ -29,6 +29,7 @@ import AdditionalSidebar from '../components/general/AdditionalSidebar';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { SidebarProvider } from '../contexts/SidebarContext';
 import { AdditionalSidebarProvider } from '../contexts/AdditionalSidebarContext';
+import { NotificationProvider, NotificationsPanel } from '../features/notifications';
 import { features } from '../features/main';
 import { isAuthEnabled } from '../services/EnvironmentService';
 
@@ -51,6 +52,8 @@ function MainLayoutContent() {
           <Outlet />
         </Grid2>
       </Grid2>
+      {/* Notifications Panel - Floating overlay */}
+      <NotificationsPanel />
     </Grid2>
   );
 
@@ -65,7 +68,9 @@ function MainLayout() {
   return (
     <SidebarProvider>
       <AdditionalSidebarProvider>
-        <MainLayoutContent />
+        <NotificationProvider>
+          <MainLayoutContent />
+        </NotificationProvider>
       </AdditionalSidebarProvider>
     </SidebarProvider>
   );

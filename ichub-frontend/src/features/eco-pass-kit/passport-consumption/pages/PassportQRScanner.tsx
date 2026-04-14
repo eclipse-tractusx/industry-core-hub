@@ -22,6 +22,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -41,6 +42,7 @@ import {
 import { Scanner } from '@yudiel/react-qr-scanner';
 
 const PassportQRScanner: React.FC = () => {
+  const { t } = useTranslation(['passportConsumption', 'common']);
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCamera, setSelectedCamera] = useState<string>('');
@@ -68,7 +70,7 @@ const PassportQRScanner: React.FC = () => {
       
       // Validate format
       if (!isValidCXFormat(decodedText)) {
-        setScannerError('Invalid format. Only CX:<manufacturerPartId>:<partInstanceId> format is allowed, not URLs.');
+        setScannerError(t('scanner.invalidFormat'));
         return;
       }
       
@@ -81,7 +83,7 @@ const PassportQRScanner: React.FC = () => {
   const handleError = (error: any) => {
     console.error('QR Scanner Error:', error);
     if (error?.message && !error.message.includes('No QR code found')) {
-      setScannerError('Failed to access camera. Please grant camera permissions.');
+      setScannerError(t('scanner.cameraError'));
     }
   };
 
@@ -148,7 +150,7 @@ const PassportQRScanner: React.FC = () => {
                     fontSize: { xs: '1rem', sm: '1.25rem' }
                   }}
                 >
-                  Scan QR Code
+                  {t('scanner.title')}
                 </Typography>
                 <Typography 
                   variant="body2" 
@@ -157,7 +159,7 @@ const PassportQRScanner: React.FC = () => {
                     fontSize: { xs: '0.8rem', sm: '0.875rem' }
                   }}
                 >
-                  Position the QR code within the frame
+                  {t('scanner.subtitle')}
                 </Typography>
               </Box>
               <Button
@@ -226,14 +228,14 @@ const PassportQRScanner: React.FC = () => {
                   <InputLabel>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <VideocamIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
-                      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Camera</Box>
-                      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Cam</Box>
+                      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{t('scanner.camera')}</Box>
+                      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{t('scanner.cameraShort')}</Box>
                     </Box>
                   </InputLabel>
                   <Select
                     value={selectedCamera}
                     onChange={(e) => setSelectedCamera(e.target.value)}
-                    label="Camera"
+                    label={t('scanner.camera')}
                     MenuProps={{
                       PaperProps: {
                         sx: {
@@ -352,14 +354,14 @@ const PassportQRScanner: React.FC = () => {
                   fontSize: { xs: '0.75rem', sm: '0.8rem' }
                 }}
               >
-                Only QR codes with format <Box component="code" sx={{ 
+                {t('scanner.formatInfo')} <Box component="code" sx={{ 
                   backgroundColor: 'rgba(102, 126, 234, 0.2)', 
                   px: 1, 
                   py: 0.5, 
                   borderRadius: '4px',
                   color: '#667eea',
                   fontFamily: 'monospace'
-                }}>CX:&lt;manufacturerPartId&gt;:&lt;partInstanceId&gt;</Box> are accepted
+                }}>CX:&lt;manufacturerPartId&gt;:&lt;partInstanceId&gt;</Box> {t('scanner.formatInfoSuffix')}
               </Typography>
             </Box>
           </CardContent>

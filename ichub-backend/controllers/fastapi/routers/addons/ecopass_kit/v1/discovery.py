@@ -35,7 +35,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=DiscoverDppResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("", response_model=DiscoverDppResponse, status_code=status.HTTP_202_ACCEPTED)
 async def discover_dpp(request: DiscoverDppRequest, background_tasks: BackgroundTasks):
     """
     Discover a Digital Product Passport using BPN Discovery and DTR lookup.

@@ -218,7 +218,6 @@
     }
   ],
   "clientScopes": [],
-  "users": [],
   "browserSecurityHeaders": {
     "contentSecurityPolicyReportOnly": "",
     "xContentTypeOptions": "nosniff",
@@ -243,12 +242,6 @@
   "authenticationFlows": [],
   "authenticatorConfig": [],
   "requiredActions": [],
-  "browserFlow": "browser",
-  "registrationFlow": "registration",
-  "directGrantFlow": "direct grant",
-  "resetCredentialsFlow": "reset credentials",
-  "clientAuthenticationFlow": "clients",
-  "dockerAuthenticationFlow": "docker auth",
   "attributes": {},
   "keycloakVersion": "25.0.6",
   "userManagedAccessAllowed": false,

@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Button, Chip } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -41,6 +42,8 @@ export const SearchModeToggle: React.FC<SearchModeToggleProps> = ({
   onDisplayFilters,
   onHideFilters
 }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
+  
   return (
     <Box 
       sx={{ 
@@ -85,7 +88,7 @@ export const SearchModeToggle: React.FC<SearchModeToggleProps> = ({
             }
           }}
         >
-          Display Filters
+          {t('common:actions.displayFilters')}
         </Button>
       )}
 
@@ -115,14 +118,14 @@ export const SearchModeToggle: React.FC<SearchModeToggleProps> = ({
             }
           }}
         >
-          Hide Filters
+          {t('common:actions.hideFilters')}
         </Button>
       )}
 
       {/* Search Mode Toggle */}
       <Box sx={{ display: 'flex', gap: 0.5 }}>
         <Chip
-          label="Discovery"
+          label={t('searchModes.discovery')}
           clickable
           onClick={() => onSearchModeChange('discovery')}
           color={searchMode === 'discovery' ? 'primary' : 'default'}
@@ -138,7 +141,7 @@ export const SearchModeToggle: React.FC<SearchModeToggleProps> = ({
           }}
         />
         <Chip
-          label="Single Twin"
+          label={t('searchModes.singleTwin')}
           clickable
           onClick={() => onSearchModeChange('single')}
           color={searchMode === 'single' ? 'primary' : 'default'}

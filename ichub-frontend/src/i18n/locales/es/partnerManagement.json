@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Lista de Contactos",
+    "noPartnersYet": "Aún no se han añadido socios, usa el botón verde de arriba para crear uno.",
+    "loadError": "Error al cargar los socios. Por favor verifica la conectividad con el backend.",
+    "requestTimeout": "Tiempo de espera agotado después de 30 segundos"
+  },
+  "dialog": {
+    "createTitle": "Crear nuevo socio",
+    "editTitle": "Editar socio",
+    "partnerInfo": "Información del Socio",
+    "partnerInfoDescription": "Introduce el nombre del socio y el BPNL"
+  },
+  "fields": {
+    "partnerName": "Nombre del Socio",
+    "partnerBpnl": "BPNL del Socio"
+  },
+  "autocomplete": {
+    "placeholder": "Selecciona un socio o introduce un BPNL personalizado (ej., BPNL0000000093Q7)",
+    "helperText": "Selecciona de los socios disponibles o introduce un Número de Socio Comercial de Entidad Legal personalizado",
+    "loadingPartners": "Cargando socios...",
+    "noPartnersFound": "No se encontraron socios. Aún puedes introducir un BPNL personalizado.",
+    "loadError": "No se pudo cargar la lista de socios del backend. Aún puedes introducir un BPNL manualmente."
+  },
+  "messages": {
+    "createSuccess": "Socio {{name}} creado exitosamente [{{bpnl}}]",
+    "updateSuccess": "Socio {{name}} actualizado exitosamente [{{bpnl}}] (actualización local)",
+    "createError": "Error al crear el socio.",
+    "bpnlConflict": "Ya existe un socio con este BPNL."
+  }
+}

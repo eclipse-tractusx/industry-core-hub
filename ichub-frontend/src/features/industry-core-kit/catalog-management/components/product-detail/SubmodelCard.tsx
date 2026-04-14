@@ -35,6 +35,7 @@ import {
     Visibility as VisibilityIcon,
     DataObject as DataObjectIcon
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 
 import { TwinAspectRead } from '@/features/industry-core-kit/catalog-management/types/twin-types';
 import { parseSemanticId } from '@/utils/semantics';
@@ -61,6 +62,8 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
     aspect,
     onViewDetails
 }) => {
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
 
     const formatSemanticId = (semanticId: string): string => {
         if (semanticId.length > 40) {
@@ -167,7 +170,7 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
                                 fontSize: '10px'
                             }}
                         >
-                            Namespace
+                            {t('productDetail.submodelCard.namespace')}
                         </Typography>
                         <Tooltip title={parsedSemanticId.namespace} placement="top">
                             <Typography 
@@ -196,7 +199,7 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
                                 fontSize: '10px'
                             }}
                         >
-                            Submodel ID
+                            {tCommon('fields.submodelId')}
                         </Typography>
                         <Tooltip title={aspect.submodelId} placement="top">
                             <Typography 
@@ -236,7 +239,7 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
                         borderRadius: 1
                     }}
                 >
-                    View Details
+                    {tCommon('actions.viewDetails')}
                 </Button>
             </CardActions>
         </Card>

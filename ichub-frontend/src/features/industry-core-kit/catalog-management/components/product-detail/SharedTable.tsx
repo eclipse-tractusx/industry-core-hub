@@ -22,6 +22,7 @@
 
 import React, { useState } from "react";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination} from "@mui/material";
+import { useTranslation } from 'react-i18next';
 
 import { SharedPartner } from '@/features/industry-core-kit/catalog-management/types/types';
 
@@ -30,6 +31,8 @@ interface SharedTableProps {
 }
 
 const SharedTable = ({ sharedParts }: SharedTableProps) => {
+  const { t } = useTranslation('catalogManagement');
+  const { t: tCommon } = useTranslation('common');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -50,9 +53,9 @@ const SharedTable = ({ sharedParts }: SharedTableProps) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Company Name</TableCell>
-              <TableCell>BPNL</TableCell>
-              <TableCell>Customer Part ID</TableCell>
+              <TableCell>{t('productDetail.sharedTable.columns.partnerName')}</TableCell>
+              <TableCell>{t('productDetail.sharedTable.columns.bpnl')}</TableCell>
+              <TableCell>{t('common:fields.customerPartId')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -76,6 +79,7 @@ const SharedTable = ({ sharedParts }: SharedTableProps) => {
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}
+        labelRowsPerPage={tCommon('pagination.rowsPerPage')}
       />
     </Paper>
   );

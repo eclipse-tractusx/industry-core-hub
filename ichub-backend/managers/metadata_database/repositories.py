@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025,2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -44,7 +44,12 @@ from models.metadata_database.provider.models import (
     PartnerCatalogPart,
     DataExchangeAgreement
 )
-
+from models.metadata_database.notification.models import (
+    NotificationEntity,
+    NotificationDirection,
+    NotificationStatus
+)
+from tractusx_sdk.industry.models.notifications import Notification
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
@@ -662,3 +667,106 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         )
         self.create(twin_registration)
         return twin_registration
+
+class NotificationRepository(BaseRepository[NotificationEntity]):
+    """
+    Repository for managing Industry Core Notifications.
+    """
+    
+    def create_new(
+        self, 
+        notification: Notification, 
+        direction: NotificationDirection,
+        status: NotificationStatus = NotificationStatus.PENDING,
+        use_case: str = None,
+        location: str = ""
+    ) -> NotificationEntity:
+        """
+        Creates a new NotificationEntity from an SDK model (passed as a dict),
+        the specific flow direction, and an optional use_case/category.
+        """
+        db_notification = NotificationEntity.from_sdk(
+            notification=notification, 
+            direction=direction, 
+            status=status,
+            use_case=use_case,
+            location=location
+        )
+        self.create(db_notification)
+        # Flush so the DB assigns the auto-increment ``id`` (and any other
+        # server-side defaults) while the session is still open, then expunge
+        # the instance from the session identity-map.  This transitions it to a
+        # "detached but not expired" state: all in-memory attribute values
+        # (message_id, sender_bpn, …) are preserved and readable after the
+        # session is committed and closed by the RepositoryManager context
+        # manager.  Without expunge, SQLAlchemy would expire every attribute on
+        # commit and raise DetachedInstanceError the moment the caller probes
+        # any field after the ``with`` block exits.
+        self._session.flush()
+        self._session.expunge(db_notification)
+        return db_notification
+
+    def find_by_message_id(self, message_id: UUID) -> Optional[NotificationEntity]:
+        """Find a notification by its unique Catena-X messageId."""
+        stmt = select(NotificationEntity).where(
+            NotificationEntity.message_id == message_id
+        )
+        return self._session.scalars(stmt).first()
+
+    def find_by_bpn(
+        self, 
+        bpn: str, 
+        direction: Optional[NotificationDirection] = None,
+        status: Optional[NotificationStatus] = None,
+        use_case: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[NotificationEntity]:
+        """
+        Retrieves notifications related to a specific Business Partner.
+        Useful for 'Inbox' (Incoming) or 'Sent' (Outgoing) views.
+        Optionally filter by use_case/category.
+        """
+        stmt = select(NotificationEntity)
+        
+        # Filter by BPN: If incoming, we are the receiver. If outgoing, we are the sender.
+        if direction == NotificationDirection.INCOMING:
+            stmt = stmt.where(NotificationEntity.receiver_bpn == bpn)
+        elif direction == NotificationDirection.OUTGOING:
+            stmt = stmt.where(NotificationEntity.sender_bpn == bpn)
+        else:
+            # If direction isn't specified, find any interaction with this BPN
+            stmt = stmt.where(
+                (NotificationEntity.sender_bpn == bpn) | 
+                (NotificationEntity.receiver_bpn == bpn)
+            )
+
+        if status:
+            stmt = stmt.where(NotificationEntity.status == status)
+
+        if use_case:
+            stmt = stmt.where(NotificationEntity.use_case == use_case)
+
+        # Order by newest first
+        stmt = stmt.order_by(desc(NotificationEntity.created_at)).offset(offset).limit(limit)
+        
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(self, message_id: UUID, new_status: NotificationStatus) -> Optional[NotificationEntity]:
+        """Update the lifecycle status of a notification."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return None
+        
+        db_obj.status = new_status
+        self._session.add(db_obj)
+        return db_obj
+
+    def delete_by_message_id(self, message_id: UUID) -> bool:
+        """Delete a notification by its messageId. Returns True if deleted, False if not found."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return False
+        
+        self.delete_obj(db_obj)
+        return True

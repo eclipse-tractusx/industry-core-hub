@@ -71,119 +71,145 @@ backend:
     # -- Hostname for the backend service. If empty, it will use the ingress URL automatically.
     # Set this to override the hostname with a custom value (e.g., "https://my-custom-backend.example.com")
     hostname: ""
+    # -- Agreements define the ODRL policies for each semantic model.
+    # The format follows the Tractus-X SDK TCK reference (plain keys).
+    # Both Jupiter and Saturn use identical rule structures — only the context differs.
+    # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
     agreements:
       - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
         usage:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.circular.dpp:1"
           prohibition: []
           obligation: []
         access:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: access
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
           prohibition: []
           obligation: []
       - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
         usage:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
           prohibition: []
           obligation: []
         access:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
           prohibition: []
           obligation: []
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         usage:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
           prohibition: []
           obligation: []
         access:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
           prohibition: []
           obligation: []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         usage:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
           prohibition: []
           obligation: []
         access:
           context:
-            odrl: http://www.w3.org/ns/odrl/2/
-            cx-policy: https://w3id.org/catenax/policy/
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
           permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
           prohibition: []
           obligation: []
     authorization:
@@ -234,7 +260,7 @@ backend:
             operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
       connector:
         dataspace:
-          version: "jupiter"
+          version: "saturn"
         controlplane:
           hostname: "https://<edc-consumer-control-hostname>"
           apiKeyHeader: "X-Api-Key"
@@ -246,7 +272,7 @@ backend:
     provider:
       connector:
         dataspace:
-          version: "jupiter"
+          version: "saturn"
         controlplane:
           hostname: "https://<edc-provider-control-hostname>"
           apiKeyHeader: "X-Api-Key"
@@ -268,33 +294,78 @@ backend:
         policy:
           usage:
             context:
-              odrl: http://www.w3.org/ns/odrl/2/
-              cx-policy: https://w3id.org/catenax/policy/
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-              - action: odrl:use
-                LogicalConstraint: odrl:and
-                constraints:
-                  - leftOperand: cx-policy:FrameworkAgreement
-                    operator: odrl:eq
-                    rightOperand: DataExchangeGovernance:1.0
-                  - leftOperand: cx-policy:Membership
-                    operator: odrl:eq
-                    rightOperand: active
-                  - leftOperand: cx-policy:UsagePurpose
-                    operator: odrl:eq
-                    rightOperand: cx.core.digitalTwinRegistry:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.digitalTwinRegistry:1"
             prohibition: []
             obligation: []
           access:
             context:
-              odrl: http://www.w3.org/ns/odrl/2/
-              cx-policy: https://w3id.org/catenax/policy/
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-              - action: odrl:use
-                constraints:
-                  - leftOperand: cx-policy:Membership
-                    operator: odrl:eq
-                    rightOperand: active
+              - action: "access"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      digitalTwinEventAPI:
+        hostname: "http://<provider-digital-twin-event-api>"
+        apiPath: /api/v3
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
+          # existing_asset_id: <event-asset> # -- In case an existing DT Event asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
             prohibition: []
             obligation: []
       # -- Submodel Dispatcher configuration
@@ -558,6 +629,11 @@ frontend:
     enablePerformanceMonitoring: false
     enableDevTools: false
 
+    # Notifications configuration
+    # -- Polling interval in milliseconds for fetching new notifications
+    notifications:
+      pollInterval: 30000
+
     # UI configuration
     uiTheme: "auto"
     uiLocale: "en"
@@ -588,186 +664,115 @@ frontend:
 
   consumption:
     digitalTwinRegistry:
+      # -- DTR policy configuration (Saturn format — 1:1 match with backend YAML)
+      # Array of policy definitions sent to the backend for DTR access negotiation.
+      # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
       policies:
-        - permission:
-          - action: odrl:use
-            LogicalConstraint: odrl:and
-            constraints:
-              - leftOperand: cx-policy:FrameworkAgreement
-                operator: odrl:eq
-                rightOperand: DataExchangeGovernance:1.0
-              - leftOperand: cx-policy:Membership
-                operator: odrl:eq
-                rightOperand: active
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
+        - context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.digitalTwinRegistry:1"
           prohibition: []
           obligation: []
-          strict: false
-        - permission:
-          - action: odrl:use
-            constraints:
-              - leftOperand: cx-policy:UsagePurpose
-                operator: odrl:eq
-                rightOperand: cx.core.digitalTwinRegistry:1
-          prohibition: []
-          obligation: []
+    # -- Governance policies for consumption (Saturn format — 1:1 match with backend agreements YAML)
+    # Each entry maps a semantic ID to its usage and access policies.
+    # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport"
         policies:
-          # -- Enable here the permutations of constraints (order not matters)
-          - strict: false
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: false
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.circular.dpp:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.circular.dpp:1"
             prohibition: []
             obligation: []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         policies:
-          - strict: false
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
-            prohibition: []
-            obligation: []
-          # -- Disable here the permutations of constraints (order matters)
-          - strict: true
-            permission:
-            - action: odrl:use
-              LogicalConstraint: odrl:and
-              constraints:
-                - leftOperand: cx-policy:FrameworkAgreement
-                  operator: odrl:eq
-                  rightOperand: DataExchangeGovernance:1.0
-                - leftOperand: cx-policy:Membership
-                  operator: odrl:eq
-                  rightOperand: active
-            prohibition: []
-            obligation: []
-          - strict: false
-            permission:
-            - action: odrl:use
-              constraints:
-                - leftOperand: cx-policy:UsagePurpose
-                  operator: odrl:eq
-                  rightOperand: cx.core.industrycore:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
 
@@ -1022,7 +1027,6 @@ keycloak:
   realmImport:
     enabled: true
     # -- Method: "startup" for --import-realm flag or "job" for post-install job
-    # -- "startup": Automatic import on Keycloak container startup (simpler, more reliable for ArgoCD)
     # -- "job": Post-install Kubernetes job (allows dynamic password setting)
     method: "job"
     # -- keycloak-config-cli image configuration

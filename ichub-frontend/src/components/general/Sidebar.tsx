@@ -23,6 +23,7 @@
 import { useState, JSX, cloneElement, useRef, useEffect, useMemo } from "react";
 import { Box } from "@mui/material";
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Add, Assignment } from '@mui/icons-material';
 import { kitFeaturesConfig } from '../../features/main';
 import FeaturesPanel from '../../features/kit-features/components/FeaturesPanel';
@@ -37,6 +38,7 @@ type SidebarItem = {
 };
 
 const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
+  const { t } = useTranslation('common');
   const [activeIndex, setActiveIndex] = useState(0);
   const [showFeaturesPanel, setShowFeaturesPanel] = useState(false);
   const location = useLocation();
@@ -51,14 +53,14 @@ const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
       ...enabledFeatures,
       // Add placeholder for additional features (disabled - opens features panel)
       {
-        name: 'Add Features',
+        name: t('features.addFeatures'),
         icon: <Assignment />,
         navigationPath: '/add-features',
         disabled: true,
         routes: []
       }
     ];
-  }, [enabledFeatures]);
+  }, [enabledFeatures, t]);
   
   // Convert to navigation items
   const items: NavigationItem[] = useMemo(() => {
@@ -82,10 +84,10 @@ const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
     e.preventDefault();
     
     if (isKitFeaturesActive) {
-      // Si ya estamos en KIT Features, volver a la página anterior
+      // If we're already in KIT Features, go back to the previous page
       navigate(previousPath.current);
     } else {
-      // Si no estamos en KIT Features, ir a KIT Features
+      // If we're not in KIT Features, go to KIT Features
       navigate(kitFeaturesConfig.navigationPath);
     }
     setActiveIndex(-1);
@@ -116,7 +118,7 @@ const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
           
           // Find the feature configuration to get the name
           const feature = allFeatures.find(f => f.navigationPath === item.path);
-          const tooltipTitle = isDisabled ? 'Add Features' : (feature?.name || '');
+          const tooltipTitle = isDisabled ? t('features.addFeatures') : (feature?.name || '');
 
           return (
             <SidebarTooltip key={index} title={tooltipTitle}>

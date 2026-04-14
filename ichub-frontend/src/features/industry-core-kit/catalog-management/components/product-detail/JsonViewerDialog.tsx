@@ -23,6 +23,7 @@
 import { useState } from 'react';
 import { Button } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { useTranslation } from 'react-i18next';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -35,8 +36,10 @@ import { ProductDetailDialogProps } from '@/features/industry-core-kit/catalog-m
 import { useEscapeDialog } from '@/hooks/useEscapeKey';
 
 const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
     const [copied, setCopied] = useState(false);
-    const title = partData?.name ? `${partData.name} JSON data` : "DCM JSON Data";
+    const title = partData?.name ? `${partData.name} JSON data` : t('productDetail.jsonViewer.title');
 
     useEscapeDialog(onClose, open);
 
@@ -76,7 +79,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
             <DialogContent dividers>
                 <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f4f4f4', padding: '0 10px 5px 10px', borderRadius: '5px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '4px' }}>
-                        <span className='mr-3'>{copied ? 'JSON copied ✅' : ''}</span>
+                        <span className='mr-3'>{copied ? tCommon('actions.copied') : ''}</span>
                         <Button variant="text" onClick={handleCopy} size='small' className='copy-button'>
                             <ContentCopyIcon />
                         </Button>
@@ -89,7 +92,7 @@ const JsonViewerDialog = ({ open, onClose, partData }: ProductDetailDialogProps)
             <DialogActions>
                 <Button className="close-button" variant="outlined" size="small" onClick={onClose}>
                 <CloseIcon />
-                    <span className="close-button-content">CLOSE</span>
+                    <span className="close-button-content">{tCommon('actions.close')}</span>
                 </Button>
             </DialogActions>
         </Dialog>

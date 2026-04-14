@@ -23,6 +23,7 @@
  
 import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import authService from '../../services/AuthService';
 import environmentService from '../../services/EnvironmentService';
 import ErrorPage from '../common/ErrorPage';
@@ -35,6 +36,7 @@ interface AuthProviderProps {
 * Component that initializes authentication and provides auth context to the entire app
 */
 export function AuthProvider({ children }: AuthProviderProps) {
+  const { t } = useTranslation('common');
   // Check if we have a stored auth state to skip the loading screen
   const hasStoredAuth = sessionStorage.getItem('keycloak_authenticated') === 'true';
   const [isInitialized, setIsInitialized] = useState(hasStoredAuth);
@@ -88,35 +90,35 @@ export function AuthProvider({ children }: AuthProviderProps) {
       >
         <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
-          Industry Core Hub
+          {t('app.name')}
         </Typography>
         <Typography variant="h6">
-          Initializing authentication...
+          {t('auth.initializingAuth')}
         </Typography>
       </Box>
     );
   }
- 
+
   // Show error screen if initialization failed
   if (initError) {
     return (
       <ErrorPage
-        title="Authentication Failed"
+        title={t('auth.authFailed')}
         message={initError}
         causes={[
-          'Invalid credentials or user not authorized',
-          'Keycloak service is not running or misconfigured',
-          'Network connectivity issues'
+          t('auth.causes.invalidCredentials'),
+          t('auth.causes.keycloakNotRunning'),
+          t('auth.causes.networkIssues')
         ]}
         showRefreshButton={true}
-        helpText="If the problem persists, please contact your system administrator"
+        helpText={t('auth.contactAdmin')}
       />
     );
   }
- 
+
   // Authentication initialized successfully, render the app
   return <>{children}</>;
 }
- 
+
 export default AuthProvider;
  

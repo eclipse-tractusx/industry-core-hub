@@ -22,6 +22,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -61,6 +62,7 @@ const LOADING_STEPS: LoadingStep[] = [
 ];
 
 const PassportConsumption: React.FC = () => {
+  const { t } = useTranslation(['passportConsumption', 'common']);
   const [passportId, setPassportId] = useState('');
   const [showVisualization, setShowVisualization] = useState(false);
   const [passportData, setPassportData] = useState<Record<string, unknown> | null>(null);
@@ -81,12 +83,12 @@ const PassportConsumption: React.FC = () => {
   const handleSearch = async () => {
     const trimmedId = passportId.trim();
     if (!trimmedId) {
-      setValidationError('Please enter a Discovery ID');
+      setValidationError(t('page.validationRequired'));
       return;
     }
     
     if (!isValidDiscoveryId(trimmedId)) {
-      setValidationError('Invalid format. Expected: CX:<manufacturerPartId>:<partInstanceId>');
+      setValidationError(t('page.validationFormat'));
       return;
     }
     
@@ -114,7 +116,7 @@ const PassportConsumption: React.FC = () => {
     // Get generic passport mock data
     const genericConfig = PassportTypeRegistry.get('generic');
     if (!genericConfig || !genericConfig.mockData) {
-      throw new Error('No mock data available');
+      throw new Error(t('errors.noMockData'));
     }
     
     return {
@@ -166,14 +168,14 @@ const PassportConsumption: React.FC = () => {
           setIsLoading(false);
           setShowVisualization(true);
         } catch (error) {
-          setLoadingError(error instanceof Error ? error.message : 'Failed to load passport');
+          setLoadingError(error instanceof Error ? error.message : t('errors.loadFailed'));
           setIsLoading(false);
         }
       };
       
       loadPassport();
     }
-  }, [params?.id]);
+  }, [params?.id, t]);
 
   // Show visualization if data is loaded
   if (showVisualization && passportData) {
@@ -184,10 +186,10 @@ const PassportConsumption: React.FC = () => {
       return (
         <Box sx={{ p: 4, textAlign: 'center' }}>
           <Typography color="error">
-            Unable to determine passport type. Please check the data format.
+            {t('visualization.unableToDetermineType')}
           </Typography>
           <Button onClick={handleBack} sx={{ mt: 2 }}>
-            Go Back
+            {t('common:actions.goBack')}
           </Button>
         </Box>
       );
@@ -232,7 +234,7 @@ const PassportConsumption: React.FC = () => {
             {/* Header */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
-                Loading Passport
+                {t('loading.title')}
               </Typography>
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'monospace' }}>
                 {passportId}
@@ -389,7 +391,7 @@ const PassportConsumption: React.FC = () => {
                   }
                 }}
               >
-                Cancel
+                {t('common:actions.cancel')}
               </Button>
             </Box>
 
@@ -455,7 +457,7 @@ const PassportConsumption: React.FC = () => {
               fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' }
             }}
           >
-            Digital Product Passport
+            {t('page.title')}
           </Typography>
           <Typography 
             variant="body1" 
@@ -465,7 +467,7 @@ const PassportConsumption: React.FC = () => {
               px: { xs: 2, sm: 0 }
             }}
           >
-            Retrieve and visualize product passports from the dataspace
+            {t('page.subtitle')}
           </Typography>
         </Box>
 
@@ -489,7 +491,7 @@ const PassportConsumption: React.FC = () => {
             <Box sx={{ position: 'relative', mb: 2 }}>
               <TextField
                 fullWidth
-                placeholder="CX:XYZ78901:BAT-XYZ789"
+                placeholder={t('page.searchPlaceholder')}
                 value={passportId}
                 onChange={(e) => {
                   setPassportId(e.target.value);
@@ -587,7 +589,7 @@ const PassportConsumption: React.FC = () => {
                   }
                 }}
               >
-                Search
+                {t('common:actions.search')}
               </Button>
               <Button
                 variant="outlined"
@@ -648,13 +650,13 @@ const PassportConsumption: React.FC = () => {
                   }}
                 />
                 <Box component="span">
-                  Want to find out more? Take a look at all our{' '}
+                  {t('page.learnMore')}{' '}
                   <Box
                     component="a"
                     href="/kit-features/eco-pass"
                     sx={{ color: '#667eea', cursor: 'pointer', fontWeight: 500, textDecoration: 'none' }}
                   >
-                    Eco Pass KIT Features
+                    {t('page.ecoPassFeatures')}
                   </Box>
                 </Box>
               </Typography>

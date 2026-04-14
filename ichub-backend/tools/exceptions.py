@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -21,10 +22,13 @@
 #################################################################################
 
 from pydantic import BaseModel
+from typing import Optional
 
 class ErrorDetail(BaseModel):
     status: int
     message: str
+    details: Optional[list[str]] = None
+    """Optional structured details (e.g. per-policy diff lines) for human-readable diagnostics."""
 
 exception_responses ={
         400: {
@@ -58,9 +62,9 @@ exception_responses ={
     }
 
 class BaseError(Exception):
-    def __init__(self, status_code: int, message: str):
+    def __init__(self, status_code: int, message: str, details: Optional[list[str]] = None):
         self.status_code = status_code
-        self.detail = ErrorDetail(status=status_code, message=message)
+        self.detail = ErrorDetail(status=status_code, message=message, details=details)
         super().__init__(message)
 
 class InvalidError(BaseError):
@@ -129,3 +133,64 @@ class DppShareError(Exception):
         self.dpp_id = dpp_id
         self.partner = partner
         super().__init__(self.message)
+
+class NotificationCreationError(BaseError):
+    """
+    Exception raised when notification creation fails.
+    """
+    def __init__(self, message: str = "Failed to create notification."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationUpdateStatusError(BaseError):
+    """
+    Exception raised when updating notification status fails.
+    """
+    def __init__(self, message: str = "Failed to update notification status."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationRetrievalError(BaseError):
+    """
+    Exception raised when retrieving notifications fails.
+    """
+    def __init__(self, message: str = "Failed to retrieve notifications."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationDeleteError(BaseError):
+    """
+    Exception raised when deleting a notification fails.
+    """
+    def __init__(self, message: str = "Failed to delete notification."):
+        super().__init__(status_code=502, message=message)
+
+class NotificationSendingError(BaseError):
+    """
+    Exception raised when sending a notification fails.
+
+    The optional ``details`` list can carry context useful for diagnosing the
+    failure — e.g. which DSP URL was attempted and the underlying error
+    message — so that API consumers can act on the information without having
+    to grep server logs.
+    """
+    def __init__(self, message: str = "Failed to send notification.", details: Optional[list[str]] = None):
+        super().__init__(status_code=502, message=message, details=details)
+
+
+class PolicyMismatchError(BaseError):
+    """
+    Exception raised when no allowed policy matches the catalog's available policies.
+
+    Carries per-policy diff details captured from the SDK's DEBUG-level diagnostic
+    log messages (``tractusx_sdk.dataspace.tools.dsp_tools``) so the frontend can
+    display them in a human-readable dropdown without requiring the operator to dig
+    through server logs.
+
+    Example details entry::
+
+        "Allowed policy [0] differences:\n"
+        "  - permission.constraint.and[2]: constraint mismatch\n"
+        "  Catalog:  'UsagePurpose' 'isAnyOf' 'cx.core.digitalTwinRegistry:1'\n"
+        "  Allowed:  'UsagePurpose' 'isAnyOf' 'cx.core.digitalTwinRegistry:2'"
+    """
+
+    def __init__(self, message: str, details: Optional[list[str]] = None) -> None:
+        super().__init__(status_code=403, message=message, details=details)

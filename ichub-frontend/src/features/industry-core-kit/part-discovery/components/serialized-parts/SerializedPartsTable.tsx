@@ -28,6 +28,7 @@ import {
   Tooltip,
   Paper
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { DataGrid, GridColDef, GridActionsCellItem } from '@mui/x-data-grid';
 import ContentCopy from '@mui/icons-material/ContentCopy';
 import Download from '@mui/icons-material/Download';
@@ -41,6 +42,7 @@ interface SerializedPartsTableProps {
 }
 
 const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
   const handleCopyAasId = async (aasId: string, partId: string) => {
@@ -100,7 +102,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
   const columns: GridColDef[] = [
     {
       field: 'dtrIndex',
-      headerName: 'DTR Source',
+      headerName: t('serializedParts.dtrSource'),
       width: 100,
       align: 'center',
       headerAlign: 'center',
@@ -116,7 +118,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'globalAssetId',
-      headerName: 'Global Asset ID',
+      headerName: t('common:fields.globalAssetId'),
       width: 280,
       renderCell: (params) => (
         <Tooltip title={params.value} arrow>
@@ -140,7 +142,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'aasId',
-      headerName: 'AAS ID',
+      headerName: t('common:fields.aasId'),
       width: 280,
       renderCell: (params) => (
         <Box sx={{ 
@@ -170,7 +172,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'idShort',
-      headerName: 'ID Short',
+      headerName: t('common:fields.idShort'),
       width: 180,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -191,7 +193,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'manufacturerId',
-      headerName: 'Manufacturer ID',
+      headerName: t('common:fields.manufacturerId'),
       width: 150,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -203,7 +205,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'manufacturerPartId',
-      headerName: 'Manufacturer Part ID',
+      headerName: t('common:fields.manufacturerPartId'),
       width: 180,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -215,7 +217,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'customerPartId',
-      headerName: 'Customer Part ID',
+      headerName: t('common:fields.customerPartId'),
       width: 150,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -227,7 +229,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'partInstanceId',
-      headerName: 'Part Instance ID',
+      headerName: t('common:fields.partInstanceId'),
       width: 150,
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -239,7 +241,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'digitalTwinType',
-      headerName: 'Digital Twin Type',
+      headerName: t('common:fields.digitalTwinType'),
       width: 150,
       align: 'center',
       headerAlign: 'center',
@@ -255,7 +257,7 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     },
     {
       field: 'submodelCount',
-      headerName: 'Submodels',
+      headerName: t('common:fields.submodels'),
       width: 100,
       align: 'center',
       headerAlign: 'center',
@@ -268,12 +270,12 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
     {
       field: 'actions',
       type: 'actions',
-      headerName: 'Actions',
+      headerName: t('common:actions.title'),
       width: 120,
       getActions: (params) => [
         <GridActionsCellItem
           icon={
-            <Tooltip title="Copy AAS ID" arrow>
+            <Tooltip title={t('common:tooltips.copyAasId')} arrow>
               {copySuccess === params.row.id ? (
                 <CheckCircle sx={{ color: 'success.main' }} />
               ) : (
@@ -281,26 +283,26 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
               )}
             </Tooltip>
           }
-          label="Copy AAS ID"
+          label={t('common:tooltips.copyAasId')}
           onClick={() => handleCopyAasId(params.row.aasId, params.row.id)}
         />,
         <GridActionsCellItem
           icon={
-            <Tooltip title="Download Twin Data" arrow>
+            <Tooltip title={t('common:tooltips.downloadTwinData')} arrow>
               <Download />
             </Tooltip>
           }
-          label="Download"
+          label={t('common:actions.download')}
           onClick={() => handleDownloadTwinData(params.row)}
           disabled={!params.row.rawTwinData}
         />,
         <GridActionsCellItem
           icon={
-            <Tooltip title="View Details" arrow>
+            <Tooltip title={t('common:actions.viewDetails')} arrow>
               <VisibilityIcon />
             </Tooltip>
           }
-          label="View"
+          label={t('common:actions.view')}
           onClick={() => {
             
             if (onView) {
@@ -378,10 +380,10 @@ const SerializedPartsTable = ({ parts, onView }: SerializedPartsTableProps) => {
                 alignItems: 'center'
               }}>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Showing {parts.length} serialized parts
+                  {t('serializedParts.showingParts', { count: parts.length })}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Click on column headers to sort • Use column filters for search
+                  {t('serializedParts.sortHint')}
                 </Typography>
               </Box>
             ),

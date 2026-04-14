@@ -47,6 +47,7 @@ import { SchemaDefinition } from '@/schemas';
 import { useEffect, useState } from 'react';
 import { fetchCatalogPartTwinDetails, registerCatalogPartTwin, createTwinAspect } from '@/features/industry-core-kit/catalog-management/api';
 import { CatalogPartTwinDetailsRead, CatalogPartTwinCreateType } from '@/features/industry-core-kit/catalog-management/types/twin-types';
+import { useTranslation } from 'react-i18next';
 
 interface ProductDataProps {
     part: PartType;
@@ -60,6 +61,8 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const [isLoadingTwin, setIsLoadingTwin] = useState(false);
     const [isUpdatingParent, setIsUpdatingParent] = useState(false);
     const [copySnackbar, setCopySnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
     
     // Submodel viewer dialog state
     const [submodelViewerOpen, setSubmodelViewerOpen] = useState(false);
@@ -92,7 +95,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             };
             await registerCatalogPartTwin(twinToCreate);
             // Show success message immediately
-            setCopySnackbar({ open: true, message: 'Part twin registered successfully!', severity: 'success' });
+            setCopySnackbar({ open: true, message: t('productDetail.productData.messages.twinRegisteredSuccess'), severity: 'success' });
 
             // Delay refresh so the snackbar is visible before re-rendering content
             setTimeout(async () => {
@@ -122,7 +125,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             }, 1000);
         } catch (error) {
             console.error("Error registering part twin:", error);
-            setCopySnackbar({ open: true, message: 'Failed to register part twin!', severity: 'error' });
+            setCopySnackbar({ open: true, message: t('productDetail.productData.messages.twinRegistrationFailed'), severity: 'error' });
             setIsUpdatingParent(false);
         }
     };
@@ -158,10 +161,10 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const handleCopy = async (text: string, fieldName: string) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopySnackbar({ open: true, message: `${fieldName} copied to clipboard!`, severity: 'success' });
+            setCopySnackbar({ open: true, message: tCommon('notifications.copiedToClipboard', { field: fieldName }), severity: 'success' });
         } catch (error) {
             console.error('Failed to copy:', error);
-            setCopySnackbar({ open: true, message: `Failed to copy ${fieldName}`, severity: 'error' });
+            setCopySnackbar({ open: true, message: tCommon('notifications.failedToCopy', { field: fieldName }), severity: 'error' });
         }
     };
 
@@ -170,7 +173,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     };
 
     const formatDate = (dateString: string) => {
-        if (!dateString) return 'Not available';
+        if (!dateString) return t('productDetail.productData.specifications.notAvailable');
         try {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -180,7 +183,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                 minute: '2-digit'
             });
         } catch {
-            return 'Invalid date';
+            return t('productDetail.productData.invalidDate');
         }
     };
 
@@ -216,12 +219,12 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const handleCreateSubmodelSubmit = async (submodelData: any) => {
         try {
             if (!selectedSchema) {
-                throw new Error('No schema selected');
+                throw new Error(t('productDetail.productData.messages.noSchemaSelected'));
             }
 
             // Check if twin exists
             if (!twinDetails || !twinDetails.globalId) {
-                throw new Error('Twin must be created before adding submodels. Please create a twin first.');
+                throw new Error(t('productDetail.productData.messages.twinRequired'));
             }
 
             // Call the API to create the twin aspect
@@ -234,7 +237,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             if (result.success) {
                 setCopySnackbar({ 
                     open: true, 
-                    message: `Submodel created successfully with ${selectedSchema.metadata.name} schema!`, 
+                    message: t('productDetail.productData.messages.submodelCreatedSuccess', { schemaName: selectedSchema.metadata.name }), 
                     severity: 'success' 
                 });
                 
@@ -246,11 +249,11 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     onPartUpdated();
                 }
             } else {
-                throw new Error(result.message || 'Failed to create submodel');
+                throw new Error(result.message || t('productDetail.productData.messages.submodelCreationFailed'));
             }
         } catch (error) {
             console.error('Error creating submodel:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create submodel';
+            const errorMessage = error instanceof Error ? error.message : t('productDetail.productData.messages.submodelCreationFailed');
             setCopySnackbar({ 
                 open: true, 
                 message: errorMessage, 
@@ -290,10 +293,10 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     }}>
                         <CircularProgress size={40} sx={{ color: '#3b82f6' }} />
                         <Typography variant="h6" sx={{ color: 'text.primary' }}>
-                            Updating part status...
+                            {t('productDetail.productData.updatingStatus')}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-                            Please wait while we refresh the twin information
+                            {t('productDetail.productData.pleaseWait')}
                         </Typography>
                     </Box>
                 </Box>
@@ -336,7 +339,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                         }}>
                             {/* Register Twin Button - Only show if status is draft */}
                             {(part.status === StatusVariants.draft || part.status === StatusVariants.pending) && (
-                                <Tooltip title="Register part twin" arrow>
+                                <Tooltip title={t('productDetail.productData.registerPartTwin')} arrow>
                                     <IconButton
                                         onClick={handleRegisterTwin}
                                         sx={{
@@ -357,7 +360,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                             {isLoadingTwin ? (
                                 <>
                                     <Chip 
-                                        label="Loading AAS ID..." 
+                                        label={t('productDetail.productData.loadingAasId')} 
                                         variant="outlined" 
                                         size="small" 
                                         disabled 
@@ -369,7 +372,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         }}
                                     />
                                     <Chip 
-                                        label="Loading Twin ID..." 
+                                        label={t('productDetail.productData.loadingTwinId')} 
                                         variant="outlined" 
                                         size="small" 
                                         disabled 
@@ -383,7 +386,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 </>
                             ) : twinDetails ? (
                                 <> {twinDetails.globalId && (
-                                        <Tooltip title="Click to copy Global Asset ID">
+                                        <Tooltip title={t('common:tooltips.copyGlobalAssetId')}>
                                             <Chip
                                                 icon={<AccountTreeIcon />}
                                                 label={twinDetails.globalId.startsWith('urn:uuid:') ? twinDetails.globalId : `urn:uuid:${twinDetails.globalId}`}
@@ -414,7 +417,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         </Tooltip>
                                     )}
                                     {twinDetails.dtrAasId && (
-                                        <Tooltip title="Click to copy AAS ID">
+                                        <Tooltip title={t('common:tooltips.copyAasId')}>
                                             <Chip
                                                 icon={<FingerprintIcon />}
                                                 label={twinDetails.dtrAasId.startsWith('urn:uuid:') ? twinDetails.dtrAasId : `urn:uuid:${twinDetails.dtrAasId}`}
@@ -449,7 +452,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                     )}
                                     {(!twinDetails.dtrAasId && !twinDetails.globalId) && (
                                         <Chip 
-                                            label="No Twin IDs" 
+                                            label={t('productDetail.productData.noTwinIds')} 
                                             variant="outlined" 
                                             size="small" 
                                             sx={{ 
@@ -465,7 +468,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 </>
                             ) : (
                                 <Chip 
-                                    label="Twin data unavailable" 
+                                    label={t('productDetail.productData.twinDataUnavailable')} 
                                     variant="outlined" 
                                     size="small" 
                                     sx={{ 
@@ -534,14 +537,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 </Box>
                                 {/* Manufacturer Info Chips */}
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                                    <Tooltip title="Click to copy Manufacturer ID">
+                                    <Tooltip title={t('common:tooltips.copyManufacturerId')}>
                                         <Chip
                                             icon={<BusinessIcon />}
-                                            label={`Manufacturer ID: ${part.manufacturerId}`}
+                                            label={`${t('common:fields.manufacturerId')}: ${part.manufacturerId}`}
                                             variant="outlined"
                                             size="small"
                                             clickable
-                                            onClick={() => handleCopy(part.manufacturerId, 'Manufacturer ID')}
+                                            onClick={() => handleCopy(part.manufacturerId, t('common:fields.manufacturerId'))}
                                             sx={{
                                                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                                                 borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -563,14 +566,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             }}
                                         />
                                     </Tooltip>
-                                    <Tooltip title="Click to copy Manufacturer Part ID">
+                                    <Tooltip title={t('common:tooltips.copyManufacturerPartId')}>
                                         <Chip
                                             icon={<InventoryIcon />}
-                                            label={`Manufacturer Part ID: ${part.manufacturerPartId}`}
+                                            label={`${t('common:fields.manufacturerPartId')}: ${part.manufacturerPartId}`}
                                             variant="outlined"
                                             size="small"
                                             clickable
-                                            onClick={() => handleCopy(part.manufacturerPartId, 'Manufacturer Part ID')}
+                                            onClick={() => handleCopy(part.manufacturerPartId, t('common:fields.manufacturerPartId'))}
                                             sx={{
                                                 backgroundColor: 'rgba(255, 255, 255, 0.05)',
                                                 borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -593,14 +596,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         />
                                     </Tooltip>
                                     {part.bpns && (
-                                        <Tooltip title="Click to copy Site of Origin">
+                                        <Tooltip title={t('productDetail.productData.tooltips.clickToCopySiteOfOrigin')}>
                                             <Chip
                                                 icon={<LocationOnIcon />}
-                                                label={`Site of Origin: ${part.bpns}`}
+                                                label={`${t('productDetail.productData.labels.siteOfOrigin')}: ${part.bpns}`}
                                                 variant="outlined"
                                                 size="small"
                                                 clickable
-                                                onClick={() => handleCopy(part.bpns || '', 'Site of Origin (BPNS)')}
+                                                onClick={() => handleCopy(part.bpns || '', t('productDetail.productData.labels.siteOfOrigin'))}
                                                 sx={{
                                                     backgroundColor: 'rgba(255, 255, 255, 0.05)',
                                                     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -648,21 +651,21 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 gap: 1
                             }}>
                                 <InfoIcon sx={{ color: 'primary.main' }} />
-                                Part Details
+                                {t('productDetail.productData.partDetails')}
                             </Typography>
 
                             <Box sx={{ mb: 2.5 }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                     <DescriptionIcon sx={{ color: 'primary.main' }} />
                                     <Typography variant="label3" sx={{ color: 'text.primary' }}>
-                                        Description
+                                        {tCommon('fields.description')}
                                     </Typography>
                                 </Box>
                                 <Typography variant="body3" sx={{ 
                                     color: 'text.secondary',
                                     fontStyle: part.description ? 'normal' : 'italic'
                                 }}>
-                                    {part.description || 'No description available'}
+                                    {part.description || t('productDetail.productData.partInfo.noDescription')}
                                 </Typography>
                             </Box>
 
@@ -677,7 +680,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                     gap: 1
                                 }}>
                                     <AccessTimeIcon sx={{ color: 'primary.main' }} />
-                                    Twin Timestamps
+                                    {t('productDetail.productData.twinTimestamps.title')}
                                 </Typography>
 
                                 {/* Timestamps */}
@@ -707,14 +710,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 letterSpacing: '0.08em',
                                                 mb: 1
                                             }}>
-                                                Created
+                                                {tCommon('labels.created')}
                                             </Typography>
                                             <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                 {isLoadingTwin 
-                                                    ? 'Loading...' 
+                                                    ? tCommon('actions.loading')
                                                     : twinDetails?.createdDate 
                                                         ? formatDate(twinDetails.createdDate)
-                                                        : 'Not yet created'
+                                                        : t('productDetail.productData.twinTimestamps.notYetCreated')
                                                 }
                                             </Typography>
                                         </Box>
@@ -744,14 +747,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 letterSpacing: '0.08em',
                                                 mb: 1
                                             }}>
-                                                Updated
+                                                {tCommon('labels.updated')}
                                             </Typography>
                                             <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                 {isLoadingTwin 
-                                                    ? 'Loading...' 
+                                                    ? tCommon('actions.loading')
                                                     : twinDetails?.modifiedDate 
                                                         ? formatDate(twinDetails.modifiedDate)
-                                                        : 'Not yet created'
+                                                        : t('productDetail.productData.twinTimestamps.notYetCreated')
                                                 }
                                             </Typography>
                                         </Box>
@@ -780,7 +783,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 gap: 1
                             }}>
                                 <ShareIcon sx={{ color: 'primary.main' }} />
-                                Shared With
+                                {t('productDetail.productData.sharing.title')}
                             </Typography>
                             
                             {/* Warning for parts with customer IDs but not yet shared */}
@@ -802,7 +805,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         fontWeight: 500,
                                         fontSize: '0.875rem'
                                     }}>
-                                        This part is still not shared, but has already an existing customer part ID prepared for sharing.
+                                        {t('productDetail.productData.sharing.notYetSharedWarning')}
                                     </Typography>
                                 </Box>
                             )}
@@ -821,7 +824,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 }}>
                                     <WifiTetheringErrorIcon sx={{ color: 'text.secondary' }} />
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                        No sharing insights are currently available. Share this part with a partner to view the information here.
+                                        {t('productDetail.productData.sharing.noSharingInsights')}
                                     </Typography>
                                 </Box>
                             )}
@@ -843,14 +846,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 gap: 1
                             }}>
                                 <InfoIcon sx={{ color: 'primary.main' }} />
-                                More Information
+                                {t('productDetail.productData.moreInformation.title')}
                             </Typography>
                             
                             <Grid2 container spacing={3}>
                                 {/* Materials Chart */}
                                 <Grid2 size={{ md: 8, xs: 12 }}>
                                     <Typography variant="label3" sx={{ color: 'text.primary', mb: 2, display: 'block' }}>
-                                        Materials:
+                                        {t('productDetail.productData.moreInformation.materials')}
                                     </Typography>
                                     {(part.materials && part.materials.length > 0) ? (
                                         <Box sx={{ 
@@ -885,7 +888,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             border: '1px dashed rgba(255, 255, 255, 0.12)'
                                         }}>
                                             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                                                No materials data available
+                                                {t('productDetail.productData.moreInformation.noMaterials')}
                                             </Typography>
                                         </Box>
                                     )}
@@ -894,7 +897,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                 {/* Physical Properties */}
                                 <Grid2 size={{ md: 4, xs: 12 }}>
                                     <Typography variant="label3" sx={{ color: 'text.primary', mb: 2, display: 'block' }}>
-                                        Dimensions:
+                                        {t('productDetail.productData.moreInformation.dimensions')}
                                     </Typography>
                                     <Grid2 container spacing={2}>
                                         <Grid2 size={6}>
@@ -919,7 +922,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                     display: 'block',
                                                     mb: 0.5
                                                 }}>
-                                                    Width
+                                                    {tCommon('fields.width')}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                     {part.width?.value || '-'} {part.width?.unit || ''}
@@ -948,7 +951,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                     display: 'block',
                                                     mb: 0.5
                                                 }}>
-                                                    Height
+                                                    {t('productDetail.productData.moreInformation.height')}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                     {part.height?.value || '-'} {part.height?.unit || ''}
@@ -977,7 +980,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                     display: 'block',
                                                     mb: 0.5
                                                 }}>
-                                                    Length
+                                                    {t('productDetail.productData.moreInformation.length')}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                     {part.length?.value || '-'} {part.length?.unit || ''}
@@ -1006,7 +1009,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                     display: 'block',
                                                     mb: 0.5
                                                 }}>
-                                                    Weight
+                                                    {t('productDetail.productData.moreInformation.weight')}
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                     {part.weight?.value || '-'} {part.weight?.unit || ''}

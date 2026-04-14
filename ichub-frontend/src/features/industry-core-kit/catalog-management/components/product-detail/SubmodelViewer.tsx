@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import { CatalogPartTwinDetailsRead } from '@/features/industry-core-kit/catalog-management/types/twin-types';
 import { parseSemanticId } from '@/utils/semantics';
+import { useTranslation } from 'react-i18next';
 
 interface SubmodelViewerProps {
     twinDetails: CatalogPartTwinDetailsRead;
@@ -64,6 +65,8 @@ interface SubmodelViewerProps {
 
 const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFullDetails, onCreateSubmodel }) => {
     const [currentStartIndex, setCurrentStartIndex] = useState(0);
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
     const submodelsPerPage = 3;
     const submodelEntries = Object.entries(twinDetails.aspects || {});
     const totalSubmodels = submodelEntries.length;
@@ -84,13 +87,13 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
     const getStatusLabel = (status: number): { label: string; color: string } => {
         switch (status) {
             case 1:
-                return { label: 'Created', color: '#2196f3' }; // Blue
+                return { label: tCommon('status.created'), color: '#2196f3' }; // Blue
             case 2:
-                return { label: 'Available', color: '#ff9800' }; // Orange
+                return { label: tCommon('status.available'), color: '#ff9800' }; // Orange
             case 3:
-                return { label: 'Registered', color: '#4caf50' }; // Green
+                return { label: tCommon('status.registered'), color: '#4caf50' }; // Green
             default:
-                return { label: 'Unknown', color: '#757575' }; // Gray
+                return { label: tCommon('status.unknown'), color: '#757575' }; // Gray
         }
     };
 
@@ -129,10 +132,10 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                 <CardContent sx={{ p: 3, textAlign: 'center' }}>
                     <SchemaIcon sx={{ color: 'text.secondary', fontSize: 48, mb: 2 }} />
                     <Typography variant="h6" sx={{ color: 'text.primary', mb: 1 }}>
-                        No Submodels Available
+                        {t('productDetail.submodelViewer.noSubmodelsAvailable')}
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                        This digital twin doesn't have any submodel aspects available.
+                        {t('productDetail.submodelViewer.noSubmodelsDescription')}
                     </Typography>
                 </CardContent>
             </Card>
@@ -154,7 +157,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                     gap: 1
                 }}>
                     <SchemaIcon sx={{ color: 'primary.main' }} />
-                    Digital Twin Submodels ({totalSubmodels})
+                    {t('productDetail.submodelViewer.title')} ({totalSubmodels})
                 </Typography>
                 
                 {onCreateSubmodel && (
@@ -176,7 +179,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                             transition: 'all 0.2s ease-in-out',
                         }}
                     >
-                        New Submodel
+                        {t('productDetail.submodelViewer.newSubmodel')}
                     </Button>
                 )}
                 
@@ -284,7 +287,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                             />
                                         ) : (
                                             <Chip
-                                                label="No Registration"
+                                                label={t('productDetail.submodelViewer.noRegistration')}
                                                 size="small"
                                                 sx={{
                                                     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -320,7 +323,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                             letterSpacing: '0.08em',
                                             fontSize: '10px'
                                         }}>
-                                            Submodel ID
+                                            {tCommon('fields.submodelId')}
                                         </Typography>
                                         <Tooltip title={aspect.submodelId} placement="top">
                                             <Typography variant="body2" sx={{ 
@@ -346,7 +349,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                                 letterSpacing: '0.08em',
                                                 fontSize: '10px'
                                             }}>
-                                                Registration Info
+                                                {t('productDetail.submodelViewer.registrationInfo')}
                                             </Typography>
                                             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -401,7 +404,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                                 borderRadius: 1
                                             }}
                                         >
-                                            View Submodel
+                                            {t('productDetail.submodelViewer.viewSubmodel')}
                                         </Button>
                                     )}
                                 </Box>

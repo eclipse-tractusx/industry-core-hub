@@ -23,6 +23,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
 import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, Grid2 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -31,6 +32,7 @@ import { createPartner } from '@/features/business-partner-kit/partner-managemen
 import { useEscapeDialog } from '@/hooks/useEscapeKey';
 
 const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDialogProps) => {
+  const { t } = useTranslation(['partnerManagement', 'common']);
   const [name, setName] = useState('');
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
@@ -63,7 +65,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
 
     if (partnerData) { // Edit mode
       onSave?.(partnerPayload); // Update local state in parent
-      setSuccessMessage(`Partner ${name} updated successfully [${bpnl}] (local update)`);
+      setSuccessMessage(t('messages.updateSuccess', { name, bpnl }));
       setTimeout(() => {
         setSuccessMessage('');
         onClose();
@@ -75,21 +77,21 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
         
         onSave?.(partnerPayload); // Call onSave to update the parent component's state
 
-        setSuccessMessage(`Partner ${name} created successfully [${bpnl}]`);
+        setSuccessMessage(t('messages.createSuccess', { name, bpnl }));
         setTimeout(() => {
           setSuccessMessage('');
           onClose(); // Close dialog on success
         }, 3000);
       } catch (axiosError) {
         console.error('Error creating partner:', axiosError);
-        let errorMessage = 'Failed to create partner.';
+        let errorMessage = t('messages.createError');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const errorResponse = (axiosError as any).response;
 
         if (errorResponse) {
           if (errorResponse.status === 422 && errorResponse.data && errorResponse.data.detail && Array.isArray(errorResponse.data.detail) && errorResponse.data.detail.length > 0) {
             // Attempt to get the specific message (pydantic validation error message) for 422 errors
-            errorMessage = errorResponse.data.detail[0].msg || JSON.stringify(errorResponse.data.detail[0]) || 'Validation failed.';
+            errorMessage = errorResponse.data.detail[0].msg || JSON.stringify(errorResponse.data.detail[0]) || t('common:httpErrors.validationFailed');
           } else if (errorResponse.data && errorResponse.data.message) {
             // General error message from backend response
             errorMessage = errorResponse.data.message;
@@ -106,7 +108,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
                 errorMessage = h1Match[1].trim();
               } else {
                 // Fallback for HTML responses
-                errorMessage = `Server error (${errorResponse.status}): ${errorResponse.statusText || 'Request failed'}`;
+                errorMessage = t('common:httpErrors.serverError', { status: errorResponse.status });
               }
             } else {
               errorMessage = errorResponse.data;
@@ -115,47 +117,47 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
             // Status-based error messages
             switch (errorResponse.status) {
               case 400:
-                errorMessage = 'Invalid request. Please check your input.';
+                errorMessage = t('common:httpErrors.badRequest');
                 break;
               case 401:
-                errorMessage = 'Unauthorized. Please log in again.';
+                errorMessage = t('common:httpErrors.unauthorized');
                 break;
               case 403:
-                errorMessage = 'Access denied. You do not have permission to perform this action.';
+                errorMessage = t('common:httpErrors.forbidden');
                 break;
               case 404:
-                errorMessage = 'Service not found. Please try again later.';
+                errorMessage = t('common:httpErrors.notFound');
                 break;
               case 405:
-                errorMessage = 'Operation not allowed. Please contact support.';
+                errorMessage = t('common:httpErrors.methodNotAllowed');
                 break;
               case 409:
-                errorMessage = 'Partner with this BPNL already exists.';
+                errorMessage = t('messages.bpnlConflict');
                 break;
               case 422:
-                errorMessage = 'Invalid data provided. Please check your input.';
+                errorMessage = t('common:httpErrors.validationFailed');
                 break;
               case 500:
-                errorMessage = 'Internal server error. Please try again later.';
+                errorMessage = t('common:httpErrors.internalServer');
                 break;
               case 502:
               case 503:
               case 504:
-                errorMessage = 'Service temporarily unavailable. Please try again later.';
+                errorMessage = t('common:httpErrors.serviceUnavailable');
                 break;
               default:
-                errorMessage = `Server error (${errorResponse.status}). Please try again.`;
+                errorMessage = t('common:httpErrors.serverError', { status: errorResponse.status });
             }
           }
         } else if (axiosError instanceof Error && axiosError.message) {
           // Network or other errors
           const message = axiosError.message;
           if (message.includes('Network Error')) {
-            errorMessage = 'Network error. Please check your connection and try again.';
+            errorMessage = t('common:httpErrors.networkError');
           } else if (message.includes('timeout')) {
-            errorMessage = 'Request timed out. Please try again.';
+            errorMessage = t('common:httpErrors.timeout');
           } else {
-            errorMessage = 'Connection failed. Please try again later.';
+            errorMessage = t('common:httpErrors.connectionFailed');
           }
         }
         
@@ -193,7 +195,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
           fontWeight: 600
         }}
       >
-        {partnerData ? 'Edit partner' : 'Create new partner'}
+        {partnerData ? t('dialog.editTitle') : t('dialog.createTitle')}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -239,20 +241,20 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
               fontSize: '1.1rem',
               fontWeight: 500
             }}>
-              Partner Information
+              {t('dialog.partnerInfo')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Introduce the partner name and BPNL
+              {t('dialog.partnerInfoDescription')}
             </Typography>
           </Grid2>
           
           <Grid2 size={{xs: 12, sm: 6}}>
             <TextField
-              label="Partner Name"
+              label={t('fields.partnerName')}
               variant="outlined"
               size="medium"
               error={error && !name.trim()}
-              helperText={error && !name.trim() ? 'Name is required' : ''}
+              helperText={error && !name.trim() ? t('common:validation.required', { field: t('fields.name') }) : ''}
               fullWidth
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -261,11 +263,11 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
           
           <Grid2 size={{xs: 12, sm: 6}}>
             <TextField
-              label="Partner BPNL"
+              label={t('fields.partnerBpnl')}
               variant="outlined"
               size="medium"
               error={error && !bpnl.trim()}
-              helperText={error && !bpnl.trim() ? 'BPNL is required' : ''}
+              helperText={error && !bpnl.trim() ? t('common:validation.required', { field: t('fields.bpnl') }) : ''}
               fullWidth
               value={bpnl}
               onChange={(e) => setBpnl(e.target.value)}
@@ -304,7 +306,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
             fontWeight: 500
           }}
         >
-          CLOSE
+          {t('common:actions.close').toUpperCase()}
         </Button>
         <Button 
           onClick={handleCreate}
@@ -319,7 +321,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData }: PartnerDial
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}
         >
-          {partnerData ? 'UPDATE' : 'CREATE'}
+          {partnerData ? t('common:actions.update').toUpperCase() : t('common:actions.create').toUpperCase()}
         </Button>
       </DialogActions>
     </Dialog>

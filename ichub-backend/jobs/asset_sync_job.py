@@ -67,6 +67,9 @@ class AssetSyncJob:
             
             # Step 2: Sync all semantic assets from agreements configuration
             self._sync_semantic_assets()
+
+            # Step 3: Sync Digital Twin Event asset
+            self._sync_digital_twin_event_asset()
             
             logger.info("[AssetSyncJob] Asset synchronization completed successfully.")
             
@@ -106,6 +109,36 @@ class AssetSyncJob:
                 
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error synchronizing DTR asset: {e}", exc_info=True)
+
+    def _sync_digital_twin_event_asset(self) -> None:
+        """
+        Synchronize the Digital Twin Event asset with the connector.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing Digital Twin Event asset...")
+            
+            # Get DTE configuration
+            dte_config = ConfigManager.get_config("provider.digitalTwinEventAPI")
+            if not dte_config:
+                logger.warning("[AssetSyncJob] No Digital Twin Event configuration found. Skipping DTE sync.")
+                return
+            
+            asset_config = dte_config.get("asset_config", {})
+            
+            # Register DTE asset
+            dte_asset_id, _, _, _ = self.connector_provider_manager.register_digital_twin_event_offer(
+                digital_twin_event_url=dte_config.get("hostname"),
+                digital_twin_event_policy_config=dte_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id", None)
+            )
+            
+            if dte_asset_id:
+                logger.info(f"[AssetSyncJob] Digital Twin Event asset synchronized: {dte_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize Digital Twin Event asset.")
+                
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing DTE asset: {e}", exc_info=True)
     
     def _sync_semantic_assets(self) -> None:
         """

@@ -33,9 +33,11 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  LinearProgress,
   DialogActions,
   Alert,
   CircularProgress,
+  Skeleton,
   Tooltip,
   Tabs,
   Tab,
@@ -53,9 +55,12 @@ import { downloadJson } from '@/utils/downloadJson';
 import EmailIcon from '@mui/icons-material/Email';
 import CheckIcon from '@mui/icons-material/Check';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { fetchSubmodel, SubmodelDiscoveryResponse } from '../../api';
 import { submodelAddonRegistry } from '../submodel-addons/shared/registry';
 import { usTariffInformationAddon } from '../submodel-addons/us-tariff-information/addon';
+import { partTypeInformationAddon } from '../submodel-addons/part-type-information/addon';
+import { serialPartAddon } from '../submodel-addons/serial-part/addon';
 
 interface SubmodelViewerProps {
   open: boolean;
@@ -318,6 +323,33 @@ export const SubmodelViewer: React.FC<SubmodelViewerProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetailOpen, setErrorDetailOpen] = useState(false);
+  const [errorCopied, setErrorCopied] = useState(false);
+  const [descErrorDetailOpen, setDescErrorDetailOpen] = useState(false);
+  const [descErrorCopied, setDescErrorCopied] = useState(false);
+
+  const loadingMessages = [
+    'Discovering connector endpoints…',
+    'Negotiating contracts…',
+    'Matching policies…',
+    'Requesting EDC catalog…',
+    'Validating access permissions…',
+    'Initiating data transfer…',
+    'Fetching submodel data…',
+    'Decrypting payload…',
+    'Finalizing response…',
+  ];
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    setLoadingMsgIdx(0);
+    const interval = setInterval(() => {
+      setLoadingMsgIdx(i => (i + 1) % loadingMessages.length);
+    }, 1800);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
   const [submodelData, setSubmodelData] = useState<SubmodelDiscoveryResponse | null>(null);
   const [rightPanelTab, setRightPanelTab] = useState(0); // Separate state for right panel tabs
   const [lastLoadedSubmodelId, setLastLoadedSubmodelId] = useState<string | null>(null);
@@ -328,10 +360,14 @@ export const SubmodelViewer: React.FC<SubmodelViewerProps> = ({
 
   // Register addons on component mount
   useEffect(() => {
-    // Register US Tariff Information addon if not already registered
     if (!submodelAddonRegistry.getAddon('us-tariff-information')) {
       submodelAddonRegistry.register(usTariffInformationAddon as unknown as import('../submodel-addons/shared/types').VersionedSubmodelAddon);
-      
+    }
+    if (!submodelAddonRegistry.getAddon('part-type-information')) {
+      submodelAddonRegistry.register(partTypeInformationAddon as unknown as import('../submodel-addons/shared/types').VersionedSubmodelAddon);
+    }
+    if (!submodelAddonRegistry.getAddon('serial-part')) {
+      submodelAddonRegistry.register(serialPartAddon as unknown as import('../submodel-addons/shared/types').VersionedSubmodelAddon);
     }
   }, []);
 
@@ -649,14 +685,13 @@ Best regards`);
               </Box>
               {submodelData.submodelDescriptor.error && (
                 <Box>
-                  <Alert severity="error" sx={{ mt: 1, borderRadius: 0 }}>
-                    <Typography variant="body2" sx={{ fontWeight: '600', mb: 0.5 }}>
-                      Error Details:
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                      {submodelData.submodelDescriptor.error}
-                    </Typography>
-                  </Alert>
+                  <Chip
+                    label="Negotiation error — see details panel"
+                    color="error"
+                    size="small"
+                    variant="outlined"
+                    sx={{ mt: 1, fontFamily: 'monospace', fontSize: '0.72rem' }}
+                  />
                 </Box>
               )}
             </Box>
@@ -876,14 +911,69 @@ Best regards`);
             </Box>
 
             <Box sx={{ flex: 1, overflow: 'hidden', backgroundColor: theme.palette.background.default, display: 'flex', flexDirection: 'column' }}>
+              {loading && (
+                <LinearProgress
+                  sx={{
+                    height: 2,
+                    borderRadius: 0,
+                    flexShrink: 0,
+                    backgroundColor: `${theme.palette.primary.main}30`,
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: theme.palette.primary.main,
+                      transition: 'transform 0.6s linear',
+                    },
+                  }}
+                />
+              )}
               {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress />
+                <Box sx={{ background: '#1E1E1E', height: '100%', p: 2, overflow: 'hidden' }}>
+                  {[80, 55, 70, 45, 90, 60, 75, 50, 65, 40, 85, 55].map((w, i) => (
+                    <Skeleton key={i} variant="text" width={`${w}%`} sx={{ bgcolor: '#2D2D30', mb: 0.5, borderRadius: 0 }} />
+                  ))}
                 </Box>
-              ) : error ? (
-                <Alert severity="error" sx={{ borderRadius: 0, m: 2 }}>
-                  {error}
-                </Alert>
+              ) : (error || submodelData?.submodelDescriptor?.error) ? (
+                <Box sx={{ background: '#1E1E1E', height: '100%', p: 3, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
+                    <WarningAmberIcon sx={{ color: '#f85149', fontSize: 18, flexShrink: 0 }} />
+                    <Typography sx={{ fontFamily: 'Consolas, monospace', fontSize: '0.85rem', color: '#f85149', fontWeight: 600 }}>
+                      Asset negotiation failed
+                    </Typography>
+                  </Box>
+                  <Box sx={{ position: 'relative', flex: 1 }}>
+                    <Box
+                      component="pre"
+                      sx={{
+                        m: 0, p: 2, pr: 5, borderRadius: 1,
+                        background: '#161b22', border: '1px solid rgba(248,81,73,0.4)',
+                        fontFamily: 'Consolas, monospace', fontSize: '0.78rem', lineHeight: 1.7,
+                        whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                        color: '#ffa198', maxHeight: 'calc(100% - 80px)', overflow: 'auto',
+                      }}
+                    >
+                      {error ?? submodelData?.submodelDescriptor?.error}
+                    </Box>
+                    <IconButton
+                      size="small" title="Copy to clipboard"
+                      onClick={() => { navigator.clipboard.writeText(error ?? submodelData?.submodelDescriptor?.error ?? ''); setErrorCopied(true); setTimeout(() => setErrorCopied(false), 2000); }}
+                      sx={{ position: 'absolute', top: 8, right: 8, color: '#8b949e', opacity: 0.7, '&:hover': { opacity: 1, color: '#c9d1d9' } }}
+                    >
+                      {errorCopied ? <CheckIcon fontSize="inherit" sx={{ color: '#3fb950' }} /> : <ContentCopyIcon fontSize="inherit" />}
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexShrink: 0 }}>
+                    <Button
+                      variant="outlined" size="small"
+                      onClick={() => error ? setErrorDetailOpen(true) : setDescErrorDetailOpen(true)}
+                      sx={{
+                        textTransform: 'none', fontFamily: 'Consolas, monospace', fontSize: '0.78rem',
+                        borderColor: 'rgba(248,81,73,0.5)', color: '#f85149',
+                        '&:hover': { borderColor: '#f85149', background: 'rgba(248,81,73,0.1)' },
+                      }}
+                    >
+                      Show full error
+                    </Button>
+                  </Box>
+                </Box>
               ) : (
                 <Box sx={{ 
                   flex: 1, 
@@ -912,20 +1002,129 @@ Best regards`);
 
             <Box sx={{ flex: 1, overflow: 'auto', backgroundColor: theme.palette.background.default, p: 3 }}>
               {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                  <CircularProgress />
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                    <CircularProgress size={18} />
+                    <Typography variant="body2" color="text.secondary" sx={{ transition: 'opacity 0.4s' }}>
+                      {loadingMessages[loadingMsgIdx]}
+                    </Typography>
+                  </Box>
+                  {[1, 2, 3, 4].map(i => (
+                    <Box key={i} sx={{ mb: 2.5 }}>
+                      <Skeleton variant="text" width="45%" sx={{ mb: 0.5 }} />
+                      <Skeleton variant="rounded" height={36} />
+                    </Box>
+                  ))}
                 </Box>
-              ) : error ? (
-                <Alert severity="error" sx={{ borderRadius: 0 }}>
-                  {error}
-                </Alert>
-              ) : (
+              ) : error ? null : (
                 renderSubmodelInfo()
               )}
             </Box>
           </Box>
         </Box>
       </DialogContent>
+
+      {/* Error detail modal (main negotiation error) */}
+      <Dialog
+        open={errorDetailOpen}
+        onClose={() => setErrorDetailOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 0 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f6f8fa', borderBottom: '1px solid #d0d7de', fontFamily: 'Consolas, monospace', fontSize: '0.95rem', py: 1.5, px: 3 }}>
+          <Typography sx={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: '#656d76' }}>
+            submodel-error.log
+          </Typography>
+          <IconButton size="small" onClick={() => setErrorDetailOpen(false)} sx={{ color: '#656d76' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, background: '#ffffff' }}>
+          <Box
+            component="pre"
+            sx={{
+              m: 0, p: 3,
+              fontFamily: 'Consolas, monospace', fontSize: '0.8rem',
+              lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              color: '#24292f', minHeight: 200,
+            }}
+          >
+            {error}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ background: '#f6f8fa', borderTop: '1px solid #d0d7de', px: 3, py: 1.5, justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Typography sx={{ fontSize: '0.875rem', color: '#9a6700', fontFamily: 'Consolas, monospace', lineHeight: 1.5, flex: 1 }}>
+            ⚠ Inform your business partner so they can give you access to the submodel, or review the policy configuration you are willing to accept.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+            <Button
+              variant="outlined" size="small"
+              startIcon={errorCopied ? <CheckIcon fontSize="small" sx={{ color: 'success.main' }} /> : <ContentCopyIcon fontSize="small" />}
+              onClick={() => { navigator.clipboard.writeText(error ?? ''); setErrorCopied(true); setTimeout(() => setErrorCopied(false), 2000); }}
+              sx={{ textTransform: 'none', fontFamily: 'Consolas, monospace', borderColor: '#d0d7de', color: '#24292f', '&:hover': { borderColor: '#0969da', color: '#0969da' } }}
+            >
+              {errorCopied ? 'Copied!' : 'Copy'}
+            </Button>
+            <Button variant="outlined" size="small" onClick={() => setErrorDetailOpen(false)}
+              sx={{ textTransform: 'none', fontFamily: 'Consolas, monospace', borderColor: '#d0d7de', color: '#24292f', '&:hover': { borderColor: '#0969da', color: '#0969da' } }}
+            >
+              Close
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error detail modal (descriptor-level error) */}
+      <Dialog
+        open={descErrorDetailOpen}
+        onClose={() => setDescErrorDetailOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 0 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f6f8fa', borderBottom: '1px solid #d0d7de', fontFamily: 'Consolas, monospace', fontSize: '0.95rem', py: 1.5, px: 3 }}>
+          <Typography sx={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: '#656d76' }}>
+            negotiation-error.log
+          </Typography>
+          <IconButton size="small" onClick={() => setDescErrorDetailOpen(false)} sx={{ color: '#656d76' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, background: '#ffffff' }}>
+          <Box
+            component="pre"
+            sx={{
+              m: 0, p: 3,
+              fontFamily: 'Consolas, monospace', fontSize: '0.8rem',
+              lineHeight: 1.7, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              color: '#24292f', minHeight: 200,
+            }}
+          >
+            {submodelData?.submodelDescriptor?.error}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ background: '#f6f8fa', borderTop: '1px solid #d0d7de', px: 3, py: 1.5, justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+          <Typography sx={{ fontSize: '0.875rem', color: '#9a6700', fontFamily: 'Consolas, monospace', lineHeight: 1.5, flex: 1 }}>
+            ⚠ Inform your business partner so they can give you access to the submodel, or review the policy configuration you are willing to accept.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+            <Button
+              variant="outlined" size="small"
+              startIcon={descErrorCopied ? <CheckIcon fontSize="small" sx={{ color: 'success.main' }} /> : <ContentCopyIcon fontSize="small" />}
+              onClick={() => { navigator.clipboard.writeText(submodelData?.submodelDescriptor?.error ?? ''); setDescErrorCopied(true); setTimeout(() => setDescErrorCopied(false), 2000); }}
+              sx={{ textTransform: 'none', fontFamily: 'Consolas, monospace', borderColor: '#d0d7de', color: '#24292f', '&:hover': { borderColor: '#0969da', color: '#0969da' } }}
+            >
+              {descErrorCopied ? 'Copied!' : 'Copy'}
+            </Button>
+            <Button variant="outlined" size="small" onClick={() => setDescErrorDetailOpen(false)}
+              sx={{ textTransform: 'none', fontFamily: 'Consolas, monospace', borderColor: '#d0d7de', color: '#24292f', '&:hover': { borderColor: '#0969da', color: '#0969da' } }}
+            >
+              Close
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
 
       <DialogActions sx={{ borderRadius: 0, borderTop: `1px solid ${theme.palette.divider}`, p: 2, gap: 1 }}>
         <Button 

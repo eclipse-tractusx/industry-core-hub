@@ -47,8 +47,7 @@ jobs:
       - name: Build ichub-backend Docker image
         id: build-docker-ichub-backend
         run: |
-            cd ichub-backend
-            docker build -t ${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_BACKEND_IMAGE_NAME }}:latest .
+            docker build -f ./ichub-backend/runtimes/Dockerfile -t ${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_BACKEND_IMAGE_NAME }}:latest ./ichub-backend
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0

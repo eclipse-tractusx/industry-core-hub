@@ -201,6 +201,21 @@ data:
         twin_id integer
     );
 
+    CREATE TYPE public.notification_direction AS ENUM ('incoming', 'outgoing');
+    CREATE TYPE public.notification_status AS ENUM ('received', 'read', 'pending', 'sent', 'failed');
+
+    CREATE TABLE public.notifications (
+        id integer NOT NULL,
+        created_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+        message_id uuid NOT NULL,
+        sender_bpn character varying NOT NULL,
+        receiver_bpn character varying NOT NULL,
+        direction public.notification_direction NOT NULL,
+        status public.notification_status DEFAULT 'pending'::public.notification_status NOT NULL,
+        use_case VARCHAR(255),
+        location character varying NOT NULL
+    );
+
     ALTER TABLE public.batch ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
         SEQUENCE NAME public.batch_id_seq
         START WITH 1
@@ -308,7 +323,14 @@ data:
         CACHE 1
     );
 
-
+    ALTER TABLE public.notifications ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+        SEQUENCE NAME public.notifications_id_seq
+        START WITH 1
+        INCREMENT BY 1
+        NO MINVALUE
+        NO MAXVALUE
+        CACHE 1
+    );
 
     ALTER TABLE ONLY public.batch
         ADD CONSTRAINT pk_batch PRIMARY KEY (id);
@@ -406,6 +428,11 @@ data:
     ALTER TABLE ONLY public.twin_aspect
         ADD CONSTRAINT uk_twin_aspect_twin_id_semantic_id UNIQUE (twin_id, semantic_id);
 
+    ALTER TABLE ONLY public.notifications
+        ADD CONSTRAINT pk_notifications PRIMARY KEY (id);
+
+    ALTER TABLE ONLY public.notifications
+        ADD CONSTRAINT uk_notifications_message_id UNIQUE (message_id);
 
     CREATE INDEX idx_batch_batch_id ON public.batch USING btree (batch_id) WITH (deduplicate_items='true');
     CREATE INDEX idx_batch_catalog_part_id ON public.batch USING btree (catalog_part_id);
@@ -449,6 +476,11 @@ data:
 
     CREATE INDEX idx_twin_registration_dtr_registered ON public.twin_registration USING btree (dtr_registered);
 
+    CREATE INDEX idx_notifications_sender_bpn ON public.notifications USING btree (sender_bpn);
+    CREATE INDEX idx_notifications_receiver_bpn ON public.notifications USING btree (receiver_bpn);
+    CREATE INDEX idx_notifications_status ON public.notifications USING btree (status);
+    CREATE INDEX idx_notifications_direction ON public.notifications USING btree (direction);
+    CREATE INDEX idx_notifications_location ON public.notifications USING btree (location);
 
     ALTER TABLE ONLY public.batch
         ADD CONSTRAINT fk_batch_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;

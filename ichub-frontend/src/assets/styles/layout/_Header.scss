@@ -23,6 +23,11 @@
 @use "../config/variables" as *;
 @use '../config/mixins';
 
+/* Header wrapper */
+.header-wrapper {
+  flex-grow: 1;
+}
+
 /* Navigation bar */
 header.ichub-header {
   background: $header-gradient-bg;
@@ -43,50 +48,136 @@ header.ichub-header {
     transition: all 0.2s ease-in-out;
 
     &:hover {
-      background-color: rgba(25, 118, 210, 0.2);
+      background-color: $hover-primary;
       color: white;
-      border-color: rgba(25, 118, 210, 0.5);
+      border-color: $hover-primary-border;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+      box-shadow: 0 4px 12px $hover-primary-shadow;
     }
   }
   
   .MuiIconButton-root {
-    color: white;
+    color: $brand-text;
     
     &:hover {
-      background-color: rgba(25, 118, 210, 0.2);
+      background-color: $hover-primary;
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+      box-shadow: 0 4px 12px $hover-primary-shadow;
     }
     
     .MuiSvgIcon-root {
-      color: white;
+      color: $brand-text;
     }
   }
-  h1, h2{
+
+  h1, h2 {
     color: $brand-text;
     font-weight: bold;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 4px $shadow-dark;
     letter-spacing: 0.5px;
     
     &.main-title {
       font-size: 2rem;
       font-weight: 700;
-      background: linear-gradient(45deg, #ffffff 30%, #42a5f5 90%);
+      background: linear-gradient(45deg, $brand-text 30%, $color-primary-light 90%);
       background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      text-shadow: none; // Remove text-shadow when using gradient text
+      text-shadow: none;
       
       @media (max-width: 768px) {
         font-size: 1.6rem;
       }
     }
   }
+
+  /* Logo containers */
+  .logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    a {
+      display: flex;
+      align-items: center;
+    }
+
+    img {
+      display: block;
+    }
+
+    &--mobile {
+      display: flex;
+
+      @media (min-width: 900px) {
+        display: none;
+      }
+    }
+
+    &--desktop {
+      display: none;
+
+      @media (min-width: 900px) {
+        display: flex;
+      }
+    }
+  }
+
+  /* Title container */
+  .header-title-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+  }
+
+  .header-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: $brand-text;
+    text-shadow: 0 2px 4px $shadow-dark;
+    letter-spacing: 0.5px;
+
+    @media (max-width: 900px) {
+      font-size: 1.6rem;
+    }
+  }
+
+  /* Header actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    &--desktop {
+      display: none;
+
+      @media (min-width: 900px) {
+        display: flex;
+      }
+    }
+
+    &--mobile {
+      display: flex;
+
+      @media (min-width: 900px) {
+        display: none;
+      }
+    }
+  }
+
+  .header-icon-button {
+    color: $brand-text;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      background-color: $hover-primary;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px $hover-primary-shadow;
+    }
+  }
 }
 
-/* Dropdown menu borders */
+/* User profile menu */
 #primary-search-account-menu {
   > div.MuiPaper-root.MuiPopover-paper.MuiMenu-paper {
     background-color: $brand-dark;
@@ -104,6 +195,152 @@ header.ichub-header {
 
     hr {
       border-color: $brand-shadow;
+    }
+  }
+}
+
+/* Common menu styles */
+.header-menu {
+  .MuiPaper-root {
+    overflow: visible;
+    filter: drop-shadow(0px 4px 20px $shadow-light);
+    margin-top: 12px;
+    border-radius: 8px;
+
+    &::before {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      right: 14px;
+      width: 10px;
+      height: 10px;
+      background-color: inherit;
+      transform: translateY(-50%) rotate(45deg);
+      z-index: 0;
+    }
+  }
+}
+
+/* User menu specific */
+.user-menu {
+  .MuiPaper-root {
+    min-width: 280px;
+  }
+
+  .user-info-section {
+    padding: 16px;
+    background: linear-gradient(135deg, $hover-primary-light 0%, rgba($color-primary, 0.05) 100%);
+
+    .user-name {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .user-username {
+      font-size: 0.875rem;
+      margin-bottom: 4px;
+    }
+
+    .user-email {
+      display: block;
+      margin-bottom: 8px;
+    }
+  }
+
+  .company-id-box {
+    margin-top: 8px;
+    padding: 6px 12px;
+    background-color: $hover-primary-light;
+    border-radius: 4px;
+    border: 1px solid $hover-primary;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .company-id-text {
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.3px;
+      flex: 1;
+    }
+
+    .copy-button {
+      padding: 4px;
+
+      &:hover {
+        background-color: $hover-primary;
+      }
+
+      .MuiSvgIcon-root {
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .menu-item {
+    padding: 10px 16px;
+
+    &:hover {
+      background-color: $hover-primary-light;
+    }
+
+    &--logout:hover {
+      background-color: $hover-error;
+    }
+  }
+}
+
+/* Language menu */
+.language-menu {
+  .MuiPaper-root {
+    min-width: 160px;
+  }
+
+  .language-item {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      background-color: $hover-primary-light;
+    }
+
+    &.Mui-selected {
+      background-color: $hover-primary;
+
+      &:hover {
+        background-color: $hover-primary;
+      }
+    }
+  }
+
+  .flag-icon {
+    width: 24px;
+    height: 18px;
+    margin-right: 12px;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px $shadow-light;
+  }
+}
+
+/* Mobile menu */
+.mobile-menu {
+  .mobile-menu-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .language-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .flag-icon {
+      width: 24px;
+      height: 18px;
+      border-radius: 2px;
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-04/schema",
   "x-samm-aspect-model-urn" : "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation",
-  "description" : "Information required for US tariff declaration",
+  "description" : "Information required for US tariff declaration, including product classification codes (e.g., HTS), customs valuation data, country of origin, applicable duty rates, and other attributes necessary to ensure regulatory compliance and automated processing within cross-company data exchange scenarios.",
   "type" : "object",
   "components" : {
     "schemas" : {

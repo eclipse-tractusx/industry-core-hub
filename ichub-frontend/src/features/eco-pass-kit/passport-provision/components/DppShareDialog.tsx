@@ -20,8 +20,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@mui/material';
 import { Box, TextField, Alert, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Checkbox, FormControlLabel, Typography, Grid2, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
@@ -44,6 +45,7 @@ interface DppShareDialogProps {
 
 const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['passportProvision', 'common']);
 
   const [bpnl, setBpnl] = useState('');
   const [error, setError] = useState(false);
@@ -81,17 +83,6 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
     }
   }, [open, dppId]);
 
-  const handlePartnerSelection = (_event: React.SyntheticEvent, value: PartnerInstance | null) => {
-    if (value && 'bpnl' in value) {
-      setBpnl(value.bpnl);
-    } else {
-      setBpnl('');
-    }
-    setError(false);
-    setApiErrorMessage('');
-    setSuccessMessage('');
-  };
-
   const handleShare = async () => {
     if (!bpnl.trim()) {
       setError(true);
@@ -109,7 +100,7 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
         customPartId.trim() || undefined
       );
       
-      setSuccessMessage(`DPP shared successfully with ${bpnl.trim()}`);
+      setSuccessMessage(t('shareDialog.successMessage', { bpnl: bpnl.trim() }));
 
       setTimeout(() => {
         setSuccessMessage('');
@@ -175,7 +166,7 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
           fontWeight: 600
         }}
       >
-        Share Digital Product Passport ({dppName})
+        {t('shareDialog.title', { name: dppName })}
       </DialogTitle>
       <IconButton
         aria-label="close"
@@ -230,10 +221,10 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                No Partners Available
+                {t('shareDialog.noPartnersTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center', py: 4 }}>
-                No partners available. Please add partners in the Partner View to share DPPs.
+                {t('shareDialog.noPartnersDescription')}
               </Typography>
             </Grid2>
           </Grid2>
@@ -246,10 +237,10 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
                 fontSize: '1.1rem',
                 fontWeight: 500
               }}>
-                Share Digital Product Passport
+                {t('shareDialog.shareTitle')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Select a partner to share the DPP with
+                {t('shareDialog.selectPartnerDescription')}
               </Typography>
             </Grid2>
             
@@ -261,10 +252,10 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
                 isLoadingPartners={false}
                 partnersError={false}
                 hasError={error}
-                label="Partner"
-                placeholder="Select a partner to share the DPP with"
-                helperText="Select from available partners"
-                errorMessage="Partner selection is required"
+                label={t('common:fields.partner')}
+                placeholder={t('shareDialog.partnerPlaceholder')}
+                helperText={t('shareDialog.partnerHelperText')}
+                errorMessage={t('shareDialog.partnerRequired')}
                 onBpnlChange={setBpnl}
                 onPartnerChange={(partner) => {
                   setSelectedPartner(partner);
@@ -358,20 +349,20 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
                         color: 'primary.main',
                       }
                     }}>
-                      Add custom customer part Id
+                      {t('shareDialog.addCustomPartId')}
                     </Typography>
                   }
                 />
                 {showCustomPartId && (
                   <Box sx={{ mt: 2 }}>
                     <TextField
-                      label="Customer Part Id"
+                      label={t('shareDialog.customerPartId')}
                       variant="outlined"
                       size="medium"
                       fullWidth
                       value={customPartId}
                       onChange={(e) => setCustomPartId(e.target.value)}
-                      placeholder="Enter your custom part identifier"
+                      placeholder={t('shareDialog.customerPartIdPlaceholder')}
                     />
                   </Box>
                 )}
@@ -410,7 +401,7 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
             fontWeight: 500
           }}
         >
-          CLOSE
+          {t('common:actions.close').toUpperCase()}
         </Button>
         {partnersList.length === 0 ? (
           <Button 
@@ -426,7 +417,7 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
           >
-            Add a Partner
+            {t('shareDialog.addPartner')}
           </Button>
         ) : (
           <Button 
@@ -443,7 +434,7 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}
           >
-            {isLoading ? 'Sharing...' : 'Share'}
+            {isLoading ? t('common:actions.sharing') : t('common:actions.share')}
           </Button>
         )}
       </DialogActions>

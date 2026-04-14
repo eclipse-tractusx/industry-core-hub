@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { AppConfig, RawEnvironmentConfig, ConfigurationError, GovernancePolicy } from './schema';
+import { AppConfig, RawEnvironmentConfig, ConfigurationError, AgreementConfig, DtrPolicyConfig } from './schema';
 
 export class ConfigFactory {
   private static instance: AppConfig | null = null;
@@ -74,7 +74,7 @@ export class ConfigFactory {
       VITE_APP_VERSION: windowEnv.APP_VERSION || viteEnv.VITE_APP_VERSION,
       
       // API configuration
-      VITE_ICHUB_BACKEND_URL: windowEnv.ICHUB_BACKEND_URL || viteEnv.VITE_ICHUB_BACKEND_URL,
+      VITE_ICHUB_BACKEND_URL: viteEnv.VITE_ICHUB_BACKEND_URL || windowEnv.ICHUB_BACKEND_URL,
       VITE_API_TIMEOUT: windowEnv.API_TIMEOUT || viteEnv.VITE_API_TIMEOUT,
       VITE_API_RETRY_ATTEMPTS: windowEnv.API_RETRY_ATTEMPTS || viteEnv.VITE_API_RETRY_ATTEMPTS,
       VITE_REQUIRE_HTTPS_URL_PATTERN: windowEnv.REQUIRE_HTTPS_URL_PATTERN || viteEnv.VITE_REQUIRE_HTTPS_URL_PATTERN,
@@ -182,8 +182,8 @@ export class ConfigFactory {
       },
       
       governance: {
-        config: this.parseJsonConfig(raw.VITE_GOVERNANCE_CONFIG, []),
-        dtrPolicies: this.parseJsonConfig(raw.VITE_DTR_POLICIES_CONFIG, []),
+        agreements: this.parseJsonConfig<AgreementConfig[]>(raw.VITE_GOVERNANCE_CONFIG, []),
+        dtrPolicy: this.parseJsonConfig<DtrPolicyConfig>(raw.VITE_DTR_POLICIES_CONFIG, []),
       },
       
       features: {

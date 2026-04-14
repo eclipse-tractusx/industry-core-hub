@@ -23,8 +23,8 @@
 import { 
   getGovernanceConfig, 
   getDtrPoliciesConfig,
-  GovernanceConfig,
-  GovernancePolicy 
+  AgreementConfig,
+  DtrPolicyConfig 
 } from '@/services/EnvironmentService';
 import { configUtils } from '@/config';
 
@@ -43,16 +43,16 @@ export const partDiscoveryApiEndpoints = {
  */
 export const partDiscoveryGovernanceConfig = {
   /**
-   * Get governance configuration for part discovery
+   * Get agreements configuration for part discovery (Saturn format)
    */
-  getGovernanceConfig: (): GovernanceConfig[] => {
+  getGovernanceConfig: (): AgreementConfig[] => {
     return getGovernanceConfig();
   },
 
   /**
-   * Get DTR policies configuration for part discovery
+   * Get DTR policy configuration for part discovery (Saturn format)
    */
-  getDtrPoliciesConfig: (): GovernancePolicy[] => {
+  getDtrPoliciesConfig: (): DtrPolicyConfig => {
     return getDtrPoliciesConfig();
   }
 };

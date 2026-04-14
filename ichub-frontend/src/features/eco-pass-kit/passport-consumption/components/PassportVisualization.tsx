@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -59,6 +60,7 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
   onBack,
   digitalTwinData
 }) => {
+  const { t } = useTranslation(['passportConsumption', 'common']);
   const [activeTab, setActiveTab] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -138,10 +140,10 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
   // Handle copy to clipboard
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      setSnackbarMessage(`${label} copied to clipboard`);
+      setSnackbarMessage(t('visualization.copiedToClipboard', { label }));
       setSnackbarOpen(true);
     }).catch(() => {
-      setSnackbarMessage('Failed to copy');
+      setSnackbarMessage(t('visualization.copyFailed'));
       setSnackbarOpen(true);
     });
   };
@@ -224,12 +226,12 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
               }
             }}
           >
-            Back
+            {t('common:actions.back')}
           </Button>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, flex: '1 1 auto', minWidth: 0 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: { xs: '0.7rem', sm: '0.75rem' }, fontWeight: 500 }}>
-                ID:
+                {t('common:fields.id')}
               </Typography>
               <Chip
                 label={passportId}
@@ -267,8 +269,8 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
             <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1 }, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center', mt: 1 }}>
               <Chip
                 icon={<ContentCopy sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem' } }} />}
-                label={`AAS ID: ${(data.metadata as any)?.passportIdentifier || 'N/A'}`}
-                onClick={() => handleCopy((data.metadata as any)?.passportIdentifier || 'N/A', 'AAS ID')}
+                label={`${t('common:fields.aasId')}: ${(data.metadata as any)?.passportIdentifier || 'N/A'}`}
+                onClick={() => handleCopy((data.metadata as any)?.passportIdentifier || 'N/A', t('common:fields.aasId'))}
                 sx={{
                   backgroundColor: 'rgba(74, 144, 226, 0.15)',
                   color: 'rgba(255, 255, 255, 0.8)',
@@ -292,8 +294,8 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
               />
               <Chip
                 icon={<ContentCopy sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem' } }} />}
-                label={`Global Asset ID: ${passportId}`}
-                onClick={() => handleCopy(passportId, 'Global Asset ID')}
+                label={`${t('common:fields.globalAssetId')}: ${passportId}`}
+                onClick={() => handleCopy(passportId, t('common:fields.globalAssetId'))}
                 sx={{
                   backgroundColor: 'rgba(74, 144, 226, 0.15)',
                   color: 'rgba(255, 255, 255, 0.8)',
@@ -331,7 +333,7 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
               }
             }}
           >
-            Download
+            {t('common:actions.download')}
           </Button>
         </Box>
 
@@ -397,7 +399,7 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
                 }}
               >
                 <CompositionChart 
-                  title="Materials" 
+                  title={t('visualization.materials')} 
                   items={compositionData.items}
                   compact
                 />
@@ -610,7 +612,7 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
           >
             <Info sx={{ fontSize: { xs: 40, sm: 48 }, color: 'rgba(255, 255, 255, 0.3)', mb: 2 }} />
             <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-              No data available for this section
+              {t('visualization.noDataAvailable')}
             </Typography>
           </Paper>
         )}

@@ -1,0 +1,49 @@
+{
+  "page": {
+    "title": "Digital Product Passport",
+    "subtitle": "Retrieve and visualize product passports from the dataspace",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "Please enter a Discovery ID",
+    "validationFormat": "Invalid format. Expected: CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "Want to find out more? Take a look at all our",
+    "ecoPassFeatures": "Eco Pass KIT Features"
+  },
+  "loading": {
+    "title": "Loading Passport",
+    "errorTitle": "Error Loading Passport",
+    "steps": {
+      "parsingId": "Parsing ID",
+      "parsingIdDescription": "Extracting manufacturer and instance information",
+      "findingOwner": "Finding Owner",
+      "findingOwnerDescription": "Looking up BPN using BPN Discovery",
+      "retrievingTwin": "Retrieving Twin",
+      "retrievingTwinDescription": "Fetching digital twin from DTR",
+      "findingSubmodel": "Finding Submodel",
+      "findingSubmodelDescription": "Locating matching submodel",
+      "loadingData": "Loading Data",
+      "loadingDataDescription": "Consuming passport data",
+      "readyDescription": "Passport loaded successfully"
+    }
+  },
+  "scanner": {
+    "title": "Scan QR Code",
+    "subtitle": "Position the QR code within the frame",
+    "camera": "Camera",
+    "cameraShort": "Cam",
+    "formatInfo": "Only QR codes with format",
+    "formatInfoSuffix": "are accepted",
+    "invalidFormat": "Invalid format. Only CX:<manufacturerPartId>:<partInstanceId> format is allowed, not URLs.",
+    "cameraError": "Failed to access camera. Please grant camera permissions."
+  },
+  "visualization": {
+    "copiedToClipboard": "{{label}} copied to clipboard",
+    "copyFailed": "Failed to copy",
+    "noDataAvailable": "No data available for this section",
+    "materials": "Materials",
+    "unableToDetermineType": "Unable to determine passport type. Please check the data format."
+  },
+  "errors": {
+    "noMockData": "No mock data available",
+    "loadFailed": "Failed to load passport"
+  }
+}
