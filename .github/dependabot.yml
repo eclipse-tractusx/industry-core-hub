@@ -27,8 +27,7 @@ registries:
 
 updates:
   # Github Actions
-  -
-    package-ecosystem: "github-actions"
+  - package-ecosystem: "github-actions"
     directory: /
     labels:
       - "dependabot"
@@ -36,5 +35,40 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      dependencies:
+      all-dependencies:
+        patterns:
+          - "*"
+
+  # Frontend (Node.js/npm)
+  - package-ecosystem: "npm"
+    directory: "/ichub-frontend"
+    labels:
+      - "dependabot"
+      - "npm"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
+      production:
         dependency-type: "production"
+      development:
+        dependency-type: "development"
+
+  # Backend (Python/pip)
+  - package-ecosystem: "pip"
+    directory: "/ichub-backend"
+    labels:
+      - "dependabot"
+      - "pip"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
+      production:
+        dependency-type: "production"
+      development:
+        dependency-type: "development"
