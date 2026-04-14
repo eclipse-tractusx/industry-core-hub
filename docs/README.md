@@ -35,20 +35,12 @@ Everything you need to get started with Industry Core Hub.
 ## For Users
 
 - **[Submodel Creator Guide](./user/SUBMODEL_CREATOR_GUIDE.md)** - Create and validate submodels
-- **[User Manual](./user/USER_MANUAL.md)** - Complete UI and feature guide
-- **[Part Management Guide](./user/PART_MANAGEMENT_GUIDE.md)** - Creating and managing parts
-- **[Partner Management Guide](./user/PARTNER_MANAGEMENT_GUIDE.md)** - Partner connections and agreements
-- **[Data Sharing Guide](./user/DATA_SHARING_GUIDE.md)** - Sharing data with partners
 
 ## For Developers
 
 - **[Backend README](../ichub-backend/README.md)** - Backend setup and structure
 - **[Frontend README](../ichub-frontend/README.md)** - Frontend development
-- **[Development Setup](./developer/DEVELOPMENT_SETUP.md)** - Local environment setup
 - **[Code Architecture](./developer/CODE_ARCHITECTURE.md)** - Codebase structure
-- **[API Development Guidelines](./developer/API_DEVELOPMENT_GUIDELINES.md)** - API standards
-- **[Testing Guide](./developer/TESTING_GUIDE.md)** - Writing and running tests
-- **[Debugging Guide](./developer/DEBUGGING_GUIDE.md)** - Debugging tools and techniques
 - **[Reset Keycloak Password](./developer/reset-keycloak-password.md)** - Admin utility
 
 ## API Reference
@@ -66,9 +58,6 @@ Everything you need to get started with Industry Core Hub.
 - **[Runtime View](./architecture/4-runtime-view.md)** - How it runs
 - **[Glossary](./architecture/glossary.md)** - Terms explained
 - **[Decision Records](./architecture/decision-records/)** - Architectural decisions and reasoning
-- **[Production Deployment](./admin/PRODUCTION_DEPLOYMENT.md)** - Production best practices
-- **[Monitoring and Observability](./admin/MONITORING_AND_OBSERVABILITY.md)** - Metrics and logging
-- **[Backup and Disaster Recovery](./admin/BACKUP_AND_DISASTER_RECOVERY.md)** - Backup and recovery procedures
 
 ## For Operators
 
@@ -123,13 +112,7 @@ Everything you need to get started with Industry Core Hub.
 - **[Discussions](https://github.com/eclipse-tractusx/industry-core-hub/discussions)** - Ask questions and share ideas
 - **[Community Office Hours](https://eclipse-tractusx.github.io/community/open-meetings/)** - Weekly meetings
 
-## Additional Guides
 
-- **[Performance Tuning](./PERFORMANCE_TUNING.md)** - Optimization strategies
-- **[Security Hardening](./SECURITY_HARDENING.md)** - Security best practices
-- **[Troubleshooting](./TROUBLESHOOTING.md)** - Common issues and solutions
-
-## Improve These Docs
 
 Found a mistake or want to add something?
 
