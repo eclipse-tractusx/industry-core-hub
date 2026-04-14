@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Kontaktliste",
+    "noPartnersYet": "Es wurden noch keine Partner hinzugefügt. Verwenden Sie die grüne Schaltfläche oben, um einen zu erstellen.",
+    "loadError": "Partner konnten nicht geladen werden. Bitte überprüfen Sie die Backend-Verbindung.",
+    "requestTimeout": "Anfrage-Timeout nach 30 Sekunden"
+  },
+  "dialog": {
+    "createTitle": "Neuen Partner erstellen",
+    "editTitle": "Partner bearbeiten",
+    "partnerInfo": "Partner-Informationen",
+    "partnerInfoDescription": "Geben Sie den Partnernamen und die BPNL ein"
+  },
+  "fields": {
+    "partnerName": "Partnername",
+    "partnerBpnl": "Partner-BPNL"
+  },
+  "autocomplete": {
+    "placeholder": "Partner auswählen oder benutzerdefinierte BPNL eingeben (z.B. BPNL0000000093Q7)",
+    "helperText": "Wählen Sie aus verfügbaren Partnern oder geben Sie eine benutzerdefinierte Geschäftspartner-Rechtsträgernummer ein",
+    "loadingPartners": "Partner werden geladen...",
+    "noPartnersFound": "Keine Partner gefunden. Sie können trotzdem eine benutzerdefinierte BPNL eingeben.",
+    "loadError": "Partnerliste konnte nicht vom Backend geladen werden. Sie können trotzdem eine BPNL manuell eingeben."
+  },
+  "messages": {
+    "createSuccess": "Partner {{name}} erfolgreich erstellt [{{bpnl}}]",
+    "updateSuccess": "Partner {{name}} erfolgreich aktualisiert [{{bpnl}}] (lokale Aktualisierung)",
+    "createError": "Partner konnte nicht erstellt werden.",
+    "bpnlConflict": "Ein Partner mit dieser BPNL existiert bereits."
+  }
+}

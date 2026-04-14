@@ -23,6 +23,7 @@
 
 import React from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import useAuth from '../../hooks/useAuth';
 import ErrorPage from '../common/ErrorPage';
 
@@ -42,29 +43,32 @@ export function ProtectedRoute({
   requireRoles = [], 
   requirePermissions = [] 
 }: ProtectedRouteProps) {
+  const { t } = useTranslation('common');
   const { isAuthenticated, isLoading, user, hasRole, hasPermission, error } = useAuth();
 
-  // Show loading spinner while authentication is being initialized
+  // Show loading state FIRST - don't mount children until auth is ready
+  // This prevents pages from mounting and showing their own loading states
+  // while authentication is still being checked
   if (isLoading) {
-    return fallback || (
-      <Box 
-        display="flex" 
+    return (
+      <Box
+        display="flex"
         flexDirection="column"
-        justifyContent="center" 
-        alignItems="center" 
+        justifyContent="center"
+        alignItems="center"
         minHeight="100vh"
         gap={3}
-        sx={{ 
-          background: 'black',
-          color: 'white'
+        sx={{
+          background: 'white',
+          color: 'black'
         }}
       >
-        <CircularProgress size={80} sx={{ color: 'white' }} />
+        <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
-          Industry Core Hub
+          {t('app.name')}
         </Typography>
         <Typography variant="h6">
-          Authenticating...
+          {t('auth.authenticating')}
         </Typography>
       </Box>
     );
@@ -74,20 +78,20 @@ export function ProtectedRoute({
   if (error) {
     return (
       <ErrorPage
-        title="Authentication Error"
+        title={t('auth.authError')}
         message={error}
         causes={[
-          'Session expired or invalid',
-          'Authentication service unavailable',
-          'Permission denied'
+          t('auth.causes.sessionExpired'),
+          t('auth.causes.serviceUnavailable'),
+          t('auth.causes.permissionDenied')
         ]}
         showRefreshButton={true}
-        helpText="Please try refreshing the page or contact support if the problem persists."
+        helpText={t('auth.tryRefresh')}
       />
     );
   }
 
-  // If not authenticated, Keycloak will redirect to login page
+  // If not authenticated and not loading, Keycloak will redirect to login page
   // This is handled by the AuthService initialization with onLoad: 'login-required'
   if (!isAuthenticated) {
     return fallback || (
@@ -105,10 +109,10 @@ export function ProtectedRoute({
       >
         <CircularProgress size={80} sx={{ color: 'black' }} />
         <Typography variant="h4" fontWeight="bold">
-          Industry Core Hub
+          {t('app.name')}
         </Typography>
         <Typography variant="h6">
-          Redirecting to login...
+          {t('auth.redirectingToLogin')}
         </Typography>
       </Box>
     );
@@ -119,27 +123,16 @@ export function ProtectedRoute({
     const hasRequiredRole = requireRoles.some(role => hasRole(role));
     if (!hasRequiredRole) {
       return (
-        <Box 
-          display="flex" 
-          flexDirection="column"
-          justifyContent="center" 
-          alignItems="center" 
-          minHeight="60vh"
-          gap={2}
-        >
-          <Typography variant="h5" color="warning.main">
-            Access Denied
-          </Typography>
-          <Typography variant="body1" color="textSecondary" textAlign="center">
-            You don't have the required role to access this content.
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Required roles: {requireRoles.join(', ')}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Your roles: {user?.roles.join(', ') || 'None'}
-          </Typography>
-        </Box>
+        <ErrorPage
+          title={t('auth.accessDenied')}
+          message={t('auth.noRequiredRole')}
+          causes={[
+            t('auth.requiredRoles', { roles: requireRoles.join(', ') }),
+            t('auth.yourRoles', { roles: user?.roles.join(', ') || 'None' })
+          ]}
+          showRefreshButton={false}
+          helpText={t('auth.contactAdminAccess')}
+        />
       );
     }
   }
@@ -149,27 +142,16 @@ export function ProtectedRoute({
     const hasRequiredPermission = requirePermissions.some(permission => hasPermission(permission));
     if (!hasRequiredPermission) {
       return (
-        <Box 
-          display="flex" 
-          flexDirection="column"
-          justifyContent="center" 
-          alignItems="center" 
-          minHeight="60vh"
-          gap={2}
-        >
-          <Typography variant="h5" color="warning.main">
-            Access Denied
-          </Typography>
-          <Typography variant="body1" color="textSecondary" textAlign="center">
-            You don't have the required permissions to access this content.
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Required permissions: {requirePermissions.join(', ')}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Your permissions: {user?.permissions.join(', ') || 'None'}
-          </Typography>
-        </Box>
+        <ErrorPage
+          title={t('auth.accessDenied')}
+          message={t('auth.noRequiredPermission')}
+          causes={[
+            t('auth.requiredPermissions', { permissions: requirePermissions.join(', ') }),
+            t('auth.yourPermissions', { permissions: user?.permissions.join(', ') || 'None' })
+          ]}
+          showRefreshButton={false}
+          helpText={t('auth.contactAdminAccess')}
+        />
       );
     }
   }

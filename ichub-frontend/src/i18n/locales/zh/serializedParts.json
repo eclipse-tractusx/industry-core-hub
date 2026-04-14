@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "序列化零件",
+    "loading": "正在加载序列化零件..."
+  },
+  "table": {
+    "subtitle": "查看和管理序列化零件实例（共{{count}}个）",
+    "addSerializedPart": "添加序列化零件",
+    "columns": {
+      "businessPartnerBpnl": "业务合作伙伴BPNL"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "删除序列化零件"
+    },
+    "messages": {
+      "twinRegistered": "孪生注册成功！",
+      "twinShared": "孪生分享成功！",
+      "twinUnshared": "孪生取消分享成功！",
+      "partDeleted": "序列化零件删除成功！",
+      "dataRefreshed": "数据刷新成功！",
+      "registerFailed": "注册失败",
+      "shareFailed": "分享失败",
+      "unshareFailed": "取消分享失败",
+      "deleteFailed": "删除失败",
+      "refreshFailed": "刷新失败",
+      "globalAssetIdCopied": "全局资产ID已复制！",
+      "aasIdCopied": "AAS ID已复制！",
+      "failedToCopy": "复制失败"
+    },
+    "loading": {
+      "title": "正在加载孪生数据...",
+      "subtitle": "正在获取序列化零件的孪生信息"
+    },
+    "empty": {
+      "title": "未找到序列化零件",
+      "subtitle": "当前没有序列化零件可显示。创建零件后将显示在此处。"
+    },
+    "deleteDialog": {
+      "title": "删除序列化零件",
+      "confirmation": "您确定要删除此序列化零件吗？",
+      "warning": "此操作无法撤销。"
+    }
+  },
+  "addDialog": {
+    "title": "添加序列化零件",
+    "form": {
+      "manufacturerPartIdPlaceholder": "选择或输入制造商零件ID",
+      "manufacturerPartIdHelper": "从现有目录零件中选择或输入新的",
+      "sharingPartner": "分享合作伙伴",
+      "noPartnersWarning": "无可用合作伙伴。您需要先创建至少一个合作伙伴才能创建序列化零件。",
+      "createPartnerButton": "在联系人列表中创建合作伙伴",
+      "selectSharingPartner": "选择分享合作伙伴",
+      "selectPartnerPlaceholder": "选择要与之分享的合作伙伴",
+      "optionalFields": "可选字段",
+      "includeVanField": "包含VAN字段",
+      "includeCustomerPartIdField": "包含客户零件ID字段"
+    },
+    "messages": {
+      "noPartnersAvailable": "无可用合作伙伴。请先创建合作伙伴。",
+      "manufacturerPartIdRequired": "制造商零件ID为必填项且不能为空",
+      "partCreatedSuccess": "序列化零件创建成功",
+      "catalogPartNotFound": "未找到目录零件。您想如何创建它？",
+      "catalogPartNotFoundOnServer": "在服务器上找不到所选目录零件。请刷新目录或重试。",
+      "createFailed": "创建序列化零件失败",
+      "catalogAndPartCreated": "目录零件和序列化零件创建成功",
+      "createCatalogFailed": "创建目录零件失败"
+    },
+    "choiceStep": {
+      "title": "选择目录零件创建方式",
+      "description": "未找到目录零件<strong>{{manufacturerId}}/{{manufacturerPartId}}</strong>。您想如何创建它？",
+      "quickCreation": {
+        "title": "快速创建",
+        "recommended": "推荐",
+        "description": "在此处使用基本详情（名称、类别、BPNS）创建目录零件",
+        "subtitle": "快速简单"
+      },
+      "detailedCreation": {
+        "title": "详细创建",
+        "description": "转到目录零件视图以创建完整详情然后返回",
+        "subtitle": "完全控制"
+      }
+    },
+    "catalogForm": {
+      "title": "创建目录零件",
+      "description": "未找到目录零件<strong>{{manufacturerId}}/{{manufacturerPartId}}</strong>。请提供所需详情以创建它。",
+      "nameHelper": "目录零件的名称",
+      "categoryHelper": "目录零件的可选类别",
+      "bpnsHelper": "可选的业务合作伙伴编号站点"
+    }
+  }
+}

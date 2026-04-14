@@ -23,22 +23,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-realm-import-{{ now | date "20060102-150405" }}
+  name: {{ .Release.Name }}-realm-import
   namespace: {{ .Release.Namespace | default "default" | quote }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-import
   annotations:
     {{- if eq .Values.deploymentMode "argocd"  }}
-    # ArgoCD annotations - runs on every sync
-      "argocd.argoproj.io/sync-wave": "3"
-      "argocd.argoproj.io/hook": Sync
-      "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+    # ArgoCD annotations - runs after every sync completes
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
     {{- else }}
     # Helm hooks for standard Helm deployments
-      "helm.sh/hook": post-install, post-upgrade
-      "helm.sh/hook-weight": "5"
-      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     {{- end }}
 spec:
   backoffLimit: 3

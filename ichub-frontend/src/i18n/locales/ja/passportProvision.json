@@ -1,0 +1,175 @@
+{
+  "shareDialog": {
+    "title": "デジタル製品パスポートを共有 ({{name}})",
+    "shareTitle": "デジタル製品パスポートを共有",
+    "selectPartnerDescription": "DPPを共有するパートナーを選択してください",
+    "partnerPlaceholder": "DPPを共有するパートナーを選択",
+    "partnerHelperText": "利用可能なパートナーから選択",
+    "partnerRequired": "パートナーの選択は必須です",
+    "addCustomPartId": "カスタム顧客部品IDを追加",
+    "customerPartId": "顧客部品ID",
+    "customerPartIdPlaceholder": "カスタム部品識別子を入力",
+    "noPartnersTitle": "利用可能なパートナーがありません",
+    "noPartnersDescription": "利用可能なパートナーがありません。DPPを共有するには、パートナービューでパートナーを追加してください。",
+    "addPartner": "パートナーを追加",
+    "successMessage": "DPPが{{bpnl}}と正常に共有されました"
+  },
+  "list": {
+    "title": "デジタル製品パスポート",
+    "subtitle": "製品パスポートを管理・共有",
+    "createPassport": "パスポートを作成",
+    "searchPlaceholder": "名前、メーカー部品ID、またはインスタンスIDで検索...",
+    "noPassportsFound": "パスポートが見つかりません",
+    "noPassportsYet": "まだパスポートがありません",
+    "adjustSearch": "検索条件を調整してみてください",
+    "createFirstPassport": "最初のデジタル製品パスポートを作成して始めましょう",
+    "getStarted": "始める",
+    "passportDiscoveryId": "パスポートディスカバリーID",
+    "passportId": "パスポートID",
+    "passportType": "パスポートタイプ",
+    "expiration": "有効期限",
+    "noExpiration": "有効期限なし",
+    "version": "バージョン{{version}}",
+    "versionLabel": "バージョン",
+    "seeAll": "すべて表示 ({{count}})",
+    "allPassports": "すべてのデジタル製品パスポート",
+    "passportsAvailable": "{{count}}件のパスポートが利用可能",
+    "passportsAvailable_plural": "{{count}}件のパスポートが利用可能",
+    "searchDialogPlaceholder": "名前、ID、またはディスカバリーIDで検索...",
+    "discoveryId": "ディスカバリーID",
+    "type": "タイプ",
+    "expires": "有効期限",
+    "cardView": "カード表示",
+    "tableView": "テーブル表示"
+  },
+  "actions": {
+    "registerPassport": "パスポートを登録",
+    "sharePassport": "パスポートを共有",
+    "unsharePassport": "パスポートの共有を解除",
+    "processing": "処理中...",
+    "copyDiscoveryId": "ディスカバリーIDをコピー",
+    "exportPdf": "PDFをエクスポート",
+    "deletePassport": "パスポートを削除",
+    "register": "登録",
+    "open": "開く"
+  },
+  "status": {
+    "draft": "下書き",
+    "shared": "共有済み",
+    "pending": "保留中"
+  },
+  "deleteDialog": {
+    "title": "デジタル製品パスポートを削除",
+    "confirmMessage": "「{{name}}」を削除してもよろしいですか？この操作は元に戻せません。",
+    "deleting": "削除中..."
+  },
+  "wizard": {
+    "header": {
+      "backToList": "リストに戻る",
+      "title": "デジタル製品パスポートを作成",
+      "subtitle": "手順に従って新しいDPPを作成・設定します"
+    },
+    "steps": {
+      "selectVersion": "バージョンを選択",
+      "twinAssociation": "ツイン関連付け",
+      "dppData": "DPPデータ",
+      "reviewCreate": "確認して作成"
+    },
+    "step1": {
+      "title": "DPPバージョンを選択"
+    },
+    "step2": {
+      "title": "シリアライズ部品と関連付け",
+      "infoAlert": "既存のシリアライズ部品を選択するか、このデジタル製品パスポートにリンクする新しい部品を作成します",
+      "noPartsTitle": "シリアライズ部品がありません",
+      "noPartsDescription": "DPPを設定する前にシリアライズ部品を作成する必要があります",
+      "createSerializedPart": "シリアライズ部品を作成",
+      "selectSerializedPart": "シリアライズ部品を選択",
+      "chooseSerializedPart": "シリアライズ部品を選択...",
+      "selectedPart": "選択された部品",
+      "checkingRegistration": "登録ステータスを確認中...",
+      "registrationStatus": "登録ステータス",
+      "notRegistered": "未登録",
+      "alreadyHasDpp": "既にDPPがあります",
+      "noDppAssigned": "DPPが割り当てられていません",
+      "mustBeRegisteredWarning": "このシリアライズ部品はDPPを設定する前にデジタルツインとして登録する必要があります。",
+      "registerSerializedPart": "シリアライズ部品を登録",
+      "registerThisPart": "この部品を登録",
+      "registering": "登録中...",
+      "orCreateNewPart": "または新しい部品を作成:",
+      "createNewSerializedPart": "新しいシリアライズ部品を作成",
+      "twinRegisteredSuccess": "ツインが正常に登録されました！",
+      "partCreatedSuccess": "シリアライズ部品が正常に作成されました"
+    },
+    "step3": {
+      "title": "DPPデータ入力",
+      "uploadDppJson": "DPP JSONファイルをアップロード",
+      "dropJsonFile": "JSONファイルをここにドロップするか、",
+      "browseFiles": "ファイルを参照",
+      "dropDppHere": "DPPファイルをここにドロップ",
+      "dragDropDppFile": "DPPファイルをドラッグ&ドロップ",
+      "clickToBrowse": "またはクリックしてJSONファイルを参照",
+      "supportedFormat": "サポートされる形式: JSON",
+      "or": "または",
+      "createDppFromForm": "フォームからDPPを作成",
+      "dppDataValidated": "DPPデータが検証されました",
+      "validationFailed": "検証に失敗しました",
+      "dppDataLoaded": "DPPデータが読み込まれました",
+      "validatedDescription": "すべての必須データが検証されました。次のステップで確認してください。",
+      "validationFailedDescription": "検証に失敗しました。DPP JSONファイルのセマンティクスが「{{semanticId}}」セマンティックモデルのすべての必須フィールドと一致していません。DPPデータを編集して検証エラーを修正してください。",
+      "dataUploadedDescription": "データが正常にアップロードされました。続行する前に検証してください。",
+      "validateDpp": "DPPを検証",
+      "validated": "検証済み ✓",
+      "validationFailedButton": "検証失敗 ✗",
+      "editDppData": "DPPデータを編集",
+      "saveSubmodel": "サブモデルを保存",
+      "fileLoadedSuccess": "DPPファイルが正常に読み込まれました!「検証」をクリックしてスキーマに対して検証します。",
+      "validatedSuccess": "DPPが正常に検証されました!",
+      "noSchemaAccepted": "スキーマがありません。DPPが受け入れられました。"
+    },
+    "step4": {
+      "title": "確認して作成",
+      "dppVersion": "DPPバージョン",
+      "serializedPartAssociation": "シリアライズ部品の関連付け",
+      "serial": "シリアル",
+      "noPartSelected": "部品が選択されていません",
+      "digitalTwinInfo": "デジタルツイン情報",
+      "discoveryId": "ディスカバリーID",
+      "notAvailable": "利用不可",
+      "previewPassport": "パスポートをプレビュー",
+      "readyToCreate": "デジタル製品パスポートを作成する準備ができました"
+    },
+    "buttons": {
+      "back": "戻る",
+      "next": "次へ",
+      "createDpp": "DPPを作成"
+    },
+    "errors": {
+      "selectPart": "このDPPに関連付けるシリアライズ部品を選択してください",
+      "partMustBeRegistered": "選択されたシリアライズ部品はDPPを作成する前に登録する必要があります。まず登録してください。",
+      "provideDppData": "続行する前にDPPデータを提供してください。フォームを使用して作成するか、JSONファイルをアップロードできます。",
+      "validateFirst": "続行する前にDPPデータを検証してください。"
+    },
+    "publishing": {
+      "publishingDpp": "DPPを公開中...",
+      "publishedSuccessfully": "DPPが正常に公開されました",
+      "publishingFailed": "公開に失敗しました",
+      "creatingDpp": "デジタル製品パスポートを作成中...",
+      "pleaseWait": "DPPを登録中です。お待ちください",
+      "successMessage": "デジタル製品パスポートが正常に公開されました！",
+      "currentStatus": "現在のステータス",
+      "sharePrompt": "パートナーと共有できます！",
+      "errorOccurred": "DPPの公開中にエラーが発生しました"
+    },
+    "preview": {
+      "noDataAvailable": "プレビュー用のデータがありません"
+    }
+  },
+  "detail": {
+    "errorLoading": "DPPの読み込みエラー",
+    "unableToLoad": "DPPデータを読み込めません",
+    "goBack": "戻る",
+    "unableToDetermineType": "パスポートタイプを判定できません",
+    "dataNotRecognized": "パスポートデータの形式が認識されません"
+  }
+}

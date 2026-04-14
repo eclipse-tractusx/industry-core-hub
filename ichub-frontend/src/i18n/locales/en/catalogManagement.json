@@ -1,0 +1,323 @@
+{
+  "page": {
+    "title": "Catalog Parts",
+    "createButton": "Create Catalog Part"
+  },
+  "productCard": {
+    "noPartsAvailable": "No catalog parts available, please check your ichub-backend connection/configuration",
+    "registerPart": "Register part",
+    "sharePart": "Share part"
+  },
+  "messages": {
+    "registerSuccess": "Part twin registered successfully!",
+    "registerError": "Failed to register part twin!",
+    "submodelCreatedSuccess": "Submodel created successfully with {{schemaName}} schema!",
+    "submodelCreatedError": "Failed to create submodel"
+  },
+  "createDialog": {
+    "title": "Create New Catalog Part",
+    "successMessage": "Catalog part created successfully.",
+    "errorMessage": "Failed to create catalog part.",
+    "materialSharesError": "Material shares must total exactly 100% (currently {{total}}%). Please adjust the percentages before creating.",
+    "manufacturerIdChip": "Your Manufacturer ID: {{id}}",
+    "basicInformation": {
+      "title": "Basic Information",
+      "description": "Essential identifying information for the catalog part including ID, name, description, category, and manufacturing location."
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "Manufacturer Part ID",
+        "placeholder": "Enter unique part identifier",
+        "description": "Unique identifier assigned by the manufacturer to this specific part. This ID should be unique within your organization."
+      },
+      "name": {
+        "label": "Part Name",
+        "placeholder": "Enter part name",
+        "description": "Commercial or technical name of the part. This will be displayed as the main identifier in catalogs and listings."
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe the part's purpose, functionality, and key characteristics",
+        "description": "Detailed description of the part including its purpose, functionality, and key characteristics. This helps users understand what the part is for."
+      },
+      "category": {
+        "label": "Category",
+        "placeholder": "Select or enter a category",
+        "description": "Classification category that groups similar parts together. Select from common categories or create your own custom category."
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "Business Partner Number Site",
+        "description": "Business Partner Number Site - identifies the specific manufacturing location or site where this part is produced."
+      }
+    },
+    "measurements": {
+      "title": "Measurements",
+      "description": "Physical measurements of the part including width, height, length, and weight. These help with compatibility and logistics planning.",
+      "width": "Width",
+      "widthUnit": "Width Unit",
+      "height": "Height",
+      "heightUnit": "Height Unit",
+      "length": "Length",
+      "lengthUnit": "Length Unit",
+      "weight": "Weight",
+      "weightUnit": "Weight Unit"
+    },
+    "materials": {
+      "title": "Materials",
+      "description": "Material composition of the part with percentage breakdown. This information is crucial for recycling, compatibility, and regulatory compliance.",
+      "addMaterial": "Add Material",
+      "autoAdjust": "Auto-adjust to 100%",
+      "total": "Total: {{total}}%",
+      "perfectTotal": "Perfect! Material shares add up to 100%",
+      "adjustWarning": "Set your desired percentages freely. Total must equal 100% to create the part (currently {{total}}%)",
+      "materialName": {
+        "label": "Material Name",
+        "description": "Name of the specific material used in this part (e.g., Steel, Aluminum, Plastic, etc.)"
+      },
+      "share": {
+        "label": "Share",
+        "exactLabel": "Exact Share (%)",
+        "description": "Percentage or proportion of this material in the overall composition of the part. All material shares should add up to 100%.",
+        "exactHint": "Enter precise percentage value"
+      },
+      "distribution": {
+        "title": "Material Distribution",
+        "description": "Visual representation of material composition showing the percentage distribution of different materials used in this part.",
+        "emptyMessage": "Add materials with names and shares to see the distribution chart"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "Mechanical Component",
+      "electronicSensor": "Electronic Sensor",
+      "bodyPart": "Body Part"
+    }
+  },
+  "details": {
+    "notFound": "Product not found",
+    "partNotFound": "404 PART NOT FOUND",
+    "backToCatalog": "Back to Catalog",
+    "update": "Update",
+    "viewSubmodels": "View Submodels"
+  },
+  "shareDialog": {
+    "title": "Share with partner ({{partName}})",
+    "partNameFallback": "Part name not obtained",
+    "noPartnersTitle": "No Partners Available",
+    "noPartnersDescription": "No partners available. Please add partners in the Partner View to share parts.",
+    "shareInfoTitle": "Share Part Information",
+    "shareInfoDescription": "Select a partner to share the part with",
+    "partnerLabel": "Partner",
+    "partnerPlaceholder": "Select a partner to share the part with",
+    "partnerHelperText": "Select from available partners",
+    "partnerRequired": "Partner selection is required",
+    "addCustomPartId": "Add custom customer part Id",
+    "customerPartIdLabel": "Customer Part Id",
+    "customerPartIdPlaceholder": "Enter your custom part identifier",
+    "addPartner": "Add a Partner",
+    "shareSuccess": "Part shared successfully with {{bpnl}}",
+    "shareError": "Failed to share part.",
+    "validationError": "Validation failed.",
+    "partDataNotAvailable": "Part data is not available."
+  },
+  "productDetail": {
+    "addSerializedPartDialog": {
+      "title": "Add a serialized part",
+      "sharingPartner": "Sharing Partner",
+      "selectPartner": "Select Sharing Partner",
+      "selectPartnerPlaceholder": "Select a partner to share with",
+      "optionalFields": "Optional Fields",
+      "includeVan": "Include VAN field",
+      "includeCustomerPartId": "Include Customer Part ID field",
+      "successMessage": "Serialized part created successfully",
+      "errorMessage": "Failed to create serialized part: {{error}}"
+    },
+    "instanceProductsTable": {
+      "title": "Instance Products",
+      "subtitle": "Manage and track individual product instances",
+      "selectPartMessage": "Select a part from the catalog to view and manage its individual product instances.",
+      "addButton": "Add Instance Product",
+      "noInstancesFound": "No instance products found",
+      "addFirstInstance": "Start by adding your first instance product to track individual items",
+      "columns": {
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "Delete Serialized Part"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Twin registered successfully!",
+        "registrationFailed": "Registration failed: {{error}}",
+        "sharingFailed": "Sharing failed: {{error}}",
+        "unsharingFailed": "Unsharing failed: {{error}}",
+        "deletionFailed": "Deletion failed: {{error}}",
+        "failedToRegisterTwin": "Failed to register twin. Please try again.",
+        "failedToShareTwin": "Failed to share twin. Please try again.",
+        "failedToUnshareTwin": "Failed to unshare twin. Please try again.",
+        "failedToDeletePart": "Failed to delete part. Please try again.",
+        "unableToDelete": "Unable to delete: invalid part data"
+      },
+      "deleteDialog": {
+        "title": "Delete Serialized Part",
+        "message": "Are you sure you want to delete this serialized part?",
+        "warning": "This action cannot be undone.",
+        "deleting": "DELETING...",
+        "warningRegistered": "This part has a registered twin. Deleting it will also remove the twin registration.",
+        "warningShared": "This part is currently shared with partners. Deleting it will revoke all shares."
+      }
+    },
+    "productData": {
+      "updatingStatus": "Updating part status...",
+      "pleaseWait": "Please wait while we refresh the twin information",
+      "registerPartTwin": "Register part twin",
+      "loadingAasId": "Loading AAS ID...",
+      "loadingTwinId": "Loading Twin ID...",
+      "noTwinIds": "No Twin IDs",
+      "twinDataUnavailable": "Twin data unavailable",
+      "partDetails": "Part Details",
+      "invalidDate": "Invalid date",
+      "twinTimestamps": {
+        "title": "Twin Timestamps",
+        "notYetCreated": "Not yet created"
+      },
+      "sharing": {
+        "title": "Shared With",
+        "notYetSharedWarning": "This part is still not shared, but has already an existing customer part ID prepared for sharing.",
+        "noSharingInsights": "No sharing insights are currently available. Share this part with a partner to view the information here."
+      },
+      "moreInformation": {
+        "title": "More Information",
+        "materials": "Materials:",
+        "noMaterials": "No materials data available",
+        "dimensions": "Dimensions:",
+        "height": "Height",
+        "length": "Length",
+        "weight": "Weight"
+      },
+      "partInfo": {
+        "noDescription": "No description available",
+        "uncategorized": "Uncategorized",
+        "noBpns": "No BPNS available"
+      },
+      "sections": {
+        "specifications": "Specifications",
+        "dimensions": "Dimensions",
+        "materials": "Materials",
+        "sharedWith": "Shared With",
+        "submodels": "Submodels"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "Click to copy Site of Origin"
+      },
+      "labels": {
+        "siteOfOrigin": "Site of Origin"
+      },
+      "specifications": {
+        "manufacturerId": "Manufacturer ID",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "notAvailable": "Not available"
+      },
+      "dimensions": {
+        "height": "Height", 
+        "length": "Length",
+        "weight": "Weight",
+        "notSpecified": "Not specified"
+      },
+      "materials": {
+        "title": "Materials",
+        "composition": "Composition",
+        "noMaterials": "No materials specified"
+      },
+      "submodels": {
+        "title": "Submodels",
+        "createSubmodel": "Create Submodel",
+        "noSubmodels": "No submodels available",
+        "createFirst": "Create your first submodel to add detailed specifications",
+        "twinRequiredTitle": "Twin Required",
+        "twinRequiredMessage": "You need to create a twin before adding submodels. Use the register button above to create a twin first.",
+        "viewDetails": "View Details"
+      },
+      "warnings": {
+        "noShares": "This part has not been shared with any partners yet",
+        "noSubmodels": "No submodels have been created for this part"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "Part twin registered successfully!",
+        "twinRegistrationFailed": "Failed to register part twin!",
+        "submodelCreatedSuccess": "Submodel created successfully with {{schemaName}} schema!",
+        "submodelCreationFailed": "Failed to create submodel",
+        "twinRequired": "Twin must be created before adding submodels. Please create a twin first.",
+        "noSchemaSelected": "No schema selected"
+      }
+    },
+    "sharedTable": {
+      "columns": {
+        "companyName": "Company Name",
+        "partnerName": "Company Name",
+        "bpnl": "BPNL"
+      }
+    },
+    "submodelCard": {
+      "version": "v{{version}}",
+      "namespace": "Namespace"
+    },
+    "submodelsGrid": {
+      "title": "Digital Twin Submodels",
+      "submodelsAvailable": "submodel(s) available",
+      "addSubmodel": "Add Submodel",
+      "createNewSubmodel": "Create a new submodel aspect",
+      "noSubmodels": "No Submodels Available",
+      "noSubmodelsDescription": "This digital twin doesn't have any submodel aspects available for viewing.",
+      "submodelsDisplayed": "{{count}} digital twin submodel(s) displayed"
+    },
+    "jsonViewer": {
+      "title": "JSON Viewer",
+      "copyJson": "Copy JSON"
+    },
+    "shareDropdown": {
+      "share": "SHARE",
+      "options": {
+        "viewDetails": "View full details",
+        "edit": "Edit product",
+        "register": "Register Twin",
+        "share": "Share with partner",
+        "copy": "Copy unique ID",
+        "copyAasId": "Copy AAS ID",
+        "download": "Download JSON",
+        "export": "Export data",
+        "delete": "Delete product"
+      },
+      "messages": {
+        "globalAssetIdCopied": "Global Asset ID copied to clipboard",
+        "partIdCopied": "Part ID copied to clipboard",
+        "copyFailed": "Failed to copy {{label}}",
+        "aasIdCopied": "AAS ID copied to clipboard",
+        "aasIdNotAvailable": "AAS ID not available",
+        "copyAasIdFailed": "Failed to copy AAS ID",
+        "twinRegisteredSuccess": "Part twin registered successfully!",
+        "twinRegistrationFailed": "Failed to register part twin!"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "Submodel Viewer",
+      "semanticId": "Semantic ID",
+      "jsonData": "JSON Data",
+      "structured": "Structured",
+      "json": "JSON",
+      "failedToLoad": "Failed to load submodel content",
+      "noDataAvailable": "No submodel data available or data could not be retrieved.",
+      "unknownDataType": "Unknown data type"
+    },
+    "submodelViewer": {
+      "title": "Digital Twin Submodels",
+      "newSubmodel": "New Submodel",
+      "noSubmodelsAvailable": "No Submodels Available",
+      "noSubmodelsDescription": "This digital twin doesn't have any submodel aspects available.",
+      "registrationInfo": "Registration Info",
+      "noRegistration": "No Registration",
+      "viewSubmodel": "View Submodel"
+    }
+  }
+}

@@ -1,0 +1,323 @@
+{
+  "page": {
+    "title": "目录零件",
+    "createButton": "创建目录零件"
+  },
+  "productCard": {
+    "noPartsAvailable": "无可用目录零件，请检查ichub-backend连接/配置",
+    "registerPart": "注册零件",
+    "sharePart": "分享零件"
+  },
+  "messages": {
+    "registerSuccess": "零件孪生注册成功！",
+    "registerError": "注册零件孪生失败！",
+    "submodelCreatedSuccess": "子模型已使用{{schemaName}}架构成功创建！",
+    "submodelCreatedError": "创建子模型失败"
+  },
+  "createDialog": {
+    "title": "创建新目录零件",
+    "successMessage": "目录零件创建成功。",
+    "errorMessage": "创建目录零件失败。",
+    "materialSharesError": "材料份额总和必须恰好为100%（当前为{{total}}%）。请在创建前调整百分比。",
+    "manufacturerIdChip": "您的制造商ID：{{id}}",
+    "basicInformation": {
+      "title": "基本信息",
+      "description": "目录零件的基本标识信息，包括ID、名称、描述、类别和制造地点。"
+    },
+    "fields": {
+      "manufacturerPartId": {
+        "label": "制造商零件ID",
+        "placeholder": "输入唯一零件标识符",
+        "description": "制造商分配给此特定零件的唯一标识符。此ID在您的组织内应是唯一的。"
+      },
+      "name": {
+        "label": "零件名称",
+        "placeholder": "输入零件名称",
+        "description": "零件的商业或技术名称。这将作为目录和列表中的主要标识符显示。"
+      },
+      "description": {
+        "label": "描述",
+        "placeholder": "描述零件的用途、功能和关键特性",
+        "description": "零件的详细描述，包括其用途、功能和关键特性。这有助于用户了解零件的用途。"
+      },
+      "category": {
+        "label": "类别",
+        "placeholder": "选择或输入类别",
+        "description": "将相似零件分组在一起的分类类别。从常用类别中选择或创建自定义类别。"
+      },
+      "bpns": {
+        "label": "BPNS",
+        "placeholder": "业务合作伙伴编号站点",
+        "description": "业务合作伙伴编号站点 - 标识此零件生产的特定制造地点或站点。"
+      }
+    },
+    "measurements": {
+      "title": "尺寸",
+      "description": "零件的物理尺寸，包括宽度、高度、长度和重量。这些有助于兼容性和物流规划。",
+      "width": "宽度",
+      "widthUnit": "宽度单位",
+      "height": "高度",
+      "heightUnit": "高度单位",
+      "length": "长度",
+      "lengthUnit": "长度单位",
+      "weight": "重量",
+      "weightUnit": "重量单位"
+    },
+    "materials": {
+      "title": "材料",
+      "description": "零件的材料组成及百分比分解。此信息对于回收、兼容性和法规合规性至关重要。",
+      "addMaterial": "添加材料",
+      "autoAdjust": "自动调整至100%",
+      "total": "总计：{{total}}%",
+      "perfectTotal": "完美！材料份额总和为100%",
+      "adjustWarning": "自由设置您想要的百分比。总计必须等于100%才能创建零件（当前{{total}}%）",
+      "materialName": {
+        "label": "材料名称",
+        "description": "此零件中使用的特定材料名称（例如：钢、铝、塑料等）"
+      },
+      "share": {
+        "label": "份额",
+        "exactLabel": "精确份额（%）",
+        "description": "此材料在零件整体组成中的百分比或比例。所有材料份额总和应为100%。",
+        "exactHint": "输入精确百分比值"
+      },
+      "distribution": {
+        "title": "材料分布",
+        "description": "材料组成的可视化表示，显示此零件中使用的不同材料的百分比分布。",
+        "emptyMessage": "添加带有名称和份额的材料以查看分布图"
+      }
+    },
+    "categories": {
+      "mechanicalComponent": "机械组件",
+      "electronicSensor": "电子传感器",
+      "bodyPart": "车身零件"
+    }
+  },
+  "details": {
+    "notFound": "未找到产品",
+    "partNotFound": "404 未找到零件",
+    "backToCatalog": "返回目录",
+    "update": "更新",
+    "viewSubmodels": "查看子模型"
+  },
+  "shareDialog": {
+    "title": "与合作伙伴分享（{{partName}}）",
+    "partNameFallback": "未获取零件名称",
+    "noPartnersTitle": "无可用合作伙伴",
+    "noPartnersDescription": "无可用合作伙伴。请在合作伙伴视图中添加合作伙伴以分享零件。",
+    "shareInfoTitle": "分享零件信息",
+    "shareInfoDescription": "选择要与之分享零件的合作伙伴",
+    "partnerLabel": "合作伙伴",
+    "partnerPlaceholder": "选择要与之分享零件的合作伙伴",
+    "partnerHelperText": "从可用合作伙伴中选择",
+    "partnerRequired": "必须选择合作伙伴",
+    "addCustomPartId": "添加自定义客户零件ID",
+    "customerPartIdLabel": "客户零件ID",
+    "customerPartIdPlaceholder": "输入您的自定义零件标识符",
+    "addPartner": "添加合作伙伴",
+    "shareSuccess": "零件已成功与{{bpnl}}分享",
+    "shareError": "分享零件失败。",
+    "validationError": "验证失败。",
+    "partDataNotAvailable": "零件数据不可用。"
+  },
+  "productDetail": {
+    "addSerializedPartDialog": {
+      "title": "添加序列化零件",
+      "sharingPartner": "分享合作伙伴",
+      "selectPartner": "选择分享合作伙伴",
+      "selectPartnerPlaceholder": "选择要与之分享的合作伙伴",
+      "optionalFields": "可选字段",
+      "includeVan": "包含VAN字段",
+      "includeCustomerPartId": "包含客户零件ID字段",
+      "successMessage": "序列化零件创建成功",
+      "errorMessage": "创建序列化零件失败：{{error}}"
+    },
+    "instanceProductsTable": {
+      "title": "实例产品",
+      "subtitle": "管理和跟踪单个产品实例",
+      "selectPartMessage": "从目录中选择一个零件以查看和管理其单个产品实例。",
+      "addButton": "添加实例产品",
+      "noInstancesFound": "未找到实例产品",
+      "addFirstInstance": "首先添加您的第一个实例产品以跟踪单个项目",
+      "columns": {
+        "status": "状态",
+        "actions": "操作"
+      },
+      "tooltips": {
+        "deleteSerializedPart": "删除序列化零件"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "孪生注册成功！",
+        "registrationFailed": "注册失败：{{error}}",
+        "sharingFailed": "分享失败：{{error}}",
+        "unsharingFailed": "取消分享失败：{{error}}",
+        "deletionFailed": "删除失败：{{error}}",
+        "failedToRegisterTwin": "注册孪生失败。请重试。",
+        "failedToShareTwin": "分享孪生失败。请重试。",
+        "failedToUnshareTwin": "取消分享孪生失败。请重试。",
+        "failedToDeletePart": "删除零件失败。请重试。",
+        "unableToDelete": "无法删除：无效的零件数据"
+      },
+      "deleteDialog": {
+        "title": "删除序列化零件",
+        "message": "您确定要删除此序列化零件吗？",
+        "warning": "此操作无法撤销。",
+        "deleting": "删除中...",
+        "warningRegistered": "此零件有已注册的孪生。删除它也将删除孪生注册。",
+        "warningShared": "此零件目前已与合作伙伴分享。删除它将撤销所有分享。"
+      }
+    },
+    "productData": {
+      "updatingStatus": "正在更新零件状态...",
+      "pleaseWait": "请等待我们刷新孪生信息",
+      "registerPartTwin": "注册零件孪生",
+      "loadingAasId": "加载AAS ID中...",
+      "loadingTwinId": "加载孪生ID中...",
+      "noTwinIds": "无孪生ID",
+      "twinDataUnavailable": "孪生数据不可用",
+      "partDetails": "零件详情",
+      "invalidDate": "无效日期",
+      "twinTimestamps": {
+        "title": "孪生时间戳",
+        "notYetCreated": "尚未创建"
+      },
+      "sharing": {
+        "title": "已分享给",
+        "notYetSharedWarning": "此零件尚未分享，但已有为分享准备的客户零件ID。",
+        "noSharingInsights": "当前没有可用的分享信息。与合作伙伴分享此零件以在此处查看信息。"
+      },
+      "moreInformation": {
+        "title": "更多信息",
+        "materials": "材料：",
+        "noMaterials": "无可用材料数据",
+        "dimensions": "尺寸：",
+        "height": "高度",
+        "length": "长度",
+        "weight": "重量"
+      },
+      "partInfo": {
+        "noDescription": "无可用描述",
+        "uncategorized": "未分类",
+        "noBpns": "无可用BPNS"
+      },
+      "sections": {
+        "specifications": "规格",
+        "dimensions": "尺寸",
+        "materials": "材料",
+        "sharedWith": "已分享给",
+        "submodels": "子模型"
+      },
+      "tooltips": {
+        "clickToCopySiteOfOrigin": "点击复制原产地"
+      },
+      "labels": {
+        "siteOfOrigin": "原产地"
+      },
+      "specifications": {
+        "manufacturerId": "制造商ID",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "notAvailable": "不可用"
+      },
+      "dimensions": {
+        "height": "高度",
+        "length": "长度",
+        "weight": "重量",
+        "notSpecified": "未指定"
+      },
+      "materials": {
+        "title": "材料",
+        "composition": "组成",
+        "noMaterials": "未指定材料"
+      },
+      "submodels": {
+        "title": "子模型",
+        "createSubmodel": "创建子模型",
+        "noSubmodels": "无可用子模型",
+        "createFirst": "创建您的第一个子模型以添加详细规格",
+        "twinRequiredTitle": "需要孪生",
+        "twinRequiredMessage": "您需要先创建孪生才能添加子模型。请使用上方的注册按钮先创建孪生。",
+        "viewDetails": "查看详情"
+      },
+      "warnings": {
+        "noShares": "此零件尚未与任何合作伙伴分享",
+        "noSubmodels": "尚未为此零件创建子模型"
+      },
+      "messages": {
+        "twinRegisteredSuccess": "零件孪生注册成功！",
+        "twinRegistrationFailed": "注册零件孪生失败！",
+        "submodelCreatedSuccess": "子模型已使用{{schemaName}}架构成功创建！",
+        "submodelCreationFailed": "创建子模型失败",
+        "twinRequired": "必须先创建孪生才能添加子模型。请先创建孪生。",
+        "noSchemaSelected": "未选择架构"
+      }
+    },
+    "sharedTable": {
+      "columns": {
+        "companyName": "公司名称",
+        "partnerName": "公司名称",
+        "bpnl": "BPNL"
+      }
+    },
+    "submodelCard": {
+      "version": "v{{version}}",
+      "namespace": "命名空间"
+    },
+    "submodelsGrid": {
+      "title": "数字孪生子模型",
+      "submodelsAvailable": "个子模型可用",
+      "addSubmodel": "添加子模型",
+      "createNewSubmodel": "创建新的子模型方面",
+      "noSubmodels": "无可用子模型",
+      "noSubmodelsDescription": "此数字孪生没有任何可供查看的子模型方面。",
+      "submodelsDisplayed": "显示{{count}}个数字孪生子模型"
+    },
+    "jsonViewer": {
+      "title": "JSON查看器",
+      "copyJson": "复制JSON"
+    },
+    "shareDropdown": {
+      "share": "分享",
+      "options": {
+        "viewDetails": "查看完整详情",
+        "edit": "编辑产品",
+        "register": "注册孪生",
+        "share": "与合作伙伴分享",
+        "copy": "复制唯一ID",
+        "copyAasId": "复制AAS ID",
+        "download": "下载JSON",
+        "export": "导出数据",
+        "delete": "删除产品"
+      },
+      "messages": {
+        "globalAssetIdCopied": "全局资产ID已复制到剪贴板",
+        "partIdCopied": "零件ID已复制到剪贴板",
+        "copyFailed": "复制{{label}}失败",
+        "aasIdCopied": "AAS ID已复制到剪贴板",
+        "aasIdNotAvailable": "AAS ID不可用",
+        "copyAasIdFailed": "复制AAS ID失败",
+        "twinRegisteredSuccess": "零件孪生注册成功！",
+        "twinRegistrationFailed": "注册零件孪生失败！"
+      }
+    },
+    "darkSubmodelViewer": {
+      "title": "子模型查看器",
+      "semanticId": "语义ID",
+      "jsonData": "JSON数据",
+      "structured": "结构化",
+      "json": "JSON",
+      "failedToLoad": "加载子模型内容失败",
+      "noDataAvailable": "无可用子模型数据或无法检索数据。",
+      "unknownDataType": "未知数据类型"
+    },
+    "submodelViewer": {
+      "title": "数字孪生子模型",
+      "newSubmodel": "新建子模型",
+      "noSubmodelsAvailable": "无可用子模型",
+      "noSubmodelsDescription": "此数字孪生没有任何可用的子模型方面。",
+      "registrationInfo": "注册信息",
+      "noRegistration": "无注册",
+      "viewSubmodel": "查看子模型"
+    }
+  }
+}

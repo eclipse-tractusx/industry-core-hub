@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Serialized Parts",
+    "loading": "Loading serialized parts..."
+  },
+  "table": {
+    "subtitle": "View and manage serialized part instances ({{count}} total)",
+    "addSerializedPart": "Add Serialized Part",
+    "columns": {
+      "businessPartnerBpnl": "Business Partner BPNL"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "Delete Serialized Part"
+    },
+    "messages": {
+      "twinRegistered": "Twin registered successfully!",
+      "twinShared": "Twin shared successfully!",
+      "twinUnshared": "Twin unshared successfully!",
+      "partDeleted": "Serialized part deleted successfully!",
+      "dataRefreshed": "Data refreshed successfully!",
+      "registerFailed": "Registration failed",
+      "shareFailed": "Sharing failed",
+      "unshareFailed": "Unsharing failed",
+      "deleteFailed": "Deletion failed",
+      "refreshFailed": "Refresh failed",
+      "globalAssetIdCopied": "Global Asset ID copied!",
+      "aasIdCopied": "AAS ID copied!",
+      "failedToCopy": "Failed to copy"
+    },
+    "loading": {
+      "title": "Loading twins data...",
+      "subtitle": "Fetching twin information for serialized parts"
+    },
+    "empty": {
+      "title": "No serialized parts found",
+      "subtitle": "There are currently no serialized parts to display. Parts will appear here once they are created."
+    },
+    "deleteDialog": {
+      "title": "Delete Serialized Part",
+      "confirmation": "Are you sure you want to delete this serialized part?",
+      "warning": "This action cannot be undone."
+    }
+  },
+  "addDialog": {
+    "title": "Add a serialized part",
+    "form": {
+      "manufacturerPartIdPlaceholder": "Select or enter a manufacturer part ID",
+      "manufacturerPartIdHelper": "Select from existing catalog parts or enter a new one",
+      "sharingPartner": "Sharing Partner",
+      "noPartnersWarning": "No partners available. You need to create at least one partner before creating a serialized part.",
+      "createPartnerButton": "Create Partner in Contact List",
+      "selectSharingPartner": "Select Sharing Partner",
+      "selectPartnerPlaceholder": "Select a partner to share with",
+      "optionalFields": "Optional Fields",
+      "includeVanField": "Include VAN field",
+      "includeCustomerPartIdField": "Include Customer Part ID field"
+    },
+    "messages": {
+      "noPartnersAvailable": "No partners available. Please create a partner first.",
+      "manufacturerPartIdRequired": "Manufacturer Part ID is required and cannot be empty",
+      "partCreatedSuccess": "Serialized part created successfully",
+      "catalogPartNotFound": "Catalog part not found. How would you like to create it?",
+      "catalogPartNotFoundOnServer": "Selected catalog part could not be found on server. Please refresh catalog or try again.",
+      "createFailed": "Failed to create serialized part",
+      "catalogAndPartCreated": "Catalog part and serialized part created successfully",
+      "createCatalogFailed": "Failed to create catalog part"
+    },
+    "choiceStep": {
+      "title": "Choose catalog part creation method",
+      "description": "The catalog part <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> was not found. How would you like to create it?",
+      "quickCreation": {
+        "title": "Quick Creation",
+        "recommended": "Recommended",
+        "description": "Create catalog part here with basic details (name, category, bpns)",
+        "subtitle": "Fast & Simple"
+      },
+      "detailedCreation": {
+        "title": "Detailed Creation",
+        "description": "Go to catalog parts view to create with full details and then return",
+        "subtitle": "Full Control"
+      }
+    },
+    "catalogForm": {
+      "title": "Create Catalog Part",
+      "description": "The catalog part <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> was not found. Please provide the required details to create it.",
+      "nameHelper": "The name for the catalog part",
+      "categoryHelper": "Optional category for the catalog part",
+      "bpnsHelper": "Optional Business Partner Number Site"
+    }
+  }
+}

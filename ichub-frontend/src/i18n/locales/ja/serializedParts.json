@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "シリアライズ部品",
+    "loading": "シリアライズ部品を読み込み中..."
+  },
+  "table": {
+    "subtitle": "シリアライズ部品インスタンスを表示・管理 (合計{{count}}件)",
+    "addSerializedPart": "シリアライズ部品を追加",
+    "columns": {
+      "businessPartnerBpnl": "ビジネスパートナーBPNL"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "シリアライズ部品を削除"
+    },
+    "messages": {
+      "twinRegistered": "ツインが正常に登録されました!",
+      "twinShared": "ツインが正常に共有されました!",
+      "twinUnshared": "ツインの共有が正常に解除されました!",
+      "partDeleted": "シリアライズ部品が正常に削除されました!",
+      "dataRefreshed": "データが正常に更新されました!",
+      "registerFailed": "登録に失敗しました",
+      "shareFailed": "共有に失敗しました",
+      "unshareFailed": "共有解除に失敗しました",
+      "deleteFailed": "削除に失敗しました",
+      "refreshFailed": "更新に失敗しました",
+      "globalAssetIdCopied": "グローバルアセットIDをコピーしました!",
+      "aasIdCopied": "AAS IDをコピーしました!",
+      "failedToCopy": "コピーに失敗しました"
+    },
+    "loading": {
+      "title": "ツインデータを読み込み中...",
+      "subtitle": "シリアライズ部品のツイン情報を取得中"
+    },
+    "empty": {
+      "title": "シリアライズ部品が見つかりません",
+      "subtitle": "現在表示するシリアライズ部品がありません。部品が作成されるとここに表示されます。"
+    },
+    "deleteDialog": {
+      "title": "シリアライズ部品を削除",
+      "confirmation": "このシリアライズ部品を削除してもよろしいですか？",
+      "warning": "この操作は元に戻せません。"
+    }
+  },
+  "addDialog": {
+    "title": "シリアライズ部品を追加",
+    "form": {
+      "manufacturerPartIdPlaceholder": "メーカー部品IDを選択または入力",
+      "manufacturerPartIdHelper": "既存のカタログ部品から選択するか、新しいものを入力",
+      "sharingPartner": "共有パートナー",
+      "noPartnersWarning": "利用可能なパートナーがありません。シリアライズ部品を作成する前に、少なくとも1つのパートナーを作成する必要があります。",
+      "createPartnerButton": "連絡先リストでパートナーを作成",
+      "selectSharingPartner": "共有パートナーを選択",
+      "selectPartnerPlaceholder": "共有するパートナーを選択",
+      "optionalFields": "オプションフィールド",
+      "includeVanField": "VANフィールドを含める",
+      "includeCustomerPartIdField": "顧客部品IDフィールドを含める"
+    },
+    "messages": {
+      "noPartnersAvailable": "利用可能なパートナーがありません。まずパートナーを作成してください。",
+      "manufacturerPartIdRequired": "メーカー部品IDは必須で、空にはできません",
+      "partCreatedSuccess": "シリアライズ部品が正常に作成されました",
+      "catalogPartNotFound": "カタログ部品が見つかりません。どのように作成しますか？",
+      "catalogPartNotFoundOnServer": "選択されたカタログ部品がサーバーで見つかりませんでした。カタログを更新するか、再試行してください。",
+      "createFailed": "シリアライズ部品の作成に失敗しました",
+      "catalogAndPartCreated": "カタログ部品とシリアライズ部品が正常に作成されました",
+      "createCatalogFailed": "カタログ部品の作成に失敗しました"
+    },
+    "choiceStep": {
+      "title": "カタログ部品の作成方法を選択",
+      "description": "カタログ部品<strong>{{manufacturerId}}/{{manufacturerPartId}}</strong>が見つかりませんでした。どのように作成しますか？",
+      "quickCreation": {
+        "title": "クイック作成",
+        "recommended": "推奨",
+        "description": "基本的な詳細 (名前、カテゴリー、BPNS) でここでカタログ部品を作成",
+        "subtitle": "高速でシンプル"
+      },
+      "detailedCreation": {
+        "title": "詳細作成",
+        "description": "カタログ部品ビューに移動して完全な詳細で作成し、戻ってきます",
+        "subtitle": "完全制御"
+      }
+    },
+    "catalogForm": {
+      "title": "カタログ部品を作成",
+      "description": "カタログ部品<strong>{{manufacturerId}}/{{manufacturerPartId}}</strong>が見つかりませんでした。作成に必要な詳細を入力してください。",
+      "nameHelper": "カタログ部品の名前",
+      "categoryHelper": "カタログ部品のオプションカテゴリー",
+      "bpnsHelper": "オプションのビジネスパートナー番号サイト"
+    }
+  }
+}

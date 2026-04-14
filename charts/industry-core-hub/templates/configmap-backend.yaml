@@ -47,7 +47,7 @@ data:
           background_retry_interval: {{ .Values.backend.configuration.authorization.keycloak.retry.backgroundRetryInterval }}
     agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
     database:
-      connectionString: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
+      connection_string: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
       echo: {{ .Values.backend.configuration.database.echo }}
       timeout: {{ .Values.backend.configuration.database.timeout }}
       retry_interval: {{ .Values.backend.configuration.database.retry_interval }}
@@ -66,7 +66,29 @@ data:
             operandRight: {{ .Values.backend.configuration.consumer.discovery.digitalTwinRegistry.dct_type_filter.operandRight | quote }}
       connector: {{ .Values.backend.configuration.consumer.connector | toYaml | nindent 8 }}
     provider: {{ .Values.backend.configuration.provider | toYaml | nindent 6 }}
-    submodel_dispatcher: {{ .Values.backend.configuration.submodel_dispatcher | toYaml | nindent 6 }}
+      submodel_dispatcher:
+      {{- if eq .Values.backend.configuration.provider.submodel_dispatcher.mode "http" }}
+        mode: {{ .Values.backend.configuration.provider.submodel_dispatcher.mode | quote }}
+        path: {{ .Values.backend.configuration.provider.submodel_dispatcher.path | quote }}
+        apiPath: {{ .Values.backend.configuration.provider.submodel_dispatcher.apiPath | quote }}
+        http:
+          base_url: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.base_url | quote }}
+          api_path: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.api_path | quote }}
+          auth:
+            enabled: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.auth.enabled }}
+            type: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.auth.type | quote }}
+            {{- if and .Values.backend.configuration.provider.submodel_dispatcher.http.auth.enabled .Values.backend.configuration.provider.submodel_dispatcher.http.auth.token }}
+            token: "${SUBMODEL_SERVICE_TOKEN}"
+            {{- else }}
+            token: ""
+            {{- end }}
+            key_name: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.auth.key_name | quote }}
+          timeout: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.timeout }}
+          verify_ssl: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.verify_ssl }}
+      {{- else }}
+      {{- /* Filesystem mode - use standard toYaml */}}
+      {{ .Values.backend.configuration.provider.submodel_dispatcher | toYaml | nindent 6 }}
+      {{- end }}
   logging.yml: |-
     version: 1
     disable_existing_loggers: False
@@ -94,12 +116,12 @@ data:
         propagate: no
 
       staging:
-        level: INFO
+        level: DEBUG
         handlers: [console, file]
         propagate: no
 
       production:
-        level: WARNING
+        level: DEBUG
         handlers: [file]
         propagate: no
 

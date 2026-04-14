@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "Liste des Contacts",
+    "noPartnersYet": "Aucun partenaire n'a encore été ajouté, utilisez le bouton vert ci-dessus pour en créer un.",
+    "loadError": "Échec du chargement des partenaires. Veuillez vérifier la connectivité avec le backend.",
+    "requestTimeout": "Délai d'attente de la requête après 30 secondes"
+  },
+  "dialog": {
+    "createTitle": "Créer un nouveau partenaire",
+    "editTitle": "Modifier le partenaire",
+    "partnerInfo": "Informations du Partenaire",
+    "partnerInfoDescription": "Introduisez le nom du partenaire et le BPNL"
+  },
+  "fields": {
+    "partnerName": "Nom du Partenaire",
+    "partnerBpnl": "BPNL du Partenaire"
+  },
+  "autocomplete": {
+    "placeholder": "Sélectionner un partenaire ou saisir un BPNL personnalisé (ex., BPNL0000000093Q7)",
+    "helperText": "Sélectionnez parmi les partenaires disponibles ou saisissez un Numéro de Partenaire Commercial d'Entité Légale personnalisé",
+    "loadingPartners": "Chargement des partenaires...",
+    "noPartnersFound": "Aucun partenaire trouvé. Vous pouvez toujours saisir un BPNL personnalisé.",
+    "loadError": "Impossible de charger la liste des partenaires depuis le backend. Vous pouvez toujours saisir un BPNL manuellement."
+  },
+  "messages": {
+    "createSuccess": "Partenaire {{name}} créé avec succès [{{bpnl}}]",
+    "updateSuccess": "Partenaire {{name}} mis à jour avec succès [{{bpnl}}] (mise à jour locale)",
+    "createError": "Échec de la création du partenaire.",
+    "bpnlConflict": "Un partenaire avec ce BPNL existe déjà."
+  }
+}
