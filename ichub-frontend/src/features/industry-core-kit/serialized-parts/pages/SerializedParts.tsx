@@ -22,11 +22,13 @@
 
 import { Box, Grid2, Typography, Alert, CircularProgress } from '@mui/material';
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { fetchAllSerializedParts } from '@/features/industry-core-kit/serialized-parts/api';
 import SerializedPartsTable from '@/features/industry-core-kit/serialized-parts/components/SerializedPartsTable';
 import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 
 const SerializedParts = () => {
+  const { t } = useTranslation(['serializedParts', 'common']);
   const [serializedParts, setSerializedParts] = useState<SerializedPart[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ const SerializedParts = () => {
   return (
     <Grid2 container direction="row">
       <Box sx={{ p: 3, mx: 'auto',  color: 'white'}} className="product-catalog title">
-        <Typography className="text">Serialized Parts</Typography>
+        <Typography className="text">{t('page.title')}</Typography>
       </Box>
       <Box sx={{ p: 3, width: '100%', color: 'white'}}>
         {/* Error State */}
@@ -106,7 +108,7 @@ const SerializedParts = () => {
                   opacity: isRetrying ? 0.6 : 1
                 }}
               >
-                {isRetrying ? 'Retrying...' : 'Retry'}
+                {isRetrying ? t('common:actions.retrying') : t('common:actions.retry')}
               </button>
             }
           >
@@ -118,7 +120,7 @@ const SerializedParts = () => {
         {isLoading && !error && (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
             <CircularProgress sx={{ color: 'white' }} />
-            <Typography sx={{ ml: 2, color: 'white' }}>Loading serialized parts...</Typography>
+            <Typography sx={{ ml: 2, color: 'white' }}>{t('page.loading')}</Typography>
           </Box>
         )}
 

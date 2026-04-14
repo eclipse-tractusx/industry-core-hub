@@ -55,36 +55,46 @@ async def share_dpp(request: ShareDppRequest):
     Raises:
         HTTPException: If the DPP is not found or sharing fails
     """
+    logger.info(f"[SHARE DEBUG] === Share DPP endpoint called ===")
+    logger.info(f"[SHARE DEBUG] Received request - dpp_id: {request.dpp_id}, bpn: {request.business_partner_number}")
     try:
         # Share the DPP using the provision manager
+        logger.info(f"[SHARE DEBUG] Step 1: Calling provision_manager.share_dpp()")
         result = provision_manager.share_dpp(
             dpp_id=request.dpp_id,
             business_partner_number=request.business_partner_number,
         )
+        logger.info(f"[SHARE DEBUG] Step 1 DONE: share_dpp result = {result}")
 
         # Register in BPN Discovery
+        logger.info(f"[SHARE DEBUG] Step 2: Registering in BPN Discovery with manufacturer_part_id: {result['twin_data']['manufacturer_part_id']}")
         bpn_registered = provision_manager.register_in_bpn_discovery(
             result["twin_data"]["manufacturer_part_id"]
         )
+        logger.info(f"[SHARE DEBUG] Step 2 DONE: bpn_registered = {bpn_registered}")
 
-        return ShareDppResponse(
+        response = ShareDppResponse(
             dppId=request.dpp_id,
             businessPartnerNumber=request.business_partner_number,
             bpnDiscoveryRegistered=bpn_registered,
         )
+        logger.info(f"[SHARE DEBUG] === SUCCESS: Returning response ===")
+        return response
 
     except DppNotFoundError as e:
+        logger.error(f"[SHARE DEBUG] DppNotFoundError: {e.message} (dpp_id={e.dpp_id})")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=e.message,
         )
     except DppShareError as e:
+        logger.error(f"[SHARE DEBUG] DppShareError: {e.message} (dpp_id={e.dpp_id}, partner={e.partner})")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=e.message,
         )
     except Exception as e:
-        logger.error(f"Error sharing DPP {request.dpp_id}: {str(e)}", exc_info=True)
+        logger.error(f"[SHARE DEBUG] Unexpected error sharing DPP {request.dpp_id}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to share DPP: {str(e)}",

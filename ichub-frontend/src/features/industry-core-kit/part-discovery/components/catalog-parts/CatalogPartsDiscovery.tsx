@@ -27,6 +27,7 @@ import Download from '@mui/icons-material/Download';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import { Box, Typography, IconButton, Button, Tooltip, Menu } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { DiscoveryCardChip } from "./DiscoveryCardChip";
 import { ErrorNotFound } from '@/components/general/ErrorNotFound';
@@ -57,6 +58,7 @@ export const CatalogPartsDiscovery = ({
   onClick,
   isLoading
 }: CardDecisionProps) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItem, setSelectedItem] = useState<AppContent | null>(null);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
@@ -127,7 +129,7 @@ export const CatalogPartsDiscovery = ({
         <LoadingSpinner />
       )}
       {!isLoading && items.length === 0 && (
-        <ErrorNotFound icon={ReportProblemIcon} message="No catalog parts available, please check your ichub-backend connection/configuration"/>
+        <ErrorNotFound icon={ReportProblemIcon} message={t('catalogParts.noPartsAvailable')}/>
       )}
       {items.map((item) => {
         const name = item.name ?? "";
@@ -183,7 +185,7 @@ export const CatalogPartsDiscovery = ({
 
                 <Box className="catalog-parts-card-header-buttons">                  
                   {item.rawTwinData && (
-                    <Tooltip title="Download Twin Data" arrow>
+                    <Tooltip title={t('common:tooltips.downloadTwinData')} arrow>
                       <IconButton
                         onClick={(e) => {
                           e.stopPropagation();
@@ -212,7 +214,7 @@ export const CatalogPartsDiscovery = ({
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="More options" arrow>
+                  <Tooltip title={t('common:actions.moreOptions')} arrow>
                     <IconButton
                       onClick={(e) => handleMenuClick(e, item)}
                     >
@@ -338,7 +340,7 @@ export const CatalogPartsDiscovery = ({
                         {displayIdentifiers.length === 0 && (
                           <Box sx={{ minHeight: '36px' }}>
                             <Typography className="info-label">
-                              Identifier
+                              {t('common:fields.identifier')}
                             </Typography>
                             <Typography 
                               variant="caption" 
@@ -350,7 +352,7 @@ export const CatalogPartsDiscovery = ({
                                 display: 'block'
                               }}
                             >
-                              Not available
+                              {t('common:status.notAvailable')}
                             </Typography>
                           </Box>
                         )}
@@ -378,7 +380,7 @@ export const CatalogPartsDiscovery = ({
                         position: 'relative'
                       }}
                     >
-                      <Tooltip title={`Asset Type: ${assetType}`} arrow placement="top">
+                      <Tooltip title={`${t('common:fields.assetType')}: ${assetType}`} arrow placement="top">
                         <Typography
                           variant="caption"
                           sx={{
@@ -415,7 +417,7 @@ export const CatalogPartsDiscovery = ({
                     onClick(productId);
                   }}
                 >
-                  View
+                  {t('common:actions.view')}
                 </Button>
               </Box>
             </Box>
@@ -460,7 +462,7 @@ export const CatalogPartsDiscovery = ({
               color: copySuccess ? 'white' : 'black',
               transition: 'color 0.3s ease'
             }}>
-              {copySuccess ? 'Copied!' : 'Copy Shell ID'}
+              {copySuccess ? t('common:actions.copied') : t('common:tooltips.copyShellId')}
             </Box>
             {copySuccess ? (
               <CheckCircle 
@@ -498,7 +500,7 @@ export const CatalogPartsDiscovery = ({
             }}
           >
             <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>
-              Download Twin Data
+              {t('common:tooltips.downloadTwinData')}
             </Box>
             <Download 
               fontSize="small" 

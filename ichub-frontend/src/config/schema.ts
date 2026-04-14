@@ -20,30 +20,67 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-// Types for governance configuration
-export interface GovernanceConstraint {
+// ===== Saturn-format policy types (1:1 match with backend YAML) =====
+
+/** A single constraint operand triple (Saturn — plain keys, no prefixes) */
+export interface PolicyConstraint {
   leftOperand: string;
   operator: string;
   rightOperand: string;
 }
 
-export interface GovernanceRule {
+/**
+ * Constraint expression: a logical group (and/or) or a single constraint.
+ * Mirrors the backend YAML `constraint` field.
+ *
+ * Single:  { leftOperand: "Membership", operator: "eq", rightOperand: "active" }
+ * And:     { and: [{ leftOperand: "...", … }, …] }
+ * Or:      { or: [{ leftOperand: "...", … }, …] }
+ */
+export type PolicyConstraintExpression =
+  | { and: PolicyConstraint[] }
+  | { or: PolicyConstraint[] }
+  | PolicyConstraint;
+
+/** A permission / prohibition / obligation rule (Saturn format) */
+export interface PolicyRule {
   action: string;
-  LogicalConstraint?: string;
-  constraints: GovernanceConstraint[];
+  constraint?: PolicyConstraintExpression | PolicyConstraintExpression[];
 }
 
-export interface GovernancePolicy {
-  strict: boolean;
-  permission: GovernanceRule | GovernanceRule[];
-  prohibition: GovernanceRule | GovernanceRule[];
-  obligation: GovernanceRule | GovernanceRule[];
+/** JSON-LD context entry: a URL string or a { "@vocab": "…" } object */
+export type PolicyContextEntry = string | Record<string, string>;
+
+/** A policy definition (usage or access) with optional JSON-LD context */
+export interface PolicyDefinition {
+  context?: PolicyContextEntry[];
+  permissions?: PolicyRule[];
+  prohibitions?: PolicyRule[];
+  obligations?: PolicyRule[];
 }
 
-export interface GovernanceConfig {
+/**
+ * Agreement configuration — 1:1 match with the backend YAML `agreements` entries.
+ * Each entry maps a semantic ID to an array of policy definitions.
+ */
+export interface AgreementConfig {
   semanticid: string;
-  policies: GovernancePolicy[];
+  policies: PolicyDefinition[];
+  /** access policy is provider-side only — not needed for consumption */
+  access?: PolicyDefinition;
 }
+
+/**
+ * DTR policy configuration — array of policy definitions to try for DTR access.
+ * Each entry is a standalone PolicyDefinition (context + permissions/prohibitions/obligations).
+ * Permutations are generated for each entry and combined into a flat list for the backend.
+ */
+export type DtrPolicyConfig = PolicyDefinition[];
+
+// ----- Backward-compatible aliases (deprecated) -----
+
+/** @deprecated Use PolicyConstraint */
+export type GovernanceConstraint = PolicyConstraint;
 
 // Authentication types
 export interface AuthUser {
@@ -119,10 +156,10 @@ export interface AppConfig {
     bpnValidationPattern?: string;
   };
   
-  // Governance and policies
+  // Governance and policies (Saturn format)
   governance: {
-    config: GovernanceConfig[];
-    dtrPolicies: GovernancePolicy[];
+    agreements: AgreementConfig[];
+    dtrPolicy: DtrPolicyConfig;
   };
   
   // Feature flags

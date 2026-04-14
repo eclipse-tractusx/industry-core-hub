@@ -23,6 +23,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -36,10 +37,13 @@ import {
 } from '@mui/icons-material';
 import KitCard from '../components/KitCard';
 import { KitFeature } from '../types';
-import { kits as kitsData } from '../../main';
+import { useTranslatedKits } from '@/hooks/useTranslatedKits';
 
 const KitFeaturesPage: React.FC = () => {
+  const { t } = useTranslation('kits');
+  const { t: tCommon } = useTranslation('common');
   const location = useLocation();
+  const translatedKits = useTranslatedKits();
   const [kits, setKits] = useState<KitFeature[]>([]);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -49,9 +53,9 @@ const KitFeaturesPage: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    // Load KITs data
-    setKits(kitsData);
-  }, []);
+    // Load KITs data from translated hook
+    setKits(translatedKits);
+  }, [translatedKits]);
 
   // Restore carousel position when navigating back from kit detail
   useEffect(() => {
@@ -80,8 +84,13 @@ const KitFeaturesPage: React.FC = () => {
     
     const kit = kits.find(k => k.id === kitId);
     const feature = kit?.features.find(f => f.id === featureId);
+    const status = enabled ? tCommon('status.enabled').toLowerCase() : tCommon('status.disabled').toLowerCase();
     setSnackbarMessage(
-      `${feature?.name} in ${kit?.name} has been ${enabled ? 'enabled' : 'disabled'}`
+      t('page.featureToggled', { 
+        featureName: feature?.name, 
+        kitName: kit?.name,
+        status 
+      })
     );
     setSnackbarOpen(true);
   };
@@ -277,7 +286,7 @@ const KitFeaturesPage: React.FC = () => {
             textShadow: '0 0 40px rgba(66, 165, 245, 0.3)'
           }}
         >
-          Welcome to Industry Core Hub
+          {t('page.title')}
         </Typography>
         
         <Typography 
@@ -292,7 +301,7 @@ const KitFeaturesPage: React.FC = () => {
             mb: 1
           }}
         >
-          The Eclipse Tractus-X KITs & Use Cases Speed Way
+          {t('page.subtitle')}
         </Typography>
 
         <Typography 
@@ -306,8 +315,8 @@ const KitFeaturesPage: React.FC = () => {
             fontWeight: 400
           }}
         >
-          Enable or disable specific features within a KIT to unlock the complete potential of dataspaces.<br />
-          Explore the carousel below to discover available features.
+          {t('page.description')}<br />
+          {t('page.exploreCarousel')}
         </Typography>
       </Box>
 

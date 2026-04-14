@@ -54,9 +54,12 @@ import { getCountryFlag } from '@/features/industry-core-kit/part-discovery/comp
  * Specialized viewer component for US Tariff Information submodels
  */
 export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInformation>> = ({
-  data,
+  data: rawData,
   semanticId
 }) => {
+  // Normalise: some backends return the submodel wrapped in an array.
+  const data: UsTariffInformation = (Array.isArray(rawData) ? rawData[0] : rawData) as UsTariffInformation;
+
   const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -197,6 +200,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
         minWidth: 0 // Allow flex items to shrink below their content size
       }}>
         {/* Part Information */}
+        {data.partId && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -208,18 +212,26 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                 <Typography variant="subtitle2" color="text.secondary">Part ID</Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>{data.partId}</Typography>
               </Grid2>
+              {data.partName && (
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">Part Name</Typography>
                 <Typography variant="body1">{data.partName}</Typography>
               </Grid2>
+              )}
+              {data.partDescription && (
               <Grid2 size={12}>
                 <Typography variant="subtitle2" color="text.secondary">Description</Typography>
                 <Typography variant="body1">{data.partDescription}</Typography>
               </Grid2>
+              )}
+              {data.partWeight && (
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">Weight</Typography>
                 <Typography variant="body1">{formatWeight(data.partWeight)}</Typography>
               </Grid2>
+              )}
+              {data.partUsage && (
+              <>
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">Vehicle System</Typography>
                 <Typography variant="body1">{data.partUsage.vehicleSystem}</Typography>
@@ -242,11 +254,15 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                   ))}
                 </Box>
               </Grid2>
+              </>
+              )}
             </Grid2>
           </CardContent>
         </Card>
+        )}
 
         {/* Tariff Information */}
+        {data.tariff && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -283,12 +299,14 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                 <Typography variant="subtitle2" color="text.secondary">Incoterms</Typography>
                 <Typography variant="body1">{data.tariff.incoterms}</Typography>
               </Grid2>
+              {data.tariff.declaredCustomsValue && (
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">Declared Customs Value</Typography>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main' }}>
                   {formatCurrency(data.tariff.declaredCustomsValue.value, data.tariff.declaredCustomsValue.currency)}
                 </Typography>
               </Grid2>
+              )}
               {data.tariff.dutyRateNote && (
                 <Grid2 size={12}>
                   <Typography variant="subtitle2" color="text.secondary">Duty Rate Note</Typography>
@@ -300,6 +318,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
             </Grid2>
           </CardContent>
         </Card>
+        )}
 
         {/* Material Value Distribution Chart */}
         <Card>
@@ -411,6 +430,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
         </Card>
 
         {/* Compliance Information */}
+        {data.compliance && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -418,6 +438,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
               Compliance Information
             </Typography>
             <Grid2 container spacing={2}>
+              {data.compliance.rohs && (
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <GppGoodIcon fontSize="small" color="action" />
@@ -429,19 +450,23 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                     color={data.compliance.rohs.compliant ? 'success' : 'error'}
                     size="small"
                   />
-                  {data.compliance.rohs.exemptions.length > 0 && (
+                  {data.compliance.rohs.exemptions?.length > 0 && (
                     <Typography variant="caption" color="text.secondary">
                       {data.compliance.rohs.exemptions.length} exemption(s)
                     </Typography>
                   )}
                 </Box>
               </Grid2>
+              )}
+              {data.compliance.reach && (
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">REACH SVHC Content</Typography>
                 <Typography variant="body1">
                   {data.compliance.reach.svhcContentWppm} wppm
                 </Typography>
               </Grid2>
+              )}
+              {data.compliance.isoCertificates && (
               <Grid2 size={12}>
                 <Typography variant="subtitle2" color="text.secondary">ISO Certificates</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
@@ -456,11 +481,14 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                   ))}
                 </Box>
               </Grid2>
+              )}
             </Grid2>
           </CardContent>
         </Card>
+        )}
 
         {/* Supply Chain */}
+        {data.supplyChain && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -468,6 +496,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
               Supply Chain Information
             </Typography>
             <Grid2 container spacing={2}>
+              {data.supplyChain.manufacturer && (
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <BusinessIcon fontSize="small" color="action" />
@@ -477,6 +506,8 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                   {data.supplyChain.manufacturer}
                 </Typography>
               </Grid2>
+              )}
+              {data.supplyChain.finalAssembly && (
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <LocationOnIcon fontSize="small" color="action" />
@@ -486,12 +517,17 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                   {getCountryFlag(data.supplyChain.finalAssembly)} {data.supplyChain.finalAssembly}
                 </Typography>
               </Grid2>
+              )}
+              {data.supplyChain.batchNumber && (
               <Grid2 size={{ xs: 12, md: 4 }}>
                 <Typography variant="subtitle2" color="text.secondary">Batch Number</Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                   {data.supplyChain.batchNumber}
                 </Typography>
               </Grid2>
+              )}
+              {data.supplyChain.traceability && (
+              <>
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="subtitle2" color="text.secondary">Lot Code Marking</Typography>
                 <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
@@ -504,11 +540,15 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
                   {data.supplyChain.traceability.dateCodeFormat}
                 </Typography>
               </Grid2>
+              </>
+              )}
             </Grid2>
           </CardContent>
         </Card>
+        )}
 
         {/* Totals Check */}
+        {data.totalsCheck && (
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2 }}>
@@ -530,6 +570,7 @@ export const UsTariffInformationViewer: React.FC<SubmodelAddonProps<UsTariffInfo
             </Grid2>
           </CardContent>
         </Card>
+        )}
 
         {/* Notes */}
         {data.notes && data.notes.length > 0 && (

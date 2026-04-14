@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "欢迎来到工业核心中心",
+    "subtitle": "Eclipse Tractus-X KIT与用例快速通道",
+    "description": "启用或禁用KIT中的特定功能，以释放数据空间的全部潜力。",
+    "exploreCarousel": "浏览下方轮播图，发现可用功能。",
+    "featureToggled": "{{kitName}}中的{{featureName}}已{{status}}"
+  },
+  "kitCard": {
+    "viewFeatures": "查看功能"
+  },
+  "featuresPanel": {
+    "title": "可用功能",
+    "footer": "展开KIT以启用/禁用功能"
+  },
+  "kitDetail": {
+    "backToKitFeatures": "返回KIT功能",
+    "kitNotFound": "未找到KIT",
+    "goToDocumentation": "查看KIT文档"
+  },
+  "featureCard": {
+    "defaultTooltip": "默认功能无法禁用"
+  },
+  "items": {
+    "industryCore": {
+      "name": "工业核心KIT",
+      "description": "工业数据管理、合作伙伴发现和目录管理的核心功能。",
+      "features": {
+        "catalogManagement": {
+          "name": "提供目录/类型零件",
+          "description": "在目录/类型级别提供、分享和管理零件。"
+        },
+        "serializedParts": {
+          "name": "提供序列化/实例零件",
+          "description": "在序列化/实例级别提供、分享和管理零件"
+        },
+        "dataspaceDiscovery": {
+          "name": "通过数据空间发现消费数据",
+          "description": "搜索、发现和可视化来自与您连接到同一数据空间的合作伙伴的数字孪生和子模型"
+        }
+      }
+    },
+    "businessPartner": {
+      "name": "业务合作伙伴KIT",
+      "description": "全面的业务合作伙伴数据管理、联系人列表和参与者验证。",
+      "features": {
+        "participants": {
+          "name": "联系人列表",
+          "description": "管理您的简单数据空间合作伙伴联系人列表，以便更轻松地进行消费和协作。"
+        }
+      }
+    },
+    "ecoPass": {
+      "name": "生态通行证KIT",
+      "description": "利用数字产品护照的透明度来加强可持续性和合规性。",
+      "features": {
+        "passConsumption": {
+          "name": "护照消费与可视化",
+          "description": "通过二维码或ID从数据空间参与者检索护照并显示。"
+        },
+        "passProvision": {
+          "name": "护照提供与管理",
+          "description": "创建、管理和与数据空间合作伙伴分享数字产品护照。"
+        }
+      }
+    },
+    "dataGovernance": {
+      "name": "数据治理KIT",
+      "description": "管理您的数据主权、策略、合同、合规性和治理。"
+    },
+    "pcf": {
+      "name": "产品碳足迹KIT",
+      "description": "产品碳足迹计算和生命周期评估工具。"
+    },
+    "dataChain": {
+      "name": "数据链KIT",
+      "description": "访问分布在数据空间中的数据。"
+    },
+    "dcm": {
+      "name": "需求与产能管理KIT",
+      "description": "优化供应链运营的需求和产能管理。"
+    },
+    "traceability": {
+      "name": "可追溯性KIT",
+      "description": "整个供应链中零件、警报和组件的端到端可追溯性。"
+    }
+  }
+}

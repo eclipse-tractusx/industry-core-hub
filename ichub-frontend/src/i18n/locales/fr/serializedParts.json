@@ -1,0 +1,91 @@
+{
+  "page": {
+    "title": "Pièces Sérialisées",
+    "loading": "Chargement des pièces sérialisées..."
+  },
+  "table": {
+    "subtitle": "Voir et gérer les instances de pièces sérialisées ({{count}} au total)",
+    "addSerializedPart": "Ajouter une Pièce Sérialisée",
+    "columns": {
+      "businessPartnerBpnl": "BPNL du Partenaire Commercial"
+    },
+    "tooltips": {
+      "deleteSerializedPart": "Supprimer la Pièce Sérialisée"
+    },
+    "messages": {
+      "twinRegistered": "Jumeau enregistré avec succès !",
+      "twinShared": "Jumeau partagé avec succès !",
+      "twinUnshared": "Partage du jumeau annulé avec succès !",
+      "partDeleted": "Pièce sérialisée supprimée avec succès !",
+      "dataRefreshed": "Données actualisées avec succès !",
+      "registerFailed": "Échec de l'enregistrement",
+      "shareFailed": "Échec du partage",
+      "unshareFailed": "Échec de l'annulation du partage",
+      "deleteFailed": "Échec de la suppression",
+      "refreshFailed": "Échec de l'actualisation",
+      "globalAssetIdCopied": "ID Global d'Asset copié !",
+      "aasIdCopied": "ID AAS copié !",
+      "failedToCopy": "Échec de la copie"
+    },
+    "loading": {
+      "title": "Chargement des données des jumeaux...",
+      "subtitle": "Récupération des informations des jumeaux pour les pièces sérialisées"
+    },
+    "empty": {
+      "title": "Aucune pièce sérialisée trouvée",
+      "subtitle": "Il n'y a actuellement aucune pièce sérialisée à afficher. Les pièces apparaîtront ici une fois créées."
+    },
+    "deleteDialog": {
+      "title": "Supprimer la Pièce Sérialisée",
+      "confirmation": "Êtes-vous sûr de vouloir supprimer cette pièce sérialisée ?",
+      "warning": "Cette action est irréversible."
+    }
+  },
+  "addDialog": {
+    "title": "Ajouter une pièce sérialisée",
+    "form": {
+      "manufacturerPartIdPlaceholder": "Sélectionner ou saisir un ID de pièce fabricant",
+      "manufacturerPartIdHelper": "Sélectionner parmi les pièces catalogue existantes ou saisir un nouveau",
+      "sharingPartner": "Partenaire de Partage",
+      "noPartnersWarning": "Aucun partenaire disponible. Vous devez créer au moins un partenaire avant de créer une pièce sérialisée.",
+      "createPartnerButton": "Créer un Partenaire dans la Liste de Contacts",
+      "selectSharingPartner": "Sélectionner un Partenaire de Partage",
+      "selectPartnerPlaceholder": "Sélectionnez un partenaire avec qui partager",
+      "optionalFields": "Champs Optionnels",
+      "includeVanField": "Inclure le champ VAN",
+      "includeCustomerPartIdField": "Inclure le champ ID Pièce Client"
+    },
+    "messages": {
+      "noPartnersAvailable": "Aucun partenaire disponible. Veuillez d'abord créer un partenaire.",
+      "manufacturerPartIdRequired": "L'ID de Pièce Fabricant est requis et ne peut pas être vide",
+      "partCreatedSuccess": "Pièce sérialisée créée avec succès",
+      "catalogPartNotFound": "Pièce catalogue non trouvée. Comment souhaitez-vous la créer ?",
+      "catalogPartNotFoundOnServer": "La pièce catalogue sélectionnée n'a pas pu être trouvée sur le serveur. Veuillez actualiser le catalogue ou réessayer.",
+      "createFailed": "Échec de la création de la pièce sérialisée",
+      "catalogAndPartCreated": "Pièce catalogue et pièce sérialisée créées avec succès",
+      "createCatalogFailed": "Échec de la création de la pièce catalogue"
+    },
+    "choiceStep": {
+      "title": "Choisir la méthode de création de pièce catalogue",
+      "description": "La pièce catalogue <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> n'a pas été trouvée. Comment souhaitez-vous la créer ?",
+      "quickCreation": {
+        "title": "Création Rapide",
+        "recommended": "Recommandé",
+        "description": "Créer la pièce catalogue ici avec les détails de base (nom, catégorie, bpns)",
+        "subtitle": "Rapide & Simple"
+      },
+      "detailedCreation": {
+        "title": "Création Détaillée",
+        "description": "Aller à la vue des pièces catalogue pour créer avec tous les détails puis revenir",
+        "subtitle": "Contrôle Total"
+      }
+    },
+    "catalogForm": {
+      "title": "Créer une Pièce Catalogue",
+      "description": "La pièce catalogue <strong>{{manufacturerId}}/{{manufacturerPartId}}</strong> n'a pas été trouvée. Veuillez fournir les détails requis pour la créer.",
+      "nameHelper": "Le nom pour la pièce catalogue",
+      "categoryHelper": "Catégorie optionnelle pour la pièce catalogue",
+      "bpnsHelper": "Numéro de Site du Partenaire Commercial optionnel"
+    }
+  }
+}

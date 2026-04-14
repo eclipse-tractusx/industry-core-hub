@@ -22,6 +22,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ProductCard } from "@/features/industry-core-kit/catalog-management/components/product-list/ProductCard";
 import { PartType, ApiPartData } from "@/features/industry-core-kit/catalog-management/types/types";
 import TablePagination from "@mui/material/TablePagination";
@@ -36,6 +37,7 @@ import { mapApiPartDataToPartType } from "../utils/utils";
 import { CatalogPartTwinCreateType } from "@/features/industry-core-kit/catalog-management/types/twin-types";
 
 const ProductsList = () => {
+  const { t } = useTranslation('catalogManagement');
   const [carParts, setCarParts] = useState<PartType[]>([]);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedPart, setSelectedPart] = useState<PartType | null>(null);
@@ -121,13 +123,13 @@ const ProductsList = () => {
         manufacturerPartId,
       };
       await registerCatalogPartTwin(twinToCreate);
-      setSnackbarMessage("Part twin registered successfully!");
+      setSnackbarMessage(t('messages.registerSuccess'));
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       fetchData();
     } catch (error) {
       console.error("Error registering part twin:", error);
-      setSnackbarMessage("Failed to register part twin!");
+      setSnackbarMessage(t('messages.registerError'));
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     }
@@ -167,11 +169,11 @@ const ProductsList = () => {
       </Snackbar>
       <Grid2 container direction="column" alignItems="center" sx={{ mb: 3 }}>
         <Grid2 className="product-catalog title flex flex-content-center">
-          <Typography className="text">Catalog Parts</Typography>
+          <Typography className="text">{t('page.title')}</Typography>
         </Grid2>
       </Grid2>
       <Grid2 size={12} container justifyContent="flex-end" marginRight={6} marginBottom={2}>
-        <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreateDialog} startIcon={<AddIcon />} >Create Catalog Part</Button>
+        <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreateDialog} startIcon={<AddIcon />} >{t('page.createButton')}</Button>
       </Grid2>
       
       {/* Main content area that grows and positions content naturally */}

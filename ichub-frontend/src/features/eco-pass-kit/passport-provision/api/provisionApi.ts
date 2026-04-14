@@ -34,55 +34,49 @@ const API_BASE_URL = '/addons/ecopass-kit';
 export const fetchUserDPPs = async (): Promise<DPPListItem[]> => {
   try {
     const response = await httpClient.get<{
-      dppId: string;
+      id: string;
+      passportId: string;
       name: string;
       version: string;
       semanticId: string;
       status: string;
-      twinId?: string;
+      twinAssociation?: {
+        twinId: string;
+        aasId?: string;
+        manufacturerPartId: string;
+        partInstanceId: string;
+        twinName?: string;
+        assetId?: string;
+      };
       submodelId?: string;
       partType?: string;
       manufacturerPartId?: string;
       partInstanceId?: string;
       createdAt: string;
-      shareCount?: number;
-      passportId?: string;
+      updatedAt: string;
       issueDate?: string;
       expirationDate?: string;
     }[]>(`${API_BASE_URL}/passports`);
     
     const data = response.data;
+
+    // DEBUG: Log raw backend response
+    console.log('[SHARE DEBUG] Raw passports response:', JSON.stringify(data.slice(0, 2), null, 2));
     
     // Transform backend response to frontend format
-    return data.map((dpp: {
-      dppId: string;
-      name: string;
-      version: string;
-      semanticId: string;
-      status: string;
-      twinId?: string;
-      submodelId?: string;
-      partType?: string;
-      manufacturerPartId?: string;
-      partInstanceId?: string;
-      createdAt: string;
-      shareCount?: number;
-      passportId?: string;
-      issueDate?: string;
-      expirationDate?: string;
-    }) => ({
-      id: dpp.dppId,
+    return data.map((dpp) => ({
+      id: dpp.id,
       name: dpp.name,
       version: dpp.version,
       semanticId: dpp.semanticId,
       status: dpp.status.toLowerCase() as DPPListItem['status'],
-      twinId: dpp.twinId,
+      twinId: dpp.twinAssociation?.twinId,
       submodelId: dpp.submodelId,
-      partType: dpp.partType as DPPListItem['partType'],
-      manufacturerPartId: dpp.manufacturerPartId,
-      partInstanceId: dpp.partInstanceId,
+      partType: (dpp.partType || dpp.twinAssociation ? 'serialized' : undefined) as DPPListItem['partType'],
+      manufacturerPartId: dpp.manufacturerPartId || dpp.twinAssociation?.manufacturerPartId,
+      partInstanceId: dpp.partInstanceId || dpp.twinAssociation?.partInstanceId,
       createdAt: dpp.createdAt,
-      shareCount: dpp.shareCount || 0,
+      shareCount: 0,
       passportIdentifier: dpp.passportId,
       issueDate: dpp.issueDate,
       expirationDate: dpp.expirationDate
@@ -133,13 +127,20 @@ export const shareDPP = async (
     const payload = {
       dppId: dppId,
       businessPartnerNumber: partnerBpnl,
-      ...(customPartId && { customPartId: customPartId })
     };
 
-    console.log('Sharing DPP with payload:', JSON.stringify(payload));
+    const url = `${API_BASE_URL}/provision/share`;
 
-    await httpClient.post(
-      `${API_BASE_URL}/twin-management/serialized-part-twin/share?include_data_exchange_agreements=true`,
+    // DEBUG: Log request details
+    console.log('[SHARE DEBUG] === Share DPP Request ===' );
+    console.log('[SHARE DEBUG] URL:', url);
+    console.log('[SHARE DEBUG] Payload:', JSON.stringify(payload, null, 2));
+    console.log('[SHARE DEBUG] dppId:', dppId);
+    console.log('[SHARE DEBUG] partnerBpnl:', partnerBpnl);
+    if (customPartId) console.log('[SHARE DEBUG] customPartId (not sent):', customPartId);
+
+    const response = await httpClient.post(
+      url,
       payload,
       {
         headers: {
@@ -147,8 +148,27 @@ export const shareDPP = async (
         }
       }
     );
+
+    // DEBUG: Log response
+    console.log('[SHARE DEBUG] === Share DPP Response ===' );
+    console.log('[SHARE DEBUG] Status:', response.status);
+    console.log('[SHARE DEBUG] Data:', JSON.stringify(response.data, null, 2));
   } catch (error) {
-    console.error('Error sharing DPP:', error);
+    // DEBUG: Log error details
+    console.error('[SHARE DEBUG] === Share DPP Error ===' );
+    console.error('[SHARE DEBUG] Error:', error);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const axiosErr = error as any;
+    if (axiosErr?.response) {
+      console.error('[SHARE DEBUG] Status:', axiosErr.response.status);
+      console.error('[SHARE DEBUG] Response Data:', JSON.stringify(axiosErr.response.data, null, 2));
+      console.error('[SHARE DEBUG] Response Headers:', JSON.stringify(axiosErr.response.headers, null, 2));
+    }
+    if (axiosErr?.config) {
+      console.error('[SHARE DEBUG] Request URL:', axiosErr.config.url);
+      console.error('[SHARE DEBUG] Request Method:', axiosErr.config.method);
+      console.error('[SHARE DEBUG] Request Data:', axiosErr.config.data);
+    }
     throw error;
   }
 };

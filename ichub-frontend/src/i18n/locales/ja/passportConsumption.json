@@ -1,0 +1,49 @@
+{
+  "page": {
+    "title": "デジタル製品パスポート",
+    "subtitle": "データスペースから製品パスポートを取得して可視化",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "ディスカバリーIDを入力してください",
+    "validationFormat": "形式が無効です。期待される形式: CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "詳しく知りたいですか？すべての",
+    "ecoPassFeatures": "エコパスKIT機能"
+  },
+  "loading": {
+    "title": "パスポートを読み込み中",
+    "errorTitle": "パスポートの読み込みエラー",
+    "steps": {
+      "parsingId": "IDを解析中",
+      "parsingIdDescription": "メーカーとインスタンス情報を抽出中",
+      "findingOwner": "所有者を検索中",
+      "findingOwnerDescription": "BPNディスカバリーを使用してBPNを検索中",
+      "retrievingTwin": "ツインを取得中",
+      "retrievingTwinDescription": "DTRからデジタルツインを取得中",
+      "findingSubmodel": "サブモデルを検索中",
+      "findingSubmodelDescription": "一致するサブモデルを特定中",
+      "loadingData": "データを読み込み中",
+      "loadingDataDescription": "パスポートデータを消費中",
+      "readyDescription": "パスポートが正常に読み込まれました"
+    }
+  },
+  "scanner": {
+    "title": "QRコードをスキャン",
+    "subtitle": "QRコードをフレーム内に配置してください",
+    "camera": "カメラ",
+    "cameraShort": "カメラ",
+    "formatInfo": "形式が",
+    "formatInfoSuffix": "のQRコードのみ受け付けます",
+    "invalidFormat": "形式が無効です。CX:<manufacturerPartId>:<partInstanceId>形式のみ許可されています。URLは受け付けません。",
+    "cameraError": "カメラにアクセスできませんでした。カメラの権限を許可してください。"
+  },
+  "visualization": {
+    "copiedToClipboard": "{{label}}をクリップボードにコピーしました",
+    "copyFailed": "コピーに失敗しました",
+    "noDataAvailable": "このセクションのデータはありません",
+    "materials": "材料",
+    "unableToDetermineType": "パスポートタイプを判定できません。データ形式を確認してください。"
+  },
+  "errors": {
+    "noMockData": "モックデータがありません",
+    "loadFailed": "パスポートの読み込みに失敗しました"
+  }
+}

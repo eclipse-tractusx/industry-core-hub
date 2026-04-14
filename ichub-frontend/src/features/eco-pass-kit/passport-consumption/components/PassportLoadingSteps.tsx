@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Card, CardContent, Typography, Button } from '@mui/material';
 import { CheckCircle, RadioButtonUnchecked } from '@mui/icons-material';
 import { LOADING_STEPS } from './loadingStepsConfig';
@@ -44,6 +45,7 @@ const PassportLoadingSteps: React.FC<PassportLoadingStepsProps> = ({
   error,
   errorStep
 }) => {
+  const { t } = useTranslation(['passportConsumption', 'common']);
   const hasError = Boolean(error);
   const failedStep = errorStep !== undefined ? errorStep : currentStep;
   return (
@@ -71,7 +73,7 @@ const PassportLoadingSteps: React.FC<PassportLoadingStepsProps> = ({
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Typography variant="h5" sx={{ color: hasError ? '#f44336' : '#fff', fontWeight: 600, mb: 1 }}>
-              {hasError ? 'Error Loading Passport' : 'Loading Passport'}
+              {hasError ? t('loading.errorTitle') : t('loading.title')}
             </Typography>
             {passportId && (
               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'monospace' }}>
@@ -275,7 +277,7 @@ const PassportLoadingSteps: React.FC<PassportLoadingStepsProps> = ({
                   borderRadius: '10px'
                 }}
               >
-                {hasError ? 'Go Back' : 'Cancel'}
+                {hasError ? t('common:actions.goBack') : t('common:actions.cancel')}
               </Button>
             </Box>
           )}

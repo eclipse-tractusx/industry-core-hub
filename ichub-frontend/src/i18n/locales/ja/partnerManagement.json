@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "連絡先リスト",
+    "noPartnersYet": "まだパートナーが追加されていません。上の緑色のボタンを使用して作成してください。",
+    "loadError": "パートナーの読み込みに失敗しました。バックエンド接続を確認してください。",
+    "requestTimeout": "リクエストが30秒後にタイムアウトしました"
+  },
+  "dialog": {
+    "createTitle": "新しいパートナーを作成",
+    "editTitle": "パートナーを編集",
+    "partnerInfo": "パートナー情報",
+    "partnerInfoDescription": "パートナー名とBPNLを入力してください"
+  },
+  "fields": {
+    "partnerName": "パートナー名",
+    "partnerBpnl": "パートナーBPNL"
+  },
+  "autocomplete": {
+    "placeholder": "パートナーを選択するか、カスタムBPNLを入力してください (例: BPNL0000000093Q7)",
+    "helperText": "利用可能なパートナーから選択するか、カスタムのビジネスパートナー法人番号を入力してください",
+    "loadingPartners": "パートナーを読み込み中...",
+    "noPartnersFound": "パートナーが見つかりません。カスタムBPNLを入力することもできます。",
+    "loadError": "バックエンドからパートナーリストを読み込めません。カスタムBPNLを手動で入力することもできます。"
+  },
+  "messages": {
+    "createSuccess": "パートナー{{name}}が正常に作成されました [{{bpnl}}]",
+    "updateSuccess": "パートナー{{name}}が正常に更新されました [{{bpnl}}] (ローカル更新)",
+    "createError": "パートナーの作成に失敗しました。",
+    "bpnlConflict": "このBPNLのパートナーは既に存在します。"
+  }
+}

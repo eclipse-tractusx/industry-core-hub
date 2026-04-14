@@ -24,6 +24,7 @@ import React from 'react';
 import { Box, Button, Typography, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { useTranslation } from 'react-i18next';
 import { ShellDiscoveryPaginator } from '@/features/industry-core-kit/part-discovery/api';
 
 interface PaginationControlsProps {
@@ -47,6 +48,8 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   isLoadingPrevious,
   onPageChange
 }) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
+
   if (!paginator || isLoading || pageLimit === 0) {
     return null;
   }
@@ -92,7 +95,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
             }
           }}
         >
-          Previous
+          {t('common:actions.previous')}
         </Button>
       )}
       
@@ -110,11 +113,11 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
         }}
       >
         <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: '500', fontSize: '0.8rem' }}>
-          Page {currentPage}
+          {t('common:pagination.page')} {currentPage}
         </Typography>
         {totalPages > 1 && (
           <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-            of {totalPages}
+            {t('common:pagination.of')} {totalPages}
           </Typography>
         )}
       </Box>
@@ -151,7 +154,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
             }
           }}
         >
-          Next
+          {t('common:actions.next')}
         </Button>
       )}
     </Box>

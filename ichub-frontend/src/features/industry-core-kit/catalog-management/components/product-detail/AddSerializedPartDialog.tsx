@@ -22,6 +22,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -47,6 +48,8 @@ import { AxiosError } from '@/types/axiosError';
 import { useEscapeDialog } from '@/hooks/useEscapeKey';
 
 const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialogProps) => {
+    const { t } = useTranslation('catalogManagement');
+    const { t: tCommon } = useTranslation('common');
     const [formData, setFormData] = useState({
         businessPartnerNumber: '',
         manufacturerId: partData?.manufacturerId ?? '',
@@ -89,7 +92,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
             setNotification({
                 open: true,
                 severity: 'success',
-                title: 'Serialized part created successfully',
+                title: t('productDetail.addSerializedPartDialog.successMessage'),
             });
             setTimeout(() => { window.location.reload(); }, 1500);
         } catch (err) {
@@ -99,7 +102,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
             setNotification({
                 open: true,
                 severity: 'error',
-                title: `Failed to create serialized part: ${errorMessage}`,
+                title: t('productDetail.addSerializedPartDialog.errorMessage', { error: errorMessage }),
             });
             setTimeout(() => setNotification(null), 6000);
         }
@@ -131,7 +134,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                     fontWeight: 600
                 }}
             >
-                Add a serialized part
+                {t('productDetail.addSerializedPartDialog.title')}
             </DialogTitle>
             <IconButton
                 aria-label="close"
@@ -191,7 +194,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                             mb: 1
                         }}>
                             <Chip
-                                label={`Manufacturer ID: ${formData.manufacturerId}`}
+                                label={`${t('common:fields.manufacturerId')}: ${formData.manufacturerId}`}
                                 variant="filled"
                                 color="secondary"
                                 size="medium"
@@ -211,7 +214,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                                 }}
                             />
                             <Chip
-                                label={`Manufacturer Part ID: ${formData.manufacturerPartId}`}
+                                label={`${t('common:fields.manufacturerPartId')}: ${formData.manufacturerPartId}`}
                                 variant="filled"
                                 color="secondary" 
                                 size="medium"
@@ -241,7 +244,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                             fontSize: '1.1rem',
                             fontWeight: 500
                         }}>
-                            Sharing Partner
+                            {t('productDetail.addSerializedPartDialog.sharingPartner')}
                         </Typography>
                         <PartnerAutocomplete
                             value={formData.businessPartnerNumber}
@@ -250,8 +253,8 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                             isLoadingPartners={false}
                             partnersError={false}
                             hasError={false}
-                            label="Select Sharing Partner"
-                            placeholder="Select a partner to share with"
+                            label={t('productDetail.addSerializedPartDialog.selectPartner')}
+                            placeholder={t('productDetail.addSerializedPartDialog.selectPartnerPlaceholder')}
                             required={true}
                             onBpnlChange={(bpnl) => setFormData({ ...formData, businessPartnerNumber: bpnl })}
                             onPartnerChange={setSelectedPartner}
@@ -260,7 +263,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
 
                     <Grid item xs={12}>
                         <TextField
-                            label="Part Instance ID"
+                            label={tCommon('fields.partInstanceId')}
                             value={formData.partInstanceId}
                             onChange={(e) => setFormData({ ...formData, partInstanceId: e.target.value })}
                             fullWidth
@@ -278,7 +281,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                                 fontSize: '1.1rem',
                                 fontWeight: 500
                             }}>
-                                Optional Fields
+                                {t('productDetail.addSerializedPartDialog.optionalFields')}
                             </Typography>
                             
                             <FormControlLabel
@@ -289,13 +292,13 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                                         color="primary"
                                     />
                                 }
-                                label="Include VAN field"
+                                label={t('productDetail.addSerializedPartDialog.includeVan')}
                                 sx={{ mb: 2, color: 'text.primary' }}
                             />
                             
                             {showVanField && (
                                 <TextField
-                                    label="VAN"
+                                    label={tCommon('fields.van')}
                                     value={formData.van}
                                     onChange={(e) => setFormData({ ...formData, van: e.target.value })}
                                     fullWidth
@@ -313,13 +316,13 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                                         color="primary"
                                     />
                                 }
-                                label="Include Customer Part ID field"
+                                label={t('productDetail.addSerializedPartDialog.includeCustomerPartId')}
                                 sx={{ mb: 2, color: 'text.primary' }}
                             />
                             
                             {showCustomerPartIdField && (
                                 <TextField
-                                    label="Customer Part ID"
+                                    label={tCommon('fields.customerPartId')}
                                     value={formData.customerPartId}
                                     onChange={(e) => setFormData({ ...formData, customerPartId: e.target.value })}
                                     fullWidth
@@ -350,7 +353,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                         fontWeight: 500
                     }}
                 >
-                    Cancel
+                    {tCommon('actions.cancel')}
                 </Button>
                 <Button 
                     onClick={handleSubmit}
@@ -364,7 +367,7 @@ const AddSerializedPartDialog = ({ open, onClose, partData }: ProductDetailDialo
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                     }}
                 >
-                    Save
+                    {tCommon('actions.save')}
                 </Button>
             </DialogActions>
         </Dialog>

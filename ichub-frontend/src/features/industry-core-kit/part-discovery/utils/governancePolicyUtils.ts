@@ -20,243 +20,217 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import type { GovernanceConfig, GovernanceConstraint, GovernanceRule } from '@/services/EnvironmentService';
-
-// ODRL constraint interface for API compatibility
-export interface OdrlConstraint {
-  "odrl:leftOperand": { "@id": string };
-  "odrl:operator": { "@id": string };
-  "odrl:rightOperand": string;
-}
-
-// ODRL rule interface for API compatibility
-export interface OdrlRule {
-  "odrl:action": { "@id": string };
-  "odrl:constraint"?: {
-    "odrl:and"?: OdrlConstraint[];
-    "odrl:or"?: OdrlConstraint[];
-  } | OdrlConstraint; // Single constraint or logical constraint group
-}
-
-// ODRL policy interface for API compatibility
-export interface OdrlPolicy {
-  "odrl:permission": OdrlRule;
-  "odrl:prohibition": OdrlRule[];
-  "odrl:obligation": OdrlRule[];
-}
+import type {
+  AgreementConfig,
+  PolicyDefinition,
+} from '@/services/EnvironmentService';
 
 /**
- * Convert governance constraint to ODRL format
+ * ODRL policy – format-agnostic.
+ * Saturn uses plain keys (permission, action, constraint, and, or).
+ * Jupiter uses prefixed keys (odrl:permission, odrl:action, odrl:constraint, odrl:and, odrl:or).
+ * The frontend passes the config through to the backend as-is, preserving whichever format was used.
  */
-function convertToOdrlConstraint(constraint: GovernanceConstraint): OdrlConstraint {
-  return {
-    "odrl:leftOperand": { "@id": constraint.leftOperand },
-    "odrl:operator": { "@id": constraint.operator },
-    "odrl:rightOperand": constraint.rightOperand
-  };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type OdrlPolicy = Record<string, any>;
+
+// ----- Key-style helpers -----
+
+/**
+ * Look up a value from an object using multiple candidate keys.
+ * Returns the value of the first key that exists, or `fallback`.
+ */
+function pick(obj: Record<string, unknown>, keys: string[], fallback: unknown = undefined): unknown {
+  for (const k of keys) {
+    if (k in obj) return obj[k];
+  }
+  return fallback;
 }
 
 /**
- * Generate all permutations of an array
+ * Detect whether the definition uses ODRL-prefixed keys.
+ * Returns true if any top-level key contains "odrl:" or "cx-policy:".
+ */
+function usesOdrlPrefix(obj: Record<string, unknown>): boolean {
+  return Object.keys(obj).some(k => k.startsWith('odrl:') || k.startsWith('cx-policy:'));
+}
+
+/**
+ * Generate all permutations of an array.
+ * Permutation generation is disabled — only the original order is returned.
  */
 function generatePermutations<T>(arr: T[]): T[][] {
-  if (arr.length <= 1) return [arr];
-  
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i++) {
-    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
-    const perms = generatePermutations(rest);
-    for (const perm of perms) {
-      result.push([arr[i], ...perm]);
+  return [arr];
+}
+
+/**
+ * Generate constraint permutations for a constraint expression object.
+ * Generates all orderings of the FULL constraint list — no subsets.
+ * This ensures matching succeeds regardless of constraint order in the and/or array,
+ * while preserving the complete set of constraints in every output policy.
+ * Supports both Saturn keys (and/or) and Jupiter keys (odrl:and/odrl:or).
+ * Preserves the original key style in the output.
+ */
+function generateConstraintVariants(
+  expr: Record<string, unknown>
+): Record<string, unknown>[] {
+  // Saturn: { and: [...] }  |  Jupiter: { "odrl:and": [...] }
+  for (const andKey of ['and', 'odrl:and']) {
+    if (andKey in expr && Array.isArray(expr[andKey])) {
+      const items = expr[andKey] as Record<string, unknown>[];
+      if (items.length <= 1) return [expr];
+      return generatePermutations(items).map(variant => ({ [andKey]: variant }));
     }
   }
-  return result;
-}
-
-/**
- * Generate all combinations (subsets) of constraints
- */
-function generateCombinations<T>(arr: T[]): T[][] {
-  const result: T[][] = [];
-  
-  // Generate all possible combinations (1 to n elements)
-  for (let size = 1; size <= arr.length; size++) {
-    const combinations = getCombinationsOfSize(arr, size);
-    result.push(...combinations);
-  }
-  
-  return result;
-}
-
-/**
- * Get all combinations of a specific size
- */
-function getCombinationsOfSize<T>(arr: T[], size: number): T[][] {
-  if (size === 1) return arr.map(item => [item]);
-  if (size === arr.length) return [arr];
-  
-  const result: T[][] = [];
-  
-  for (let i = 0; i <= arr.length - size; i++) {
-    const smallerCombinations = getCombinationsOfSize(arr.slice(i + 1), size - 1);
-    for (const combination of smallerCombinations) {
-      result.push([arr[i], ...combination]);
+  // Saturn: { or: [...] }  |  Jupiter: { "odrl:or": [...] }
+  for (const orKey of ['or', 'odrl:or']) {
+    if (orKey in expr && Array.isArray(expr[orKey])) {
+      const items = expr[orKey] as Record<string, unknown>[];
+      if (items.length <= 1) return [expr];
+      return generatePermutations(items).map(variant => ({ [orKey]: variant }));
     }
   }
-  
-  return result;
+  // Single constraint — no permutation needed
+  return [expr];
 }
 
 /**
- * Generate all permutations of all combinations
+ * Expand a list of rules into all constraint variants.
+ * Each rule whose constraint contains and/or groups is expanded into every
+ * ordering of every subset. Rules without constraints pass through unchanged.
  */
-function generateAllVariants<T>(arr: T[]): T[][] {
-  const combinations = generateCombinations(arr);
-  const result: T[][] = [];
-  
-  for (const combination of combinations) {
-    const permutations = generatePermutations(combination);
-    result.push(...permutations);
-  }
-  
-  return result;
-}
+function expandRules(
+  rules: Record<string, unknown>[],
+  constraintKey: string
+): Record<string, unknown>[] {
+  const expanded: Record<string, unknown>[] = [];
 
-/**
- * Create ODRL constraint structure based on logical constraint type and constraints
- */
-function createOdrlConstraintStructure(
-  odrlConstraints: OdrlConstraint[],
-  logicalConstraint?: string
-): OdrlRule["odrl:constraint"] {
-  // Single constraint - no logical wrapper needed
-  if (odrlConstraints.length === 1) {
-    return odrlConstraints[0];
-  }
-
-  // Multiple constraints - use logical constraint (default to AND)
-  const logic = logicalConstraint?.toLowerCase() === 'odrl:or' ? 'odrl:or' : 'odrl:and';
-  
-  if (logic === 'odrl:or') {
-    return { "odrl:or": odrlConstraints };
-  } else {
-    return { "odrl:and": odrlConstraints };
-  }
-}
-
-/**
- * Process rules (permission, prohibition, or obligation) and generate ODRL constraints
- */
-function processRules(
-  rules: GovernanceRule[],
-  ruleType: 'permission' | 'prohibition' | 'obligation',
-  isStrict: boolean
-): OdrlPolicy[] {
-  if (!rules || rules.length === 0) {
-    return [];
-  }
-
-  const result: OdrlPolicy[] = [];
-  
   for (const rule of rules) {
-    if (!rule.constraints || rule.constraints.length === 0) {
+    const constraintExpr = rule[constraintKey] as
+      | Record<string, unknown>
+      | Record<string, unknown>[]
+      | undefined;
+
+    if (!constraintExpr) {
+      expanded.push(rule);
       continue;
     }
 
-    // Convert constraints to ODRL format
-    const odrlConstraints = rule.constraints.map(convertToOdrlConstraint);
+    const expr = Array.isArray(constraintExpr) ? constraintExpr[0] : constraintExpr;
+    if (!expr) {
+      expanded.push(rule);
+      continue;
+    }
 
-    if (isStrict) {
-      // Strict mode: use exact order as configured
-      const odrlRule: OdrlRule = {
-        "odrl:action": { "@id": rule.action },
-        "odrl:constraint": createOdrlConstraintStructure(odrlConstraints, rule.LogicalConstraint)
-      };
-
-      const policy: OdrlPolicy = {
-        "odrl:permission": ruleType === 'permission' ? odrlRule : { "odrl:action": { "@id": "odrl:use" } },
-        "odrl:prohibition": ruleType === 'prohibition' ? [odrlRule] : [],
-        "odrl:obligation": ruleType === 'obligation' ? [odrlRule] : []
-      };
-
-      result.push(policy);
-    } else {
-      // Non-strict mode: generate all permutations of all combinations
-      const variants = generateAllVariants(odrlConstraints);
-      
-      for (const variant of variants) {
-        const odrlRule: OdrlRule = {
-          "odrl:action": { "@id": rule.action },
-          "odrl:constraint": createOdrlConstraintStructure(variant, rule.LogicalConstraint)
-        };
-
-        const policy: OdrlPolicy = {
-          "odrl:permission": ruleType === 'permission' ? odrlRule : { "odrl:action": { "@id": "odrl:use" } },
-          "odrl:prohibition": ruleType === 'prohibition' ? [odrlRule] : [],
-          "odrl:obligation": ruleType === 'obligation' ? [odrlRule] : []
-        };
-
-        result.push(policy);
-      }
+    for (const variant of generateConstraintVariants(expr)) {
+      expanded.push({ ...rule, [constraintKey]: variant });
     }
   }
 
-  return result;
+  return expanded;
 }
 
 /**
- * Convert governance policy to ODRL policies with permutations
+ * Compute the Cartesian product of an arbitrary number of arrays.
+ * Returns an array of tuples (one element per input array).
  */
-export function generateOdrlPolicies(
-  governanceConfig: GovernanceConfig[],
-  semanticId?: string
+function cartesian<T>(arrays: T[][]): T[][] {
+  if (arrays.length === 0) return [[]];
+  return arrays.reduce<T[][]>(
+    (acc, arr) => acc.flatMap(combo => arr.map(item => [...combo, item])),
+    [[]]
+  );
+}
+
+/**
+ * Generate ODRL policies from a PolicyDefinition with all constraint permutations.
+ * Permissions, prohibitions, and obligations are each expanded independently,
+ * then the Cartesian product of all three produces every possible combination.
+ *
+ * Preserves the original key format (Saturn plain keys vs Jupiter odrl:-prefixed keys).
+ * No normalization is applied — the output matches the input format exactly.
+ */
+export function generatePoliciesFromDefinition(
+  definition: PolicyDefinition
 ): OdrlPolicy[] {
-  // Find the matching governance config
-  const config = semanticId 
-    ? governanceConfig.find(c => c.semanticid === semanticId)
-    : governanceConfig[0]; // Use first if no semantic ID specified
-  
-  if (!config || !config.policies || config.policies.length === 0) {
+  const def = definition as Record<string, unknown>;
+
+  // Detect key style
+  const prefixed = usesOdrlPrefix(def);
+
+  // Read rules using the appropriate key names
+  const permKey = prefixed ? 'odrl:permission' : 'permissions';
+  const permKeySingular = prefixed ? 'odrl:permission' : 'permission';
+  const prohKey = prefixed ? 'odrl:prohibition' : 'prohibitions';
+  const prohKeySingular = prefixed ? 'odrl:prohibition' : 'prohibition';
+  const oblKey = prefixed ? 'odrl:obligation' : 'obligations';
+  const oblKeySingular = prefixed ? 'odrl:obligation' : 'obligation';
+
+  const permissions = (pick(def, [permKey, permKeySingular], []) ?? []) as Record<string, unknown>[];
+  const prohibitions = (pick(def, [prohKey, prohKeySingular], []) ?? []) as Record<string, unknown>[];
+  const obligations = (pick(def, [oblKey, oblKeySingular], []) ?? []) as Record<string, unknown>[];
+
+  if (permissions.length === 0 && prohibitions.length === 0 && obligations.length === 0) {
     return [];
   }
 
-  const result: OdrlPolicy[] = [];
+  // Key names for rule fields
+  const constraintKey = prefixed ? 'odrl:constraint' : 'constraint';
+  // Output key names
+  const outPermKey = prefixed ? 'odrl:permission' : 'permission';
+  const outProhKey = prefixed ? 'odrl:prohibition' : 'prohibition';
+  const outOblKey = prefixed ? 'odrl:obligation' : 'obligation';
 
-  for (const policy of config.policies) {
-    // Process permissions
-    const permissionRules = Array.isArray(policy.permission) ? policy.permission : [policy.permission];
-    const permissionPolicies = processRules(permissionRules, 'permission', policy.strict);
-    result.push(...permissionPolicies);
+  // Expand each rule type into all constraint variants
+  const permVariants = expandRules(permissions, constraintKey);
+  const prohVariants = expandRules(prohibitions, constraintKey);
+  const oblVariants = expandRules(obligations, constraintKey);
 
-    // Process prohibitions  
-    const prohibitionRules = Array.isArray(policy.prohibition) ? policy.prohibition : [policy.prohibition];
-    const prohibitionPolicies = processRules(prohibitionRules, 'prohibition', policy.strict);
-    result.push(...prohibitionPolicies);
+  // Use placeholder arrays so the Cartesian product always runs
+  const permInput = permVariants.length > 0 ? permVariants : [null];
+  const prohInput = prohVariants.length > 0 ? prohVariants : [null];
+  const oblInput = oblVariants.length > 0 ? oblVariants : [null];
 
-    // Process obligations
-    const obligationRules = Array.isArray(policy.obligation) ? policy.obligation : [policy.obligation];
-    const obligationPolicies = processRules(obligationRules, 'obligation', policy.strict);
-    result.push(...obligationPolicies);
-  }
+  const combos = cartesian([permInput, prohInput, oblInput] as (Record<string, unknown> | null)[][]);
 
-  return result;
+  return combos.map(([perm, proh, obl]) => ({
+    [outPermKey]: perm ?? [],
+    [outProhKey]: proh ?? [],
+    [outOblKey]: obl ?? [],
+  }));
+}
+
+/**
+ * Generate ODRL policies for a specific semantic ID from agreements config.
+ */
+export function generateOdrlPolicies(
+  agreements: AgreementConfig[],
+  semanticId?: string
+): OdrlPolicy[] {
+  const agreement = semanticId
+    ? agreements.find(a => a.semanticid === semanticId)
+    : agreements[0];
+
+  if (!agreement) return [];
+
+  return agreement.policies.flatMap(def => generatePoliciesFromDefinition(def));
 }
 
 /**
  * Get governance policy for a specific semantic ID
  */
 export function getGovernancePolicyForSemanticId(
-  governanceConfig: GovernanceConfig[],
+  agreements: AgreementConfig[],
   semanticId: string
 ): OdrlPolicy[] {
-  return generateOdrlPolicies(governanceConfig, semanticId);
+  return generateOdrlPolicies(agreements, semanticId);
 }
 
 /**
- * Get default governance policy (first configuration)
+ * Get default governance policy (first agreement)
  */
 export function getDefaultGovernancePolicy(
-  governanceConfig: GovernanceConfig[]
+  agreements: AgreementConfig[]
 ): OdrlPolicy[] {
-  return generateOdrlPolicies(governanceConfig);
+  return generateOdrlPolicies(agreements);
 }

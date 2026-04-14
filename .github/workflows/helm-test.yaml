@@ -89,7 +89,7 @@ jobs:
 
       - name: Build and load backend image into KinD
         run: |
-          docker build -t kind-registry:5000/ichub-backend:ci ./ichub-backend
+          docker build -f ./ichub-backend/runtimes/Dockerfile -t kind-registry:5000/ichub-backend:ci ./ichub-backend
           kind load docker-image kind-registry:5000/ichub-backend:ci
 
       - name: Build and load frontend image into KinD

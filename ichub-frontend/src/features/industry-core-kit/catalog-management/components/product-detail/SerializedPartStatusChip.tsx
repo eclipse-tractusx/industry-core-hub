@@ -24,6 +24,7 @@ import React from 'react';
 import { Chip } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { useTheme } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
 
 export interface SerializedPartStatusChipProps {
@@ -74,11 +75,24 @@ const getStatusStyle = (status: StatusVariants): ChipStyle => {
 
 export const SerializedPartStatusChip: React.FC<SerializedPartStatusChipProps> = ({ status }) => {
   const theme = useTheme();
+  const { t } = useTranslation('catalogManagement');
+  const { t: tCommon } = useTranslation('common');
   const style = getStatusStyle(status);
+
+  const getTranslatedStatus = (status: StatusVariants): string => {
+    const statusKey = status.toLowerCase();
+    // Try common first for generic statuses (registered, available, created, unknown)
+    // Then fall back to catalogManagement for context-specific ones (draft, shared, pending)
+    const commonStatus = tCommon(`status.${statusKey}`, { defaultValue: '' });
+    if (commonStatus) {
+      return commonStatus;
+    }
+    return t(`status.${statusKey}`);
+  };
 
   return (
     <Chip
-      label={status}
+      label={getTranslatedStatus(status)}
       variant="outlined"
       sx={{
         color: style.color,

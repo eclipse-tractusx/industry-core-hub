@@ -23,6 +23,7 @@
 /** Created using an LLM (Github Copilot) review by a human committer */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Grid2,
@@ -33,9 +34,14 @@ import {
   useMediaQuery,
   IconButton,
   Alert,
+  AlertTitle,
   CircularProgress,
   Card,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -46,6 +52,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import SearchLoading from '@/features/industry-core-kit/part-discovery/components/search/SearchLoading';
@@ -141,6 +150,7 @@ const getDtrColor = (dtrIndex: number) => {
 };
 
 const PartsDiscovery = () => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const { showSidebar, hideSidebar, isVisible } = useAdditionalSidebar();
   
   // Ref to prevent duplicate API calls in React StrictMode
@@ -189,6 +199,12 @@ const PartsDiscovery = () => {
   // Loading and error states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string[] | null>(null);
+  const [errorCopied, setErrorCopied] = useState(false);
+  const [modalCopied, setModalCopied] = useState(false);
+  const [errorDetailsOpen, setErrorDetailsOpen] = useState(false);
+  const [logLight, setLogLight] = useState(true);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearchCompleted, setIsSearchCompleted] = useState<boolean>(false);
   const [showSearchLoading, setShowSearchLoading] = useState<boolean>(false);
@@ -198,6 +214,11 @@ const PartsDiscovery = () => {
   // AbortController for cancelling requests
   const abortControllerRef = useRef<AbortController | null>(null);
   
+  // Auto-clear errorTitle whenever the error is cleared
+  useEffect(() => {
+    if (!error) setErrorTitle(null);
+  }, [error]);
+
   // Cleanup timeout and abort controller on component unmount
   useEffect(() => {
     const abortController = abortControllerRef.current;
@@ -458,16 +479,17 @@ const PartsDiscovery = () => {
   // Handle single twin search
   const handleSingleTwinSearch = async () => {
     if (!bpnl.trim()) {
-      setError('Please enter a partner BPNL');
+      setError(t('errors.enterBpnl'));
       return;
     }
     
     if (!singleTwinAasId.trim()) {
-      setError('Please enter an AAS ID');
+      setError(t('errors.enterAasId'));
       return;
     }
 
     setError(null);
+    setErrorDetails(null);
     setSingleTwinResult(null);
     
     try {
@@ -540,24 +562,24 @@ const PartsDiscovery = () => {
     const filters = [
       {
         value: customerPartId,
-        label: 'Customer Part ID',
-        tooltip: 'Customer Part ID'
+        label: t('common:fields.customerPartId'),
+        tooltip: t('common:fields.customerPartId')
       },
       {
         value: manufacturerPartId,
-        label: 'Manufacturer Part ID',
-        tooltip: 'Manufacturer Part ID'
+        label: t('common:fields.manufacturerPartId'),
+        tooltip: t('common:fields.manufacturerPartId')
       },
       {
         value: globalAssetId,
-        label: 'Global Asset ID',
-        tooltip: 'Global Asset ID'
+        label: t('common:fields.globalAssetId'),
+        tooltip: t('common:fields.globalAssetId')
       },
       // Only show Part Instance ID filter when Part Instance is selected
       ...(partType === 'Serialized' ? [{
         value: partInstanceId,
-        label: 'Part Instance ID',
-        tooltip: 'Part Instance Identifier'
+        label: t('common:fields.partInstanceId'),
+        tooltip: t('common:fields.partInstanceId')
       }] : [])
       // Future filters can be easily added here:
       // {
@@ -672,6 +694,7 @@ const PartsDiscovery = () => {
     setCurrentPage(1);
     setTotalPages(0);
     setError(null);
+    setErrorDetails(null);
     // Reset pagination loading states
     setIsLoadingNext(false);
     setIsLoadingPrevious(false);
@@ -684,24 +707,25 @@ const PartsDiscovery = () => {
 
   const handleSearch = async () => {
     if (!bpnl.trim()) {
-      setError('Please enter a partner BPNL');
+      setError(t('errors.enterBpnl'));
       return;
     }
 
     // Validate custom limit
     if (isCustomLimit) {
       if (!customLimit.trim()) {
-        setError('Please enter a custom limit or select a predefined option');
+        setError(t('errors.customLimitRequired'));
         return;
       }
       const customLimitNum = parseInt(customLimit);
       if (isNaN(customLimitNum) || customLimitNum < 1 || customLimitNum > 1000) {
-        setError('Custom limit must be a number between 1 and 1000');
+        setError(t('errors.customLimitRange'));
         return;
       }
     }
 
     setError(null);
+    setErrorDetails(null);
     // Reset pagination loading states for new search
     setIsLoadingNext(false);
     setIsLoadingPrevious(false);
@@ -808,11 +832,18 @@ const PartsDiscovery = () => {
       
       // Check if the API returned an error in the response
       if (response.error) {
+        // Capture aggregated DTR error details from backend if present
+        if (response.errorDetails && response.errorDetails.length > 0) {
+          setErrorDetails(response.errorDetails);
+        } else {
+          setErrorDetails(null);
+        }
         // Handle specific error cases with user-friendly messages
         if (response.error.toLowerCase().includes('no dtrs found')) {
-          setError(`No Digital Twin Registries found for partner "${bpnl}". Please verify the BPNL is correct and if the partner has a Connector (with a reachable DTR) connected in the same dataspace as you.`);
+          setError(t('errors.noDtrsFound', { bpnl }));
         } else {
-          setError(`Search failed: ${response.error}`);
+          setErrorTitle(t('errors.searchFailed'));
+          setError(response.error);
         }
         stopProgress(true);
         setIsLoading(false);
@@ -821,15 +852,44 @@ const PartsDiscovery = () => {
       
       // Check if no shell descriptors were found
       if (!response.shellDescriptors || response.shellDescriptors.length === 0) {
-        setError('No digital twins found for the specified criteria. Please try different search parameters.');
+        // Before showing the generic "no results" message, check whether every
+        // DTR failed — if so, surface the DTR-level error (policy mismatch etc.)
+        // which is more actionable than a generic empty-results message.
+        const failedDtrs = (response.dtrs ?? []).filter(dtr =>
+          dtr.status && (
+            dtr.status.toLowerCase().includes('error') ||
+            dtr.status.toLowerCase().includes('failed') ||
+            dtr.status.toLowerCase().includes('timeout') ||
+            dtr.status.toLowerCase().includes('unavailable')
+          )
+        );
+        const allDtrsFailed =
+          failedDtrs.length > 0 &&
+          failedDtrs.length === (response.dtrs ?? []).length;
+
+        if (allDtrsFailed) {
+          // Use backend-aggregated errorDetails (dtr errors + policy diff lines);
+          // fall back to extracting dtr.error from the failed DTRs directly.
+          const details = response.errorDetails && response.errorDetails.length > 0
+            ? response.errorDetails
+            : failedDtrs.map(dtr => dtr.error).filter(Boolean) as string[];
+          setErrorDetails(details.length > 0 ? details : null);
+          // Surface the primary error message from the first failed DTR
+          const primaryMsg = details[0] ?? failedDtrs[0]?.status ?? 'unknown';
+          setErrorTitle(t('errors.searchFailed'));
+          setError(primaryMsg);
+        } else {
+          setErrorDetails(null);
+          setError(t('errors.noDigitalTwinsFound'));
+        }
         stopProgress(true);
         setIsLoading(false);
         return;
       }
-      
-      // Check for errors in DTR statuses
+
+      // Check for errors in DTR statuses (partial failures when some shells were found)
       if (response.dtrs && response.dtrs.length > 0) {
-        const errorDtrs = response.dtrs.filter(dtr => 
+        const errorDtrs = response.dtrs.filter(dtr =>
           dtr.status && (
             dtr.status.toLowerCase().includes('error') ||
             dtr.status.toLowerCase().includes('failed') ||
@@ -840,7 +900,7 @@ const PartsDiscovery = () => {
         if (errorDtrs.length > 0) {
           console.warn('DTR errors found:', errorDtrs);
           const errorMessages = errorDtrs.map(dtr => `DTR ${dtr.connectorUrl}: ${dtr.status}`);
-          setError(`DTR issues detected: ${errorMessages.join(', ')}`);
+          setError(t('errors.dtrIssuesDetected', { errors: errorMessages.join(', ') }));
           // Don't return here - continue processing in case there are still valid results
         }
       }
@@ -902,7 +962,11 @@ const PartsDiscovery = () => {
         // Handle axios or other structured errors
         if ('response' in err && err.response) {
           // Axios error with response
-          const axiosErr = err as { response: { data?: { error?: string; message?: string }; status: number; statusText: string } };
+          const axiosErr = err as { response: { data?: { error?: string; message?: string; errorDetails?: string[] }; status: number; statusText: string } };
+          // Capture aggregated DTR error details for policy mismatch errors (e.g. 403)
+          if (axiosErr.response.data?.errorDetails && axiosErr.response.data.errorDetails.length > 0) {
+            setErrorDetails(axiosErr.response.data.errorDetails);
+          }
           if (axiosErr.response.data?.error) {
             errorMessage = `API Error: ${axiosErr.response.data.error}`;
           } else if (axiosErr.response.data?.message) {
@@ -940,6 +1004,7 @@ const PartsDiscovery = () => {
     }
     
     setError(null);
+    setErrorDetails(null);
     
     try {
       let newResponse: ShellDiscoveryResponse | null = null;
@@ -952,7 +1017,7 @@ const PartsDiscovery = () => {
       } else {
         // For non-sequential navigation, show a helpful message
         // Cursor-based pagination doesn't support random page access efficiently
-        setError(`Direct navigation to page ${page} is not supported. Please use next/previous navigation.`);
+        setError(t('errors.directNavigationNotSupported', { page }));
         return;
       }
 
@@ -960,9 +1025,9 @@ const PartsDiscovery = () => {
         // Check if the pagination response contains an error
         if (newResponse.error) {
           if (newResponse.error.toLowerCase().includes('no dtrs found')) {
-            setError(`No Digital Twin Registries found for partner "${bpnl}" on page ${page}. Please verify the BPNL is correct and the partner has registered digital twins.`);
+            setError(t('errors.noDtrsFound', { bpnl }));
           } else {
-            setError(`Pagination failed: ${newResponse.error}`);
+            setError(t('errors.paginationFailed', { message: newResponse.error }));
           }
           return;
         }
@@ -982,31 +1047,31 @@ const PartsDiscovery = () => {
           setSerializedParts(serialized);
         }
       } else {
-        setError('No more pages available in that direction.');
+        setError(t('errors.noMorePages'));
       }
     } catch (err) {
       console.error('Pagination error:', err);
       
       // Extract meaningful error message from pagination errors
-      let errorMessage = 'Error loading page. Please try again.';
+      let errorMessage = t('errors.errorLoadingPage');
       
       if (err instanceof Error) {
-        errorMessage = `Pagination failed: ${err.message}`;
+        errorMessage = t('errors.paginationFailed', { message: err.message });
       } else if (typeof err === 'string') {
-        errorMessage = `Pagination failed: ${err}`;
+        errorMessage = t('errors.paginationFailed', { message: err });
       } else if (err && typeof err === 'object') {
         if ('response' in err && err.response) {
           const axiosErr = err as { response: { data?: { error?: string; message?: string }; status: number; statusText: string } };
           if (axiosErr.response.data?.error) {
-            errorMessage = `Pagination API Error: ${axiosErr.response.data.error}`;
+            errorMessage = t('errors.paginationFailed', { message: axiosErr.response.data.error });
           } else if (axiosErr.response.data?.message) {
-            errorMessage = `Pagination API Error: ${axiosErr.response.data.message}`;
+            errorMessage = t('errors.paginationFailed', { message: axiosErr.response.data.message });
           } else {
-            errorMessage = `Pagination HTTP ${axiosErr.response.status}: ${axiosErr.response.statusText}`;
+            errorMessage = t('errors.paginationFailed', { message: `HTTP ${axiosErr.response.status}: ${axiosErr.response.statusText}` });
           }
         } else if ('message' in err) {
           const errWithMessage = err as { message: string };
-          errorMessage = `Pagination failed: ${errWithMessage.message}`;
+          errorMessage = t('errors.paginationFailed', { message: errWithMessage.message });
         }
       }
       
@@ -1134,7 +1199,7 @@ const PartsDiscovery = () => {
                       }
                     }}
                   >
-                    Back to Results
+                    {t('results.backToResults')}
                   </Button>
                 ) : (
                   <Button
@@ -1152,7 +1217,7 @@ const PartsDiscovery = () => {
                       }
                     }}
                   >
-                    New Search
+                    {t('results.newSearch')}
                   </Button>
                 )}
               </Box>
@@ -1166,7 +1231,7 @@ const PartsDiscovery = () => {
                   textAlign: 'center'
                 }}
               >
-                Dataspace Discovery
+                {t('page.dataspaceDiscovery')}
               </Typography>
             </Grid2>
             <Grid2 size={3}>
@@ -1244,7 +1309,7 @@ const PartsDiscovery = () => {
                   }
                 }}
               >
-                Display Filters
+                {t('common:actions.displayFilters')}
               </Button>
             )}
 
@@ -1274,7 +1339,7 @@ const PartsDiscovery = () => {
                   }
                 }}
               >
-                Hide Filters
+                {t('common:actions.hideFilters')}
               </Button>
             )}
 
@@ -1290,7 +1355,7 @@ const PartsDiscovery = () => {
                 }}
                 onClick={() => setSearchMode('discovery')}
               >
-              Discovery Mode
+              {t('searchModes.discoveryMode')}
             </Typography>
             <Box
               sx={{
@@ -1328,7 +1393,7 @@ const PartsDiscovery = () => {
               }}
               onClick={() => setSearchMode('single')}
             >
-              Single Twin
+              {t('searchModes.singleTwin')}
             </Typography>
             </Box>
           </Box>
@@ -1371,7 +1436,7 @@ const PartsDiscovery = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 >
-                  Dataspace Discovery
+                  {t('page.dataspaceDiscovery')}
                 </Typography>
                 <Typography 
                   variant="h6" 
@@ -1385,7 +1450,7 @@ const PartsDiscovery = () => {
                     mx: 'auto'
                   }}
                 >
-                  Discover and explore digital twin parts in a Tractus-X network
+                  {t('page.dataspaceDiscoverySubtitle')}
                 </Typography>
 
                 {/* Centered Search Card */}
@@ -1424,13 +1489,13 @@ const PartsDiscovery = () => {
                               onClick={retryLoadPartners}
                               disabled={isLoadingPartners}
                             >
-                              Retry
+                              {t('common:actions.retry')}
                             </Button>
                           }
                           sx={{ mb: 2 }}
                         >
                           <Typography variant="body2">
-                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                            {t('errors.unableToLoadPartners')}
                           </Typography>
                         </Alert>
                       )}
@@ -1475,7 +1540,7 @@ const PartsDiscovery = () => {
                         }
                       }}
                     >
-                      {isLoading ? 'Searching...' : 'Start Discovery'}
+                      {isLoading ? t('search.searching') : t('search.startDiscovery')}
                     </Button>
                     </Box>
                   )}
@@ -1507,7 +1572,7 @@ const PartsDiscovery = () => {
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}
                 >
-                  Single Digital Twin
+                  {t('page.singleDigitalTwin')}
                 </Typography>
                 <Typography 
                   variant="h6" 
@@ -1521,7 +1586,7 @@ const PartsDiscovery = () => {
                     mx: 'auto'
                   }}
                 >
-                  Search for a specific digital twin by providing its Asset Administration Shell (AAS) ID
+                  {t('page.singleDigitalTwinSubtitle')}
                 </Typography>
 
                 {/* Centered Search Card */}
@@ -1560,13 +1625,13 @@ const PartsDiscovery = () => {
                               onClick={retryLoadPartners}
                               disabled={isLoadingPartners}
                             >
-                              Retry
+                              {t('common:actions.retry')}
                             </Button>
                           }
                           sx={{ mb: 2 }}
                         >
                           <Typography variant="body2">
-                            Unable to load partner list from backend. You can still enter a custom BPNL manually.
+                            {t('errors.unableToLoadPartners')}
                           </Typography>
                         </Alert>
                       )}
@@ -1587,16 +1652,16 @@ const PartsDiscovery = () => {
                     {/* AAS ID Field */}
                     <TextField
                       fullWidth
-                      label="Asset Administration Shell ID *"
-                      placeholder="Enter AAS ID (e.g., urn:uuid:35bb3960-70f8-4ff4-bd9f-0670f3beb39d)"
+                      label={t('search.aasIdLabel')}
+                      placeholder={t('search.aasIdPlaceholderFull')}
                       variant="outlined"
                       value={singleTwinAasId}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSingleTwinAasId(e.target.value)}
                       error={!!error && !singleTwinAasId.trim()}
                       helperText={
                         !!error && !singleTwinAasId.trim() 
-                          ? 'AAS ID is required' 
-                          : 'Enter the unique identifier for the Asset Administration Shell'
+                          ? t('search.aasIdRequired') 
+                          : t('search.aasIdHelperText')
                       }
                       sx={{
                         '& .MuiOutlinedInput-root': {
@@ -1643,7 +1708,7 @@ const PartsDiscovery = () => {
                         }
                       }}
                     >
-                      {isLoading ? 'Searching...' : 'Search Digital Twin'}
+                      {isLoading ? t('search.searching') : t('search.searchDigitalTwin')}
                     </Button>
                     </Box>
                   )}
@@ -1654,11 +1719,308 @@ const PartsDiscovery = () => {
             {/* Error Alert */}
             {error && (
               <Box display="flex" justifyContent="center" mb={3} sx={{ width: '100%' }}>
-                <Alert severity="error" onClose={() => setError(null)} sx={{ maxWidth: '600px' }}>
-                  {error}
+                <Alert
+                  severity="error"
+                  onClose={() => { setError(null); setErrorDetails(null); setErrorDetailsOpen(false); }}
+                  sx={{ maxWidth: '700px', width: '100%' }}
+                >
+                  {errorTitle && (
+                    <AlertTitle
+                      sx={{
+                        fontWeight: 500,
+                        fontSize: '0.95rem',
+                        letterSpacing: 0.1,
+                        mb: 1,
+                        color: 'inherit',
+                        opacity: 0.85,
+                      }}
+                    >
+                      {errorTitle}
+                    </AlertTitle>
+                  )}
+                  {errorTitle ? (
+                    <Box sx={{ position: 'relative' }}>
+                      <Box
+                        component="pre"
+                        sx={{
+                          m: 0,
+                          p: 1,
+                          pr: 4,
+                          borderRadius: 1,
+                          background: 'rgba(0,0,0,0.06)',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          fontFamily: 'monospace',
+                          fontSize: '0.78rem',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          overflowX: 'auto',
+                          color: 'inherit',
+                        }}
+                      >
+                        {error}
+                      </Box>
+                      <IconButton
+                        size="small"
+                        title="Copy to clipboard"
+                        onClick={() => {
+                          navigator.clipboard.writeText(error ?? '');
+                          setErrorCopied(true);
+                          setTimeout(() => setErrorCopied(false), 2000);
+                        }}
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          opacity: 0.55,
+                          '&:hover': { opacity: 1 },
+                        }}
+                      >
+                        {errorCopied
+                          ? <CheckIcon fontSize="inherit" sx={{ color: 'success.main' }} />
+                          : <ContentCopyIcon fontSize="inherit" />}
+                      </IconButton>
+                    </Box>
+                  ) : (
+                    error
+                  )}
+                  {errorDetails && errorDetails.length > 0 && (
+                    <Box display="flex" justifyContent="center" mt={2}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        fullWidth
+                        onClick={() => setErrorDetailsOpen(true)}
+                        sx={{
+                          py: 0.5,
+                          borderRadius: 1,
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          background: 'linear-gradient(45deg, #b71c1c 30%, #ef5350 90%)',
+                          boxShadow: '0 2px 8px rgba(183, 28, 28, 0.25)',
+                          '&:hover': {
+                            background: 'linear-gradient(45deg, #c62828 30%, #e53935 90%)',
+                            boxShadow: '0 4px 12px rgba(183, 28, 28, 0.35)',
+                          },
+                        }}
+                      >
+                        Show details
+                      </Button>
+                    </Box>
+                  )}
                 </Alert>
               </Box>
             )}
+
+            {/* Policy mismatch details modal */}
+            <Dialog
+              open={errorDetailsOpen}
+              onClose={() => setErrorDetailsOpen(false)}
+              fullScreen
+              PaperProps={{
+                sx: {
+                  background: logLight ? '#ffffff' : '#0d1117',
+                  color: logLight ? '#24292f' : '#c9d1d9',
+                  borderRadius: 0,
+                }
+              }}
+            >
+              <DialogTitle
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: logLight ? '#f6f8fa' : '#161b22',
+                  borderBottom: `1px solid ${logLight ? '#d0d7de' : '#30363d'}`,
+                  fontFamily: "'Consolas', 'Menlo', 'Monaco', monospace",
+                  fontSize: '0.95rem',
+                  py: 1.5,
+                  px: 3,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Typography
+                    sx={{
+                      fontFamily: "'Consolas', 'Menlo', 'Monaco', monospace",
+                      fontSize: '0.875rem',
+                      color: logLight ? '#656d76' : '#8b949e',
+                    }}
+                  >
+                    policy-mismatch.log — {errorDetails?.length ?? 0} entr{(errorDetails?.length ?? 0) === 1 ? 'y' : 'ies'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <IconButton
+                    onClick={() => setLogLight(v => !v)}
+                    size="small"
+                    title={logLight ? 'Switch to dark mode' : 'Switch to light mode'}
+                    sx={{ color: logLight ? '#656d76' : '#8b949e', '&:hover': { color: logLight ? '#24292f' : '#c9d1d9' } }}
+                  >
+                    {logLight ? <DarkModeIcon fontSize="small" /> : <LightModeIcon fontSize="small" />}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => setErrorDetailsOpen(false)}
+                    size="small"
+                    title="Close"
+                    sx={{ color: logLight ? '#656d76' : '#8b949e', '&:hover': { color: logLight ? '#24292f' : '#c9d1d9' } }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+
+              <DialogContent
+                sx={{
+                  p: 0,
+                  background: logLight ? '#ffffff' : '#0d1117',
+                  overflow: 'auto',
+                }}
+              >
+                <Box
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    p: 3,
+                    fontFamily: "'Consolas', 'Menlo', 'Monaco', 'Courier New', monospace",
+                    fontSize: '0.8rem',
+                    lineHeight: 1.7,
+                    color: logLight ? '#24292f' : '#c9d1d9',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    minHeight: '100%',
+                  }}
+                >
+                  {(() => {
+                    let globalLine = 0;
+                    return (errorDetails ?? []).map((entry, entryIdx) => {
+                      const lines = entry.split('\n');
+                      const entryStart = globalLine;
+                      globalLine += lines.length;
+                      return (
+                        <Box
+                          key={entryIdx}
+                          component="span"
+                          sx={{
+                            display: 'block',
+                            borderBottom: entryIdx < (errorDetails?.length ?? 0) - 1
+                              ? `1px solid ${logLight ? '#d0d7de' : '#21262d'}`
+                              : 'none',
+                            pb: 1.5,
+                            mb: 1.5,
+                          }}
+                        >
+                          {lines.map((line, lineIdx) => {
+                            const trimmed = line.trimStart();
+                            let color = logLight ? '#24292f' : '#c9d1d9';
+                            let fontWeight: string | number = 'normal';
+                            if (trimmed.startsWith('[Connector Service]')) {
+                              color = logLight ? '#cf222e' : '#f85149';
+                            } else if (/^Policy ['"]/.test(trimmed)) {
+                              color = logLight ? '#656d76' : '#8b949e';
+                            } else if (trimmed.startsWith('Allowed policy [')) {
+                              color = logLight ? '#0969da' : '#58a6ff';
+                            } else if (trimmed.startsWith('Catalog:')) {
+                              color = logLight ? '#cf222e' : '#f85149';
+                            } else if (trimmed.startsWith('Allowed:')) {
+                              color = logLight ? '#116329' : '#3fb950';
+                            } else if (trimmed.startsWith('Reason:')) {
+                              color = logLight ? '#9a6700' : '#d29922';
+                              fontWeight = 'bold';
+                            } else if (trimmed.startsWith('- ')) {
+                              color = logLight ? '#9a6700' : '#d29922';
+                            }
+                            return (
+                              <Box key={lineIdx} component="span" sx={{ display: 'block' }}>
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    color: logLight ? '#8c959f' : '#484f58',
+                                    userSelect: 'none',
+                                    mr: 2,
+                                    minWidth: '2.5em',
+                                    display: 'inline-block',
+                                    textAlign: 'right',
+                                  }}
+                                >
+                                  {entryStart + lineIdx + 1}
+                                </Box>
+                                <Box component="span" sx={{ color, fontWeight }}>
+                                  {line}
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      );
+                    });
+                  })()}
+                </Box>
+              </DialogContent>
+
+              <DialogActions
+                sx={{
+                  background: logLight ? '#f6f8fa' : '#161b22',
+                  borderTop: `1px solid ${logLight ? '#d0d7de' : '#30363d'}`,
+                  px: 3,
+                  py: 1.5,
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                }}
+              >
+                {/* Disclaimer */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1, minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      color: logLight ? '#9a6700' : '#d29922',
+                      fontFamily: "'Consolas', 'Menlo', 'Monaco', monospace",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    ⚠ Inform your business partner so they can give you access to their Digital Twin Registry, or review the policy configuration you are willing to accept.
+                  </Typography>
+                </Box>
+                {/* Actions */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                  <Button
+                    onClick={() => {
+                      const text = (errorDetails ?? []).join('\n\n');
+                      navigator.clipboard.writeText(text);
+                      setModalCopied(true);
+                      setTimeout(() => setModalCopied(false), 2000);
+                    }}
+                    variant="outlined"
+                    size="small"
+                    startIcon={modalCopied ? <CheckIcon fontSize="small" sx={{ color: 'success.main' }} /> : <ContentCopyIcon fontSize="small" />}
+                    sx={{
+                      color: logLight ? '#24292f' : '#c9d1d9',
+                      borderColor: logLight ? '#d0d7de' : '#30363d',
+                      textTransform: 'none',
+                      fontFamily: "'Consolas', 'Menlo', 'Monaco', monospace",
+                      '&:hover': { borderColor: logLight ? '#0969da' : '#58a6ff', color: logLight ? '#0969da' : '#58a6ff' },
+                    }}
+                  >
+                    {modalCopied ? 'Copied!' : 'Copy all'}
+                  </Button>
+                  <Button
+                    onClick={() => setErrorDetailsOpen(false)}
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      color: logLight ? '#24292f' : '#c9d1d9',
+                      borderColor: logLight ? '#d0d7de' : '#30363d',
+                      textTransform: 'none',
+                      fontFamily: "'Consolas', 'Menlo', 'Monaco', monospace",
+                      '&:hover': { borderColor: logLight ? '#0969da' : '#58a6ff', color: logLight ? '#0969da' : '#58a6ff' }
+                    }}
+                  >
+                    Close
+                  </Button>
+                </Box>
+              </DialogActions>
+            </Dialog>
         
             {/* Results Section - shown when search has been performed */}
             {hasSearched && (
@@ -1719,7 +2081,7 @@ const PartsDiscovery = () => {
                             letterSpacing: '0.02em'
                           }}
                         >
-                          {partType === 'Catalog' ? 'Catalog Parts' : 'Serialized Parts'}
+                          {partType === 'Catalog' ? t('results.catalogParts') : t('results.serializedParts')}
                         </Typography>
                       </Box>
 
@@ -1801,7 +2163,7 @@ const PartsDiscovery = () => {
                           fontSize: '0.9rem'
                         }}
                       >
-                        Digital Twin Registries ({currentResponse.dtrs.length})
+                        {t('dtr.title')} ({currentResponse.dtrs.length})
                       </Typography>
                       <IconButton size="small" sx={{ color: 'text.secondary' }}>
                         {dtrSectionVisible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -1817,7 +2179,7 @@ const PartsDiscovery = () => {
                             {currentResponse.dtrs.length > dtrItemsPerSlide && (
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                                  {Math.floor(dtrCarouselIndex / dtrItemsPerSlide) + 1} of {Math.ceil(currentResponse.dtrs.length / dtrItemsPerSlide)} • {currentResponse.dtrs.length} total
+                                  {t('dtr.carousel.pageOf', { current: Math.floor(dtrCarouselIndex / dtrItemsPerSlide) + 1, total: Math.ceil(currentResponse.dtrs.length / dtrItemsPerSlide), count: currentResponse.dtrs.length })}
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                   <IconButton
@@ -1885,7 +2247,7 @@ const PartsDiscovery = () => {
                                         <Box sx={{ flex: 1 }}>
                                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                             <Chip
-                                              label={`DTR ${actualIndex + 1}`}
+                                              label={t('dtr.dtrLabel', { index: actualIndex + 1 })}
                                               size="small"
                                               sx={{
                                                 backgroundColor: dtrColor.bg,
@@ -1913,7 +2275,7 @@ const PartsDiscovery = () => {
                                         {/* Shells Found - Top Right Corner */}
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3 }}>
-                                            Shells Found
+                                            {t('dtr.shellsFoundLabel')}
                                           </Typography>
                                           <Chip
                                             label={dtr.shellsFound}
@@ -1929,11 +2291,10 @@ const PartsDiscovery = () => {
                                         </Box>
                                       </Box>
                                       
-                                      {/* Connector URL and Asset ID Grid */}
                                       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 1.5, mb: 1.5 }}>
                                         <Box>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3, display: 'block' }}>
-                                            Connector URL:
+                                            {t('dtr.connectorUrl')}
                                           </Typography>
                                           <Box sx={{ 
                                             display: 'flex', 
@@ -1975,7 +2336,7 @@ const PartsDiscovery = () => {
                                         
                                         <Box>
                                           <Typography variant="caption" sx={{ fontWeight: '600', color: 'text.secondary', fontSize: '0.65rem', mb: 0.3, display: 'block' }}>
-                                            Asset ID:
+                                            {t('dtr.assetIdLabel')}
                                           </Typography>
                                           <Box sx={{ 
                                             display: 'flex', 
@@ -2067,7 +2428,7 @@ const PartsDiscovery = () => {
                           <SerializedPartsTable parts={serializedParts} onView={handleSerializedPartView} />
                         ) : !isLoading && currentResponse ? (
                           <Box textAlign="center" py={4}>
-                            <Typography color="textSecondary">No serialized parts found</Typography>
+                            <Typography color="textSecondary">{t('serializedParts.noSerializedPartsFound')}</Typography>
                           </Box>
                         ) : null}
                       </>
@@ -2091,7 +2452,7 @@ const PartsDiscovery = () => {
                           />
                         ) : !isLoading && currentResponse ? (
                           <Box textAlign="center" py={4}>
-                            <Typography color="textSecondary">No catalog parts found</Typography>
+                            <Typography color="textSecondary">{t('catalogParts.noCatalogPartsFound')}</Typography>
                           </Box>
                         ) : null}
                       </>
@@ -2142,7 +2503,7 @@ const PartsDiscovery = () => {
                           }
                         }}
                       >
-                        Previous
+                        {t('common:actions.previous')}
                       </Button>
                     )}
                     
@@ -2160,11 +2521,11 @@ const PartsDiscovery = () => {
                       }}
                     >
                       <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: '500', fontSize: '0.8rem' }}>
-                        Page {currentPage}
+                        {t('results.page', { current: currentPage })}
                       </Typography>
                       {totalPages > 1 && (
                         <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.8rem' }}>
-                          of {totalPages}
+                          {t('results.pageOf', { total: totalPages })}
                         </Typography>
                       )}
                     </Box>
@@ -2201,7 +2562,7 @@ const PartsDiscovery = () => {
                           }
                         }}
                       >
-                        Next
+                        {t('common:actions.next')}
                       </Button>
                     )}
                   </Box>

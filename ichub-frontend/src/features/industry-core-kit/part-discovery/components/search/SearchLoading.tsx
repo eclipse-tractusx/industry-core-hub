@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { Box, Typography, LinearProgress, IconButton } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState, useEffect } from 'react';
@@ -32,26 +33,27 @@ interface SearchLoadingProps {
 }
 
 const SearchLoading = ({ isLoading, isCompleted = false, onCancel }: SearchLoadingProps) => {
+  const { t } = useTranslation(['partDiscovery', 'common']);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [currentMessageIndex, setCurrentMessageIndex] = useState<number>(0);
   const [showFirstMessage, setShowFirstMessage] = useState<boolean>(true);
   
   // Base rotating messages (shown after first message)
   const rotatingMessages = [
-    'Searching through the dataspace for available data...',
-    'Discovering Partner endpoints...',
-    'Discovering Digital Twin Registries...',
-    'Negotiating contracts with data providers...',
-    'Connecting to digital twin registries...',
-    'Establishing secure connections to data sources...',
-    'Retrieving digital twin information...',
+    t('loading.searchingDataspace'),
+    t('loading.discoveringPartners'),
+    t('loading.discoveringDtr'),
+    t('loading.negotiatingContracts'),
+    t('loading.connectingDtr'),
+    t('loading.establishingConnections'),
+    t('loading.retrievingTwinInfo'),
   ];
   
   // Extended wait message for long operations
-  const extendedWaitMessage = "It's taking a bit more than expected, probably the access negotiation is still going (approx 10s). This negotiation is done only on the first request.";
+  const extendedWaitMessage = t('loading.extendedWait');
   
   // Error message for very long operations
-  const errorMessage = "This is taking much longer than expected. There may be an error in the initial connection/negotiation process. Please contact your administrator.";
+  const errorMessage = t('loading.errorMessage');
   
   // Reset component state when loading starts
   useEffect(() => {
@@ -94,11 +96,11 @@ const SearchLoading = ({ isLoading, isCompleted = false, onCancel }: SearchLoadi
   // Get current message based on state
   const getCurrentMessage = () => {
     if (isCompleted) {
-      return 'Preparing results for display...';
+      return t('loading.preparingResults');
     }
     
     if (showFirstMessage) {
-      return 'Looking for known registries in cache...';
+      return t('loading.lookingForRegistries');
     }
     
     const elapsed = Date.now() - startTime;
@@ -150,7 +152,7 @@ const SearchLoading = ({ isLoading, isCompleted = false, onCancel }: SearchLoadi
               }
             }
           }}
-          title="Cancel search"
+          title={t('loading.cancelSearch')}
         >
           <CloseIcon 
             className="cancel-icon"
@@ -179,7 +181,7 @@ const SearchLoading = ({ isLoading, isCompleted = false, onCancel }: SearchLoadi
             transition: 'all 0.4s ease'
           }}
         >
-          {isCompleted ? 'Search Complete!' : 'Searching Digital Twins'}
+          {isCompleted ? t('loading.searchComplete') : t('loading.searchingDigitalTwins')}
         </Typography>
         <Typography 
           variant="body2" 
@@ -262,7 +264,7 @@ const SearchLoading = ({ isLoading, isCompleted = false, onCancel }: SearchLoadi
               textAlign: 'center'
             }}
           >
-            Data has been successfully retrieved and is ready to display
+            {t('loading.dataRetrieved')}
           </Typography>
         </Box>
       )}

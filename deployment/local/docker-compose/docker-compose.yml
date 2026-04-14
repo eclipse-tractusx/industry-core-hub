@@ -71,7 +71,7 @@ services:
       - local-network
 
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0
+    image: quay.io/keycloak/keycloak:25.0
     container_name: local_keycloak
     restart: always
     environment:

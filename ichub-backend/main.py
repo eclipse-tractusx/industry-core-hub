@@ -20,24 +20,42 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-# Import custom logging and configuration modules, and database utility
-from managers.config.log_manager import LoggingManager
-from managers.config.config_manager import ConfigManager
-
 ## FAST API example for keycloak
 # from fastapi_keycloak_middleware import CheckPermissions
 # from fastapi_keycloak_middleware import get_user
 import sys
+import argparse
 from logging import captureWarnings
 import urllib3
 
 from pathlib import Path
-## Import paths
+## Import paths before any local imports so modules resolve correctly
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 sys.dont_write_bytecode = True
 
-# Import the startup function for the FastAPI application
-from runtimes.fastapi import start
+# Parse --config argument early — BEFORE importing any local modules that call
+# ConfigManager at import time (connector.py, dtr.py run module-level code).
+# Also strip the flag from sys.argv so the SDK's strict parse_args() doesn't fail.
+_arg_parser = argparse.ArgumentParser(add_help=False)
+_arg_parser.add_argument("--config", default=None, help="Path to the application configuration YAML file", type=str)
+_known_args, _ = _arg_parser.parse_known_args()
+_config_path = _known_args.config
+
+_i = 0
+while _i < len(sys.argv):
+    if sys.argv[_i] == "--config":
+        sys.argv.pop(_i)
+        if _i < len(sys.argv):
+            sys.argv.pop(_i)
+    elif sys.argv[_i].startswith("--config="):
+        sys.argv.pop(_i)
+    else:
+        _i += 1
+
+# Import custom logging and configuration modules, and database utility.
+# These must come AFTER sys.path is set up.
+from managers.config.log_manager import LoggingManager
+from managers.config.config_manager import ConfigManager
 
 # Disable SSL warnings from urllib3 and capture warnings into logs
 urllib3.disable_warnings()
@@ -46,9 +64,13 @@ captureWarnings(True)
 # Initialize the logging system based on project configuration
 LoggingManager.init_logging()
 
-# Load application-specific configuration settings
-ConfigManager.load_config()
+# Load the configuration BEFORE importing runtimes.fastapi, because connector.py
+# and dtr.py call ConfigManager.get_config() at module level when imported.
+ConfigManager.load_config(config_path=_config_path)
 
+# Import the startup function for the FastAPI application (triggers connector.py
+# and dtr.py module-level code, which now reads the already-loaded config).
+from runtimes.fastapi import start
 
 # Test database connection
 # If uncommented, it will test the database connection at startup
@@ -65,9 +87,9 @@ if __name__ == "__main__":
      _/ // /__/_____/ __  / /_/ / /_/ /  / /_/ / /_/ / /__/ ,< /  __/ / / / /_/ /  
     /___/\____/    /_/ /_/\__,_/_.___/  /_____/\__,_/\___/_/|_|\___/_/ /_/\__,_/   
     """)
-    print("\n\n\t\t\t\t\t\t\t\t\t\tv0.4.0")
+    print("\n\n\t\t\t\t\t\t\t\t\t\tv0.5.0")
     print("Application starting, listening to requests...\n")
     
-    start()
+    start(config_path=_config_path)
 
     print("\nClosing the application... Thank you for using the Eclipse Tractus-X Industry Core Hub Backend!")

@@ -131,31 +131,33 @@ export interface TotalsCheck {
 }
 
 // Version 1.0.0 types for UsTariffInformation
+// Note: only `materialList` is required – all other top-level fields are
+// optional because real-world responses may only contain `materialList`.
 export interface UsTariffInformationV1_0_0 {
-  partId: string;
-  partName: string;
-  partDescription: string;
-  partWeight: {
+  partId?: string;
+  partName?: string;
+  partDescription?: string;
+  partWeight?: {
     value: number;
     unit: string;
   };
-  partUsage: {
+  partUsage?: {
     vehicleSystem: string;
     vehicleSubassembly: string;
     oemPartRef: string[];
   };
-  tariff: {
+  tariff?: {
     htsCode: string;
     htsCodingSystem: string;
     htsDescription: string;
     countryOfImport: string;
-    declaredCustomsValue: {
+    declaredCustomsValue?: {
       value: number;
       currency: string;
     };
     incoterms: string;
     countryOfExport: string;
-    dutyRateNote: string;
+    dutyRateNote?: string;
   };
   materialList: Array<{
     material: {
@@ -189,30 +191,30 @@ export interface UsTariffInformationV1_0_0 {
     currency: string;
     value: number;
   }>;
-  compliance: {
-    rohs: {
+  compliance?: {
+    rohs?: {
       compliant: boolean;
       exemptions: string[];
     };
-    reach: {
+    reach?: {
       svhcContentWppm: number;
     };
-    isoCertificates: string[];
+    isoCertificates?: string[];
   };
-  supplyChain: {
-    manufacturer: string;
-    finalAssembly: string;
-    batchNumber: string;
-    traceability: {
+  supplyChain?: {
+    manufacturer?: string;
+    finalAssembly?: string;
+    batchNumber?: string;
+    traceability?: {
       lotCodeMarking: string;
       dateCodeFormat: string;
     };
   };
-  totalsCheck: {
+  totalsCheck?: {
     sumOfMaterialWeights_g: number;
     sumOfOriginValuePercentages: number;
   };
-  notes: string[];
+  notes?: string[];
 }
 
 // Union type for all supported versions (currently only 1.0.0)
@@ -230,28 +232,22 @@ export type UsTariffInformation = UsTariffInformationV1_0_0;
 
 /**
  * Type guard for US Tariff Information v1.0.0
- * 
+ *
+ * Accepts both the canonical object form `{ materialList: [...] }` and an
+ * array-wrapped form `[{ materialList: [...] }]` that some backends return.
+ *
  * @param semanticId - The semantic ID to validate
  * @param data - The data to validate
  * @returns True if data matches UsTariffInformationV1_0_0 structure
  */
 export function isUsTariffInformationV1_0_0(semanticId: string, data: unknown): data is UsTariffInformationV1_0_0 {
+  // Unwrap array-wrapped responses (e.g. [{ materialList: [...] }] → { materialList: [...] })
+  const obj = Array.isArray(data) ? data[0] : data;
   return (
-    semanticId === US_TARIFF_INFORMATION_SEMANTIC_IDS.V1_0_0 &&
-    typeof data === 'object' &&
-    data !== null &&
-    'partId' in data &&
-    typeof (data as Record<string, unknown>).partId === 'string' &&
-    'partName' in data &&
-    typeof (data as Record<string, unknown>).partName === 'string' &&
-    'partDescription' in data &&
-    typeof (data as Record<string, unknown>).partDescription === 'string' &&
-    'partWeight' in data &&
-    typeof (data as Record<string, unknown>).partWeight === 'object' &&
-    'materialList' in data &&
-    Array.isArray((data as Record<string, unknown>).materialList) &&
-    'tariff' in data &&
-    typeof (data as Record<string, unknown>).tariff === 'object'
+    typeof obj === 'object' &&
+    obj !== null &&
+    'materialList' in obj &&
+    Array.isArray((obj as Record<string, unknown>).materialList)
   );
 }
 

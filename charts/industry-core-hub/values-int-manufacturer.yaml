@@ -74,19 +74,17 @@ frontend:
       url: "https://ichub-iam-manufacturer.int.catena-x.net/auth"
       realm: "ICHub"
       clientId: "industry-core-hub-frontend"
-      realmImport:
-        enabled: true
-        method: "startup"
-        availabilityCheck:
-          timeout: "120s"
-          delay: "5s"
-    
+  
     
     # Feature flags for integration environment
     enableAdvancedLogging: true
     enablePerformanceMonitoring: true
     enableDevTools: false
     
+    # Notifications configuration
+    notifications:
+      pollInterval: 30000
+
     # UI configuration
     uiTheme: "auto"
     uiLocale: "en"
@@ -193,6 +191,144 @@ backend:
           maxRetries: 10
           retryDelay: 15
           backgroundRetryInterval: 60
+    # -- Agreements define the ODRL policies for each semantic model (Saturn format).
+      agreements:
+      - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.circular.dpp:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: access
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
     # -- Consumer configuration
     consumer:
       discovery:
@@ -213,7 +349,7 @@ backend:
             operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
       connector:
         dataspace:
-          version: "jupiter"
+          version: "saturn"
         controlplane:
           hostname: "https://edc-consumer-ichub-control.int.catena-x.net"
           apiKeyHeader: "X-Api-Key"
@@ -225,7 +361,7 @@ backend:
     provider:
       connector: 
         dataspace:
-          version: "jupiter"
+          version: "saturn"
         controlplane:
           hostname: "https://edc-consumer-ichub-control.int.catena-x.net"
           apiKeyHeader: "X-Api-Key"
@@ -243,6 +379,82 @@ backend:
           dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
         lookup:
           uri: ""
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.digitalTwinRegistry:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      digitalTwinEventAPI:
+        hostname: "https://dtr-consumer-ichub.int.catena-x.net"
+        apiPath: "/api/v3"
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
     submodel_dispatcher:
       path: "/industry-core-hub/data/submodels"
       apiPath: "/submodel-dispatcher"
@@ -278,6 +490,9 @@ backend:
               port: 8000
 
 keycloak:
+  realmImport:
+    enabled: true
+    method: "job"
   realm:
     users:
       - username: "ichub-admin"

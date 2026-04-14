@@ -1,0 +1,175 @@
+{
+  "shareDialog": {
+    "title": "Digitalen Produktpass teilen ({{name}})",
+    "shareTitle": "Digitalen Produktpass teilen",
+    "selectPartnerDescription": "Wählen Sie einen Partner aus, mit dem Sie den DPP teilen möchten",
+    "partnerPlaceholder": "Wählen Sie einen Partner aus, mit dem Sie den DPP teilen möchten",
+    "partnerHelperText": "Wählen Sie aus verfügbaren Partnern",
+    "partnerRequired": "Partnerauswahl ist erforderlich",
+    "addCustomPartId": "Benutzerdefinierte Kunden-Teilenummer hinzufügen",
+    "customerPartId": "Kunden-Teilenummer",
+    "customerPartIdPlaceholder": "Geben Sie Ihre benutzerdefinierte Teilekennung ein",
+    "noPartnersTitle": "Keine Partner Verfügbar",
+    "noPartnersDescription": "Keine Partner verfügbar. Bitte fügen Sie Partner in der Partneransicht hinzu, um DPPs zu teilen.",
+    "addPartner": "Partner hinzufügen",
+    "successMessage": "DPP erfolgreich mit {{bpnl}} geteilt"
+  },
+  "list": {
+    "title": "Digitale Produktpässe",
+    "subtitle": "Verwalten und teilen Sie Ihre Produktpässe",
+    "createPassport": "Pass erstellen",
+    "searchPlaceholder": "Nach Name, Hersteller-Teilenummer oder Instanz-ID suchen...",
+    "noPassportsFound": "Keine Pässe gefunden",
+    "noPassportsYet": "Noch keine Pässe",
+    "adjustSearch": "Versuchen Sie, Ihre Suchkriterien anzupassen",
+    "createFirstPassport": "Erstellen Sie Ihren ersten digitalen Produktpass, um zu beginnen",
+    "getStarted": "Loslegen",
+    "passportDiscoveryId": "Pass Discovery-ID",
+    "passportId": "Pass-ID",
+    "passportType": "Passtyp",
+    "expiration": "Ablauf",
+    "noExpiration": "Kein Ablauf",
+    "version": "Version {{version}}",
+    "versionLabel": "Version",
+    "seeAll": "Alle anzeigen ({{count}})",
+    "allPassports": "Alle Digitalen Produktpässe",
+    "passportsAvailable": "{{count}} Pass verfügbar",
+    "passportsAvailable_plural": "{{count}} Pässe verfügbar",
+    "searchDialogPlaceholder": "Nach Name, ID oder Discovery-ID suchen...",
+    "discoveryId": "Discovery-ID",
+    "type": "Typ",
+    "expires": "Läuft ab",
+    "cardView": "Kartenansicht",
+    "tableView": "Tabellenansicht"
+  },
+  "actions": {
+    "registerPassport": "Pass registrieren",
+    "sharePassport": "Pass teilen",
+    "unsharePassport": "Teilen aufheben",
+    "processing": "Verarbeitung...",
+    "copyDiscoveryId": "Discovery-ID kopieren",
+    "exportPdf": "PDF exportieren",
+    "deletePassport": "Pass löschen",
+    "register": "Registrieren",
+    "open": "Öffnen"
+  },
+  "status": {
+    "draft": "Entwurf",
+    "shared": "Geteilt",
+    "pending": "Ausstehend"
+  },
+  "deleteDialog": {
+    "title": "Digitalen Produktpass löschen",
+    "confirmMessage": "Sind Sie sicher, dass Sie \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleting": "Löschen..."
+  },
+  "wizard": {
+    "header": {
+      "backToList": "Zurück zur Liste",
+      "title": "Digitalen Produktpass erstellen",
+      "subtitle": "Folgen Sie den Schritten, um einen neuen DPP zu erstellen und bereitzustellen"
+    },
+    "steps": {
+      "selectVersion": "Version auswählen",
+      "twinAssociation": "Zwillingsverknüpfung",
+      "dppData": "DPP-Daten",
+      "reviewCreate": "Überprüfen & Erstellen"
+    },
+    "step1": {
+      "title": "DPP-Version auswählen"
+    },
+    "step2": {
+      "title": "Mit serialisiertem Teil verknüpfen",
+      "infoAlert": "Wählen Sie ein vorhandenes serialisiertes Teil aus oder erstellen Sie ein neues, um es mit diesem Digitalen Produktpass zu verknüpfen",
+      "noPartsTitle": "Keine serialisierten Teile verfügbar",
+      "noPartsDescription": "Sie müssen ein serialisiertes Teil erstellen, bevor Sie einen DPP bereitstellen können",
+      "createSerializedPart": "Serialisiertes Teil erstellen",
+      "selectSerializedPart": "Serialisiertes Teil auswählen",
+      "chooseSerializedPart": "Wählen Sie ein serialisiertes Teil...",
+      "selectedPart": "Ausgewähltes Teil",
+      "checkingRegistration": "Registrierungsstatus wird überprüft...",
+      "registrationStatus": "Registrierungsstatus",
+      "notRegistered": "Nicht registriert",
+      "alreadyHasDpp": "Hat bereits DPP",
+      "noDppAssigned": "Kein DPP zugewiesen",
+      "mustBeRegisteredWarning": "Dieses serialisierte Teil muss als digitaler Zwilling registriert werden, bevor Sie einen DPP bereitstellen können.",
+      "registerSerializedPart": "Serialisiertes Teil registrieren",
+      "registerThisPart": "Dieses Teil registrieren",
+      "registering": "Registrieren...",
+      "orCreateNewPart": "Oder neues Teil erstellen:",
+      "createNewSerializedPart": "Neues serialisiertes Teil erstellen",
+      "twinRegisteredSuccess": "Zwilling erfolgreich registriert!",
+      "partCreatedSuccess": "Serialisiertes Teil erfolgreich erstellt"
+    },
+    "step3": {
+      "title": "DPP-Dateneingabe",
+      "uploadDppJson": "DPP-JSON-Datei hochladen",
+      "dropJsonFile": "Legen Sie Ihre JSON-Datei hier ab, oder",
+      "browseFiles": "Dateien durchsuchen",
+      "dropDppHere": "DPP-Datei hier ablegen",
+      "dragDropDppFile": "DPP-Datei ziehen & ablegen",
+      "clickToBrowse": "oder klicken Sie, um nach einer JSON-Datei zu suchen",
+      "supportedFormat": "Unterstütztes Format: JSON",
+      "or": "ODER",
+      "createDppFromForm": "DPP aus Formular erstellen",
+      "dppDataValidated": "DPP-Daten validiert",
+      "validationFailed": "Validierung fehlgeschlagen",
+      "dppDataLoaded": "DPP-Daten geladen",
+      "validatedDescription": "Alle erforderlichen Daten wurden validiert. Im nächsten Schritt überprüfen.",
+      "validationFailedDescription": "Validierung fehlgeschlagen. Ihre DPP-JSON-Datei entspricht nicht allen Pflichtfeldern des semantischen Modells \"{{semanticId}}\". Bitte bearbeiten Sie die DPP-Daten, um Validierungsfehler zu beheben.",
+      "dataUploadedDescription": "Daten erfolgreich hochgeladen. Bitte vor dem Fortfahren validieren.",
+      "validateDpp": "DPP validieren",
+      "validated": "Validiert ✓",
+      "validationFailedButton": "Validierung fehlgeschlagen ✗",
+      "editDppData": "DPP-Daten bearbeiten",
+      "saveSubmodel": "Submodell speichern",
+      "fileLoadedSuccess": "DPP-Datei erfolgreich geladen! Klicken Sie auf \"Validieren\", um gegen das Schema zu prüfen.",
+      "validatedSuccess": "DPP erfolgreich validiert!",
+      "noSchemaAccepted": "Kein Schema verfügbar. DPP akzeptiert."
+    },
+    "step4": {
+      "title": "Überprüfen & Erstellen",
+      "dppVersion": "DPP-Version",
+      "serializedPartAssociation": "Serialisierte Teilzuordnung",
+      "serial": "Seriennummer",
+      "noPartSelected": "Kein Teil ausgewählt",
+      "digitalTwinInfo": "Digitale Zwillingsinformationen",
+      "discoveryId": "Discovery-ID",
+      "notAvailable": "Nicht verfügbar",
+      "previewPassport": "Pass-Vorschau",
+      "readyToCreate": "Bereit, Ihren Digitalen Produktpass zu erstellen"
+    },
+    "buttons": {
+      "back": "Zurück",
+      "next": "Weiter",
+      "createDpp": "DPP erstellen"
+    },
+    "errors": {
+      "selectPart": "Bitte wählen Sie ein serialisiertes Teil aus, um es mit diesem DPP zu verknüpfen",
+      "partMustBeRegistered": "Das ausgewählte serialisierte Teil muss registriert sein, bevor ein DPP erstellt werden kann. Bitte registrieren Sie es zuerst.",
+      "provideDppData": "Bitte geben Sie DPP-Daten an, bevor Sie fortfahren. Sie können diese über das Formular erstellen oder eine JSON-Datei hochladen.",
+      "validateFirst": "Bitte validieren Sie die DPP-Daten, bevor Sie fortfahren."
+    },
+    "publishing": {
+      "publishingDpp": "DPP wird veröffentlicht...",
+      "publishedSuccessfully": "DPP erfolgreich veröffentlicht",
+      "publishingFailed": "Veröffentlichung fehlgeschlagen",
+      "creatingDpp": "Digitaler Produktpass wird erstellt...",
+      "pleaseWait": "Bitte warten Sie, während wir Ihren DPP registrieren",
+      "successMessage": "Ihr Digitaler Produktpass wurde erfolgreich veröffentlicht!",
+      "currentStatus": "Aktueller Status",
+      "sharePrompt": "Jetzt können Sie ihn mit Ihrem Partner teilen!",
+      "errorOccurred": "Beim Veröffentlichen des DPP ist ein Fehler aufgetreten"
+    },
+    "preview": {
+      "noDataAvailable": "Keine Daten für die Vorschau verfügbar"
+    }
+  },
+  "detail": {
+    "errorLoading": "Fehler beim Laden des DPP",
+    "unableToLoad": "DPP-Daten konnten nicht geladen werden",
+    "goBack": "Zurück",
+    "unableToDetermineType": "Passtyp konnte nicht ermittelt werden",
+    "dataNotRecognized": "Das Passdatenformat wird nicht erkannt"
+  }
+}

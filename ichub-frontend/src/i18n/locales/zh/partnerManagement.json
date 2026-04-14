@@ -1,0 +1,31 @@
+{
+  "page": {
+    "title": "联系人列表",
+    "noPartnersYet": "尚未添加合作伙伴，请使用上方的绿色按钮创建一个。",
+    "loadError": "加载合作伙伴失败。请检查后端连接。",
+    "requestTimeout": "请求超时，超过30秒"
+  },
+  "dialog": {
+    "createTitle": "创建新合作伙伴",
+    "editTitle": "编辑合作伙伴",
+    "partnerInfo": "合作伙伴信息",
+    "partnerInfoDescription": "输入合作伙伴名称和BPNL"
+  },
+  "fields": {
+    "partnerName": "合作伙伴名称",
+    "partnerBpnl": "合作伙伴BPNL"
+  },
+  "autocomplete": {
+    "placeholder": "选择合作伙伴或输入自定义BPNL（例如：BPNL0000000093Q7）",
+    "helperText": "从可用合作伙伴中选择或输入自定义业务合作伙伴法人编号",
+    "loadingPartners": "正在加载合作伙伴...",
+    "noPartnersFound": "未找到合作伙伴。您仍然可以输入自定义BPNL。",
+    "loadError": "无法从后端加载合作伙伴列表。您仍然可以手动输入自定义BPNL。"
+  },
+  "messages": {
+    "createSuccess": "合作伙伴{{name}}创建成功 [{{bpnl}}]",
+    "updateSuccess": "合作伙伴{{name}}更新成功 [{{bpnl}}]（本地更新）",
+    "createError": "创建合作伙伴失败。",
+    "bpnlConflict": "具有此BPNL的合作伙伴已存在。"
+  }
+}

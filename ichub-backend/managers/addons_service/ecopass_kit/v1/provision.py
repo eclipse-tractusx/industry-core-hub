@@ -46,6 +46,7 @@ from models.metadata_database.provider.models import (
     CatalogPart,
     SerializedPart,
     PartnerCatalogPart,
+    LegalEntity,
 )
 from tools.exceptions import DppNotFoundError, DppShareError
 
@@ -326,7 +327,8 @@ class ProvisionManager:
                     selectinload(TwinAspect.twin)  # type: ignore
                     .selectinload(Twin.serialized_part)
                     .selectinload(SerializedPart.partner_catalog_part)
-                    .selectinload(PartnerCatalogPart.catalog_part),
+                    .selectinload(PartnerCatalogPart.catalog_part)
+                    .selectinload(CatalogPart.legal_entity),
                     selectinload(TwinAspect.twin)  # type: ignore
                     .selectinload(Twin.serialized_part)
                     .selectinload(SerializedPart.partner_catalog_part)
@@ -404,8 +406,14 @@ class ProvisionManager:
 
         # Check if this matches the requested DPP ID
         if passport_id == dpp_id:
+            # manufacturer_id must be the legal entity BPNL (manufacturer), NOT the business partner BPNL (customer)
+            manufacturer_bpnl = partner_catalog_part.catalog_part.legal_entity.bpnl
+            logger.info(f"[SHARE DEBUG] Matched DPP! manufacturer_id={manufacturer_bpnl}, "
+                        f"partner_bpnl={partner_catalog_part.business_partner.bpnl}, "
+                        f"manufacturer_part_id={partner_catalog_part.catalog_part.manufacturer_part_id}, "
+                        f"part_instance_id={db_serialized_part.part_instance_id}")
             return {
-                "manufacturer_id": partner_catalog_part.business_partner.bpnl,
+                "manufacturer_id": manufacturer_bpnl,
                 "manufacturer_part_id": partner_catalog_part.catalog_part.manufacturer_part_id,
                 "part_instance_id": db_serialized_part.part_instance_id,
             }
@@ -415,6 +423,9 @@ class ProvisionManager:
     def register_in_bpn_discovery(self, manufacturer_part_id: str) -> bool:
         """
         Register a manufacturer part ID in BPN Discovery.
+
+        Handles relative endpoint addresses from the Discovery Finder by resolving
+        them against the Discovery Finder's base URL before passing to the SDK.
 
         Args:
             manufacturer_part_id: The manufacturer part ID to register
@@ -436,20 +447,54 @@ class ProvisionManager:
                 logger.warning("Discovery Finder URL not configured")
                 return False
 
+            logger.debug(f"BPN Discovery registration - Discovery Finder URL: {discovery_finder_url}")
+
             # Create Discovery Finder service
             discovery_finder = DiscoveryFinderService(
                 url=discovery_finder_url, oauth=discovery_oauth
-            )
-
-            # Create BPN Discovery service
-            bpn_discovery_service = BpnDiscoveryService(
-                oauth=discovery_oauth, discovery_finder_service=discovery_finder
             )
 
             # Get the type identifier from configuration (default: "manufacturerPartId")
             bpn_type = ConfigManager.get_config(
                 "consumer.discovery.bpn_discovery.type", default="manufacturerPartId"
             )
+
+            # Pre-check: query Discovery Finder to inspect raw endpoint addresses
+            # and fix relative URLs before BpnDiscoveryService uses them
+            raw_endpoints = discovery_finder.find_discovery_urls(keys=[bpn_type])
+            logger.debug(f"BPN Discovery registration - raw endpoints: {raw_endpoints}")
+
+            # Fix relative endpoint addresses by resolving against Discovery Finder base URL.
+            # Some deployments return relative paths (e.g., "/bpndiscovery") instead of
+            # absolute URLs. The SDK cannot handle relative URLs.
+            fixed = False
+            for key, endpoint_url in raw_endpoints.items():
+                if endpoint_url and not endpoint_url.startswith(("http://", "https://")):
+                    from urllib.parse import urlparse
+                    parsed = urlparse(discovery_finder_url)
+                    base_url = f"{parsed.scheme}://{parsed.netloc}"
+                    resolved_url = f"{base_url}{endpoint_url}" if endpoint_url.startswith("/") else f"{base_url}/{endpoint_url}"
+                    logger.warning(
+                        f"BPN Discovery registration: relative endpoint for '{key}': '{endpoint_url}'. "
+                        f"Resolved to: '{resolved_url}'"
+                    )
+                    raw_endpoints[key] = resolved_url
+                    fixed = True
+
+            if fixed:
+                # Use the patched finder that returns already-resolved absolute URLs
+                from managers.addons_service.ecopass_kit.v1.discovery import _PatchedDiscoveryFinderService
+                patched_finder = _PatchedDiscoveryFinderService(
+                    original=discovery_finder,
+                    fixed_endpoints=raw_endpoints
+                )
+                bpn_discovery_service = BpnDiscoveryService(
+                    oauth=discovery_oauth, discovery_finder_service=patched_finder
+                )
+            else:
+                bpn_discovery_service = BpnDiscoveryService(
+                    oauth=discovery_oauth, discovery_finder_service=discovery_finder
+                )
 
             # Register the manufacturer part ID
             bpn_discovery_service.set_identifier(
