@@ -1,8 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS NEXT
-# Copyright (c) 2025 DRÄXLMAIER Group
+# Copyright (c) 2026 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
