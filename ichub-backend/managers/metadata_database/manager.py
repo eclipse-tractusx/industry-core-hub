@@ -35,7 +35,6 @@ class RepositoryManager:
         self._connector_control_plane_repository = None
         self._data_exchange_agreement_repository = None
         self._twin_registry_repository = None
-        self._enablement_service_stack_repository = None
         self._legal_entity_repository = None
         self._partner_catalog_part_repository = None
         self._serialized_part_repository = None
@@ -118,14 +117,6 @@ class RepositoryManager:
             from managers.metadata_database.repositories import TwinRegistryRepository
             self._twin_registry_repository = TwinRegistryRepository(self._session)
         return self._twin_registry_repository
-
-    @property
-    def enablement_service_stack_repository(self):
-        """Lazy initialization of the enablement service stack repository."""
-        if self._enablement_service_stack_repository is None:
-            from managers.metadata_database.repositories import EnablementServiceStackRepository
-            self._enablement_service_stack_repository = EnablementServiceStackRepository(self._session)
-        return self._enablement_service_stack_repository
 
     @property
     def legal_entity_repository(self):

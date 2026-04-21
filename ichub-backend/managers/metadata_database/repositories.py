@@ -34,7 +34,6 @@ from models.metadata_database.provider.models import (
     ConnectorControlPlane,
     BusinessPartner,
     TwinRegistry,
-    EnablementServiceStack,
     LegalEntity,
     Twin,
     TwinAspect,
@@ -255,33 +254,6 @@ class PartnerCatalogPartRepository(BaseRepository[PartnerCatalogPart]):
             self._session.refresh(existing)
         return existing
     
-class EnablementServiceStackRepository(BaseRepository[EnablementServiceStack]):
-    def get_by_name(self, name: str,
-        join_legal_entity: bool = False,
-        join_connector_control_plane: bool = False,
-        join_twin_registry: bool = False) -> Optional[EnablementServiceStack]:
-        
-        stmt = select(EnablementServiceStack).where(
-            EnablementServiceStack.name == name)  # type: ignore
-        
-        if join_connector_control_plane or join_legal_entity:
-            stmt = stmt.join(ConnectorControlPlane, ConnectorControlPlane.id == EnablementServiceStack.connector_control_plane_id)
-
-        if join_legal_entity:
-            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id)
-
-        if join_twin_registry:
-            stmt = stmt.join(TwinRegistry, TwinRegistry.id == EnablementServiceStack.twin_registry_id)
-
-        return self._session.scalars(stmt).first()
-    
-    def find_by_legal_entity_bpnl(self, legal_entity_bpnl: str) -> List[EnablementServiceStack]:
-        stmt = select(EnablementServiceStack)
-        stmt = stmt.join(ConnectorControlPlane, ConnectorControlPlane.id == EnablementServiceStack.connector_control_plane_id)
-        stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id).where(
-            LegalEntity.bpnl == legal_entity_bpnl)
-        return self._session.scalars(stmt).all()
-
 class SerializedPartRepository(BaseRepository[SerializedPart]):
     def get_by_partner_catalog_part_id_part_instance_id(self, partner_catalog_part_id: int, part_instance_id: str) -> Optional[SerializedPart]:
         stmt = select(SerializedPart).where(
@@ -481,7 +453,6 @@ class TwinRepository(BaseRepository[Twin]):
             van: Optional[str] = None,
             business_partner_number: Optional[str] = None,
             global_id: Optional[UUID] = None,
-            enablement_service_stack_id: Optional[int] = None,
             min_incl_created_date: Optional[datetime] = None,
             max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
@@ -517,13 +488,6 @@ class TwinRepository(BaseRepository[Twin]):
 
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
-
-        if enablement_service_stack_id:
-            stmt = stmt.join(
-                TwinRegistration, TwinRegistration.twin_id == Twin.id
-            ).where(
-                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
-            )
 
         if business_partner_number:
             stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id

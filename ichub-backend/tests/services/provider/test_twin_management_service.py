@@ -185,17 +185,6 @@ class TestTwinManagementService:
         return catalog_part
 
     @pytest.fixture
-    def mock_enablement_service_stack(self):
-        """Mock enablement service stack entity."""
-        stack = Mock()
-        stack.id = 1
-        stack.name = "EDC/DTR Default"
-        stack.connection_settings = {}
-        stack.legal_entity = Mock()
-        stack.legal_entity.bpnl = "BPNL123456789012"
-        return stack
-
-    @pytest.fixture
     def mock_digital_twin_registry(self):
         """Mock digital twin registry entity."""
         registry = Mock()

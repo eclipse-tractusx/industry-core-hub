@@ -32,9 +32,6 @@ from models.services.provider.system_management import (
     ConnectorControlPlaneCreate,
     ConnectorControlPlaneRead,
     ConnectorControlPlaneUpdate,
-    EnablementServiceStackCreate,
-    EnablementServiceStackRead,
-    EnablementServiceStackUpdate,
     LegalEntityCreate,
     LegalEntityRead,
     LegalEntityUpdate,
@@ -42,26 +39,6 @@ from models.services.provider.system_management import (
 
 router = APIRouter(prefix="/system-management", tags=["System Management"])
 system_management_service = SystemManagementService()
-
-@router.post("/enablement-service-stack", response_model=EnablementServiceStackRead)
-async def create_enablement_service_stack(stack_create: EnablementServiceStackCreate):
-    return system_management_service.create_enablement_service_stack(stack_create)
-
-@router.get("/enablement-service-stack", response_model=List[EnablementServiceStackRead])
-async def get_enablement_service_stacks():
-    return system_management_service.get_enablement_service_stacks()
-
-@router.get("/enablement-service-stack/{stack_id}", response_model=EnablementServiceStackRead)
-async def get_enablement_service_stack(stack_id: int):
-    return system_management_service.get_enablement_service_stack(stack_id)
-
-@router.put("/enablement-service-stack/{stack_id}", response_model=EnablementServiceStackRead)
-async def update_enablement_service_stack(stack_id: int, stack_update: EnablementServiceStackUpdate):
-    return system_management_service.update_enablement_service_stack(stack_id, stack_update)
-
-@router.delete("/enablement-service-stack/{stack_id}", response_model=bool)
-async def delete_enablement_service_stack(stack_id: int):
-    return system_management_service.delete_enablement_service_stack(stack_id)
 
 # Connector Control Plane endpoints
 @router.post("/connector-control-plane", response_model=ConnectorControlPlaneRead)
