@@ -1,6 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -77,11 +79,7 @@ try:
 
     dtr_provider_manager = DtrProviderManager(
         dtr_url=dtr_url, dtr_lookup_url=dtr_lookup_url,
-        api_path=str(dtr_api_path),
-        connector_controlplane_hostname=ConfigManager.get_config("provider.connector.controlplane.hostname"),
-        connector_controlplane_catalog_path=ConfigManager.get_config("provider.connector.controlplane.protocolPath"),
-        connector_dataplane_hostname=ConfigManager.get_config("provider.connector.dataplane.hostname"),
-        connector_dataplane_public_path=ConfigManager.get_config("provider.connector.dataplane.publicPath")
+        api_path=str(dtr_api_path)
     )
 
     dtr_manager = DtrManager(

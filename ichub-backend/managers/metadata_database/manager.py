@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 DRÄXLMAIER Group
+# Copyright (c) 2025,2026 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
@@ -32,8 +32,9 @@ class RepositoryManager:
         self._session = session
         self._business_partner_repository = None
         self._catalog_part_repository = None
+        self._connector_control_plane_repository = None
         self._data_exchange_agreement_repository = None
-        self._enablement_service_stack_repository = None
+        self._twin_registry_repository = None
         self._legal_entity_repository = None
         self._partner_catalog_part_repository = None
         self._serialized_part_repository = None
@@ -94,6 +95,14 @@ class RepositoryManager:
         return self._catalog_part_repository
 
     @property
+    def connector_control_plane_repository(self):
+        """Lazy initialization of the connector service repository."""
+        if self._connector_control_plane_repository is None:
+            from managers.metadata_database.repositories import ConnectorControlPlaneRepository
+            self._connector_control_plane_repository = ConnectorControlPlaneRepository(self._session)
+        return self._connector_control_plane_repository
+
+    @property
     def data_exchange_agreement_repository(self):
         """Lazy initialization of the data exchange agreement repository."""
         if self._data_exchange_agreement_repository is None:
@@ -102,12 +111,12 @@ class RepositoryManager:
         return self._data_exchange_agreement_repository
 
     @property
-    def enablement_service_stack_repository(self):
-        """Lazy initialization of the enablement service stack repository."""
-        if self._enablement_service_stack_repository is None:
-            from managers.metadata_database.repositories import EnablementServiceStackRepository
-            self._enablement_service_stack_repository = EnablementServiceStackRepository(self._session)
-        return self._enablement_service_stack_repository
+    def twin_registry_repository(self):
+        """Lazy initialization of the DTR service repository."""
+        if self._twin_registry_repository is None:
+            from managers.metadata_database.repositories import TwinRegistryRepository
+            self._twin_registry_repository = TwinRegistryRepository(self._session)
+        return self._twin_registry_repository
 
     @property
     def legal_entity_repository(self):

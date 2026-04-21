@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 DRÄXLMAIER Group
+# Copyright (c) 2025,2026 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
@@ -36,7 +36,6 @@ class SharingBase(BaseModel):
 
 class ShareCatalogPart(SharingBase, CatalogPartBase):
     """Class that stores the information required by request in the sharing functionalit, for catalog parts"""
-    pass
 
 class SharedPartBase(BaseModel):
     business_partner_number: str = Field(alias="businessPartnerNumber", description="The business partner number of the business partner with which the catalog part is shared.")

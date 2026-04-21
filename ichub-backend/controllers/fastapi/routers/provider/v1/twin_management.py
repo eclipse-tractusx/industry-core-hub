@@ -2,6 +2,8 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2025 LKS Next
+# Copyright (c) 2026 DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -23,7 +25,7 @@
 
 from fastapi import APIRouter, Query, Depends
 from fastapi.responses import JSONResponse
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from services.provider.twin_management_service import TwinManagementService
@@ -134,6 +136,10 @@ async def twin_management_create_twin_aspect(twin_aspect_create: TwinAspectCreat
     if default:
         return twin_management_service.create_twin_aspect(twin_aspect_create)
     return twin_management_service.create_or_update_twin_aspect_not_default(twin_aspect_create)
+
+@router.get("/twin-registrations/{global_id}", response_model=Dict[int, bool], responses=exception_responses)
+async def get_twin_registrations(global_id: UUID) -> Dict[int, bool]:
+    return twin_management_service.get_twin_registrations(global_id)
 
 @router.post("/serialized-part-twin/share", responses={
     201: {"description": "Catalog part twin shared successfully"},
