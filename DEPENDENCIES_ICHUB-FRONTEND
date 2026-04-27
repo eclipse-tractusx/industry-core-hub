@@ -140,7 +140,7 @@ npm/npmjs/-/json-buffer/3.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-parse-even-better-errors/2.3.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-schema-traverse/0.4.1, MIT, approved, clearlydefined
 npm/npmjs/-/json-stable-stringify-without-jsonify/1.0.1, MIT, approved, clearlydefined
-npm/npmjs/-/jspdf/4.2.0, , approved, #26378
+npm/npmjs/-/jspdf/4.2.1, , approved, #26378
 npm/npmjs/-/jwt-decode/4.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/keycloak-js/25.0.6, Apache-2.0, approved, clearlydefined
 npm/npmjs/-/keyv/4.5.4, MIT, approved, #4674
@@ -234,7 +234,7 @@ npm/npmjs/-/text-segmentation/1.0.3, MIT, approved, clearlydefined
 npm/npmjs/-/tiny-invariant/1.3.3, MIT, approved, clearlydefined
 npm/npmjs/-/tinybench/2.9.0, MIT, approved, clearlydefined
 npm/npmjs/-/tinyexec/0.3.2, MIT, approved, clearlydefined
-npm/npmjs/-/tinyglobby/0.2.15, MIT, approved, clearlydefined
+npm/npmjs/-/tinyglobby/0.2.15, MIT, approved, #27176
 npm/npmjs/-/tinypool/1.1.1, MIT, approved, clearlydefined
 npm/npmjs/-/tinyrainbow/2.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/tinyspy/4.0.3, MIT, approved, clearlydefined
@@ -403,7 +403,7 @@ npm/npmjs/@swc/core-win32-ia32-msvc/1.13.5, Apache-2.0 AND MIT, approved, clearl
 npm/npmjs/@swc/core-win32-x64-msvc/1.13.5, Apache-2.0 AND MIT, approved, clearlydefined
 npm/npmjs/@swc/core/1.13.5, Apache-2.0, approved, #23010
 npm/npmjs/@swc/counter/0.1.3, Apache-2.0, approved, clearlydefined
-npm/npmjs/@swc/types/0.1.25, Apache-2.0, approved, clearlydefined
+npm/npmjs/@swc/types/0.1.25, Apache-2.0, approved, #27108
 npm/npmjs/@types/chai/5.2.2, MIT, approved, clearlydefined
 npm/npmjs/@types/d3-array/3.2.2, MIT, approved, clearlydefined
 npm/npmjs/@types/d3-color/3.1.3, MIT, approved, clearlydefined
