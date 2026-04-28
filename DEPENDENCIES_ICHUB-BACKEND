@@ -51,7 +51,7 @@ pypi/pypi/-/pytest/9.0.3, MIT, approved, #26570
 pypi/pypi/-/python-dotenv/1.1.0, BSD-3-Clause, approved, #20550
 pypi/pypi/-/python-jose/3.5.0, MIT, approved, #22425
 pypi/pypi/-/python-keycloak/4.7.3, MIT, approved, #20557
-pypi/pypi/-/python-multipart/0.0.22, Apache-2.0, approved, #25779
+pypi/pypi/-/python-multipart/0.0.26, Apache-2.0, approved, #25779
 pypi/pypi/-/referencing/0.36.2, MIT, approved, clearlydefined
 pypi/pypi/-/requests-toolbelt/1.0.0, Apache-2.0, approved, #15024
 pypi/pypi/-/requests/2.33.0, Apache-2.0 AND MIT AND Apache-2.0, approved, #27675
