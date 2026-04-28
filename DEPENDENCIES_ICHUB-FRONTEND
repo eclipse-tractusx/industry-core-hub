@@ -258,7 +258,7 @@ npm/npmjs/-/webrtc-adapter/9.0.3, BSD-3-Clause, approved, clearlydefined
 npm/npmjs/-/which/2.0.2, ISC, approved, clearlydefined
 npm/npmjs/-/why-is-node-running/2.3.0, MIT, approved, clearlydefined
 npm/npmjs/-/word-wrap/1.2.5, MIT, approved, clearlydefined
-npm/npmjs/-/yaml/1.10.2, ISC, approved, #24847
+npm/npmjs/-/yaml/1.10.3, ISC, approved, #24847
 npm/npmjs/-/yocto-queue/0.1.0, MIT, approved, clearlydefined
 npm/npmjs/-/zxing-wasm/2.2.2, MIT AND (BSD-3-Clause AND MIT), approved, #25117
 npm/npmjs/@babel/code-frame/7.27.1, MIT, approved, clearlydefined
