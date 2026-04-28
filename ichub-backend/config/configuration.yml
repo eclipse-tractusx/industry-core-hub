@@ -718,3 +718,33 @@ provider:
       timeout: 30
       # -- SSL certificate verification
       verify_ssl: true
+
+# -- Add-on KIT configuration
+addons:
+  # -- MCP Addon: exposes IC-Hub dataspace capabilities as MCP tools for AI clients
+  # -- (Claude Desktop, Microsoft Copilot Studio, custom agents).
+  mcp_addon:
+    # -- Set to true to mount the FastMCP server at mount_path.
+    enabled: true
+    # -- Set to true to enable OAuth 2.0 (Keycloak) authentication for the MCP endpoint.
+    # -- When false, only the API-key Bearer fallback is used (or no auth if authorization.enabled is false).
+    oauth_enabled: true
+    # -- ASGI mount path for the FastMCP streamable-HTTP transport.
+    mount_path: /addons/mcp-addon/mcp
+    # -- When true, write tools return a preview on the first call and execute
+    # -- only on a second call with identical arguments.
+    require_confirmation_for_writes: true
+    # -- Idle TTL for in-process MCP sessions (seconds).
+    session_ttl_seconds: 7200
+    # -- Interval between idle-session eviction sweeps (seconds).
+    session_eviction_interval_seconds: 300
+    # -- Maximum number of staged write-tool previews retained per session.
+    # -- Oldest entries (by insertion order) are evicted when the cap is exceeded.
+    # -- This bounds memory when a client previews many distinct write calls
+    # -- without ever confirming them (each coexists in pending_confirmations).
+    max_pending_confirmations: 50
+    audit:
+      # -- Expose GET /addons/mcp-addon/audit .
+      # -- Disabled by default: this endpoint returns cross-user audit data.
+      # -- Enable only after adding appropriate role-based access controls.
+      expose_admin_endpoint: false

@@ -2,9 +2,10 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Capgemini Deutschland GmbH
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -33,11 +34,49 @@ import os
 from tools.exceptions import BaseError
 from tools.constants import API_V1
 from managers.config.config_manager import ConfigManager
+from managers.config.log_manager import LoggingManager
+
+logger = LoggingManager.get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler. Asset registration is handled by the Kubernetes asset-sync Job."""
-    yield
+
+    if ConfigManager.get_config("addons.mcp_addon.enabled", True):
+        import asyncio
+        from contextlib import AsyncExitStack
+        from managers.addons_service.mcp_addon.v1.server import mcp_http_app
+        from managers.addons_service.mcp_addon.v1.session import session_store
+
+        eviction_interval: int = ConfigManager.get_config(
+            "addons.mcp_addon.session_eviction_interval_seconds", 300
+        )
+
+        async def _eviction_loop() -> None:
+            while True:
+                await asyncio.sleep(eviction_interval)
+                try:
+                    n = session_store.evict_expired()
+                    if n:
+                        logger.debug("MCP session eviction: removed %d expired session(s).", n)
+                except Exception:
+                    logger.exception("Unexpected error during MCP session eviction sweep.")
+
+        async with AsyncExitStack() as stack:
+            await stack.enter_async_context(mcp_http_app.lifespan(mcp_http_app))
+            eviction_task = asyncio.create_task(_eviction_loop(), name="mcp-session-eviction")
+            try:
+                yield
+            finally:
+                eviction_task.cancel()
+                try:
+                    await eviction_task
+                except asyncio.CancelledError:
+                    # Expected: cancelling the task above raises CancelledError
+                    # when we await it. Nothing to clean up, so swallow it.
+                    pass
+    else:
+        yield
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -111,6 +150,10 @@ tags_metadata = [
     {
         "name": "PCF KIT Microservices",
         "description": "Provider-side PCF KIT endpoints"
+    },
+    {
+        "name": "MCP Addon Microservices",
+        "description": "MCP Addon endpoints — AI tool surface over Model Context Protocol (enabled by default; disable via addons.mcp_addon.enabled)"
     }
 ]
 
@@ -193,6 +236,48 @@ v1_router.include_router(addons.router)
 # Include the API version 1 router into the main app
 app.include_router(v1_router)
 
+# Mount the MCP Addon ASGI sub-application when the add-on is enabled.
+# The REST router (health, audit) is included via addons.py above.
+# The FastMCP streamable-HTTP transport needs a top-level mount so that
+# MCP clients (Claude Desktop, Copilot) can reach it without the /api/v1 prefix.
+if ConfigManager.get_config("addons.mcp_addon.enabled", True):
+    from starlette.routing import Route
+    from managers.addons_service.mcp_addon.v1.server import (
+        mcp_http_app, _auth_provider, mcp_well_known_routes, mcp_mount_parent_path,
+    )
+    # Mount the sub-app at the PARENT of the configured endpoint (e.g.
+    # "/addons/mcp-addon"), not at the endpoint itself. The streamable-HTTP route
+    # is registered inside the sub-app as the leaf (e.g. "/mcp"), so the full
+    # endpoint resolves as an exact route match and clients can connect with or
+    # without a trailing slash. Mounting at the leaf would make it a mount root,
+    # which Starlette only matches WITH the slash (307-redirecting otherwise and
+    # breaking the POST-based MCP handshake).
+    _mcp_mount_path = mcp_mount_parent_path
+    if ConfigManager.get_config("authorization.enabled", False) and _auth_provider is None:
+        import logging as _logging
+        _logging.getLogger(__name__).error(
+            "[MCP Addon] Authorization is enabled but no auth provider could be built. "
+            "The MCP endpoint will NOT be mounted to prevent unauthenticated access."
+        )
+    else:
+        app.mount(_mcp_mount_path, mcp_http_app)
+        # RFC 9728: serve OAuth protected-resource metadata at the host root so
+        # MCP clients (Claude Desktop, Copilot) can discover the authorization
+        # server. FastMCP registers these routes inside the mounted sub-app,
+        # where the doubly-prefixed path is unreachable by clients, so we
+        # re-register them on the parent app at the correct root-level path.
+        for _wk_route in mcp_well_known_routes:
+            app.router.routes.append(_wk_route)
+            # Also answer the no-trailing-slash variant for clients that strip it.
+            if _wk_route.path.endswith("/"):
+                app.router.routes.append(
+                    Route(
+                        _wk_route.path.rstrip("/"),
+                        endpoint=_wk_route.endpoint,
+                        methods=_wk_route.methods,
+                    )
+                )
+
 
 def custom_openapi():
     """
@@ -231,7 +316,8 @@ def custom_openapi():
                 "Add-Ons Microservices",
                 "EcoPass KIT Microservices",
                 "EcoPass KIT Consumer Microservices",
-                "PCF KIT Microservices"
+                "PCF KIT Microservices",
+                "MCP Addon Microservices"
             ],
         },
     ]

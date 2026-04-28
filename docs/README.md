@@ -1,6 +1,7 @@
 <!--
 Eclipse Tractus-X - Industry Core Hub
 
+Copyright (c) 2026 Capgemini Deutschland GmbH
 Copyright (c) 2026 LKS Next
 Copyright (c) 2026 Contributors to the Eclipse Foundation
 
@@ -41,6 +42,7 @@ Everything you need to get started with Industry Core Hub.
 - **[Backend README](../ichub-backend/README.md)** - Backend setup and structure
 - **[Frontend README](../ichub-frontend/README.md)** - Frontend development
 - **[Code Architecture](./developer/CODE_ARCHITECTURE.md)** - Codebase structure
+- **[MCP Addon Guide](./developer/MCP-ADDON-GUIDE.md)** - Connect AI clients to IC-Hub via the Model Context Protocol
 - **[Reset Keycloak Password](./developer/reset-keycloak-password.md)** - Admin utility
 
 ## API Reference

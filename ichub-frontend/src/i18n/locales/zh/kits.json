@@ -97,6 +97,16 @@
     "traceability": {
       "name": "可追溯性KIT",
       "description": "整个供应链中零件、警报和组件的端到端可追溯性。"
+    },
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "通过模型上下文协议（MCP）使用AI驱动的工具探索和交互Catena-X数据空间数据。将您的AI助手直接连接到数字孪生、合作伙伴网络和供应链数据。",
+      "features": {
+        "mcpTools": {
+          "name": "MCP工具",
+          "description": "通过模型上下文协议探索数字孪生、发现合作伙伴和消费数据空间数据的AI驱动工具。"
+        }
+      }
     }
   }
 }
