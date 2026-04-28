@@ -58,7 +58,7 @@ npm/npmjs/-/delaunator/5.0.1, ISC, approved, clearlydefined
 npm/npmjs/-/delayed-stream/1.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/detect-libc/1.0.3, Apache-2.0, approved, #24790
 npm/npmjs/-/dom-helpers/5.2.1, MIT, approved, clearlydefined
-npm/npmjs/-/dompurify/3.3.1, Apache-2.0 OR MPL-2.0, approved, #24541
+npm/npmjs/-/dompurify/3.4.1, Apache-2.0 OR MPL-2.0, approved, #27185
 npm/npmjs/-/dunder-proto/1.0.1, MIT, approved, #17824
 npm/npmjs/-/error-ex/1.3.4, MIT, approved, clearlydefined
 npm/npmjs/-/es-define-property/1.0.1, MIT, approved, #13222
