@@ -47,7 +47,7 @@ pypi/pypi/-/pydantic/2.11.2, MIT, approved, clearlydefined
 pypi/pypi/-/pydantic_core/2.33.1, MIT, approved, clearlydefined
 pypi/pypi/-/pyproject_hooks/1.2.0, MIT, approved, clearlydefined
 pypi/pypi/-/pytest-asyncio/0.15.1, Apache-2.0, approved, clearlydefined
-pypi/pypi/-/pytest/8.3.5, MIT, approved, #20053
+pypi/pypi/-/pytest/9.0.3, MIT, approved, #26570
 pypi/pypi/-/python-dotenv/1.1.0, BSD-3-Clause, approved, #20550
 pypi/pypi/-/python-jose/3.5.0, MIT, approved, #22425
 pypi/pypi/-/python-keycloak/4.7.3, MIT, approved, #20557
