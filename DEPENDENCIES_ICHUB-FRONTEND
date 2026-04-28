@@ -178,8 +178,8 @@ npm/npmjs/-/pathe/2.0.3, MIT, approved, clearlydefined
 npm/npmjs/-/pathval/2.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/performance-now/2.1.0, MIT, approved, clearlydefined
 npm/npmjs/-/picocolors/1.1.1, ISC, approved, #24873
-npm/npmjs/-/picomatch/2.3.1, MIT, approved, #24822
-npm/npmjs/-/picomatch/4.0.3, MIT, approved, #13338
+npm/npmjs/-/picomatch/2.3.2, MIT, approved, #24822
+npm/npmjs/-/picomatch/4.0.4, MIT, approved, #13338
 npm/npmjs/-/postcss/8.5.6, MIT, approved, #19395
 npm/npmjs/-/prelude-ls/1.2.1, MIT, approved, clearlydefined
 npm/npmjs/-/prop-types/15.8.1, MIT, approved, clearlydefined
