@@ -54,7 +54,7 @@ pypi/pypi/-/python-keycloak/4.7.3, MIT, approved, #20557
 pypi/pypi/-/python-multipart/0.0.22, Apache-2.0, approved, #25779
 pypi/pypi/-/referencing/0.36.2, MIT, approved, clearlydefined
 pypi/pypi/-/requests-toolbelt/1.0.0, Apache-2.0, approved, #15024
-pypi/pypi/-/requests/2.32.4, Apache-2.0 AND MIT AND Apache-2.0, approved, #14884
+pypi/pypi/-/requests/2.33.0, Apache-2.0 AND MIT AND Apache-2.0, approved, #27675
 pypi/pypi/-/rfc3986/1.5.0, Apache-2.0, approved, #19390
 pypi/pypi/-/rich-toolkit/0.14.1, MIT, approved, clearlydefined
 pypi/pypi/-/rich/14.0.0, MIT, approved, clearlydefined
