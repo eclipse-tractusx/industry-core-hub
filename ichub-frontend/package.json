@@ -23,7 +23,7 @@
     "@mui/x-charts": "^8.3.1",
     "@mui/x-data-grid": "^8.11.1",
     "@yudiel/react-qr-scanner": "^2.0.8",
-    "axios": "^1.13.5",
+    "axios": "^1.15.0",
     "html2canvas": "^1.4.1",
     "i18next": "^25.8.0",
     "i18next-browser-languagedetector": "^8.2.0",
