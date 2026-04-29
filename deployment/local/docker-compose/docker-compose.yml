@@ -18,9 +18,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
-
+ 
 version: '3.8'
-
+ 
 services:
   postgres:
     image: postgres:16
@@ -34,7 +34,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user"]
       interval: 10s
@@ -42,7 +41,7 @@ services:
       retries: 5
     networks:
       - local-network
-
+ 
   pgadmin:
     image: dpage/pgadmin4
     container_name: local_pgadmin
@@ -109,7 +108,8 @@ services:
 volumes:
   postgres_data:
   keycloak_import:
-
+ 
 networks:
   local-network:
     driver: bridge
+ 
