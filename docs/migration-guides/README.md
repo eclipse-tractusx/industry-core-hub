@@ -4,13 +4,13 @@ This directory contains comprehensive migration guides for the Industry Core Hub
 
 ## Available Guides
 
-### [Quick Migration Guide](./BITNAMI_TO_CLOUDPIRATES_MIGRATION_GUIDE.md) ⭐ **Start Here**
+### [PostgreSQL Migration Guide](./BITNAMI_TO_CLOUDPIRATES_MIGRATION_GUIDE.md) ⭐ **PostgreSQL**
 
 **Purpose**: Concise step-by-step guide for migrating from Bitnami PostgreSQL 15 to CloudPirates PostgreSQL 18.0
 
 **When to use this guide**:
 
-- You need a quick reference during migration
+- You need a quick reference during PostgreSQL migration
 - You want clear, actionable commands
 - You're migrating the Industry Core Hub database
 
@@ -21,6 +21,28 @@ This directory contains comprehensive migration guides for the Industry Core Hub
 - Quick rollback procedure
 
 **Target Audience**: Anyone performing the PostgreSQL migration for Industry Core Hub
+
+---
+
+### [Keycloak Migration Guide](./BITNAMI_TO_CLOUDPIRATES_KEYCLOAK_MIGRATION_GUIDE.md) ⭐ **Keycloak**
+
+**Purpose**: Comprehensive guide for migrating from Bitnami Keycloak 25.x to CloudPirates Keycloak 26.x
+
+**When to use this guide**:
+
+- You need to migrate Keycloak from Bitnami to CloudPirates chart
+- You want to upgrade to Keycloak 26.x
+- You need to understand configuration mapping between charts
+
+**Features**:
+
+- 8 detailed steps with commands
+- Configuration mapping reference table
+- Troubleshooting section
+- 30-90 minute estimated timeline
+- Quick rollback procedure
+
+**Target Audience**: Anyone performing the Keycloak migration for Industry Core Hub
 
 ---
 
