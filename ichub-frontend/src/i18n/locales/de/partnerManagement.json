@@ -1,6 +1,8 @@
 {
   "page": {
     "title": "Kontaktliste",
+    "subtitle": "Verwalten Sie Ihre Dataspace-Partner-Kontakte für eine einfachere Nutzung und Zusammenarbeit",
+    "createContact": "Kontakt erstellen",
     "noPartnersYet": "Es wurden noch keine Partner hinzugefügt. Verwenden Sie die grüne Schaltfläche oben, um einen zu erstellen.",
     "loadError": "Partner konnten nicht geladen werden. Bitte überprüfen Sie die Backend-Verbindung.",
     "requestTimeout": "Anfrage-Timeout nach 30 Sekunden"

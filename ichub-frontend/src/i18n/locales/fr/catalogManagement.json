@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Pièces du Catalogue",
+    "subtitle": "Fournir, Partager et Gérer les Pièces au Niveau Catalogue / Type",
     "createButton": "Créer une Pièce de Catalogue"
   },
   "productCard": {

@@ -1,6 +1,8 @@
 {
   "page": {
     "title": "联系人列表",
+    "subtitle": "管理您的数据空间合作伙伴联系人，以便更轻松地消费和协作",
+    "createContact": "创建联系人",
     "noPartnersYet": "尚未添加合作伙伴，请使用上方的绿色按钮创建一个。",
     "loadError": "加载合作伙伴失败。请检查后端连接。",
     "requestTimeout": "请求超时，超过30秒"

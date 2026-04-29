@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import React, { useState, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Box, 
   Typography, 
@@ -95,14 +96,30 @@ const FeaturesPanel: React.FC<FeaturesPanelProps> = ({ isOpen, onClose, onFeatur
 
   if (!isOpen) return null;
 
-  return (
-    <Box
+  return ReactDOM.createPortal(
+    <>
+      {/* Transparent backdrop — catches clicks outside to close the panel */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1000000,
+          backgroundColor: 'transparent'
+        }}
+        onClick={onClose}
+      />
+      <Box
       sx={{
         position: 'fixed',
         left: '72px', // Position next to the fixed-width sidebar
         top: '50%',
         transform: 'translateY(-50%)',
         width: '320px',
+        maxHeight: 'calc(100vh - 80px)',
+        overflowY: 'auto',
         backgroundColor: 'rgba(0, 42, 126, 0.95)',
         backdropFilter: 'blur(10px)',
         borderRadius: '12px',
@@ -394,6 +411,8 @@ const FeaturesPanel: React.FC<FeaturesPanelProps> = ({ isOpen, onClose, onFeatur
         `}
       </style>
     </Box>
+    </>,
+    document.body
   );
 };
 

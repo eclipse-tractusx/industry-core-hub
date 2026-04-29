@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Peças Serializadas",
+    "subtitle": "Fornecer, Partilhar e Gerir Peças a Nível Serializado / Instância",
     "loading": "A carregar peças serializadas..."
   },
   "table": {

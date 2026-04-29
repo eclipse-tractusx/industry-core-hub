@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Serialisierte Teile",
+    "subtitle": "Teile auf Serialisierter / Instanzebene bereitstellen, teilen und verwalten",
     "loading": "Serialisierte Teile werden geladen..."
   },
   "table": {

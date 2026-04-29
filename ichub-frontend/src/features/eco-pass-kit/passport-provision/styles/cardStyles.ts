@@ -66,16 +66,16 @@ export const darkCardStyles = {
   
   button: {
     primary: {
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
       color: '#fff',
       borderRadius: { xs: '10px', md: '12px' },
       fontWeight: 600,
       textTransform: 'none' as const,
-      boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+      boxShadow: '0 4px 16px rgba(16, 185, 129, 0.3)',
       transition: 'all 0.2s ease',
       '&:hover': {
-        background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
-        boxShadow: '0 6px 24px rgba(102, 126, 234, 0.4)',
+        background: 'linear-gradient(135deg, #0ea572 0%, #047857 100%)',
+        boxShadow: '0 6px 24px rgba(16, 185, 129, 0.4)',
         transform: 'translateY(-1px)'
       },
       '&:disabled': {
@@ -92,8 +92,8 @@ export const darkCardStyles = {
       textTransform: 'none' as const,
       transition: 'all 0.2s ease',
       '&:hover': {
-        borderColor: '#667eea',
-        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
         borderWidth: '2px'
       }
     }
