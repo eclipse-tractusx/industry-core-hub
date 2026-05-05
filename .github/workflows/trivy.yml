@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Build ichub-backend Docker image
         id: build-docker-ichub-backend
@@ -50,7 +50,7 @@ jobs:
             docker build -f ./ichub-backend/runtimes/Dockerfile -t ${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_BACKEND_IMAGE_NAME }}:latest ./ichub-backend
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
         with:
           image-ref: "${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_BACKEND_IMAGE_NAME }}:latest" # Pull image from Docker Hub and run Trivy vulnerability scanner
           format: "sarif"
@@ -62,7 +62,7 @@ jobs:
           trivyignores: ".trivyignore" # Use the .trivyignore file to suppress known accepted risks
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
+        uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4.35.3
         if: always()
         with:
           sarif_file: "trivy-results-ichub-backend.sarif"
@@ -77,7 +77,7 @@ jobs:
 
       steps:
         - name: Checkout repository
-          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+          uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
         - name: Build ichub-frontend Docker image
           id: build-docker-ichub-frontend
@@ -86,7 +86,7 @@ jobs:
               docker build -t ${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_FRONTEND_IMAGE_NAME }}:latest .
 
         - name: Run Trivy vulnerability scanner
-          uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # 0.29.0
+          uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # 0.36.0
           with:
             image-ref: "${{ env.IMAGE_NAMESPACE }}/${{ env.ICHUB_FRONTEND_IMAGE_NAME }}:latest" # Pull image from Docker Hub and run Trivy vulnerability scanner
             format: "sarif"
@@ -98,7 +98,7 @@ jobs:
             trivyignores: ".trivyignore" # Use the .trivyignore file to suppress known accepted risks
 
         - name: Upload Trivy scan results to GitHub Security tab
-          uses: github/codeql-action/upload-sarif@9e8d0789d4a0fa9ceb6b1738f7e269594bdd67f0 # v3.28.9
+          uses: github/codeql-action/upload-sarif@e46ed2cbd01164d986452f91f178727624ae40d7 # v4.35.3
           if: always()
           with:
             sarif_file: "trivy-results-ichub-frontend.sarif"
