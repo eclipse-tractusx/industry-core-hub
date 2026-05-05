@@ -981,46 +981,37 @@ readinessProbe:
   timeoutSeconds: 1
 
 ## Keycloak taken from Portal-IAM: https://github.com/eclipse-tractusx/portal-iam
+## Migrated from Bitnami to CloudPirates chart
 
 keycloak:
+  # -- Switch to enable or disable the Keycloak helm chart
   enabled: true
+  # -- Keycloak image configuration
   image:
-    registry: docker.io
-    repository: bitnamilegacy/keycloak
-    tag: 25.0.6-debian-12-r0
-  auth:
+    # -- Keycloak image tag (immutable tags are recommended)
+    tag: "26.5.2@sha256:fb31a59deb46f746f2aaa25adc5da39ceccac4fd22d36a519562b0bf02e8df20"
+  # -- Number of Keycloak replicas to deploy
+  replicaCount: 1
+  # -- Keycloak configuration
+  keycloak:
+    # -- Keycloak admin username
     adminUser: admin
     # -- Keycloak administrator password.
     adminPassword: "keycloak-admin-password"
     # -- Secret containing the password for admin username 'admin'.
     existingSecret: ""
-  # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
-  production: false
-  # -- Proxy mode for Keycloak when running behind a reverse proxy (edge, reencrypt, passthrough, or none)
-  # Use 'edge' when running behind a reverse proxy that terminates SSL/TLS
-  proxy: edge
-  # -- Setting the path relative to '/' for serving resources:
-  # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth/'.
-  # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
-  httpRelativePath: /auth/
-  replicaCount: 1
-  # -- Liveness probe configuration
-  livenessProbe:
-    enabled: true
-    initialDelaySeconds: 240
-    periodSeconds: 2
-    timeoutSeconds: 10
-    failureThreshold: 6
-    successThreshold: 1
-  # -- Readiness probe configuration
-  readinessProbe:
-    enabled: true
-    initialDelaySeconds: 60
-    periodSeconds: 20
-    timeoutSeconds: 2
-    failureThreshold: 6
-    successThreshold: 1
-  # -- Realm import configuration
+    # -- The proxy headers that should be accepted by the server (forwarded, xforwarded)
+    # Use 'xforwarded' when running behind a reverse proxy that terminates SSL/TLS
+    proxyHeaders: "xforwarded"
+    # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
+    production: false
+    # -- Setting the path relative to '/' for serving resources:
+    # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth'.
+    # IMPORTANT: Do NOT use trailing slash (/auth/) - it causes double-slash in readiness probe path
+    # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
+    httpRelativePath: /auth
+
+  # -- Realm import configuration (ICHub custom job-based import)
   realmImport:
     enabled: true
     # -- Method: "startup" for --import-realm flag or "job" for post-install job
@@ -1029,7 +1020,7 @@ keycloak:
     # -- keycloak-config-cli image configuration
     image:
       repository: "adorsys/keycloak-config-cli"
-      tag: "latest-25.0.1"
+      tag: "latest-26"
       pullPolicy: "IfNotPresent"
     # -- Resource limits for the realm import job
     resources:
@@ -1041,8 +1032,9 @@ keycloak:
         cpu: 500m
         memory: 256Mi
         ephemeral-storage: "128Mi"
-  # -- Realm user configuration (passwords will be hashed at deployment time)
-  realm:
+  # -- ICHub Realm user configuration (passwords will be hashed at deployment time)
+  # -- This is used by the custom realm import job, not native CloudPirates realm import
+  ichubRealm:
     name: "ICHub"
     users:
       - username: "ichub-admin"
@@ -1084,21 +1076,19 @@ keycloak:
   # -- Will be set automatically based on realmImport.method
   extraEnvVars: []
 
-  # -- Command override for Keycloak container
-  # -- Will be set automatically when realmImport.method is "startup"
-  command: []
-  args: []
-
+  # -- Extra volumes for Keycloak pod (themes)
   extraVolumes:
     - name: themes
       emptyDir: {}
 
+  # -- Extra volume mounts for Keycloak container
   extraVolumeMounts:
     - name: themes
-      mountPath: /opt/bitnami/keycloak/themes/catenax-central
+      mountPath: /opt/keycloak/themes/catenax-central
 
-  initContainers:
-    - name: import
+  # -- Extra init containers for Keycloak pod (CloudPirates format)
+  extraInitContainers:
+    - name: import-themes
       image: docker.io/tractusx/portal-iam:v4.2.0
       imagePullPolicy: IfNotPresent
       command:
@@ -1112,94 +1102,49 @@ keycloak:
         - name: themes
           mountPath: /themes
 
+  # -- Service configuration
   service:
-    sessionAffinity: ClientIP
+    # -- Keycloak HTTP service port
+    httpPort: 80
 
+  # -- Ingress configuration
   ingress:
     # -- Enable ingress record generation
     enabled: false
-    ingressClassName: ""
-    # -- Provide default path for the ingress record.
-    hostname: "<keycloak-hostname>"
-    # -- Optional annotations when using the nginx ingress class;
-    # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
-    # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
-    # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
-    annotations:
-      nginx.ingress.kubernetes.io/use-regex: "true"
-      # cert-manager.io/cluster-issuer: ""
-      # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-      # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
-      # nginx.ingress.kubernetes.io/cors-allow-origin: "https://centralidp.example.org"
-      # nginx.ingress.kubernetes.io/enable-cors: "true"
-      # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
-      # nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
-    tls: false
+    # -- Ingress hosts configuration
+    hosts:
+      - host: "<keycloak-hostname>"
+        paths:
+          - path: /
+            pathType: Prefix
+    # -- TLS configuration for Keycloak ingress
+    tls: []
+
   # -- Resource configuration for Keycloak
   resources:
     requests:
       memory: "1Gi"
       cpu: "500m"
-      ephemeral-storage: "256Mi"
     limits:
       memory: "2Gi"
       cpu: "1"
-      ephemeral-storage: "2Gi"
-  rbac:
-    create: true
-    rules:
-      - apiGroups:
-          - ""
-        resources:
-          - pods
-        verbs:
-          - get
-          - list
-  postgresql:
-    # -- PostgreSQL chart configuration (recommended for demonstration purposes only);
-    # default configurations:
-    # host: "centralidp-postgresql",
-    # port: 5432;
-    # Switch to enable or disable the PostgreSQL helm chart.
+
+  # -- Database Configuration (CloudPirates format)
+  # Keycloak connects to the main industry-core-hub PostgreSQL using a dedicated secret
+  # The secret is auto-generated by templates/secret-keycloak-db.yaml with keys 'db-username' and 'db-password'
+  # The database host uses a fixed alias service (ichub-postgresql-alias) that resolves to the actual PostgreSQL service
+  database:
+    # -- Database type
+    type: postgres
+    # -- Database name (uses the main ichub-postgres database)
+    name: ichub-postgres
+    # -- Database host (uses fixed alias service created by templates/service-postgresql-alias.yaml)
+    # -- This alias automatically resolves to <release-name>-postgresql, no manual configuration needed
+    host: "ichub-postgresql-alias"
+    # -- Secret containing db-username and db-password keys (auto-created by templates/secret-keycloak-db.yaml)
+    existingSecret: "ichub-keycloak-db"
+
+  # -- Embedded PostgreSQL Configuration (CloudPirates subchart)
+  # Disabled - uses main industry-core-hub PostgreSQL instead
+  postgres:
     enabled: false
-    # -- Setting to Postgres version 15 as that is the aligned version,
-    # https://eclipse-tractusx.github.io/docs/release/trg-5/trg-5-07/#aligning-dependency-versions).
-    # Keycloak helm-chart from Bitnami has moved on to version 16.
-    image:
-      registry: docker.io
-      repository: bitnamilegacy/postgresql
-      tag: 15-debian-11
-    commonLabels:
-      app.kubernetes.io/version: "15"
-    auth:
-      # -- Non-root username.
-      username: ichub_keycloak
-      # -- Non-root user password.
-      # password: "kccentral-user-password"
-      # # -- Root user password.
-      # postgresPassword: "postgres-keycloak-admin-password"
-      # -- Database name.
-      database: ichub-postgres
-      # -- Secret containing the passwords for root usernames postgres and non-root username ichub.
-      existingSecret: "ichub-postgres-secret"
-    architecture: standalone
-  externalDatabase:
-    # -- External PostgreSQL configuration
-    # IMPORTANT: non-root db user needs needs to be created beforehand on external database.
-    host: "{{ include \"industry-core-hub.postgresql.fullname\" . }}"
-    # -- Database port number.
-    port: 5432
-    # -- Non-root username.
-    user: "ichub_keycloak"
-    # -- Database name.
-    database: "ichub-postgres"
-    # -- Password for the non-root username.
-    password: ""
-    # -- Secret containing the database credentials.
-    existingSecret: "ichub-postgres-secret"
-    existingSecretHostKey: ""
-    existingSecretPortKey: ""
-    existingSecretUserKey: ""
-    existingSecretDatabaseKey: ""
-    existingSecretPasswordKey: "ichub-password"

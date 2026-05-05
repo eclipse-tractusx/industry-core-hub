@@ -74,11 +74,11 @@ backend:
           retryDelay: 10
           backgroundRetryInterval: 60
 
-# Keycloak deployment configuration
+# Keycloak deployment configuration (CloudPirates chart)
 keycloak:
   enabled: true
   
-  # Realm import configuration
+  # Realm import configuration (ICHub custom job-based import)
   realmImport:
     enabled: true
     method: "job"  # Use job-based import for dynamic password setting
@@ -86,8 +86,8 @@ keycloak:
       timeout: "120s"
       delay: "5s"
   
-  # Realm user configuration
-  realm:
+  # ICHub Realm user configuration
+  ichubRealm:
     name: "ICHub"
     users:
       - username: "ichub-admin"
@@ -104,11 +104,15 @@ keycloak:
           - "offline_access"
           - "uma_authorization"
   
-  # Keycloak ingress configuration
+  # Keycloak ingress configuration (CloudPirates format)
   ingress:
     enabled: true
-    hostname: "<keycloak-hostname>"
+    hosts:
+      - host: "<keycloak-hostname>"
+        paths:
+          - path: /
+            pathType: Prefix
     annotations:
       nginx.ingress.kubernetes.io/use-regex: "true"
       # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    tls: false
+    tls: []

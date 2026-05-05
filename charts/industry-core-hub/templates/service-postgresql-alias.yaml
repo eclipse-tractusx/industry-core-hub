@@ -1,7 +1,6 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
-* Copyright (c) 2025 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -19,18 +18,21 @@
 *
 * SPDX-License-Identifier: Apache-2.0
 */}}
-{{- if and .Values.keycloak.enabled .Values.keycloak.ichubRealm }}
+{{- if and .Values.keycloak.enabled .Values.postgresql.enabled }}
+{{- /*
+  This ExternalName service creates a fixed alias for the PostgreSQL service.
+  Keycloak can use 'ichub-postgresql-alias' as the database host regardless of release name.
+  The actual PostgreSQL service name varies based on release name (e.g., my-release-postgresql).
+*/}}
 apiVersion: v1
-kind: Secret
+kind: Service
 metadata:
-  name: {{ .Release.Name }}-keycloak-realm-users
+  name: ichub-postgresql-alias
   namespace: {{ .Release.Namespace | default "default" | quote }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
-    app.kubernetes.io/component: keycloak
-type: Opaque
-data:
-  {{- range $user := .Values.keycloak.ichubRealm.users }}
-  {{ $user.username }}-password: {{ $user.password | b64enc | quote }}
-  {{- end }}
+    app.kubernetes.io/component: postgresql-alias
+spec:
+  type: ExternalName
+  externalName: {{ include "industry-core-hub.postgresql.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local
 {{- end }}
