@@ -2035,7 +2035,7 @@ const PartsDiscovery = () => {
                 {/* Single Twin Mode Results - Outside Results Display to avoid padding inheritance */}
                 {singleTwinResult && searchMode === 'single' && (
                   <SingleTwinResult 
-                    counterPartyId={selectedPartner?.bpnl || ''} 
+                    counterPartyId={selectedPartner?.bpnl || bpnl}
                     singleTwinResult={singleTwinResult} 
                   />
                 )}
@@ -2044,7 +2044,7 @@ const PartsDiscovery = () => {
                 {viewingTwin && searchMode === 'view' && (
                   <Box sx={{ width: '100%', p: 2 }}>
                     <SingleTwinResult 
-                      counterPartyId={selectedPartner?.bpnl || ''} 
+                      counterPartyId={selectedPartner?.bpnl || bpnl}
                       singleTwinResult={viewingTwin} 
                     />
                   </Box>
