@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Welcome to Industry Core Hub",
+    "subtitle": "The Eclipse Tractus-X KITs & Use Cases Speed Way",
+    "description": "Enable or disable specific features within a KIT to unlock the complete potential of dataspaces.",
+    "exploreCarousel": "Explore the carousel below to discover available features.",
+    "featureToggled": "{{featureName}} in {{kitName}} has been {{status}}"
+  },
+  "kitCard": {
+    "viewFeatures": "View Features"
+  },
+  "featuresPanel": {
+    "title": "Available Features",
+    "footer": "Expand KITs to enable/disable features"
+  },
+  "kitDetail": {
+    "backToKitFeatures": "Back to KIT Features",
+    "kitNotFound": "KIT not found",
+    "goToDocumentation": "Go to KIT Documentation"
+  },
+  "featureCard": {
+    "defaultTooltip": "Default features cannot be disabled"
+  },
+  "items": {
+    "industryCore": {
+      "name": "Industry Core KIT",
+      "description": "Core functionality for industrial data management, partner discovery, and catalog management.",
+      "features": {
+        "catalogManagement": {
+          "name": "Provide Catalog/Type Parts",
+          "description": "Provide, Share and Manage Parts in Catalog / Type Level."
+        },
+        "serializedParts": {
+          "name": "Provide Serialized/Instance Parts",
+          "description": "Provide, Share and Manage Parts in Serialized / Instance Level"
+        },
+        "dataspaceDiscovery": {
+          "name": "Consume Data via Dataspace Discovery",
+          "description": "Search, Discover and Visualize Digital Twins & Submodels from your partners connected to the same dataspace as you"
+        }
+      }
+    },
+    "businessPartner": {
+      "name": "Business Partner KIT",
+      "description": "Comprehensive business partners data management, contact list and validation of participants.",
+      "features": {
+        "participants": {
+          "name": "Contact List",
+          "description": "Manage your simple dataspace partner contact list, to enable easier consumption and collaboration."
+        }
+      }
+    },
+    "ecoPass": {
+      "name": "Eco Pass KIT",
+      "description": "Leverage the transparency of digital product passports to strengthen sustainability & compliance.",
+      "features": {
+        "passConsumption": {
+          "name": "Passport Consumption & Visualization",
+          "description": "Retrieve passport from a dataspace participant via QR code or ID and display it."
+        },
+        "passProvision": {
+          "name": "Passport Provision & Management",
+          "description": "Create, manage, and share digital product passports with dataspace partners."
+        }
+      }
+    },
+    "dataGovernance": {
+      "name": "Data Governance KIT",
+      "description": "Manage your data sovereignty, policies, contracts, compliance, and governance."
+    },
+    "pcf": {
+      "name": "PCF KIT",
+      "description": "Product Carbon Footprint calculation and lifecycle assessment tools."
+    },
+    "dataChain": {
+      "name": "Data Chain KIT",
+      "description": "Access data distributed across the dataspace."
+    },
+    "dcm": {
+      "name": "DCM KIT",
+      "description": "Demand and Capacity Management for optimizing supply chain operations."
+    },
+    "traceability": {
+      "name": "Traceability KIT",
+      "description": "End-to-end traceability of parts, alerts and components throughout the supply chain."
+    }
+  }
+}

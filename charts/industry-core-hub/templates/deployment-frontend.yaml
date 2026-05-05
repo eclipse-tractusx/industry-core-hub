@@ -147,6 +147,10 @@ spec:
             - name: ENABLE_DEV_TOOLS
               value: "{{ .Values.frontend.config.enableDevTools }}"
             
+            # Notifications configuration
+            - name: NOTIFICATIONS_POLL_INTERVAL
+              value: "{{ .Values.frontend.config.notifications.pollInterval }}"
+
             # UI configuration
             - name: UI_THEME
               value: "{{ .Values.frontend.config.uiTheme }}"

@@ -1,7 +1,7 @@
 pypi/pypi/-/Jinja2/3.1.6, BSD-3-Clause, approved, #7978
 pypi/pypi/-/MarkupSafe/3.0.2, BSD-3-Clause, approved, #25777
 pypi/pypi/-/PyYAML/6.0.2, MIT, approved, #25755
-pypi/pypi/-/Pygments/2.19.1, Apache-2.0 AND BSD-3-Clause and BSD-2-Clause and MIT, approved, #19382
+pypi/pypi/-/Pygments/2.20.0, BSD-2-Clause AND LicenseRef-Public-domain AND Apache-2.0 AND MIT, approved, #27129
 pypi/pypi/-/SQLAlchemy/2.0.40, MIT AND LGPL-2.0-only AND BSD-3-Clause AND LGPL-2.0-or-later, approved, #19392
 pypi/pypi/-/annotated-doc/0.0.4, MIT, approved, #24552
 pypi/pypi/-/annotated-types/0.7.0, MIT, approved, clearlydefined
@@ -11,13 +11,13 @@ pypi/pypi/-/attrs/25.3.0, MIT, approved, clearlydefined
 pypi/pypi/-/build/1.2.2.post1, MIT, approved, clearlydefined
 pypi/pypi/-/cached-property/1.5.2, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined
 pypi/pypi/-/certifi/2025.1.31, MPL-2.0, approved, #20552
-pypi/pypi/-/cffi/1.17.1, MIT, approved, #19388
+pypi/pypi/-/cffi/2.0.0, MIT-0 AND MIT, approved, #25733
 pypi/pypi/-/charset-normalizer/3.4.1, MIT AND (LGPL-2.1-only AND MIT) AND LGPL-2.1-only AND CC-BY-SA-3.0, approved, #19391
 pypi/pypi/-/click/8.1.8, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined
-pypi/pypi/-/cryptography/44.0.2, Apache-2.0 AND BSD-3-Clause AND Apache-2.0 AND BSD-3-Clause AND (BSD-3-Clause AND MIT), approved, #19520
+pypi/pypi/-/cryptography/46.0.7, Apache-2.0 AND BSD-3-Clause AND Apache-2.0 AND BSD-3-Clause AND (BSD-3-Clause AND MIT), approved, #25735
 pypi/pypi/-/deprecation/2.1.0, Apache-2.0 AND BSD-3-Clause AND MIT, approved, #7823
 pypi/pypi/-/dnspython/2.7.0, ISC, approved, #19394
-pypi/pypi/-/ecdsa/0.19.1, MIT AND CC0-1.0, approved, #22427
+pypi/pypi/-/ecdsa/0.19.2, MIT AND CC0-1.0, approved, #22427
 pypi/pypi/-/email_validator/2.2.0, Unlicense, approved, #19387
 pypi/pypi/-/exceptiongroup/1.2.2, MIT AND PSF-2.0, approved, #12076
 pypi/pypi/-/fastapi-cli/0.0.7, MIT, approved, clearlydefined
@@ -41,20 +41,20 @@ pypi/pypi/-/packaging/24.2, (Apache-2.0 OR BSD-2-Clause) AND MIT, approved, #198
 pypi/pypi/-/pip/25.0.1, MIT AND ISC AND Apache-2.0 AND (BSD-2-Clause OR Apache-2.0) AND BSD-2-Clause AND BSD-3-Clause AND Python-2.0 AND MPL-2.0, approved, #20397
 pypi/pypi/-/pluggy/1.5.0, MIT, approved, clearlydefined
 pypi/pypi/-/psycopg2-binary/2.9.10, (LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) AND ((LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) OR Zlib) AND LicenseRef-Public-domain, approved, #20738
-pypi/pypi/-/pyasn1/0.6.2, BSD-2-Clause AND (BSD-2-Clause AND BSD-3-Clause) AND (BSD-2-Clause AND MIT) AND BSD-3-Clause, approved, #22426
+pypi/pypi/-/pyasn1/0.6.3, BSD-2-Clause AND (BSD-2-Clause AND BSD-3-Clause) AND (BSD-2-Clause AND MIT) AND BSD-3-Clause, approved, #22426
 pypi/pypi/-/pycparser/2.22, LGPL-2.0-or-later AND BSD-3-Clause, approved, #14636
 pypi/pypi/-/pydantic/2.11.2, MIT, approved, clearlydefined
 pypi/pypi/-/pydantic_core/2.33.1, MIT, approved, clearlydefined
 pypi/pypi/-/pyproject_hooks/1.2.0, MIT, approved, clearlydefined
 pypi/pypi/-/pytest-asyncio/0.15.1, Apache-2.0, approved, clearlydefined
-pypi/pypi/-/pytest/8.3.5, MIT, approved, #20053
-pypi/pypi/-/python-dotenv/1.1.0, BSD-3-Clause, approved, #20550
+pypi/pypi/-/pytest/9.0.3, MIT, approved, #26570
+pypi/pypi/-/python-dotenv/1.2.2, BSD-3-Clause, approved, #25638
 pypi/pypi/-/python-jose/3.5.0, MIT, approved, #22425
 pypi/pypi/-/python-keycloak/4.7.3, MIT, approved, #20557
-pypi/pypi/-/python-multipart/0.0.22, Apache-2.0, approved, #25779
+pypi/pypi/-/python-multipart/0.0.26, Apache-2.0, approved, #25779
 pypi/pypi/-/referencing/0.36.2, MIT, approved, clearlydefined
 pypi/pypi/-/requests-toolbelt/1.0.0, Apache-2.0, approved, #15024
-pypi/pypi/-/requests/2.32.4, Apache-2.0 AND MIT AND Apache-2.0, approved, #14884
+pypi/pypi/-/requests/2.33.0, Apache-2.0 AND MIT AND Apache-2.0, approved, #27675
 pypi/pypi/-/rfc3986/1.5.0, Apache-2.0, approved, #19390
 pypi/pypi/-/rich-toolkit/0.14.1, MIT, approved, clearlydefined
 pypi/pypi/-/rich/14.0.0, MIT, approved, clearlydefined
@@ -63,12 +63,12 @@ pypi/pypi/-/rsa/4.9.1, Apache-2.0, approved, clearlydefined
 pypi/pypi/-/shellingham/1.5.4, ISC AND BSD-3-Clause, approved, #19381
 pypi/pypi/-/six/1.17.0, MIT, approved, #19893
 pypi/pypi/-/sniffio/1.3.1, Apache-2.0 AND BSD-3-Clause AND MIT AND Apache-2.0 AND MIT AND (Apache-2.0 AND MIT), approved, #25118
-pypi/pypi/-/sqlmodel/0.0.22, MIT, approved, clearlydefined
+pypi/pypi/-/sqlmodel/0.0.22, MIT, approved, #26768
 pypi/pypi/-/starlette/0.49.1, BSD-3-Clause, approved, #24550
 pypi/pypi/-/tomli/2.0.1, MIT, approved, #7824
-pypi/pypi/-/tractusx_sdk/0.6.1, Apache-2.0 AND CC-BY-4.0, approved, #25112
+pypi/pypi/-/tractusx_sdk/0.7.1, Apache-2.0 AND CC-BY-4.0, approved, #26438
 pypi/pypi/-/typer/0.15.2, MIT, approved, #21293
-pypi/pypi/-/typing-inspection/0.4.1, MIT, approved, clearlydefined
+pypi/pypi/-/typing-inspection/0.4.1, MIT, approved, #26752
 pypi/pypi/-/typing_extensions/4.13.1, PSF-2.0 AND (PSF-2.0 OR 0BSD), approved, #20549
 pypi/pypi/-/urllib3/2.6.3, MIT AND Python-2.0 AND MPL-2.0, approved, #25564
 pypi/pypi/-/uvicorn/0.30.6, BSD-2-Clause AND BSD-3-Clause, approved, clearlydefined

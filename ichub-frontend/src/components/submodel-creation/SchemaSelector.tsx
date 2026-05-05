@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { scrollToElement } from '../../utils/fieldNavigation';
 import {
     Dialog,
@@ -48,7 +48,8 @@ import {
     Close as CloseIcon,
     Schema as SchemaIcon,
     Add as AddIcon,
-    AccountTree as AccountTreeIcon
+    AccountTree as AccountTreeIcon,
+    OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import { getAvailableSchemas, SchemaDefinition, SCHEMA_REGISTRY } from '../../schemas';
 
@@ -132,6 +133,25 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
+    const descRefs = useRef<Record<string, HTMLElement | null>>({});
+    const [overflowMap, setOverflowMap] = useState<Record<string, boolean>>({});
+
+    // Detect which schema descriptions overflow their clamped container
+    useEffect(() => {
+        if (!open) return;
+        // Small delay to ensure DOM is rendered with line-clamp applied
+        const timer = setTimeout(() => {
+            const newMap: Record<string, boolean> = {};
+            Object.keys(descRefs.current).forEach(key => {
+                const el = descRefs.current[key];
+                if (el) {
+                    newMap[key] = el.scrollHeight > el.clientHeight;
+                }
+            });
+            setOverflowMap(newMap);
+        }, 50);
+        return () => clearTimeout(timer);
+    }, [open]);
 
     const handleCopy = async (value: string, event: React.MouseEvent) => {
         event.stopPropagation(); // Prevent card click
@@ -301,22 +321,19 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                         py: '11px',
                                                         flexDirection: 'column',
                                                         alignItems: 'stretch',
-                                                        justifyContent: 'flex-start'
+                                                        justifyContent: 'flex-start',
+                                                        minHeight: 0,
+                                                        overflow: 'hidden'
                                                     }}>
                                                         {(() => {
                                                             const desc = schema.metadata.description || '';
-                                                            const lines = desc.split(/\r?\n/);
-                                                            const isLong = lines.length > 5 || desc.length > 500;
                                                             const expanded = !!expandedMap[schemaKey];
-
-                                                            // Fallback preview: first 5 newline lines if present, otherwise slice chars
-                                                            const preview = lines.length > 1
-                                                                ? lines.slice(0, 5).join('\n')
-                                                                : desc.slice(0, 500).trim();
+                                                            const isOverflowing = !!overflowMap[schemaKey];
 
                                                             return (
-                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minHeight: 0 }}>
                                                                     <Box
+                                                                        ref={(el: HTMLElement | null) => { descRefs.current[schemaKey] = el; }}
                                                                         id={`desc-${schemaKey}`}
                                                                         sx={{
                                                                             color: 'text.secondary',
@@ -325,14 +342,12 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                             textAlign: 'left',
                                                                             whiteSpace: 'pre-line',
                                                                             overflow: expanded ? 'auto' : 'hidden',
-                                                                            // Keep room for the Read less toggle and namespace chip below
                                                                             maxHeight: expanded ? '140px' : undefined,
                                                                             pr: expanded ? 1 : 0,
-                                                                            // multiline clamp when collapsed (5 lines)
+                                                                            // Clamp to 3 lines when collapsed for consistent card layout
                                                                             display: !expanded ? '-webkit-box' : 'block',
                                                                             WebkitBoxOrient: !expanded ? 'vertical' : undefined,
-                                                                            WebkitLineClamp: !expanded ? 5 : undefined,
-                                                                            // subtle custom scrollbar (no visible track background)
+                                                                            WebkitLineClamp: !expanded ? 3 : undefined,
                                                                             '&::-webkit-scrollbar': {
                                                                                 width: '8px'
                                                                             },
@@ -347,15 +362,23 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                             scrollbarColor: 'rgba(255,255,255,0.12) transparent'
                                                                         }}
                                                                     >
-                                                                        {!expanded && isLong ? `${preview}...` : desc}
+                                                                        {desc}
                                                                     </Box>
 
-                                                                    {isLong && (
+                                                                    {(isOverflowing || expanded) && (
                                                                         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                                            <Box component="button"
+                                                                            <Box component="span"
                                                                                 onClick={(e: any) => toggleExpanded(schemaKey, e)}
+                                                                                role="button"
+                                                                                tabIndex={0}
                                                                                 aria-expanded={expanded}
                                                                                 aria-controls={`desc-${schemaKey}`}
+                                                                                onKeyDown={(e: any) => {
+                                                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                                                        e.preventDefault();
+                                                                                        toggleExpanded(schemaKey, e);
+                                                                                    }
+                                                                                }}
                                                                                 sx={{
                                                                                     background: 'transparent',
                                                                                     border: 'none',
@@ -396,6 +419,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                 leaveDelay={0}
                                                             >
                                                                 <Chip
+                                                                    component="div"
                                                                     label={schema.metadata.namespace}
                                                                     size="medium"
                                                                     variant="outlined"
@@ -433,27 +457,31 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                 );
                             })}
 
-                            {/* Future Schema Placeholder Card */}
+                            {/* More Schemas Card - links to GitHub semantic models */}
                             <Grid2 size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                                <Card sx={{
-                                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                                    border: '2px dashed rgba(255, 255, 255, 0.2)',
-                                    borderRadius: 2,
-                                    height: '280px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.3s ease',
-                                    '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                                        border: '2px dashed rgba(255, 255, 255, 0.3)',
-                                    }
-                                }}>
+                                <Card 
+                                    sx={{
+                                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                        border: '2px dashed rgba(255, 255, 255, 0.2)',
+                                        borderRadius: 2,
+                                        height: '280px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.3s ease',
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                            border: '2px dashed rgba(96, 165, 250, 0.4)',
+                                        }
+                                    }}
+                                    onClick={() => window.open('https://github.com/eclipse-tractusx/sldt-semantic-models/tree/main', '_blank', 'noopener,noreferrer')}
+                                >
                                     <CardContent sx={{ 
                                         textAlign: 'center',
                                         p: 3
                                     }}>
-                                        <AddIcon sx={{ 
+                                        <OpenInNewIcon sx={{ 
                                             fontSize: 48, 
                                             color: alpha('#ffffff', 0.3),
                                             mb: 2
@@ -469,7 +497,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                             color: alpha('#ffffff', 0.3),
                                             fontSize: '0.75rem'
                                         }}>
-                                            Additional schema templates will be available soon
+                                            Browse additional schema templates on GitHub
                                         </Typography>
                                     </CardContent>
                                 </Card>

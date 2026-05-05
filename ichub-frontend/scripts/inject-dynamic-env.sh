@@ -68,6 +68,7 @@ GOVERNANCE_RETRY_ATTEMPTS \
 PARTICIPANT_API_URL \
 PARTICIPANT_TIMEOUT \
 PARTICIPANT_RETRY_ATTEMPTS \
+NOTIFICATIONS_POLL_INTERVAL \
 "
 
 # List of environment variables to be replaced as JSON objects
@@ -76,32 +77,57 @@ GOVERNANCE_CONFIG \
 DTR_POLICIES_CONFIG \
 "
 
-# base sed command: output source file and remove javascript comments
-sed_command="cat ${source_file} | sed -e \"s@^\\\s*//.*@@g\""
+# Start by removing javascript comments from source file
+sed 's@^\s*//.*@@g' "${source_file}" > "${target_file}"
 
 # Process string variables (wrapped in quotes)
+# Only replaces value if the env var is set and non-empty, preserving index.html defaults otherwise
+# Uses awk instead of sed to avoid delimiter conflicts with special characters in values
 set -- $string_vars
 while [ -n "$1" ]; do
   var=$1
-  # add a replace expression for each string variable
-  # Pattern matches: VAR_NAME: "any_value", and replaces with VAR_NAME: "${VAR_NAME}",
-  sed_command="${sed_command} -e \"s@${var}:[[:space:]]*\\\"[^\\\"]*\\\"@${var}: \\\"\${${var}}\\\"@g\""
+  eval "_env_val=\"\${${var}}\""
+  if [ -n "${_env_val}" ]; then
+    # Use awk to safely replace: VAR_NAME: "old_value" -> VAR_NAME: "new_value"
+    # awk avoids sed delimiter issues with @, /, #, etc. in values
+    awk -v varname="${var}" -v varval="${_env_val}" '
+    {
+      pattern = varname ":[[:space:]]*\"[^\"]*\""
+      replacement = varname ": \"" varval "\""
+      pos = match($0, pattern)
+      if (pos > 0) {
+        print substr($0, 1, pos - 1) replacement substr($0, pos + RLENGTH)
+      } else {
+        print
+      }
+    }' "${target_file}" > "${target_file}.tmp" && mv "${target_file}.tmp" "${target_file}"
+  fi
   shift
 done
 
 # Process JSON variables (not wrapped in quotes)
+# Uses awk to safely handle JSON values containing @, /, #, and other special chars
 set -- $json_vars
 while [ -n "$1" ]; do
   var=$1
+  eval "_env_val=\"\${${var}}\""
   # Set default empty array if variable is empty or undefined
-  eval "if [ -z \"\${${var}}\" ]; then export ${var}='[]'; fi"
-  # add a replace expression for each JSON variable
-  # Pattern matches: VAR_NAME: "any_value", and replaces with VAR_NAME: ${VAR_NAME},
-  sed_command="${sed_command} -e \"s@${var}:[[:space:]]*\\\"[^\\\"]*\\\"@${var}: \${${var}}@g\""
+  if [ -z "${_env_val}" ]; then
+    _env_val='[]'
+  fi
+  # Use awk to replace: VAR_NAME: "old_value" -> VAR_NAME: new_json_value
+  awk -v varname="${var}" -v varval="${_env_val}" '
+  {
+    pattern = varname ":[[:space:]]*\"[^\"]*\""
+    replacement = varname ": " varval
+    pos = match($0, pattern)
+    if (pos > 0) {
+      print substr($0, 1, pos - 1) replacement substr($0, pos + RLENGTH)
+    } else {
+      print
+    }
+  }' "${target_file}" > "${target_file}.tmp" && mv "${target_file}.tmp" "${target_file}"
   shift
 done
-
-# execute the built replace command and write to target file
-echo ${sed_command} | sh > ${target_file}
 
 echo "Variables injected correctly in $target_file"

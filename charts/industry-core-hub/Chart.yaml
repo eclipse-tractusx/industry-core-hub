@@ -22,8 +22,8 @@
 apiVersion: v2
 name: industry-core-hub
 type: application
-appVersion: "v0.4.0"
-version: 0.4.1
+appVersion: "v0.5.0"
+version: "v0.5.0"
 description: A Helm chart for Eclipse Tractus-X - Industry Core Hub
 home: https://github.com/eclipse-tractusx/industry-core-hub
 sources:
@@ -40,5 +40,5 @@ dependencies:
     version: 1.25.x
   - condition: keycloak.enabled
     name: keycloak
-    repository: https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
-    version: 23.0.0
+    repository: oci://registry-1.docker.io/cloudpirates
+    version: 0.13.6

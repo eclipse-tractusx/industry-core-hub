@@ -40,7 +40,15 @@ export function setValueByPath(obj: any, path: string, value: any): any {
         current = current[key];
     }
     const lastKey = keys[keys.length - 1];
-    if (value === '' || value === null || value === undefined) {
+    // For top-level keys (primitive sections), always set the value even if empty string
+    // However, for undefined values, always delete to remove from JSON completely
+    // For nested keys, delete if empty/null/undefined
+    const isTopLevel = keys.length === 1;
+    if (value === undefined) {
+        // Always delete undefined values to remove them from JSON completely
+        delete current[lastKey];
+    } else if ((value === '' || value === null) && !isTopLevel) {
+        // For nested keys, delete if empty string or null
         delete current[lastKey];
     } else {
         current[lastKey] = value;
