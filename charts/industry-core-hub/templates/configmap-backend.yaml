@@ -29,7 +29,7 @@ metadata:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
 data:
   configuration.yml: |-
-    hostname: {{ include "industry-core-hub.ingressUrl" . | quote }}
+    hostname: {{ .Values.backend.configuration.hostname | default (include "industry-core-hub.ingressUrl" .) | quote }}
     authorization:
       enabled: {{ .Values.backend.configuration.authorization.enabled }}
       api_key:
