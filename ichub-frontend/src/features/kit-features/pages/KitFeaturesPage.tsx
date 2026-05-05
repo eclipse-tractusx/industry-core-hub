@@ -401,7 +401,7 @@ const KitFeaturesPage: React.FC = () => {
               height: '100%',
               // Create infinite loop by multiplying array size
               width: `${sortedKits.length * 320 * 5}px`, // 5 copies for seamless infinite scroll
-              transform: `translateX(calc(50vw - 233px - ${(currentIndex + sortedKits.length * 2) * 320}px))`, // Adjusted for perfect centering with title and dots
+              transform: `translateX(calc(50vw - 196px - ${(currentIndex + sortedKits.length * 2) * 320}px))`, // Adjusted for perfect centering with title and dots
               transition: isAnimating ? 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)' : 'none',
               gap: 0
             }}

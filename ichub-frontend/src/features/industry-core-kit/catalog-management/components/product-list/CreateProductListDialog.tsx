@@ -264,6 +264,23 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     return named.reduce((sum, mat) => sum + mat.share, 0);
   };
 
+  const isFormValid = () => {
+    if (!formData.manufacturerPartId.trim()) return false;
+    if (!formData.name.trim()) return false;
+    
+    // If materials have been added, all must have a name filled in
+    if (formData.materials.length > 0 && !formData.materials.every((m) => m.name && m.name.trim())) {
+      return false;
+    }
+    
+    // If there are named materials, they must total exactly 100%
+    if (getNamedMaterials().length > 0 && Math.abs(getTotalShare() - 100) > 0.01) {
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSave = async () => {
     const namedMaterials = getNamedMaterials();
     const totalShare = getTotalShare();
@@ -814,12 +831,14 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
               <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Grid2 container spacing={2} alignItems="center">
                   <Grid2 size={{ xs: 12, sm: 5 }}>
+                    <FieldLabelWithTooltip 
+                      label={`${t('createDialog.materials.materialName.label')} *`}
+                      tooltip={fieldDescriptions.materialName} 
+                    />
                     <TextField
-                      label={<FieldLabelWithTooltip label={t('createDialog.materials.materialName.label')} tooltip={fieldDescriptions.materialName} />}
                       value={material.name}
                       onChange={(e) => handleMaterialChange(index, "name", e.target.value)}
                       fullWidth
-                      required
                       variant="outlined"
                       size="medium"
                       InputProps={{
@@ -892,8 +911,11 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
                   <Grid2 size={12}>
                     <Collapse in={expandedMaterial === index}>
                       <Box sx={{ mt: 1, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                        <FieldLabelWithTooltip 
+                          label={t('createDialog.materials.share.exactLabel')} 
+                          tooltip={fieldDescriptions.materialShare} 
+                        />
                         <TextField
-                          label={<FieldLabelWithTooltip label={t('createDialog.materials.share.exactLabel')} tooltip={fieldDescriptions.materialShare} />}
                           type="number"
                           value={material.share === 0 ? "" : material.share}
                           onChange={(e) => handleMaterialChange(index, "share", e.target.value)}
@@ -1052,7 +1074,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
           variant="contained"
           color="primary"
           size="large"
-          disabled={isLoading || (getNamedMaterials().length > 0 && Math.abs(getTotalShare() - 100) > 0.01)}
+          disabled={isLoading || !isFormValid()}
           startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
           sx={{
             minWidth: '100px',

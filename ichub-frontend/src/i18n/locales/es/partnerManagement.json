@@ -1,6 +1,8 @@
 {
   "page": {
     "title": "Lista de Contactos",
+    "subtitle": "Gestiona tus contactos de socios del dataspace para facilitar el consumo y la colaboración",
+    "createContact": "Crear Contacto",
     "noPartnersYet": "Aún no se han añadido socios, usa el botón verde de arriba para crear uno.",
     "loadError": "Error al cargar los socios. Por favor verifica la conectividad con el backend.",
     "requestTimeout": "Tiempo de espera agotado después de 30 segundos"

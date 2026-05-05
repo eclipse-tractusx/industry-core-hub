@@ -23,12 +23,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Button, Snackbar, Alert, Fab } from '@mui/material';
+import { Button, Snackbar, Alert } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import VerticalBackStrip from '@/components/common/VerticalBackStrip';
 import { CardChip } from "@/features/industry-core-kit/catalog-management/components/product-list/CardChip";
 import { StatusVariants } from "@/features/industry-core-kit/catalog-management/types/types";
 import HelpOutlineIcon from '@mui/icons-material/Help';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Grid2 from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 
@@ -377,24 +378,11 @@ const ProductsDetails = () => {
         </Alert>
       </Snackbar>
 
-      {/* Floating back button */}
-      <Fab
-        color="primary"
-        aria-label="back"
+      {/* Vertical back strip */}
+      <VerticalBackStrip
         onClick={() => navigate('/catalog')}
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          left: 104,
-          backgroundColor: '#1976d2',
-          color: 'white',
-          '&:hover': {
-            backgroundColor: '#1565c0',
-          },
-        }}
-      >
-        <ArrowBackIcon />
-      </Fab>
+        tooltip={t('details.backToCatalog')}
+      />
     </Box>
   );
 }

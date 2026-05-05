@@ -1,6 +1,8 @@
 {
   "page": {
     "title": "Contact List",
+    "subtitle": "Manage your dataspace partner contacts to enable easier consumption and collaboration",
+    "createContact": "Create Contact",
     "noPartnersYet": "No partners were added yet, use the green button above to create one.",
     "loadError": "Failed to load partners. Please check backend connectivity.",
     "requestTimeout": "Request timeout after 30 seconds"

@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Katalogteile",
+    "subtitle": "Teile auf Katalogebene / Typebene bereitstellen, teilen und verwalten",
     "createButton": "Katalogteil erstellen"
   },
   "productCard": {

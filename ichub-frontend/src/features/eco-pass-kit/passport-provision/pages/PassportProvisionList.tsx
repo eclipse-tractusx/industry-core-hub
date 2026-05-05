@@ -73,6 +73,8 @@ import { DPPListItem } from '../types';
 import { fetchUserDPPs, deleteDPP, getDPPById, fetchSubmodelData } from '../api/provisionApi';
 import DppShareDialog from '../components/DppShareDialog';
 import { darkCardStyles } from '../styles/cardStyles';
+import PageSectionHeader from '@/components/common/PageSectionHeader';
+import { kitThemes } from '@/theme/colors';
 import { formatShortDate, generateCXId } from '../utils/formatters';
 import { CardChip } from '../components/CardChip';
 import { getParticipantId } from '@/services/EnvironmentService';
@@ -400,56 +402,34 @@ const PassportProvisionList: React.FC = () => {
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Box
-            sx={{
-              width: { xs: 48, sm: 56 },
-              height: { xs: 48, sm: 56 },
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)'
-            }}
-          >
-            <PostAddIcon sx={{ fontSize: { xs: 28, sm: 32 }, color: '#fff' }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="h4"
+        <PageSectionHeader
+          icon={<PostAddIcon />}
+          title={t('list.title')}
+          subtitle={t('list.subtitle')}
+          kitTheme={kitThemes.ecoPass}
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateNew}
               sx={{
+                background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
                 color: '#fff',
-                fontWeight: 700,
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' }
+                borderRadius: { xs: '10px', md: '12px' },
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: `0 4px 16px ${kitThemes.ecoPass.shadowColor}`,
+                transition: 'all 0.2s ease',
+                display: { xs: 'none', sm: 'flex' },
+                px: 3,
+                py: 1.5,
+                '&:hover': { filter: 'brightness(1.1)', boxShadow: `0 6px 24px ${kitThemes.ecoPass.shadowColor}`, transform: 'translateY(-1px)' }
               }}
             >
-              {t('list.title')}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: 'rgba(255, 255, 255, 0.6)',
-                fontSize: { xs: '0.875rem', sm: '1rem' }
-              }}
-            >
-              {t('list.subtitle')}
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-            sx={{
-              ...darkCardStyles.button.primary,
-              display: { xs: 'none', sm: 'flex' },
-              px: 3,
-              py: 1.5
-            }}
-          >
-            {t('list.createPassport')}
-          </Button>
-        </Box>
+              {t('list.createPassport')}
+            </Button>
+          }
+        />
 
         {/* Mobile Create Button */}
         <Button
@@ -458,10 +438,18 @@ const PassportProvisionList: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={handleCreateNew}
           sx={{
-            ...darkCardStyles.button.primary,
+            background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
+            color: '#fff',
+            borderRadius: { xs: '10px', md: '12px' },
+            fontWeight: 600,
+            textTransform: 'none',
+            boxShadow: `0 4px 16px ${kitThemes.ecoPass.shadowColor}`,
+            transition: 'all 0.2s ease',
             display: { xs: 'flex', sm: 'none' },
             py: 1.5,
-            mb: 2
+            mt: 2,
+            mb: 2,
+            '&:hover': { filter: 'brightness(1.1)', boxShadow: `0 6px 24px ${kitThemes.ecoPass.shadowColor}`, transform: 'translateY(-1px)' }
           }}
         >
           {t('list.createPassport')}

@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Piezas del Catálogo",
+    "subtitle": "Proporciona, Comparte y Gestiona Piezas a Nivel Catálogo / Tipo",
     "createButton": "Crear Pieza de Catálogo"
   },
   "productCard": {

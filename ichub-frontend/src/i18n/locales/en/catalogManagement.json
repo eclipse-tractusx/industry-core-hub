@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Catalog Parts",
+    "subtitle": "Provide, Share and Manage Parts in Catalog / Type Level",
     "createButton": "Create Catalog Part"
   },
   "productCard": {

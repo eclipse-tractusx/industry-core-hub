@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Pièces Sérialisées",
+    "subtitle": "Fournir, Partager et Gérer les Pièces au Niveau Sérialisé / Instance",
     "loading": "Chargement des pièces sérialisées..."
   },
   "table": {
