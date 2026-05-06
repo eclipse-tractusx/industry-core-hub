@@ -22,7 +22,6 @@
 #################################################################################
 
 import os
-from pathlib import Path
 from typing import Dict, Any
 from uuid import UUID
 from hashlib import sha256
@@ -33,9 +32,9 @@ from managers.config.log_manager import LoggingManager
 from tools.exceptions import InvalidError, NotFoundError
 
 from tractusx_sdk.industry.adapters import SubmodelAdapter
-from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdapterFactory
+from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdapterFactory, SubmodelAdapterType
 from tractusx_sdk.industry.adapters.submodel_adapters.file_system_adapter import FileSystemAdapter
-from managers.enablement_services.adapters.http_submodel_adapter import HttpSubmodelAdapter
+from tractusx_sdk.industry.adapters.submodel_adapters.http_submodel_adapter import HttpSubmodelAdapter
 
 
 class OperationType(Enum):
@@ -95,7 +94,10 @@ class SubmodelServiceManager:
             )
         
         try:
-            return SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)
+            return SubmodelAdapterFactory.from_config(SubmodelAdapterType.FILE_SYSTEM, {
+                "root_path": submodel_service_path,
+                "path_pattern": "{semantic_id_hash}/{submodel_id}.json"
+            })
         except Exception as e:
             self.logger.error("Failed to create FileSystemAdapter: %s", e)
             raise RuntimeError(f"Failed to initialize filesystem adapter: {e}") from e
@@ -165,15 +167,16 @@ class SubmodelServiceManager:
         
         self.logger.info(f"Initializing HTTP adapter for: {base_url}")
         
-        return HttpSubmodelAdapter(
-            base_url=base_url,
-            api_path=api_path,
-            auth_type=auth_type,
-            auth_token=auth_token if auth_enabled else None,
-            auth_key_name=auth_key_name,
-            timeout=timeout,
-            verify_ssl=verify_ssl
-        )
+        return SubmodelAdapterFactory.from_config(SubmodelAdapterType.HTTP_SUBMODEL, {
+            "base_url": base_url,
+            "api_path": api_path,
+            "auth_type": auth_type,
+            "auth_token": auth_token if auth_enabled else None,
+            "auth_key_name": auth_key_name,
+            "timeout": timeout,
+            "verify_ssl": verify_ssl,
+            "url_pattern": "{base_url}/{api_path}/{semantic_id}/{submodel_id}"
+        })
 
     def _validate_uuid(self, value: Any) -> UUID:
         """Validate and convert value to UUID.
@@ -194,20 +197,18 @@ class SubmodelServiceManager:
         except (ValueError, AttributeError, TypeError) as e:
             raise InvalidError(f"Invalid UUID: {value}") from e
 
-    def _get_filesystem_path(self, semantic_id: str, submodel_id: UUID) -> tuple[str, str]:
+    def _hash_semantic_id(self, semantic_id: str) -> str:
         """Get filesystem path components for a submodel.
         
         Args:
             semantic_id: Semantic ID of the submodel.
-            submodel_id: UUID of the submodel.
         
         Returns:
-            Tuple of (directory_hash, file_path).
+            Directory hash for the submodel.
         """
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
-        file_path = f"{sha256_semantic_id}/{submodel_id}.json"
-        return sha256_semantic_id, file_path
-
+        return sha256_semantic_id
+    
     def _execute_submodel_operation(
         self,
         operation: OperationType,
@@ -238,42 +239,28 @@ class SubmodelServiceManager:
         # Log operation
         self.logger.info(f"{operation.value.capitalize()}ing submodel with id=[{submodel_id}], semanticId=[{semantic_id}]")
         
-        # Use HTTP adapter with semantic IDs
-        if self.adapter_mode == "http" and isinstance(self.adapter, HttpSubmodelAdapter):
-            if operation == OperationType.READ:
-                return self.adapter.read_submodel(semantic_id, submodel_id)
-            elif operation == OperationType.WRITE:
-                self.adapter.write_submodel(semantic_id, submodel_id, payload)
-                self.logger.info(f"Submodel uploaded successfully to external service.")
-                return None
-            elif operation == OperationType.DELETE:
-                self.adapter.delete_submodel(semantic_id, submodel_id)
-                self.logger.info("Submodel deleted successfully from external service.")
-                return None
-        
-        # Filesystem adapter with hashed paths
-        sha256_id, file_path = self._get_filesystem_path(semantic_id, submodel_id)
-        
-        # Cache semantic_id if using HTTP adapter
-        if isinstance(self.adapter, HttpSubmodelAdapter):
-            self.adapter.cache_semantic_id(sha256_id, semantic_id)
+        submodel_metadata = {
+            "submodel_id": str(submodel_id),
+            "semantic_id": semantic_id,
+            "semantic_id_hash": self._hash_semantic_id(semantic_id),
+        }
         
         if operation == OperationType.READ:
-            if not self.adapter.exists(file_path):
-                self.logger.error(f"Submodel file not found: {file_path}")
-                raise NotFoundError(f"Submodel file not found: {file_path}")
-            return self.adapter.read(file_path)
+            if not self.adapter.exists(submodel_metadata):
+                self.logger.error(f"Submodel file not found: {submodel_metadata}")
+                raise NotFoundError(f"Submodel file not found: {submodel_metadata}")
+            return self.adapter.read(submodel_metadata)
         
         elif operation == OperationType.WRITE:
-            self.adapter.write(file_path, payload)
+            self.adapter.write_json(submodel_metadata, payload)
             self.logger.info("Submodel uploaded successfully.")
             return None
         
         elif operation == OperationType.DELETE:
-            if not self.adapter.exists(file_path):
-                self.logger.error(f"Submodel file not found: {file_path}")
-                raise NotFoundError(f"Submodel file not found: {file_path}")
-            self.adapter.delete(file_path)
+            if not self.adapter.exists(submodel_metadata):
+                self.logger.error(f"Submodel file not found: {submodel_metadata}")
+                raise NotFoundError(f"Submodel file not found: {submodel_metadata}")
+            self.adapter.delete(submodel_metadata)
             self.logger.info("Submodel deleted successfully.")
             return None
 
