@@ -94,37 +94,12 @@ class SubmodelServiceManager:
                 f"got: {type(submodel_service_path).__name__}"
             )
         
-        # Convert relative path to absolute path if needed
-        if not os.path.isabs(submodel_service_path):
-            submodel_service_path = os.path.abspath(submodel_service_path)
-        
-        # Ensure the directory exists and check permissions
         try:
-            path_obj = Path(submodel_service_path)
-            path_obj.mkdir(parents=True, exist_ok=True)
-            
-            # Check if we have write permissions using os.access()
-            if not os.access(submodel_service_path, os.W_OK):
-                raise PermissionError(
-                    f"No write permission for directory: {submodel_service_path}"
-                )
-            
-            self.logger.info(f"Submodel storage initialized at: {submodel_service_path}")
-        except PermissionError as e:
-            self.logger.error(
-                f"Permission denied accessing submodel storage path: {submodel_service_path}"
-            )
-            raise PermissionError(
-                f"Cannot access submodel storage directory: {submodel_service_path}. Error: {e}"
-            )
+            return SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)
         except Exception as e:
-            self.logger.error(
-                f"Failed to initialize submodel storage at {submodel_service_path}: {e}"
-            )
-            raise RuntimeError(f"Failed to initialize submodel storage: {e}")
-        
-        return SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)
-    
+            self.logger.error("Failed to create FileSystemAdapter: %s", e)
+            raise RuntimeError(f"Failed to initialize filesystem adapter: {e}") from e
+
     def _initialize_http_adapter(self) -> HttpSubmodelAdapter:
         """Initialize HTTP adapter for external submodel service."""
         http_config = ConfigManager.get_config("provider.submodel_dispatcher.http", default={})
@@ -290,8 +265,6 @@ class SubmodelServiceManager:
             return self.adapter.read(file_path)
         
         elif operation == OperationType.WRITE:
-            if not self.adapter.exists(sha256_id):
-                self.adapter.create_directory(sha256_id)
             self.adapter.write(file_path, payload)
             self.logger.info("Submodel uploaded successfully.")
             return None
