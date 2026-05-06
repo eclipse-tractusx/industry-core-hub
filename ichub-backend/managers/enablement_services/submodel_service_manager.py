@@ -53,7 +53,7 @@ class SubmodelServiceManager:
         # Get adapter mode from configuration (default: filesystem)
         self.adapter_mode = ConfigManager.get_config(
             "provider.submodel_dispatcher.mode",
-            default="filesystem"
+            default="file_system"
         )
         
         if not isinstance(self.adapter_mode, str):
@@ -64,10 +64,10 @@ class SubmodelServiceManager:
         
         self.adapter_mode = self.adapter_mode.lower()
         
-        if self.adapter_mode not in ["filesystem", "http"]:
+        if self.adapter_mode not in SubmodelAdapterFactory.get_available_adapter_types():
             raise ValueError(
                 f"Invalid adapter mode: {self.adapter_mode}. "
-                f"Supported modes: 'filesystem', 'http'"
+                f"Supported modes: {', '.join(SubmodelAdapterFactory.get_available_adapter_types())}"
             )
         
         # Initialize appropriate adapter based on mode
@@ -83,20 +83,31 @@ class SubmodelServiceManager:
     def _initialize_filesystem_adapter(self) -> FileSystemAdapter:
         """Initialize filesystem adapter for local storage."""
         submodel_service_path = ConfigManager.get_config(
-            "provider.submodel_dispatcher.path",
+            "provider.submodel_dispatcher.file_system.path",
             default="/industry-core-hub/data/submodels"
         )
         
         if not isinstance(submodel_service_path, str):
             raise ValueError(
-                f"Expected 'provider.submodel_dispatcher.path' to be a string, "
+                f"Expected 'provider.submodel_dispatcher.file_system.path' to be a string, "
                 f"got: {type(submodel_service_path).__name__}"
             )
         
+        path_pattern = ConfigManager.get_config(
+            "provider.submodel_dispatcher.file_system.path_pattern",
+            default="{base_path}/{semantic_id_hash}/{submodel_id}.json"
+        )
+
+        if not isinstance(path_pattern, str):
+            raise ValueError(
+                f"Expected 'provider.submodel_dispatcher.file_system.path_pattern' to be a string, "
+                f"got: {type(path_pattern).__name__}"
+            )
+
         try:
             return SubmodelAdapterFactory.from_config(SubmodelAdapterType.FILE_SYSTEM, {
                 "root_path": submodel_service_path,
-                "path_pattern": "{semantic_id_hash}/{submodel_id}.json"
+                "path_pattern": path_pattern
             })
         except Exception as e:
             self.logger.error("Failed to create FileSystemAdapter: %s", e)
@@ -104,7 +115,7 @@ class SubmodelServiceManager:
 
     def _initialize_http_adapter(self) -> HttpSubmodelAdapter:
         """Initialize HTTP adapter for external submodel service."""
-        http_config = ConfigManager.get_config("provider.submodel_dispatcher.http", default={})
+        http_config = ConfigManager.get_config("provider.submodel_dispatcher.http_submodel", default={})
         
         if not isinstance(http_config, dict):
             raise ValueError(
@@ -118,11 +129,12 @@ class SubmodelServiceManager:
             raise ValueError(
                 "Missing required configuration: provider.submodel_dispatcher.http.base_url"
             )
-        
+
         # Extract optional configuration with defaults
         api_path = http_config.get("api_path", "")
         timeout = http_config.get("timeout", 30)
         verify_ssl = http_config.get("verify_ssl", True)
+        url_pattern = http_config.get("url_pattern", "{base_url}{api_path}/{semantic_id}/{submodel_id}/submodel")
         
         # Extract authentication configuration
         auth_config = http_config.get("auth", {})
@@ -175,7 +187,7 @@ class SubmodelServiceManager:
             "auth_key_name": auth_key_name,
             "timeout": timeout,
             "verify_ssl": verify_ssl,
-            "url_pattern": "{base_url}/{api_path}/{semantic_id}/{submodel_id}"
+            "url_pattern": url_pattern
         })
 
     def _validate_uuid(self, value: Any) -> UUID:
