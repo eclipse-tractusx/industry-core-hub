@@ -1,0 +1,15 @@
+info:
+  name: Refresh our Pending Response in case that We have the PCF but it not appear in the PCF Response card
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{SubICHUB-URL}}/v1/addons/pcf-kit/provider/requests/{{Request-ID}}/refresh-pcf"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

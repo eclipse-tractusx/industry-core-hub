@@ -1,0 +1,367 @@
+info:
+  name: Retry in case of failes to Send PCF Request to the Sub Participant
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/requests/{{Request-ID}}/retry"
+  body:
+    type: json
+    data: |-
+      [
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:and": [
+                { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+              ]
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        },
+        {
+          "odrl:permission": {
+            "odrl:action": { "@id": "odrl:use" },
+            "odrl:constraint": {
+              "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" },
+              "odrl:operator": { "@id": "odrl:eq" },
+              "odrl:rightOperand": "cx.pcf.base:1"
+            }
+          },
+          "odrl:prohibition": [],
+          "odrl:obligation": []
+        }
+      ]
+  auth: inherit
+
+runtime:
+  variables:
+    - name: Request-ID
+      value: 2a2bb927-b269-48f1-917a-b7b7c59a97d7
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Example-Sent
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/requests/{{Request-ID}}/send"
+      method: POST
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" },
+                  "odrl:operator": { "@id": "odrl:eq" },
+                  "odrl:rightOperand": "cx.pcf.base:1"
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            }
+          ]
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:27:28 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "4"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: "null"
+  - name: Example-Sent2
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/requests/{{Request-ID}}/send"
+      method: POST
+      body:
+        type: json
+        data: |-
+          [
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:and": [
+                    { "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "cx.pcf.base:1" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:Membership" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "active" },
+                    { "odrl:leftOperand": { "@id": "cx-policy:FrameworkAgreement" }, "odrl:operator": { "@id": "odrl:eq" }, "odrl:rightOperand": "DataExchangeGovernance:1.0" }
+                  ]
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            },
+            {
+              "odrl:permission": {
+                "odrl:action": { "@id": "odrl:use" },
+                "odrl:constraint": {
+                  "odrl:leftOperand": { "@id": "cx-policy:UsagePurpose" },
+                  "odrl:operator": { "@id": "odrl:eq" },
+                  "odrl:rightOperand": "cx.pcf.base:1"
+                }
+              },
+              "odrl:prohibition": [],
+              "odrl:obligation": []
+            }
+          ]
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:29:01 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "4"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: "null"

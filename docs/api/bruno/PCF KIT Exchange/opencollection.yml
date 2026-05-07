@@ -1,0 +1,38 @@
+opencollection: 1.0.0
+
+info:
+  name: "PCF KIT Exchange "
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: MainManufacturerPartId
+      value: LKS-PART1
+    - name: SubPartManufacturerPartId1
+      value: NEXT-PART2-2
+    - name: SubPartManufacturerPartId2
+      value: NEXT-PART2-2
+    - name: MainBPN
+      value: BPNL00000000024R
+    - name: SubBPN
+      value: BPNL000000000342
+    - name: MainICHUB-URL
+      value: https://hackathon1-ichub-backend.esauto-x.com
+    - name: SubICHUB-URL
+      value: https://hackathon2-ichub-backend.esauto-x.com
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

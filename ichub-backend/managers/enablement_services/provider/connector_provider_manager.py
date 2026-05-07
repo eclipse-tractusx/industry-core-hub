@@ -413,6 +413,12 @@ class ConnectorProviderManager:
         Register a digital twin event asset, create policies and contract for it.
         Returns a tuple: (asset_id, usage_policy_id, access_policy_id, contract_id)
         """
+        # In case the authorization is enabled, we need to add the backend API key to the headers
+        if(self.authorization):
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
         # Step 1: Create or get the digital twin event asset
         asset_id = self.get_or_create_digital_twin_event_asset(
             digital_twin_event_url=digital_twin_event_url,
@@ -483,4 +489,87 @@ class ConnectorProviderManager:
             notification_endpoint_url=notification_endpoint_url,
             version=version,
             headers=headers
+        )
+
+    def register_pcf_exchange_offer(self,
+                           base_url:str=None,
+                           api_path:str = "/v1/addons/pcf-kit/footprintExchange", 
+                           pcf_exchange_policy_config=dict, 
+                           dct_type:str="cx-taxo:PcfExchange", 
+                           existing_asset_id:str=None,
+                           version="1.2.0",
+                           headers:dict=None) -> tuple[str, str, str, str]:
+        
+        if not base_url:
+            base_url = self.ichub_url
+        pcf_exchange_url = base_url + api_path
+
+        # In case the authorization is enabled, we need to add the backend API key to the headers
+        if(self.authorization):
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
+        asset_id = self.get_or_create_pcf_exchange_asset(pcf_exchange_url=pcf_exchange_url, dct_type=dct_type, existing_asset_id=existing_asset_id, version=version, headers=headers)
+
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=pcf_exchange_policy_config
+        )
+        
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+    
+    def get_or_create_pcf_exchange_asset(self, pcf_exchange_url:str, dct_type:str, existing_asset_id:str=None, headers:dict=None, version:str="3.0") -> str:
+        
+        if(not existing_asset_id):
+            existing_asset_id = self.generate_pcf_exchange_asset_id(pcf_exchange_url=pcf_exchange_url)
+        """Get or create a pcf exchange asset."""
+        # Check if the asset already exists
+        existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
+        
+        if existing_asset.status_code == 200:
+            logger.debug(f"[PCF Exchange] Asset with ID {existing_asset_id} already exists.")
+            return existing_asset_id
+        
+        # If it doesn't exist, create it
+        logger.info(f"[PCF Exchange] Creating new asset with ID {existing_asset_id}.")
+        asset = self.create_pcf_exchange_asset(asset_id=existing_asset_id, pcf_exchange_url=pcf_exchange_url, dct_type=dct_type, version=version, headers=headers)
+        return asset.get("@id", existing_asset_id)
+    
+    def generate_pcf_exchange_asset_id(self, pcf_exchange_url:str):
+        return "ichub:asset:pcf-exchange:"+blake2b_128bit(pcf_exchange_url)
+    
+    def create_pcf_exchange_asset(self, asset_id: str, pcf_exchange_url: str, dct_type:str, version:str="1.2.0", headers: dict = None):           
+        # Create the pcf exchange asset
+        context = {
+            "edc": "https://w3id.org/edc/v0.0.1/ns/",
+            "odrl": "http://www.w3.org/ns/odrl/2/",
+            "dcat": "http://www.w3.org/ns/dcat#",
+            "dct": "http://purl.org/dc/terms/",
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "cx-taxo": "https://w3id.org/catenax/taxonomy#",
+            "cx-common": "https://w3id.org/catenax/ontology/common#",
+            "aas-semantics": "https://admin-shell.io/aas/3/0/HasSemantics/"
+        }
+
+        private_properties = {
+            "rdfs:label": "PCF Exchange API",
+            "rdfs:comment": "Endpoint for PCF Exchange API"
+        }
+
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=pcf_exchange_url,
+            dct_type=dct_type,
+            version=version,
+            headers=headers,
+            proxy_params={ 
+                "proxyQueryParams": "true",
+                "proxyPath": "true",
+                "proxyMethod": "true",
+                "proxyBody": "true",
+                "contentType": "application/json"
+            },
+            #context=context,
+            private_properties=private_properties
         )

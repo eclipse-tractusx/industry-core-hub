@@ -1,9 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 DRÄXLMAIER Group
-# (represented by Lisa Dräxlmaier GmbH)
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -22,14 +21,21 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .provider.models import (
-    LegalEntity, BusinessPartner, EnablementServiceStack,
-    Twin, TwinAspect, TwinAspectRegistration, TwinExchange, TwinRegistration,
-    CatalogPart, PartnerCatalogPart, SerializedPart, JISPart, Batch, BatchBusinessPartner,
-    DataExchangeAgreement, DataExchangeContract
-)
+from sqlalchemy import text
 
-from .pcf.models import (
-    PcfExchangeEntity, PcfExchangeDirection, PcfExchangeStatus
-)
+from managers.config.log_manager import LoggingManager
 
+logger = LoggingManager.get_logger(__name__)
+
+
+def remove_existing_edr(repos, provider_bpn: str, asset_id: str):
+    """
+    Before sending a notification, we must remove any edr_connection that we have stored in the database
+    related with the DigitalTwinEventAPI to ensure that we are not using an old edr_connection.
+    """
+    session = repos._session
+    session.execute(
+        text("DELETE FROM edr_connections WHERE counter_party_id = :cpid AND edr_data->>'assetId' LIKE :asset_id"),
+        params={"cpid": provider_bpn, "asset_id": asset_id}
+    )
+    session.commit()

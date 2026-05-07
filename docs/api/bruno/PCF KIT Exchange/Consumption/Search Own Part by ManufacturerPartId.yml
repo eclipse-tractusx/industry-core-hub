@@ -1,0 +1,242 @@
+info:
+  name: Search Own Part by ManufacturerPartId
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Example-Empty
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:18:27 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "70"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": []
+          }
+  - name: Example-One Sub Part Sent
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:27:55 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "595"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              },
+              {
+                "requestId": "2a2bb927-b269-48f1-917a-b7b7c59a97d7",
+                "manufacturerPartId": "NEXT-PART2-2",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "pending",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              }
+            ]
+          }
+  - name: Example-Two Sub Parts Requests
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:29:17 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "597"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              },
+              {
+                "requestId": "2a2bb927-b269-48f1-917a-b7b7c59a97d7",
+                "manufacturerPartId": "NEXT-PART2-2",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              }
+            ]
+          }
+  - name: Example - One Received
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:49:48 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "666"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              },
+              {
+                "requestId": "2a2bb927-b269-48f1-917a-b7b7c59a97d7",
+                "manufacturerPartId": "NEXT-PART2-2",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "response",
+                "message": null,
+                "pcfLocation": "submodel://urn:samm:io.catenax.pcf:9.0.0#PcfExchangeAsync/NEXT-PART2-2",
+                "pcfData": null
+              }
+            ]
+          }
+  - name: Example - All Received
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: GET
+    response:
+      status: 200
+      statusText: OK
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:53:46 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "735"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "response",
+                "message": null,
+                "pcfLocation": "submodel://urn:samm:io.catenax.pcf:9.0.0#PcfExchangeAsync/NEXT-PART2-1",
+                "pcfData": null
+              },
+              {
+                "requestId": "2a2bb927-b269-48f1-917a-b7b7c59a97d7",
+                "manufacturerPartId": "NEXT-PART2-2",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "delivered",
+                "type": "response",
+                "message": null,
+                "pcfLocation": "submodel://urn:samm:io.catenax.pcf:9.0.0#PcfExchangeAsync/NEXT-PART2-2",
+                "pcfData": null
+              }
+            ]
+          }

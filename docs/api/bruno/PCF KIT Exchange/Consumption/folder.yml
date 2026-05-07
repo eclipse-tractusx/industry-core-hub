@@ -1,0 +1,11 @@
+info:
+  name: Consumption
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: apikey
+    key: X-Api-Key
+    value: "{{API_KEY}}"
+    placement: header

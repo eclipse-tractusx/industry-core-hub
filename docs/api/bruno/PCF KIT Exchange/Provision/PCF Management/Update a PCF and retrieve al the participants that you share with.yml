@@ -1,0 +1,15 @@
+info:
+  name: Update a PCF and retrieve al the participants that you share with
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{SubICHUB-URL}}/v1/addons/pcf-kit/provider/pcfs/{{SubPartManufacturerPartId1}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

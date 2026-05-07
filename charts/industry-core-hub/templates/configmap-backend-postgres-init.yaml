@@ -216,6 +216,33 @@ data:
         location character varying NOT NULL
     );
 
+    CREATE TYPE public.pcf_exchange_direction AS ENUM ('outgoing', 'incoming');
+    CREATE TYPE public.pcf_exchange_status AS ENUM ('pending', 'delivered', 'updated', 'rejected', 'failed', 'cancelled');
+    CREATE TYPE public.pcf_exchange_type AS ENUM ('request', 'response');
+
+    CREATE TABLE public.pcf_exchanges (
+        id integer NOT NULL,
+        request_id uuid DEFAULT gen_random_uuid() NOT NULL,
+        created_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+        updated_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+        direction public.pcf_exchange_direction NOT NULL,
+        status public.pcf_exchange_status DEFAULT 'pending'::public.pcf_exchange_status NOT NULL,
+        type public.pcf_exchange_type DEFAULT 'request'::public.pcf_exchange_type NOT NULL,
+        requesting_bpn character varying NOT NULL,
+        responding_bpn character varying,
+        manufacturer_part_id character varying,
+        customer_part_id character varying,
+        message character varying,
+        pcf_location character varying,
+        correlation_id character varying
+    );
+
+    CREATE TABLE public.pcf_relationships (
+        id integer NOT NULL,
+        main_manufacturer_part_id character varying NOT NULL,
+        list_sub_manufacturer_part_id json
+    );
+
     ALTER TABLE public.batch ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
         SEQUENCE NAME public.batch_id_seq
         START WITH 1
@@ -332,6 +359,24 @@ data:
         CACHE 1
     );
 
+    ALTER TABLE public.pcf_exchanges ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+        SEQUENCE NAME public.pcf_exchanges_id_seq
+        START WITH 1
+        INCREMENT BY 1
+        NO MINVALUE
+        NO MAXVALUE
+        CACHE 1
+    );
+
+    ALTER TABLE public.pcf_relationships ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+        SEQUENCE NAME public.pcf_relationships_id_seq
+        START WITH 1
+        INCREMENT BY 1
+        NO MINVALUE
+        NO MAXVALUE
+        CACHE 1
+    );
+
     ALTER TABLE ONLY public.batch
         ADD CONSTRAINT pk_batch PRIMARY KEY (id);
 
@@ -434,6 +479,15 @@ data:
     ALTER TABLE ONLY public.notifications
         ADD CONSTRAINT uk_notifications_message_id UNIQUE (message_id);
 
+    ALTER TABLE ONLY public.pcf_exchanges
+        ADD CONSTRAINT pk_pcf_exchanges PRIMARY KEY (id);
+
+    ALTER TABLE ONLY public.pcf_exchanges
+        ADD CONSTRAINT uk_pcf_exchanges_request_id UNIQUE (request_id);
+
+    ALTER TABLE ONLY public.pcf_relationships
+        ADD CONSTRAINT pk_pcf_relationships PRIMARY KEY (id);
+
     CREATE INDEX idx_batch_batch_id ON public.batch USING btree (batch_id) WITH (deduplicate_items='true');
     CREATE INDEX idx_batch_catalog_part_id ON public.batch USING btree (catalog_part_id);
 
@@ -481,6 +535,18 @@ data:
     CREATE INDEX idx_notifications_status ON public.notifications USING btree (status);
     CREATE INDEX idx_notifications_direction ON public.notifications USING btree (direction);
     CREATE INDEX idx_notifications_location ON public.notifications USING btree (location);
+
+    CREATE INDEX idx_pcf_exchanges_request_id ON public.pcf_exchanges USING btree (request_id);
+    CREATE INDEX idx_pcf_exchanges_direction ON public.pcf_exchanges USING btree (direction);
+    CREATE INDEX idx_pcf_exchanges_status ON public.pcf_exchanges USING btree (status);
+    CREATE INDEX idx_pcf_exchanges_requesting_bpn ON public.pcf_exchanges USING btree (requesting_bpn);
+    CREATE INDEX idx_pcf_exchanges_responding_bpn ON public.pcf_exchanges USING btree (responding_bpn);
+    CREATE INDEX idx_pcf_exchanges_manufacturer_part_id ON public.pcf_exchanges USING btree (manufacturer_part_id);
+    CREATE INDEX idx_pcf_exchanges_customer_part_id ON public.pcf_exchanges USING btree (customer_part_id);
+    CREATE INDEX idx_pcf_exchanges_correlation_id ON public.pcf_exchanges USING btree (correlation_id);
+    CREATE INDEX idx_pcf_exchanges_type ON public.pcf_exchanges USING btree (type);
+
+    CREATE INDEX idx_pcf_relationships_main_manufacturer_part_id ON public.pcf_relationships USING btree (main_manufacturer_part_id);
 
     ALTER TABLE ONLY public.batch
         ADD CONSTRAINT fk_batch_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
@@ -545,5 +611,7 @@ data:
     ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
     ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
     ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.pcf_exchanges_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.pcf_relationships_id_seq RESTART WITH 1;
 
 {{- end -}}

@@ -1,0 +1,11 @@
+info:
+  name: Provision
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: apikey
+    key: X-Api-Key
+    value: "{{X_API_KEY}}"
+    placement: header

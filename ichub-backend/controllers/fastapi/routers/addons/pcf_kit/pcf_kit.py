@@ -1,9 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 DRÄXLMAIER Group
-# (represented by Lisa Dräxlmaier GmbH)
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -12,7 +11,7 @@
 # terms of the Apache License, Version 2.0 which is available at
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
-# Unless required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the
@@ -22,14 +21,19 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .provider.models import (
-    LegalEntity, BusinessPartner, EnablementServiceStack,
-    Twin, TwinAspect, TwinAspectRegistration, TwinExchange, TwinRegistration,
-    CatalogPart, PartnerCatalogPart, SerializedPart, JISPart, Batch, BatchBusinessPartner,
-    DataExchangeAgreement, DataExchangeContract
+from fastapi import APIRouter, Depends
+
+from .v1 import consumption, exchange, management, provision
+
+from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+
+router = APIRouter(
+    prefix="/pcf-kit",
+    tags=["PCF KIT Microservices"],
+    dependencies=[Depends(get_authentication_dependency())]
 )
 
-from .pcf.models import (
-    PcfExchangeEntity, PcfExchangeDirection, PcfExchangeStatus
-)
-
+router.include_router(consumption.router)
+router.include_router(provision.router)
+router.include_router(exchange.router)
+router.include_router(management.router)
