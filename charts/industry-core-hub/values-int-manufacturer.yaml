@@ -457,7 +457,7 @@ backend:
             obligation: []
       pcfExchange:
         # -- Enable or disable PCF Exchange
-        enabled: true
+        enabled: false
         # -- Hostname of the PCF Exchange API
         hostname: "https://<provider-pcf-exchange-api>"
         asset_config:

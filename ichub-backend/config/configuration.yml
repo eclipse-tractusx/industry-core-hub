@@ -331,7 +331,7 @@ provider:
         prohibitions: []
         obligations: []
   pcfExchange:
-    enabled: true
+    enabled: false
     hostname: "https://<provider-pcf-exchange-api>"
     asset_config:
       dct_type: "cx-taxo:PcfExchange"
