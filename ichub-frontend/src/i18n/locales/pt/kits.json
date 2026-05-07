@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Cálculo da Pegada de Carbono do Produto e ferramentas de avaliação do ciclo de vida."
+      "description": "Cálculo da Pegada de Carbono do Produto e ferramentas de avaliação do ciclo de vida.",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "Pré-cálculo PCF",
+          "description": "Calcular a pegada de carbono do produto a partir de dados PCF de subpeças"
+        },
+        "pcfManagement": {
+          "name": "Gestão PCF",
+          "description": "Gerir e fazer upload de dados PCF para as suas peças de catálogo"
+        },
+        "pcfRequests": {
+          "name": "Pedidos PCF",
+          "description": "Ver e responder pedidos PCF recebidos"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",

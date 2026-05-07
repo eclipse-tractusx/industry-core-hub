@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Calcul de l'empreinte carbone du produit et outils d'évaluation du cycle de vie."
+      "description": "Calcul de l'empreinte carbone du produit et outils d'évaluation du cycle de vie.",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "Précalcul PCF",
+          "description": "Calculer l'empreinte carbone du produit à partir des données PCF des sous-pièces"
+        },
+        "pcfManagement": {
+          "name": "Gestion PCF",
+          "description": "Gérer et télécharger les données PCF pour vos pièces de catalogue"
+        },
+        "pcfRequests": {
+          "name": "Demandes PCF",
+          "description": "Voir et répondre aux demandes PCF entrantes"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",

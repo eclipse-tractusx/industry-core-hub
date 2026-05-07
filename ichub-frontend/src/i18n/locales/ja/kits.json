@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "製品カーボンフットプリント計算とライフサイクル評価ツール。"
+      "description": "製品カーボンフットプリント計算とライフサイクル評価ツール。",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "PCF事前計算",
+          "description": "サブパーツのPCFデータから製品カーボンフットプリントを計算"
+        },
+        "pcfManagement": {
+          "name": "PCF管理",
+          "description": "カタログ部品のPCFデータを管理・アップロード"
+        },
+        "pcfRequests": {
+          "name": "PCFリクエスト",
+          "description": "着信PCFリクエストの表示と対応"
+        }
+      }
     },
     "dataChain": {
       "name": "データチェーンKIT",

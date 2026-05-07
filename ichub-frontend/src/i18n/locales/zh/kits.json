@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "产品碳足迹KIT",
-      "description": "产品碳足迹计算和生命周期评估工具。"
+      "description": "产品碳足迹计算和生命周期评估工具。",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "PCF预计算",
+          "description": "从子部件PCF数据计算产品碳足迹"
+        },
+        "pcfManagement": {
+          "name": "PCF管理",
+          "description": "管理和上传您目录零件的PCF数据"
+        },
+        "pcfRequests": {
+          "name": "PCF请求",
+          "description": "查看和响应传入的PCF请求"
+        }
+      }
     },
     "dataChain": {
       "name": "数据链KIT",

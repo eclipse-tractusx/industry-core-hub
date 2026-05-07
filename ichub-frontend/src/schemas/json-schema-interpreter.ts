@@ -424,7 +424,7 @@ function processProperties(
   
   // Prevent infinite recursion
   if (depth > 10) {
-    console.warn(`Maximum recursion depth reached for ${parentKey}`);
+    console.debug(`Maximum recursion depth reached for ${parentKey}`);
     return fields;
   }
   

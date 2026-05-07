@@ -177,6 +177,40 @@ agreements:
             rightOperand: "active"
       prohibitions: []
       obligations: []
+  - semanticid: urn:samm:io.catenax.pcf:9.0.0#Pcf
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permission:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.pcf.base:1"
+      prohibition: []
+      obligation: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
 
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"

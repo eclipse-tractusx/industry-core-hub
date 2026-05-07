@@ -47,14 +47,103 @@ import {
   Security,
   CloudUpload,
   Description,
-  FolderSpecial
+  FolderSpecial,
+  // PCF-specific icons
+  Co2,
+  LocalFireDepartment,
+  Spa,
+  FlightTakeoff,
+  Warehouse,
+  QueryStats,
+  PrecisionManufacturing,
+  Timeline,
+  VerifiedUser,
+  Public,
+  Percent,
+  AccountTree,
+  Numbers,
+  SettingsApplications,
+  Air,
+  Agriculture
 } from '@mui/icons-material';
 
 /**
  * Maps property keys to appropriate MUI icons based on semantic meaning
+ * Includes PCF-specific icons for Product Carbon Footprint visualization
  */
 export const getIconForProperty = (key: string): React.ElementType => {
   const lowerKey = key.toLowerCase();
+  
+  // ============ PCF-SPECIFIC ICONS ============
+  
+  // Main PCF Values
+  if (lowerKey.includes('pcfexcludingbiogenic') || lowerKey.includes('pcfexcluding')) return Co2;
+  if (lowerKey.includes('pcfincludingbiogenic') || lowerKey.includes('pcfincluding')) return Co2;
+  if (lowerKey === 'pcf' || lowerKey.includes('pcfdeclaration')) return Co2;
+  
+  // Emission Types
+  if (lowerKey.includes('fossilghg') || (lowerKey.includes('fossil') && lowerKey.includes('emission'))) return LocalFireDepartment;
+  if (lowerKey.includes('biogenic') && lowerKey.includes('emission')) return Spa;
+  if (lowerKey.includes('aircraft') || lowerKey.includes('flight')) return FlightTakeoff;
+  if (lowerKey.includes('packagingemission') || lowerKey.includes('packagingghg')) return Warehouse;
+  if (lowerKey.includes('dluc') || lowerKey.includes('landuse')) return Agriculture;
+  if (lowerKey.includes('iluc') || lowerKey.includes('indirectlanduse')) return Agriculture;
+  
+  // Carbon Content
+  if (lowerKey.includes('fossilcarbon')) return LocalFireDepartment;
+  if (lowerKey.includes('biogeniccarboncontent')) return EnergySavingsLeaf;
+  
+  // PCF Data Quality
+  if (lowerKey.includes('dqi') || lowerKey.includes('dataquality')) return QueryStats;
+  if (lowerKey.includes('technologicaldqr')) return PrecisionManufacturing;
+  if (lowerKey.includes('temporaldqr')) return Timeline;
+  if (lowerKey.includes('geographicaldqr')) return Public;
+  if (lowerKey.includes('completenessdqr')) return VerifiedUser;
+  if (lowerKey.includes('reliabilitydqr')) return VerifiedUser;
+  if (lowerKey.includes('primarydatashare')) return Percent;
+  if (lowerKey.includes('emissionfactor') || lowerKey.includes('secondaryemission')) return Science;
+  
+  // PCF Assurance
+  if (lowerKey.includes('assurance')) return VerifiedUser;
+  
+  // PCF Scope & Form
+  if (lowerKey.includes('scopeofpcf') || lowerKey.includes('partialfull')) return AccountTree;
+  if (lowerKey.includes('specversion')) return Numbers;
+  if (lowerKey.includes('exempted')) return Percent;
+  
+  // PCF Technology
+  if (lowerKey.includes('technology') || lowerKey.includes('ccs')) return SettingsApplications;
+  if (lowerKey.includes('boundaryprocess')) return PrecisionManufacturing;
+  
+  // PCF Time & Period
+  if (lowerKey.includes('referenceperiod')) return Timeline;
+  if (lowerKey.includes('validity')) return CalendarToday;
+  
+  // GWP Factors
+  if (lowerKey.includes('gwp') || lowerKey.includes('globalwarming')) return Air;
+  if (lowerKey.includes('characterizationfactor')) return Science;
+  
+  // PCF Geography
+  if (lowerKey.includes('geography') || lowerKey.includes('geo')) return Public;
+  if (lowerKey.includes('region')) return LocationOn;
+  
+  // PCF Assessment
+  if (lowerKey.includes('pcfassessment')) return Co2;
+  if (lowerKey.includes('datasources')) return QueryStats;
+  
+  // PCF Company & Product
+  if (lowerKey.includes('companyandproduct')) return Business;
+  if (lowerKey.includes('companyinformation')) return Business;
+  if (lowerKey.includes('productinformation')) return Inventory;
+  if (lowerKey.includes('declaredunit')) return Numbers;
+  if (lowerKey.includes('productmass')) return FitnessCenter;
+  
+  // PCF ID & Version
+  if (lowerKey.includes('idandversion')) return Assignment;
+  if (lowerKey.includes('precedingpf')) return AccountTree;
+  if (lowerKey.includes('retroorprospective')) return Timeline;
+  
+  // ============ ORIGINAL DPP ICONS ============
   
   // Metadata & Identification
   if (lowerKey.includes('metadata')) return Info;
@@ -116,11 +205,30 @@ export const getIconForProperty = (key: string): React.ElementType => {
 
 /**
  * Get category-specific icons for metric cards
+ * Includes PCF-specific categories for Product Carbon Footprint
  */
 export const getCategoryIcon = (category?: string): React.ElementType => {
   if (!category) return Info;
   
   const lower = category.toLowerCase();
+  
+  // ============ PCF-SPECIFIC CATEGORIES ============
+  
+  // Main PCF Sections
+  if (lower.includes('pcfassessment') || lower.includes('pcfdeclaration')) return Co2;
+  if (lower.includes('scopeofpcf') || lower.includes('scope')) return AccountTree;
+  if (lower.includes('companyandproduct') || lower.includes('companyproduct')) return Business;
+  if (lower.includes('datasources') || lower.includes('quality')) return QueryStats;
+  if (lower.includes('technology')) return PrecisionManufacturing;
+  if (lower.includes('idandversion')) return Assignment;
+  if (lower.includes('boundary')) return AccountTree;
+  if (lower.includes('geography') || lower.includes('geo')) return Public;
+  if (lower.includes('time') || lower.includes('period')) return Timeline;
+  if (lower.includes('assurance')) return VerifiedUser;
+  if (lower.includes('emission')) return LocalFireDepartment;
+  if (lower.includes('dqi') || lower.includes('dataquality')) return QueryStats;
+  
+  // ============ ORIGINAL DPP CATEGORIES ============
   
   // Metadata & Information
   if (lower.includes('metadata') || lower.includes('general')) return Info;

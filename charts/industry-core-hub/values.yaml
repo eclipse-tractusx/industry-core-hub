@@ -209,6 +209,38 @@ backend:
                 rightOperand: "active"
           prohibition: []
           obligation: []
+      - semanticid: urn:samm:io.catenax.pcf:9.0.0#Pcf
+        usage:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              LogicalConstraint: odrl:and
+              constraints:
+                - leftOperand: cx-policy:FrameworkAgreement
+                  operator: odrl:eq
+                  rightOperand: DataExchangeGovernance:1.0
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+                - leftOperand: cx-policy:UsagePurpose
+                  operator: odrl:eq
+                  rightOperand: cx.pcf.base:1
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            odrl: http://www.w3.org/ns/odrl/2/
+            cx-policy: https://w3id.org/catenax/policy/
+          permission:
+            - action: odrl:use
+              constraints:
+                - leftOperand: cx-policy:Membership
+                  operator: odrl:eq
+                  rightOperand: active
+          prohibition: []
+          obligation: []
     authorization:
       enabled: true
       apiKey:
