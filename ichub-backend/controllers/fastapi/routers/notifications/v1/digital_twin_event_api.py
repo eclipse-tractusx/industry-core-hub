@@ -24,7 +24,7 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import Response, JSONResponse
 
-from tractusx_sdk.extensions.notification_api.models import (
+from tractusx_sdk.industry.models.notifications import (
     Notification)
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency

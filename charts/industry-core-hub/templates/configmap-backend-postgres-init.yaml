@@ -611,6 +611,7 @@ data:
     ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
     ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
     ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
+    ALTER SEQUENCE public.pcf_exchanges_id_seq RESTART WITH 1;
     ALTER SEQUENCE public.pcf_relationships_id_seq RESTART WITH 1;
 
 {{- end -}}

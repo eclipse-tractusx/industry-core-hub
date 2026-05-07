@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Peças Serializadas",
+    "subtitle": "Fornecer, Partilhar e Gerir Peças a Nível Serializado / Instância",
     "loading": "A carregar peças serializadas..."
   },
   "table": {
@@ -13,12 +14,12 @@
       "deleteSerializedPart": "Eliminar Peça Serializada"
     },
     "messages": {
-      "twinRegistered": "Gémeo partilhado com sucesso!",
+      "twinRegistered": "Gémeo registado com sucesso!",
       "twinShared": "Gémeo partilhado com sucesso!",
       "twinUnshared": "Partilha do gémeo anulada com sucesso!",
       "partDeleted": "Peça serializada eliminada com sucesso!",
       "dataRefreshed": "Dados atualizados com sucesso!",
-      "registerFailed": "Partilha falhou",
+      "registerFailed": "Registo falhou",
       "shareFailed": "Partilha falhou",
       "unshareFailed": "Anulação de partilha falhou",
       "deleteFailed": "Eliminação falhou",

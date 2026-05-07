@@ -34,6 +34,7 @@ import enPassportProvision from './locales/en/passportProvision.json';
 import enPartDiscovery from './locales/en/partDiscovery.json';
 import enSerializedParts from './locales/en/serializedParts.json';
 import enPcf from './locales/en/pcf.json';
+import enNotifications from './locales/en/notifications.json';
 
 // Spanish
 import esCommon from './locales/es/common.json';
@@ -45,6 +46,7 @@ import esPassportProvision from './locales/es/passportProvision.json';
 import esPartDiscovery from './locales/es/partDiscovery.json';
 import esSerializedParts from './locales/es/serializedParts.json';
 import esPcf from './locales/es/pcf.json';
+import esNotifications from './locales/es/notifications.json';
 
 // German
 import deCommon from './locales/de/common.json';
@@ -56,6 +58,7 @@ import dePassportProvision from './locales/de/passportProvision.json';
 import dePartDiscovery from './locales/de/partDiscovery.json';
 import deSerializedParts from './locales/de/serializedParts.json';
 import dePcf from './locales/de/pcf.json';
+import deNotifications from './locales/de/notifications.json';
 
 // French
 import frCommon from './locales/fr/common.json';
@@ -67,6 +70,7 @@ import frPassportProvision from './locales/fr/passportProvision.json';
 import frPartDiscovery from './locales/fr/partDiscovery.json';
 import frSerializedParts from './locales/fr/serializedParts.json';
 import frPcf from './locales/fr/pcf.json';
+import frNotifications from './locales/fr/notifications.json';
 
 // Chinese (Simplified)
 import zhCommon from './locales/zh/common.json';
@@ -78,6 +82,7 @@ import zhPassportProvision from './locales/zh/passportProvision.json';
 import zhPartDiscovery from './locales/zh/partDiscovery.json';
 import zhSerializedParts from './locales/zh/serializedParts.json';
 import zhPcf from './locales/zh/pcf.json';
+import zhNotifications from './locales/zh/notifications.json';
 
 // Japanese
 import jaCommon from './locales/ja/common.json';
@@ -89,6 +94,7 @@ import jaPassportProvision from './locales/ja/passportProvision.json';
 import jaPartDiscovery from './locales/ja/partDiscovery.json';
 import jaSerializedParts from './locales/ja/serializedParts.json';
 import jaPcf from './locales/ja/pcf.json';
+import jaNotifications from './locales/ja/notifications.json';
 
 // Portuguese
 import ptCommon from './locales/pt/common.json';
@@ -100,6 +106,7 @@ import ptPassportProvision from './locales/pt/passportProvision.json';
 import ptPartDiscovery from './locales/pt/partDiscovery.json';
 import ptSerializedParts from './locales/pt/serializedParts.json';
 import ptPcf from './locales/pt/pcf.json';
+import ptNotifications from './locales/pt/notifications.json';
 
 export const defaultNS = 'common';
 export const resources = {
@@ -112,7 +119,8 @@ export const resources = {
     passportProvision: enPassportProvision,
     partDiscovery: enPartDiscovery,
     serializedParts: enSerializedParts,
-    pcf: enPcf
+    pcf: enPcf,
+    notifications: enNotifications
   },
   es: {
     common: esCommon,
@@ -123,7 +131,8 @@ export const resources = {
     passportProvision: esPassportProvision,
     partDiscovery: esPartDiscovery,
     serializedParts: esSerializedParts,
-    pcf: esPcf
+    pcf: esPcf,
+    notifications: esNotifications
   },
   de: {
     common: deCommon,
@@ -134,7 +143,8 @@ export const resources = {
     passportProvision: dePassportProvision,
     partDiscovery: dePartDiscovery,
     serializedParts: deSerializedParts,
-    pcf: dePcf
+    pcf: dePcf,
+    notifications: deNotifications
   },
   fr: {
     common: frCommon,
@@ -145,7 +155,8 @@ export const resources = {
     passportProvision: frPassportProvision,
     partDiscovery: frPartDiscovery,
     serializedParts: frSerializedParts,
-    pcf: frPcf
+    pcf: frPcf,
+    notifications: frNotifications
   },
   zh: {
     common: zhCommon,
@@ -156,7 +167,8 @@ export const resources = {
     passportProvision: zhPassportProvision,
     partDiscovery: zhPartDiscovery,
     serializedParts: zhSerializedParts,
-    pcf: zhPcf
+    pcf: zhPcf,
+    notifications: zhNotifications
   },
   ja: {
     common: jaCommon,
@@ -167,7 +179,8 @@ export const resources = {
     passportProvision: jaPassportProvision,
     partDiscovery: jaPartDiscovery,
     serializedParts: jaSerializedParts,
-    pcf: jaPcf
+    pcf: jaPcf,
+    notifications: jaNotifications
   },
   pt: {
     common: ptCommon,
@@ -178,7 +191,8 @@ export const resources = {
     passportProvision: ptPassportProvision,
     partDiscovery: ptPartDiscovery,
     serializedParts: ptSerializedParts,
-    pcf: ptPcf
+    pcf: ptPcf,
+    notifications: ptNotifications
   }
 } as const;
 
@@ -196,7 +210,7 @@ i18n
     fallbackLng: 'en',
     supportedLngs: supportedLanguages,
     defaultNS,
-    ns: ['common', 'kits', 'catalogManagement', 'partnerManagement', 'passportConsumption', 'passportProvision', 'partDiscovery', 'pcf'],
+    ns: ['common', 'kits', 'catalogManagement', 'partnerManagement', 'passportConsumption', 'passportProvision', 'partDiscovery', 'pcf', 'notifications'],
     interpolation: {
       escapeValue: false // React already escapes values
     },

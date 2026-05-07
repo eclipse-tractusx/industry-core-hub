@@ -25,23 +25,30 @@ FROM alpine:3.21
 
 USER root
 
-## Move all the files from the project to the sdk directory
-COPY ./ /industry-core-hub
-
 ## Create user groups
 RUN addgroup -g 10001 appgroup \
 	&& adduser -u 10000 -g 10001 -h /home/nonroot -D nonroot
 
+## Install Python (system deps are cached independently of application code)
+RUN apk add python3 py3-pip libpq gettext --no-cache
+
 WORKDIR /industry-core-hub
+
+## Copy only the requirements file first to leverage Docker layer caching:
+## the pip install layer is reused on subsequent builds when requirements.txt is unchanged.
+COPY requirements.txt .
+
+## Install application requirements.
+## --mount=type=cache keeps pip's download cache outside the image layer,
+## so changed packages are re-downloaded without re-downloading everything.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install --break-system-packages -r ./requirements.txt
+
+## Copy the rest of the project (code changes do not invalidate the dep layer above)
+COPY ./ ./
 
 ## List the contents of the /backend directory
 RUN ls -la
-
-## Install Python
-RUN apk add python3 py3-pip libpq gettext --no-cache
-
-## Install application requirements
-RUN pip3 install --break-system-packages --no-cache-dir -r ./requirements.txt
 
 ## Specify the volumes
 VOLUME ./data ./logs

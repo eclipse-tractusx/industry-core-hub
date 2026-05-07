@@ -125,13 +125,13 @@ const KitDetailPage: React.FC = () => {
           <Box
             sx={{
               height: { xs: 'auto', md: '100%' },
-              p: 4,
+              p: 3,
               borderRight: { xs: 'none', md: '1px solid rgba(255, 255, 255, 0.1)' },
               borderBottom: { xs: '1px solid rgba(255, 255, 255, 0.1)', md: 'none' },
               background: 'linear-gradient(135deg, rgb(20, 20, 20) 0%, rgb(30, 30, 30) 100%)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 3,
+              gap: 2,
               overflowY: { xs: 'visible', md: 'auto' }
             }}
           >
@@ -211,21 +211,16 @@ const KitDetailPage: React.FC = () => {
             <Box
             sx={{
                 textAlign: 'center',
-                p: 2,
+                p: 1.5,
                 borderRadius: 2,
                 backgroundColor: 'rgb(25, 25, 25)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(66, 165, 245, 0.2)'
-                }
+                border: '1px solid rgba(255, 255, 255, 0.1)'
             }}
             >
-            <Typography variant="h2" sx={{ color: '#42a5f5', fontWeight: 700 }}>
+            <Typography variant="h3" sx={{ color: '#42a5f5', fontWeight: 700 }}>
                 {kit.features.length}
             </Typography>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 1 }}>
+            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 0.5 }}>
                 {kit.features.length === 1 ? tCommon('labels.feature') : tCommon('labels.features')}
             </Typography>
             </Box>
@@ -234,18 +229,12 @@ const KitDetailPage: React.FC = () => {
               {/* Description */}
               <Box
                 sx={{
-                  p: 2,
+                  p: 1.5,
                   borderRadius: 1,
                   backgroundColor: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                   display: 'flex',
-                  alignContent: 'between',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)'
-                  }
+                  alignContent: 'between'
                 }}
               >
                 <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.5, fontSize: '0.875rem' }}>
@@ -259,17 +248,10 @@ const KitDetailPage: React.FC = () => {
                   <Box 
                     sx={{ 
                       flex: 1,
-                      p: 1.5,
+                      p: 1,
                       borderRadius: 1,
                       backgroundColor: 'rgba(66, 165, 245, 0.08)',
-                      border: '1px solid rgba(66, 165, 245, 0.2)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        backgroundColor: 'rgba(66, 165, 245, 0.12)',
-                        borderColor: 'rgba(66, 165, 245, 0.3)',
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 24px rgba(66, 165, 245, 0.3)'
-                      }
+                      border: '1px solid rgba(66, 165, 245, 0.2)'
                     }}
                   >
                     <Typography 
@@ -277,7 +259,7 @@ const KitDetailPage: React.FC = () => {
                       sx={{ 
                         color: 'rgba(66, 165, 245, 0.7)', 
                         display: 'block', 
-                        mb: 0.5, 
+                        mb: 0.25, 
                         fontSize: '0.688rem', 
                         textTransform: 'uppercase', 
                         letterSpacing: '0.8px',
@@ -305,17 +287,10 @@ const KitDetailPage: React.FC = () => {
                   <Box 
                     sx={{ 
                       flex: 1,
-                      p: 1.5,
+                      p: 1,
                       borderRadius: 1,
                       backgroundColor: 'rgba(156, 39, 176, 0.08)',
-                      border: '1px solid rgba(156, 39, 176, 0.2)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        backgroundColor: 'rgba(156, 39, 176, 0.12)',
-                        borderColor: 'rgba(156, 39, 176, 0.3)',
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 24px rgba(156, 39, 176, 0.3)'
-                      }
+                      border: '1px solid rgba(156, 39, 176, 0.2)'
                     }}
                   >
                     <Typography 
@@ -323,7 +298,7 @@ const KitDetailPage: React.FC = () => {
                       sx={{ 
                         color: 'rgba(156, 39, 176, 0.7)', 
                         display: 'block', 
-                        mb: 0.5, 
+                        mb: 0.25, 
                         fontSize: '0.688rem', 
                         textTransform: 'uppercase', 
                         letterSpacing: '0.8px',
@@ -387,7 +362,7 @@ const KitDetailPage: React.FC = () => {
 
         {/* Right Side: Features Grid */}
         <Grid2 size={{ xs: 12, md: 8, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '100%', height: { xs: 'auto', md: '100%' } }}>
-          <Box sx={{ p: 4, width: '100%', maxWidth: '100%', height: '100%', overflowY: 'auto' }}>
+          <Box sx={{ p: 3, width: '100%', maxWidth: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
               <Grid2 container spacing={3} sx={{ width: '100%', maxWidth: '100%', margin: 0 }}>
                 {kit.features.map((feature) => (
                   <Grid2 size={{ xs: 12, sm: 6, lg: 4 }} key={feature.id} sx={{ maxWidth: '100%' }}>

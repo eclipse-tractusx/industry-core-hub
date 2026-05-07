@@ -1,6 +1,8 @@
 {
   "page": {
     "title": "Liste des Contacts",
+    "subtitle": "Gérez vos contacts partenaires du dataspace pour faciliter la consommation et la collaboration",
+    "createContact": "Créer un Contact",
     "noPartnersYet": "Aucun partenaire n'a encore été ajouté, utilisez le bouton vert ci-dessus pour en créer un.",
     "loadError": "Échec du chargement des partenaires. Veuillez vérifier la connectivité avec le backend.",
     "requestTimeout": "Délai d'attente de la requête après 30 secondes"

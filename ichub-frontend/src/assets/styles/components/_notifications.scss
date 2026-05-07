@@ -1,0 +1,322 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Industry Core Hub Frontend
+ *
+ * Copyright (c) 2026 LKS Next 
+ * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License, Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the
+ * License for the specific language govern in permissions and limitations
+ * under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+// Notifications Panel Styles
+// Following the design patterns from FeaturesPanel
+
+@use '../config/variables' as *;
+
+.notifications-panel {
+  // Panel container animations
+  &-enter {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  
+  &-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.3s ease-out;
+  }
+  
+  &-exit {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  &-exit-active {
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-out;
+  }
+}
+
+// Chat list item animations
+.chat-list-item {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    transform: translateX(4px);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  &.active {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  &.unread {
+    .chat-name {
+      font-weight: 700;
+    }
+    
+    .chat-preview {
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 500;
+    }
+  }
+}
+
+// Message bubble animations
+.message-bubble {
+  animation: messageIn 0.2s ease-out;
+  
+  &.own {
+    animation-name: messageInRight;
+  }
+  
+  &.received {
+    animation-name: messageInLeft;
+  }
+}
+
+@keyframes messageInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes messageInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Unread badge pulse animation
+.unread-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(244, 67, 54, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+}
+
+// Panel expand/collapse animation
+.panel-size-transition {
+  transition: width 0.3s ease-out, max-width 0.3s ease-out;
+}
+
+// Overlay fade animation
+.notifications-overlay {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Chat view transition
+.chat-view-enter {
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Input focus animation
+.message-input {
+  transition: all 0.2s ease;
+  
+  &:focus-within {
+    .MuiOutlinedInput-root {
+      border-color: $brand-light-blue;
+      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+    }
+  }
+}
+
+// Action buttons hover effect
+.message-action-btn {
+  transition: all 0.15s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Typing indicator animation
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  
+  span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.5);
+    animation: typing 1.4s infinite ease-in-out;
+    
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+// Scrollbar styling for chat areas
+.chat-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+}
+
+// Date separator styling
+.date-separator {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .date-label {
+    padding: 0 12px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+  }
+}
+
+// Reply preview styling
+.reply-preview {
+  animation: slideDown 0.2s ease-out;
+  border-left: 3px solid $brand-light-blue;
+  background-color: rgba(25, 118, 210, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Contact badge animations
+.contact-status {
+  &.known {
+    color: #4caf50;
+  }
+  
+  &.unknown {
+    color: #ffa726;
+    animation: gentlePulse 2s infinite;
+  }
+}
+
+@keyframes gentlePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+// Message info panel
+.message-info-panel {
+  animation: expandIn 0.2s ease-out;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}

@@ -87,23 +87,18 @@
       "selectSerializedPart": "Sélectionner une Pièce Sérialisée",
       "chooseSerializedPart": "Choisissez une pièce sérialisée...",
       "selectedPart": "Pièce Sélectionnée",
-      "checkingRegistration": "Vérification du statut de partage...",
+      "checkingRegistration": "Vérification du statut d'enregistrement...",
       "registrationStatus": "Statut d'Enregistrement",
-      "sharingStatus": "Statut de Partage",
-      "notRegistered": "Non partagé",
+      "notRegistered": "Non enregistré",
       "alreadyHasDpp": "A déjà un DPP",
       "noDppAssigned": "Pas de DPP assigné",
       "mustBeRegisteredWarning": "Cette pièce sérialisée doit être enregistrée comme jumeau numérique avant de pouvoir provisionner un DPP.",
-      "mustBeSharedWarning": "Cette pièce sérialisée doit être partagée comme jumeau numérique avant de pouvoir provisionner un DPP.",
       "registerSerializedPart": "Enregistrer la Pièce Sérialisée",
-      "shareSerializedPart": "Partager la Pièce Sérialisée",
       "registerThisPart": "Enregistrer Cette Pièce",
       "registering": "Enregistrement...",
-      "sharing": "Partage...",
       "orCreateNewPart": "Ou créer une nouvelle pièce :",
       "createNewSerializedPart": "Créer une Nouvelle Pièce Sérialisée",
-      "twinRegisteredSuccess": "Jumeau partagé avec succès !",
-      "twinSharedSuccess": "Jumeau partagé avec succès !",
+      "twinRegisteredSuccess": "Jumeau enregistré avec succès !",
       "partCreatedSuccess": "Pièce sérialisée créée avec succès"
     },
     "step3": {
@@ -152,7 +147,6 @@
     "errors": {
       "selectPart": "Veuillez sélectionner une pièce sérialisée à associer à ce DPP",
       "partMustBeRegistered": "La pièce sérialisée sélectionnée doit être enregistrée avant de créer un DPP. Veuillez l'enregistrer d'abord.",
-      "partMustBeShared": "La pièce sérialisée sélectionnée doit être partagée avant de créer un DPP. Veuillez la partager d'abord.",
       "provideDppData": "Veuillez fournir des données DPP avant de continuer. Vous pouvez les créer via le formulaire ou télécharger un fichier JSON.",
       "validateFirst": "Veuillez valider les données DPP avant de continuer."
     },
@@ -165,7 +159,6 @@
       "successMessage": "Votre Passeport Produit Numérique a été publié avec succès !",
       "currentStatus": "Statut Actuel",
       "sharePrompt": "Maintenant vous pouvez le partager avec votre partenaire !",
-      "alreadyShared": "Ce DPP est déjà partagé avec votre partenaire.",
       "errorOccurred": "Une erreur s'est produite lors de la publication du DPP"
     },
     "preview": {

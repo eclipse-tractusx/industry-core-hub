@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Pièces Sérialisées",
+    "subtitle": "Fournir, Partager et Gérer les Pièces au Niveau Sérialisé / Instance",
     "loading": "Chargement des pièces sérialisées..."
   },
   "table": {
@@ -13,12 +14,12 @@
       "deleteSerializedPart": "Supprimer la Pièce Sérialisée"
     },
     "messages": {
-      "twinRegistered": "Jumeau partagé avec succès !",
+      "twinRegistered": "Jumeau enregistré avec succès !",
       "twinShared": "Jumeau partagé avec succès !",
       "twinUnshared": "Partage du jumeau annulé avec succès !",
       "partDeleted": "Pièce sérialisée supprimée avec succès !",
       "dataRefreshed": "Données actualisées avec succès !",
-      "registerFailed": "Échec du partage",
+      "registerFailed": "Échec de l'enregistrement",
       "shareFailed": "Échec du partage",
       "unshareFailed": "Échec de l'annulation du partage",
       "deleteFailed": "Échec de la suppression",

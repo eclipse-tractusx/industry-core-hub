@@ -38,7 +38,7 @@ class DiscoverDppRequest(BaseModel):
         alias="dtrPolicies",
         description="Policies to apply for DTR (Digital Twin Registry) access"
     )
-    governance: Optional[Dict[str, Any]] = Field(
+    governance: Optional[List[Dict[str, Any]]] = Field(
         None,
         description="Governance policies for submodel consumption (passport data access)"
     )

@@ -44,7 +44,7 @@ const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const previousPath = useRef<string>('/catalog');
-  const isKitFeaturesActive = location.pathname === kitFeaturesConfig.navigationPath;
+  const isKitFeaturesActive = location.pathname === kitFeaturesConfig.navigationPath || location.pathname === '/';
   const { enabledFeatures } = useFeatures();
   
   // Get all enabled features dynamically
@@ -161,22 +161,6 @@ const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
           </Box>
         </SidebarTooltip>
       </Box>
-      
-      {/* Overlay for closing panel */}
-      {showFeaturesPanel && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 1000000,
-            backgroundColor: 'transparent'
-          }}
-          onClick={handleCloseFeaturesPanel}
-        />
-      )}
       
       {/* Features Panel */}
       <FeaturesPanel

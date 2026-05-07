@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "序列化零件",
+    "subtitle": "在序列化 / 实例级别提供、共享和管理零件",
     "loading": "正在加载序列化零件..."
   },
   "table": {
@@ -13,12 +14,12 @@
       "deleteSerializedPart": "删除序列化零件"
     },
     "messages": {
-      "twinRegistered": "孪生共享成功！",
+      "twinRegistered": "孪生注册成功！",
       "twinShared": "孪生分享成功！",
       "twinUnshared": "孪生取消分享成功！",
       "partDeleted": "序列化零件删除成功！",
       "dataRefreshed": "数据刷新成功！",
-      "registerFailed": "共享失败",
+      "registerFailed": "注册失败",
       "shareFailed": "分享失败",
       "unshareFailed": "取消分享失败",
       "deleteFailed": "删除失败",

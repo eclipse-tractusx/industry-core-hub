@@ -33,11 +33,18 @@ def pytest_configure(config):
     mock_connection = MagicMock()
     mock_engine.connect.return_value.__enter__.return_value = mock_connection
     mock_engine.connect.return_value.__exit__.return_value = None
-    
+
     # Patch database module
     sys.modules['database'] = MagicMock()
     sys.modules['database'].engine = mock_engine
     sys.modules['database'].get_session = MagicMock(return_value=MagicMock())
+
+    # Mock SubmodelServiceManager so that module-level instantiation in routers
+    # (notification_management_service = NotificationsManagementService()) does not
+    # attempt to create filesystem directories or connect to external storage.
+    # Individual tests that need specific behaviour override this via their own patches.
+    mock_submodel_module = MagicMock()
+    sys.modules['managers.enablement_services.submodel_service_manager'] = mock_submodel_module
 
 
 @pytest.fixture(scope="session", autouse=True)

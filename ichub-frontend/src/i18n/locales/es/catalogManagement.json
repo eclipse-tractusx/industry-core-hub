@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Piezas del Catálogo",
+    "subtitle": "Proporciona, Comparte y Gestiona Piezas a Nivel Catálogo / Tipo",
     "createButton": "Crear Pieza de Catálogo"
   },
   "productCard": {
@@ -147,8 +148,8 @@
         "deleteSerializedPart": "Eliminar Pieza Serializada"
       },
       "messages": {
-        "twinRegisteredSuccess": "¡Gemelo compartido correctamente!",
-        "registrationFailed": "Error al compartir: {{error}}",
+        "twinRegisteredSuccess": "¡Gemelo registrado correctamente!",
+        "registrationFailed": "Error al registrar: {{error}}",
         "sharingFailed": "Error al compartir: {{error}}",
         "unsharingFailed": "Error al dejar de compartir: {{error}}",
         "deletionFailed": "Error al eliminar: {{error}}",

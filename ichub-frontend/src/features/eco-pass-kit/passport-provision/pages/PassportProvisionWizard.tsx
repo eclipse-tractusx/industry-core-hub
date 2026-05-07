@@ -56,7 +56,6 @@ import {
   Link as LinkIcon,
   Add,
   CloudUpload,
-  IosShare,
   Edit,
   Close,
   Visibility,
@@ -65,8 +64,9 @@ import { DPP_VERSION_REGISTRY } from '../config/dppVersionRegistry';
 import { createTwinAspect } from '@/features/industry-core-kit/catalog-management/api';
 import SubmodelCreator from '@/components/submodel-creation/SubmodelCreator';
 import { darkCardStyles } from '../styles/cardStyles';
+import { kitThemes } from '@/theme/colors';
 import { GenericPassportVisualization } from '../../passport-consumption/passport-types/generic/GenericPassportVisualization';
-import { fetchAllSerializedPartTwins, fetchAllSerializedParts, createSerializedPartTwin, shareSerializedPartTwin } from '@/features/industry-core-kit/serialized-parts/api';
+import { fetchAllSerializedPartTwins, fetchAllSerializedParts, createSerializedPartTwin } from '@/features/industry-core-kit/serialized-parts/api';
 import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
 import { StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
@@ -129,9 +129,9 @@ const PassportProvisionWizard: React.FC = () => {
         setError(t('wizard.errors.selectPart'));
         return;
       }
-      // Check if part is registered/shared — for SerializedParts, registration already shares
+      // Check if part is registered
       if (partRegistrationStatus !== StatusVariants.registered && partRegistrationStatus !== StatusVariants.shared) {
-        setError(t('wizard.errors.partMustBeShared'));
+        setError(t('wizard.errors.partMustBeRegistered'));
         return;
       }
       setActiveStep(2);
@@ -185,8 +185,7 @@ const PassportProvisionWizard: React.FC = () => {
           return {
             ...part,
             ...twin, // This adds globalId, dtrAasId, etc. if they exist
-            // For SerializedParts, registration already shares (partner BPN is in DTR shell descriptor)
-            _registrationStatus: 'shared'
+            _registrationStatus: twin.dtrAasId && twin.globalId ? 'registered' : 'error'
           };
         }
         return {
@@ -224,12 +223,14 @@ const PassportProvisionWizard: React.FC = () => {
       // Check if the part already has the registration status from loadSerializedParts
       if ((part as any)._registrationStatus) {
         const status = (part as any)._registrationStatus;
-        // For SerializedParts, both 'registered' and 'shared' map to Shared
-        // because registration already makes the twin visible to the partner
-        setPartRegistrationStatus(
-          (status === 'shared' || status === 'registered') ? StatusVariants.shared : 
-          StatusVariants.draft
-        );
+        // Map status string to StatusVariants enum
+        if (status === 'shared') {
+          setPartRegistrationStatus(StatusVariants.shared);
+        } else if (status === 'registered') {
+          setPartRegistrationStatus(StatusVariants.registered);
+        } else {
+          setPartRegistrationStatus(StatusVariants.draft);
+        }
       } else {
         // Fallback to checking twins if status not available
         const twins = await fetchAllSerializedPartTwins();
@@ -241,9 +242,10 @@ const PassportProvisionWizard: React.FC = () => {
 
         if (!twin) {
           setPartRegistrationStatus(StatusVariants.draft);
-        } else {
-          // For SerializedParts, any registered twin is effectively shared
+        } else if (twin.dtrAasId && twin.globalId) {
           setPartRegistrationStatus(StatusVariants.shared);
+        } else {
+          setPartRegistrationStatus(StatusVariants.registered);
         }
       }
     } catch (err) {
@@ -261,27 +263,15 @@ const PassportProvisionWizard: React.FC = () => {
     setError(null);
 
     try {
-      // Step 1: Register the twin (this already makes it visible in DTR to the partner)
+      // Register the twin in the DTR
       await createSerializedPartTwin({
         manufacturerId: selectedPart.manufacturerId,
         manufacturerPartId: selectedPart.manufacturerPartId,
         partInstanceId: selectedPart.partInstanceId,
       });
 
-      // Step 2: Automatically create TwinExchange record so the DB state reflects the shared reality
-      try {
-        await shareSerializedPartTwin({
-          manufacturerId: selectedPart.manufacturerId,
-          manufacturerPartId: selectedPart.manufacturerPartId,
-          partInstanceId: selectedPart.partInstanceId,
-        });
-      } catch (shareErr) {
-        // Share may fail if TwinExchange already exists — not critical since DTR visibility is already set
-        console.warn('Auto-share after registration warning:', shareErr);
-      }
-
-      // Show success message immediately after sharing
-      setSuccessMessage(t('wizard.step2.twinSharedSuccess'));
+      // Show success message immediately after registration
+      setSuccessMessage(t('wizard.step2.twinRegisteredSuccess'));
       setTimeout(() => setSuccessMessage(null), 4000);
 
       // Reload the serialized parts list to get the updated twin data with globalId and dtrAasId
@@ -304,12 +294,12 @@ const PassportProvisionWizard: React.FC = () => {
         await checkPartRegistrationStatus(partWithTwinData || selectedPart);
       } catch (statusErr) {
         console.warn('Failed to check registration status after registration:', statusErr);
-        // Set status to shared manually since registration already shares for SerializedParts
-        setPartRegistrationStatus(StatusVariants.shared);
+        // Set status to registered manually since we know the registration succeeded
+        setPartRegistrationStatus(StatusVariants.registered);
       }
     } catch (err: any) {
-      console.error('Failed to share serialized part:', err);
-      const errorMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to share serialized part. Please try again.';
+      console.error('Failed to register serialized part:', err);
+      const errorMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to register serialized part. Please try again.';
       setError(errorMessage);
     } finally {
       setRegistering(false);
@@ -788,7 +778,7 @@ const PassportProvisionWizard: React.FC = () => {
                         <Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
-                              {t('wizard.step2.sharingStatus')}:
+                              {t('wizard.step2.registrationStatus')}:
                             </Typography>
                             <Chip
                               label={partRegistrationStatus}
@@ -814,25 +804,28 @@ const PassportProvisionWizard: React.FC = () => {
                                 mb: 2
                               }}
                             >
-                              {t('wizard.step2.mustBeSharedWarning')}
+                              {t('wizard.step2.mustBeRegisteredWarning')}
                             </Alert>
                           )}
                           {(partRegistrationStatus === StatusVariants.draft || partRegistrationStatus === StatusVariants.pending) && (
                             <Button
                               fullWidth
                               variant="contained"
-                              startIcon={registering ? <CircularProgress size={20} color="inherit" /> : <IosShare />}
+                              startIcon={registering ? <CircularProgress size={20} color="inherit" /> : <CloudUpload />}
                               onClick={handleRegisterPart}
                               disabled={registering}
                               sx={{
                                 ...darkCardStyles.button.primary,
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
+                                boxShadow: `0 4px 16px ${kitThemes.ecoPass.shadowColor}`,
                                 '&:hover': {
-                                  background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)'
+                                  filter: 'brightness(1.1)',
+                                  boxShadow: `0 6px 24px ${kitThemes.ecoPass.shadowColor}`,
+                                  transform: 'translateY(-1px)',
                                 }
                               }}
                             >
-                              {registering ? t('wizard.step2.sharing') : t('wizard.step2.shareSerializedPart')}
+                              {registering ? t('wizard.step2.registering') : t('wizard.step2.registerSerializedPart')}
                             </Button>
                           )}
                         </Box>
@@ -1225,14 +1218,14 @@ const PassportProvisionWizard: React.FC = () => {
                         fontSize: '1rem',
                         fontWeight: 600,
                         textTransform: 'none',
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
                         color: '#fff',
                         borderRadius: 2,
-                        boxShadow: '0 4px 20px rgba(102, 126, 234, 0.4)',
+                        boxShadow: `0 4px 20px ${kitThemes.ecoPass.shadowColor}`,
                         transition: 'all 0.3s ease',
                         '&:hover': {
-                          background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                          boxShadow: '0 6px 28px rgba(102, 126, 234, 0.5)',
+                          filter: 'brightness(1.1)',
+                          boxShadow: `0 6px 28px ${kitThemes.ecoPass.shadowColor}`,
                           transform: 'translateY(-2px)',
                         },
                         '&:active': {
@@ -1302,13 +1295,13 @@ const PassportProvisionWizard: React.FC = () => {
             position: 'sticky',
             top: 0,
             zIndex: 90,
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
+            background: `linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)`,
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(139, 92, 246, 0.2)',
+            border: `1px solid rgba(16, 185, 129, 0.2)`,
             borderRadius: 2,
             p: 2.5,
             mb: 2.5,
-            boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)',
+            boxShadow: `0 8px 32px rgba(16, 185, 129, 0.15)`,
             bgcolor: 'rgba(10, 10, 15, 0.95)',
           }}
         >
@@ -1326,7 +1319,7 @@ const PassportProvisionWizard: React.FC = () => {
                         fontWeight: 600,
                       },
                       '&.Mui-completed': { 
-                        color: '#a78bfa',
+                        color: kitThemes.ecoPass.gradientStart,
                         fontWeight: 500,
                       },
                     },
@@ -1334,8 +1327,8 @@ const PassportProvisionWizard: React.FC = () => {
                       color: 'rgba(255,255,255,0.2)',
                       fontSize: '1.75rem',
                       '&.Mui-active': {
-                        color: '#8b5cf6',
-                        filter: 'drop-shadow(0 4px 20px rgba(139, 92, 246, 0.6))',
+                        color: kitThemes.ecoPass.gradientStart,
+                        filter: `drop-shadow(0 4px 20px ${kitThemes.ecoPass.shadowColor})`,
                         '& .MuiStepIcon-text': {
                           fill: '#fff',
                           fontWeight: 600,
@@ -1511,7 +1504,7 @@ const PassportProvisionWizard: React.FC = () => {
           sx: {
             bgcolor: 'rgba(10, 10, 15, 0.95)',
             backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(139, 92, 246, 0.2)',
+            border: `1px solid rgba(16, 185, 129, 0.2)`,
           }
         }}
       >
@@ -1526,7 +1519,7 @@ const PassportProvisionWizard: React.FC = () => {
         <DialogContent sx={{ pt: 3 }}>
           {!publishingResult ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 3 }}>
-              <CircularProgress size={60} sx={{ color: '#8b5cf6', mb: 2 }} />
+              <CircularProgress size={60} sx={{ color: kitThemes.ecoPass.gradientStart, mb: 2 }} />
               <Typography sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center' }}>
                 {t('wizard.publishing.creatingDpp')}
               </Typography>
@@ -1556,13 +1549,13 @@ const PassportProvisionWizard: React.FC = () => {
                     {t('common:fields.submodelId')}:
                   </Typography>
                   <Box sx={{ 
-                    bgcolor: 'rgba(139, 92, 246, 0.1)',
-                    border: '1px solid rgba(139, 92, 246, 0.3)',
+                    bgcolor: 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
                     borderRadius: 1,
                     p: 1.5,
                     fontFamily: 'monospace',
                     fontSize: '0.875rem',
-                    color: '#a78bfa',
+                    color: kitThemes.ecoPass.gradientStart,
                     wordBreak: 'break-all'
                   }}>
                     {publishingResult.submodelId}
@@ -1577,7 +1570,7 @@ const PassportProvisionWizard: React.FC = () => {
                     {t('wizard.publishing.currentStatus')}:
                   </Typography>
                   <Chip
-                    label={t('common:status.shared')}
+                    label={t('common:status.registered')}
                     size="small"
                     sx={{
                       bgcolor: 'rgba(16, 185, 129, 0.1)',
@@ -1588,20 +1581,27 @@ const PassportProvisionWizard: React.FC = () => {
                   />
                 </Box>
                 <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1, 
-                  p: 1.5,
-                  bgcolor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
-                  borderRadius: 1,
-                }}>
-                  <CheckCircle sx={{ color: '#10b981', fontSize: '1.2rem' }} />
-                  <Typography sx={{ color: '#10b981', fontSize: '0.9rem' }}>
-                    {t('wizard.publishing.alreadyShared')}
-                  </Typography>
-                </Box>
+                <Typography sx={{ color: 'rgba(255,255,255,0.7)', mb: 2, fontSize: '0.9rem' }}>
+                  {t('wizard.publishing.sharePrompt')}
+                </Typography>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<LinkIcon />}
+                  sx={{
+                    borderColor: `rgba(16, 185, 129, 0.5)`,
+                    color: kitThemes.ecoPass.gradientStart,
+                    textTransform: 'none',
+                    py: 1.2,
+                    '&:hover': {
+                      borderColor: kitThemes.ecoPass.gradientStart,
+                      bgcolor: 'rgba(16, 185, 129, 0.1)',
+                      color: kitThemes.ecoPass.gradientStart,
+                    }
+                  }}
+                >
+                  {t('common:actions.share')} DPP
+                </Button>
               </Box>
             </Box>
           ) : (
@@ -1628,12 +1628,12 @@ const PassportProvisionWizard: React.FC = () => {
               onClick={handleClosePublishingDialog}
               variant="contained"
               sx={{
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
                 color: '#fff',
                 textTransform: 'none',
                 px: 3,
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                  filter: 'brightness(1.1)',
                 }
               }}
             >

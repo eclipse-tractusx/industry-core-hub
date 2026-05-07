@@ -20,6 +20,7 @@
     "close": "Cerrar",
     "confirm": "Confirmar",
     "back": "Atrás",
+    "remove": "Eliminar",
     "goBack": "Volver",
     "next": "Siguiente",
     "previous": "Anterior",
@@ -111,10 +112,6 @@
     "submodelId": "ID de Submodelo",
     "width": "Ancho"
   },
-  "notifications": {
-    "copiedToClipboard": "{{field}} copiado al portapapeles!",
-    "failedToCopy": "Error al copiar {{field}}"
-  },
   "tooltips": {
     "copyAasId": "Copiar ID de AAS",
     "copyShellId": "Copiar ID del Shell",
@@ -174,7 +171,9 @@
     "guest": "Invitado",
     "language": "Idioma: {{language}}",
     "notificationsComingSoon": "Las notificaciones estarán disponibles próximamente",
-    "policyComingSoon": "La configuración de Políticas/Gobernanza estará disponible próximamente"
+    "policyComingSoon": "La configuración de Políticas/Gobernanza estará disponible próximamente",
+    "openMessages": "Abrir mensajes",
+    "closeMessages": "Cerrar mensajes"
   },
   "validation": {
     "required": "{{field}} es requerido",

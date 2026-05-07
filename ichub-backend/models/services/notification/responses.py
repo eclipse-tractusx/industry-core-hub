@@ -21,7 +21,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+from pydantic.alias_generators import to_camel
 from datetime import datetime
 from typing import Optional, Dict, Any
 from uuid import UUID
@@ -29,10 +30,10 @@ from uuid import UUID
 class NotificationResponse(BaseModel):
     """
     API response model for notifications.
-    
-    This model ensures proper serialization of notification data when returned
-    from API endpoints. It maps from the database entity to a clean, serializable
-    format for the API consumer.
+
+    Field names follow camelCase (via alias_generator) so the response JSON
+    is consistent with the camelCase keys used in request bodies and the
+    underlying Catena-X notification schema.
     """
     id: int
     created_at: datetime
@@ -43,33 +44,35 @@ class NotificationResponse(BaseModel):
     status: str
     use_case: Optional[str] = None
     full_notification: Dict[str, Any]
-    
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        populate_by_name=True,          # allow construction with snake_case kwarg names
+        alias_generator=to_camel,       # serialize response JSON as camelCase
+        json_schema_extra={
             "example": {
                 "id": 1,
-                "created_at": "2026-02-27T15:04:07.319919Z",
-                "message_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                "sender_bpn": "BPNL00000000024R",
-                "receiver_bpn": "BPNL000000000342",
-                "direction": "INCOMING",
-                "status": "RECEIVED",
-                "use_case": "Industry Core Hub",
-                "full_notification": {
+                "createdAt": "2026-02-27T15:04:07.319919Z",
+                "messageId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "senderBpn": "BPNL00000000024R",
+                "receiverBpn": "BPNL000000000342",
+                "direction": "incoming",
+                "status": "received",
+                "useCase": "Industry Core Hub",
+                "fullNotification": {
                     "header": {
-                        "message_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "messageId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                         "context": "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0",
-                        "sent_date_time": "2026-02-27T11:26:21.146000Z",
-                        "sender_bpn": "BPNL00000000024R",
-                        "receiver_bpn": "BPNL000000000342",
+                        "sentDateTime": "2026-02-27T11:26:21.146000Z",
+                        "senderBpn": "BPNL00000000024R",
+                        "receiverBpn": "BPNL000000000342",
                         "version": "3.0.0"
                     },
                     "content": {
                         "information": "Hello",
-                        "list_of_affected_items": ["DTR_Update"],
-                        "additionalProp1": {}
+                        "listOfAffectedItems": ["urn:uuid:b5f462a2-54e8-4034-85e2-2d663f1c2c2f"]
                     }
                 }
             }
         }
+    )

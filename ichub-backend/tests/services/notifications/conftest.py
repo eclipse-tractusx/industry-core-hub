@@ -26,6 +26,24 @@ from unittest.mock import Mock, patch
 
 
 @pytest.fixture(autouse=True)
+def mock_submodel_service_manager():
+    """Mock SubmodelServiceManager to avoid filesystem access during tests."""
+    with patch(
+        'services.notifications.notifications_management_service.SubmodelServiceManager'
+    ) as mock_cls:
+        mock_cls.return_value = Mock()
+        yield mock_cls
+
+
+@pytest.fixture(autouse=True)
+def mock_dtr_manager():
+    """Mock dtr_manager to avoid DTR connection attempts during tests."""
+    with patch('services.notifications.notifications_management_service.dtr_manager') as mock:
+        mock.purge_edrs_matching.return_value = 0
+        yield mock
+
+
+@pytest.fixture(autouse=True)
 def mock_connector_manager():
     """Mock connector manager to avoid connection attempts during test collection."""
     with patch('services.notifications.notifications_management_service.connector_manager') as mock:

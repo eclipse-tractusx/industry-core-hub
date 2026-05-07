@@ -57,7 +57,7 @@ from models.metadata_database.pcf.models import (
     PcfExchangeType,
     PcfRelationshipEntity
 )
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
@@ -701,6 +701,17 @@ class NotificationRepository(BaseRepository[NotificationEntity]):
             location=location
         )
         self.create(db_notification)
+        # Flush so the DB assigns the auto-increment ``id`` (and any other
+        # server-side defaults) while the session is still open, then expunge
+        # the instance from the session identity-map.  This transitions it to a
+        # "detached but not expired" state: all in-memory attribute values
+        # (message_id, sender_bpn, …) are preserved and readable after the
+        # session is committed and closed by the RepositoryManager context
+        # manager.  Without expunge, SQLAlchemy would expire every attribute on
+        # commit and raise DetachedInstanceError the moment the caller probes
+        # any field after the ``with`` block exits.
+        self._session.flush()
+        self._session.expunge(db_notification)
         return db_notification
 
     def find_by_message_id(self, message_id: UUID) -> Optional[NotificationEntity]:

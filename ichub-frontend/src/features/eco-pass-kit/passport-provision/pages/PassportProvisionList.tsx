@@ -70,8 +70,11 @@ import {
   TableRows as TableRowsIcon
 } from '@mui/icons-material';
 import { DPPListItem } from '../types';
-import { fetchUserDPPs, deleteDPP, getDPPById, fetchSubmodelData, shareDPP } from '../api/provisionApi';
+import { fetchUserDPPs, deleteDPP, getDPPById, fetchSubmodelData } from '../api/provisionApi';
+import DppShareDialog from '../components/DppShareDialog';
 import { darkCardStyles } from '../styles/cardStyles';
+import PageSectionHeader from '@/components/common/PageSectionHeader';
+import { kitThemes } from '@/theme/colors';
 import { formatShortDate, generateCXId } from '../utils/formatters';
 import { CardChip } from '../components/CardChip';
 import { getParticipantId } from '@/services/EnvironmentService';
@@ -110,7 +113,7 @@ const getVersionDisplay = (version: string | undefined): string => {
 const getStatusLabel = (status: string): string => {
   const statusMap: Record<string, string> = {
     'draft': 'Draft',
-    'active': 'Shared',
+    'active': 'Registered',
     'shared': 'Shared',
     'pending': 'Pending'
   };
@@ -148,6 +151,8 @@ const PassportProvisionList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [sharedDpps, setSharedDpps] = useState<Set<string>>(new Set());
   const [sharingInProgress, setSharingInProgress] = useState<Set<string>>(new Set());
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [dppToShare, setDppToShare] = useState<DPPListItem | null>(null);
   
   const checkCarouselOverflow = () => {
     if (carouselRef.current) {
@@ -291,68 +296,12 @@ const PassportProvisionList: React.FC = () => {
     }
   };
 
-  const handleShare = async (dppId: string) => {
+  const handleShare = (dppId: string) => {
     const dpp = dpps.find(d => d.id === dppId);
     if (!dpp) return;
-
-    // DEBUG: Log which DPP is being shared
-    console.log('[SHARE DEBUG] handleShare called with dppId:', dppId);
-    console.log('[SHARE DEBUG] DPP found:', JSON.stringify({
-      id: dpp.id,
-      name: dpp.name,
-      manufacturerPartId: dpp.manufacturerPartId,
-      partInstanceId: dpp.partInstanceId,
-      status: dpp.status,
-      passportIdentifier: dpp.passportIdentifier,
-    }, null, 2));
-
-    // Use passport discovery ID (CX:manufacturerPartId:partInstanceId) for sharing
-    const passportDiscoveryId = dpp.manufacturerPartId && dpp.partInstanceId 
-      ? `CX:${dpp.manufacturerPartId}:${dpp.partInstanceId}`
-      : dpp.id; // Fallback to internal ID if discovery ID not available
-
-    console.log('[SHARE DEBUG] Computed passportDiscoveryId:', passportDiscoveryId);
-
-    // Add to sharing in progress
-    setSharingInProgress(prev => new Set(prev).add(dppId));
-
-    try {
-      // Get BPNL from environment/configuration
-      const defaultBpnl = getParticipantId(); // Use actual participant ID
-      
-      await shareDPP(passportDiscoveryId, defaultBpnl);
-      
-      // Refresh DPP list to get updated status from backend
-      await loadDPPs();
-      
-      // Show success message
-      console.log(`Successfully shared DPP: ${dpp.name}`);
-    } catch (error) {
-      console.error('Failed to share DPP:', error);
-      
-      // Extract meaningful error message
-      let errorMessage = 'Failed to share passport. Please try again.';
-      
-      if (error instanceof Error) {
-        errorMessage = `Sharing failed: ${error.message}`;
-      } else if (typeof error === 'object' && error !== null && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string; error?: string } } };
-        if (axiosError.response?.data?.message) {
-          errorMessage = `Sharing failed: ${axiosError.response.data.message}`;
-        } else if (axiosError.response?.data?.error) {
-          errorMessage = `Sharing failed: ${axiosError.response.data.error}`;
-        }
-      }
-      
-      setError(errorMessage);
-    } finally {
-      // Remove from sharing in progress
-      setSharingInProgress(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(dppId);
-        return newSet;
-      });
-    }
+    // Open the share dialog so the user can select a partner BPNL
+    setDppToShare(dpp);
+    setShareDialogOpen(true);
   };
 
   const handleUnshare = async (dppId: string) => {
@@ -453,56 +402,34 @@ const PassportProvisionList: React.FC = () => {
     <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Box
-            sx={{
-              width: { xs: 48, sm: 56 },
-              height: { xs: 48, sm: 56 },
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)'
-            }}
-          >
-            <PostAddIcon sx={{ fontSize: { xs: 28, sm: 32 }, color: '#fff' }} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography
-              variant="h4"
+        <PageSectionHeader
+          icon={<PostAddIcon />}
+          title={t('list.title')}
+          subtitle={t('list.subtitle')}
+          kitTheme={kitThemes.ecoPass}
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateNew}
               sx={{
+                background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
                 color: '#fff',
-                fontWeight: 700,
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' }
+                borderRadius: { xs: '10px', md: '12px' },
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: `0 4px 16px ${kitThemes.ecoPass.shadowColor}`,
+                transition: 'all 0.2s ease',
+                display: { xs: 'none', sm: 'flex' },
+                px: 3,
+                py: 1.5,
+                '&:hover': { filter: 'brightness(1.1)', boxShadow: `0 6px 24px ${kitThemes.ecoPass.shadowColor}`, transform: 'translateY(-1px)' }
               }}
             >
-              {t('list.title')}
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{
-                color: 'rgba(255, 255, 255, 0.6)',
-                fontSize: { xs: '0.875rem', sm: '1rem' }
-              }}
-            >
-              {t('list.subtitle')}
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-            sx={{
-              ...darkCardStyles.button.primary,
-              display: { xs: 'none', sm: 'flex' },
-              px: 3,
-              py: 1.5
-            }}
-          >
-            {t('list.createPassport')}
-          </Button>
-        </Box>
+              {t('list.createPassport')}
+            </Button>
+          }
+        />
 
         {/* Mobile Create Button */}
         <Button
@@ -511,10 +438,18 @@ const PassportProvisionList: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={handleCreateNew}
           sx={{
-            ...darkCardStyles.button.primary,
+            background: `linear-gradient(135deg, ${kitThemes.ecoPass.gradientStart} 0%, ${kitThemes.ecoPass.gradientEnd} 100%)`,
+            color: '#fff',
+            borderRadius: { xs: '10px', md: '12px' },
+            fontWeight: 600,
+            textTransform: 'none',
+            boxShadow: `0 4px 16px ${kitThemes.ecoPass.shadowColor}`,
+            transition: 'all 0.2s ease',
             display: { xs: 'flex', sm: 'none' },
             py: 1.5,
-            mb: 2
+            mt: 2,
+            mb: 2,
+            '&:hover': { filter: 'brightness(1.1)', boxShadow: `0 6px 24px ${kitThemes.ecoPass.shadowColor}`, transform: 'translateY(-1px)' }
           }}
         >
           {t('list.createPassport')}
@@ -2045,6 +1980,21 @@ const PassportProvisionList: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Share DPP dialog – prompts for partner BPNL and calls the backend */}
+      {dppToShare && (
+        <DppShareDialog
+          open={shareDialogOpen}
+          onClose={() => {
+            setShareDialogOpen(false);
+            setDppToShare(null);
+            // Refresh list so updated status is reflected
+            loadDPPs();
+          }}
+          dppId={dppToShare.id}
+          dppName={dppToShare.name}
+        />
+      )}
 
     </Box>
   );

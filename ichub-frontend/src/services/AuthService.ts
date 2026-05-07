@@ -82,9 +82,33 @@ class AuthService {
     }
   }
  
+  private async checkKeycloakReachability(url: string, realm: string): Promise<void> {
+    const realmUrl = `${url}/realms/${realm}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      // Use no-cors so we get a network-level answer without CORS blocking
+      await fetch(realmUrl, { method: 'GET', signal: controller.signal, cache: 'no-store', mode: 'no-cors' });
+      clearTimeout(timeoutId);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      const isTimeout = error instanceof DOMException && error.name === 'AbortError';
+      throw new Error(
+        isTimeout
+          ? `Keycloak did not respond in time (${realmUrl}). The service may be down or the URL is incorrect.`
+          : `Keycloak is not reachable at ${realmUrl}. Please verify the service is running.`
+      );
+    }
+  }
+
   private async initializeKeycloak(): Promise<void> {
     const keycloakConfig = environmentService.getKeycloakConfig();
     const initOptions = environmentService.getKeycloakInitOptions();
+
+    // Pre-flight check — if Keycloak is unreachable, throw immediately so AuthProvider
+    // shows the ErrorPage instead of redirecting the browser to an unreachable URL.
+    await this.checkKeycloakReachability(keycloakConfig.url, keycloakConfig.realm);
+
     this.keycloak = new Keycloak({
       url: keycloakConfig.url,
       realm: keycloakConfig.realm,

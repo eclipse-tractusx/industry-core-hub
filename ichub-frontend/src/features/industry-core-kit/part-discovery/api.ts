@@ -25,11 +25,9 @@
 import httpClient from '@/services/HttpClient';
 import { 
   getIchubBackendUrl,
-  GovernanceConfig,
-  GovernanceConstraint,
-  GovernanceRule,
-  GovernancePolicy
+  AgreementConfig,
 } from '@/services/EnvironmentService';
+import { generatePoliciesFromDefinition, type OdrlPolicy } from './utils/governancePolicyUtils';
 import { ApiPartData } from './types/types';
 import { CatalogPartTwinCreateType, TwinReadType } from './types/types';
 import { ShellDiscoveryResponse, getNextPageCursor, getPreviousPageCursor, hasNextPage, hasPreviousPage } from './utils/utils';
@@ -60,59 +58,19 @@ const generateConfigHash = async (config: unknown): Promise<string> => {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
 
-/**
- * Generate policies with all constraint permutations
- */
-const generatePoliciesWithPermutations = (dtrPolicies: GovernancePolicy[]): OdrlPolicy[] => {
-  const allPolicyPermutations: OdrlPolicy[] = [];
-  
-  for (const policy of dtrPolicies) {
-    // Check if policy is strict - if so, don't generate permutations
-    if (policy.strict === true) {
-      // Strict policy: use exact order without permutations
-      allPolicyPermutations.push({
-        "odrl:permission": convertRulesToOdrl(policy.permission),
-        "odrl:prohibition": convertRulesToOdrl(policy.prohibition),
-        "odrl:obligation": convertRulesToOdrl(policy.obligation)
-      });
-    } else {
-      // Non-strict policy: generate permutations for each rule type
-      const permissionPermutations = generateRulesPermutations(policy.permission);
-      const prohibitionPermutations = generateRulesPermutations(policy.prohibition);
-      const obligationPermutations = generateRulesPermutations(policy.obligation);
-      
-      // Create cartesian product of all rule permutations
-      for (const permission of permissionPermutations) {
-        for (const prohibition of prohibitionPermutations) {
-          for (const obligation of obligationPermutations) {
-            allPolicyPermutations.push({
-              "odrl:permission": convertRulesToOdrl(permission),
-              "odrl:prohibition": convertRulesToOdrl(prohibition),
-              "odrl:obligation": convertRulesToOdrl(obligation)
-            });
-          }
-        }
-      }
-    }
-  }
-  
-  return allPolicyPermutations;
-};
+// generatePoliciesFromDefinition and OdrlPolicy are imported from governancePolicyUtils
 
 /**
  * Generate governance policies with permutations for a specific semantic ID
  */
-const generateGovernancePoliciesWithPermutations = async (semanticId: string, config: GovernanceConfig[]): Promise<OdrlPolicy[]> => {
-  // First, try to find a specific configuration for the semantic ID
-  const relevantConfig = config.find(cfg => cfg.semanticid === semanticId);
-  
-  if (relevantConfig) {
-    // Found specific configuration, use it
-    return generatePoliciesWithPermutations(relevantConfig.policies);
+const generateGovernancePoliciesWithPermutations = async (semanticId: string, config: AgreementConfig[]): Promise<OdrlPolicy[]> => {
+  const agreement = config.find(a => a.semanticid === semanticId);
+
+  if (agreement) {
+    return agreement.policies.flatMap(def => generatePoliciesFromDefinition(def));
   }
-  
+
   // No specific configuration found, use default policies as fallback
-  
   return await getCachedDefaultGovernancePolicies();
 };
 
@@ -121,22 +79,26 @@ const generateGovernancePoliciesWithPermutations = async (semanticId: string, co
  */
 const getCachedDtrGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
   const currentConfig = partDiscoveryConfig.governance.getDtrPoliciesConfig();
+  console.debug('[ICHUB] getDtrPoliciesConfig raw:', import.meta.env.VITE_DTR_POLICIES_CONFIG);
+  console.debug('[ICHUB] getDtrPoliciesConfig parsed:', currentConfig);
   const currentHash = await generateConfigHash(currentConfig);
-  
+
   // Check if cache is valid
   if (dtrGovernancePoliciesCache && dtrGovernancePoliciesCache.configHash === currentHash) {
     return dtrGovernancePoliciesCache.policies;
   }
-  
-  // Cache is invalid or doesn't exist, regenerate
-  
-  const newPolicies = generatePoliciesWithPermutations(currentConfig);
-  
+
+  // Ensure currentConfig is a valid array before calling flatMap
+  const configArray = Array.isArray(currentConfig) ? currentConfig : [];
+  // Generate and flatten permutations for every DTR policy definition
+  const newPolicies = configArray.flatMap(def => generatePoliciesFromDefinition(def));
+  console.debug('[ICHUB] dtrGovernance policies generated:', newPolicies.length);
+
   dtrGovernancePoliciesCache = {
     configHash: currentHash,
     policies: newPolicies
   };
-  
+
   return newPolicies;
 };
 
@@ -153,9 +115,9 @@ const getCachedGovernancePolicies = async (semanticId: string): Promise<OdrlPoli
     return cached.policies;
   }
   
-  // Cache is invalid or doesn't exist, regenerate
-  
+  // Cache miss — regenerate
   const newPolicies = await generateGovernancePoliciesWithPermutations(semanticId, currentConfig);
+  console.debug('[ICHUB] governanceConfig for', semanticId, ':', newPolicies.length, 'policies');
   
   governancePoliciesCache.set(semanticId, {
     configHash: currentHash,
@@ -209,28 +171,6 @@ const getCachedDefaultGovernancePolicies = async (): Promise<OdrlPolicy[]> => {
   
   return newPolicies;
 };
-
-// Types for ODRL policies with flexible structure
-interface OdrlConstraint {
-  "odrl:leftOperand": { "@id": string };
-  "odrl:operator": { "@id": string };
-  "odrl:rightOperand": string;
-}
-
-// Support for logical operators: "and", "or", or single constraint
-interface OdrlRule {
-  "odrl:action": { "@id": string };
-  "odrl:constraint"?: 
-    | { "odrl:and": OdrlConstraint[] }     // Multiple constraints with AND logic
-    | { "odrl:or": OdrlConstraint[] }      // Multiple constraints with OR logic  
-    | OdrlConstraint;                      // Single constraint without logical operator
-}
-
-interface OdrlPolicy {
-  "odrl:permission": OdrlRule | OdrlRule[];  // Single object when 1 rule, array when multiple
-  "odrl:prohibition": OdrlRule | OdrlRule[]; // Single object when 1 rule, array when multiple
-  "odrl:obligation": OdrlRule | OdrlRule[];  // Single object when 1 rule, array when multiple
-}
 
 // Types for Shell Discovery API requests
 export interface QuerySpecItem {
@@ -753,163 +693,6 @@ export interface SubmodelDiscoveryResponse {
   status?: string;
   error?: string;
 }
-
-/**
- * Convert constraint to ODRL format
- */
-const convertConstraintToOdrl = (constraint: GovernanceConstraint): OdrlConstraint => ({
-  "odrl:leftOperand": {
-    "@id": constraint.leftOperand
-  },
-  "odrl:operator": {
-    "@id": constraint.operator
-  },
-  "odrl:rightOperand": constraint.rightOperand
-});
-
-/**
- * Generate all permutations of an array
- */
-const generatePermutations = <T>(arr: T[]): T[][] => {
-  if (arr.length <= 1) return [arr];
-  
-  const result: T[][] = [];
-  for (let i = 0; i < arr.length; i++) {
-    const current = arr[i];
-    const remaining = [...arr.slice(0, i), ...arr.slice(i + 1)];
-    const perms = generatePermutations(remaining);
-    
-    for (const perm of perms) {
-      result.push([current, ...perm]);
-    }
-  }
-  
-  return result;
-};
-
-/**
- * Generate all permutations of constraints within a rule, creating separate policies for each ordering
- */
-const generateRulePermutations = (rule: GovernanceRule): GovernanceRule[] => {
-  if (!rule.constraints || rule.constraints.length <= 1) {
-    return [rule];
-  }
-
-  const constraintPermutations = generatePermutations(rule.constraints);
-  
-  return constraintPermutations.map(permutedConstraints => ({
-    ...rule,
-    constraints: permutedConstraints
-  }));
-};
-
-/**
- * Generate all permutations of rules (permission, prohibition, obligation)
- */
-const generateRulesPermutations = (rules: GovernanceRule | GovernanceRule[]): (GovernanceRule | GovernanceRule[])[] => {
-  if (Array.isArray(rules)) {
-    if (rules.length === 0) return [rules];
-    
-    // For array of rules, generate permutations for each rule
-    const rulePermutations = rules.map(generateRulePermutations);
-    
-    // Generate cartesian product of all rule permutations
-    const result: GovernanceRule[][] = [[]];
-    for (const permutations of rulePermutations) {
-      const newResult: GovernanceRule[][] = [];
-      for (const existing of result) {
-        for (const perm of permutations) {
-          newResult.push([...existing, perm]);
-        }
-      }
-      result.length = 0;
-      result.push(...newResult);
-    }
-    
-    return result;
-  } else {
-    // Single rule - generate permutations for its constraints
-    return generateRulePermutations(rules);
-  }
-};
-
-/**
- * Create constraint structure based on logical operator and constraints
- */
-const createConstraintStructure = (
-  constraints: GovernanceConstraint[], 
-  logicalOperator?: string
-): OdrlConstraint | { "odrl:and": OdrlConstraint[] } | { "odrl:or": OdrlConstraint[] } => {
-  const odrlConstraints = constraints.map(convertConstraintToOdrl);
-  
-  // Single constraint without logical operator
-  if (odrlConstraints.length === 1 && !logicalOperator) {
-    return odrlConstraints[0];
-  }
-  
-  // Multiple constraints with logical operators
-  if (logicalOperator === "odrl:or" || logicalOperator === "or") {
-    return { "odrl:or": odrlConstraints };
-  }
-  
-  // Default to "and" for multiple constraints
-  return { "odrl:and": odrlConstraints };
-};
-
-/**
- * Convert rule (permission, prohibition, obligation) to ODRL format
- */
-const convertRuleToOdrl = (
-  rule: { action: string; constraints: GovernanceConstraint[]; LogicalConstraint?: string }
-): OdrlRule => {
-  const odrlRule: OdrlRule = {
-    "odrl:action": {
-      "@id": rule.action
-    }
-  };
-
-  if (rule.constraints && rule.constraints.length > 0) {
-    odrlRule["odrl:constraint"] = createConstraintStructure(
-      rule.constraints, 
-      rule.LogicalConstraint
-    );
-  }
-
-  return odrlRule;
-};
-
-/**
- * Convert governance rule(s) to ODRL format
- * - Single rule -> single OdrlRule object
- * - Multiple rules -> array of OdrlRule objects
- */
-const convertRulesToOdrl = (rules: GovernanceRule | GovernanceRule[]): OdrlRule | OdrlRule[] => {
-  if (Array.isArray(rules)) {
-    // If it's an array, check the length
-    if (rules.length === 1) {
-      // Single item in array -> return as single object
-      return convertRuleToOdrl(rules[0]);
-    } else {
-      // Multiple items -> return as array
-      return rules.map(convertRuleToOdrl);
-    }
-  } else {
-    // Single object -> return as single object
-    return convertRuleToOdrl(rules);
-  }
-};
-
-/**
- * Convert governance configuration to ODRL format
- * 
- * @param config - The governance configuration from environment variables
- * @returns Array of ODRL policies
- */
-/**
- * Convert governance rule(s) to ODRL format
- * - Single rule -> single OdrlRule object
- * - Multiple rules -> array of OdrlRule objects
- */
 
 /**
  * Convert DTR policies from environment config to ODRL format with all possible constraint orderings.

@@ -20,6 +20,7 @@
     "close": "閉じる",
     "confirm": "確認",
     "back": "戻る",
+    "remove": "削除",
     "goBack": "戻る",
     "next": "次へ",
     "previous": "前へ",
@@ -111,10 +112,6 @@
     "submodelId": "サブモデルID",
     "width": "幅"
   },
-  "notifications": {
-    "copiedToClipboard": "{{field}}をクリップボードにコピーしました！",
-    "failedToCopy": "{{field}}のコピーに失敗しました"
-  },
   "tooltips": {
     "copyAasId": "AAS IDをコピー",
     "copyShellId": "シェルIDをコピー",
@@ -174,7 +171,9 @@
     "guest": "ゲスト",
     "language": "言語: {{language}}",
     "notificationsComingSoon": "通知機能は近日公開予定です",
-    "policyComingSoon": "ポリシー/ガバナンス設定は近日公開予定です"
+    "policyComingSoon": "ポリシー/ガバナンス設定は近日公開予定です",
+    "openMessages": "メッセージを開く",
+    "closeMessages": "メッセージを閉じる"
   },
   "validation": {
     "required": "{{field}}は必須です",
