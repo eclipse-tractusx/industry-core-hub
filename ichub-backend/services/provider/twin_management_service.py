@@ -276,11 +276,24 @@ class TwinManagementService:
                 raise NotFoundError("Twin not found.")
 
             # Step 5: Create a twin exchange entity for the twin and business partner
-            return self._create_twin_exchange(
+            result = self._create_twin_exchange(
                 repo=repo,
                 db_twin=db_twin,
                 db_business_partner=db_business_partner
             )
+
+        # Step 6: Update the DTR shell descriptor so the newly linked partner receives
+        # access via its BPNL as a specificAssetId. create_catalog_part_twin is
+        # idempotent — it rebuilds customer_part_ids from all partner_catalog_parts
+        # (which now includes the new partner) and calls create_or_update_shell_descriptor.
+        self.create_catalog_part_twin(
+            CatalogPartTwinCreate(
+                manufacturerId=catalog_part_share_input.manufacturer_id,
+                manufacturerPartId=catalog_part_share_input.manufacturer_part_id,
+            )
+        )
+
+        return result
 
     def create_serialized_part_twin(self, create_input: SerializedPartTwinCreate, auto_create_serial_part_aspect: bool = False, enablement_service_stack_name: str = 'EDC/DTR Default') -> TwinRead:
         with RepositoryManagerFactory.create() as repo:
@@ -479,11 +492,25 @@ class TwinManagementService:
                 raise NotFoundError("Twin not found.")
 
             # Step 5: Create a twin exchange entity for the twin and business partner
-            return self._create_twin_exchange(
+            result = self._create_twin_exchange(
                 repo=repo,
                 db_twin=db_twin,
                 db_business_partner=db_business_partner
             )
+
+        # Step 6: Update the DTR shell descriptor so the partner's BPNL is registered
+        # as a specificAssetId granting them lookup access. create_serialized_part_twin
+        # is idempotent — it re-fetches the existing twin and calls
+        # create_or_update_shell_descriptor with the full customer_part_ids map.
+        self.create_serialized_part_twin(
+            SerializedPartTwinCreate(
+                manufacturerId=serialized_part_share_input.manufacturer_id,
+                manufacturerPartId=serialized_part_share_input.manufacturer_part_id,
+                partInstanceId=serialized_part_share_input.part_instance_id,
+            )
+        )
+
+        return result
 
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
         """

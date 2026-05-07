@@ -23,19 +23,19 @@
 {{- $realmData := .Files.Get "files/realm-export.json" | fromJson }}
 
 {{- /* Update client redirect URIs and web origins */ -}}
-{{- if .Values.keycloak.realm.clients }}
+{{- if .Values.keycloak.ichubRealm.clients }}
 {{- range $client := $realmData.clients }}
   {{- if eq $client.clientId "industry-core-hub-frontend" }}
-    {{- if $.Values.keycloak.realm.clients.frontend }}
-      {{- $_ := set $client "redirectUris" $.Values.keycloak.realm.clients.frontend.redirectUris }}
-      {{- $_ := set $client "webOrigins" $.Values.keycloak.realm.clients.frontend.webOrigins }}
-      {{- $postLogoutUris := join "##" (concat $.Values.keycloak.realm.clients.frontend.redirectUris) }}
+    {{- if $.Values.keycloak.ichubRealm.clients.frontend }}
+      {{- $_ := set $client "redirectUris" $.Values.keycloak.ichubRealm.clients.frontend.redirectUris }}
+      {{- $_ := set $client "webOrigins" $.Values.keycloak.ichubRealm.clients.frontend.webOrigins }}
+      {{- $postLogoutUris := join "##" (concat $.Values.keycloak.ichubRealm.clients.frontend.redirectUris) }}
       {{- $_ := set $client.attributes "post.logout.redirect.uris" $postLogoutUris }}
     {{- end }}
   {{- else if eq $client.clientId "industry-core-hub-api" }}
-    {{- if $.Values.keycloak.realm.clients.backend }}
-      {{- $_ := set $client "redirectUris" $.Values.keycloak.realm.clients.backend.redirectUris }}
-      {{- $_ := set $client "webOrigins" $.Values.keycloak.realm.clients.backend.webOrigins }}
+    {{- if $.Values.keycloak.ichubRealm.clients.backend }}
+      {{- $_ := set $client "redirectUris" $.Values.keycloak.ichubRealm.clients.backend.redirectUris }}
+      {{- $_ := set $client "webOrigins" $.Values.keycloak.ichubRealm.clients.backend.webOrigins }}
     {{- end }}
   {{- end }}
 {{- end }}
@@ -43,7 +43,7 @@
 
 {{- /* Update realm users */ -}}
 {{- $_ := set $realmData "users" list }}
-{{- range $user := .Values.keycloak.realm.users }}
+{{- range $user := .Values.keycloak.ichubRealm.users }}
 {{- $passwordVar := printf "$(%s_PASSWORD)" ($user.username | upper | replace "-" "_") }}
 {{- $credentials := list (dict "type" "password" "value" $passwordVar "temporary" false) }}
 {{- $newUser := dict 

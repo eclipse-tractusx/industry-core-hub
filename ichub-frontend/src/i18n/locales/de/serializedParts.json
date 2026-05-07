@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Serialisierte Teile",
+    "subtitle": "Teile auf Serialisierter / Instanzebene bereitstellen, teilen und verwalten",
     "loading": "Serialisierte Teile werden geladen..."
   },
   "table": {
@@ -13,12 +14,12 @@
       "deleteSerializedPart": "Serialisiertes Teil löschen"
     },
     "messages": {
-      "twinRegistered": "Zwilling erfolgreich geteilt!",
+      "twinRegistered": "Zwilling erfolgreich registriert!",
       "twinShared": "Zwilling erfolgreich geteilt!",
       "twinUnshared": "Zwilling erfolgreich nicht mehr geteilt!",
       "partDeleted": "Serialisiertes Teil erfolgreich gelöscht!",
       "dataRefreshed": "Daten erfolgreich aktualisiert!",
-      "registerFailed": "Teilen fehlgeschlagen",
+      "registerFailed": "Registrierung fehlgeschlagen",
       "shareFailed": "Teilen fehlgeschlagen",
       "unshareFailed": "Aufheben der Freigabe fehlgeschlagen",
       "deleteFailed": "Löschen fehlgeschlagen",

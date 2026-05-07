@@ -21,7 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 from managers.config.log_manager import LoggingManager
 from services.notifications.notifications_management_service import NotificationsManagementService

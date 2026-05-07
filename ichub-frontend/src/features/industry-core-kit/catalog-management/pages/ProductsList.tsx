@@ -26,10 +26,13 @@ import { useTranslation } from "react-i18next";
 import { ProductCard } from "@/features/industry-core-kit/catalog-management/components/product-list/ProductCard";
 import { PartType, ApiPartData } from "@/features/industry-core-kit/catalog-management/types/types";
 import TablePagination from "@mui/material/TablePagination";
-import { Typography, Grid2, Box } from "@mui/material"; // Removed Paper
+import { Grid2, Box } from "@mui/material"; // Removed Paper
 import { Button } from "@mui/material";
 import { Alert, Snackbar } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import StorefrontIcon from "@mui/icons-material/Storefront";
+import PageSectionHeader from '@/components/common/PageSectionHeader';
+import { kitThemes } from '@/theme/colors';
 import ShareDialog from "@/features/industry-core-kit/catalog-management/components/shared/ShareDialog";
 import CreateProductListDialog from "@/features/industry-core-kit/catalog-management/components/product-list/CreateProductListDialog";
 import { fetchCatalogParts, registerCatalogPartTwin } from "@/features/industry-core-kit/catalog-management/api";
@@ -157,7 +160,7 @@ const ProductsList = () => {
   };
 
   return (
-    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", p: 3 }}>
+    <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", p: { xs: 2, sm: 3, md: 4 } }}>
       <Snackbar
         open={snackbarOpen}
         onClose={() => setSnackbarOpen(false)}
@@ -167,14 +170,33 @@ const ProductsList = () => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-      <Grid2 container direction="column" alignItems="center" sx={{ mb: 3 }}>
-        <Grid2 className="product-catalog title flex flex-content-center">
-          <Typography className="text">{t('page.title')}</Typography>
-        </Grid2>
-      </Grid2>
-      <Grid2 size={12} container justifyContent="flex-end" marginRight={6} marginBottom={2}>
-        <Button className="add-button" variant="outlined" size="small" onClick={handleOpenCreateDialog} startIcon={<AddIcon />} >{t('page.createButton')}</Button>
-      </Grid2>
+      <Box sx={{ mb: 4 }}>
+        <PageSectionHeader
+          icon={<StorefrontIcon />}
+          title={t('page.title')}
+          subtitle={t('page.subtitle')}
+          kitTheme={kitThemes.industryCore}
+          actions={
+            <Button
+              variant="contained"
+              onClick={handleOpenCreateDialog}
+              startIcon={<AddIcon />}
+              sx={{
+                background: `linear-gradient(135deg, ${kitThemes.industryCore.gradientStart} 0%, ${kitThemes.industryCore.gradientEnd} 100%)`,
+                color: '#fff',
+                borderRadius: { xs: '10px', md: '12px' },
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: `0 4px 16px ${kitThemes.industryCore.shadowColor}`,
+                transition: 'all 0.2s ease',
+                '&:hover': { filter: 'brightness(1.1)', boxShadow: `0 6px 24px ${kitThemes.industryCore.shadowColor}`, transform: 'translateY(-1px)' }
+              }}
+            >
+              {t('page.createButton')}
+            </Button>
+          }
+        />
+      </Box>
       
       {/* Main content area that grows and positions content naturally */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-start", pt: 2 }}>

@@ -26,6 +26,8 @@ import asyncio
 
 from fastapi.responses import Response
 #from services.consumer import ConnectionService
+from tools.log_capture import run_with_policy_log_capture
+from tools.exceptions import PolicyMismatchError
 from models.services.consumer.discovery_management import (
     DiscoverRegistriesRequest,
     DiscoverShellsRequest,
@@ -45,18 +47,214 @@ router = APIRouter(
 #connection_service = ConnectionService()
 
 from dtr import dtr_manager  # Use the original manager
+from connector import connector_manager  # For cache management
 
+
+def _map_error_to_status_code(error_message: str) -> int:
+    """
+    Map known error messages to appropriate HTTP status codes.
+
+    Args:
+        error_message: The error message string from the underlying service
+
+    Returns:
+        int: The HTTP status code to return
+    """
+    if "No valid asset and policy allowed" in error_message:
+        return 403
+    if "No valid policy was found" in error_message:
+        return 403
+    if "negotiation failed" in error_message.lower():
+        return 403
+    if "not found" in error_message.lower():
+        return 404
+    if "timeout" in error_message.lower():
+        return 504
+    return 500
+
+
+async def _purge_bpn_cache(bpn: str) -> None:
+    """
+    Purge both DTR and connector discovery caches for a specific BPN.
+
+    Called automatically when a discovery operation fails, so stale
+    cache entries don't keep causing repeated failures.
+
+    Args:
+        bpn: The Business Partner Number whose cache entries should be removed
+    """
+    await asyncio.to_thread(dtr_manager.consumer.purge_bpn, bpn)
+    await asyncio.to_thread(connector_manager.consumer.purge_bpn, bpn)
+
+
+async def _handle_discovery_error(e: Exception, bpn: str, endpoint: str) -> Response:
+    """
+    Build an error response for a failed discovery operation.
+
+    Automatically purges the DTR and connector caches for the involved BPN
+    so the next retry starts with a clean state.
+
+    Args:
+        e: The exception that was raised
+        bpn: The Business Partner Number involved in the failed operation
+        endpoint: The API endpoint path (for error context)
+
+    Returns:
+        Response: A JSON error response with cache-purged notice
+    """
+    error_message = str(e)
+    status_code = _map_error_to_status_code(error_message)
+
+    # Purge stale cache so a retry has a fresh discovery state
+    await _purge_bpn_cache(bpn)
+
+    response_data: dict = {
+        "error": error_message,
+        "status": "error",
+        "endpoint": endpoint,
+        "cachePurged": True,
+        "message": f"There was an error, the discovery cache for BPN {bpn} has been purged. Please retry the request.",
+    }
+
+    # When the SDK detected policy mismatches it populates PolicyMismatchError.detail.details
+    # with per-policy diff lines.  Include them in the response so the frontend can render
+    # them in a human-readable dropdown without requiring access to server logs.
+    if isinstance(e, PolicyMismatchError) and e.detail.details:
+        response_data["details"] = e.detail.details
+        status_code = e.status_code  # Always 403 for policy mismatch
+
+    return Response(
+        content=json.dumps(response_data, indent=2),
+        media_type="application/json",
+        status_code=status_code
+    )
+
+
+# --- Cache management: DTR ---
+
+@router.delete("/cache/dtr")
+async def purge_dtr_cache() -> Response:
+    """
+    Purge the entire DTR discovery cache.
+
+    Forces re-discovery of Digital Twin Registries on the next request for any BPN.
+    """
+    await asyncio.to_thread(dtr_manager.consumer.purge_cache)
+    return Response(
+        content=json.dumps({"status": "ok", "message": "DTR discovery cache purged"}),
+        media_type="application/json",
+        status_code=200
+    )
+
+
+@router.delete("/cache/dtr/{bpnl}")
+async def purge_dtr_cache_for_bpn(bpnl: str) -> Response:
+    """
+    Purge the DTR discovery cache for a specific BPN.
+
+    Forces re-discovery of Digital Twin Registries on the next request for that BPN.
+
+    Args:
+        bpnl: The Business Partner Number to purge from DTR cache
+    """
+    await asyncio.to_thread(dtr_manager.consumer.purge_bpn, bpnl)
+    return Response(
+        content=json.dumps({"status": "ok", "message": f"DTR cache purged for BPN {bpnl}"}),
+        media_type="application/json",
+        status_code=200
+    )
+
+
+# --- Cache management: Connector ---
+
+@router.delete("/cache/connector")
+async def purge_connector_cache() -> Response:
+    """
+    Purge the entire connector discovery cache.
+
+    Forces re-discovery of EDC connectors on the next request for any BPN.
+    """
+    await asyncio.to_thread(connector_manager.consumer.purge_cache)
+    return Response(
+        content=json.dumps({"status": "ok", "message": "Connector discovery cache purged"}),
+        media_type="application/json",
+        status_code=200
+    )
+
+
+@router.delete("/cache/connector/{bpnl}")
+async def purge_connector_cache_for_bpn(bpnl: str) -> Response:
+    """
+    Purge the connector discovery cache for a specific BPN.
+
+    Forces re-discovery of EDC connectors on the next request for that BPN.
+
+    Args:
+        bpnl: The Business Partner Number to purge from connector cache
+    """
+    await asyncio.to_thread(connector_manager.consumer.purge_bpn, bpnl)
+    return Response(
+        content=json.dumps({"status": "ok", "message": f"Connector cache purged for BPN {bpnl}"}),
+        media_type="application/json",
+        status_code=200
+    )
+
+
+# --- Cache management: Both ---
+
+@router.delete("/cache")
+async def purge_discovery_cache() -> Response:
+    """
+    Purge both the DTR and connector discovery caches.
+
+    Convenience endpoint that clears everything at once.
+    Forces re-discovery on the next request for any BPN.
+    """
+    await asyncio.to_thread(dtr_manager.consumer.purge_cache)
+    await asyncio.to_thread(connector_manager.consumer.purge_cache)
+    return Response(
+        content=json.dumps({"status": "ok", "message": "DTR and connector discovery cache purged"}),
+        media_type="application/json",
+        status_code=200
+    )
+
+
+@router.delete("/cache/{bpnl}")
+async def purge_discovery_cache_for_bpn(bpnl: str) -> Response:
+    """
+    Purge both the DTR and connector discovery caches for a specific BPN.
+
+    Convenience endpoint that clears everything for the given BPN.
+    Forces re-discovery on the next request for that BPN.
+
+    Args:
+        bpnl: The Business Partner Number to purge from all caches
+    """
+    await asyncio.to_thread(dtr_manager.consumer.purge_bpn, bpnl)
+    await asyncio.to_thread(connector_manager.consumer.purge_bpn, bpnl)
+    return Response(
+        content=json.dumps({"status": "ok", "message": f"Cache purged for BPN {bpnl}"}),
+        media_type="application/json",
+        status_code=200
+    )
 
 
 @router.post("/registries")
 async def discover_registries(request: DiscoverRegistriesRequest) -> Response:
-    ## Check if the api key is present and if it is authenticated
-    # Offload blocking I/O to thread pool to prevent blocking the event loop
-    result = await asyncio.to_thread(
-        dtr_manager.consumer.get_dtrs,
-        request.counter_party_id
-    )
-    return result
+    """Discover available Digital Twin Registries for a given BPN."""
+    captured_policy_logs: list[str] = []
+    try:
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
+        # run_with_policy_log_capture wraps the call so that SDK policy-diff DEBUG
+        # messages are captured in the worker thread and stored in captured_policy_logs.
+        result = await asyncio.to_thread(
+            run_with_policy_log_capture(dtr_manager.consumer.get_dtrs, captured_policy_logs),
+            request.counter_party_id
+        )
+        return result
+    except Exception as e:
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, request.counter_party_id, "/discover/registries")
 
 @router.post("/shells")
 async def discover_shells(search_request: DiscoverShellsRequest) -> Response:
@@ -79,22 +277,56 @@ async def discover_shells(search_request: DiscoverShellsRequest) -> Response:
         for spec in search_request.query_spec
     ]
     
-    # Offload blocking I/O to thread pool to prevent blocking the event loop
-    result = await asyncio.to_thread(
-        dtr_manager.consumer.discover_shells,
-        counter_party_id=search_request.counter_party_id,
-        query_spec=query_spec_dict,
-        dtr_policies=search_request.dtr_policies,
-        limit=search_request.limit,
-        cursor=search_request.cursor
-    )
-    
-    # Return the response as JSON
-    return Response(
-        content=json.dumps(result, indent=2),
-        media_type="application/json",
-        status_code=200
-    )
+    captured_policy_logs: list[str] = []
+    try:
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
+        # run_with_policy_log_capture captures SDK policy-diff DEBUG messages in the
+        # worker thread so they can be included in the error response.
+        result = await asyncio.to_thread(
+            run_with_policy_log_capture(dtr_manager.consumer.discover_shells, captured_policy_logs),
+            counter_party_id=search_request.counter_party_id,
+            query_spec=query_spec_dict,
+            dtr_policies=search_request.dtr_policies,
+            limit=search_request.limit,
+            cursor=search_request.cursor
+        )
+
+        # Collect error messages from failed DTRs into a top-level errorDetails list.
+        # The SDK surfaces policy mismatch errors inside dtrs[].error without raising,
+        # so we must extract them here to make them available to the frontend.
+        if isinstance(result, dict):
+            dtr_errors = list(dict.fromkeys(
+                dtr["error"]
+                for dtr in result.get("dtrs", [])
+                if isinstance(dtr, dict)
+                and dtr.get("error")
+                and dtr.get("status", "").lower() in ("failed", "error", "timeout", "unavailable")
+            ))
+            # De-duplicate SDK policy-diff log lines: many catalog offers produce identical
+            # mismatch descriptions (same constraints, different opaque policy ID in the
+            # first line). Keep only unique diff bodies so the frontend doesn't show
+            # hundreds of identical blocks.
+            seen_bodies: set[str] = set()
+            unique_logs: list[str] = []
+            for entry in captured_policy_logs:
+                lines = entry.split("\n", 1)
+                body = lines[1] if len(lines) > 1 else entry
+                if body not in seen_bodies:
+                    seen_bodies.add(body)
+                    unique_logs.append(entry)
+            dtr_errors.extend(unique_logs)
+            if dtr_errors:
+                result["errorDetails"] = dtr_errors
+
+        # Return the response as JSON
+        return Response(
+            content=json.dumps(result, indent=2),
+            media_type="application/json",
+            status_code=200
+        )
+    except Exception as e:
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, search_request.counter_party_id, "/discover/shells")
     
 @router.post("/shell")
 async def discover_shell(search_request: DiscoverShellRequest) -> Response:
@@ -112,20 +344,25 @@ async def discover_shell(search_request: DiscoverShellRequest) -> Response:
         Response containing discovered shells and metadata
     """
     
-    # Offload blocking I/O to thread pool to prevent blocking the event loop
-    result = await asyncio.to_thread(
-        dtr_manager.consumer.discover_shell,
-        counter_party_id=search_request.counter_party_id,
-        id=search_request.id,
-        dtr_policies=search_request.dtr_policies
-    )
-    
-    # Return the response as JSON
-    return Response(
-        content=json.dumps(result, indent=2),
-        media_type="application/json",
-        status_code=200
-    )
+    captured_policy_logs: list[str] = []
+    try:
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
+        result = await asyncio.to_thread(
+            run_with_policy_log_capture(dtr_manager.consumer.discover_shell, captured_policy_logs),
+            counter_party_id=search_request.counter_party_id,
+            id=search_request.id,
+            dtr_policies=search_request.dtr_policies
+        )
+
+        # Return the response as JSON
+        return Response(
+            content=json.dumps(result, indent=2),
+            media_type="application/json",
+            status_code=200
+        )
+    except Exception as e:
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, search_request.counter_party_id, "/discover/shell")
 
 
 @router.post("/shell/submodels")
@@ -196,22 +433,27 @@ async def discover_submodels(search_request: DiscoverSubmodelsDataRequest) -> Re
     }
     """
     
-    # Offload blocking I/O to thread pool to prevent blocking the event loop
-    result = await asyncio.to_thread(
-        dtr_manager.consumer.discover_submodels,
-        counter_party_id=search_request.counter_party_id,
-        id=search_request.id,
-        dtr_policies=search_request.dtr_policies,
-        governance=search_request.governance
-    )
-    
-    # Return the response as JSON
-    return Response(
-        content=json.dumps(result, indent=2),
-        media_type="application/json",
-        status_code=200
-    )
-    
+    captured_policy_logs: list[str] = []
+    try:
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
+        result = await asyncio.to_thread(
+            run_with_policy_log_capture(dtr_manager.consumer.discover_submodels, captured_policy_logs),
+            counter_party_id=search_request.counter_party_id,
+            id=search_request.id,
+            dtr_policies=search_request.dtr_policies,
+            governance=search_request.governance
+        )
+
+        # Return the response as JSON
+        return Response(
+            content=json.dumps(result, indent=2),
+            media_type="application/json",
+            status_code=200
+        )
+    except Exception as e:
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, search_request.counter_party_id, "/discover/shell/submodels")
+
 @router.post("/shell/submodel")
 async def discover_submodel(search_request: DiscoverSubmodelDataRequest) -> Response:
     """
@@ -262,48 +504,28 @@ async def discover_submodel(search_request: DiscoverSubmodelDataRequest) -> Resp
             status_code=400
         )
     
+    captured_policy_logs: list[str] = []
     try:
-        # Offload blocking I/O to thread pool to prevent blocking the event loop
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
         result = await asyncio.to_thread(
-            dtr_manager.consumer.discover_submodel,
+            run_with_policy_log_capture(dtr_manager.consumer.discover_submodel, captured_policy_logs),
             counter_party_id=search_request.counter_party_id,
             id=search_request.id,
             dtr_policies=search_request.dtr_policies,
             submodel_id=search_request.submodel_id,
             governance=search_request.governance
         )
-        
+
         # Return the response as JSON
         return Response(
             content=json.dumps(result, indent=2),
             media_type="application/json",
             status_code=200
         )
-        
+
     except Exception as e:
-        # Forward the original error message from connector service
-        error_message = str(e)
-        status_code = 500
-        
-        # Check for specific connector service errors to provide better status codes
-        if "No valid asset and policy allowed" in error_message:
-            status_code = 403
-        elif "negotiation failed" in error_message.lower():
-            status_code = 403
-        elif "not found" in error_message.lower():
-            status_code = 404
-        elif "timeout" in error_message.lower():
-            status_code = 504
-            
-        return Response(
-            content=json.dumps({
-                "error": error_message,
-                "status": "error",
-                "endpoint": "/discover/shell/submodel"
-            }, indent=2),
-            media_type="application/json",
-            status_code=status_code
-        )
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, search_request.counter_party_id, "/discover/shell/submodel")
 
 
 @router.post("/shell/submodels/semanticId")
@@ -392,45 +614,25 @@ async def discover_submodels_by_semantic_id(search_request: DiscoverSubmodelSema
             status_code=400
         )
     
+    captured_policy_logs: list[str] = []
     try:
-        # Offload blocking I/O to thread pool to prevent blocking the event loop
+        # Offload blocking I/O to thread pool to prevent blocking the event loop.
         result = await asyncio.to_thread(
-            dtr_manager.consumer.discover_submodel_by_semantic_ids,
+            run_with_policy_log_capture(dtr_manager.consumer.discover_submodel_by_semantic_ids, captured_policy_logs),
             counter_party_id=search_request.counter_party_id,
             id=search_request.id,
             dtr_policies=search_request.dtr_policies,
             semantic_id_policies=normalized_semantic_ids
         )
-        
+
         # Return the response as JSON
         return Response(
             content=json.dumps(result, indent=2),
             media_type="application/json",
             status_code=200
         )
-        
+
     except Exception as e:
-        # Forward the original error message from connector service
-        error_message = str(e)
-        status_code = 500
-        
-        # Check for specific connector service errors to provide better status codes
-        if "No valid asset and policy allowed" in error_message:
-            status_code = 403
-        elif "negotiation failed" in error_message.lower():
-            status_code = 403
-        elif "not found" in error_message.lower():
-            status_code = 404
-        elif "timeout" in error_message.lower():
-            status_code = 504
-            
-        return Response(
-            content=json.dumps({
-                "error": error_message,
-                "status": "error",
-                "endpoint": "/discover/shell/submodels/semanticId"
-            }, indent=2),
-            media_type="application/json",
-            status_code=status_code
-        )
+        exc = PolicyMismatchError(message=str(e), details=captured_policy_logs) if captured_policy_logs else e
+        return await _handle_discovery_error(exc, search_request.counter_party_id, "/discover/shell/submodels/semanticId")
     

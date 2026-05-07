@@ -41,7 +41,7 @@ from tools.exceptions import (
     NotificationSendingError
 )
 from tools.constants import SEM_ID_NOTIFICATION
-from tractusx_sdk.extensions.notification_api.models import Notification
+from tractusx_sdk.industry.models.notifications import Notification
 
 
 class TestNotificationsManagementService:
@@ -422,6 +422,9 @@ class TestNotificationsManagementService:
         list_policies = [{"policy": "test"}]
 
         mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0"
+        mock_notification.model_dump.return_value = {"some": "payload"}
         mock_db_notification = Mock()
         mock_db_notification.to_sdk.return_value = mock_notification
 
@@ -433,7 +436,8 @@ class TestNotificationsManagementService:
 
         self.service.submodel_service_manager = Mock()
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
-        
+        self.service.submodel_service_manager.upload_twin_aspect_document.return_value = None
+
         mock_service_instance = Mock()
         mock_service_instance.send_notification.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
@@ -472,7 +476,7 @@ class TestNotificationsManagementService:
     def test_send_notification_notification_error(self, mock_repo_factory, mock_notification_consumer_service):
         """Test send_notification with NotificationError."""
         # Arrange
-        from tractusx_sdk.extensions.notification_api import NotificationError
+        from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 
         message_id = uuid4()
         endpoint_url = "/test/endpoint"
@@ -480,8 +484,12 @@ class TestNotificationsManagementService:
         provider_dsp_url = "https://example.com/dsp"
         list_policies = [{"policy": "test"}]
 
+        mock_notification_obj = Mock(spec=Notification)
+        mock_notification_obj.header = Mock()
+        mock_notification_obj.header.context = "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0"
+        mock_notification_obj.model_dump.return_value = {"some": "payload"}
         mock_db_notification = Mock()
-        mock_db_notification.to_sdk.return_value = Mock(spec=Notification)
+        mock_db_notification.to_sdk.return_value = mock_notification_obj
 
         mock_repo_manager = MagicMock()
         mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
@@ -491,7 +499,8 @@ class TestNotificationsManagementService:
 
         self.service.submodel_service_manager = Mock()
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
-        
+        self.service.submodel_service_manager.upload_twin_aspect_document.return_value = None
+
         mock_service_instance = Mock()
         mock_service_instance.send_notification.side_effect = NotificationError("Send failed")
         mock_notification_consumer_service.return_value = mock_service_instance
@@ -550,3 +559,358 @@ class TestNotificationsManagementService:
             )
         assert "Failed to send notification" in str(exc_info.value)
         mock_repo_manager.notification_repository.update_status.assert_not_called()
+
+    # ------------------------------------------------------------------
+    # Optional parameter resolution — endpoint_path auto-derivation
+    # ------------------------------------------------------------------
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_endpoint_derived_from_context(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_dtr_manager
+    ):
+        """When endpoint_url is None, derive it from notification.header.context."""
+        # Arrange
+        message_id = uuid4()
+        provider_bpn = "BPNL00000000024R"
+        provider_dsp_url = "https://example.com/dsp"
+
+        mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0"
+
+        mock_db_notification = Mock()
+        mock_db_notification.to_sdk.return_value = mock_notification
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.submodel_service_manager = Mock()
+        self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
+
+        mock_service_instance = Mock()
+        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_notification_consumer_service.return_value = mock_service_instance
+
+        self.service.connector_consumer_service = Mock()
+
+        # Act
+        self.service.send_notification(
+            message_id=message_id,
+            endpoint_url=None,
+            provider_bpn=provider_bpn,
+            provider_dsp_url=provider_dsp_url,
+            list_policies=[{"policy": "test"}],
+        )
+
+        # Assert — SDK must be called with the derived path, not None
+        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        assert call_kwargs["endpoint_path"] == "/connect-to-parent"
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_dsp_url_resolved_from_connector_discovery(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_dtr_manager,
+        mock_connector_manager
+    ):
+        """When provider_dsp_url is None, resolve it through connector discovery."""
+        # Arrange
+        message_id = uuid4()
+        provider_bpn = "BPNL00000000024R"
+        discovered_dsp_url = "https://discovered.partner.example.com/api/v1/dsp"
+
+        mock_connector_manager.consumer.get_connectors.return_value = [discovered_dsp_url]
+
+        mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-Feedback:1.0.0"
+
+        mock_db_notification = Mock()
+        mock_db_notification.to_sdk.return_value = mock_notification
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.submodel_service_manager = Mock()
+        self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
+
+        mock_service_instance = Mock()
+        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_notification_consumer_service.return_value = mock_service_instance
+
+        self.service.connector_consumer_service = Mock()
+
+        # Act
+        self.service.send_notification(
+            message_id=message_id,
+            endpoint_url="/feedback",
+            provider_bpn=provider_bpn,
+            provider_dsp_url=None,
+            list_policies=[{"policy": "test"}],
+        )
+
+        # Assert — SDK must receive the discovered DSP URL
+        mock_connector_manager.consumer.get_connectors.assert_called_once_with(provider_bpn)
+        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        assert call_kwargs["provider_dsp_url"] == discovered_dsp_url
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_no_connectors_found_raises_error(
+        self, mock_repo_factory, mock_dtr_manager, mock_connector_manager
+    ):
+        """When provider_dsp_url is None and discovery returns nothing, raise NotificationSendingError."""
+        # Arrange
+        mock_connector_manager.consumer.get_connectors.return_value = []
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        # Act & Assert
+        with pytest.raises(NotificationSendingError) as exc_info:
+            self.service.send_notification(
+                message_id=uuid4(),
+                endpoint_url="/feedback",
+                provider_bpn="BPNL00000000024R",
+                provider_dsp_url=None,
+                list_policies=[{"policy": "test"}],
+            )
+        assert "No connector DSP URL found" in str(exc_info.value)
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.ConfigManager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_policies_from_config_when_none(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
+    ):
+        """When list_policies is None, fall back to provider.digitalTwinEventAPI.policy.usage from config."""
+        # Arrange
+        config_policy = {"permissions": [{"action": "use"}], "prohibitions": [], "obligations": []}
+        mock_config_manager.get_config.return_value = config_policy
+
+        mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-ConnectToChild:3.0.0"
+
+        mock_db_notification = Mock()
+        mock_db_notification.to_sdk.return_value = mock_notification
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.submodel_service_manager = Mock()
+        self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
+
+        mock_service_instance = Mock()
+        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_notification_consumer_service.return_value = mock_service_instance
+        self.service.connector_consumer_service = Mock()
+
+        # Act
+        self.service.send_notification(
+            message_id=uuid4(),
+            endpoint_url="/connect-to-child",
+            provider_bpn="BPNL00000000024R",
+            provider_dsp_url="https://example.com/dsp",
+            list_policies=None,
+        )
+
+        # Assert — policy from config is wrapped in a list and forwarded
+        mock_config_manager.get_config.assert_called_with(
+            "provider.digitalTwinEventAPI.policy.usage"
+        )
+        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        assert call_kwargs["policies"] == [config_policy]
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.ConfigManager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_policies_from_config_when_empty_list(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
+    ):
+        """An empty list_policies also triggers the config fallback."""
+        # Arrange
+        config_policy = {"permissions": [{"action": "use"}]}
+        mock_config_manager.get_config.return_value = config_policy
+
+        mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-Feedback:1.0.0"
+
+        mock_db_notification = Mock()
+        mock_db_notification.to_sdk.return_value = mock_notification
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.submodel_service_manager = Mock()
+        self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
+
+        mock_service_instance = Mock()
+        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_notification_consumer_service.return_value = mock_service_instance
+        self.service.connector_consumer_service = Mock()
+
+        # Act
+        self.service.send_notification(
+            message_id=uuid4(),
+            endpoint_url="/feedback",
+            provider_bpn="BPNL00000000024R",
+            provider_dsp_url="https://example.com/dsp",
+            list_policies=[],
+        )
+
+        # Assert
+        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        assert call_kwargs["policies"] == [config_policy]
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.ConfigManager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_all_params_auto_resolved(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager,
+        mock_dtr_manager, mock_connector_manager
+    ):
+        """All three optional params are resolved automatically when omitted."""
+        # Arrange — connector discovery returns a URL
+        discovered_dsp = "https://auto-discovered.example.com/api/v1/dsp"
+        mock_connector_manager.consumer.get_connectors.return_value = [discovered_dsp]
+
+        # Config returns a policy
+        config_policy = {"permissions": [{"action": "use"}]}
+        mock_config_manager.get_config.return_value = config_policy
+
+        # Notification context drives endpoint path
+        mock_notification = Mock(spec=Notification)
+        mock_notification.header = Mock()
+        mock_notification.header.context = "IndustryCore-DigitalTwinEventAPI-SubmodelUpdate:1.0.0"
+
+        mock_db_notification = Mock()
+        mock_db_notification.to_sdk.return_value = mock_notification
+
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = mock_db_notification
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.submodel_service_manager = Mock()
+        self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
+
+        mock_service_instance = Mock()
+        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_notification_consumer_service.return_value = mock_service_instance
+        self.service.connector_consumer_service = Mock()
+
+        # Act
+        self.service.send_notification(
+            message_id=uuid4(),
+            endpoint_url=None,
+            provider_bpn="BPNL00000000024R",
+            provider_dsp_url=None,
+            list_policies=None,
+        )
+
+        # Assert all three were substituted correctly
+        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        assert call_kwargs["endpoint_path"] == "/submodel-update"
+        assert call_kwargs["provider_dsp_url"] == discovered_dsp
+        assert call_kwargs["policies"] == [config_policy]
+
+    @patch('services.notifications.notifications_management_service.dtr_manager')
+    @patch('services.notifications.notifications_management_service.NotificationConsumerService')
+    @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
+    def test_send_notification_not_found_raises_error(
+        self, mock_repo_factory, mock_notification_consumer_service, mock_dtr_manager
+    ):
+        """If the notification does not exist in the DB, raise NotificationSendingError."""
+        # Arrange
+        mock_repo_manager = MagicMock()
+        mock_repo_manager.notification_repository.find_by_message_id.return_value = None
+        mock_repo_manager.__enter__.return_value = mock_repo_manager
+        mock_repo_manager.__exit__.return_value = None
+        mock_repo_factory.return_value.create.return_value = mock_repo_manager
+
+        self.service.connector_consumer_service = Mock()
+
+        # Act & Assert
+        with pytest.raises(NotificationSendingError) as exc_info:
+            self.service.send_notification(
+                message_id=uuid4(),
+                endpoint_url="/feedback",
+                provider_bpn="BPNL00000000024R",
+                provider_dsp_url="https://example.com/dsp",
+                list_policies=[{"policy": "test"}],
+            )
+        assert "Notification not found" in str(exc_info.value)
+        mock_notification_consumer_service.return_value.send_notification.assert_not_called()
+
+
+class TestDeriveEndpointPath:
+    """Unit tests for the _derive_endpoint_path static method.
+
+    The method converts the notification context string into a URL path segment
+    following the PascalCase → kebab-case convention used by the DigitalTwinEventAPI.
+    """
+
+    @pytest.mark.parametrize("context,expected_path", [
+        (
+            "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0",
+            "/connect-to-parent",
+        ),
+        (
+            "IndustryCore-DigitalTwinEventAPI-ConnectToChild:3.0.0",
+            "/connect-to-child",
+        ),
+        (
+            "IndustryCore-DigitalTwinEventAPI-SubmodelUpdate:1.0.0",
+            "/submodel-update",
+        ),
+        (
+            "IndustryCore-DigitalTwinEventAPI-Feedback:1.0.0",
+            "/feedback",
+        ),
+    ])
+    def test_known_notification_contexts(self, context, expected_path):
+        """All four standard DigitalTwinEventAPI contexts derive the correct path."""
+        assert NotificationsManagementService._derive_endpoint_path(context) == expected_path
+
+    def test_unknown_context_without_marker_returns_empty(self):
+        """A context string that does not contain 'DigitalTwinEventAPI-' returns ''."""
+        result = NotificationsManagementService._derive_endpoint_path(
+            "SomeOther-Context:1.0.0"
+        )
+        assert result == ""
+
+    def test_empty_context_returns_empty(self):
+        """An empty context string returns ''."""
+        assert NotificationsManagementService._derive_endpoint_path("") == ""
+
+    def test_different_version_does_not_affect_path(self):
+        """The version number after ':' is stripped; only the type name matters."""
+        v1 = NotificationsManagementService._derive_endpoint_path(
+            "IndustryCore-DigitalTwinEventAPI-ConnectToParent:1.0.0"
+        )
+        v3 = NotificationsManagementService._derive_endpoint_path(
+            "IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0"
+        )
+        assert v1 == v3 == "/connect-to-parent"

@@ -21,13 +21,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+import re
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import List, Optional, Dict
 
-from tractusx_sdk.extensions.notification_api.models import Notification
-from tractusx_sdk.extensions.notification_api import NotificationConsumerService, NotificationError
+from tractusx_sdk.industry.models.notifications import Notification
+from tractusx_sdk.industry.services.notifications import NotificationConsumerService
+from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 from tractusx_sdk.dataspace.services.connector.base_connector_consumer import BaseConnectorConsumerService
 
+from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
@@ -37,7 +41,7 @@ from tools.exceptions import NotificationCreationError, NotificationUpdateStatus
 from tools.constants import SEM_ID_NOTIFICATION
 
 from connector import connector_manager
-from tools.edr_tools import remove_existing_edr
+from dtr import dtr_manager
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -51,15 +55,55 @@ class NotificationsManagementService():
         self.submodel_service_manager = SubmodelServiceManager()
 
     @staticmethod
+    def _derive_endpoint_path(context: str) -> str:
+        """
+        Derive the DigitalTwinEventAPI endpoint path from a notification context string.
+
+        Example: ``IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0``
+                 → ``/connect-to-parent``
+        """
+        try:
+            marker = "DigitalTwinEventAPI-"
+            idx = context.index(marker) + len(marker)
+            type_name = context[idx:].split(":")[0]  # e.g. "ConnectToParent"
+            kebab = re.sub(r"([A-Z])", r"-\1", type_name).lower().lstrip("-")
+            return f"/{kebab}"
+        except (ValueError, IndexError):
+            logger.warning(
+                f"[Notifications] Could not derive endpoint path from context '{context}', using empty path"
+            )
+            return ""
+
+    @staticmethod
     def _build_location(message_id: UUID) -> str:
         """
         Build a stable location reference for the stored notification payload.
         """
         return f"{SEM_ID_NOTIFICATION}:{message_id}"
 
+    def _remove_existing_edr_for_digital_twin_event_api(self, provider_bpn: str) -> None:
+        """
+        Before sending a notification, remove any cached EDR for the
+        DigitalTwinEventAPI asset of this provider so we never reuse a stale token.
+        Delegates to the DTR manager's reusable purge helper.
+        """
+        rows = dtr_manager.purge_edrs_matching(
+            counter_party_id=provider_bpn,
+            asset_id_pattern="ichub:asset:digitaltwin-event:%",
+        )
+        logger.debug(
+            f"[Notifications] Purged {rows} stale DigitalTwinEventAPI EDR(s) "
+            f"for provider [{provider_bpn}]"
+        )
+
     def create_notification(self, notification: Notification, direction: NotificationDirection, use_case: str = None) -> NotificationEntity:
         """
         Create a new notification in the system.
+
+        ``message_id`` and ``sent_date_time`` default to a server-generated UUID
+        and the current UTC timestamp respectively when not supplied by the caller
+        (the SDK ``NotificationHeader`` model handles this via ``default_factory``).
+        Caller-supplied values are preserved as-is.
         """
         try:
             status: NotificationStatus = None
@@ -70,7 +114,10 @@ class NotificationsManagementService():
                 logger.info(f"Creating outgoing notification with ID: {notification.header.message_id}")
                 status = NotificationStatus.PENDING
 
-            payload = notification.model_dump(mode="json")
+            # Store payload using camelCase aliases so full_notification in the
+            # API response is consistent with the Catena-X notification schema
+            # and the camelCase keys used in request bodies (senderBpn, etc.).
+            payload = notification.model_dump(mode="json", by_alias=True)
             self.submodel_service_manager.upload_twin_aspect_document(
                 submodel_id=notification.header.message_id,
                 semantic_id=SEM_ID_NOTIFICATION,
@@ -155,14 +202,47 @@ class NotificationsManagementService():
             logger.error(f"Error deleting notification: {e}")
             raise NotificationDeleteError(f"Failed to delete notification: {e}")
 
-    def send_notification(self, message_id: UUID, endpoint_url: str, provider_bpn: str, provider_dsp_url: str, list_policies: List[Dict]) -> None:
+    def send_notification(self, message_id: UUID, endpoint_url: Optional[str], provider_bpn: str, provider_dsp_url: Optional[str], list_policies: Optional[List[Dict]]) -> None:
         """
         Send a notification to the specified endpoint using the connector consumer service.
         Retrieves the notification from the database using the message_id.
+
+        If ``endpoint_url`` is None, the path is derived automatically from the
+        notification's ``header.context`` (e.g. ``ConnectToParent`` → ``/connect-to-parent``).
+
+        If ``provider_dsp_url`` is None, the DSP URL is resolved automatically
+        from the connector discovery cache for the given ``provider_bpn``.
+
+        If ``list_policies`` is None or empty, the policy defined at
+        ``provider.digitalTwinEventAPI.policy.usage`` in ``configuration.yml`` is
+        used as the fallback.
         """
         try:
+            # Resolve DSP URL: use provided value or fall back to connector discovery
+            resolved_dsp_url = provider_dsp_url
+            if not resolved_dsp_url:
+                connectors = connector_manager.consumer.get_connectors(provider_bpn)
+                if not connectors:
+                    raise NotificationSendingError(
+                        f"No connector DSP URL found for provider BPN [{provider_bpn}]. "
+                        "Please provide provider_dsp_url explicitly."
+                    )
+                resolved_dsp_url = connectors[0]
+                logger.debug(
+                    f"[Notifications] No provider_dsp_url provided; using discovered "
+                    f"DSP URL [{resolved_dsp_url}] for BPN [{provider_bpn}]"
+                )
+
+            # Resolve policies: caller-supplied takes precedence over config fallback
+            resolved_policies = list_policies
+            if not resolved_policies:
+                dte_policy = ConfigManager.get_config("provider.digitalTwinEventAPI.policy.usage")
+                if dte_policy:
+                    resolved_policies = [dte_policy]
+                    logger.debug("[Notifications] No governance provided; using provider.digitalTwinEventAPI.policy.usage from configuration")
+
             with RepositoryManagerFactory().create() as repos:
-                remove_existing_edr(repos, provider_bpn, "ichub:asset:digitaltwin-event:%")
+                self._remove_existing_edr_for_digital_twin_event_api(provider_bpn)
                 db_notification = repos.notification_repository.find_by_message_id(
                     message_id=message_id
                 )
@@ -175,6 +255,20 @@ class NotificationsManagementService():
             )
             notification = db_notification.to_sdk(payload)
 
+            # Stamp the actual dispatch time so sentDateTime in the payload reflects
+            # when the message left this system, not when it was pre-created.
+            notification.header.sent_date_time = datetime.now(timezone.utc)
+            # Store with camelCase aliases consistent with the rest of the payload
+            updated_payload = notification.model_dump(mode="json", by_alias=True)
+            self.submodel_service_manager.upload_twin_aspect_document(
+                submodel_id=message_id,
+                semantic_id=SEM_ID_NOTIFICATION,
+                payload=updated_payload
+            )
+
+            # Resolve endpoint path: explicit override or derived from context
+            resolved_endpoint = endpoint_url or self._derive_endpoint_path(notification.header.context)
+
             notification_service = NotificationConsumerService(
                 self.connector_consumer_service,
                 verbose=True
@@ -182,10 +276,10 @@ class NotificationsManagementService():
 
             result = notification_service.send_notification(
                 provider_bpn=provider_bpn,
-                provider_dsp_url=provider_dsp_url,
+                provider_dsp_url=resolved_dsp_url,
                 notification=notification,
-                endpoint_path=endpoint_url,
-                policies=list_policies
+                endpoint_path=resolved_endpoint,
+                policies=resolved_policies
             )
             self.update_notification_status(
                 message_id=message_id,
@@ -196,7 +290,14 @@ class NotificationsManagementService():
 
         except NotificationError as ne:
             logger.error(f"NotificationError sending notification: {ne}")
-            raise NotificationSendingError(f"NotificationError: {ne}")
+            raise NotificationSendingError(
+                message=f"NotificationError: {ne}",
+                details=[
+                    f"Provider BPN: {provider_bpn}",
+                    f"DSP URL attempted: {resolved_dsp_url}",
+                    f"Notification ID: {message_id}",
+                ]
+            )
         except Exception as e:
             logger.error(f"Error sending notification: {e}")
             raise NotificationSendingError(f"Failed to send notification: {e}")

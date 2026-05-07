@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "Serialized Parts",
+    "subtitle": "Provide, Share and Manage Parts in Serialized / Instance Level",
     "loading": "Loading serialized parts..."
   },
   "table": {
@@ -13,12 +14,12 @@
       "deleteSerializedPart": "Delete Serialized Part"
     },
     "messages": {
-      "twinRegistered": "Twin shared successfully!",
+      "twinRegistered": "Twin registered successfully!",
       "twinShared": "Twin shared successfully!",
       "twinUnshared": "Twin unshared successfully!",
       "partDeleted": "Serialized part deleted successfully!",
       "dataRefreshed": "Data refreshed successfully!",
-      "registerFailed": "Sharing failed",
+      "registerFailed": "Registration failed",
       "shareFailed": "Sharing failed",
       "unshareFailed": "Unsharing failed",
       "deleteFailed": "Deletion failed",

@@ -258,6 +258,26 @@ Return the postgresql DSN URL
 {{- printf "postgresql://%s:$DATABASE_PASSWORD@%s:%s/%s?sslmode=%s" $user $host $port $name $sslMode -}}
 {{- end -}}
 
+{{/*
+Get or generate the ichub password - used by both postgres and keycloak secrets
+This ensures the same password is used across all secrets that need it.
+On first install: uses value from values.yaml (REQUIRED for new installs)
+On upgrade: looks up existing secret and reuses the password
+NOTE: For new installations, you MUST provide postgresql.auth.ichubPassword in values.yaml
+      Random password generation across multiple templates is not reliable in Helm.
+*/}}
+{{- define "industry-core-hub.postgresql.ichubPassword" -}}
+{{- $existingSecret := (lookup "v1" "Secret" .Release.Namespace .Values.postgresql.auth.existingSecret) -}}
+{{- if and $existingSecret $existingSecret.data (index $existingSecret.data "ichub-password") -}}
+  {{- index $existingSecret.data "ichub-password" | b64dec -}}
+{{- else if .Values.postgresql.auth.ichubPassword -}}
+  {{- .Values.postgresql.auth.ichubPassword -}}
+{{- else -}}
+  {{- /* Generate deterministic password based on release name + namespace for dev/testing */}}
+  {{- printf "%s-%s-ichub-secret-key" .Release.Name .Release.Namespace | sha256sum | trunc 32 -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "industry-core-hub.ingressUrl" -}}
 {{- $ingress := .Values.backend.ingress }}
 {{- $host := "" }}

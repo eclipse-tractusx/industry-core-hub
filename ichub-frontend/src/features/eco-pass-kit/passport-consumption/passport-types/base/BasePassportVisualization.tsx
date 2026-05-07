@@ -227,8 +227,11 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
 
   // Handle show digital twin
   const handleShowDigitalTwin = () => {
-    if (digitalTwinData) {
+    if (digitalTwinData && counterPartyId) {
       setDigitalTwinModalOpen(true);
+    } else if (!counterPartyId) {
+      setSnackbarMessage('Counter party information not available');
+      setSnackbarOpen(true);
     } else {
       setSnackbarMessage('No digital twin data available');
       setSnackbarOpen(true);
@@ -508,17 +511,17 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
                 size="small"
                 startIcon={<ViewInAr sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                 onClick={handleShowDigitalTwin}
-                disabled={!digitalTwinData}
+                disabled={!digitalTwinData || !counterPartyId}
                 sx={{
-                  background: digitalTwinData ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255, 255, 255, 0.05)',
-                  color: digitalTwinData ? '#fff' : 'rgba(255, 255, 255, 0.3)',
+                  background: digitalTwinData && counterPartyId ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255, 255, 255, 0.05)',
+                  color: digitalTwinData && counterPartyId ? '#fff' : 'rgba(255, 255, 255, 0.3)',
                   textTransform: 'none',
                   fontSize: { xs: '0.75rem', sm: '0.8rem' },
                   px: { xs: 1.5, sm: 2 },
                   py: { xs: 0.75, sm: 1 },
                   fontWeight: 600,
                   borderRadius: '8px',
-                  '&:hover': digitalTwinData ? { 
+                  '&:hover': digitalTwinData && counterPartyId ? { 
                     background: 'linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%)',
                     boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
                   } : {},

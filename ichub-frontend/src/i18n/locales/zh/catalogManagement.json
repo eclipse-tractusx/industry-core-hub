@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "目录零件",
+    "subtitle": "在目录 / 类型级别提供、共享和管理零件",
     "createButton": "创建目录零件"
   },
   "productCard": {
@@ -147,8 +148,8 @@
         "deleteSerializedPart": "删除序列化零件"
       },
       "messages": {
-        "twinRegisteredSuccess": "孪生共享成功！",
-        "registrationFailed": "共享失败：{{error}}",
+        "twinRegisteredSuccess": "孪生注册成功！",
+        "registrationFailed": "注册失败：{{error}}",
         "sharingFailed": "分享失败：{{error}}",
         "unsharingFailed": "取消分享失败：{{error}}",
         "deletionFailed": "删除失败：{{error}}",

@@ -14,7 +14,7 @@
   distributed under the License is distributed on an "AS IS" BASIS
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
   either express or implied. See the
-  License for the specific language govern in permissions and limitations
+  License for the specific language govern in permission and limitations
   under the License.
  
   SPDX-License-Identifier: Apache-2.0
@@ -80,7 +80,9 @@
         PARTICIPANT_ID: "",
         BPN_VALIDATION_PATTERN: "",
         
-        // Governance and policies
+        // Governance and policies - must be configured via GOVERNANCE_CONFIG and DTR_POLICIES_CONFIG env vars
+        // Format: JSON array string, e.g. '[{"semanticid":"...","policies":[...]}]'
+        // See Helm chart values or docker-compose for example values
         GOVERNANCE_CONFIG: "[]",
         DTR_POLICIES_CONFIG: "[]",
         GOVERNANCE_STRICT_MODE: "false",
@@ -90,6 +92,9 @@
         ENABLE_PERFORMANCE_MONITORING: "false",
         ENABLE_DEV_TOOLS: "true",
         
+        // Notifications
+        NOTIFICATIONS_POLL_INTERVAL: "30000",
+
         // UI configuration
         UI_THEME: "auto",
         UI_LOCALE: "en",

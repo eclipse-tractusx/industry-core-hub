@@ -102,8 +102,8 @@ export interface DiscoveryResponse {
 export interface DiscoverRequest {
   id: string;
   semanticId: string;
-  dtrPolicies?: Array<Record<string, unknown>>;
-  governance?: Record<string, unknown>;
+  dtrPolicies?: Record<string, unknown>[];
+  governance?: Record<string, unknown>[];
 }
 
 const API_BASE_URL = '/addons/ecopass-kit';
@@ -151,8 +151,8 @@ export const discoverPassport = async (
   id: string,
   semanticId: string,
   onProgress?: (status: DiscoveryStatus) => void,
-  dtrPolicies?: Array<Record<string, unknown>>,
-  governance?: Record<string, unknown>
+  dtrPolicies?: Record<string, unknown>[],
+  governance?: Record<string, unknown>[]
 ): Promise<PassportResponse> => {
   // Initiate discovery
   const initialResponse = await initiateDiscovery({ 
