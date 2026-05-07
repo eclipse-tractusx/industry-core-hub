@@ -1,0 +1,37 @@
+###############################################################
+# Eclipse Tractus-X - Local Umbrella Deployment
+###############################################################
+
+This deployment includes:
+
+🏭 INDUSTRY CORE HUB INSTANCES:
+- Manufacturer ICHub (BPNL00000003CRHK)
+  Frontend: Check NodePort services for access
+  Backend: Check NodePort services for API access
+  
+- Supplier ICHub (BPNL0000000093Q7)  
+  Frontend: Check NodePort services for access
+  Backend: Check NodePort services for API access
+
+🔌 CONNECTORS & DTRs:
+- Manufacturer Connector: manufacturer-connector-controlplane.tx.test
+- Supplier Connector: supplier-connector-controlplane.tx.test
+- Manufacturer DTR: manufacturer-dtr.tx.test
+- Supplier DTR: supplier-dtr.tx.test
+
+🛠️ INFRASTRUCTURE:
+- Portal: Available via NodePort
+- Keycloak (Central & Shared IDP): Available via NodePort
+- PGAdmin: Available via NodePort for database management
+- Discovery Finder: semantics.tx.test
+
+📊 USEFUL COMMANDS:
+kubectl get services -n {{ .Release.Namespace }}  # Check all service access points
+kubectl get pods -n {{ .Release.Namespace }}      # Check pod status
+kubectl logs -f deployment/<deployment-name> -n {{ .Release.Namespace }}  # Check logs
+
+🌐 ACCESS:
+All services are configured with NodePort for local access.
+Use 'kubectl get services' to find the assigned ports.
+
+For detailed configuration, check the values.yaml file.
