@@ -1,6 +1,7 @@
 /********************************************************************************
 * Eclipse Tractus-X - Industry Core Hub                                      
-*                                                                             
+*
+* Copyright (c) 2026 LKS Next                                                                             
 * Copyright (c) 2025 Contributors to the Eclipse Foundation                   
 *                                                                             
 * See the NOTICE file(s) distributed with this work for additional            
@@ -30,6 +31,13 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: ichub; Type: SCHEMA; Schema: -; Owner: ichub
+--
+
+CREATE SCHEMA ichub;
+ALTER SCHEMA ichub OWNER TO ichub;
+
 
 SET default_table_access_method = heap;
 
@@ -50,6 +58,51 @@ DROP TABLE IF EXISTS public.data_exchange_agreement;
 DROP TABLE IF EXISTS public.business_partner;
 DROP TABLE IF EXISTS public.enablement_service_stack;
 DROP TABLE IF EXISTS public.legal_entity;
+DROP TABLE IF EXISTS ichub.edr_connections;
+DROP TABLE IF EXISTS ichub.known_connectors;
+DROP TABLE IF EXISTS ichub.known_dtrs;
+
+--
+-- Name: edr_connections; Type: TABLE; Schema: ichub; Owner: ichub
+--
+
+CREATE TABLE ichub.edr_connections (
+    transfer_id character varying NOT NULL,
+    counter_party_id character varying NOT NULL,
+    counter_party_address character varying NOT NULL,
+    query_checksum character varying NOT NULL,
+    policy_checksum character varying NOT NULL,
+    edr_data json,
+    edr_hash character varying
+);
+
+ALTER TABLE ichub.edr_connections OWNER TO ichub;
+
+--
+-- Name: known_connectors; Type: TABLE; Schema: ichub; Owner: ichub
+--
+
+CREATE TABLE ichub.known_connectors (
+    bpnl character varying NOT NULL,
+    connectors json,
+    expires_at timestamp without time zone NOT NULL
+);
+
+ALTER TABLE ichub.known_connectors OWNER TO ichub;
+
+--
+-- Name: known_dtrs; Type: TABLE; Schema: ichub; Owner: ichub
+--
+
+CREATE TABLE ichub.known_dtrs (
+    bpnl character varying NOT NULL,
+    edc_url character varying NOT NULL,
+    asset_id character varying NOT NULL,
+    policies json,
+    expires_at timestamp without time zone NOT NULL
+);
+
+ALTER TABLE ichub.known_dtrs OWNER TO ichub;
 
 
 CREATE TABLE public.batch (
@@ -63,6 +116,8 @@ CREATE TABLE public.batch_business_partner (
     batch_id integer NOT NULL,
     business_partner_id integer NOT NULL
 );
+
+ALTER TABLE public.batch_business_partner OWNER TO postgres;
 
 CREATE TABLE public.business_partner (
     id integer NOT NULL,
@@ -288,6 +343,11 @@ ALTER TABLE ONLY public.batch
 ALTER TABLE ONLY public.batch_business_partner
     ADD CONSTRAINT pk_batch_business_partner PRIMARY KEY (batch_id, business_partner_id);
 
+ALTER TABLE ONLY public.batch_business_partner
+    ADD CONSTRAINT fk_batch_business_partner_batch_id FOREIGN KEY (batch_id) REFERENCES public.batch(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+ALTER TABLE ONLY public.batch_business_partner
+    ADD CONSTRAINT fk_batch_business_partner_business_partner_id FOREIGN KEY (business_partner_id) REFERENCES public.business_partner(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
 ALTER TABLE ONLY public.business_partner
     ADD CONSTRAINT pk_business_partner PRIMARY KEY (id);
 
@@ -485,3 +545,21 @@ ALTER SEQUENCE public.part_share_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
+
+--
+-- Name: ichub schema indexes and constraints
+--
+
+ALTER TABLE ONLY ichub.edr_connections
+    ADD CONSTRAINT pk_edr_connections PRIMARY KEY (transfer_id);
+ALTER TABLE ONLY ichub.edr_connections
+    ADD CONSTRAINT uk_edr_connections_query_policy_checksum UNIQUE (query_checksum, policy_checksum);
+
+CREATE INDEX idx_edr_connections_counter_party_id ON ichub.edr_connections USING btree (counter_party_id);
+CREATE INDEX idx_edr_connections_counter_party_address ON ichub.edr_connections USING btree (counter_party_address);
+
+ALTER TABLE ONLY ichub.known_connectors
+    ADD CONSTRAINT pk_known_connectors PRIMARY KEY (bpnl);
+
+ALTER TABLE ONLY ichub.known_dtrs
+    ADD CONSTRAINT pk_known_dtrs PRIMARY KEY (bpnl);

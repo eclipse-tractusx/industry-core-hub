@@ -645,9 +645,9 @@ See the full [Changelog](./CHANGELOG.md) for details on released versions.
 
 ## Installation
 
-Deploy the IC-Hub in a **Kubernetes cluster** (via Helm) or run it **locally** for development.
+**New Users?** Start with our **[Quickstart Guide](./docs/QUICKSTART.md)** for a guided walkthrough.
 
-### Quick Start (Local Development)
+For detailed installation instructions, please consult our [Installation Guide](./INSTALL.md).
 
 **Database (PostgreSQL + pgAdmin)**
 
