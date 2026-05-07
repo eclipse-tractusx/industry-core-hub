@@ -377,33 +377,35 @@ backend:
         policy:
           usage:
             context:
-              odrl: http://www.w3.org/ns/odrl/2/
-              cx-policy: https://w3id.org/catenax/policy/
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-              - action: odrl:use
-                LogicalConstraint: odrl:and
-                constraints:
-                  - leftOperand: cx-policy:FrameworkAgreement
-                    operator: odrl:eq
-                    rightOperand: DataExchangeGovernance:1.0
-                  - leftOperand: cx-policy:Membership
-                    operator: odrl:eq
-                    rightOperand: active
-                  - leftOperand: cx-policy:UsagePurpose
-                    operator: odrl:eq
-                    rightOperand: cx.pcf.base:1
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.pcf.base:1"
             prohibition: []
             obligation: []
           access:
             context:
-              odrl: http://www.w3.org/ns/odrl/2/
-              cx-policy: https://w3id.org/catenax/policy/
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
-              - action: odrl:use
-                constraints:
-                  - leftOperand: cx-policy:Membership
-                    operator: odrl:eq
-                    rightOperand: active
+              - action: "use"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
             prohibition: []
             obligation: []
       # -- Submodel Dispatcher configuration
