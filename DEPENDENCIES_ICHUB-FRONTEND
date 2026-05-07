@@ -1,6 +1,6 @@
 npm/npmjs/-/acorn-jsx/5.3.2, MIT, approved, clearlydefined
 npm/npmjs/-/acorn/8.15.0, MIT, approved, clearlydefined
-npm/npmjs/-/ajv/6.12.6, MIT, approved, #15286
+npm/npmjs/-/ajv/6.14.0, MIT AND BSD-2-Clause-Views, approved, #26299
 npm/npmjs/-/ansi-styles/4.3.0, MIT, approved, clearlydefined
 npm/npmjs/-/argparse/2.0.1, Python-2.0, approved, CQ22954
 npm/npmjs/-/assertion-error/2.0.1, MIT, approved, clearlydefined
