@@ -1,9 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 DRÄXLMAIER Group
-# (represented by Lisa Dräxlmaier GmbH)
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS NEXT
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -22,14 +21,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from .provider.models import (
-    LegalEntity, BusinessPartner, EnablementServiceStack,
-    Twin, TwinAspect, TwinAspectRegistration, TwinExchange, TwinRegistration,
-    CatalogPart, PartnerCatalogPart, SerializedPart, JISPart, Batch, BatchBusinessPartner,
-    DataExchangeAgreement, DataExchangeContract
+from .models import (
+    PcfExchangeEntity,
+    PcfExchangeDirection,
+    PcfExchangeStatus,
+    PcfExchangeType,
+    PcfRelationshipEntity
 )
-
-from .pcf.models import (
-    PcfExchangeEntity, PcfExchangeDirection, PcfExchangeStatus
-)
-
