@@ -1,7 +1,6 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -20,9 +19,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-
+ 
 hostname: "http://localhost:9000"
-
+ 
 authorization:
   enabled: true
   api_key:
@@ -35,8 +34,8 @@ authorization:
     client_id: "industry-core-hub-api"
     client_secret: "ichub-client-secret-2024"
     retry:
-      max_retries: 3
-      retry_delay: 2
+      max_retries: 5
+      retry_delay: 10
       # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
       background_retry_interval: 60
 agreements:
@@ -180,7 +179,9 @@ agreements:
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
-
+  timeout: 8
+  retry_interval: 5
+ 
 cors:
   enabled: true
   allow_origins:
@@ -190,7 +191,7 @@ cors:
     - "http://127.0.0.1:5173"     # Alternative localhost notation
     - "http://127.0.0.1:3000"
     - "http://127.0.0.1:8080"
-    - "http://localhost:4173"
+    - "http://localhost:4173"  # Deployed frontend
   allow_credentials: true
   allow_methods:
     - "GET"
@@ -201,11 +202,22 @@ cors:
     - "PATCH"
   allow_headers:
     - "*"
-
+ 
+server:
+  # Worker configuration
+  workers:
+    max_workers: 1                        # Single worker for optimal in-memory state
+    worker_threads: 200                   # High thread count for blocking operations
+ 
+  # Timeout configuration (in seconds)
+  timeouts:
+    keep_alive: 300                       # 5 minutes for DTR operations
+    graceful_shutdown: 30    
+ 
 consumer:
   discovery:
     discovery_finder:
-      url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+      url: "https://<discovery-finder-url>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
     connector_discovery:
       key: "bpn"
     oauth:
@@ -334,14 +346,14 @@ provider:
     # -- Storage mode: "filesystem" (local storage) or "http" (external service)
     mode: "filesystem"
     # -- Local filesystem path for submodels (used when mode=filesystem)
-    path: "industry-core-hub/data/submodels"
+    path: "./data/submodels"
     apiPath: "/submodel-dispatcher"
     # -- External HTTP submodel service configuration (used when mode=http)
     http:
       # -- Base URL of the external ICHub-compatible submodel service
-      base_url: "https://external-ichub.example.com"
+      base_url: "https://<external-submodel-service-url>"
       # -- Optional API path prefix
-      api_path: ""
+      api_path: "/v1/submodel-dispatcher"
       # -- Authentication configuration
       auth:
         # -- Enable authentication
