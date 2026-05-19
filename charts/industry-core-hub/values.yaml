@@ -68,6 +68,10 @@ backend:
       - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
+    # -- Business Partner Number (BPN) of the operator running this instance.
+    # Used by PCF Exchange and other managers to identify the local participant.
+    # Defaults to the top-level participantId value if left empty.
+    bpn: ""
     # -- Agreements define the ODRL policies for each semantic model.
     # The format follows the Tractus-X SDK TCK reference (plain keys).
     # Both Jupiter and Saturn use identical rule structures — only the context differs.
