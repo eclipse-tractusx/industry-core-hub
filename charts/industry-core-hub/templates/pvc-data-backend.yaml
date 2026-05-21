@@ -27,10 +27,11 @@ metadata:
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
-  {{- with .Values.backend.persistence.data.annotations }}
   annotations:
+    helm.sh/resource-policy: keep
+    {{- with .Values.backend.persistence.data.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   accessModes:
     - {{ .Values.backend.persistence.data.accessMode | quote }}
@@ -51,10 +52,11 @@ metadata:
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
-  {{- with .Values.backend.persistence.logs.annotations }}
   annotations:
+    helm.sh/resource-policy: keep
+    {{- with .Values.backend.persistence.logs.annotations }}
     {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- end }}
 spec:
   accessModes:
     - {{ .Values.backend.persistence.logs.accessMode | quote }}
