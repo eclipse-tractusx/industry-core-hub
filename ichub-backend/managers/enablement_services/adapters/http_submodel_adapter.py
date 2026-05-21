@@ -22,7 +22,7 @@
 #################################################################################
 
 # TODO: Move to Tractus-X SDK if it can be generalized for any HTTP-based submodel service
-
+# TODO: should we delete it or keep it at least now? 
 from typing import Dict, Any, Optional
 from uuid import UUID
 from urllib.parse import quote

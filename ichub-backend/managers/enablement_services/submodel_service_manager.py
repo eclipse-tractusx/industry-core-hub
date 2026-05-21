@@ -35,7 +35,7 @@ from tractusx_sdk.industry.adapters import SubmodelAdapter
 from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdapterFactory, SubmodelAdapterType
 from tractusx_sdk.industry.adapters.submodel_adapters.file_system_adapter import FileSystemAdapter
 from tractusx_sdk.industry.adapters.submodel_adapters.http_submodel_adapter import HttpSubmodelAdapter
-
+from tractusx_sdk.industry.adapters.submodel_adapters.s3_adapter import S3Adapter
 
 class OperationType(Enum):
     """Enumeration of supported submodel operations."""
@@ -75,6 +75,8 @@ class SubmodelServiceManager:
             self.adapter = self._initialize_filesystem_adapter()
         elif self.adapter_mode == "http":
             self.adapter = self._initialize_http_adapter()
+        elif self.adapter_mode == "s3":
+            self.adapter = self._initialize_s3_adapter()
         else:
             raise ValueError(f"Unsupported adapter mode: {self.adapter_mode}")
         
@@ -189,6 +191,95 @@ class SubmodelServiceManager:
             "verify_ssl": verify_ssl,
             "url_pattern": url_pattern
         })
+
+    def _initialize_s3_adapter(self) -> S3Adapter:
+        """Initialize S3 adapter for AWS S3 Storage."""
+        s3_config = ConfigManager.get_config(
+            "provider.submodel_dispatcher.s3", default={}
+        )
+
+        if not isinstance(s3_config, dict):
+            raise ValueError(
+                f"Expected 'provider.submodel_dispatcher.s3' to be a dict, "
+                f"got: {type(s3_config).__name__}"
+            )
+
+        # Extract required configuration
+        bucket_name = s3_config.get("bucket_name", "")
+        if not bucket_name:
+            raise ValueError(
+                "Missing required configuration: provider.submodel_dispatcher.s3.bucket_name"
+            )
+
+        # Extract optional configuration with defaults
+        # TODO: key_pattern should be configurable to allow different directory structures in the bucket, but default to a reasonable pattern that avoids too many files in a single directory
+        key_pattern = s3_config.get("key_pattern", "")
+        if not key_pattern:
+            raise ValueError(
+                "Missing required configuration: provider.submodel_dispatcher.s3.key_pattern"
+            )
+        
+        region_name = s3_config.get("region_name", None)
+        if not region_name:
+            raise ValueError(
+                "Missing required configuration: provider.submodel_dispatcher.s3.region_name"
+            )
+
+        endpoint_url = s3_config.get("endpoint_url", None) or None
+
+        # Extract authentication configuration
+        auth_config = s3_config.get("auth", {})
+        auth_enabled = auth_config.get("enabled", False)
+        aws_access_key_id = None
+        aws_secret_access_key = None
+        #TODO: Access key id and secret access key
+        if auth_enabled:
+            raw_access_key = auth_config.get("aws_access_key_id", "")
+            raw_secret_key = auth_config.get("aws_secret_access_key", "")
+
+            # Support environment variable substitution ($VAR or ${VAR})
+            def resolve_env(value: str) -> str:
+                if value.startswith("${") and value.endswith("}"):
+                    env_var = value[2:-1]
+                elif value.startswith("$"):
+                    env_var = value[1:]
+                else:
+                    return value
+                resolved = os.getenv(env_var, "")
+                if not resolved:
+                    self.logger.warning(
+                        f"Environment variable {env_var} not set. "
+                        f"S3 authentication may fail."
+                    )
+                return resolved
+
+            aws_access_key_id = resolve_env(raw_access_key) or None
+            aws_secret_access_key = resolve_env(raw_secret_key) or None
+
+            if not aws_access_key_id or not aws_secret_access_key:
+                self.logger.warning(
+                    "S3 authentication enabled but credentials are incomplete. "
+                    "Falling back to environment variables, IAM roles, or AWS config files."
+                )
+                aws_access_key_id = None
+                aws_secret_access_key = None
+
+        self.logger.info(f"Initializing S3 adapter for bucket: {bucket_name}")
+
+        try:
+            return (
+                S3Adapter.builder()
+                .bucket_name(bucket_name)
+                .key_pattern(key_pattern)
+                .region_name(region_name)
+                .endpoint_url(endpoint_url)
+                .aws_access_key_id(aws_access_key_id)
+                .aws_secret_access_key(aws_secret_access_key)
+                .build()
+            )
+        except Exception as e:
+            self.logger.error("Failed to create S3Adapter: %s", e)
+            raise RuntimeError(f"Failed to initialize S3 adapter: {e}") from e
 
     def _validate_uuid(self, value: Any) -> UUID:
         """Validate and convert value to UUID.

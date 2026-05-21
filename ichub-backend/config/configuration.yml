@@ -184,10 +184,10 @@ database:
 cors:
   enabled: true
   allow_origins:
-    - "http://localhost:5173"     # Vite dev server
-    - "http://localhost:3000"     # React dev server
-    - "http://localhost:8080"     # Alternative frontend port
-    - "http://127.0.0.1:5173"     # Alternative localhost notation
+    - "http://localhost:5173" # Vite dev server
+    - "http://localhost:3000" # React dev server
+    - "http://localhost:8080" # Alternative frontend port
+    - "http://127.0.0.1:5173" # Alternative localhost notation
     - "http://127.0.0.1:3000"
     - "http://127.0.0.1:8080"
     - "http://localhost:4173"
@@ -338,7 +338,6 @@ provider:
     file_system:
       path: "industry-core-hub/data/submodels"
       path_pattern: "{base_path}/{semantic_id}/{submodel_id}.json"
-    
     # -- External HTTP submodel service configuration (used when mode=http_submodel)
     http_submodel:
       # -- Base URL of the external ICHub-compatible submodel service
@@ -361,3 +360,20 @@ provider:
       timeout: 30
       # -- SSL certificate verification
       verify_ssl: true
+    s3:
+      # -- S3 bucket name for submodel storage
+      bucket_name: "<BUCKET_NAME>"
+      # -- AWS region where the S3 bucket is hosted
+      region_name: "<REGION_NAME>"
+      # -- Key pattern for submodel storage (use {semantic_id} and {submodel_id} as placeholders)
+      key_pattern: "{semantic_id}/{submodel_id}.json"
+      # -- Optional custom endpoint URL (for S3-compatible services like MinIO)
+      endpoint_url: "<ENDPOINT_URL>"
+      # -- Authentication configuration
+      auth:
+        # -- Enable authentication
+        enabled: false
+        # -- AWS access key ID
+        aws_access_key_id: "$AWS_ACCESS_KEY_ID"
+        # -- AWS secret access key
+        aws_secret_access_key: "$AWS_SECRET_ACCESS_KEY"
