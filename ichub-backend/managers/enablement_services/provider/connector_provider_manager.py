@@ -484,3 +484,132 @@ class ConnectorProviderManager:
             version=version,
             headers=headers
         )
+
+    def generate_ccm_notification_asset_id(self, ccm_url: str) -> str:
+        """
+        Generate a stable, deterministic asset ID for the CCM notification endpoint.
+
+        The ID is derived from the URL so that the same configuration always
+        produces the same ID, enabling safe idempotent re-runs.
+        """
+        return "ichub:asset:ccm-notification:" + blake2b_128bit(ccm_url)
+
+    def create_ccm_notification_asset(
+        self,
+        asset_id: str,
+        notification_endpoint_url: str,
+        version: str = "3.0",
+        headers: dict = None
+    ):
+        """
+        Create the CCM notification asset directly via the connector service.
+
+        We intentionally bypass ``NotificationService.ensure_notification_asset_exists``
+        because that method hardcodes ``dct_type=cx-taxo:DigitalTwinEventAPI`` with no
+        override parameter.  Instead we call ``connector_service.create_asset()`` directly,
+        using the CX-0135-mandated type and the same proxy settings required by any
+        notification / push-style endpoint.
+        """
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=notification_endpoint_url,
+            dct_type="cx-taxo:CompanyCertificateManagementNotificationApi",
+            version=version,
+            headers=headers,
+            proxy_params={
+                "proxyQueryParams": "false",
+                "proxyPath": "true",
+                "proxyMethod": "true",
+                "proxyBody": "true",
+            },
+        )
+
+    def get_or_create_ccm_notification_asset(
+        self,
+        ccm_url: str,
+        existing_asset_id: str = None,
+        version: str = "3.0",
+        headers: dict = None
+    ) -> str:
+        """
+        Return the CCM notification asset ID, creating it in the EDC if it does
+        not yet exist.
+
+        Args:
+            ccm_url: Full URL of the CCM notification endpoint on the ichub-backend.
+            existing_asset_id: Override the generated asset ID (e.g. from config).
+            version: Asset version string forwarded to the EDC.
+            headers: Optional auth headers injected into the EDC data-address.
+
+        Returns:
+            The asset ID (either pre-existing or newly created).
+        """
+        asset_id = existing_asset_id or self.generate_ccm_notification_asset_id(ccm_url)
+
+        existing_asset = self.connector_service.assets.get_by_id(oid=asset_id)
+        if existing_asset.status_code == 200:
+            logger.debug(f"[CCM] Asset with ID {asset_id} already exists.")
+            return asset_id
+
+        logger.info(f"[CCM] Creating new asset with ID {asset_id}.")
+        try:
+            asset = self.create_ccm_notification_asset(
+                asset_id=asset_id,
+                notification_endpoint_url=ccm_url,
+                version=version,
+                headers=headers
+            )
+        except ValueError as e:
+            logger.error(
+                f"[CCM] Failed to register asset with ID {asset_id} "
+                f"for URL '{ccm_url}'. Error: {e}"
+            )
+            raise
+        logger.info(f"[CCM] Successfully registered asset with ID {asset_id}.")
+        return asset.get("@id", asset_id)
+
+    def register_ccm_notification_offer(
+        self,
+        ccm_notification_url: str,
+        ccm_policy_config: dict = None,
+        existing_asset_id: str = None,
+        version: str = "3.0",
+        headers: dict = None
+    ) -> tuple[str, str, str, str]:
+        """
+        Register the single Company Certificate Management notification asset in
+        the EDC, together with its usage/access policies and contract definition.
+
+        This method is idempotent: calling it multiple times with the same
+        configuration yields the same IDs without duplicating EDC resources.
+
+        Args:
+            ccm_notification_url: Full URL of the CCM endpoint (ichub-backend
+                hostname + apiPath, e.g. ``http://ichub/addons/ccm-kit``).
+            ccm_policy_config: ODRL policy dict with ``usage`` and ``access``
+                sub-keys. Falls back to the version-appropriate empty policy.
+            existing_asset_id: Optional fixed asset ID to use instead of a
+                generated one (set via ``asset_config.existing_asset_id`` in YAML).
+            version: Asset version string.
+            headers: Optional auth headers for the EDC data-address.
+
+        Returns:
+            Tuple of ``(asset_id, usage_policy_id, access_policy_id, contract_id)``.
+        """
+        # Step 1: ensure the EDC asset exists
+        asset_id = self.get_or_create_ccm_notification_asset(
+            ccm_url=ccm_notification_url,
+            existing_asset_id=existing_asset_id,
+            version=version,
+            headers=headers
+        )
+
+        # Step 2: create usage + access policies and link them via a contract
+        policy_config = ccm_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=policy_config,
+            qualifier="ccm"
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id

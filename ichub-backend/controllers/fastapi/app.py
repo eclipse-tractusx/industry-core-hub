@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -42,6 +43,7 @@ startup_logger = logging.getLogger("app.startup")
 async def lifespan(app: FastAPI):
     """Run startup tasks before serving requests."""
     _sync_digital_twin_event_asset_on_startup()
+    _sync_ccm_asset_on_startup()
     yield
 
 
@@ -83,6 +85,50 @@ def _sync_digital_twin_event_asset_on_startup() -> None:
         startup_logger.error(
             f"[Startup] Failed to sync Digital Twin Event asset: {e}", exc_info=True
         )
+
+def _sync_ccm_asset_on_startup() -> None:
+    """
+    Register the CCM notification asset in the EDC on every backend startup.
+
+    Mirrors the DTE startup sync so the CCM endpoint is always advertised in
+    the connector catalog even when the Kubernetes sync Job has not run yet.
+    Failures are logged but do not prevent the backend from starting.
+    """
+    try:
+        from connector import connector_provider_manager, connector_start_up_error
+
+        if connector_start_up_error or connector_provider_manager is None:
+            startup_logger.warning(
+                "[Startup] Connector is not available. Skipping CCM asset sync."
+            )
+            return
+
+        ccm_config = ConfigManager.get_config("provider.ccm")
+        if not ccm_config:
+            startup_logger.warning(
+                "[Startup] No 'provider.ccm' config found. "
+                "Skipping CCM asset sync."
+            )
+            return
+
+        asset_config = ccm_config.get("asset_config", {})
+        hostname = ccm_config.get("hostname", "").rstrip("/")
+        api_path = ccm_config.get("apiPath", "").rstrip("/")
+        ccm_notification_url = hostname + api_path
+
+        ccm_asset_id, _, _, _ = connector_provider_manager.register_ccm_notification_offer(
+            ccm_notification_url=ccm_notification_url,
+            ccm_policy_config=ccm_config.get("policy"),
+            existing_asset_id=asset_config.get("existing_asset_id"),
+        )
+        startup_logger.info(
+            f"[Startup] CCM notification asset synced successfully: {ccm_asset_id}"
+        )
+    except Exception as e:
+        startup_logger.error(
+            f"[Startup] Failed to sync CCM notification asset: {e}", exc_info=True
+        )
+
 
 from tractusx_sdk.dataspace.tools import op
 

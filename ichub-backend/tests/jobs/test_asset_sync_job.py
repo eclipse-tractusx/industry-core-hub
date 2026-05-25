@@ -198,6 +198,125 @@ class TestAssetSyncJob(unittest.TestCase):
         error_calls = [call for call in mock_logger.error.call_args_list if "Config error" in str(call)]
         self.assertGreater(len(error_calls), 0, "Expected error logging for config failure")
 
+    # -----------------------------------------------------------------------
+    # CCM notification asset tests
+    # -----------------------------------------------------------------------
+
+    @patch('jobs.asset_sync_job.ConfigManager')
+    def test_sync_ccm_asset_success(self, mock_config_manager):
+        """
+        Test that _sync_ccm_asset calls register_ccm_notification_offer with
+        the URL built from hostname + apiPath and the policy from config.
+        """
+        mock_config_manager.get_config.return_value = {
+            "hostname": "http://ichub-backend",
+            "apiPath": "/addons/ccm-kit",
+            "policy": {
+                "usage": {"permissions": []},
+                "access": {"permissions": []}
+            },
+            "asset_config": {"existing_asset_id": None},
+        }
+        self.mock_connector_manager.register_ccm_notification_offer.return_value = (
+            "ichub:asset:ccm-notification:abc123", "up-id", "ap-id", "c-id"
+        )
+
+        self.job._sync_ccm_asset()
+
+        self.mock_connector_manager.register_ccm_notification_offer.assert_called_once_with(
+            ccm_notification_url="http://ichub-backend/addons/ccm-kit",
+            ccm_policy_config=mock_config_manager.get_config.return_value["policy"],
+            existing_asset_id=None,
+        )
+
+    @patch('jobs.asset_sync_job.ConfigManager')
+    @patch('jobs.asset_sync_job.logger')
+    def test_sync_ccm_asset_no_config(self, mock_logger, mock_config_manager):
+        """
+        Test that _sync_ccm_asset skips gracefully when 'provider.ccm' is absent,
+        so deployments without the CCM add-on are unaffected.
+        """
+        mock_config_manager.get_config.return_value = None
+
+        self.job._sync_ccm_asset()
+
+        self.mock_connector_manager.register_ccm_notification_offer.assert_not_called()
+        mock_logger.warning.assert_any_call(
+            "[AssetSyncJob] No 'provider.ccm' configuration found. "
+            "Skipping CCM asset sync."
+        )
+
+    @patch('jobs.asset_sync_job.ConfigManager')
+    @patch('jobs.asset_sync_job.logger')
+    def test_sync_ccm_asset_handles_exception(self, mock_logger, mock_config_manager):
+        """
+        Test that _sync_ccm_asset catches and logs exceptions without propagating
+        them, so a CCM failure does not abort the rest of the sync job.
+        """
+        mock_config_manager.get_config.return_value = {
+            "hostname": "http://ichub-backend",
+            "apiPath": "/addons/ccm-kit",
+            "policy": {},
+            "asset_config": {},
+        }
+        self.mock_connector_manager.register_ccm_notification_offer.side_effect = (
+            Exception("EDC unreachable")
+        )
+
+        # Should not raise
+        self.job._sync_ccm_asset()
+
+        mock_logger.error.assert_called_once()
+        error_msg = mock_logger.error.call_args[0][0]
+        self.assertIn("EDC unreachable", error_msg)
+
+    @patch('jobs.asset_sync_job.ConfigManager')
+    def test_run_calls_ccm_sync(self, mock_config_manager):
+        """
+        Test that run() invokes _sync_ccm_asset as step 4 alongside the other
+        three sync steps.
+        """
+        # All config lookups return minimal valid objects so no step errors out
+        mock_config_manager.get_config.return_value = None  # skip each optional step
+
+        self.mock_connector_manager.register_dtr_offer.return_value = ("d", "p", "a", "c")
+        self.mock_connector_manager.register_ccm_notification_offer.return_value = ("ccm", "p", "a", "c")
+
+        with patch.object(self.job, '_sync_dtr_asset') as mock_dtr, \
+             patch.object(self.job, '_sync_semantic_assets') as mock_sem, \
+             patch.object(self.job, '_sync_digital_twin_event_asset') as mock_dte, \
+             patch.object(self.job, '_sync_ccm_asset') as mock_ccm:
+            self.job.run()
+
+        mock_dtr.assert_called_once()
+        mock_sem.assert_called_once()
+        mock_dte.assert_called_once()
+        mock_ccm.assert_called_once()
+
+    @patch('jobs.asset_sync_job.ConfigManager')
+    def test_sync_ccm_asset_strips_trailing_slashes(self, mock_config_manager):
+        """
+        Test that hostname and apiPath trailing slashes are stripped before
+        building the notification URL so there is no double-slash.
+        """
+        mock_config_manager.get_config.return_value = {
+            "hostname": "http://ichub-backend/",   # trailing slash
+            "apiPath": "/addons/ccm-kit/",          # trailing slash
+            "policy": {},
+            "asset_config": {},
+        }
+        self.mock_connector_manager.register_ccm_notification_offer.return_value = (
+            "ichub:asset:ccm-notification:x", "p", "a", "c"
+        )
+
+        self.job._sync_ccm_asset()
+
+        call_kwargs = self.mock_connector_manager.register_ccm_notification_offer.call_args[1]
+        self.assertEqual(
+            call_kwargs["ccm_notification_url"],
+            "http://ichub-backend/addons/ccm-kit",
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
