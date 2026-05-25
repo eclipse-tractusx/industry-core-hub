@@ -79,11 +79,21 @@ class ConfigManager:
         """
         Load the configuration from a YAML file. Should be called once at startup.
         
+        If the configuration is already loaded, this method returns the cached configuration
+        without reloading. If the file is not found or fails to parse, an empty dictionary
+        is set and logged as a warning/error.
+        
         Args:
             config_path: Path to YAML configuration file. Defaults to ./config/configuration.yml
         
         Returns:
-            Loaded configuration as dictionary
+            Loaded configuration as dictionary. Empty dictionary if file not found or
+            YAML parsing fails.
+        
+        Note:
+            - Repeated calls return the cached configuration
+            - File not found or YAML parse errors do not raise exceptions, but log warnings
+            - The configuration is stored in cls._raw_config for reuse by other methods
         """
         if cls._raw_config is not None:
             logger.debug("Configuration already loaded, skipping reload")
@@ -142,13 +152,17 @@ class ConfigManager:
     @classmethod
     def _navigate_config(cls, section_path: str) -> Dict[str, Any] | None:
         """
-        Navigate nested configuration using dot notation.
+        Navigate nested configuration using dot notation to retrieve a configuration section.
+        
+        Internal method used by get_section() to traverse nested dictionaries. Returns the
+        configuration value only if it is a dictionary (section), otherwise returns None.
         
         Args:
-            section_path: Dot-notation path (e.g., 'provider.submodel_dispatcher.mode')
+            section_path: Dot-notation path (e.g., 'provider.submodel_dispatcher')
         
         Returns:
-            Configuration value or None if not found
+            Configuration section as a dictionary, or None if section not found or
+            final value is not a dictionary.
         """
         keys = section_path.split(".")
         value = cls._raw_config

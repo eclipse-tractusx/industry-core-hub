@@ -72,34 +72,40 @@ class SubmodelServiceManager:
     """
     Manager for handling submodel service operations (read, write, delete).
     
-    Implemented as a singleton to ensure a single adapter instance is shared across
-    the application. Uses SubmodelAdapterFactory for 100% dynamic adapter initialization
-    based on configuration. Supports multiple storage backends:
+    Uses lazy initialization to ensure efficient adapter creation and configuration.
+    Features 100% dynamic adapter initialization based on configuration via SubmodelAdapterFactory.
+    Supports multiple storage backends:
     - FileSystem (local storage)
     - S3 (AWS S3 or S3-compatible)
     - HttpSubmodel (external submodel service)
     
-    Configuration is loaded from YAML and passed to the factory without any
-    hardcoded logic or switch statements. Adapter type and configuration are
-    determined dynamically from the configuration section: provider.submodel_dispatcher
+    Singleton Pattern Infrastructure:
+    The singleton pattern infrastructure (__new__ method) is prepared but not currently enforced.
+    This allows flexibility for potential future use. Currently, lazy initialization via __init__
+    is used to initialize the adapter only once per application runtime.
+    
+    Configuration is loaded from YAML and passed to the factory without any hardcoded logic
+    or switch statements. Adapter type and configuration are determined dynamically from
+    the configuration section: provider.submodel_dispatcher
     
     Example:
-        # First instantiation initializes the adapter
-        manager1 = SubmodelServiceManager()
+        # Initialize adapter from configuration
+        manager = SubmodelServiceManager()
         
-        # Subsequent instantiations return the same instance (singleton)
+        # Subsequent instantiations initialize the same way (due to lazy initialization)
         manager2 = SubmodelServiceManager()
-        assert manager1 is manager2  # True
+        # Both reference the same initialized adapter instance
     """
     _instance = None
-    adapter: SubmodelAdapter
-    adapter_mode: str
+    _initialized = False
     logger = LoggingManager.get_logger(__name__)
     
-    #TODO: consider if we need it in the future
     # def __new__(cls):
     #     """
     #     Implement singleton pattern to ensure only one adapter instance exists.
+        
+    #     Creates a single instance on first instantiation and initializes the _initialized
+    #     flag for lazy initialization. Subsequent calls return the existing instance.
         
     #     Returns:
     #         Singleton instance of SubmodelServiceManager.
@@ -111,23 +117,34 @@ class SubmodelServiceManager:
 
     def __init__(self):
         """
-        Initialize SubmodelServiceManager with dynamic adapter configuration.
+        Initialize SubmodelServiceManager with lazy initialization pattern.
         
-        Implements lazy initialization with singleton pattern - only initializes on first
-        instantiation, subsequent calls skip initialization.
+        Implements lazy initialization to create the adapter instance only once during
+        application runtime. The _initialized flag tracks whether initialization has occurred.
         
-        Uses ConfigManager.get_adapter_mode_and_config() to efficiently retrieve
-        both the adapter mode and its configuration in a single call. This approach
-        is 100% dynamic and flexible - no hardcoded paths or adapter-specific logic.
+        Note on Singleton Pattern:
+        The singleton __new__() method is prepared but currently commented out. If enabled
+        in the future, it will enforce that only one manager instance exists application-wide.
+        The current lazy initialization pattern provides similar benefits for typical usage.
         
         Configuration flow:
-        1. ConfigManager.get_adapter_mode_and_config() → retrieves and validates
-           both adapter mode and configuration
-        2. Passes to SubmodelAdapterFactory.from_config() → adapter instance
+        1. On first instantiation: ConfigManager.get_adapter_mode_and_config() retrieves
+           both adapter mode and configuration from provider.submodel_dispatcher section
+        2. Passes to SubmodelAdapterFactory.from_config() → creates adapter instance
+        3. Sets instance attributes: self.adapter, self.adapter_mode
+        4. Sets _initialized flag to True, skipping reinitialize on subsequent calls
         
         Raises:
-            ValueError: If configuration is missing or invalid
+            ValueError: If configuration section is missing or invalid
             RuntimeError: If adapter initialization fails
+        
+        Example:
+            # First instantiation initializes adapter from configuration
+            manager = SubmodelServiceManager()
+            
+            # Subsequent instantiations skip initialization (lazy pattern)
+            manager2 = SubmodelServiceManager()
+            # Both have access to the initialized adapter
         """
         if self._initialized:
             return
@@ -175,13 +192,16 @@ class SubmodelServiceManager:
             raise InvalidError(f"Invalid UUID: {value}") from e
 
     def _hash_semantic_id(self, semantic_id: str) -> str:
-        """Get filesystem path components for a submodel.
+        """Generate SHA-256 hash of semantic ID for storage organization.
+        
+        Creates a deterministic hash of the semantic ID that can be used for organizing
+        storage paths or grouping related submodels.
         
         Args:
-            semantic_id: Semantic ID of the submodel.
+            semantic_id: Semantic ID of the submodel (e.g., urn:samm:io.catenax...).
         
         Returns:
-            Directory hash for the submodel.
+            SHA-256 hash of the semantic ID as hexadecimal string.
         """
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
         return sha256_semantic_id
