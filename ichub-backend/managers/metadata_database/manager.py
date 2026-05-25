@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -44,6 +45,8 @@ class RepositoryManager:
         self._twin_registration_repository = None
         self._notification_repository = None
         self._ccm_repository = None
+        self._ccm_site_repository = None
+        self._certificate_share_repository = None
 
     # Context Manager Methods
     def __enter__(self):
@@ -189,6 +192,22 @@ class RepositoryManager:
             from managers.metadata_database.repositories import CcmRepository
             self._ccm_repository = CcmRepository(self._session)
         return self._ccm_repository
+
+    @property
+    def ccm_site_repository(self):
+        """Lazy initialization of the CcmSite (certificate BPNS/BPNA sites) repository."""
+        if self._ccm_site_repository is None:
+            from managers.metadata_database.repositories import CcmSiteRepository
+            self._ccm_site_repository = CcmSiteRepository(self._session)
+        return self._ccm_site_repository
+
+    @property
+    def certificate_share_repository(self):
+        """Lazy initialization of the CertificateShare (sharing-history) repository."""
+        if self._certificate_share_repository is None:
+            from managers.metadata_database.repositories import CertificateShareRepository
+            self._certificate_share_repository = CertificateShareRepository(self._session)
+        return self._certificate_share_repository
 
 class RepositoryManagerFactory:
     """Factory class for creating repository managers."""

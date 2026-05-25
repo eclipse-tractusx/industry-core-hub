@@ -1,7 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -20,118 +21,279 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import Optional
+from datetime import date, datetime
+from enum import Enum
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
+
+
+# ---------------------------------------------------------------------------
+# Enumerations
+# ---------------------------------------------------------------------------
+
+class CertificateType(str, Enum):
+    """
+    Allowed certificate types as per CX-0135 CertificateType characteristic.
+    Extended with OTHER for any certification not explicitly listed.
+    """
+    ISO9001   = "ISO9001"
+    ISO14001  = "ISO14001"
+    ISO45001  = "ISO45001"
+    IATF16949 = "IATF16949"
+    ISO27001  = "ISO27001"
+    OTHER     = "OTHER"
+
+
+class TrustLevelEnum(str, Enum):
+    """
+    Trust level values as per the SAMM TrustLevel characteristic in CX-0135.
+    """
+    none    = "none"
+    low     = "low"
+    high    = "high"
+    trusted = "trusted"
+
+
+class ShareStatusEnum(str, Enum):
+    """
+    Lifecycle status of a certificate-sharing record.
+    Matches the ShareStatus enum on the database layer.
+    """
+    Active  = "Active"
+    Pending = "Pending"
+    Revoked = "Revoked"
+
+
+# ---------------------------------------------------------------------------
+# Sub-models
+# ---------------------------------------------------------------------------
+
+class SiteRead(BaseModel):
+    """
+    Represents a single BPNS or BPNA entry in the ``sites`` list of a certificate.
+    Corresponds to the SAMM ``siteBpn`` property.
+    """
+    site_bpn: str = Field(
+        alias="siteBpn",
+        description="Business Partner Number Site (BPNS) or Address (BPNA)."
+    )
+
+    class Config:
+        populate_by_name = True
 
 
 class CertificateDocument(BaseModel):
     """
-    Document model for certificate attachments as per CX-0135.
-    Contains the BASE64-encoded document and metadata.
+    Document attachment for a certificate (BASE64-encoded content).
+
+    The ``documentContent`` field carries the Base64 string that is only
+    populated when the detail of a single certificate is requested;
+    it is omitted from list endpoints to keep payloads small.
     """
     document_title: str = Field(
         alias="documentTitle",
-        description="Title of the certificate document"
+        description="File name or title of the certificate PDF."
     )
     document_type: str = Field(
         alias="documentType",
-        description="Type of document (e.g., 'application/pdf')"
+        description="MIME type of the document (e.g. 'application/pdf')."
     )
     document_content: str = Field(
         alias="documentContent",
-        description="BASE64-encoded content of the certificate PDF"
+        description="BASE64-encoded content of the certificate PDF."
     )
 
     class Config:
         populate_by_name = True
 
 
-class BusinessPartnerCertificate(BaseModel):
+# ---------------------------------------------------------------------------
+# Core certificate read models
+# ---------------------------------------------------------------------------
+
+class CertificateListItem(BaseModel):
     """
-    Business Partner Certificate model following CX-0135 v3.1.0.
-    
-    This model represents a certificate issued to a business partner
-    in the Catena-X network, such as ISO certifications, quality standards, etc.
+    Lightweight certificate representation used in list endpoints.
+
+    Does NOT include the PDF document to keep responses lean.
     """
-    certificate_id: str = Field(
-        alias="certificateId",
-        description="Unique identifier for the certificate"
-    )
-    certificate_type: str = Field(
-        alias="certificateType",
-        description="Type of certificate (e.g., ISO 9001, IATF 16949, ISO 14001)"
-    )
-    certificate_name: str = Field(
-        alias="certificateName",
-        description="Name of the certificate"
-    )
-    issuer: str = Field(
-        description="Certification body or authority that issued the certificate"
-    )
-    valid_from: str = Field(
-        alias="validFrom",
-        description="Start date of certificate validity (ISO 8601 format)"
-    )
-    valid_until: str = Field(
-        alias="validUntil",
-        description="End date of certificate validity (ISO 8601 format)"
-    )
-    bpnl: str = Field(
-        description="Business Partner Number Legal Entity (BPN-L) of the certificate holder"
-    )
-    description: Optional[str] = Field(
+    certificate_id: str = Field(alias="certificateId")
+    bpnl: str = Field(description="BPNL of the certificate holder.")
+    certificate_type: str = Field(alias="certificateType")
+    certificate_name: Optional[str] = Field(default=None, alias="certificateName")
+    issuer: str
+    valid_from: date = Field(alias="validFrom")
+    valid_until: Optional[date] = Field(default=None, alias="validUntil")
+    trust_level: TrustLevelEnum = Field(default=TrustLevelEnum.none, alias="trustLevel")
+    registration_number: Optional[str] = Field(default=None, alias="registrationNumber")
+    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication")
+    validator: Optional[str] = Field(default=None)
+    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl")
+    description: Optional[str] = Field(default=None)
+    sites: List[SiteRead] = Field(default_factory=list)
+    created_at: Optional[datetime] = Field(default=None, alias="createdAt")
+    updated_at: Optional[datetime] = Field(default=None, alias="updatedAt")
+
+    class Config:
+        populate_by_name = True
+
+
+class BusinessPartnerCertificate(CertificateListItem):
+    """
+    Full certificate detail model following CX-0135 v3.1.0.
+
+    Extends CertificateListItem with the embedded document (Base64).
+    """
+    document: Optional[CertificateDocument] = Field(
         default=None,
-        description="Optional description or additional information about the certificate"
-    )
-    document: CertificateDocument = Field(
-        description="The certificate document with BASE64-encoded content"
-    )
-    created_at: Optional[str] = Field(
-        alias="createdAt",
-        default=None,
-        description="Timestamp when the certificate was uploaded"
-    )
-    updated_at: Optional[str] = Field(
-        alias="updatedAt",
-        default=None,
-        description="Timestamp when the certificate was last updated"
+        description="The certificate document with BASE64-encoded content."
     )
 
     class Config:
         populate_by_name = True
 
+
+# ---------------------------------------------------------------------------
+# Sharing-history models
+# ---------------------------------------------------------------------------
+
+class CertificateShareCreate(BaseModel):
+    """Request model to record a new certificate-sharing event."""
+    consumer_bpnl: str = Field(
+        alias="consumerBpnl",
+        description="BPNL of the Catena-X participant receiving the certificate."
+    )
+    status: ShareStatusEnum = Field(
+        default=ShareStatusEnum.Pending,
+        description="Initial status of the sharing record."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CertificateShareRead(BaseModel):
+    """Read model for a single sharing-history entry."""
+    id: int
+    certificate_id: int = Field(alias="certificateId")
+    consumer_bpnl: str = Field(alias="consumerBpnl")
+    last_shared_date: datetime = Field(alias="lastSharedDate")
+    status: ShareStatusEnum
+    created_at: datetime = Field(alias="createdAt")
+
+    class Config:
+        populate_by_name = True
+
+
+class CertificateDetail(BusinessPartnerCertificate):
+    """
+    Full certificate detail response, including the complete sharing history.
+    Used by the GET /{id} endpoint.
+    """
+    sharing_history: List[CertificateShareRead] = Field(
+        default_factory=list,
+        alias="sharingHistory",
+        description="All sharing events recorded for this certificate."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+# ---------------------------------------------------------------------------
+# Request / Response models for upload and update
+# ---------------------------------------------------------------------------
 
 class UploadCertificateRequest(BaseModel):
     """
-    Request model for uploading a certificate.
-    Used to receive metadata from multipart form data.
+    Metadata received from the multipart form when uploading a certificate.
+    Maps to BusinessPartnerCertificate v3.1.0 field set.
     """
+    bpnl: str = Field(
+        description="BPNL of the certificate holder."
+    )
     certificate_type: str = Field(
         alias="certificateType",
-        description="Type of certificate (e.g., ISO 9001, IATF 16949, ISO 14001)"
-    )
-    certificate_name: str = Field(
-        alias="certificateName",
-        description="Name of the certificate"
+        description="Certificate type identifier (e.g. ISO9001, IATF16949)."
     )
     issuer: str = Field(
-        description="Certification body or authority that issued the certificate"
+        description="Certification body or authority that issued the certificate."
     )
-    valid_from: str = Field(
+    valid_from: date = Field(
         alias="validFrom",
-        description="Start date of certificate validity (ISO 8601 format: YYYY-MM-DD)"
+        description="Start date of validity (ISO 8601: YYYY-MM-DD)."
     )
-    valid_until: str = Field(
+    trust_level: TrustLevelEnum = Field(
+        default=TrustLevelEnum.none,
+        alias="trustLevel",
+        description="Trust level (none/low/high/trusted)."
+    )
+    certificate_name: Optional[str] = Field(
+        default=None,
+        alias="certificateName",
+        description="Human-readable display name for the certificate."
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        alias="registrationNumber",
+        description="Official registration or serial number."
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        alias="areaOfApplication",
+        description="Textual scope of the certificate."
+    )
+    valid_until: Optional[date] = Field(
+        default=None,
         alias="validUntil",
-        description="End date of certificate validity (ISO 8601 format: YYYY-MM-DD)"
+        description="Expiry date of the certificate (ISO 8601: YYYY-MM-DD)."
     )
-    bpnl: str = Field(
-        description="Business Partner Number Legal Entity (BPN-L) of the certificate holder"
+    validator: Optional[str] = Field(
+        default=None,
+        description="BPN or URL of the third-party validator."
+    )
+    uploader_bpnl: Optional[str] = Field(
+        default=None,
+        alias="uploaderBpnl",
+        description="BPNL of the participant uploading the certificate."
     )
     description: Optional[str] = Field(
         default=None,
-        description="Optional description or additional information about the certificate"
+        description="Free-text notes about the certificate."
     )
+    # Comma-separated list of BPNS/BPNA values supplied via form data.
+    # Example: "BPNS000000000001,BPNA000000000002"
+    sites: Optional[str] = Field(
+        default=None,
+        description="Comma-separated BPNS/BPNA values associated with this certificate."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CertificateUpdate(BaseModel):
+    """
+    Partial update request for an existing certificate (PUT /{id}).
+
+    All fields are optional; only non-None values are written to the database.
+    The PDF document and BPNL are intentionally excluded — those cannot be
+    changed after initial upload.
+    """
+    certificate_type: Optional[str] = Field(default=None, alias="certificateType")
+    certificate_name: Optional[str] = Field(default=None, alias="certificateName")
+    issuer: Optional[str] = Field(default=None)
+    valid_from: Optional[date] = Field(default=None, alias="validFrom")
+    valid_until: Optional[date] = Field(default=None, alias="validUntil")
+    trust_level: Optional[TrustLevelEnum] = Field(default=None, alias="trustLevel")
+    registration_number: Optional[str] = Field(default=None, alias="registrationNumber")
+    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication")
+    validator: Optional[str] = Field(default=None)
+    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl")
+    description: Optional[str] = Field(default=None)
+    # Comma-separated BPNS/BPNA; if provided, replaces the existing site list.
+    sites: Optional[str] = Field(default=None)
 
     class Config:
         populate_by_name = True
@@ -139,17 +301,15 @@ class UploadCertificateRequest(BaseModel):
 
 class UploadCertificateResponse(BaseModel):
     """
-    Response model after uploading a certificate.
+    Response returned after successfully uploading a new certificate.
     """
     certificate_id: str = Field(
         alias="certificateId",
-        description="Unique identifier for the uploaded certificate"
+        description="Auto-generated unique identifier for the uploaded certificate."
     )
-    message: str = Field(
-        description="Status message"
-    )
+    message: str = Field(description="Human-readable status message.")
     certificate: BusinessPartnerCertificate = Field(
-        description="The complete certificate object with embedded document"
+        description="The complete certificate object with BASE64-encoded document."
     )
 
     class Config:
