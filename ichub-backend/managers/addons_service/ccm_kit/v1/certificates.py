@@ -26,6 +26,7 @@ from typing import List, Optional
 
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
+from utils.log_utils import sanitize_log_value as _s
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CertificateShare,
@@ -352,7 +353,7 @@ class CertificatesManager:
             repo.ccm_repository.delete_by_id(certificate_id)
             repo.commit()
 
-        logger.info("Certificate %d deleted successfully.", certificate_id)
+        logger.info(f"Certificate {_s(certificate_id)} deleted successfully.")
         return True
 
     # ------------------------------------------------------------------
