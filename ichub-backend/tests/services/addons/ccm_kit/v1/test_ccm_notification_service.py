@@ -569,10 +569,10 @@ class TestCcmNotificationService:
             }
         )
 
-        status, body = self.service.process_certificate_request(notification)
+        status, _ = self.service.process_certificate_request(notification)
 
         assert status == 200
-        mock_auto_push.assert_called_once_with(ccm.id, "BPNL000000000099")
+        mock_auto_push.assert_called_once_with(ccm.id, "BPNL000000000099", "BPNL000000000001")
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"

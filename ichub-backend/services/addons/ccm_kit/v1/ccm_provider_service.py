@@ -35,20 +35,8 @@ data-plane proxy — exactly mirroring the consumer-side send pattern.
 """
 
 import base64
-import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict
 
-from tractusx_sdk.industry.models.notifications import (
-    Notification,
-    NotificationContent,
-    NotificationHeader,
-)
-from tractusx_sdk.industry.services.notifications import NotificationConsumerService
-from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
-
-from connector import connector_manager, consumer_connector_service
-from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.services.addons.ccm_kit.v1.notifications import (
@@ -56,22 +44,18 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmPushRequest,
     CcmSendResult,
 )
-from tools.constants import CCM_CONTEXT_AVAILABLE, CCM_CONTEXT_PUSH
+from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+from tools.constants import (
+    CCM_CONTEXT_AVAILABLE,
+    CCM_CONTEXT_PUSH,
+    CCM_ENDPOINT_AVAILABLE,
+    CCM_ENDPOINT_PUSH,
+)
 
 logger = LoggingManager.get_logger(__name__)
 
-# DCT type that CCM notification assets are registered under
-CCM_DCT_TYPE = (
-    "https://w3id.org/catenax/taxonomy"
-    "#CompanyCertificateManagementNotificationApi"
-)
 
-# Endpoint paths on the consumer side
-CCM_ENDPOINT_PUSH = "/companycertificate/push"
-CCM_ENDPOINT_AVAILABLE = "/companycertificate/available"
-
-
-class CcmProviderService:
+class CcmProviderService(CcmBaseService):
     """
     Provider-side operations for CX-0135 Company Certificate Management.
 
@@ -79,6 +63,8 @@ class CcmProviderService:
     to send PUSH and Available notifications to a remote consumer's CCM
     notification API.
     """
+
+    _log_prefix = "[CCM Provider]"
 
     # ------------------------------------------------------------------
     # Push certificate (provider → consumer)
@@ -271,103 +257,6 @@ class CcmProviderService:
             ]
 
         return content
-
-    def _resolve_dsp_url(self, target_bpn: str) -> str:
-        """Resolve a partner's DSP URL from connector discovery."""
-        connectors = connector_manager.consumer.get_connectors(target_bpn)
-        if not connectors:
-            raise RuntimeError(
-                f"No connector DSP URL found for BPN [{target_bpn}]"
-            )
-        return connectors[0]
-
-    def _resolve_policies(self) -> Optional[List[Dict]]:
-        """Get CCM usage policies from configuration."""
-        policy = ConfigManager.get_config("provider.ccm.policy.usage")
-        if policy:
-            return [policy]
-        return None
-
-    def _build_notification(
-        self,
-        context: str,
-        sender_bpn: str,
-        receiver_bpn: str,
-        content_fields: Dict,
-    ) -> Notification:
-        """Build a SDK Notification with the given content fields."""
-        header = NotificationHeader(
-            messageId=uuid.uuid4(),
-            context=context,
-            sentDateTime=datetime.now(timezone.utc),
-            senderBpn=sender_bpn,
-            receiverBpn=receiver_bpn,
-            version="1.0.0",
-        )
-        content = NotificationContent(**content_fields)
-        return Notification(header=header, content=content)
-
-    def _send_notification(
-        self,
-        target_bpn: str,
-        notification: Notification,
-        endpoint_path: str,
-    ) -> CcmSendResult:
-        """
-        Negotiate EDR and send a notification to the target's CCM endpoint.
-
-        Uses the SDK's NotificationConsumerService with the CCM-specific
-        dct_type to locate and negotiate with the target's notification asset.
-        """
-        try:
-            dsp_url = self._resolve_dsp_url(target_bpn)
-        except Exception as e:
-            logger.error(
-                "[CCM Provider] Discovery failed for [%s]: %s", target_bpn, e
-            )
-            return CcmSendResult(success=False, error=f"Discovery failed: {e}")
-
-        policies = self._resolve_policies()
-
-        notification_service = NotificationConsumerService(
-            consumer_connector_service,
-            verbose=True,
-        )
-
-        try:
-            endpoint, token = notification_service.get_notification_endpoint(
-                provider_bpn=target_bpn,
-                provider_dsp_url=dsp_url,
-                policies=policies,
-                dct_type=CCM_DCT_TYPE,
-            )
-
-            notification_service.send_notification_to_endpoint(
-                endpoint_url=endpoint,
-                access_token=token,
-                notification=notification,
-                endpoint_path=endpoint_path,
-            )
-
-            message_id = str(notification.header.message_id)
-            logger.info(
-                "[CCM Provider] Notification sent: message_id=%s, "
-                "endpoint=%s",
-                message_id,
-                endpoint_path,
-            )
-            return CcmSendResult(success=True, message_id=message_id)
-
-        except NotificationError as ne:
-            logger.error("[CCM Provider] NotificationError: %s", ne)
-            return CcmSendResult(success=False, error=str(ne))
-        except Exception as e:
-            logger.error(
-                "[CCM Provider] Unexpected error sending notification: %s", e
-            )
-            return CcmSendResult(
-                success=False, error=f"Unexpected error: {e}"
-            )
 
     @staticmethod
     def _update_share_status(

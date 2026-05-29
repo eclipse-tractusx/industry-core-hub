@@ -68,3 +68,12 @@ CCM_CONTEXT_REQUEST = "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
 CCM_CONTEXT_STATUS = "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
 CCM_CONTEXT_PUSH = "CompanyCertificateManagement-CCMAPI-Push:1.0.0"
 CCM_CONTEXT_AVAILABLE = "CompanyCertificateManagement-CCMAPI-Available:1.0.0"
+
+# DCT type that CCM notification assets are registered under in the EDC catalog
+CCM_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+
+# Endpoint paths for CCM notification API (appended to the data-plane URL)
+CCM_ENDPOINT_REQUEST = "/companycertificate/request"
+CCM_ENDPOINT_STATUS = "/companycertificate/status"
+CCM_ENDPOINT_PUSH = "/companycertificate/push"
+CCM_ENDPOINT_AVAILABLE = "/companycertificate/available"

@@ -30,20 +30,9 @@ Provides three operations:
    a certificate via PUSH.
 """
 
-import uuid
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
-from tractusx_sdk.industry.models.notifications import (
-    Notification,
-    NotificationContent,
-    NotificationHeader,
-)
-from tractusx_sdk.industry.services.notifications import NotificationConsumerService
-from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
-
-from connector import connector_manager, consumer_connector_service
-from managers.config.config_manager import ConfigManager
+from connector import consumer_connector_service
 from managers.config.log_manager import LoggingManager
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
@@ -51,27 +40,28 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmSendRequestPayload,
     CcmSendResult,
     CcmSendStatusPayload,
-    CertificateStatusValue,
 )
-from tools.constants import CCM_CONTEXT_REQUEST, CCM_CONTEXT_STATUS
+from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+from tools.constants import (
+    CCM_CONTEXT_REQUEST,
+    CCM_CONTEXT_STATUS,
+    CCM_DCT_TYPE,
+    CCM_ENDPOINT_REQUEST,
+    CCM_ENDPOINT_STATUS,
+)
 
 logger = LoggingManager.get_logger(__name__)
 
-# DCT type that CCM notification assets are registered under
-CCM_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
 
-# Endpoint paths for CCM notification API (appended to the data-plane URL)
-CCM_ENDPOINT_REQUEST = "/companycertificate/request"
-CCM_ENDPOINT_STATUS = "/companycertificate/status"
-
-
-class CcmConsumerService:
+class CcmConsumerService(CcmBaseService):
     """
     Consumer-side operations for CX-0135 Company Certificate Management.
 
     Uses the EDC connector infrastructure (discovery, catalog, DSP negotiation)
     to interact with a remote provider's CCM notification API.
     """
+
+    _log_prefix = "[CCM Consumer]"
 
     # ------------------------------------------------------------------
     # Catalog search
@@ -165,7 +155,7 @@ class CcmConsumerService:
         )
 
         return self._send_notification(
-            provider_bpn=provider_bpn,
+            target_bpn=provider_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_REQUEST,
         )
@@ -210,108 +200,10 @@ class CcmConsumerService:
         )
 
         return self._send_notification(
-            provider_bpn=provider_bpn,
+            target_bpn=provider_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_STATUS,
         )
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
-
-    def _resolve_dsp_url(self, provider_bpn: str) -> str:
-        """Resolve a provider's DSP URL from connector discovery."""
-        connectors = connector_manager.consumer.get_connectors(provider_bpn)
-        if not connectors:
-            raise RuntimeError(
-                f"No connector DSP URL found for provider BPN [{provider_bpn}]"
-            )
-        return connectors[0]
-
-    def _resolve_policies(self) -> Optional[List[Dict]]:
-        """Get CCM usage policies from configuration."""
-        policy = ConfigManager.get_config("provider.ccm.policy.usage")
-        if policy:
-            return [policy]
-        return None
-
-    def _build_notification(
-        self,
-        context: str,
-        sender_bpn: str,
-        receiver_bpn: str,
-        content_fields: Dict,
-    ) -> Notification:
-        """Build a SDK Notification with CCM-specific content fields."""
-        header = NotificationHeader(
-            messageId=uuid.uuid4(),
-            context=context,
-            sentDateTime=datetime.now(timezone.utc),
-            senderBpn=sender_bpn,
-            receiverBpn=receiver_bpn,
-            version="1.0.0",
-        )
-        content = NotificationContent(**content_fields)
-        return Notification(header=header, content=content)
-
-    def _send_notification(
-        self,
-        provider_bpn: str,
-        notification: Notification,
-        endpoint_path: str,
-    ) -> CcmSendResult:
-        """
-        Negotiate EDR and send a notification to the provider's CCM endpoint.
-
-        Uses the SDK's NotificationConsumerService with a custom dct_type
-        (CompanyCertificateManagementNotificationApi instead of DigitalTwinEventAPI).
-        """
-        try:
-            dsp_url = self._resolve_dsp_url(provider_bpn)
-        except Exception as e:
-            logger.error(f"[CCM Consumer] Discovery failed for [{provider_bpn}]: {e}")
-            return CcmSendResult(
-                success=False,
-                error=f"Discovery failed: {e}",
-            )
-
-        policies = self._resolve_policies()
-
-        notification_service = NotificationConsumerService(
-            consumer_connector_service,
-            verbose=True,
-        )
-
-        try:
-            # Get endpoint and token using CCM-specific dct_type
-            endpoint, token = notification_service.get_notification_endpoint(
-                provider_bpn=provider_bpn,
-                provider_dsp_url=dsp_url,
-                policies=policies,
-                dct_type=CCM_DCT_TYPE,
-            )
-
-            # Send the notification to the resolved endpoint
-            result = notification_service.send_notification_to_endpoint(
-                endpoint_url=endpoint,
-                access_token=token,
-                notification=notification,
-                endpoint_path=endpoint_path,
-            )
-            
-            message_id = str(notification.header.message_id)
-            logger.info(
-                f"[CCM Consumer] Notification sent successfully: "
-                f"message_id={message_id}, endpoint={endpoint_path}"
-            )
-            return CcmSendResult(success=True, message_id=message_id)
-
-        except NotificationError as ne:
-            logger.error(f"[CCM Consumer] NotificationError: {ne}")
-            return CcmSendResult(success=False, error=str(ne))
-        except Exception as e:
-            logger.error(f"[CCM Consumer] Unexpected error sending notification: {e}")
-            return CcmSendResult(success=False, error=f"Unexpected error: {e}")
 
     @staticmethod
     def _extract_asset_id(catalog: dict) -> Optional[str]:

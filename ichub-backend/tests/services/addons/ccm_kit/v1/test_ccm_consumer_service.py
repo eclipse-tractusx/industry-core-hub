@@ -69,7 +69,7 @@ class TestCatalogSearch:
     """Tests for CcmConsumerService.search_catalog"""
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_found(self, mock_cm, mock_ccs, service):
         """Catalog contains a CCM notification asset."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -94,7 +94,7 @@ class TestCatalogSearch:
         assert result.error is None
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_not_found_empty_dataset(self, mock_cm, mock_ccs, service):
         """Catalog response has no dataset."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -107,7 +107,7 @@ class TestCatalogSearch:
         assert result.asset_id is None
         assert result.error is None
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_discovery_failure(self, mock_cm, service):
         """Connector discovery returns no DSP URL."""
         mock_cm.consumer.get_connectors.return_value = []
@@ -119,7 +119,7 @@ class TestCatalogSearch:
         assert "Discovery failed" in result.error
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_catalog_query_error(self, mock_cm, mock_ccs, service):
         """Catalog query raises an exception."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -133,7 +133,7 @@ class TestCatalogSearch:
         assert result.dsp_url == DSP_URL
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_dataset_list(self, mock_cm, mock_ccs, service):
         """Catalog response has dataset as a list (multiple assets)."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -151,7 +151,7 @@ class TestCatalogSearch:
         assert result.asset_id == "ichub:asset:ccm-notification:1"
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_catalog_search_saturn_keys(self, mock_cm, mock_ccs, service):
         """Catalog response uses Saturn-style keys (no dcat: prefix)."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -173,9 +173,9 @@ class TestCatalogSearch:
 class TestSendCertificateRequest:
     """Tests for CcmConsumerService.send_certificate_request"""
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_request_success(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """Successfully sends a certificate request notification."""
@@ -208,7 +208,7 @@ class TestSendCertificateRequest:
         assert call_kwargs["dct_type"] == CCM_DCT_TYPE
         assert call_kwargs["provider_bpn"] == PROVIDER_BPN
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_send_request_discovery_failure(self, mock_cm, service):
         """Discovery returns no connectors."""
         mock_cm.consumer.get_connectors.return_value = []
@@ -224,9 +224,9 @@ class TestSendCertificateRequest:
         assert result.success is False
         assert "Discovery failed" in result.error
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_request_notification_error(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """NotificationError during DSP negotiation."""
@@ -250,9 +250,9 @@ class TestSendCertificateRequest:
         assert result.success is False
         assert "Contract negotiation failed" in result.error
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_request_with_location_bpns(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """Request includes optional locationBpns."""
@@ -293,9 +293,9 @@ class TestSendCertificateRequest:
 class TestSendCertificateStatus:
     """Tests for CcmConsumerService.send_certificate_status"""
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_status_accepted(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """Successfully sends ACCEPTED status."""
@@ -325,9 +325,9 @@ class TestSendCertificateStatus:
         call_kwargs = mock_ncs.send_notification_to_endpoint.call_args[1]
         assert call_kwargs["endpoint_path"] == "/companycertificate/status"
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_status_rejected_with_errors(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """REJECTED status includes error details."""
@@ -360,7 +360,7 @@ class TestSendCertificateStatus:
         assert notification.content.model_extra.get("certificateStatus") == "REJECTED"
         assert notification.content.model_extra.get("certificateErrors") == [{"message": "Certificate expired"}]
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_send_status_discovery_failure(self, mock_cm, service):
         """Discovery returns no connectors for status sending."""
         mock_cm.consumer.get_connectors.return_value = []
@@ -376,9 +376,9 @@ class TestSendCertificateStatus:
         assert result.success is False
         assert "Discovery failed" in result.error
 
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.NotificationConsumerService")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager")
-    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
     def test_send_status_with_policies(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
         """CCM usage policy is resolved from config and passed to DSP."""

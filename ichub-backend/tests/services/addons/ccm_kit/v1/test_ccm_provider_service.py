@@ -48,9 +48,9 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmPushRequest,
 )
 from services.addons.ccm_kit.v1.ccm_provider_service import (
-    CCM_DCT_TYPE,
     CcmProviderService,
 )
+from tools.constants import CCM_DCT_TYPE
 
 
 # ---------------------------------------------------------------------------
@@ -109,11 +109,19 @@ def service():
 
 
 def _push_request(cert_id: int = CERT_ID) -> CcmPushRequest:
-    return CcmPushRequest(certificate_id=cert_id, consumer_bpn=CONSUMER_BPN)
+    return CcmPushRequest(
+        sender_bpn=SENDER_BPN,
+        certificate_id=cert_id,
+        consumer_bpn=CONSUMER_BPN,
+    )
 
 
 def _available_request(cert_id: int = CERT_ID) -> CcmAvailableRequest:
-    return CcmAvailableRequest(certificate_id=cert_id, consumer_bpn=CONSUMER_BPN)
+    return CcmAvailableRequest(
+        sender_bpn=SENDER_BPN,
+        certificate_id=cert_id,
+        consumer_bpn=CONSUMER_BPN,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -129,11 +137,11 @@ class TestPushCertificate:
         ".CcmProviderService._update_share_status"
     )
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service"
+        "services.addons.ccm_kit.v1.ccm_base_service"
         ".NotificationConsumerService"
     )
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -191,7 +199,7 @@ class TestPushCertificate:
         assert "not found" in result.error.lower()
 
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -216,11 +224,11 @@ class TestPushCertificate:
         assert "discovery" in result.error.lower()
 
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service"
+        "services.addons.ccm_kit.v1.ccm_base_service"
         ".NotificationConsumerService"
     )
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -262,11 +270,11 @@ class TestSendCertificateAvailable:
     """Tests for CcmProviderService.send_certificate_available"""
 
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service"
+        "services.addons.ccm_kit.v1.ccm_base_service"
         ".NotificationConsumerService"
     )
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -324,7 +332,7 @@ class TestSendCertificateAvailable:
         assert "not found" in result.error.lower()
 
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -351,11 +359,11 @@ class TestSendCertificateAvailable:
         assert "discovery" in result.error.lower()
 
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service"
+        "services.addons.ccm_kit.v1.ccm_base_service"
         ".NotificationConsumerService"
     )
     @patch(
-        "services.addons.ccm_kit.v1.ccm_provider_service.connector_manager"
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"

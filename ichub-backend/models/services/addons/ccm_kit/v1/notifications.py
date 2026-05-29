@@ -36,7 +36,7 @@ Notification contexts:
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -430,6 +430,10 @@ class CcmPushContent(BaseModel):
 
 class CcmPushRequest(BaseModel):
     """Request body for the provider push trigger endpoint."""
+    sender_bpn: str = Field(
+        alias="senderBpn",
+        description="BPNL of the provider sending this push (own BPN).",
+    )
     certificate_id: int = Field(
         alias="certificateId",
         description="Internal ID of the certificate to push.",
@@ -483,6 +487,10 @@ class CcmAvailableContent(BaseModel):
 
 class CcmAvailableRequest(BaseModel):
     """Request body for the provider available-notification trigger endpoint."""
+    sender_bpn: str = Field(
+        alias="senderBpn",
+        description="BPNL of the provider sending this notification (own BPN).",
+    )
     certificate_id: int = Field(
         alias="certificateId",
         description="Internal ID of the certificate that is now available.",

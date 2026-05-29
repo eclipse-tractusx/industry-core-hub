@@ -24,10 +24,12 @@
 """
 CX-0135 Company Certificate Management — notification API endpoints.
 
-Implements the PULL-flow endpoints that a consumer calls on the provider:
+Inbound notification endpoints for both PULL-flow and PUSH-flow:
 
-- ``POST /companycertificate/request`` — ask for a certificate
-- ``POST /companycertificate/status``  — report processing result
+- ``POST /companycertificate/request``   — consumer asks for a certificate
+- ``POST /companycertificate/status``    — consumer reports processing result
+- ``POST /companycertificate/push``      — provider pushes a full certificate
+- ``POST /companycertificate/available`` — provider signals certificate availability
 """
 
 from fastapi import APIRouter, Depends

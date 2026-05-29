@@ -147,7 +147,8 @@ class CcmNotificationService:
                 ccm.id,
                 sender_bpn,
             )
-            self._auto_push_certificate(ccm.id, sender_bpn)
+            provider_bpn = notification.header.receiver_bpn
+            self._auto_push_certificate(ccm.id, sender_bpn, provider_bpn)
         else:
             logger.info(
                 "Certificate %d registered for consumer %s "
@@ -361,7 +362,7 @@ class CcmNotificationService:
                 kwargs["issuer_name"] = content.issuer.issuer_name
                 kwargs["issuer_bpn"] = content.issuer.issuer_bpn
             if content.validator:
-                kwargs["validator_name"] = content.validator.validator_name if hasattr(content.validator, "validator_name") else None
+                kwargs["validator_name"] = content.validator.validator_name
             if content.valid_from:
                 kwargs["valid_from"] = content.valid_from
             if content.valid_until:
@@ -442,13 +443,20 @@ class CcmNotificationService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _auto_push_certificate(certificate_id: int, consumer_bpn: str) -> None:
+    def _auto_push_certificate(
+        certificate_id: int, consumer_bpn: str, provider_bpn: str
+    ) -> None:
         """
         Trigger a PUSH of the certificate to the consumer.
 
         Imports the provider service lazily to avoid circular dependencies.
         Failures are logged but do **not** propagate — the request endpoint
         has already returned ``200`` and the consumer was registered.
+
+        Args:
+            certificate_id: PK of the certificate to push.
+            consumer_bpn: BPNL of the consumer to push the certificate to.
+            provider_bpn: BPNL of this node (the provider / sender).
         """
         try:
             from models.services.addons.ccm_kit.v1.notifications import (
@@ -459,11 +467,12 @@ class CcmNotificationService:
             )
 
             push_request = CcmPushRequest(
+                sender_bpn=provider_bpn,
                 certificate_id=certificate_id,
                 consumer_bpn=consumer_bpn,
             )
             result = ccm_provider_service.push_certificate(
-                push_request, consumer_bpn
+                push_request, provider_bpn
             )
             if not result.success:
                 logger.warning(

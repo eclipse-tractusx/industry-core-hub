@@ -70,7 +70,7 @@ async def push_certificate(request: CcmPushRequest) -> CcmSendResult:
     """
     try:
         return ccm_provider_service.push_certificate(
-            request, request.consumer_bpn
+            request, request.sender_bpn
         )
     except Exception:
         logger.exception("Unhandled error in push_certificate endpoint")
@@ -93,7 +93,7 @@ async def send_certificate_available(
     """
     try:
         return ccm_provider_service.send_certificate_available(
-            request, request.consumer_bpn
+            request, request.sender_bpn
         )
     except Exception:
         logger.exception(
