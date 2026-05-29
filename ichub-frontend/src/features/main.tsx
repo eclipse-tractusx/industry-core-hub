@@ -38,7 +38,7 @@ import {
   Badge,
   Policy,
   PostAdd,
-  ReceiptLong
+  ReceiptLong,
   Calculate,
   CloudUpload,
   Inbox
