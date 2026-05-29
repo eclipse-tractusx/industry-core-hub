@@ -34,6 +34,7 @@ from typing import Dict, Optional
 
 from connector import consumer_connector_service
 from managers.config.log_manager import LoggingManager
+from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
     CcmCatalogSearchResult,
@@ -75,12 +76,12 @@ class CcmConsumerService(CcmBaseService):
         the catalog filtering by the CCM dct_type.
         """
         provider_bpn = request.provider_bpn
-        logger.info(f"[CCM Consumer] Searching catalog for provider [{provider_bpn}]")
+        logger.info(f"[CCM Consumer] Searching catalog for provider [{_s(provider_bpn)}]")
 
         try:
             dsp_url = self._resolve_dsp_url(provider_bpn)
         except Exception as e:
-            logger.warning(f"[CCM Consumer] Discovery failed for [{provider_bpn}]: {e}")
+            logger.warning(f"[CCM Consumer] Discovery failed for [{_s(provider_bpn)}]: {_s(e)}")
             return CcmCatalogSearchResult(
                 found=False,
                 provider_bpn=provider_bpn,
@@ -94,7 +95,7 @@ class CcmConsumerService(CcmBaseService):
                 dct_type=CCM_DCT_TYPE,
             )
         except Exception as e:
-            logger.warning(f"[CCM Consumer] Catalog query failed for [{provider_bpn}]: {e}")
+            logger.warning(f"[CCM Consumer] Catalog query failed for [{_s(provider_bpn)}]: {_s(e)}")
             return CcmCatalogSearchResult(
                 found=False,
                 provider_bpn=provider_bpn,
@@ -107,8 +108,8 @@ class CcmConsumerService(CcmBaseService):
         found = asset_id is not None
 
         logger.info(
-            f"[CCM Consumer] Catalog search result for [{provider_bpn}]: "
-            f"found={found}, asset_id={asset_id}"
+            f"[CCM Consumer] Catalog search result for [{_s(provider_bpn)}]: "
+            f"found={found}, asset_id={_s(asset_id)}"
         )
         return CcmCatalogSearchResult(
             found=found,
@@ -135,8 +136,8 @@ class CcmConsumerService(CcmBaseService):
         """
         provider_bpn = payload.provider_bpn
         logger.info(
-            f"[CCM Consumer] Sending certificate request to [{provider_bpn}] "
-            f"for type={payload.certificate_type}, certifiedBpn={payload.certified_bpn}"
+            f"[CCM Consumer] Sending certificate request to [{_s(provider_bpn)}] "
+            f"for type={_s(payload.certificate_type)}, certifiedBpn={_s(payload.certified_bpn)}"
         )
 
         # Build notification content
@@ -177,8 +178,8 @@ class CcmConsumerService(CcmBaseService):
         """
         provider_bpn = payload.provider_bpn
         logger.info(
-            f"[CCM Consumer] Sending certificate status to [{provider_bpn}] "
-            f"documentId={payload.document_id}, status={payload.certificate_status.value}"
+            f"[CCM Consumer] Sending certificate status to [{_s(provider_bpn)}] "
+            f"documentId={_s(payload.document_id)}, status={_s(payload.certificate_status.value)}"
         )
 
         content_fields: Dict = {

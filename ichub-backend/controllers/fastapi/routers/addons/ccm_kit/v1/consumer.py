@@ -32,7 +32,6 @@ Implements the consumer operations for the PULL flow:
 """
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 
 from controllers.fastapi.routers.authentication.auth_api import (
     get_authentication_dependency,

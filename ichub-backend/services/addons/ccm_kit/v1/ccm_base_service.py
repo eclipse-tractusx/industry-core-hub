@@ -43,6 +43,7 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 from connector import connector_manager, consumer_connector_service
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
+from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
 from tools.constants import CCM_DCT_TYPE
 
@@ -112,7 +113,7 @@ class CcmBaseService:
             dsp_url = self._resolve_dsp_url(target_bpn)
         except Exception as e:
             logger.error(
-                "%s Discovery failed for [%s]: %s", self._log_prefix, target_bpn, e
+                f"{self._log_prefix} Discovery failed for [{_s(target_bpn)}]: {_s(e)}"
             )
             return CcmSendResult(success=False, error=f"Discovery failed: {e}")
 
@@ -140,21 +141,17 @@ class CcmBaseService:
 
             message_id = str(notification.header.message_id)
             logger.info(
-                "%s Notification sent: message_id=%s, endpoint=%s",
-                self._log_prefix,
-                message_id,
-                endpoint_path,
+                f"{self._log_prefix} Notification sent: message_id={_s(message_id)}, "
+                f"endpoint={_s(endpoint_path)}"
             )
             return CcmSendResult(success=True, message_id=message_id)
 
         except NotificationError as ne:
-            logger.error("%s NotificationError: %s", self._log_prefix, ne)
+            logger.error(f"{self._log_prefix} NotificationError: {_s(ne)}")
             return CcmSendResult(success=False, error=str(ne))
         except Exception as e:
             logger.error(
-                "%s Unexpected error sending notification: %s",
-                self._log_prefix,
-                e,
+                f"{self._log_prefix} Unexpected error sending notification: {_s(e)}"
             )
             return CcmSendResult(
                 success=False, error=f"Unexpected error: {e}"

@@ -30,6 +30,7 @@ from tractusx_sdk.industry.models.notifications import Notification
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
+from utils.log_utils import sanitize_log_value as _s
 from models.metadata_database.addons.ccm_kit.v1.models import ShareStatus
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableContent,
@@ -80,10 +81,9 @@ class CcmNotificationService:
         sender_bpn = notification.header.sender_bpn
 
         logger.info(
-            "CCM request from %s for certifiedBpn=%s certificateType=%s",
-            sender_bpn,
-            content.certified_bpn,
-            content.certificate_type,
+            f"CCM request from {_s(sender_bpn)} for "
+            f"certifiedBpn={_s(content.certified_bpn)} "
+            f"certificateType={_s(content.certificate_type)}"
         )
 
         # --- 2. Look up certificate ---
@@ -96,10 +96,8 @@ class CcmNotificationService:
             # --- 3. Not found ---
             if ccm is None:
                 logger.warning(
-                    "No certificate found for bpnl=%s type=%s (requested by %s)",
-                    content.certified_bpn,
-                    content.certificate_type,
-                    sender_bpn,
+                    f"No certificate found for bpnl={_s(content.certified_bpn)} "
+                    f"type={_s(content.certificate_type)} (requested by {_s(sender_bpn)})"
                 )
                 return 404, {
                     "message": (
@@ -122,17 +120,15 @@ class CcmNotificationService:
                     status=ShareStatus.Pending,
                 )
                 logger.info(
-                    "Created new CertificateShare for certificate %d → consumer %s",
-                    ccm.id,
-                    sender_bpn,
+                    f"Created new CertificateShare for certificate {ccm.id} "
+                    f"→ consumer {_s(sender_bpn)}"
                 )
             else:
                 # Consumer already has a share record — refresh the timestamp.
                 existing_share.last_shared_date = datetime.now(timezone.utc)
                 logger.info(
-                    "Updated existing CertificateShare %d for consumer %s",
-                    existing_share.id,
-                    sender_bpn,
+                    f"Updated existing CertificateShare {existing_share.id} "
+                    f"for consumer {_s(sender_bpn)}"
                 )
 
             repo.commit()
@@ -143,18 +139,15 @@ class CcmNotificationService:
         )
         if auto_push:
             logger.info(
-                "Auto-push enabled — pushing certificate %d to %s",
-                ccm.id,
-                sender_bpn,
+                f"Auto-push enabled — pushing certificate {ccm.id} "
+                f"to {_s(sender_bpn)}"
             )
             provider_bpn = notification.header.receiver_bpn
             self._auto_push_certificate(ccm.id, sender_bpn, provider_bpn)
         else:
             logger.info(
-                "Certificate %d registered for consumer %s "
-                "(auto-push disabled, manual push required).",
-                ccm.id,
-                sender_bpn,
+                f"Certificate {ccm.id} registered for consumer {_s(sender_bpn)} "
+                f"(auto-push disabled, manual push required)."
             )
 
         return 200, {
@@ -187,10 +180,9 @@ class CcmNotificationService:
         sender_bpn = notification.header.sender_bpn
 
         logger.info(
-            "CCM status from %s: documentId=%s status=%s",
-            sender_bpn,
-            content.document_id,
-            content.certificate_status.value,
+            f"CCM status from {_s(sender_bpn)}: "
+            f"documentId={_s(content.document_id)} "
+            f"status={_s(content.certificate_status.value)}"
         )
 
         # --- 2. Resolve certificate ID ---
@@ -236,11 +228,8 @@ class CcmNotificationService:
             repo.commit()
 
         logger.info(
-            "CertificateShare %d updated to %s (consumer %s, document %s)",
-            share.id,
-            new_status.value,
-            sender_bpn,
-            content.document_id,
+            f"CertificateShare {share.id} updated to {new_status.value} "
+            f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"
         )
 
         return 200, {
@@ -291,7 +280,7 @@ class CcmNotificationService:
         try:
             return int(document_id)
         except (ValueError, TypeError):
-            logger.warning("Cannot parse documentId '%s' as integer.", document_id)
+            logger.warning(f"Cannot parse documentId '{_s(document_id)}' as integer.")
             return None
 
     # ------------------------------------------------------------------
@@ -318,11 +307,10 @@ class CcmNotificationService:
         sender_bpn = notification.header.sender_bpn
 
         logger.info(
-            "CCM push from %s for bpn=%s type=%s documentID=%s",
-            sender_bpn,
-            content.business_partner_number,
-            content.type.certificate_type,
-            content.document.document_id,
+            f"CCM push from {_s(sender_bpn)} for "
+            f"bpn={_s(content.business_partner_number)} "
+            f"type={_s(content.type.certificate_type)} "
+            f"documentID={_s(content.document.document_id)}"
         )
 
         # Decode binary document
@@ -332,8 +320,7 @@ class CcmNotificationService:
                 doc_bytes = base64.b64decode(content.document.content_base64)
             except Exception:
                 logger.warning(
-                    "Failed to decode Base64 document for %s",
-                    content.document.document_id,
+                    f"Failed to decode Base64 document for {_s(content.document.document_id)}"
                 )
 
         with RepositoryManagerFactory.create() as repo:
@@ -343,8 +330,7 @@ class CcmNotificationService:
             )
             if existing is not None:
                 logger.info(
-                    "Duplicate push for documentId=%s — updating.",
-                    content.document.document_id,
+                    f"Duplicate push for documentId={_s(content.document.document_id)} — updating."
                 )
                 existing.doc = doc_bytes
                 existing.received_at = datetime.now(timezone.utc)
@@ -389,8 +375,7 @@ class CcmNotificationService:
             repo.commit()
 
         logger.info(
-            "Certificate '%s' stored in ccm_received.",
-            content.document.document_id,
+            f"Certificate '{_s(content.document.document_id)}' stored in ccm_received."
         )
 
         return 200, {
@@ -424,10 +409,9 @@ class CcmNotificationService:
         sender_bpn = notification.header.sender_bpn
 
         logger.info(
-            "CCM available from %s: documentId=%s certificateType=%s",
-            sender_bpn,
-            content.document_id,
-            content.certificate_type,
+            f"CCM available from {_s(sender_bpn)}: "
+            f"documentId={_s(content.document_id)} "
+            f"certificateType={_s(content.certificate_type)}"
         )
 
         # For now, just acknowledge.  Phase C will add PULL retrieval.
@@ -476,16 +460,13 @@ class CcmNotificationService:
             )
             if not result.success:
                 logger.warning(
-                    "Auto-push for certificate %d to %s failed: %s",
-                    certificate_id,
-                    consumer_bpn,
-                    result.error,
+                    f"Auto-push for certificate {certificate_id} "
+                    f"to {_s(consumer_bpn)} failed: {_s(result.error)}"
                 )
         except Exception:
             logger.exception(
-                "Auto-push raised for certificate %d to %s",
-                certificate_id,
-                consumer_bpn,
+                f"Auto-push raised for certificate {certificate_id} "
+                f"to {_s(consumer_bpn)}"
             )
 
     # ------------------------------------------------------------------

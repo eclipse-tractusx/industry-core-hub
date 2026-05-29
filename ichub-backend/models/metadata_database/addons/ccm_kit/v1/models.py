@@ -315,6 +315,10 @@ class CcmReceived(SQLModel, table=True):
         default=None,
         description="BPNL of the certification body.",
     )
+    validator_name: Optional[str] = Field(
+        default=None,
+        description="Name of the third-party validator that verified this certificate.",
+    )
     valid_from: Optional[str] = Field(
         default=None,
         description="Start of the validity period.",

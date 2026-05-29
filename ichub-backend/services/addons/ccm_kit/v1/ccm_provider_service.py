@@ -39,6 +39,7 @@ from typing import Dict
 
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
+from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
     CcmPushRequest,
@@ -92,9 +93,8 @@ class CcmProviderService(CcmBaseService):
         """
         consumer_bpn = request.consumer_bpn
         logger.info(
-            "[CCM Provider] Pushing certificate %d to consumer [%s]",
-            request.certificate_id,
-            consumer_bpn,
+            f"[CCM Provider] Pushing certificate {request.certificate_id} "
+            f"to consumer [{_s(consumer_bpn)}]"
         )
 
         # --- 1. Load certificate from DB ---
@@ -159,9 +159,8 @@ class CcmProviderService(CcmBaseService):
         """
         consumer_bpn = request.consumer_bpn
         logger.info(
-            "[CCM Provider] Sending certificate-available for cert %d to [%s]",
-            request.certificate_id,
-            consumer_bpn,
+            f"[CCM Provider] Sending certificate-available for cert {request.certificate_id} "
+            f"to [{_s(consumer_bpn)}]"
         )
 
         # --- 1. Load certificate metadata ---

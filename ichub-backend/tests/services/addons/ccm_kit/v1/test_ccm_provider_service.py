@@ -39,8 +39,6 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CcmSite,
-    CertificateShare,
-    ShareStatus,
     TrustLevel,
 )
 from models.services.addons.ccm_kit.v1.notifications import (
@@ -50,7 +48,6 @@ from models.services.addons.ccm_kit.v1.notifications import (
 from services.addons.ccm_kit.v1.ccm_provider_service import (
     CcmProviderService,
 )
-from tools.constants import CCM_DCT_TYPE
 
 
 # ---------------------------------------------------------------------------

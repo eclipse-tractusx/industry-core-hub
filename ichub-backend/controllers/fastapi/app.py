@@ -122,11 +122,13 @@ def _sync_ccm_asset_on_startup() -> None:
             existing_asset_id=asset_config.get("existing_asset_id"),
         )
         startup_logger.info(
-            f"[Startup] CCM notification asset synced successfully: {ccm_asset_id}"
+            "[Startup] CCM notification asset synced successfully: %s",
+            ccm_asset_id,
         )
     except Exception as e:
         startup_logger.error(
-            f"[Startup] Failed to sync CCM notification asset: {e}", exc_info=True
+            "[Startup] Failed to sync CCM notification asset: %s",
+            e, exc_info=True,
         )
 
 

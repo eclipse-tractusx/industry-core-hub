@@ -34,7 +34,8 @@ from unittest.mock import Mock, patch
 
 from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 
-from services.addons.ccm_kit.v1.ccm_consumer_service import CcmConsumerService, CCM_DCT_TYPE
+from services.addons.ccm_kit.v1.ccm_consumer_service import CcmConsumerService
+from tools.constants import CCM_DCT_TYPE
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
     CcmSendRequestPayload,

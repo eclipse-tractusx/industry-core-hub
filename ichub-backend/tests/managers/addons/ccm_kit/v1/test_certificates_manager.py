@@ -34,17 +34,13 @@ from unittest.mock import Mock, patch
 from managers.addons_service.ccm_kit.v1.certificates import CertificatesManager
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
-    CcmSite,
-    CertificateShare,
     TrustLevel,
-    ShareStatus,
 )
 from models.services.addons.ccm_kit.v1 import (
     CertificateDetail,
     CertificateListItem,
     CertificateUpdate,
     TrustLevelEnum,
-    ShareStatusEnum,
     UploadCertificateRequest,
     UploadCertificateResponse,
 )
