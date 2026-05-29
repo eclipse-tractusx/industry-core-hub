@@ -265,3 +265,92 @@ class CertificateShare(SQLModel, table=True):
     certificate: Optional[Ccm] = Relationship(back_populates="shares")
 
     __tablename__ = "certificate_share"
+
+
+# ---------------------------------------------------------------------------
+# Received certificates (consumer-side persistence)
+# ---------------------------------------------------------------------------
+
+class CcmReceived(SQLModel, table=True):
+    """
+    Stores certificates received by this node as a consumer via PUSH
+    notifications (CX-0135).
+
+    Each row represents a single certificate pushed by a remote provider.
+    The binary document (PDF) is stored as-is in the ``doc`` column; the
+    service layer handles Base64 encoding/decoding.
+    """
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    # --- Identity ---
+    document_id: str = Field(
+        index=True,
+        unique=True,
+        description="Provider-assigned document reference ID.",
+    )
+    provider_bpn: str = Field(
+        index=True,
+        description="BPNL of the provider that pushed this certificate.",
+    )
+    certified_bpn: str = Field(
+        index=True,
+        description="BPNL of the legal entity the certificate belongs to.",
+    )
+    certificate_type: str = Field(
+        index=True,
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+
+    # --- Certificate metadata ---
+    certificate_version: Optional[str] = Field(
+        default=None,
+        description="Version of the certificate standard (e.g. 2015).",
+    )
+    issuer_name: Optional[str] = Field(
+        default=None,
+        description="Name of the certification body.",
+    )
+    issuer_bpn: Optional[str] = Field(
+        default=None,
+        description="BPNL of the certification body.",
+    )
+    valid_from: Optional[str] = Field(
+        default=None,
+        description="Start of the validity period.",
+    )
+    valid_until: Optional[str] = Field(
+        default=None,
+        description="End of the validity period.",
+    )
+    trust_level: Optional[str] = Field(
+        default=None,
+        description="Trust level (none/low/high/trusted).",
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        description="Official registration/serial number.",
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        description="Scope the certificate applies to.",
+    )
+    uploader_bpn: Optional[str] = Field(
+        default=None,
+        description="BPNL of the uploader.",
+    )
+
+    # --- Document binary ---
+    doc: Optional[bytes] = Field(
+        default=None,
+        sa_column=Column(LargeBinary),
+        description="Binary PDF content (BYTEA in PostgreSQL).",
+    )
+
+    # --- Audit ---
+    received_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp when the certificate was received.",
+    )
+
+    __tablename__ = "ccm_received"

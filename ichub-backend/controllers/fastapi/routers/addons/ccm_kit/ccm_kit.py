@@ -23,7 +23,7 @@
 
 from fastapi import APIRouter, Depends
 
-from .v1 import certificates, notifications, consumer
+from .v1 import certificates, notifications, consumer, provider
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
@@ -35,3 +35,4 @@ router = APIRouter(
 router.include_router(certificates.router)
 router.include_router(notifications.router)
 router.include_router(consumer.router)
+router.include_router(provider.router)

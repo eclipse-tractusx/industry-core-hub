@@ -23,13 +23,17 @@
 
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
+import base64
 
 from tractusx_sdk.industry.models.notifications import Notification
 
+from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.addons.ccm_kit.v1.models import ShareStatus
 from models.services.addons.ccm_kit.v1.notifications import (
+    CcmAvailableContent,
+    CcmPushContent,
     CcmRequestContent,
     CcmStatusContent,
     CertificateStatusValue,
@@ -133,19 +137,30 @@ class CcmNotificationService:
 
             repo.commit()
 
-        # TODO: Trigger async push of the certificate data to the consumer.
-        #       This will be implemented in a subsequent issue (Push flow).
-        logger.info(
-            "Certificate %d queued for push delivery to %s",
-            ccm.id,
-            sender_bpn,
+        # Auto-push if configured
+        auto_push = ConfigManager.get_config(
+            "provider.ccm.auto_push_on_request", default=False
         )
+        if auto_push:
+            logger.info(
+                "Auto-push enabled — pushing certificate %d to %s",
+                ccm.id,
+                sender_bpn,
+            )
+            self._auto_push_certificate(ccm.id, sender_bpn)
+        else:
+            logger.info(
+                "Certificate %d registered for consumer %s "
+                "(auto-push disabled, manual push required).",
+                ccm.id,
+                sender_bpn,
+            )
 
         return 200, {
             "message": (
                 f"Certificate found for BPNL {content.certified_bpn} "
                 f"with type {content.certificate_type}. "
-                f"Push delivery initiated."
+                f"{'Push delivery initiated.' if auto_push else 'Consumer registered for sharing.'}"
             ),
         }
 
@@ -277,6 +292,214 @@ class CcmNotificationService:
         except (ValueError, TypeError):
             logger.warning("Cannot parse documentId '%s' as integer.", document_id)
             return None
+
+    # ------------------------------------------------------------------
+    # Inbound PUSH processing (provider → this node as consumer)
+    # ------------------------------------------------------------------
+
+    def process_certificate_push(
+        self, notification: Notification
+    ) -> Tuple[int, Dict[str, Any]]:
+        """
+        Process a ``POST /companycertificate/push`` notification.
+
+        The remote provider sends a full certificate payload (including
+        the Base64-encoded document).  We persist it in the ``ccm_received``
+        table for later consumption.
+
+        Args:
+            notification: SDK Notification with header + push content.
+
+        Returns:
+            Tuple of ``(http_status_code, response_body_dict)``.
+        """
+        content = self._parse_push_content(notification)
+        sender_bpn = notification.header.sender_bpn
+
+        logger.info(
+            "CCM push from %s for bpn=%s type=%s documentID=%s",
+            sender_bpn,
+            content.business_partner_number,
+            content.type.certificate_type,
+            content.document.document_id,
+        )
+
+        # Decode binary document
+        doc_bytes: Optional[bytes] = None
+        if content.document.content_base64:
+            try:
+                doc_bytes = base64.b64decode(content.document.content_base64)
+            except Exception:
+                logger.warning(
+                    "Failed to decode Base64 document for %s",
+                    content.document.document_id,
+                )
+
+        with RepositoryManagerFactory.create() as repo:
+            # Check for duplicate
+            existing = repo.ccm_received_repository.find_by_document_id(
+                content.document.document_id
+            )
+            if existing is not None:
+                logger.info(
+                    "Duplicate push for documentId=%s — updating.",
+                    content.document.document_id,
+                )
+                existing.doc = doc_bytes
+                existing.received_at = datetime.now(timezone.utc)
+                repo.commit()
+                return 200, {
+                    "message": (
+                        f"Certificate '{content.document.document_id}' "
+                        f"updated (duplicate push)."
+                    ),
+                }
+
+            # Build optional kwargs
+            kwargs: Dict[str, Any] = {}
+            if content.issuer:
+                kwargs["issuer_name"] = content.issuer.issuer_name
+                kwargs["issuer_bpn"] = content.issuer.issuer_bpn
+            if content.validator:
+                kwargs["validator_name"] = content.validator.validator_name if hasattr(content.validator, "validator_name") else None
+            if content.valid_from:
+                kwargs["valid_from"] = content.valid_from
+            if content.valid_until:
+                kwargs["valid_until"] = content.valid_until
+            if content.trust_level:
+                kwargs["trust_level"] = content.trust_level
+            if content.registration_number:
+                kwargs["registration_number"] = content.registration_number
+            if content.area_of_application:
+                kwargs["area_of_application"] = content.area_of_application
+            if content.uploader:
+                kwargs["uploader_bpn"] = content.uploader
+            if content.type.certificate_version:
+                kwargs["certificate_version"] = content.type.certificate_version
+
+            repo.ccm_received_repository.create_new(
+                document_id=content.document.document_id,
+                provider_bpn=sender_bpn,
+                certified_bpn=content.business_partner_number,
+                certificate_type=content.type.certificate_type,
+                doc=doc_bytes,
+                **kwargs,
+            )
+            repo.commit()
+
+        logger.info(
+            "Certificate '%s' stored in ccm_received.",
+            content.document.document_id,
+        )
+
+        return 200, {
+            "message": (
+                f"Certificate '{content.document.document_id}' received "
+                f"and stored successfully."
+            ),
+        }
+
+    # ------------------------------------------------------------------
+    # Inbound AVAILABLE processing (provider → this node as consumer)
+    # ------------------------------------------------------------------
+
+    def process_certificate_available(
+        self, notification: Notification
+    ) -> Tuple[int, Dict[str, Any]]:
+        """
+        Process a ``POST /companycertificate/available`` notification.
+
+        The provider informs us that a certificate is available for PULL
+        retrieval.  We log the availability; the actual retrieval is
+        deferred to the consumer PULL flow (Phase C).
+
+        Args:
+            notification: SDK Notification with header + available content.
+
+        Returns:
+            Tuple of ``(http_status_code, response_body_dict)``.
+        """
+        content = self._parse_available_content(notification)
+        sender_bpn = notification.header.sender_bpn
+
+        logger.info(
+            "CCM available from %s: documentId=%s certificateType=%s",
+            sender_bpn,
+            content.document_id,
+            content.certificate_type,
+        )
+
+        # For now, just acknowledge.  Phase C will add PULL retrieval.
+        return 200, {
+            "message": (
+                f"Certificate availability acknowledged for "
+                f"documentId='{content.document_id}'."
+            ),
+        }
+
+    # ------------------------------------------------------------------
+    # Auto-push helper
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _auto_push_certificate(certificate_id: int, consumer_bpn: str) -> None:
+        """
+        Trigger a PUSH of the certificate to the consumer.
+
+        Imports the provider service lazily to avoid circular dependencies.
+        Failures are logged but do **not** propagate — the request endpoint
+        has already returned ``200`` and the consumer was registered.
+        """
+        try:
+            from models.services.addons.ccm_kit.v1.notifications import (
+                CcmPushRequest,
+            )
+            from services.addons.ccm_kit.v1.ccm_provider_service import (
+                ccm_provider_service,
+            )
+
+            push_request = CcmPushRequest(
+                certificate_id=certificate_id,
+                consumer_bpn=consumer_bpn,
+            )
+            result = ccm_provider_service.push_certificate(
+                push_request, consumer_bpn
+            )
+            if not result.success:
+                logger.warning(
+                    "Auto-push for certificate %d to %s failed: %s",
+                    certificate_id,
+                    consumer_bpn,
+                    result.error,
+                )
+        except Exception:
+            logger.exception(
+                "Auto-push raised for certificate %d to %s",
+                certificate_id,
+                consumer_bpn,
+            )
+
+    # ------------------------------------------------------------------
+    # Additional parsers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _parse_push_content(notification: Notification) -> CcmPushContent:
+        """Extract CX-0135 push content from the notification."""
+        raw = notification.content.model_dump(by_alias=True)
+        if notification.content.model_extra:
+            raw.update(notification.content.model_extra)
+        return CcmPushContent.model_validate(raw)
+
+    @staticmethod
+    def _parse_available_content(
+        notification: Notification,
+    ) -> CcmAvailableContent:
+        """Extract CX-0135 available content from the notification."""
+        raw = notification.content.model_dump(by_alias=True)
+        if notification.content.model_extra:
+            raw.update(notification.content.model_extra)
+        return CcmAvailableContent.model_validate(raw)
 
 
 # Singleton instance consumed by the controller.

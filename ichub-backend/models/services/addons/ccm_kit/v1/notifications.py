@@ -253,3 +253,244 @@ class CcmStatusContent(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+# ---------------------------------------------------------------------------
+# PUSH content models (CX-0135 §2.1.1 — Provider → Consumer)
+# ---------------------------------------------------------------------------
+
+class CcmPushDocument(BaseModel):
+    """
+    Document payload embedded in a PUSH notification.
+
+    Contains the certificate file encoded as Base64 along with metadata
+    that allows the consumer to process and store the document.
+
+    Example::
+
+        {
+            "documentID": "UUID--123456789",
+            "creationDate": "2024-08-23T13:19:00.280+02:00",
+            "contentType": "application/pdf",
+            "contentBase64": "iVBORw0KGgo..."
+        }
+    """
+    document_id: str = Field(
+        alias="documentID",
+        description="Provider-internal reference ID for this document.",
+    )
+    creation_date: Optional[str] = Field(
+        default=None,
+        alias="creationDate",
+        description="ISO 8601 timestamp when the document was created.",
+    )
+    content_type: str = Field(
+        default="application/pdf",
+        alias="contentType",
+        description="MIME type of the certificate document.",
+    )
+    content_base64: str = Field(
+        alias="contentBase64",
+        description="Base64-encoded binary content of the certificate document.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushValidator(BaseModel):
+    """Third-party validator who verified the certificate."""
+    validator_name: Optional[str] = Field(
+        default=None,
+        alias="validatorName",
+        description="Name of the validating entity.",
+    )
+    validator_bpn: Optional[str] = Field(
+        default=None,
+        alias="validatorBpn",
+        description="BPNL of the validating entity.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushIssuer(BaseModel):
+    """Certification body that issued the certificate."""
+    issuer_name: str = Field(
+        alias="issuerName",
+        description="Name of the issuing authority (e.g. TÜV).",
+    )
+    issuer_bpn: Optional[str] = Field(
+        default=None,
+        alias="issuerBpn",
+        description="BPNL of the issuing authority.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushCertificateType(BaseModel):
+    """Certificate type with optional version."""
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    certificate_version: Optional[str] = Field(
+        default=None,
+        alias="certificateVersion",
+        description="Version of the certificate standard (e.g. 2015).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushEnclosedSite(BaseModel):
+    """Site covered by the certificate."""
+    area_of_application: Optional[str] = Field(
+        default=None,
+        alias="areaOfApplication",
+        description="Scope of the certificate at this site.",
+    )
+    enclosed_site_bpn: str = Field(
+        alias="enclosedSiteBpn",
+        description="BPNS or BPNA of the site covered.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushContent(BaseModel):
+    """
+    Full BusinessPartnerCertificate payload for ``POST /companycertificate/push``.
+
+    The provider sends the complete certificate data — including the Base64-
+    encoded document — to the consumer's notification endpoint.
+
+    This matches the CX-0135 §2.1.1 push payload structure exactly.
+    """
+    business_partner_number: str = Field(
+        alias="businessPartnerNumber",
+        description="BPNL of the certified legal entity.",
+    )
+    type: CcmPushCertificateType = Field(
+        description="Certificate type and version.",
+    )
+    enclosed_sites: Optional[List[CcmPushEnclosedSite]] = Field(
+        default=None,
+        alias="enclosedSites",
+        description="Sites (BPNS/BPNA) covered by the certificate.",
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        alias="registrationNumber",
+        description="Official registration number at the certification authority.",
+    )
+    uploader: Optional[str] = Field(
+        default=None,
+        description="BPNL of the company that originally provided the certificate.",
+    )
+    document: CcmPushDocument = Field(
+        description="Certificate document with Base64 content.",
+    )
+    validator: Optional[CcmPushValidator] = Field(
+        default=None,
+        description="Third-party validator information.",
+    )
+    valid_until: Optional[str] = Field(
+        default=None,
+        alias="validUntil",
+        description="Expiry date (ISO 8601 date).",
+    )
+    valid_from: Optional[str] = Field(
+        default=None,
+        alias="validFrom",
+        description="Start date of validity (ISO 8601 date).",
+    )
+    trust_level: Optional[str] = Field(
+        default=None,
+        alias="trustLevel",
+        description="Trust level (none/low/high/trusted).",
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        alias="areaOfApplication",
+        description="Scope of the certificate.",
+    )
+    issuer: CcmPushIssuer = Field(
+        description="Certification body that issued the certificate.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushRequest(BaseModel):
+    """Request body for the provider push trigger endpoint."""
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal ID of the certificate to push.",
+    )
+    consumer_bpn: str = Field(
+        alias="consumerBpn",
+        description="BPNL of the consumer to push the certificate to.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+# ---------------------------------------------------------------------------
+# AVAILABLE content models
+# ---------------------------------------------------------------------------
+
+class CcmAvailableContent(BaseModel):
+    """
+    Content payload for the Certificate Available notification.
+
+    A lightweight notification from the provider telling the consumer
+    that a certificate has been published or updated in the EDC catalog
+    and can be retrieved via the PULL mechanism.
+
+    Example::
+
+        {
+            "documentId": "00000000-0000-0000-0000-000000000001",
+            "certificateType": "ISO9001",
+            "locationBpns": ["BPNS000000000001", "BPNA000000000002"]
+        }
+    """
+    document_id: str = Field(
+        alias="documentId",
+        description="Reference ID of the certificate now available.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Type of the available certificate.",
+    )
+    location_bpns: Optional[List[str]] = Field(
+        default=None,
+        alias="locationBpns",
+        description="BPNS/BPNA sites covered by the certificate.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmAvailableRequest(BaseModel):
+    """Request body for the provider available-notification trigger endpoint."""
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal ID of the certificate that is now available.",
+    )
+    consumer_bpn: str = Field(
+        alias="consumerBpn",
+        description="BPNL of the consumer to notify.",
+    )
+
+    class Config:
+        populate_by_name = True

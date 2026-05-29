@@ -59,6 +59,7 @@ from models.metadata_database.pcf.models import (
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmReceived,
     CcmSite,
     CertificateShare,
     ShareStatus,
@@ -1375,4 +1376,75 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
             .offset(offset)
             .limit(limit)
         )
+        return list(self._session.scalars(stmt).all())
+
+
+class CcmReceivedRepository(BaseRepository[CcmReceived]):
+    """
+    Repository for CcmReceived entities — certificates received via PUSH.
+    """
+
+    def create_new(
+        self,
+        document_id: str,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        **kwargs,
+    ) -> CcmReceived:
+        """
+        Stage a new received-certificate record.
+
+        Args:
+            document_id: Provider-assigned document reference ID.
+            provider_bpn: BPNL of the provider that pushed the certificate.
+            certified_bpn: BPNL of the certified legal entity.
+            certificate_type: Certificate type identifier.
+            **kwargs: Optional fields (certificate_version, issuer_name, etc.).
+
+        Returns:
+            The staged CcmReceived instance.
+        """
+        received = CcmReceived(
+            document_id=document_id,
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            **kwargs,
+        )
+        self.create(received)
+        return received
+
+    def find_by_document_id(self, document_id: str) -> Optional[CcmReceived]:
+        """Look up a received certificate by its provider-assigned document ID."""
+        stmt = select(CcmReceived).where(CcmReceived.document_id == document_id)
+        return self._session.scalars(stmt).first()
+
+    def find_by_provider_bpn(
+        self, provider_bpn: str, offset: int = 0, limit: int = 100
+    ) -> List[CcmReceived]:
+        """Return all certificates received from a given provider."""
+        stmt = (
+            select(CcmReceived)
+            .where(CcmReceived.provider_bpn == provider_bpn)
+            .order_by(desc(CcmReceived.received_at))
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self._session.scalars(stmt).all())
+
+    def find_all_filtered(
+        self,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmReceived]:
+        """Return received certificates with optional filters."""
+        stmt = select(CcmReceived)
+        if certified_bpn:
+            stmt = stmt.where(CcmReceived.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmReceived.certificate_type == certificate_type)
+        stmt = stmt.order_by(desc(CcmReceived.received_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())

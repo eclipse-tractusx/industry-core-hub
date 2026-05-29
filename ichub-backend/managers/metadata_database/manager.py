@@ -47,6 +47,7 @@ class RepositoryManager:
         self._ccm_repository = None
         self._ccm_site_repository = None
         self._certificate_share_repository = None
+        self._ccm_received_repository = None
         self._pcf_repository = None
         self._pcf_relationship_repository = None
 
@@ -210,6 +211,14 @@ class RepositoryManager:
             from managers.metadata_database.repositories import CertificateShareRepository
             self._certificate_share_repository = CertificateShareRepository(self._session)
         return self._certificate_share_repository
+
+    @property
+    def ccm_received_repository(self):
+        """Lazy initialization of the CcmReceived (received certificates) repository."""
+        if self._ccm_received_repository is None:
+            from managers.metadata_database.repositories import CcmReceivedRepository
+            self._ccm_received_repository = CcmReceivedRepository(self._session)
+        return self._ccm_received_repository
 
     @property
     def pcf_repository(self):

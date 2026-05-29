@@ -421,3 +421,193 @@ class TestCcmNotificationService:
 
         assert status == 404
         assert "no sharing record" in body["message"].lower()
+
+    # ==================================================================
+    # process_certificate_push
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_stores_certificate(self, mock_factory, mock_repos):
+        """
+        GIVEN a push notification with valid certificate data
+        WHEN process_certificate_push is called
+        THEN the certificate is stored in ccm_received.
+        """
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {
+                    "certificateType": "ISO9001",
+                    "certificateVersion": "2015",
+                },
+                "document": {
+                    "documentID": "DOC-001",
+                    "creationDate": "2024-06-01T00:00:00Z",
+                    "contentType": "application/pdf",
+                    "contentBase64": "dGVzdA==",
+                },
+                "issuer": {
+                    "issuerName": "TÜV Rheinland",
+                    "issuerBpn": "BPNL000000000002",
+                },
+                "trustLevel": "high",
+                "validFrom": "2024-01-01",
+                "validUntil": "2027-12-31",
+            },
+        )
+
+        status, body = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        assert "received" in body["message"].lower()
+        mock_repos.ccm_received_repository.create_new.assert_called_once()
+        mock_repos.commit.assert_called()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_duplicate_updates(self, mock_factory, mock_repos):
+        """
+        GIVEN a push notification for a document that already exists
+        WHEN process_certificate_push is called
+        THEN the existing record is updated instead of creating a new one.
+        """
+        existing = Mock()
+        existing.doc = b"old"
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "DOC-001",
+                    "contentType": "application/pdf",
+                    "contentBase64": "bmV3",
+                },
+                "issuer": {"issuerName": "TÜV"},
+            },
+        )
+
+        status, body = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        assert "updated" in body["message"].lower()
+        mock_repos.ccm_received_repository.create_new.assert_not_called()
+        mock_repos.commit.assert_called()
+
+    # ==================================================================
+    # process_certificate_available
+    # ==================================================================
+
+    def test_available_acknowledges(self):
+        """
+        GIVEN an available notification with documentId and certificateType
+        WHEN process_certificate_available is called
+        THEN the response acknowledges the availability.
+        """
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Available:1.0.0",
+            content_extras={
+                "documentId": "DOC-042",
+                "certificateType": "IATF16949",
+                "locationBpns": ["BPNS000000000001"],
+            },
+        )
+
+        status, body = self.service.process_certificate_available(notification)
+
+        assert status == 200
+        assert "acknowledged" in body["message"].lower()
+
+    # ==================================================================
+    # Auto-push on request
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".CcmNotificationService._auto_push_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".ConfigManager.get_config"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_auto_push_enabled(
+        self, mock_factory, mock_config, mock_auto_push, mock_repos
+    ):
+        """
+        GIVEN auto_push_on_request is True
+        WHEN a certificate request is processed successfully
+        THEN _auto_push_certificate is called.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm()
+        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+        mock_config.return_value = True
+
+        notification = _make_notification(
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+            }
+        )
+
+        status, body = self.service.process_certificate_request(notification)
+
+        assert status == 200
+        mock_auto_push.assert_called_once_with(ccm.id, "BPNL000000000099")
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".CcmNotificationService._auto_push_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".ConfigManager.get_config"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_auto_push_disabled(
+        self, mock_factory, mock_config, mock_auto_push, mock_repos
+    ):
+        """
+        GIVEN auto_push_on_request is False
+        WHEN a certificate request is processed successfully
+        THEN _auto_push_certificate is NOT called.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm()
+        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+        mock_config.return_value = False
+
+        notification = _make_notification(
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+            }
+        )
+
+        status, _ = self.service.process_certificate_request(notification)
+
+        assert status == 200
+        mock_auto_push.assert_not_called()

@@ -93,3 +93,43 @@ async def update_certificate_status(notification: Notification) -> JSONResponse:
         return JSONResponse(
             status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
         )
+
+
+@router.post("/push")
+async def certificate_push(notification: Notification) -> JSONResponse:
+    """
+    Receive a certificate-push notification from a provider.
+
+    The provider sends the full certificate payload (including the
+    Base64-encoded document) via the CX-0135 PUSH mechanism.
+    """
+    try:
+        status_code, body = ccm_notification_service.process_certificate_push(
+            notification
+        )
+        return JSONResponse(status_code=status_code, content=body)
+    except Exception:
+        logger.exception("Unhandled error in certificate_push endpoint")
+        return JSONResponse(
+            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+        )
+
+
+@router.post("/available")
+async def certificate_available(notification: Notification) -> JSONResponse:
+    """
+    Receive a certificate-available notification from a provider.
+
+    The provider notifies that a certificate is available for PULL
+    retrieval via the EDC catalog.
+    """
+    try:
+        status_code, body = ccm_notification_service.process_certificate_available(
+            notification
+        )
+        return JSONResponse(status_code=status_code, content=body)
+    except Exception:
+        logger.exception("Unhandled error in certificate_available endpoint")
+        return JSONResponse(
+            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+        )
