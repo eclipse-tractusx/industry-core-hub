@@ -856,6 +856,34 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    def find_by_bpnl_and_type(
+        self, bpnl: str, certificate_type: str
+    ) -> Optional[Ccm]:
+        """
+        Find the most recent certificate matching a given BPNL and type.
+
+        Eagerly loads ``sites`` and ``shares`` relationships.  Returns the
+        newest record (by ``created_at``) or ``None`` if no match exists.
+
+        Args:
+            bpnl: Business Partner Number Legal of the certificate holder.
+            certificate_type: Certificate type identifier (e.g. ISO9001).
+
+        Returns:
+            The matching Ccm record with relations, or None.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.bpnl == bpnl, Ccm.certificate_type == certificate_type)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+            .order_by(desc(Ccm.created_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()
+
     def find_all_filtered(
         self,
         bpnl: Optional[str] = None,
@@ -1002,6 +1030,28 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
             .order_by(desc(CertificateShare.last_shared_date))
         )
         return list(self._session.scalars(stmt).all())
+
+    def find_by_certificate_and_consumer(
+        self, certificate_id: int, consumer_bpnl: str
+    ) -> Optional[CertificateShare]:
+        """
+        Look up an existing share record for a specific certificate/consumer pair.
+
+        Args:
+            certificate_id: FK of the certificate.
+            consumer_bpnl: BPNL of the consumer.
+
+        Returns:
+            The matching CertificateShare, or None if not found.
+        """
+        stmt = (
+            select(CertificateShare)
+            .where(
+                CertificateShare.certificate_id == certificate_id,
+                CertificateShare.consumer_bpnl == consumer_bpnl,
+            )
+        )
+        return self._session.scalars(stmt).first()
 
     def update_status(
         self, share_id: int, new_status: ShareStatus

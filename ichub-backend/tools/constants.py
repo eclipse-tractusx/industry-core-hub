@@ -62,3 +62,9 @@ CCM = "CCM"
 TRACEABILITY = "Traceability"
 INDUSTRY_CORE_HUB = "Industry Core Hub"
 PCF = "PCF"
+
+# ==================== CCM NOTIFICATION CONTEXTS (CX-0135) =========================
+CCM_CONTEXT_REQUEST = "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
+CCM_CONTEXT_STATUS = "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
+CCM_CONTEXT_PUSH = "CompanyCertificateManagement-CCMAPI-Push:1.0.0"
+CCM_CONTEXT_AVAILABLE = "CompanyCertificateManagement-CCMAPI-Available:1.0.0"

@@ -41,3 +41,16 @@ from .certificates import (
     CertificateUpdate,
     UploadCertificateResponse,
 )
+
+from .notifications import (
+    CertificateStatusValue,
+    CcmRequestContent,
+    CcmStatusContent,
+    CertificateErrorDetail,
+    LocationErrorDetail,
+    CcmCatalogSearchRequest,
+    CcmCatalogSearchResult,
+    CcmSendRequestPayload,
+    CcmSendStatusPayload,
+    CcmSendResult,
+)
