@@ -50,7 +50,6 @@ import {
   DeviceHub,
   KeyboardArrowRight,
   KeyboardArrowLeft,
-  PersonAdd,
   SortByAlpha,
   Menu as MenuIcon,
   Inbox,
@@ -71,7 +70,7 @@ import {
 } from '@mui/icons-material';
 import { useNotifications } from '../contexts/NotificationContext';
 import { InboxNotification, SenderGroup, NotificationSortBy, InboxFilterType } from '../types';
-import CreatePartnerDialog from '@/features/business-partner-kit/partner-management/components/general/CreatePartnerDialog';
+import AddContactIconButton from '@/features/business-partner-kit/partner-management/components/general/AddContactIconButton';
 
 /**
  * NotificationInbox component - displays notifications in list or grouped view
@@ -122,12 +121,22 @@ const NotificationInbox: React.FC = () => {
     setCurrentPage,
     totalPages,
     pageSize,
+    setUseCaseFilter,
   } = useNotifications();
 
   const { t } = useTranslation('notifications');
 
   // Determine if we're in compact (mobile) mode
   const isCompact = panelSize === 'normal';
+
+  /** Returns chip background and text color for a given use case string */
+  const getUseCaseChipStyle = (useCase: string) => {
+    switch (useCase.toUpperCase()) {
+      case 'PCF': return { bg: 'rgba(0, 188, 212, 0.2)', color: '#00bcd4' };
+      case 'CCM': return { bg: 'rgba(255, 152, 0, 0.2)', color: '#ffa726' };
+      default:    return { bg: 'rgba(158, 158, 158, 0.15)', color: '#bdbdbd' };
+    }
+  };
 
   // State for filter menu
   const [filterMenuAnchor, setFilterMenuAnchor] = useState<null | HTMLElement>(null);
@@ -138,12 +147,6 @@ const NotificationInbox: React.FC = () => {
     mouseY: number;
     notification: InboxNotification;
   } | null>(null);
-
-  // State for add contact dialog
-  const [addContactDialog, setAddContactDialog] = useState<{
-    open: boolean;
-    bpn: string;
-  }>({ open: false, bpn: '' });
 
   // State for undo snackbars (supports stacking)
   interface UndoSnackbarItem {
@@ -346,13 +349,7 @@ const NotificationInbox: React.FC = () => {
   };
 
   // Handle add contact click
-  const handleAddContactClick = (bpn: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setAddContactDialog({ open: true, bpn });
-  };
-
   const handleAddContactSuccess = () => {
-    setAddContactDialog({ open: false, bpn: '' });
     refreshPartners();
   };
 
@@ -589,32 +586,38 @@ const NotificationInbox: React.FC = () => {
               {senderName}
             </Typography>
             {!isKnown && (
-              <Tooltip title={t('inbox.addToContacts')} arrow>
-                <IconButton
-                  size="small"
-                  onClick={(e) => handleAddContactClick(senderBpn, e)}
-                  sx={{
-                    padding: '2px',
-                    color: '#ffb74d',
-                    '&:hover': { color: '#ffa726', backgroundColor: 'rgba(255, 167, 38, 0.15)' },
-                  }}
-                >
-                  <PersonAdd sx={{ fontSize: '0.85rem' }} />
-                </IconButton>
-              </Tooltip>
+              <AddContactIconButton
+                bpnl={senderBpn}
+                onContactAdded={handleAddContactSuccess}
+                tooltipTitle={t('inbox.addToContacts')}
+              />
             )}
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-            <Chip
-              label={`${notification.content.listOfItems.length} DT`}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(129, 199, 132, 0.15)',
-                color: '#81c784',
-                fontSize: '0.6rem',
-                height: '16px',
-              }}
-            />
+            {notification.useCase ? (
+              <Chip
+                label={notification.useCase}
+                size="small"
+                sx={{
+                  backgroundColor: getUseCaseChipStyle(notification.useCase).bg,
+                  color: getUseCaseChipStyle(notification.useCase).color,
+                  fontSize: '0.55rem',
+                  height: '14px',
+                  fontWeight: 600,
+                }}
+              />
+            ) : (
+              <Chip
+                label={`${notification.content.listOfItems.length} DT`}
+                size="small"
+                sx={{
+                  backgroundColor: 'rgba(129, 199, 132, 0.15)',
+                  color: '#81c784',
+                  fontSize: '0.6rem',
+                  height: '16px',
+                }}
+              />
+            )}
             {deadlineInfo && (
               <Chip
                 icon={<Schedule sx={{ fontSize: '0.7rem !important' }} />}
@@ -737,19 +740,11 @@ const NotificationInbox: React.FC = () => {
               {senderName}
             </Typography>
             {!isKnown && (
-              <Tooltip title={t('inbox.addToContacts')} arrow>
-                <IconButton
-                  size="small"
-                  onClick={(e) => handleAddContactClick(senderBpn, e)}
-                  sx={{
-                    padding: '2px',
-                    color: '#ffb74d',
-                    '&:hover': { color: '#ffa726', backgroundColor: 'rgba(255, 167, 38, 0.15)' },
-                  }}
-                >
-                  <PersonAdd sx={{ fontSize: '0.95rem' }} />
-                </IconButton>
-              </Tooltip>
+              <AddContactIconButton
+                bpnl={senderBpn}
+                onContactAdded={handleAddContactSuccess}
+                tooltipTitle={t('inbox.addToContacts')}
+              />
             )}
           </Box>
 
@@ -768,28 +763,60 @@ const NotificationInbox: React.FC = () => {
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              <Chip
-                icon={<DeviceHub sx={{ fontSize: '0.8rem !important' }} />}
-                label={`${notification.content.listOfItems.length} Digital Twin${notification.content.listOfItems.length > 1 ? 's' : ''}`}
-                size="small"
-                sx={{
-                  backgroundColor: 'rgba(129, 199, 132, 0.15)',
-                  color: '#81c784',
-                  fontSize: '0.65rem',
-                  height: '22px',
-                  '& .MuiChip-icon': { color: '#81c784' },
-                }}
-              />
-              <Chip
-                label={notification.content.digitalTwinType}
-                size="small"
-                sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '0.65rem',
-                  height: '22px',
-                }}
-              />
+              {notification.useCase ? (
+                // Non-DT notification: show useCase chip + notificationType chip
+                <>
+                  <Chip
+                    label={notification.useCase}
+                    size="small"
+                    sx={{
+                      backgroundColor: getUseCaseChipStyle(notification.useCase).bg,
+                      color: getUseCaseChipStyle(notification.useCase).color,
+                      fontSize: '0.65rem',
+                      height: '22px',
+                      fontWeight: 600,
+                    }}
+                  />
+                  {notification.pcfContent?.notificationType && (
+                    <Chip
+                      label={notification.pcfContent.notificationType.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.6rem',
+                        height: '22px',
+                      }}
+                    />
+                  )}
+                </>
+              ) : (
+                // DT notification: show twin count + digitalTwinType chips
+                <>
+                  <Chip
+                    icon={<DeviceHub sx={{ fontSize: '0.8rem !important' }} />}
+                    label={`${notification.content.listOfItems.length} Digital Twin${notification.content.listOfItems.length > 1 ? 's' : ''}`}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(129, 199, 132, 0.15)',
+                      color: '#81c784',
+                      fontSize: '0.65rem',
+                      height: '22px',
+                      '& .MuiChip-icon': { color: '#81c784' },
+                    }}
+                  />
+                  <Chip
+                    label={notification.content.digitalTwinType}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontSize: '0.65rem',
+                      height: '22px',
+                    }}
+                  />
+                </>
+              )}
               {deadlineInfo && (
                 <Chip
                   icon={<Schedule sx={{ fontSize: '0.75rem !important' }} />}
@@ -892,22 +919,14 @@ const NotificationInbox: React.FC = () => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {group.sender.name}
+                {getContactName(group.sender.bpnl)}
               </Typography>
               {!isKnown && (
-                <Tooltip title={t('inbox.addToContacts')} arrow>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => handleAddContactClick(group.sender.bpnl, e)}
-                    sx={{
-                      padding: '2px',
-                      color: '#ffb74d',
-                      '&:hover': { color: '#ffa726', backgroundColor: 'rgba(255, 167, 38, 0.15)' },
-                    }}
-                  >
-                    <PersonAdd sx={{ fontSize: '0.85rem' }} />
-                  </IconButton>
-                </Tooltip>
+                <AddContactIconButton
+                  bpnl={group.sender.bpnl}
+                  onContactAdded={handleAddContactSuccess}
+                  tooltipTitle={t('inbox.addToContacts')}
+                />
               )}
             </Box>
             <Typography
@@ -1259,20 +1278,35 @@ const NotificationInbox: React.FC = () => {
       {/* Selection toolbar */}
       {renderSelectionToolbar()}
 
-      {/* Active filter chip */}
-      {filters.senderBpn && (
-        <Box sx={{ padding: '8px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <Chip
-            label={`From: ${getContactName(filters.senderBpn)}`}
-            onDelete={() => setFilters({ ...filters, senderBpn: undefined })}
-            size="small"
-            sx={{
-              backgroundColor: 'rgba(66, 165, 245, 0.2)',
-              color: '#90caf9',
-              fontSize: '0.7rem',
-              '& .MuiChip-deleteIcon': { color: 'rgba(144, 202, 249, 0.7)', '&:hover': { color: '#90caf9' } },
-            }}
-          />
+      {/* Active filter chips for senderBpn and useCase */}
+      {(filters.senderBpn || filters.useCase) && (
+        <Box sx={{ padding: '8px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+          {filters.senderBpn && (
+            <Chip
+              label={`From: ${getContactName(filters.senderBpn)}`}
+              onDelete={() => setFilters({ ...filters, senderBpn: undefined })}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(66, 165, 245, 0.2)',
+                color: '#90caf9',
+                fontSize: '0.7rem',
+                '& .MuiChip-deleteIcon': { color: 'rgba(144, 202, 249, 0.7)', '&:hover': { color: '#90caf9' } },
+              }}
+            />
+          )}
+          {filters.useCase && (
+            <Chip
+              label={`Use Case: ${filters.useCase}`}
+              onDelete={() => setUseCaseFilter(undefined)}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(66, 165, 245, 0.2)',
+                color: '#90caf9',
+                fontSize: '0.7rem',
+                '& .MuiChip-deleteIcon': { color: 'rgba(144, 202, 249, 0.7)', '&:hover': { color: '#90caf9' } },
+              }}
+            />
+          )}
         </Box>
       )}
 
@@ -1534,20 +1568,40 @@ const NotificationInbox: React.FC = () => {
           <ListItemText primary={t('inbox.trash')} primaryTypographyProps={{ sx: { color: '#ffffff', fontSize: '0.85rem' } }} />
           <Chip label={stats.trash} size="small" sx={{ height: '20px', fontSize: '0.7rem', backgroundColor: 'rgba(239, 83, 80, 0.2)', color: '#ef5350' }} />
         </MenuItem>
+        {/* Use Case filter section — shown only when at least one use-case notification exists */}
+        {Object.keys(stats.perUseCase).length > 0 && [
+          <Divider key="uc-divider" sx={{ borderColor: 'rgba(66, 165, 245, 0.1)', my: 0.5 }} />,
+          <Box key="uc-header" sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(66, 165, 245, 0.1)' }}>
+            <Typography sx={{ color: '#64b5f6', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Use Case
+            </Typography>
+          </Box>,
+          ...Object.entries(stats.perUseCase).map(([uc, count]) => (
+            <MenuItem
+              key={`uc-${uc}`}
+              onClick={() => { setUseCaseFilter(filters.useCase === uc ? undefined : uc); handleFilterMenuClose(); }}
+              selected={filters.useCase === uc}
+              sx={{
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                padding: '10px 16px',
+                transition: 'all 0.15s ease',
+                '&:hover': { backgroundColor: `${getUseCaseChipStyle(uc).bg}` },
+                '&.Mui-selected': { backgroundColor: `${getUseCaseChipStyle(uc).bg}`, '&:hover': { backgroundColor: `${getUseCaseChipStyle(uc).bg}` } },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: getUseCaseChipStyle(uc).color }} />
+              </ListItemIcon>
+              <ListItemText primary={uc} primaryTypographyProps={{ sx: { color: '#ffffff', fontSize: '0.85rem' } }} />
+              <Chip label={count} size="small" sx={{ height: '20px', fontSize: '0.7rem', backgroundColor: getUseCaseChipStyle(uc).bg, color: getUseCaseChipStyle(uc).color }} />
+            </MenuItem>
+          )),
+        ]}
       </Menu>
 
       {/* Context menu */}
       {renderContextMenu()}
-
-      {/* Add contact dialog */}
-      {addContactDialog.open && (
-        <CreatePartnerDialog
-          open={addContactDialog.open}
-          onClose={() => setAddContactDialog({ open: false, bpn: '' })}
-          onSave={handleAddContactSuccess}
-          partnerData={{ bpnl: addContactDialog.bpn, name: '' }}
-        />
-      )}
 
       {/* Stacking Undo Snackbars */}
       <Box

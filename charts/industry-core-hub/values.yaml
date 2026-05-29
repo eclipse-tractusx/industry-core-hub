@@ -71,6 +71,10 @@ backend:
     # -- Hostname for the backend service. If empty, it will use the ingress URL automatically.
     # Set this to override the hostname with a custom value (e.g., "https://my-custom-backend.example.com")
     hostname: ""
+    # -- Business Partner Number (BPN) of the operator running this instance.
+    # Used by PCF Exchange and other managers to identify the local participant.
+    # Defaults to the top-level participantId value if left empty.
+    bpn: ""
     # -- Agreements define the ODRL policies for each semantic model.
     # The format follows the Tractus-X SDK TCK reference (plain keys).
     # Both Jupiter and Saturn use identical rule structures — only the context differs.
@@ -212,6 +216,40 @@ backend:
                 rightOperand: "active"
           prohibition: []
           obligation: []
+      - semanticid: urn:samm:io.catenax.pcf:9.0.0#Pcf
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.pcf.base:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
     authorization:
       enabled: true
       apiKey:
@@ -301,13 +339,13 @@ backend:
               - action: "use"
                 constraint:
                   and:
-                    - leftOperand: "FrameworkAgreement"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                       operator: "eq"
                       rightOperand: "DataExchangeGovernance:1.0"
-                    - leftOperand: "Membership"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                       operator: "eq"
                       rightOperand: "active"
-                    - leftOperand: "UsagePurpose"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                       operator: "isAnyOf"
                       rightOperand: "cx.core.digitalTwinRegistry:1"
             prohibition: []
@@ -320,7 +358,7 @@ backend:
             permission:
               - action: "access"
                 constraint:
-                  leftOperand: "Membership"
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []
@@ -344,13 +382,13 @@ backend:
               - action: "use"
                 constraint:
                   and:
-                    - leftOperand: "FrameworkAgreement"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                       operator: "eq"
                       rightOperand: "DataExchangeGovernance:1.0"
-                    - leftOperand: "Membership"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                       operator: "eq"
                       rightOperand: "active"
-                    - leftOperand: "UsagePurpose"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                       operator: "isAnyOf"
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
@@ -361,9 +399,52 @@ backend:
               - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
               - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
             permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      # -- PCF Exchange configuration
+      pcfExchange:
+        # -- Enable or disable PCF Exchange. Keep this disabled until a real hostname is configured.
+        enabled: false
+        # -- Hostname of the PCF Exchange API
+        hostname: "https://<provider-pcf-exchange-api>"
+        asset_config:
+          dct_type: "cx-taxo:PcfExchange"
+          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
               - action: "use"
                 constraint:
-                  leftOperand: "Membership"
+                  and:
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.pcf.base:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []
@@ -815,6 +896,30 @@ frontend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+    # -- PCF Exchange policies for consumption (Saturn format — plain keys, no ODRL prefixes)
+    # Sent to the backend when requesting PCF data from a provider.
+    # UsagePurpose must use isAnyOf to match what EDC providers advertise in their catalog.
+    pcfExchange:
+      policies:
+        - context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.pcf.base:1"
+          prohibition: []
+          obligation: []
 
   healthChecks:
     startup:

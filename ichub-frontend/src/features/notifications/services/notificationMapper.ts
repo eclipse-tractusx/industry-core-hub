@@ -32,6 +32,7 @@ import type {
   ConnectToParentItem,
   VerifiedItem,
   DigitalTwinType,
+  PcfNotificationPayload,
 } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,14 @@ import type {
  */
 const parseNotificationType = (context: string): NotificationType => {
   const normalized = context.toLowerCase();
+
+  // Use-case-specific types detected before DT types (context format differs)
+  if (normalized.includes('pcf')) {
+    return 'pcf';
+  }
+  if (normalized.includes('ccm')) {
+    return 'ccm';
+  }
 
   if (normalized.includes('connecttoparent') || normalized.includes('connect-to-parent') || normalized.includes('connect_to_parent')) {
     return 'connect-to-parent';
@@ -235,7 +244,9 @@ const extractDigitalTwinType = (rawContent: Record<string, unknown>): DigitalTwi
 const mapContent = (rawContent: Record<string, unknown>): ConnectToParentPayload => {
   const listOfItems = mapContentItems(rawContent);
   const digitalTwinType = extractDigitalTwinType(rawContent);
-  const information = (rawContent.information as string) ?? undefined;
+  // For DT notifications 'information' is the main text. For PCF/CCM the text lives in 'message'.
+  const information =
+    (rawContent.information as string) ?? (rawContent.message as string) ?? undefined;
 
   return {
     digitalTwinType,
@@ -243,6 +254,32 @@ const mapContent = (rawContent: Record<string, unknown>): ConnectToParentPayload
     listOfItems,
   };
 };
+
+// ---------------------------------------------------------------------------
+// PCF content mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the typed PCF payload from the raw backend content.
+ * Handles both camelCase and snake_case field names.
+ */
+const mapPcfContent = (rawContent: Record<string, unknown>): PcfNotificationPayload => ({
+  notificationType:
+    (rawContent.notificationType as string) ?? (rawContent.notification_type as string) ?? '',
+  requestId: (rawContent.requestId as string) ?? (rawContent.request_id as string) ?? '',
+  message: (rawContent.message as string) ?? undefined,
+  timestamp: (rawContent.timestamp as string) ?? '',
+  manufacturerPartId:
+    (rawContent.manufacturerPartId as string) ?? (rawContent.manufacturer_part_id as string) ?? undefined,
+  customerPartId:
+    (rawContent.customerPartId as string) ?? (rawContent.customer_part_id as string) ?? undefined,
+  requestingBpn:
+    (rawContent.requestingBpn as string) ?? (rawContent.requesting_bpn as string) ?? undefined,
+  respondingBpn:
+    (rawContent.respondingBpn as string) ?? (rawContent.responding_bpn as string) ?? undefined,
+  targetBpn: (rawContent.targetBpn as string) ?? (rawContent.target_bpn as string) ?? undefined,
+  isUpdate: (rawContent.isUpdate as boolean) ?? (rawContent.is_update as boolean) ?? false,
+});
 
 // ---------------------------------------------------------------------------
 // Main mapper
@@ -260,6 +297,12 @@ export const mapApiResponseToInboxNotification = (
   const notificationType = parseNotificationType(header.context);
   const status = mapStatus(response.status);
   const verificationState = mapVerificationState(response.status);
+
+  // Populate typed PCF payload only for PCF notifications
+  const pcfContent =
+    notificationType === 'pcf'
+      ? mapPcfContent(response.fullNotification.content)
+      : undefined;
 
   const verifiedItems: VerifiedItem[] = content.listOfItems.map((item) => ({
     item,
@@ -287,6 +330,8 @@ export const mapApiResponseToInboxNotification = (
     isArchived: false,
     isTrashed: false,
     verificationState,
+    useCase: response.useCase ?? undefined,
+    pcfContent,
   };
 };
 

@@ -193,6 +193,10 @@ tags_metadata = [
     {
         "name": "EcoPass KIT Microservices",
         "description": "Provider-side EcoPass KIT endpoints"
+    },
+    {
+        "name": "PCF KIT Microservices",
+        "description": "Provider-side PCF KIT endpoints"
     }
 ]
 
@@ -311,6 +315,7 @@ def custom_openapi():
                 "Add-Ons Microservices",
                 "EcoPass KIT Microservices",
                 "EcoPass KIT Consumer Microservices",
+                "PCF KIT Microservices"
             ],
         },
     ]

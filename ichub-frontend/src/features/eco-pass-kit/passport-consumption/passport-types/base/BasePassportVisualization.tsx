@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -78,6 +79,14 @@ export interface BasePassportConfig {
    * Value is a component to render that section
    */
   customRenderers?: Record<string, React.ComponentType<{ data: any; rawData: Record<string, unknown> }>>;
+
+  /**
+   * Action buttons to hide from the header toolbar.
+   * Useful when the visualization is embedded in a context where certain
+   * actions are not applicable (e.g. PCF details does not need Data Contract
+   * or Export PDF).
+   */
+  hideActionButtons?: ('dataContract' | 'exportPdf')[];
 }
 
 /**
@@ -534,6 +543,7 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
               >
                 Show Digital Twin
               </Button>
+              {!config.hideActionButtons?.includes('dataContract') && (
               <Button
                 size="small"
                 startIcon={<Description sx={{ fontSize: { xs: 16, sm: 18 } }} />}
@@ -555,6 +565,8 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
               >
                 Data Contract Info
               </Button>
+              )}
+              {!config.hideActionButtons?.includes('exportPdf') && (
               <Button
                 size="small"
                 startIcon={<PictureAsPdf sx={{ fontSize: { xs: 18, sm: 20 } }} />}
@@ -582,6 +594,7 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
                   Export PDF
                 </Box>
               </Button>
+              )}
               <Button
                 size="small"
                 startIcon={<Download sx={{ fontSize: { xs: 16, sm: 18 } }} />}
