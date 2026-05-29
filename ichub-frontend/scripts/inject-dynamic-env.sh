@@ -3,6 +3,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Frontend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -75,6 +76,7 @@ NOTIFICATIONS_POLL_INTERVAL \
 json_vars=" \
 GOVERNANCE_CONFIG \
 DTR_POLICIES_CONFIG \
+PCF_EXCHANGE_POLICIES_CONFIG \
 "
 
 # Start by removing javascript comments from source file

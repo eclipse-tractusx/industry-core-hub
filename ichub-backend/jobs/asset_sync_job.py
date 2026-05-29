@@ -70,6 +70,10 @@ class AssetSyncJob:
 
             # Step 3: Sync Digital Twin Event asset
             self._sync_digital_twin_event_asset()
+
+            # Step 4: Sync PCF Exchange asset if enabled
+            if self._pcf_kit_enablement_check():
+                self._sync_pcf_exchange_asset()
             
             logger.info("[AssetSyncJob] Asset synchronization completed successfully.")
             
@@ -184,3 +188,47 @@ class AssetSyncJob:
             
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error synchronizing semantic assets: {e}", exc_info=True)
+
+    def _sync_pcf_exchange_asset(self) -> None:
+        """
+        Synchronize the PCF Exchange asset with the connector.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing PCF Exchange asset...")
+            
+            # Get PCF Exchange configuration
+            pcf_config = ConfigManager.get_config("provider.pcfExchange")
+            if not pcf_config:
+                logger.warning("[AssetSyncJob] No PCF Exchange configuration found. Skipping PCF Exchange sync.")
+                return
+            
+            asset_config = pcf_config.get("asset_config", {})
+            
+            # Register PCF Exchange asset
+            pcf_asset_id, _, _, _ = self.connector_provider_manager.register_pcf_exchange_offer(
+                base_url=pcf_config.get("hostname"),
+                pcf_exchange_policy_config=pcf_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id", None)
+            )
+            
+            if pcf_asset_id:
+                logger.info(f"[AssetSyncJob] PCF Exchange asset synchronized: {pcf_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange asset.")
+                
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing PCF Exchange asset: {e}", exc_info=True)
+
+    def _pcf_kit_enablement_check(self) -> bool:
+        """
+        Check if the PCF Kit enablement is active in the configuration.
+        
+        Returns:
+            bool: True if PCF Kit is enabled, False otherwise.
+        """
+        try:
+            pcf_config = ConfigManager.get_config("provider.pcfExchange", {})
+            return pcf_config.get("enabled", False)
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error checking PCF Kit enablement: {e}", exc_info=True)
+            return False
