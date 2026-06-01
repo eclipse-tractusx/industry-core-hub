@@ -37,7 +37,7 @@ interface StatItem {
 }
 
 const STAT_ITEMS: StatItem[] = [
-  { key: '', label: 'Total', color: '#F59E0B', getValue: (s) => s.total },
+  { key: '', label: 'Total', color: '#9D6FD4', getValue: (s) => s.total },
   { key: 'valid', label: 'Valid', color: '#4caf50', getValue: (s) => s.valid },
   { key: 'expiring', label: 'Expiring', color: '#ed8936', getValue: (s) => s.expiring },
   { key: 'expired', label: 'Expired', color: '#f44336', getValue: (s) => s.expired },

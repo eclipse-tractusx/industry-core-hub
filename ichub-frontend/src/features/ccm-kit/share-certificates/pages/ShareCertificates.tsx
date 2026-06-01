@@ -232,7 +232,7 @@ const ShareCertificates = () => {
                                 fontWeight: 600,
                                 fontSize: '0.7rem',
                                 ...(record.status === 'Active' && { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' }),
-                                ...(record.status === 'Pending' && { backgroundColor: 'rgba(255,167,38,0.15)', color: '#ffb74d', border: '1px solid rgba(255,167,38,0.3)' }),
+                                ...(record.status === 'Pending' && { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' }),
                                 ...(record.status !== 'Active' && record.status !== 'Pending' && { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }),
                               }}
                             />
@@ -266,7 +266,7 @@ const ShareCertificates = () => {
                 Incoming Certificate Shares
               </Typography>
               {pendingCount > 0 && (
-                <Chip label={`${pendingCount} pending`} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', backgroundColor: 'rgba(255,167,38,0.15)', color: '#ffb74d', border: '1px solid rgba(255,167,38,0.3)' }} />
+                <Chip label={`${pendingCount} pending`} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' }} />
               )}
             </Box>
             <Box sx={{ px: 2.5, py: 1.5 }}>
@@ -317,7 +317,7 @@ const ShareCertificates = () => {
                                 fontSize: '0.7rem',
                                 textTransform: 'capitalize',
                                 ...(notif.status === 'acknowledged' && { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' }),
-                                ...(notif.status === 'pending' && { backgroundColor: 'rgba(255,167,38,0.15)', color: '#ffb74d', border: '1px solid rgba(255,167,38,0.3)' }),
+                                ...(notif.status === 'pending' && { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' }),
                                 ...(notif.status !== 'acknowledged' && notif.status !== 'pending' && { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }),
                               }}
                             />

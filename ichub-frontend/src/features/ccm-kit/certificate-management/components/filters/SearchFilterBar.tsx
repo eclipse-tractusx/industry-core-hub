@@ -78,8 +78,8 @@ export const SearchFilterBar = ({ filters, onChange, viewMode, onViewModeChange 
       borderRadius: '10px',
       transition: 'all 0.2s ease',
       '& fieldset': { borderColor: 'rgba(255,255,255,0.1)', borderWidth: '1px' },
-      '&:hover fieldset': { borderColor: 'rgba(245,158,11,0.45)' },
-      '&.Mui-focused fieldset': { borderColor: '#F59E0B', borderWidth: '1.5px' },
+      '&:hover fieldset': { borderColor: 'rgba(157,111,212,0.45)' },
+      '&.Mui-focused fieldset': { borderColor: '#9D6FD4', borderWidth: '1.5px' },
     },
   };
 
@@ -158,7 +158,7 @@ export const SearchFilterBar = ({ filters, onChange, viewMode, onViewModeChange 
           color: filters.type ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)',
           '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
           '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(245,158,11,0.45)' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#F59E0B', borderWidth: '1.5px' },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#9D6FD4', borderWidth: '1.5px' },
           '& .MuiSelect-select': { textAlign: 'center', py: '8.5px' },
           '& .MuiSelect-icon': { color: 'rgba(255,255,255,0.4)' },
         }}

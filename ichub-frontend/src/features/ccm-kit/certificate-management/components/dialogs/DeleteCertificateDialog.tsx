@@ -67,7 +67,7 @@ export const DeleteCertificateDialog = ({
           position: 'relative',
         }}
       >
-        <WarningAmberIcon sx={{ color: '#ffa726', fontSize: 22 }} />
+        <WarningAmberIcon sx={{ color: '#9D6FD4', fontSize: 22 }} />
         <Typography variant="h6" sx={{ fontWeight: 600, color: 'inherit', lineHeight: 1 }}>
           Delete Certificate
         </Typography>

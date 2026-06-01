@@ -379,12 +379,12 @@ const NotificationDetail: React.FC = () => {
                     itemFeedback.status === 'OK'
                       ? 'rgba(76, 175, 80, 0.2)'
                       : itemFeedback.status === 'PENDING'
-                        ? 'rgba(255, 167, 38, 0.2)'
+                        ? 'rgba(157, 111, 212, 0.2)'
                         : 'rgba(244, 67, 54, 0.2)',
                   color: itemFeedback.status === 'OK' 
                     ? '#81c784' 
                     : itemFeedback.status === 'PENDING'
-                      ? '#ffa726'
+                      ? '#9D6FD4'
                       : '#ef5350',
                   fontSize: '0.55rem',
                   height: '16px',
@@ -721,11 +721,11 @@ const NotificationDetail: React.FC = () => {
                   onClick={() => setShowAddContactDialog(true)}
                   sx={{
                     padding: '4px',
-                    color: '#ffb74d',
-                    backgroundColor: 'rgba(255, 183, 77, 0.1)',
+                    color: '#9D6FD4',
+                    backgroundColor: 'rgba(157, 111, 212, 0.1)',
                     '&:hover': { 
-                      backgroundColor: 'rgba(255, 183, 77, 0.25)',
-                      color: '#ffa726',
+                      backgroundColor: 'rgba(157, 111, 212, 0.25)',
+                      color: '#9D6FD4',
                     },
                   }}
                 >
@@ -784,13 +784,13 @@ const NotificationDetail: React.FC = () => {
                   selectedNotification.useCase.toUpperCase() === 'PCF'
                     ? 'rgba(0, 188, 212, 0.2)'
                     : selectedNotification.useCase.toUpperCase() === 'CCM'
-                    ? 'rgba(255, 152, 0, 0.2)'
+                    ? 'rgba(157, 111, 212, 0.2)'
                     : 'rgba(158, 158, 158, 0.15)',
                 color:
                   selectedNotification.useCase.toUpperCase() === 'PCF'
                     ? '#00bcd4'
                     : selectedNotification.useCase.toUpperCase() === 'CCM'
-                    ? '#ffa726'
+                    ? '#9D6FD4'
                     : '#bdbdbd',
                 fontSize: '0.65rem',
                 fontWeight: 600,
@@ -958,8 +958,8 @@ const NotificationDetail: React.FC = () => {
                 size="small"
                 sx={{
                   mt: 1.5,
-                  backgroundColor: 'rgba(255, 152, 0, 0.2)',
-                  color: '#ffa726',
+                  backgroundColor: 'rgba(157, 111, 212, 0.2)',
+                  color: '#9D6FD4',
                   fontSize: '0.65rem',
                   fontWeight: 600,
                 }}
@@ -1353,7 +1353,7 @@ const DetailRow: React.FC<{ label: string; value: string; copyable?: boolean; co
 const getFeedbackStatusColor = (status: string): string => {
   switch (status) {
     case 'OK': return '#81c784';
-    case 'PENDING': return '#ffa726';
+    case 'PENDING': return '#9D6FD4';
     default: return '#ef5350';
   }
 };
@@ -1361,7 +1361,7 @@ const getFeedbackStatusColor = (status: string): string => {
 const getFeedbackStatusBg = (status: string): string => {
   switch (status) {
     case 'OK': return 'rgba(76, 175, 80, 0.1)';
-    case 'PENDING': return 'rgba(255, 167, 38, 0.1)';
+    case 'PENDING': return 'rgba(157, 111, 212, 0.1)';
     default: return 'rgba(244, 67, 54, 0.1)';
   }
 };
@@ -1377,7 +1377,7 @@ const getFeedbackStatusHoverBg = (status: string): string => {
 const getFeedbackStatusIcon = (status: string, fontSize: string = '1rem') => {
   switch (status) {
     case 'OK': return <CheckCircle sx={{ color: '#81c784', fontSize }} />;
-    case 'PENDING': return <HourglassEmpty sx={{ color: '#ffa726', fontSize }} />;
+    case 'PENDING': return <HourglassEmpty sx={{ color: '#9D6FD4', fontSize }} />;
     default: return <Error sx={{ color: '#ef5350', fontSize }} />;
   }
 };

@@ -133,7 +133,7 @@ const NotificationInbox: React.FC = () => {
   const getUseCaseChipStyle = (useCase: string) => {
     switch (useCase.toUpperCase()) {
       case 'PCF': return { bg: 'rgba(0, 188, 212, 0.2)', color: '#00bcd4' };
-      case 'CCM': return { bg: 'rgba(255, 152, 0, 0.2)', color: '#ffa726' };
+      case 'CCM': return { bg: 'rgba(157, 111, 212, 0.2)', color: '#9D6FD4' };
       default:    return { bg: 'rgba(158, 158, 158, 0.15)', color: '#bdbdbd' };
     }
   };

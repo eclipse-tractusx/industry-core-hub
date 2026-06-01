@@ -83,11 +83,11 @@ const darkAutocomplete = {
     color: 'rgba(255,255,255,0.87)',
     borderRadius: '10px',
     '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-    '&:hover fieldset': { borderColor: 'rgba(245,158,11,0.45)' },
-    '&.Mui-focused fieldset': { borderColor: '#F59E0B', borderWidth: '1.5px' },
+    '&:hover fieldset': { borderColor: 'rgba(157,111,212,0.45)' },
+    '&.Mui-focused fieldset': { borderColor: '#9D6FD4', borderWidth: '1.5px' },
   },
   '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.45)' },
-  '& .MuiInputLabel-root.Mui-focused': { color: '#F59E0B' },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#9D6FD4' },
   '& .MuiInputLabel-shrink': {
     backgroundColor: 'rgba(18,18,22,0.98)',
     padding: '0 4px',
@@ -131,13 +131,13 @@ const darkTableSx = {
 };
 
 const amberButton = {
-  background: 'linear-gradient(135deg, #92400E 0%, #F59E0B 100%)',
+  background: 'linear-gradient(135deg, #6B3FA0 0%, #9D6FD4 100%)',
   color: '#fff',
   textTransform: 'none' as const,
   fontWeight: 600,
   borderRadius: '10px',
-  boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
-  '&:hover': { filter: 'brightness(1.1)', boxShadow: '0 6px 18px rgba(245,158,11,0.4)' },
+  boxShadow: '0 4px 12px rgba(157,111,212,0.3)',
+  '&:hover': { filter: 'brightness(1.1)', boxShadow: '0 6px 18px rgba(157,111,212,0.4)' },
   '&:disabled': {
     background: 'rgba(255,255,255,0.1)',
     color: 'rgba(255,255,255,0.3)',
