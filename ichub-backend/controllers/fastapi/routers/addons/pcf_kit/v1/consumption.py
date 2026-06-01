@@ -109,7 +109,7 @@ async def send_pcf_request_to_participant(
 
 
 @router.get("/requests/{requestId}/response")
-async def consult_pcf_response(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
+async def consult_pcf_response(request_id: str = Path(..., alias="requestId")) -> JSONResponse:
     try:
         result = consumption_manager.consult_pcf_response(request_id=request_id)
         return JSONResponse(status_code=200, content=result.model_dump(by_alias=True))

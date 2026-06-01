@@ -122,7 +122,7 @@ async def list_provider_notifications(
     status: Optional[PcfExchangeStatus] = Query(None, description="Filter by request status (e.g., pending, delivered)"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(100, ge=1, le=1000, description="Pagination limit")
-) -> List[PcfExchangeModel]:
+) -> JSONResponse:
     try:
         result = provision_manager.list_provider_notifications(status=status, offset=offset, limit=limit)
         return JSONResponse(status_code=200, content=[item.model_dump(by_alias=True) for item in result])
@@ -153,7 +153,7 @@ async def accept_request_and_send_response(
 
 
 @router.get("/requests/{requestId}/refresh-pcf")
-async def refresh_pcf_data_for_request(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
+async def refresh_pcf_data_for_request(request_id: str = Path(..., alias="requestId")) -> JSONResponse:
     try:
         result = provision_manager.refresh_pcf_data_for_request(request_id=request_id)
         return JSONResponse(status_code=200, content=result.model_dump(by_alias=True))

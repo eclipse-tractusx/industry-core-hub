@@ -120,19 +120,24 @@ const NotificationDetail: React.FC = () => {
   const navigate = useNavigate();
 
   // Maps PCF notification type to navigation target
-  const getPcfNavigationTarget = (notificationType: string): { path: string; label: string } | null => {
+  const getPcfNavigationTarget = (notificationType: string): { path: string; labelKey: string } | null => {
+    const requestId = selectedNotification?.pcfContent?.requestId;
     switch (notificationType) {
       case 'PCF_REQUEST_RECEIVED':
-        return { path: '/pcf/requests', label: 'View Incoming PCF Requests' };
+        return { path: '/pcf/requests', labelKey: 'detail.viewIncomingPcfRequests' };
       case 'PCF_RESPONSE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
         return {
-          path: `/pcf/precalculation?requestId=${encodeURIComponent(selectedNotification?.pcfContent?.requestId ?? '')}`,
-          label: 'Go to PCF Precalculation',
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.goPcfPrecalculation',
         };
       case 'PCF_DATA_UPDATE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
         return {
-          path: `/pcf/precalculation?requestId=${encodeURIComponent(selectedNotification?.pcfContent?.requestId ?? '')}`,
-          label: 'View Updated PCF Data',
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.viewUpdatedPcfData',
         };
       default:
         return null;
@@ -1013,7 +1018,7 @@ const NotificationDetail: React.FC = () => {
                     },
                   }}
                 >
-                  {navTarget.label}
+                  {t(navTarget.labelKey)}
                 </Button>
               ) : null;
             })()}

@@ -138,6 +138,8 @@ const PcfRequestPage: React.FC = () => {
   // Sending/polling state per subpartId: 'sending' while API call in flight, 'polling' while waiting for status change
   const [subpartSendingState, setSubpartSendingState] = useState<Map<string, 'sending' | 'polling'>>(new Map());
   const pollingIntervalsRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
+  // Temporary in-memory cache for subparts results (cleared on component unmount)
+  const subpartsCacheRef = useRef<Map<string, Awaited<ReturnType<typeof getSubparts>>>>(new Map());
 
   // Parse part ID and manufacturer ID from URL
   const partIdFromUrl = params?.partId;
@@ -166,12 +168,12 @@ const PcfRequestPage: React.FC = () => {
           setPageState('search');
           return;
         }
-        // Step 2: find which catalog part has this subpart
+        // Step 2: find which catalog part has this subpart (using cache to avoid duplicate API calls)
         const catalogParts = await fetchCatalogParts();
         let foundPartId: string | null = null;
         for (const part of catalogParts) {
           try {
-            const rel = await getSubparts(part.manufacturerPartId);
+            const rel = await getSubpartsWithCache(part.manufacturerPartId);
             const hasSubpart = rel.listSubManufacturerPartIds.some(
               (sub) => sub.manufacturerPartId === subpartId
             );
@@ -192,13 +194,25 @@ const PcfRequestPage: React.FC = () => {
         setPageState('search');
       }
     })();
-  }, [requestIdFromUrl]);
+  }, [requestIdFromUrl, partIdFromUrl, loadPartData]);
 
-  // Cleanup all polling intervals when the component unmounts
+  // Helper function to get subparts with caching
+  const getSubpartsWithCache = async (manufacturerPartId: string) => {
+    const cached = subpartsCacheRef.current.get(manufacturerPartId);
+    if (cached) {
+      return cached;
+    }
+    const result = await getSubparts(manufacturerPartId);
+    subpartsCacheRef.current.set(manufacturerPartId, result);
+    return result;
+  };
+
+  // Cleanup all polling intervals and cache when the component unmounts
   useEffect(() => {
     return () => {
       pollingIntervalsRef.current.forEach(intervalId => clearInterval(intervalId));
       pollingIntervalsRef.current.clear();
+      subpartsCacheRef.current.clear();
     };
   }, []);
 
