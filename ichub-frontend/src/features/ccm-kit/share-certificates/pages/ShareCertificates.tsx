@@ -140,7 +140,7 @@ const ShareCertificates = () => {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Page header */}
       <Box sx={{ mb: 4 }}>
         <PageSectionHeader
@@ -174,11 +174,11 @@ const ShareCertificates = () => {
       </Box>
 
       {/* ── Dual-column layout ───────────────────────────────────────────── */}
-      <Grid2 container spacing={3}>
+      <Grid2 container spacing={3} sx={{ flex: 1, display: 'flex', flexDirection: 'row' }}>
 
         {/* ── Left column: Outbox ─────────────────────────────────────────── */}
-        <Grid2 size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden' }}>
+        <Grid2 size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
             {/* Section header */}
             <Box sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'rgba(255,255,255,0.1)', backgroundColor: '#1e2d3d', display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <ArrowUpwardIcon sx={{ color: '#64b5f6', fontSize: 20 }} />
@@ -200,7 +200,7 @@ const ShareCertificates = () => {
               </Box>
             ) : (
               <>
-                <TableContainer sx={{ maxHeight: 'calc(50vh - 120px)', overflow: 'auto' }}>
+                <TableContainer sx={{ flex: 1, overflow: 'auto', maxHeight: { xs: 'calc(40vh - 120px)', md: 'calc(70vh - 120px)' } }}>
                   <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.08)' } }}>
                     <TableHead>
                       <TableRow>
@@ -249,7 +249,7 @@ const ShareCertificates = () => {
                   rowsPerPage={ROWS_PER_PAGE}
                   page={outboxPage}
                   onPageChange={(_, p) => setOutboxPage(p)}
-                  sx={{ color: 'rgba(255,255,255,0.6)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.6)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
+                  sx={{ color: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiTablePagination-displayedRows': { color: 'rgba(255,255,255,0.9)' }, '& .MuiTablePagination-selectLabel': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
                 />
               </>
             )}
@@ -257,8 +257,8 @@ const ShareCertificates = () => {
         </Grid2>
 
         {/* ── Right column: Incoming ───────────────────────────────────────── */}
-        <Grid2 size={{ xs: 12, md: 6 }}>
-          <Paper sx={{ backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden' }}>
+        <Grid2 size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column' }}>
+          <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
             {/* Section header */}
             <Box sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'rgba(255,255,255,0.1)', backgroundColor: '#1e2d3d', display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <ArrowDownwardIcon sx={{ color: '#64b5f6', fontSize: 20 }} />
@@ -282,7 +282,7 @@ const ShareCertificates = () => {
               </Box>
             ) : (
               <>
-                <TableContainer sx={{ maxHeight: 'calc(50vh - 120px)', overflow: 'auto' }}>
+                <TableContainer sx={{ flex: 1, overflow: 'auto', maxHeight: { xs: 'calc(40vh - 120px)', md: 'calc(70vh - 120px)' } }}>
                   <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.08)' } }}>
                     <TableHead>
                       <TableRow>
@@ -334,7 +334,7 @@ const ShareCertificates = () => {
                   rowsPerPage={ROWS_PER_PAGE}
                   page={inboxPage}
                   onPageChange={(_, p) => setInboxPage(p)}
-                  sx={{ color: 'rgba(255,255,255,0.6)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.6)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
+                  sx={{ color: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiTablePagination-displayedRows': { color: 'rgba(255,255,255,0.9)' }, '& .MuiTablePagination-selectLabel': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
                 />
               </>
             )}
