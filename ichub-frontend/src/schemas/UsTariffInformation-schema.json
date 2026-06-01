@@ -1,7 +1,7 @@
 {
   "$schema" : "http://json-schema.org/draft-04/schema",
   "x-samm-aspect-model-urn" : "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation",
-  "description" : "Information required for US tariff declaration, including product classification codes (e.g., HTS), customs valuation data, country of origin, applicable duty rates, and other attributes necessary to ensure regulatory compliance and automated processing within cross-company data exchange scenarios.",
+  "description" : "The US Tariff Information aspect model provides structured data required for United States tariff declarations. It captures essential details about product origin, processing steps, material composition, and applicable tariff classifications (HTS codes) to support compliance with US trade regulations and customs requirements.",
   "type" : "object",
   "components" : {
     "schemas" : {

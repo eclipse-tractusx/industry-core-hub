@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
- *
+ * 
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -38,7 +39,10 @@ import {
   Policy,
   PostAdd,
   MarkunreadMailbox,
-  WorkspacePremium as WorkspacePremiumIcon
+  WorkspacePremium as WorkspacePremiumIcon,
+  Calculate,
+  CloudUpload,
+  Inbox
 } from '@mui/icons-material';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
@@ -64,6 +68,9 @@ import { passportConsumptionFeature } from './eco-pass-kit/passport-consumption/
 import { passportProvisionFeature } from './eco-pass-kit/passport-provision/routes';
 import { certificateManagementFeature } from './ccm-kit/certificate-management/routes';
 import { shareCertificatesFeature } from './ccm-kit/share-certificates/routes';
+import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
+import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
+import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -166,6 +173,48 @@ export const kits: KitFeature[] = [
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/eco-pass-kit/adoption-view'
   },
   {
+    id: 'pcf',
+    name: i18n.t('pcf.name', { ns: 'kits' }),
+    description: i18n.t('pcf.description', { ns: 'kits' }),
+    status: 'available',
+    icon: <EnergySavingsLeaf />,
+    image: PcfKitImage,
+    features: [
+      {
+        module: pcfRequestFeature,
+        id: 'pcf-precalculation',
+        name: i18n.t('pcf.features.pcfPrecalculation.name', { ns: 'kits', defaultValue: 'PCF Precalculation' }),
+        description: i18n.t('pcf.features.pcfPrecalculation.description', { ns: 'kits', defaultValue: 'Calculate product carbon footprint from subpart PCF data' }),
+        icon: <Calculate />,
+        enabled: false,
+        default: false
+      },
+      {
+        module: pcfManagementFeature,
+        id: 'pcf-management',
+        name: i18n.t('pcf.features.pcfManagement.name', { ns: 'kits', defaultValue: 'PCF Management' }),
+        description: i18n.t('pcf.features.pcfManagement.description', { ns: 'kits', defaultValue: 'Manage and upload PCF data for your catalog parts' }),
+        icon: <CloudUpload />,
+        enabled: false,
+        default: false
+      },
+      {
+        module: pcfExchangeFeature,
+        id: 'pcf-requests',
+        name: i18n.t('pcf.features.pcfRequests.name', { ns: 'kits', defaultValue: 'PCF Requests' }),
+        description: i18n.t('pcf.features.pcfRequests.description', { ns: 'kits', defaultValue: 'View and respond to incoming PCF requests' }),
+        icon: <Inbox />,
+        enabled: false,
+        default: false
+      }
+    ],
+    domain: 'sustainability',
+    version: '1.0.0',
+    createdAt: '2026-03-06',
+    lastUpdated: '2026-03-06',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
+  },
+  {
     id: 'data-governance',
     name: i18n.t('dataGovernance.name', { ns: 'kits' }),
     description: i18n.t('dataGovernance.description', { ns: 'kits' }),
@@ -176,18 +225,6 @@ export const kits: KitFeature[] = [
     domain: 'dataspace-foundation',
     version: '0.0.0',
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/data-governance-kit/adoption-view'
-  },
-  {
-    id: 'pcf',
-    name: i18n.t('pcf.name', { ns: 'kits' }),
-    description: i18n.t('pcf.description', { ns: 'kits' }),
-    status: 'coming-soon',
-    icon: <EnergySavingsLeaf />,
-    image: PcfKitImage,
-    features: [],
-    domain: 'sustainability',
-    version: '0.0.0',
-    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
   },
   {
     id: 'data-chain',

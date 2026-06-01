@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -318,6 +319,14 @@ export const getDtrPoliciesConfig = (): DtrPolicyConfig => {
   return parseConfig<DtrPolicyConfig>(
     'DTR_POLICIES_CONFIG',
     'VITE_DTR_POLICIES_CONFIG',
+    []
+  );
+};
+
+export const getPcfExchangePoliciesConfig = (): DtrPolicyConfig => {
+  return parseConfig<DtrPolicyConfig>(
+    'PCF_EXCHANGE_POLICIES_CONFIG',
+    'VITE_PCF_EXCHANGE_POLICIES_CONFIG',
     []
   );
 };

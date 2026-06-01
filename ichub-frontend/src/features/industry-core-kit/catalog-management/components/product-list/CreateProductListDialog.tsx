@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -84,9 +85,11 @@ interface ProductListDialogProps {
   open: boolean;
   onClose: () => void;
   onSave?: (data: { part: PartType }) => void;
+  /** Optional: pre-fill the manufacturerPartId field (e.g. from a search term) */
+  initialManufacturerPartId?: string;
 }
 
-const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogProps) => {
+const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPartId }: ProductListDialogProps) => {
   const { t } = useTranslation('catalogManagement');
   const { t: tCommon } = useTranslation('common');
   const manufacturerId = getParticipantId();
@@ -161,7 +164,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
     if (open) {
       setFormData({
         manufacturerId: manufacturerId,
-        manufacturerPartId: "",
+        manufacturerPartId: initialManufacturerPartId ?? "",
         name: "",
         description: "",
         category: "",
@@ -178,7 +181,7 @@ const CreateProductListDialog = ({ open, onClose, onSave }: ProductListDialogPro
       setIsLoading(false);
       setExpandedMaterial(null);
     }
-  }, [open, manufacturerId]);
+  }, [open, manufacturerId, initialManufacturerPartId]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

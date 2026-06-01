@@ -1,18 +1,19 @@
 npm/npmjs/-/acorn-jsx/5.3.2, MIT, approved, clearlydefined
 npm/npmjs/-/acorn/8.15.0, MIT, approved, clearlydefined
-npm/npmjs/-/ajv/6.12.6, MIT, approved, #15286
+npm/npmjs/-/agent-base/6.0.2, MIT, approved, clearlydefined
+npm/npmjs/-/ajv/6.14.0, MIT AND BSD-2-Clause-Views, approved, #26299
 npm/npmjs/-/ansi-styles/4.3.0, MIT, approved, clearlydefined
 npm/npmjs/-/argparse/2.0.1, Python-2.0, approved, CQ22954
 npm/npmjs/-/assertion-error/2.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/asynckit/0.4.0, MIT, approved, clearlydefined
-npm/npmjs/-/axios/1.15.0, MIT, approved, #27130
+npm/npmjs/-/axios/1.16.1, MIT, approved, #28196
 npm/npmjs/-/babel-plugin-macros/3.1.0, MIT, approved, clearlydefined
 npm/npmjs/-/balanced-match/1.0.2, MIT, approved, #24802
 npm/npmjs/-/barcode-detector/3.0.6, MIT, approved, #25116
 npm/npmjs/-/base64-arraybuffer/1.0.2, MIT, approved, clearlydefined
 npm/npmjs/-/bezier-easing/2.1.0, MIT, approved, clearlydefined
-npm/npmjs/-/brace-expansion/1.1.12, MIT, approved, #24803
-npm/npmjs/-/brace-expansion/2.0.2, MIT, approved, clearlydefined
+npm/npmjs/-/brace-expansion/1.1.14, MIT, approved, #24803
+npm/npmjs/-/brace-expansion/2.1.0, MIT, approved, #27170
 npm/npmjs/-/braces/3.0.3, MIT, approved, #14866
 npm/npmjs/-/cac/6.7.14, MIT, approved, clearlydefined
 npm/npmjs/-/call-bind-apply-helpers/1.0.2, MIT, approved, #17826
@@ -90,7 +91,7 @@ npm/npmjs/-/fast-levenshtein/2.0.6, MIT, approved, #15236
 npm/npmjs/-/fast-png/6.4.0, MIT, approved, clearlydefined
 npm/npmjs/-/fastq/1.19.1, ISC, approved, #19306
 npm/npmjs/-/fdir/6.5.0, MIT, approved, clearlydefined
-npm/npmjs/-/fflate/0.8.2, 0BSD AND MIT, approved, clearlydefined
+npm/npmjs/-/fflate/0.8.2, MIT AND (0BSD AND MIT), approved, #28185
 npm/npmjs/-/file-entry-cache/8.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/fill-range/7.1.1, MIT, approved, #14867
 npm/npmjs/-/find-root/1.1.0, MIT, approved, clearlydefined
@@ -116,6 +117,7 @@ npm/npmjs/-/hasown/2.0.2, MIT, approved, #11097
 npm/npmjs/-/hoist-non-react-statics/3.3.2, BSD-3-Clause, approved, clearlydefined
 npm/npmjs/-/html-parse-stringify/3.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/html2canvas/1.4.1, MIT AND (0BSD AND MIT) AND 0BSD, approved, #3481
+npm/npmjs/-/https-proxy-agent/5.0.1, MIT, approved, clearlydefined
 npm/npmjs/-/i18next-browser-languagedetector/8.2.0, MIT, approved, clearlydefined
 npm/npmjs/-/i18next/25.8.0, MIT, approved, #25960
 npm/npmjs/-/ignore/5.3.2, MIT, approved, #11665

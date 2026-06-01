@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -39,7 +40,10 @@ import {
   Policy,
   PostAdd,
   MarkunreadMailbox,
-  WorkspacePremium as WorkspacePremiumIcon
+  WorkspacePremium as WorkspacePremiumIcon,
+  Calculate,
+  CloudUpload,
+  Inbox
 } from '@mui/icons-material';
 import { KitFeature } from '@/features/kit-features/types';
 import { FeatureConfig } from '@/types/routing';
@@ -64,6 +68,9 @@ import { passportConsumptionFeature } from '@/features/eco-pass-kit/passport-con
 import { passportProvisionFeature } from '@/features/eco-pass-kit/passport-provision/routes';
 import { certificateManagementFeature } from '@/features/ccm-kit/certificate-management/routes';
 import { shareCertificatesFeature } from '@/features/ccm-kit/share-certificates/routes';
+import { pcfRequestFeature } from '@/features/pcf-kit/pcf-request/routes';
+import { pcfExchangeFeature } from '@/features/pcf-kit/pcf-exchange/routes';
+import { pcfManagementFeature } from '@/features/pcf-kit/pcf-management/routes';
 
 /**
  * Hook that returns translated KIT configurations.
@@ -175,12 +182,42 @@ export const useTranslatedKits = (): KitFeature[] => {
       id: 'pcf',
       name: t('items.pcf.name'),
       description: t('items.pcf.description'),
-      status: 'coming-soon',
+      status: 'available',
       icon: <EnergySavingsLeaf />,
       image: PcfKitImage,
-      features: [],
+      features: [
+        {
+          module: pcfRequestFeature,
+          id: 'pcf-precalculation',
+          name: t('items.pcf.features.pcfPrecalculation.name', { defaultValue: 'PCF Precalculation' }),
+          description: t('items.pcf.features.pcfPrecalculation.description', { defaultValue: 'Calculate product carbon footprint from subpart PCF data' }),
+          icon: <Calculate />,
+          enabled: false,
+          default: false
+        },
+        {
+          module: pcfManagementFeature,
+          id: 'pcf-management',
+          name: t('items.pcf.features.pcfManagement.name', { defaultValue: 'PCF Management' }),
+          description: t('items.pcf.features.pcfManagement.description', { defaultValue: 'Manage and upload PCF data for your catalog parts' }),
+          icon: <CloudUpload />,
+          enabled: false,
+          default: false
+        },
+        {
+          module: pcfExchangeFeature,
+          id: 'pcf-requests',
+          name: t('items.pcf.features.pcfRequests.name', { defaultValue: 'PCF Requests' }),
+          description: t('items.pcf.features.pcfRequests.description', { defaultValue: 'View and respond to incoming PCF requests' }),
+          icon: <Inbox />,
+          enabled: false,
+          default: false
+        }
+      ],
       domain: 'sustainability',
-      version: '0.0.0',
+      version: '1.0.0',
+      createdAt: '2026-03-06',
+      lastUpdated: '2026-03-06',
       documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
     },
     {
