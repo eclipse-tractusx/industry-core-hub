@@ -29,9 +29,10 @@ Implements the consumer operations for the PULL flow:
 - ``POST /consumer/catalog-search`` — check if a provider has a CCM asset
 - ``POST /consumer/request``        — send a certificate request to a provider
 - ``POST /consumer/status``         — send a processing status to a provider
+- ``POST /consumer/pull``           — pull a certificate from a provider's catalog
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from controllers.fastapi.routers.authentication.auth_api import (
     get_authentication_dependency,
@@ -40,6 +41,8 @@ from managers.config.log_manager import LoggingManager
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
     CcmCatalogSearchResult,
+    CcmPullRequest,
+    CcmPullResult,
     CcmSendRequestPayload,
     CcmSendResult,
     CcmSendStatusPayload,
@@ -121,3 +124,23 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
     except Exception:
         logger.exception("Unhandled error in send_certificate_status endpoint")
         return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+
+
+@router.post(
+    "/pull",
+    response_model=CcmPullResult,
+    summary="Pull a certificate from a provider's EDC catalog",
+)
+async def pull_certificate(request: CcmPullRequest) -> CcmPullResult:
+    """
+    Pull a certificate from a provider's EDC catalog using the PULL mechanism.
+
+    The consumer discovers the certificate asset (identified by ``documentId``)
+    in the provider's catalog, negotiates a contract, and retrieves the
+    embedded BusinessPartnerCertificate payload via the data plane.
+    """
+    try:
+        return ccm_consumer_service.pull_certificate(request)
+    except Exception:
+        logger.exception("Unhandled error in pull_certificate endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)

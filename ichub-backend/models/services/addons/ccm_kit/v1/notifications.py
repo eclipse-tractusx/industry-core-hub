@@ -502,3 +502,62 @@ class CcmAvailableRequest(BaseModel):
 
     class Config:
         populate_by_name = True
+
+class CcmPublishRequest(BaseModel):
+    """Request body for publishing a certificate as an EDC asset."""
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal DB ID of the certificate to publish.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPublishResult(BaseModel):
+    """Response body after successfully publishing a certificate."""
+    document_id: str = Field(
+        alias="documentId",
+        description="The EDC asset ID, used as documentId in CX-0135 PULL flow.",
+    )
+    asset_id: str = Field(
+        alias="assetId",
+        description="EDC asset identifier (same as documentId).",
+    )
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal DB ID of the published certificate.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPullRequest(BaseModel):
+    """Request body for pulling a certificate from a provider's catalog."""
+    provider_bpn: str = Field(
+        alias="providerBpn",
+        description="BPNL of the provider to pull from.",
+    )
+    document_id: str = Field(
+        alias="documentId",
+        description="The documentId (EDC asset ID) of the certificate to pull.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPullResult(BaseModel):
+    """Response body after successfully pulling a certificate."""
+    certificate_data: dict = Field(
+        alias="certificateData",
+        description="The full BusinessPartnerCertificate payload.",
+    )
+    stored: bool = Field(
+        default=False,
+        description="Whether the certificate was stored in the local database.",
+    )
+
+    class Config:
+        populate_by_name = True

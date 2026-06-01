@@ -77,3 +77,12 @@ CCM_ENDPOINT_REQUEST = "/companycertificate/request"
 CCM_ENDPOINT_STATUS = "/companycertificate/status"
 CCM_ENDPOINT_PUSH = "/companycertificate/push"
 CCM_ENDPOINT_AVAILABLE = "/companycertificate/available"
+
+# ==================== CCM PULL MECHANISM (CX-0135) =========================
+# DCT type for individual certificate assets published via the PULL mechanism
+CCM_CERTIFICATE_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+
+# Semantic ID referencing the SAMM BusinessPartnerCertificate v3.1.0 aspect model
+CCM_CERTIFICATE_SEMANTIC_ID = (
+    "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+)

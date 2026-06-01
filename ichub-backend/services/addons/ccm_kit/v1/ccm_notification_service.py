@@ -37,7 +37,11 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmPushContent,
     CcmRequestContent,
     CcmStatusContent,
+    CcmPullRequest,
     CertificateStatusValue,
+)
+from services.addons.ccm_kit.v1.ccm_consumer_service import (
+    ccm_consumer_service,
 )
 
 logger = LoggingManager.get_logger(__name__)
@@ -132,6 +136,21 @@ class CcmNotificationService:
                 )
 
             repo.commit()
+
+        # --- 5. If certificate is already published as EDC asset, respond COMPLETED ---
+        if ccm.edc_asset_id:
+            logger.info(
+                f"Certificate {ccm.id} is published (asset {_s(ccm.edc_asset_id)}). "
+                f"Responding COMPLETED with documentId."
+            )
+            return 200, {
+                "requestStatus": "COMPLETED",
+                "documentId": ccm.edc_asset_id,
+                "message": (
+                    f"Certificate available for PULL. "
+                    f"documentId={ccm.edc_asset_id}"
+                ),
+            }
 
         # Auto-push if configured
         auto_push = ConfigManager.get_config(
@@ -396,8 +415,8 @@ class CcmNotificationService:
         Process a ``POST /companycertificate/available`` notification.
 
         The provider informs us that a certificate is available for PULL
-        retrieval.  We log the availability; the actual retrieval is
-        deferred to the consumer PULL flow (Phase C).
+        retrieval.  If a ``documentId`` is present, we attempt to pull the
+        certificate automatically via the consumer PULL flow.
 
         Args:
             notification: SDK Notification with header + available content.
@@ -414,7 +433,13 @@ class CcmNotificationService:
             f"certificateType={_s(content.certificate_type)}"
         )
 
-        # For now, just acknowledge.  Phase C will add PULL retrieval.
+        # If a documentId is provided, attempt auto-pull
+        if content.document_id:
+            self._auto_pull_certificate(
+                provider_bpn=sender_bpn,
+                document_id=content.document_id,
+            )
+
         return 200, {
             "message": (
                 f"Certificate availability acknowledged for "
@@ -467,6 +492,37 @@ class CcmNotificationService:
             logger.exception(
                 f"Auto-push raised for certificate {certificate_id} "
                 f"to {_s(consumer_bpn)}"
+            )
+
+    @staticmethod
+    def _auto_pull_certificate(provider_bpn: str, document_id: str) -> None:
+        """
+        Trigger a PULL of the certificate from the provider.
+
+        Imports the consumer service lazily to avoid circular dependencies.
+        Failures are logged but do **not** propagate — the available
+        endpoint has already acknowledged the notification.
+
+        Args:
+            provider_bpn: BPNL of the provider that published the certificate.
+            document_id: EDC asset ID of the certificate to pull.
+        """
+        try:
+            pull_request = CcmPullRequest(
+                provider_bpn=provider_bpn,
+                document_id=document_id,
+            )
+            result = ccm_consumer_service.pull_certificate(pull_request)
+            if not result.stored:
+                logger.warning(
+                    f"Auto-pull for certificate {_s(document_id)} "
+                    f"from {_s(provider_bpn)} did not store: "
+                    f"data={bool(result.certificate_data)}"
+                )
+        except Exception:
+            logger.exception(
+                f"Auto-pull raised for certificate {_s(document_id)} "
+                f"from {_s(provider_bpn)}"
             )
 
     # ------------------------------------------------------------------

@@ -176,6 +176,11 @@ class Ccm(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp when the certificate record was last updated."
     )
+    edc_asset_id: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="EDC asset ID when the certificate is published as an individual "
+    )
 
     # --- Relationships ---
     sites: List["CcmSite"] = Relationship(back_populates="ccm")

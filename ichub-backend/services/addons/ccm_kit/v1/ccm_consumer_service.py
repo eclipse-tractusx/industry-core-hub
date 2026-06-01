@@ -23,27 +23,35 @@
 """
 Consumer-side service for CX-0135 Company Certificate Management (CCM).
 
-Provides three operations:
+Provides four operations:
 1. Catalog search — check whether a provider exposes a CCM notification asset.
 2. Send request — ask a provider to share a specific certificate (PULL flow).
 3. Send status — notify the provider of the processing result after receiving
    a certificate via PUSH.
+4. Pull certificate — discover and retrieve a certificate from a provider's
+   EDC catalog via the PULL mechanism (HttpData asset).
 """
 
+import time
 from typing import Dict, Optional
+import requests as http_requests
 
 from connector import consumer_connector_service
 from managers.config.log_manager import LoggingManager
+from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
     CcmCatalogSearchResult,
+    CcmPullRequest,
+    CcmPullResult,
     CcmSendRequestPayload,
     CcmSendResult,
     CcmSendStatusPayload,
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from tools.constants import (
+    CCM_CERTIFICATE_DCT_TYPE,
     CCM_CONTEXT_REQUEST,
     CCM_CONTEXT_STATUS,
     CCM_DCT_TYPE,
@@ -206,6 +214,135 @@ class CcmConsumerService(CcmBaseService):
             endpoint_path=CCM_ENDPOINT_STATUS,
         )
 
+    # ------------------------------------------------------------------
+    # Pull certificate (consumer ← provider, PULL mechanism)
+    # ------------------------------------------------------------------
+
+    def pull_certificate(
+        self,
+        request: CcmPullRequest,
+    ) -> CcmPullResult:
+        """
+        Discover and pull a certificate from a provider's EDC catalog.
+
+        1. Resolve the provider's DSP URL.
+        2. Query the catalog for the certificate asset by its ``documentId``
+           (= EDC asset ID).
+        3. Negotiate a contract and obtain an EDR.
+        4. Retrieve the certificate data via the data plane.
+        5. Store the certificate in the local ``ccm_received`` table.
+
+        Args:
+            request: Contains ``provider_bpn`` and ``document_id``.
+
+        Returns:
+            CcmPullResult with the certificate payload and storage status.
+        """
+        provider_bpn = request.provider_bpn
+        document_id = request.document_id
+
+        logger.info(
+            f"[CCM Consumer] Pulling certificate {_s(document_id)} "
+            f"from provider [{_s(provider_bpn)}]"
+        )
+
+        # --- 1. Resolve DSP URL ---
+        try:
+            dsp_url = self._resolve_dsp_url(provider_bpn)
+        except Exception as e:
+            logger.error(
+                f"[CCM Consumer] Discovery failed for [{_s(provider_bpn)}]: {_s(e)}"
+            )
+            return CcmPullResult(
+                certificate_data={},
+                stored=False,
+            )
+
+        # --- 2. Query catalog for the specific certificate asset ---
+        try:
+            catalog = consumer_connector_service.get_catalog_by_dct_type(
+                counter_party_id=provider_bpn,
+                counter_party_address=dsp_url,
+                dct_type=CCM_CERTIFICATE_DCT_TYPE,
+            )
+        except Exception as e:
+            logger.error(
+                f"[CCM Consumer] Catalog query failed: {_s(e)}"
+            )
+            return CcmPullResult(certificate_data={}, stored=False)
+
+        # --- 3. Find the matching dataset by asset ID ---
+        dataset, policy = self._find_dataset_by_id(catalog, document_id)
+        if dataset is None or policy is None:
+            logger.warning(
+                f"[CCM Consumer] Asset {_s(document_id)} not found in catalog."
+            )
+            return CcmPullResult(certificate_data={}, stored=False)
+
+        # --- 4. Negotiate EDR and retrieve data ---
+        try:
+            negotiation_id = consumer_connector_service.start_edr_negotiation(
+                counter_party_id=provider_bpn,
+                counter_party_address=dsp_url,
+                target=document_id,
+                policy=policy,
+            )
+            if negotiation_id is None:
+                raise RuntimeError("EDR negotiation returned None.")
+
+            # Wait for EDR to be available
+            edr_entry = None
+            for _ in range(30):
+                edr_entry = consumer_connector_service.get_edr_entry(
+                    negotiation_id=negotiation_id
+                )
+                if edr_entry:
+                    break
+                time.sleep(1)
+
+            if not edr_entry:
+                raise RuntimeError(
+                    f"EDR not available after timeout for negotiation {negotiation_id}."
+                )
+
+            # Retrieve data from data plane
+            endpoint = edr_entry.get("endpoint")
+            token = edr_entry.get("authorization")
+
+            headers = consumer_connector_service.get_data_plane_headers(
+                access_token=token
+            )
+            response = http_requests.get(endpoint, headers=headers, timeout=30)
+            response.raise_for_status()
+            certificate_data = response.json()
+
+        except Exception as e:
+            logger.error(
+                f"[CCM Consumer] Failed to pull certificate data: {_s(e)}"
+            )
+            return CcmPullResult(certificate_data={}, stored=False)
+
+        # --- 5. Store in ccm_received ---
+        stored = self._store_received_certificate(
+            certificate_data=certificate_data,
+            provider_bpn=provider_bpn,
+            document_id=document_id,
+        )
+
+        logger.info(
+            f"[CCM Consumer] Successfully pulled certificate {_s(document_id)} "
+            f"from [{_s(provider_bpn)}]. Stored={stored}"
+        )
+
+        return CcmPullResult(
+            certificate_data=certificate_data,
+            stored=stored,
+        )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
     @staticmethod
     def _extract_asset_id(catalog: dict) -> Optional[str]:
         """
@@ -233,6 +370,87 @@ class CcmConsumerService(CcmBaseService):
             return dataset.get("@id") or dataset.get("id")
 
         return None
+
+
+    @staticmethod
+    def _find_dataset_by_id(catalog: dict, asset_id: str):
+        """
+        Find a specific dataset in the catalog response by its ``@id``.
+
+        Returns:
+            Tuple of ``(dataset_dict, policy_dict)`` or ``(None, None)``.
+        """
+        if not catalog:
+            return None, None
+
+        datasets = catalog.get("dcat:dataset") or catalog.get("dataset")
+        if not datasets:
+            return None, None
+
+        if isinstance(datasets, dict):
+            datasets = [datasets]
+
+        for ds in datasets:
+            if ds.get("@id", ds.get("id")) != asset_id:
+                continue
+            policy = ds.get("odrl:hasPolicy") or ds.get("hasPolicy")
+            if isinstance(policy, list):
+                policy = policy[0] if policy else None
+            return ds, policy
+
+        return None, None
+
+    @staticmethod
+    def _store_received_certificate(
+        certificate_data: dict,
+        provider_bpn: str,
+        document_id: str,
+    ) -> bool:
+        """
+        Persist a pulled certificate in the ``ccm_received`` table.
+
+        Returns ``True`` on success, ``False`` on failure.
+        """
+        import base64
+        from models.metadata_database.addons.ccm_kit.v1.models import CcmReceived
+
+        try:
+            # Parse fields from the BusinessPartnerCertificate payload
+            doc_section = certificate_data.get("document", {})
+            issuer_section = certificate_data.get("issuer", {})
+            validator_section = certificate_data.get("validator", {})
+            cert_type_section = certificate_data.get("type", {})
+
+            # Decode base64 document if present
+            doc_bytes = None
+            content_b64 = doc_section.get("contentBase64")
+            if content_b64:
+                doc_bytes = base64.b64decode(content_b64)
+
+            received = CcmReceived(
+                document_id=document_id,
+                provider_bpn=provider_bpn,
+                certified_bpn=certificate_data.get("businessPartnerNumber", ""),
+                certificate_type=cert_type_section.get("certificateType", ""),
+                issuer_name=issuer_section.get("issuerName"),
+                valid_from=certificate_data.get("validFrom"),
+                valid_until=certificate_data.get("validUntil"),
+                trust_level=certificate_data.get("trustLevel"),
+                registration_number=certificate_data.get("registrationNumber"),
+                area_of_application=certificate_data.get("areaOfApplication"),
+                uploader_bpn=certificate_data.get("uploader"),
+                validator_name=validator_section.get("validatorName"),
+                doc=doc_bytes,
+            )
+
+            with RepositoryManagerFactory.create() as repo:
+                repo.session.add(received)
+                repo.commit()
+
+            return True
+        except Exception as e:
+            logger.error(f"[CCM Consumer] Failed to store received certificate: {_s(e)}")
+            return False
 
 
 # Module-level singleton
