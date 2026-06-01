@@ -15,7 +15,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the
- * License for the specific language govern in permissions and limitations
+ * License for the specific language governing permissions and limitations
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -39,15 +39,32 @@ import {
   Edit,
   Visibility,
   CheckCircle,
-  Info,
   Co2,
   CalendarMonth,
-  Public,
   Speed,
   Publish,
-  DraftsOutlined
+  DraftsOutlined,
+  Category,
+  Timeline,
 } from '@mui/icons-material';
-import { ManagedPart, PcfDataRecord } from '../api/pcfExchangeApi';
+import { ManagedPart } from '../api/pcfExchangeApi';
+import type { PcfNestedData } from '../../pcf-management/types/pcfNestedData';
+import {
+  getPcfExcludingBiogenic,
+  getPcfIncludingBiogenic,
+  getDeclaredUnit,
+  getPcfScope,
+  getReferencePeriod,
+  getPrimaryDataShare,
+  getPcfStatus,
+  getPcfType,
+  formatEmissionValue,
+  formatDeclaredUnit,
+  formatReferencePeriod,
+  mapPcfStatus,
+  formatPcfType,
+  getPrimaryDataShareColor,
+} from '../../pcf-management/utils/pcfDataExtractors';
 
 // PCF Green Theme
 const PCF_PRIMARY = '#10b981';
@@ -55,12 +72,14 @@ const PCF_SECONDARY = '#059669';
 
 interface PcfManagementSectionProps {
   part: ManagedPart;
-  pcfData: PcfDataRecord | null;
+  pcfData: PcfNestedData | null;
   onUpload: () => void;
   onEdit: () => void;
   onVisualize: () => void;
   onPublish: () => void;
   isLoading?: boolean;
+  /** When true, renders only the KPI content without Card wrapper, header, or duplicate states */
+  contentOnly?: boolean;
 }
 
 const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
@@ -70,156 +89,285 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
   onEdit,
   onVisualize,
   onPublish,
-  isLoading = false
+  isLoading = false,
+  contentOnly = false
 }) => {
   const hasPcf = part.hasPcf && pcfData;
-  const isDraft = pcfData?.status === 'DRAFT';
-  const isPublished = pcfData?.status === 'PUBLISHED';
 
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString([], {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+  // Derived values from the nested PCF structure
+  const pcfExcl = pcfData ? getPcfExcludingBiogenic(pcfData) : null;
+  const pcfIncl = pcfData ? getPcfIncludingBiogenic(pcfData) : null;
+  const declaredUnit = pcfData ? getDeclaredUnit(pcfData) : null;
+  const scope = pcfData ? getPcfScope(pcfData) : null;
+  const period = pcfData ? getReferencePeriod(pcfData) : null;
+  const primaryShare = pcfData ? getPrimaryDataShare(pcfData) : null;
+  const rawStatus = pcfData ? getPcfStatus(pcfData) : null;
+  const uiStatus = mapPcfStatus(rawStatus);
+  const pcfType = pcfData ? getPcfType(pcfData) : null;
 
-  // PCF Values display
+  const isDraft = uiStatus === 'DRAFT';
+  const isPublished = uiStatus === 'PUBLISHED';
+
+  const unitLabel = formatDeclaredUnit(declaredUnit);
+  const shareColor = getPrimaryDataShareColor(primaryShare);
+
+  // PCF Values display — the 6 key KPIs from the real nested PCF data
   const renderPcfValues = () => {
     if (!pcfData) return null;
 
     return (
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: 2,
-          p: 2,
-          borderRadius: '12px',
-          background: 'rgba(255, 255, 255, 0.02)',
-          border: '1px solid rgba(255, 255, 255, 0.06)'
-        }}
-      >
-        {/* PCF Value (excl. biogenic) */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Co2 sx={{ fontSize: 14, color: PCF_PRIMARY }} />
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-              PCF (excl. biogenic)
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+        {/* ── Row 1: The two main PCF values (large, prominent) ── */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 2,
+          }}
+        >
+          {/* KPI 1 — PCF excl. biogenic (THE main value) */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: '12px',
+              background: alpha(PCF_PRIMARY, 0.08),
+              border: `1px solid ${alpha(PCF_PRIMARY, 0.2)}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
+              <Co2 sx={{ fontSize: 14, color: PCF_PRIMARY }} />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+                PCF excl. biogenic
+              </Typography>
+            </Box>
+            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.1 }}>
+              {formatEmissionValue(pcfExcl)}
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)' }}>
+              kg CO₂e {unitLabel}
             </Typography>
           </Box>
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-            {pcfData.pcfExcludingBiogenic.toFixed(1)}
-            <Typography component="span" variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', ml: 0.5 }}>
-              kg CO2e
+
+          {/* KPI 2 — PCF incl. biogenic */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: '12px',
+              background: alpha('#3b82f6', 0.08),
+              border: `1px solid ${alpha('#3b82f6', 0.2)}`,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
+              <Co2 sx={{ fontSize: 14, color: '#3b82f6' }} />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+                PCF incl. biogenic
+              </Typography>
+            </Box>
+            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.1 }}>
+              {formatEmissionValue(pcfIncl)}
             </Typography>
-          </Typography>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)' }}>
+              kg CO₂e {unitLabel}
+            </Typography>
+          </Box>
         </Box>
 
-        {/* PCF Value (incl. biogenic) */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Co2 sx={{ fontSize: 14, color: '#3b82f6' }} />
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-              PCF (incl. biogenic)
-            </Typography>
-          </Box>
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-            {pcfData.pcfIncludingBiogenic.toFixed(1)}
-            <Typography component="span" variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', ml: 0.5 }}>
-              kg CO2e
-            </Typography>
-          </Typography>
-        </Box>
-
-        {/* Primary Data Share */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Speed sx={{ fontSize: 14, color: '#a855f7' }} />
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-              Primary Data
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-              {pcfData.primaryDataShare.toFixed(0)}%
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={pcfData.primaryDataShare}
+        {/* ── Row 2: Scope + Reference Period + Primary Data Share ── */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'auto 1fr auto',
+            gap: 2,
+            p: 2,
+            borderRadius: '12px',
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            alignItems: 'center',
+          }}
+        >
+          {/* KPI 3 — Scope chip */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Category sx={{ fontSize: 13, color: '#a855f7' }} />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
+                Scope
+              </Typography>
+            </Box>
+            <Chip
+              label={scope ?? 'N/A'}
+              size="small"
               sx={{
-                flex: 1,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                '& .MuiLinearProgress-bar': {
-                  borderRadius: 3,
-                  backgroundColor:
-                    pcfData.primaryDataShare >= 70
-                      ? PCF_PRIMARY
-                      : pcfData.primaryDataShare >= 50
-                      ? '#eab308'
-                      : '#ef4444'
-                }
+                backgroundColor: scope === 'Cradle-to-gate'
+                  ? alpha('#10b981', 0.15)
+                  : alpha('#f59e0b', 0.15),
+                color: scope === 'Cradle-to-gate' ? '#10b981' : '#f59e0b',
+                border: `1px solid ${alpha(scope === 'Cradle-to-gate' ? '#10b981' : '#f59e0b', 0.3)}`,
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                height: 22,
               }}
             />
           </Box>
-        </Box>
 
-        {/* Geography */}
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Public sx={{ fontSize: 14, color: '#f97316' }} />
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-              Geography
+          {/* KPI 4 — Reference Period */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, px: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <CalendarMonth sx={{ fontSize: 13, color: '#f59e0b' }} />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
+                Reference Period
+              </Typography>
+            </Box>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: '0.82rem' }}>
+              {formatReferencePeriod(period)}
             </Typography>
           </Box>
-          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-            {pcfData.geographyCountry}
-          </Typography>
-        </Box>
-      </Box>
-    );
-  };
 
-  // Metadata section
-  const renderMetadata = () => {
-    if (!pcfData) return null;
+          {/* KPI 6 — PCF Type badge */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-end' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Timeline sx={{ fontSize: 13, color: '#64748b' }} />
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
+                Type
+              </Typography>
+            </Box>
+            <Tooltip title={pcfType ?? 'N/A'} arrow>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'rgba(255,255,255,0.6)',
+                  fontWeight: 500,
+                  fontSize: '0.75rem',
+                  cursor: 'default',
+                  maxWidth: 110,
+                  textAlign: 'right',
+                  lineHeight: 1.2,
+                }}
+              >
+                {formatPcfType(pcfType)}
+              </Typography>
+            </Tooltip>
+          </Box>
+        </Box>
 
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 2,
-          mt: 2,
-          pt: 2,
-          borderTop: '1px solid rgba(255, 255, 255, 0.06)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <CalendarMonth sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)' }} />
-          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-            Reference: {formatDate(pcfData.referencePeriodStart)} - {formatDate(pcfData.referencePeriodEnd)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Info sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)' }} />
-          <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-            Spec Version: {pcfData.specVersion}
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Tooltip title={`Created: ${formatDate(pcfData.created)}, Updated: ${formatDate(pcfData.updated)}`}>
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', cursor: 'help' }}>
-              Version {pcfData.version}
+        {/* ── Row 3: Primary Data Share (quality indicator) ── */}
+        {primaryShare !== null && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: '12px',
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Speed sx={{ fontSize: 13, color: shareColor }} />
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
+                  Primary Data Share
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: shareColor, fontWeight: 700, fontSize: '0.85rem' }}>
+                {primaryShare.toFixed(0)}%
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={primaryShare}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: 'rgba(255,255,255,0.08)',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: 3,
+                  backgroundColor: shareColor,
+                },
+              }}
+            />
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', mt: 0.5, display: 'block' }}>
+              {primaryShare >= 70 ? 'High quality — primarily measured data' :
+               primaryShare >= 40 ? 'Medium quality — mix of primary and secondary data' :
+               'Low quality — mostly estimated/secondary data'}
             </Typography>
-          </Tooltip>
-        </Box>
+          </Box>
+        )}
+
       </Box>
     );
   };
+
+  // contentOnly mode: render just the KPI content (used when already inside an outer Card)
+  if (contentOnly) {
+    if (isLoading) return null;
+    if (!hasPcf) return null;
+    return (
+      <>
+        {renderPcfValues()}
+
+        {/* Draft Alert */}
+        {isDraft && (
+          <Alert
+            severity="warning"
+            icon={<DraftsOutlined />}
+            sx={{
+              mt: 2,
+              borderRadius: '10px',
+              backgroundColor: alpha('#eab308', 0.1),
+              border: `1px solid ${alpha('#eab308', 0.2)}`,
+              '& .MuiAlert-icon': { color: '#eab308' },
+              '& .MuiAlert-message': { color: '#eab308' }
+            }}
+          >
+            <Typography variant="body2" sx={{ color: '#eab308' }}>
+              This PCF is in draft status. Publish it to make it available for sharing with customers.
+            </Typography>
+          </Alert>
+        )}
+
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
+          <Button
+            variant="outlined"
+            startIcon={<Visibility />}
+            onClick={onVisualize}
+            sx={{
+              flex: 1, py: 1.25, borderRadius: '10px', textTransform: 'none', fontWeight: 600,
+              borderColor: 'rgba(255, 255, 255, 0.2)', color: 'rgba(255, 255, 255, 0.8)',
+              '&:hover': { borderColor: PCF_PRIMARY, backgroundColor: alpha(PCF_PRIMARY, 0.1), color: '#fff', '& .MuiSvgIcon-root': { color: PCF_PRIMARY } }
+            }}
+          >
+            View Details
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Edit />}
+            onClick={onEdit}
+            sx={{
+              flex: 1, py: 1.25, borderRadius: '10px', textTransform: 'none', fontWeight: 600,
+              borderColor: 'rgba(255, 255, 255, 0.2)', color: 'rgba(255, 255, 255, 0.8)',
+              '&:hover': { borderColor: '#3b82f6', backgroundColor: alpha('#3b82f6', 0.1), color: '#fff', '& .MuiSvgIcon-root': { color: '#3b82f6' } }
+            }}
+          >
+            Update
+          </Button>
+          {isDraft && (
+            <Button
+              variant="contained"
+              startIcon={<Publish />}
+              onClick={onPublish}
+              sx={{
+                flex: 1, py: 1.25, borderRadius: '10px', textTransform: 'none', fontWeight: 600,
+                background: `linear-gradient(135deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`,
+                '&:hover': { background: `linear-gradient(135deg, ${PCF_SECONDARY} 0%, ${PCF_PRIMARY} 100%)` }
+              }}
+            >
+              Publish
+            </Button>
+          )}
+        </Box>
+      </>
+    );
+  }
 
   return (
     <Card
@@ -343,11 +491,8 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
         {/* Has PCF Data */}
         {hasPcf && !isLoading && (
           <>
-            {/* PCF Values */}
+            {/* PCF Values — 6 KPIs */}
             {renderPcfValues()}
-
-            {/* Metadata */}
-            {renderMetadata()}
 
             {/* Draft Alert */}
             {isDraft && (
