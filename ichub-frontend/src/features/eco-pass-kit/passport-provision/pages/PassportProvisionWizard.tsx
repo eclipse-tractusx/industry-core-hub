@@ -45,7 +45,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -84,7 +83,6 @@ const PassportProvisionWizard: React.FC = () => {
   ];
   
   const [activeStep, setActiveStep] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -208,7 +206,7 @@ const PassportProvisionWizard: React.FC = () => {
 
       setSerializedParts(finalParts);
       return finalParts;
-    } catch (err) {
+    } catch {
       setError('Failed to load serialized parts');
       return [];
     } finally {
@@ -468,7 +466,7 @@ const PassportProvisionWizard: React.FC = () => {
         setTimeout(() => {
           setSuccessMessage(null);
         }, 4000);
-      } catch (err) {
+      } catch {
         setUploadError('Failed to parse JSON file. Please check the file format.');
       }
     };
@@ -1306,7 +1304,7 @@ const PassportProvisionWizard: React.FC = () => {
           }}
         >
           <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label, index) => (
+            {steps.map((label) => (
               <Step key={label}>
                 <StepLabel
                   sx={{
@@ -1391,7 +1389,7 @@ const PassportProvisionWizard: React.FC = () => {
         {/* Actions */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button
-            disabled={activeStep === 0 || loading}
+            disabled={activeStep === 0}
             onClick={handleBack}
             startIcon={<ArrowBack />}
             sx={darkCardStyles.button.outlined}
@@ -1402,7 +1400,6 @@ const PassportProvisionWizard: React.FC = () => {
             variant="contained"
             onClick={handleNext}
             disabled={
-              loading ||
               (activeStep === 1 && 
                 (!selectedPart || 
                   (partRegistrationStatus !== StatusVariants.registered && 
@@ -1412,9 +1409,7 @@ const PassportProvisionWizard: React.FC = () => {
             endIcon={activeStep === 3 ? <Save /> : <ArrowForward />}
             sx={darkCardStyles.button.primary}
           >
-            {loading ? (
-              <CircularProgress size={24} />
-            ) : activeStep === 3 ? (
+            {activeStep === 3 ? (
               t('wizard.buttons.createDpp')
             ) : (
               t('wizard.buttons.next')
