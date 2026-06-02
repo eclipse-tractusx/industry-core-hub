@@ -58,6 +58,9 @@ DROP TABLE IF EXISTS public.data_exchange_agreement;
 DROP TABLE IF EXISTS public.business_partner;
 DROP TABLE IF EXISTS public.enablement_service_stack;
 DROP TABLE IF EXISTS public.legal_entity;
+DROP TABLE IF EXISTS public.pcf_exchanges;
+DROP TABLE IF EXISTS public.pcf_relationships;
+DROP TABLE IF EXISTS public.notifications;
 DROP TABLE IF EXISTS ichub.edr_connections;
 DROP TABLE IF EXISTS ichub.known_connectors;
 DROP TABLE IF EXISTS ichub.known_dtrs;
@@ -199,6 +202,42 @@ CREATE TABLE public.twin_aspect_registration (
     modified_date timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL
 );
 
+CREATE TABLE public.notifications (
+    id integer NOT NULL,
+    created_date timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+    modified_date timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+    type character varying NOT NULL,
+    status character varying NOT NULL,
+    direction character varying NOT NULL,
+    sender_bpn character varying NOT NULL,
+    receiver_bpn character varying NOT NULL,
+    message json,
+    category character varying
+);
+
+CREATE TABLE public.pcf_exchanges (
+    id integer NOT NULL,
+    request_id uuid DEFAULT gen_random_uuid() NOT NULL,
+    created_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+    updated_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL,
+    direction character varying NOT NULL,
+    status character varying NOT NULL,
+    type character varying NOT NULL,
+    requesting_bpn character varying NOT NULL,
+    responding_bpn character varying,
+    manufacturer_part_id character varying,
+    customer_part_id character varying,
+    message character varying,
+    pcf_location character varying,
+    correlation_id character varying
+);
+
+CREATE TABLE public.pcf_relationships (
+    id integer NOT NULL,
+    main_manufacturer_part_id character varying NOT NULL,
+    list_sub_manufacturer_part_id json NOT NULL
+);
+
 CREATE TABLE public.twin_exchange (
     twin_id integer NOT NULL,
     data_exchange_agreement_id integer NOT NULL,
@@ -226,6 +265,33 @@ CREATE TABLE public.serialized_part (
     part_instance_id character varying NOT NULL,
     van character varying,
     twin_id integer
+);
+
+ALTER TABLE public.notifications ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.notifications_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.pcf_exchanges ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.pcf_exchange_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.pcf_relationships ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.pcf_relationship_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
 );
 
 ALTER TABLE public.batch ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
@@ -390,6 +456,19 @@ ALTER TABLE ONLY public.twin_exchange
 ALTER TABLE ONLY public.twin_registration
     ADD CONSTRAINT pk_twin_registration PRIMARY KEY (twin_id, enablement_service_stack_id);
 
+ALTER TABLE ONLY public.notifications
+    ADD CONSTRAINT pk_notifications PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.pcf_exchanges
+    ADD CONSTRAINT pk_pcf_exchanges PRIMARY KEY (id);
+ALTER TABLE ONLY public.pcf_exchanges
+    ADD CONSTRAINT uk_pcf_exchanges_request_id UNIQUE (request_id);
+
+ALTER TABLE ONLY public.pcf_relationships
+    ADD CONSTRAINT pk_pcf_relationships PRIMARY KEY (id);
+ALTER TABLE ONLY public.pcf_relationships
+    ADD CONSTRAINT uk_pcf_relationships_main_manufacturer_part_id UNIQUE (main_manufacturer_part_id);
+
 
 ALTER TABLE ONLY public.batch
     ADD CONSTRAINT uk_batch_catalog_part_id_batch_id UNIQUE (catalog_part_id, batch_id);
@@ -481,6 +560,17 @@ CREATE INDEX idx_twin_exchange_twin_id ON public.twin_exchange USING btree (twin
 
 CREATE INDEX idx_twin_registration_dtr_registered ON public.twin_registration USING btree (dtr_registered);
 
+CREATE INDEX idx_pcf_exchanges_request_id ON public.pcf_exchanges USING btree (request_id);
+CREATE INDEX idx_pcf_exchanges_direction ON public.pcf_exchanges USING btree (direction);
+CREATE INDEX idx_pcf_exchanges_status ON public.pcf_exchanges USING btree (status);
+CREATE INDEX idx_pcf_exchanges_type ON public.pcf_exchanges USING btree (type);
+CREATE INDEX idx_pcf_exchanges_requesting_bpn ON public.pcf_exchanges USING btree (requesting_bpn);
+CREATE INDEX idx_pcf_exchanges_responding_bpn ON public.pcf_exchanges USING btree (responding_bpn);
+CREATE INDEX idx_pcf_exchanges_manufacturer_part_id ON public.pcf_exchanges USING btree (manufacturer_part_id);
+CREATE INDEX idx_pcf_exchanges_correlation_id ON public.pcf_exchanges USING btree (correlation_id);
+
+CREATE INDEX idx_pcf_relationships_main_manufacturer_part_id ON public.pcf_relationships USING btree (main_manufacturer_part_id);
+
 
 ALTER TABLE ONLY public.batch
     ADD CONSTRAINT fk_batch_twin_id FOREIGN KEY (twin_id) REFERENCES public.twin(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
@@ -545,6 +635,9 @@ ALTER SEQUENCE public.part_share_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.serialized_part_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.twin_aspect_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.notifications_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.pcf_exchange_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.pcf_relationship_id_seq RESTART WITH 1;
 
 --
 -- Name: ichub schema indexes and constraints

@@ -138,6 +138,8 @@ spec:
               value: {{ .Values.frontend.consumption.governance | toJson | quote }}
             - name: DTR_POLICIES_CONFIG
               value: {{ .Values.frontend.consumption.digitalTwinRegistry.policies | toJson | quote }}
+            - name: PCF_EXCHANGE_POLICIES_CONFIG
+              value: {{ .Values.frontend.consumption.pcfExchange.policies | toJson | quote }}
 
             # Feature flags
             - name: ENABLE_ADVANCED_LOGGING

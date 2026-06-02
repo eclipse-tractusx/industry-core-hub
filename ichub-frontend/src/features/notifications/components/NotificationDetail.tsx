@@ -130,6 +130,11 @@ const NotificationDetail: React.FC = () => {
 
   const { header, content, verifiedItems, status, feedbackResponse } = selectedNotification;
 
+  // Digital-twin notification types that use the DT verification/feedback workflow
+  const isDtNotification = ['connect-to-parent', 'connect-to-child', 'submodel-update', 'feedback'].includes(
+    selectedNotification.type
+  );
+
   const senderName = getContactName(header.senderBpn);
   const isKnown = isKnownContact(header.senderBpn);
   const priority = getPriority(selectedNotification);
@@ -770,6 +775,28 @@ const NotificationDetail: React.FC = () => {
               }}
             />
           )}
+          {selectedNotification.useCase && (
+            <Chip
+              label={selectedNotification.useCase}
+              size="small"
+              sx={{
+                backgroundColor:
+                  selectedNotification.useCase.toUpperCase() === 'PCF'
+                    ? 'rgba(0, 188, 212, 0.2)'
+                    : selectedNotification.useCase.toUpperCase() === 'CCM'
+                    ? 'rgba(255, 152, 0, 0.2)'
+                    : 'rgba(158, 158, 158, 0.15)',
+                color:
+                  selectedNotification.useCase.toUpperCase() === 'PCF'
+                    ? '#00bcd4'
+                    : selectedNotification.useCase.toUpperCase() === 'CCM'
+                    ? '#ffa726'
+                    : '#bdbdbd',
+                fontSize: '0.65rem',
+                fontWeight: 600,
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -814,129 +841,253 @@ const NotificationDetail: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            <Chip
-              label={content.digitalTwinType}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                color: '#64b5f6',
-                fontSize: '0.65rem',
-                height: '22px',
-              }}
-            />
-            <Chip
-              icon={<DeviceHub sx={{ fontSize: '0.75rem !important' }} />}
-              label={`${content.listOfItems.length} DT${content.listOfItems.length > 1 ? 's' : ''}`}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                color: '#81c784',
-                fontSize: '0.65rem',
-                height: '22px',
-                '& .MuiChip-icon': { color: '#81c784' },
-              }}
-            />
+            {isDtNotification ? (
+              <>
+                <Chip
+                  label={content.digitalTwinType}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    color: '#64b5f6',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                  }}
+                />
+                <Chip
+                  icon={<DeviceHub sx={{ fontSize: '0.75rem !important' }} />}
+                  label={`${content.listOfItems.length} DT${content.listOfItems.length > 1 ? 's' : ''}`}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    color: '#81c784',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                    '& .MuiChip-icon': { color: '#81c784' },
+                  }}
+                />
+              </>
+            ) : (
+              // Non-DT: show the notificationType as a chip (works for PCF, CCM, future use cases)
+              selectedNotification.pcfContent?.notificationType && (
+                <Chip
+                  label={selectedNotification.pcfContent.notificationType.replace(/_/g, ' ')}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                    fontWeight: 500,
+                  }}
+                />
+              )
+            )}
             {header.expectedResponseBy && getPriorityDisplay()}
           </Box>
         </Box>
 
-        {/* Digital Twins Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography
+        {/* PCF content section — shown for PCF-type notifications */}
+        {selectedNotification.type === 'pcf' && selectedNotification.pcfContent && (
+          <Box
             sx={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              textTransform: 'uppercase',
+              padding: isCompact ? '10px' : '14px',
+              backgroundColor: 'rgba(0, 188, 212, 0.08)',
+              border: '1px solid rgba(0, 188, 212, 0.2)',
+              borderRadius: '8px',
+              mb: 2,
             }}
           >
-            {t('detail.digitalTwinsCount', { count: content.listOfItems.length })}
-          </Typography>
-
-          {!allVerified && !anyVerifying && (
-            <Button
-              size="small"
-              startIcon={<Refresh sx={{ fontSize: '0.85rem' }} />}
-              onClick={() => verifyAllDigitalTwins(selectedNotification.id)}
+            <Typography
               sx={{
-                color: '#64b5f6',
-                fontSize: '0.65rem',
-                padding: '2px 8px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(100, 181, 246, 0.2)',
-                  color: '#90caf9',
-                  transform: 'translateY(-1px)',
-                },
+                color: '#00bcd4',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                mb: 1.5,
               }}
             >
-              {t('detail.verifyAll')}
-            </Button>
-          )}
-        </Box>
-
-        {verifiedItems.map((vi, index) => renderDigitalTwinItem(vi, index))}
-
-        {/* Feedback Section */}
-        {status !== 'feedback-sent' && (
-          <Box sx={{ mt: 2 }}>
-            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
-
-            {!showFeedbackForm ? (
-              <Tooltip 
-                title={!allVerified ? t('detail.verifyAllTooltip') : ""}
-                arrow
-                placement="top"
-              >
-                <span>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    startIcon={<Send sx={{ fontSize: '1rem' }} />}
-                    onClick={() => {
-                      setShowFeedbackForm(true);
-                      // Scroll to bottom so the feedback form is visible
-                      setTimeout(() => {
-                        scrollContainerRef.current?.scrollTo({
-                          top: scrollContainerRef.current.scrollHeight,
-                          behavior: 'smooth',
-                        });
-                      }, 350);
-                    }}
-                    disabled={!allVerified}
-                    sx={{
-                      backgroundColor: allVerified ? '#1976d2' : 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      fontSize: '0.8rem',
-                      padding: '8px 16px',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        backgroundColor: allVerified ? '#1565c0' : 'rgba(255, 255, 255, 0.15)',
-                        transform: allVerified ? 'translateY(-1px)' : 'none',
-                        boxShadow: allVerified ? '0 4px 12px rgba(25, 118, 210, 0.4)' : 'none',
-                      },
-                      '&.Mui-disabled': {
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      },
-                    }}
-                  >
-                    {allVerified ? t('detail.sendFeedback') : t('detail.pendingVerification')}
-                  </Button>
-                </span>
-              </Tooltip>
-            ) : (
-              <FeedbackForm
-                notification={selectedNotification}
-                onCancel={() => setShowFeedbackForm(false)}
+              PCF Details
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: isCompact ? '1fr' : '1fr 1fr', gap: 1, rowGap: 1.5 }}>
+              <DetailRow label="Notification Type" value={selectedNotification.pcfContent.notificationType} compact={isCompact} t={t} />
+              {selectedNotification.pcfContent.manufacturerPartId && (
+                <DetailRow
+                  label="Manufacturer Part ID"
+                  value={selectedNotification.pcfContent.manufacturerPartId}
+                  copyable
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              {selectedNotification.pcfContent.customerPartId && (
+                <DetailRow
+                  label="Customer Part ID"
+                  value={selectedNotification.pcfContent.customerPartId}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              <DetailRow
+                label="Request ID"
+                value={selectedNotification.pcfContent.requestId}
+                copyable
+                compact={isCompact}
+                t={t}
+              />
+              {selectedNotification.pcfContent.requestingBpn && (
+                <DetailRow
+                  label="Requesting BPN"
+                  value={selectedNotification.pcfContent.requestingBpn}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              {selectedNotification.pcfContent.respondingBpn && (
+                <DetailRow
+                  label="Responding BPN"
+                  value={selectedNotification.pcfContent.respondingBpn}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+            </Box>
+            {selectedNotification.pcfContent.isUpdate && (
+              <Chip
+                label="Update"
+                size="small"
+                sx={{
+                  mt: 1.5,
+                  backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                  color: '#ffa726',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                }}
               />
             )}
           </Box>
         )}
 
-        {/* Feedback Response if already sent */}
-        {feedbackResponse && (
-          <FeedbackSentPanel feedbackResponse={feedbackResponse} t={t} />
+        {/* Generic non-DT content section — for CCM and other future use cases */}
+        {!isDtNotification && selectedNotification.type !== 'pcf' && content.information && (
+          <Box
+            sx={{
+              padding: isCompact ? '10px' : '14px',
+              backgroundColor: 'rgba(158, 158, 158, 0.08)',
+              border: '1px solid rgba(158, 158, 158, 0.2)',
+              borderRadius: '8px',
+              mb: 2,
+            }}
+          >
+            <Typography sx={{ color: '#bdbdbd', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 1 }}>
+              {selectedNotification.useCase ?? 'Notification'} Details
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+              {content.information}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Digital Twins Section — only for DT notification types */}
+        {isDtNotification && (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {t('detail.digitalTwinsCount', { count: content.listOfItems.length })}
+              </Typography>
+
+              {!allVerified && !anyVerifying && (
+                <Button
+                  size="small"
+                  startIcon={<Refresh sx={{ fontSize: '0.85rem' }} />}
+                  onClick={() => verifyAllDigitalTwins(selectedNotification.id)}
+                  sx={{
+                    color: '#64b5f6',
+                    fontSize: '0.65rem',
+                    padding: '2px 8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(100, 181, 246, 0.2)',
+                      color: '#90caf9',
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  {t('detail.verifyAll')}
+                </Button>
+              )}
+            </Box>
+
+            {verifiedItems.map((vi, index) => renderDigitalTwinItem(vi, index))}
+
+            {/* Feedback Section */}
+            {status !== 'feedback-sent' && (
+              <Box sx={{ mt: 2 }}>
+                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
+
+                {!showFeedbackForm ? (
+                  <Tooltip
+                    title={!allVerified ? t('detail.verifyAllTooltip') : ""}
+                    arrow
+                    placement="top"
+                  >
+                    <span>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<Send sx={{ fontSize: '1rem' }} />}
+                        onClick={() => {
+                          setShowFeedbackForm(true);
+                          setTimeout(() => {
+                            scrollContainerRef.current?.scrollTo({
+                              top: scrollContainerRef.current.scrollHeight,
+                              behavior: 'smooth',
+                            });
+                          }, 350);
+                        }}
+                        disabled={!allVerified}
+                        sx={{
+                          backgroundColor: allVerified ? '#1976d2' : 'rgba(255, 255, 255, 0.1)',
+                          color: '#ffffff',
+                          fontSize: '0.8rem',
+                          padding: '8px 16px',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: allVerified ? '#1565c0' : 'rgba(255, 255, 255, 0.15)',
+                            transform: allVerified ? 'translateY(-1px)' : 'none',
+                            boxShadow: allVerified ? '0 4px 12px rgba(25, 118, 210, 0.4)' : 'none',
+                          },
+                          '&.Mui-disabled': {
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          },
+                        }}
+                      >
+                        {allVerified ? t('detail.sendFeedback') : t('detail.pendingVerification')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <FeedbackForm
+                    notification={selectedNotification}
+                    onCancel={() => setShowFeedbackForm(false)}
+                  />
+                )}
+              </Box>
+            )}
+
+            {/* Feedback Response if already sent */}
+            {feedbackResponse && (
+              <FeedbackSentPanel feedbackResponse={feedbackResponse} t={t} />
+            )}
+          </>
         )}
       </Box>
 
