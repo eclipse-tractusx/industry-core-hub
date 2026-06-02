@@ -47,11 +47,10 @@ import {
 import {
     Close as CloseIcon,
     Schema as SchemaIcon,
-    Add as AddIcon,
     AccountTree as AccountTreeIcon,
     OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
-import { getAvailableSchemas, SchemaDefinition, SCHEMA_REGISTRY } from '../../schemas';
+import { SchemaDefinition, SCHEMA_REGISTRY } from '../../schemas';
 
 interface SchemaSelectorProps {
     open: boolean;
@@ -129,7 +128,6 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     onSchemaSelect,
     manufacturerPartId
 }) => {
-    const availableSchemas = getAvailableSchemas();
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
@@ -348,6 +346,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                             display: !expanded ? '-webkit-box' : 'block',
                                                                             WebkitBoxOrient: !expanded ? 'vertical' : undefined,
                                                                             WebkitLineClamp: !expanded ? 3 : undefined,
+                                                                            // subtle custom scrollbar (no visible track background)
                                                                             '&::-webkit-scrollbar': {
                                                                                 width: '8px'
                                                                             },
