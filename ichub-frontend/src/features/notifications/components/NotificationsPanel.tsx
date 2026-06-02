@@ -23,7 +23,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, IconButton, Typography, Tooltip } from '@mui/material';
+import { Box, Chip, IconButton, Typography, Tooltip } from '@mui/material';
 import {
   Close,
   OpenInFull,
@@ -50,6 +50,8 @@ const NotificationsPanel: React.FC = () => {
     collapsePanel,
     selectedNotification,
     getStats,
+    filters,
+    setUseCaseFilter,
   } = useNotifications();
 
   const { t } = useTranslation('notifications');
@@ -58,6 +60,16 @@ const NotificationsPanel: React.FC = () => {
 
   const isExpanded = panelSize === 'expanded';
   const stats = getStats();
+
+  /** Returns background + text color for a given use case chip */
+  const getUseCaseChipColors = (useCase: string, isActive: boolean) => {
+    const palette: Record<string, { bg: string; activeBg: string; color: string }> = {
+      PCF: { bg: 'rgba(0, 188, 212, 0.12)', activeBg: 'rgba(0, 188, 212, 0.35)', color: '#00bcd4' },
+      CCM: { bg: 'rgba(255, 152, 0, 0.12)', activeBg: 'rgba(255, 152, 0, 0.35)', color: '#ffa726' },
+    };
+    const p = palette[useCase.toUpperCase()] ?? { bg: 'rgba(158,158,158,0.12)', activeBg: 'rgba(158,158,158,0.35)', color: '#bdbdbd' };
+    return { backgroundColor: isActive ? p.activeBg : p.bg, color: isActive ? '#fff' : p.color };
+  };
 
   return (
     <>
@@ -228,6 +240,61 @@ const NotificationsPanel: React.FC = () => {
               </Tooltip>
             </Box>
           </Box>
+
+          {/* Use-case quick-filter chips — only shown when there is at least one use-case notification */}
+          {Object.keys(stats.perUseCase).length > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.75,
+                px: 2,
+                py: 0.75,
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                flexWrap: 'wrap',
+              }}
+            >
+              {/* "All" chip clears the useCase filter */}
+              <Chip
+                label="All"
+                size="small"
+                onClick={() => setUseCaseFilter(undefined)}
+                sx={{
+                  backgroundColor: !filters.useCase
+                    ? 'rgba(66, 165, 245, 0.3)'
+                    : 'rgba(255, 255, 255, 0.08)',
+                  color: !filters.useCase ? '#fff' : 'rgba(255,255,255,0.7)',
+                  fontSize: '0.68rem',
+                  height: '22px',
+                  cursor: 'pointer',
+                  fontWeight: !filters.useCase ? 600 : 400,
+                  '&:hover': { backgroundColor: 'rgba(66, 165, 245, 0.2)' },
+                }}
+              />
+              {Object.entries(stats.perUseCase).map(([uc, count]) => {
+                const isActive = filters.useCase === uc;
+                const chipColors = getUseCaseChipColors(uc, isActive);
+                return (
+                  <Chip
+                    key={uc}
+                    label={`${uc} (${count})`}
+                    size="small"
+                    onClick={() => setUseCaseFilter(isActive ? undefined : uc)}
+                    sx={{
+                      ...chipColors,
+                      fontSize: '0.68rem',
+                      height: '22px',
+                      cursor: 'pointer',
+                      fontWeight: isActive ? 600 : 400,
+                      '&:hover': {
+                        backgroundColor: getUseCaseChipColors(uc, true).backgroundColor,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          )}
 
           {/* Content */}
           <Box
