@@ -443,7 +443,7 @@ function processProperties(
     const isRequired = contextualRequiredMapping.get(fullKey) || false;
     
     // Resolve all possible references and compositions
-    let resolvedProperty = resolveSchemaProperty(property, schema);
+    const resolvedProperty = resolveSchemaProperty(property, schema);
     
     // Determine section - use dynamic section detection from schema structure
     const section = parentKey ? parentSection : getSectionName(key, resolvedProperty, parentKey, schema);

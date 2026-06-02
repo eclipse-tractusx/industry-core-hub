@@ -35,7 +35,6 @@ import {
     Box,
     Typography,
     IconButton,
-    Grid2,
     Container,
     createTheme,
     ThemeProvider,
@@ -43,7 +42,6 @@ import {
     AppBar,
     Toolbar,
     Paper,
-    Divider,
     Button,
     Card,
     CardContent,
@@ -63,17 +61,13 @@ import {
     Close as CloseIcon,
     ArrowBack as ArrowBackIcon,
     Schema as SchemaIcon,
-    Preview as PreviewIcon,
     Save as SaveIcon,
-    Code as CodeIcon,
     AccountTree as AccountTreeIcon,
     Fingerprint as FingerprintIcon,
     Inventory as InventoryIcon,
     Error as ErrorIcon,
-    ViewModule as ViewModuleIcon,
     DataObject as DataObjectIcon,
     Warning as WarningIcon,
-    ChevronRight as ChevronRightIcon,
     ExpandMore as ExpandMoreIcon,
     CheckCircle as CheckCircleIcon,
     Rule as RuleIcon,
@@ -85,9 +79,8 @@ import {
     Edit as EditIcon,
     Upload as UploadIcon
 } from '@mui/icons-material';
-import { getAvailableSchemas, SchemaDefinition } from '../../schemas';
-import { FormField } from '../../schemas/json-schema-interpreter';
-import SchemaSelector from './SchemaSelector';
+import { SchemaDefinition } from '../../schemas';
+
 import DynamicForm, { DynamicFormRef } from './DynamicForm';
 import JsonPreview from './JsonPreview';
 import SchemaRulesViewer from './SchemaRulesViewer';
