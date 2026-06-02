@@ -21,7 +21,7 @@
  ********************************************************************************/
 
 import React, { useState } from 'react';
-import { Box, Typography, Grid2, Paper, Chip, IconButton, Tooltip, ClickAwayListener, Collapse, LinearProgress, Link, Divider } from '@mui/material';
+import { Box, Typography, Grid2, Paper, Chip, IconButton, Collapse, LinearProgress, Link } from '@mui/material';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { BarChart } from '@mui/x-charts/BarChart';
 import { 
@@ -29,12 +29,10 @@ import {
   ExpandMore, 
   ExpandLess, 
   Warning, 
-  CheckCircle, 
   Recycling,
   EnergySavingsLeaf,
   LocationOn,
   Description,
-  Error as ErrorIcon,
   InfoOutlined
 } from '@mui/icons-material';
 
@@ -129,7 +127,6 @@ export const MaterialsRenderer: React.FC<MaterialsRendererProps> = ({ rawData })
   }, {} as Record<string, MaterialCompositionItem[]>) || {};
 
   const hasMultipleCompositionUnits = Object.keys(materialsByUnit).length > 1;
-  const primaryCompositionUnit = Object.keys(materialsByUnit)[0] || 'unit';
 
   const compositionChartData = materials.materialComposition?.content.map((material, index) => {
     const materialName = material.id?.[0]?.name || `Material ${index + 1}`;
@@ -594,7 +591,6 @@ export const MaterialsRenderer: React.FC<MaterialsRendererProps> = ({ rawData })
  */
 const SubstanceOfConcernCard: React.FC<{ substance: SubstanceOfConcern; index: number }> = ({ substance, index }) => {
   const [expanded, setExpanded] = useState(false);
-  const [tooltipOpen, setTooltipOpen] = useState(false);
 
   const materialName = substance.id?.[0]?.name || `Substance ${index + 1}`;
   const materialId = substance.id?.[0]?.id || 'N/A';
