@@ -73,7 +73,6 @@ const SerializedPartsTable = ({ parts, onRefresh, isAddDialogOpen, onAddDialogCl
   const [allTwins, setAllTwins] = useState<SerializedPartTwinRead[]>([]);
   const [hasFetchedTwins, setHasFetchedTwins] = useState<boolean>(false); // Track if we've attempted to fetch twins
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true); // For initial data load
-  const [_isRefreshing, setIsRefreshing] = useState<boolean>(false); // For refresh operations
   const [twinCreatingId, setTwinCreatingId] = useState<number | null>(null);
   const [twinSharingId, setTwinSharingId] = useState<number | null>(null);
   const [twinUnsharingId, setTwinUnsharingId] = useState<number | null>(null);
@@ -534,11 +533,6 @@ const SerializedPartsTable = ({ parts, onRefresh, isAddDialogOpen, onAddDialogCl
   };
 
   const handleRefresh = async () => {
-    
-    
-    // Set refresh loading state (doesn't show overlay)
-    setIsRefreshing(true);
-    
     try {
       // Only refresh twins data if there are parts to work with
       if (parts && parts.length > 0) {
@@ -575,8 +569,6 @@ const SerializedPartsTable = ({ parts, onRefresh, isAddDialogOpen, onAddDialogCl
       }
       
       showError(errorMessage);
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
