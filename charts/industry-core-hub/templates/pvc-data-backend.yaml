@@ -27,11 +27,9 @@ metadata:
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
+  {{- $dataAnnotations := mergeOverwrite (dict "helm.sh/resource-policy" "keep") (.Values.backend.persistence.data.annotations | default dict) }}
   annotations:
-    helm.sh/resource-policy: keep
-    {{- with .Values.backend.persistence.data.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- toYaml $dataAnnotations | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.backend.persistence.data.accessMode | quote }}
@@ -52,11 +50,9 @@ metadata:
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
   namespace: {{ .Release.Namespace }}
+  {{- $logsAnnotations := mergeOverwrite (dict "helm.sh/resource-policy" "keep") (.Values.backend.persistence.logs.annotations | default dict) }}
   annotations:
-    helm.sh/resource-policy: keep
-    {{- with .Values.backend.persistence.logs.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+    {{- toYaml $logsAnnotations | nindent 4 }}
 spec:
   accessModes:
     - {{ .Values.backend.persistence.logs.accessMode | quote }}
