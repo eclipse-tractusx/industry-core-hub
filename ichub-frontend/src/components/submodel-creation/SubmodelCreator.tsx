@@ -1372,7 +1372,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                                         {/* Preview Content - Dynamic height based on content */}
                                         <Box sx={{ p: 3 }}>
                                             {viewMode === 'json' && (
-                                                <JsonPreview data={formData} interactive={true} onNavigateToField={handleNavigateToField} />
+                                                <JsonPreview data={formData} onNavigateToField={handleNavigateToField} />
                                             )}
                                             {viewMode === 'errors' && (
                                                 <ErrorViewer 
