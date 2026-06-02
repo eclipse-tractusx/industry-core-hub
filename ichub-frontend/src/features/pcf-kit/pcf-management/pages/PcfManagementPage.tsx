@@ -287,7 +287,7 @@ const PcfManagementPage: React.FC = () => {
       setRawPcfData((pcfDataRecord as PcfNestedData) || null);
       setPageState('visualization');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load part data';
+      const message = err instanceof Error ? err.message : t('error.failedToLoadPart');
       setError(message);
       setPageState('error');
     }
@@ -838,7 +838,7 @@ const PcfManagementPage: React.FC = () => {
                         <Box sx={{ mb: 2 }}>
                           <Chip
                             icon={<DraftsOutlined sx={{ fontSize: 14 }} />}
-                            label="Draft Part"
+                            label={t('management.draftPart')}
                             size="small"
                             sx={{
                               backgroundColor: alpha('#eab308', 0.15),

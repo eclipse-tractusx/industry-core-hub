@@ -16,7 +16,11 @@
     "refresh": "Actualizar",
     "kgCo2e": "kg CO2e",
     "published": "Publicado",
-    "draft": "Borrador"
+    "draft": "Borrador",
+    "close": "Cerrar",
+    "yes": "Sí",
+    "no": "No",
+    "notAvailable": "N/D"
   },
   "loading": {
     "title": "Cargando Pieza del Catálogo",
@@ -43,7 +47,10 @@
     "failedToLoadRequests": "Error al cargar las solicitudes PCF",
     "failedToRefreshRequests": "Error al actualizar las solicitudes PCF",
     "failedToAcceptRequest": "Error al aceptar la solicitud",
-    "rejectNotImplemented": "La funcionalidad de rechazo aún no está implementada en el backend"
+    "rejectNotImplemented": "La funcionalidad de rechazo aún no está implementada en el backend",
+    "failedToLoadPcf": "Error al cargar los datos PCF",
+    "failedToSavePcf": "Error al guardar el PCF",
+    "schemaNotFound": "Definición de esquema PCF no encontrada. Por favor, compruebe la configuración de la aplicación."
   },
   "precalculation": {
     "title": "Precálculo de PCF",
@@ -88,7 +95,18 @@
       "rejectedNoReason": "La solicitud fue rechazada por el proveedor.",
       "errorWithMessage": "Error en la solicitud: {{error}}",
       "errorNoMessage": "Se produjo un error al procesar la solicitud de PCF — usa el botón reintentar."
-    }
+    },
+    "status": {
+      "delivered": "Entregado",
+      "received": "Recibido",
+      "updated": "Actualizado",
+      "rejected": "Rechazado",
+      "error": "Error",
+      "pending": "Pendiente"
+    },
+    "statusError": "No se pudo obtener el estado de recopilación PCF del servidor. Actualiza para reintentar.",
+    "downloadError": "Descarga fallida: {{message}}. Por favor comprueba el backend e inténtalo de nuevo.",
+    "unexpectedError": "Error inesperado"
   },
   "addSubpartDialog": {
     "title": "Añadir Relación de Subcomponente",
@@ -141,7 +159,27 @@
     "draftAlert": "Este PCF está en estado borrador. Súbelo para que esté disponible para compartir con clientes.",
     "viewDetails": "Ver Detalles",
     "update": "Actualizar",
-    "upload": "Subir"
+    "upload": "Subir",
+    "draftPart": "Pieza en Borrador",
+    "sectionTitle": "Gestión de PCF",
+    "sectionSubtitle": "Gestionar datos de Huella de Carbono del Producto para esta pieza",
+    "noPcfData": "No hay datos PCF disponibles",
+    "noPcfDataHint": "Sube datos PCF para responder a las solicitudes de clientes",
+    "uploadPcfData": "Subir Datos PCF",
+    "publish": "Publicar",
+    "panes": {
+      "pcfExclBiogenic": "PCF excl. biogénico",
+      "pcfInclBiogenic": "PCF incl. biogénico",
+      "scope": "Alcance",
+      "referencePeriod": "Período de Referencia",
+      "type": "Tipo",
+      "primaryDataShare": "Proporción de Datos Primarios"
+    },
+    "quality": {
+      "high": "Alta calidad — principalmente datos medidos",
+      "medium": "Calidad media — mezcla de datos primarios y secundarios",
+      "low": "Baja calidad — principalmente datos estimados/secundarios"
+    }
   },
   "partInfoHeader": {
     "viewDetails": "Haz clic para ver los detalles de la pieza",
@@ -181,7 +219,8 @@
     "validatedSuccess": "¡Datos PCF validados correctamente!",
     "noSchemaValidation": "Datos PCF aceptados (no hay validación de esquema disponible).",
     "formBuilderSuccess": "Datos PCF creados con el Constructor de Formularios y listos para guardar.",
-    "validationErrors": "La validación falló con {{count}} error(es): {{errors}}"
+    "validationErrors": "La validación falló con {{count}} error(es): {{errors}}",
+    "useAsPcfData": "Usar como datos PCF"
   },
   "notifications": {
     "statusAll": "Todo",
@@ -210,7 +249,17 @@
     "daysAgo": "Hace {{count}} días",
     "participantDialog": {
       "title": "Notificar Participantes",
-      "subtitle": "Seleccione los participantes a notificar sobre esta actualización de PCF"
+      "subtitle": "Seleccione los participantes a notificar sobre esta actualización de PCF",
+      "partId": "ID de Pieza",
+      "noParticipants": "Ningún participante ha solicitado datos PCF para esta pieza. La actualización se guardará pero no se enviarán notificaciones.",
+      "interestedCount": "{{count}} participante(s) interesado(s) en estos datos PCF",
+      "deselectAll": "Deseleccionar Todo",
+      "selectAll": "Seleccionar Todo",
+      "selected": "{{count}} seleccionado(s)",
+      "skip": "Omitir",
+      "sending": "Enviando...",
+      "sendUpdate": "Enviar Actualización PCF",
+      "notifyError": "Error al notificar participantes"
     }
   },
   "rejectDialog": {
@@ -248,7 +297,21 @@
     "listView": "Vista de lista"
   },
   "exchange": {
-    "loading": {
+    "title": "Intercambio de PCF",
+    "subtitle": "Gestionar datos de PCF y responder a solicitudes entrantes",
+    "manufacturerId": "ID de Fabricante",
+    "manufacturerPartId": "ID de Pieza de Fabricante",
+    "partName": "Nombre de Pieza",
+    "newSearch": "Nueva Búsqueda",
+    "refresh": "Actualizar",
+    "loadingTitle": "Cargando Pieza de Catálogo",
+    "backToSearch": "Volver a la Búsqueda",    "searchPlaceholder": "Ingrese ID de Pieza de Fabricante...",
+    "editDialog": {
+      "pcfExcludingBiogenic": "PCF (excluyendo biogenico)",
+      "pcfIncludingBiogenic": "PCF (incluyendo biogenico)",
+      "primaryDataShare": "Parte de Datos Primarios",
+      "manufacturingCountry": "Pais de Fabricacion (ISO 3166-1)"
+    },    "loading": {
       "searching": "Buscando",
       "searchingDesc": "Localizando parte del catálogo en el registro",
       "loadingPcf": "Cargando PCF",
@@ -259,6 +322,54 @@
       "readyDesc": "Datos cargados exitosamente"
     },
     "pcfUpdateSent": "Actualización de PCF enviada a {{count}} participante(s) exitosamente."
+  },
+  "details": {
+    "title": "Detalles PCF",
+    "dqrScale": "1=mejor, 5=peor",
+    "sections": {
+      "carbonFootprint": "Valores de Huella de Carbono",
+      "productionStage": "Desglose de Fase de Producción",
+      "carbonContent": "Contenido de Carbono",
+      "dataQuality": "Calidad de Datos",
+      "geography": "Geografía",
+      "timeValidity": "Tiempo y Validez",
+      "distribution": "Fase de Distribución",
+      "productCompany": "Producto y Empresa",
+      "metadata": "Metadatos PCF"
+    },
+    "fields": {
+      "pcfExclBiogenic": "PCF excl. biogénico",
+      "pcfInclBiogenic": "PCF incl. biogénico",
+      "fossilGhg": "Emisiones GEI fósiles (A)",
+      "bioCO2Uptake": "Absorción biogénica de CO₂ (D)",
+      "landUseChange": "Cambio de uso del suelo (E)",
+      "totalCarbon": "Contenido total de carbono",
+      "fossilCarbon": "Carbono fósil",
+      "biogenicCarbon": "Carbono biogénico",
+      "recycledCarbon": "Carbono reciclado",
+      "primaryDataShare": "Proporción de datos primarios",
+      "country": "País",
+      "region": "Región",
+      "subdivision": "Subdivisión",
+      "referencePeriod": "Período de referencia",
+      "pcfCreated": "PCF creado",
+      "validityEnd": "Fin del período de validez",
+      "distributionIncluded": "Incluido en el límite del sistema",
+      "distributionPcf": "PCF de distribución excl. biogénico",
+      "productName": "Nombre del producto",
+      "company": "Empresa",
+      "companyBpn": "BPN de la empresa",
+      "productMass": "Masa del producto / unidad declarada",
+      "description": "Descripción",
+      "specVersion": "Versión de especificación",
+      "pcfVersion": "Versión PCF",
+      "type": "Tipo"
+    },
+    "dqr": {
+      "technological": "Tecnológico",
+      "temporal": "Temporal",
+      "geographical": "Geográfico"
+    }
   },
   "headerCards": {
     "company": {

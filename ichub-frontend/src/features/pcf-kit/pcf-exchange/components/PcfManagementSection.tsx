@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -92,6 +93,8 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
   isLoading = false,
   contentOnly = false
 }) => {
+  const { t } = useTranslation('pcf');
+
   const hasPcf = part.hasPcf && pcfData;
 
   // Derived values from the nested PCF structure
@@ -138,7 +141,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
               <Co2 sx={{ fontSize: 14, color: PCF_PRIMARY }} />
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
-                PCF excl. biogenic
+                {t('management.panes.pcfExclBiogenic')}
               </Typography>
             </Box>
             <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.1 }}>
@@ -161,7 +164,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
               <Co2 sx={{ fontSize: 14, color: '#3b82f6' }} />
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
-                PCF incl. biogenic
+                {t('management.panes.pcfInclBiogenic')}
               </Typography>
             </Box>
             <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.1 }}>
@@ -191,7 +194,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Category sx={{ fontSize: 13, color: '#a855f7' }} />
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
-                Scope
+                {t('management.panes.scope')}
               </Typography>
             </Box>
             <Chip
@@ -215,7 +218,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <CalendarMonth sx={{ fontSize: 13, color: '#f59e0b' }} />
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
-                Reference Period
+                {t('management.panes.referencePeriod')}
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontSize: '0.82rem' }}>
@@ -228,7 +231,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Timeline sx={{ fontSize: 13, color: '#64748b' }} />
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.68rem' }}>
-                Type
+                {t('management.panes.type')}
               </Typography>
             </Box>
             <Tooltip title={pcfType ?? 'N/A'} arrow>
@@ -264,7 +267,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Speed sx={{ fontSize: 13, color: shareColor }} />
                 <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>
-                  Primary Data Share
+                  {t('management.panes.primaryDataShare')}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ color: shareColor, fontWeight: 700, fontSize: '0.85rem' }}>
@@ -285,9 +288,9 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
               }}
             />
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.35)', mt: 0.5, display: 'block' }}>
-              {primaryShare >= 70 ? 'High quality — primarily measured data' :
-               primaryShare >= 40 ? 'Medium quality — mix of primary and secondary data' :
-               'Low quality — mostly estimated/secondary data'}
+              {primaryShare >= 70 ? t('management.quality.high') :
+               primaryShare >= 40 ? t('management.quality.medium') :
+               t('management.quality.low')}
             </Typography>
           </Box>
         )}
@@ -319,7 +322,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             }}
           >
             <Typography variant="body2" sx={{ color: '#eab308' }}>
-              This PCF is in draft status. Publish it to make it available for sharing with customers.
+              {t('management.draftAlert')}
             </Typography>
           </Alert>
         )}
@@ -336,7 +339,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
               '&:hover': { borderColor: PCF_PRIMARY, backgroundColor: alpha(PCF_PRIMARY, 0.1), color: '#fff', '& .MuiSvgIcon-root': { color: PCF_PRIMARY } }
             }}
           >
-            View Details
+            {t('management.viewDetails')}
           </Button>
           <Button
             variant="outlined"
@@ -348,7 +351,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
               '&:hover': { borderColor: '#3b82f6', backgroundColor: alpha('#3b82f6', 0.1), color: '#fff', '& .MuiSvgIcon-root': { color: '#3b82f6' } }
             }}
           >
-            Update
+            {t('management.update')}
           </Button>
           {isDraft && (
             <Button
@@ -361,7 +364,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                 '&:hover': { background: `linear-gradient(135deg, ${PCF_SECONDARY} 0%, ${PCF_PRIMARY} 100%)` }
               }}
             >
-              Publish
+              {t('management.publish')}
             </Button>
           )}
         </Box>
@@ -393,10 +396,10 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
             </Box>
             <Box>
               <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-                PCF Management
+                {t('management.sectionTitle')}
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                Manage Product Carbon Footprint data for this part
+                {t('management.sectionSubtitle')}
               </Typography>
             </Box>
           </Box>
@@ -411,7 +414,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                   <DraftsOutlined sx={{ fontSize: 14 }} />
                 )
               }
-              label={isPublished ? 'Published' : 'Draft'}
+              label={isPublished ? t('common.published') : t('common.draft')}
               size="small"
               sx={{
                 backgroundColor: isPublished
@@ -462,10 +465,10 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
               <CloudUpload sx={{ fontSize: 28, color: 'rgba(255, 255, 255, 0.3)' }} />
             </Box>
             <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-              No PCF data available
+              {t('management.noPcfData')}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.4)', display: 'block', mb: 3 }}>
-              Upload PCF data to respond to customer requests
+              {t('management.noPcfDataHint')}
             </Typography>
             <Button
               variant="contained"
@@ -483,7 +486,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                 }
               }}
             >
-              Upload PCF Data
+              {t('management.uploadPcfData')}
             </Button>
           </Box>
         )}
@@ -513,7 +516,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                 }}
               >
                 <Typography variant="body2" sx={{ color: '#eab308' }}>
-                  This PCF is in draft status. Publish it to make it available for sharing with customers.
+                  {t('management.draftAlert')}
                 </Typography>
               </Alert>
             )}
@@ -540,7 +543,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                   }
                 }}
               >
-                View Details
+                {t('management.viewDetails')}
               </Button>
               <Button
                 variant="outlined"
@@ -562,7 +565,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                   }
                 }}
               >
-                Update
+                {t('management.update')}
               </Button>
               {isDraft && (
                 <Button
@@ -581,7 +584,7 @@ const PcfManagementSection: React.FC<PcfManagementSectionProps> = ({
                     }
                   }}
                 >
-                  Publish
+                  {t('management.publish')}
                 </Button>
               )}
             </Box>

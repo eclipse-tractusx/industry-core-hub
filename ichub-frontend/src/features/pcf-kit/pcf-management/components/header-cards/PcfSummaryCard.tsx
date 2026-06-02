@@ -80,7 +80,7 @@ export const PcfSummaryCard: React.FC<HeaderCardProps> = ({ data }) => {
             {formatValue(pcfExcluding)}
           </Typography>
           <Typography className="pcf-summary-card__value-unit">
-            kg CO₂e/unit
+            {t('headerCards.summary.unit')}
           </Typography>
         </Box>
 
@@ -97,7 +97,7 @@ export const PcfSummaryCard: React.FC<HeaderCardProps> = ({ data }) => {
             {formatValue(pcfIncluding)}
           </Typography>
           <Typography className="pcf-summary-card__value-unit">
-            kg CO₂e/unit
+            {t('headerCards.summary.unit')}
           </Typography>
         </Box>
       </Box>

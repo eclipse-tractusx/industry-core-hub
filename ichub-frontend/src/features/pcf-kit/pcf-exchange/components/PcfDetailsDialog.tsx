@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -119,41 +120,45 @@ const InfoRow: React.FC<{
   mono?: boolean;
   valueColor?: string;
   last?: boolean;
-}> = ({ label, value, icon, mono, valueColor, last }) => (
-  <Box
-    sx={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      py: 1.25,
-      borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
-    }}
-  >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {icon && <Box sx={{ color: 'rgba(255,255,255,0.35)', display: 'flex' }}>{icon}</Box>}
-      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)' }}>{label}</Typography>
-    </Box>
-    <Typography
-      variant="body2"
+}> = ({ label, value, icon, mono, valueColor, last }) => {
+  const { t } = useTranslation('pcf');
+  return (
+    <Box
       sx={{
-        color: valueColor ?? (value === null || value === undefined ? 'rgba(255,255,255,0.3)' : '#fff'),
-        fontWeight: 500,
-        fontFamily: mono ? 'monospace' : 'inherit',
-        fontSize: mono ? '0.8rem' : undefined,
-        maxWidth: 240,
-        textAlign: 'right',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        py: 1.25,
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}
     >
-      {value === null || value === undefined ? 'N/A' : value}
-    </Typography>
-  </Box>
-);
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {icon && <Box sx={{ color: 'rgba(255,255,255,0.35)', display: 'flex' }}>{icon}</Box>}
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.55)' }}>{label}</Typography>
+      </Box>
+      <Typography
+        variant="body2"
+        sx={{
+          color: valueColor ?? (value === null || value === undefined ? 'rgba(255,255,255,0.3)' : '#fff'),
+          fontWeight: 500,
+          fontFamily: mono ? 'monospace' : 'inherit',
+          fontSize: mono ? '0.8rem' : undefined,
+          maxWidth: 240,
+          textAlign: 'right',
+        }}
+      >
+        {value === null || value === undefined ? t('common.notAvailable') : value}
+      </Typography>
+    </Box>
+  );
+};
 
 // ── DQR Score badge ─────────────────────────────────────────────────────────
 const DqrBadge: React.FC<{ label: string; value: number | null }> = ({ label, value }) => {
+  const { t } = useTranslation('pcf');
   const color = getDqrColor(value);
   return (
-    <Tooltip title={`${label}: ${value ?? 'N/A'} (1=best, 5=worst)`} arrow>
+    <Tooltip title={`${label}: ${value ?? t('common.notAvailable')} (${t('details.dqrScale')})`} arrow>
       <Box
         sx={{
           display: 'flex',
@@ -198,6 +203,8 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 // ── Main Dialog ──────────────────────────────────────────────────────────────
 const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfData, part }) => {
   if (!pcfData || !part) return null;
+
+  const { t } = useTranslation('pcf');
 
   // Extract all values using the centralized helpers
   const pcfExcl = getPcfExcludingBiogenic(pcfData);
@@ -267,7 +274,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
           </Box>
           <Box>
             <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-              PCF Details
+              {t('details.title')}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)' }}>
               {part.manufacturerPartId}
@@ -277,7 +284,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
             icon={isPublished ? <CheckCircle sx={{ fontSize: 14 }} /> : <DraftsOutlined sx={{ fontSize: 14 }} />}
-            label={isPublished ? 'Published' : 'Draft'}
+            label={isPublished ? t('common.published') : t('common.draft')}
             size="small"
             sx={{
               backgroundColor: isPublished ? alpha(PCF_PRIMARY, 0.15) : alpha('#eab308', 0.15),
@@ -297,7 +304,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
 
         {/* ── Section 1: Main PCF values ── */}
         <Box sx={{ mb: 3 }}>
-          <SectionTitle>Carbon Footprint Values</SectionTitle>
+          <SectionTitle>{t('details.sections.carbonFootprint')}</SectionTitle>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <Box
               sx={{
@@ -310,7 +317,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
                 <Co2 sx={{ fontSize: 15, color: PCF_PRIMARY }} />
                 <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                  PCF excl. biogenic
+                  {t('details.fields.pcfExclBiogenic')}
                 </Typography>
               </Box>
               <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700 }}>
@@ -332,7 +339,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
                 <Co2 sx={{ fontSize: 15, color: '#3b82f6' }} />
                 <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                  PCF incl. biogenic
+                  {t('details.fields.pcfInclBiogenic')}
                 </Typography>
               </Box>
               <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700 }}>
@@ -383,10 +390,10 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
         {(fossilGhg !== null || bioCO2Uptake !== null || landUse !== null) && (
           <>
             <Box sx={{ mb: 3 }}>
-              <SectionTitle>Production Stage Breakdown</SectionTitle>
-              <InfoRow label="Fossil GHG Emissions (A)" value={fossilGhg !== null ? `${formatEmissionValue(fossilGhg)} kg CO₂e` : null} icon={<LocalFireDepartment sx={{ fontSize: 15 }} />} />
-              <InfoRow label="Biogenic CO₂ Uptake (D)" value={bioCO2Uptake !== null ? `${formatEmissionValue(bioCO2Uptake)} kg CO₂e` : null} icon={<ForestOutlined sx={{ fontSize: 15 }} />} valueColor={bioCO2Uptake !== null && bioCO2Uptake < 0 ? '#10b981' : undefined} />
-              <InfoRow label="Land Use Change (E)" value={landUse !== null ? `${formatEmissionValue(landUse)} kg CO₂e` : null} last />
+              <SectionTitle>{t('details.sections.productionStage')}</SectionTitle>
+              <InfoRow label={t('details.fields.fossilGhg')} value={fossilGhg !== null ? `${formatEmissionValue(fossilGhg)} kg CO₂e` : null} icon={<LocalFireDepartment sx={{ fontSize: 15 }} />} />
+              <InfoRow label={t('details.fields.bioCO2Uptake')} value={bioCO2Uptake !== null ? `${formatEmissionValue(bioCO2Uptake)} kg CO₂e` : null} icon={<ForestOutlined sx={{ fontSize: 15 }} />} valueColor={bioCO2Uptake !== null && bioCO2Uptake < 0 ? '#10b981' : undefined} />
+              <InfoRow label={t('details.fields.landUseChange')} value={landUse !== null ? `${formatEmissionValue(landUse)} kg CO₂e` : null} last />
             </Box>
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: 2 }} />
           </>
@@ -396,11 +403,11 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
         {(carbonTotal !== null || fossilCarbon !== null || bioCarbon !== null || recycledCarbon !== null) && (
           <>
             <Box sx={{ mb: 3 }}>
-              <SectionTitle>Carbon Content</SectionTitle>
-              {carbonTotal !== null && <InfoRow label="Total Carbon Content" value={`${formatEmissionValue(carbonTotal)} kg CO₂e`} />}
-              {fossilCarbon !== null && <InfoRow label="Fossil Carbon" value={`${formatEmissionValue(fossilCarbon)} kg CO₂e`} />}
-              {bioCarbon !== null && <InfoRow label="Biogenic Carbon" value={`${formatEmissionValue(bioCarbon)} kg CO₂e`} />}
-              {recycledCarbon !== null && <InfoRow label="Recycled Carbon" value={`${formatEmissionValue(recycledCarbon)} kg CO₂e`} last />}
+              <SectionTitle>{t('details.sections.carbonContent')}</SectionTitle>
+              {carbonTotal !== null && <InfoRow label={t('details.fields.totalCarbon')} value={`${formatEmissionValue(carbonTotal)} kg CO₂e`} />}
+              {fossilCarbon !== null && <InfoRow label={t('details.fields.fossilCarbon')} value={`${formatEmissionValue(fossilCarbon)} kg CO₂e`} />}
+              {bioCarbon !== null && <InfoRow label={t('details.fields.biogenicCarbon')} value={`${formatEmissionValue(bioCarbon)} kg CO₂e`} />}
+              {recycledCarbon !== null && <InfoRow label={t('details.fields.recycledCarbon')} value={`${formatEmissionValue(recycledCarbon)} kg CO₂e`} last />}
             </Box>
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: 2 }} />
           </>
@@ -408,14 +415,14 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
 
         {/* ── Section 4: Data Quality ── */}
         <Box sx={{ mb: 3 }}>
-          <SectionTitle>Data Quality</SectionTitle>
+          <SectionTitle>{t('details.sections.dataQuality')}</SectionTitle>
           {/* Primary data share bar */}
           {primaryShare !== null && (
             <Box sx={{ mb: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                   <Speed sx={{ fontSize: 15, color: shareColor }} />
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>Primary Data Share</Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>{t('details.fields.primaryDataShare')}</Typography>
                 </Box>
                 <Typography variant="body2" sx={{ color: shareColor, fontWeight: 700 }}>{primaryShare.toFixed(0)}%</Typography>
               </Box>
@@ -434,9 +441,9 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
           {/* DQR scores */}
           {(techDqr !== null || tempDqr !== null || geoDqr !== null) && (
             <Box sx={{ display: 'flex', gap: 1.5, mt: 1.5 }}>
-              <DqrBadge label="Technological" value={techDqr} />
-              <DqrBadge label="Temporal" value={tempDqr} />
-              <DqrBadge label="Geographical" value={geoDqr} />
+              <DqrBadge label={t('details.dqr.technological')} value={techDqr} />
+              <DqrBadge label={t('details.dqr.temporal')} value={tempDqr} />
+              <DqrBadge label={t('details.dqr.geographical')} value={geoDqr} />
             </Box>
           )}
         </Box>
@@ -445,20 +452,20 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
 
         {/* ── Section 5: Geography ── */}
         <Box sx={{ mb: 3 }}>
-          <SectionTitle>Geography</SectionTitle>
-          <InfoRow label="Country" value={country} icon={<Public sx={{ fontSize: 15 }} />} />
-          <InfoRow label="Region" value={region} />
-          <InfoRow label="Subdivision" value={subdivision} mono last />
+          <SectionTitle>{t('details.sections.geography')}</SectionTitle>
+          <InfoRow label={t('details.fields.country')} value={country} icon={<Public sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.region')} value={region} />
+          <InfoRow label={t('details.fields.subdivision')} value={subdivision} mono last />
         </Box>
 
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: 2 }} />
 
         {/* ── Section 6: Time & Validity ── */}
         <Box sx={{ mb: 3 }}>
-          <SectionTitle>Time & Validity</SectionTitle>
-          <InfoRow label="Reference Period" value={formatReferencePeriod(period)} icon={<CalendarMonth sx={{ fontSize: 15 }} />} />
-          <InfoRow label="PCF Created" value={formatDateTime(created)} icon={<Event sx={{ fontSize: 15 }} />} />
-          <InfoRow label="Validity Period End" value={formatDate(validityEnd)} last />
+          <SectionTitle>{t('details.sections.timeValidity')}</SectionTitle>
+          <InfoRow label={t('details.fields.referencePeriod')} value={formatReferencePeriod(period)} icon={<CalendarMonth sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.pcfCreated')} value={formatDateTime(created)} icon={<Event sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.validityEnd')} value={formatDate(validityEnd)} last />
         </Box>
 
         {/* ── Section 7: Distribution Stage (if present) ── */}
@@ -466,10 +473,10 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
           <>
             <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: 2 }} />
             <Box sx={{ mb: 3 }}>
-              <SectionTitle>Distribution Stage</SectionTitle>
-              <InfoRow label="Included in boundary" value={distIncluded ? 'Yes' : 'No'} valueColor={distIncluded ? PCF_PRIMARY : 'rgba(255,255,255,0.5)'} />
+              <SectionTitle>{t('details.sections.distribution')}</SectionTitle>
+              <InfoRow label={t('details.fields.distributionIncluded')} value={distIncluded ? t('common.yes') : t('common.no')} valueColor={distIncluded ? PCF_PRIMARY : 'rgba(255,255,255,0.5)'} />
               {distPcfExcl !== null && (
-                <InfoRow label="Distribution PCF excl. biogenic" value={`${formatEmissionValue(distPcfExcl)} kg CO₂e ${unitLabel}`} last />
+                <InfoRow label={t('details.fields.distributionPcf')} value={`${formatEmissionValue(distPcfExcl)} kg CO₂e ${unitLabel}`} last />
               )}
             </Box>
           </>
@@ -479,24 +486,24 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
 
         {/* ── Section 8: Product & Company ── */}
         <Box sx={{ mb: 1 }}>
-          <SectionTitle>Product & Company</SectionTitle>
-          <InfoRow label="Product Name" value={productName} icon={<Inventory sx={{ fontSize: 15 }} />} />
-          <InfoRow label="Company" value={companyName} icon={<Business sx={{ fontSize: 15 }} />} />
-          <InfoRow label="Company BPN" value={companyBpn} mono />
+          <SectionTitle>{t('details.sections.productCompany')}</SectionTitle>
+          <InfoRow label={t('details.fields.productName')} value={productName} icon={<Inventory sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.company')} value={companyName} icon={<Business sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.companyBpn')} value={companyBpn} mono />
           {productMass !== null && (
-            <InfoRow label="Product Mass / Declared Unit" value={`${productMass} kg`} />
+            <InfoRow label={t('details.fields.productMass')} value={`${productMass} kg`} />
           )}
-          {productDesc && <InfoRow label="Description" value={productDesc} last />}
+          {productDesc && <InfoRow label={t('details.fields.description')} value={productDesc} last />}
         </Box>
 
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.07)', my: 2 }} />
 
         {/* ── Section 9: PCF Metadata ── */}
         <Box sx={{ mb: 1 }}>
-          <SectionTitle>PCF Metadata</SectionTitle>
-          <InfoRow label="Spec Version" value={specVersion} icon={<Science sx={{ fontSize: 15 }} />} />
-          <InfoRow label="PCF Version" value={version} />
-          <InfoRow label="Type" value={pcfType} last />
+          <SectionTitle>{t('details.sections.metadata')}</SectionTitle>
+          <InfoRow label={t('details.fields.specVersion')} value={specVersion} icon={<Science sx={{ fontSize: 15 }} />} />
+          <InfoRow label={t('details.fields.pcfVersion')} value={version} />
+          <InfoRow label={t('details.fields.type')} value={pcfType} last />
         </Box>
 
       </DialogContent>
@@ -513,7 +520,7 @@ const PcfDetailsDialog: React.FC<PcfDetailsDialogProps> = ({ open, onClose, pcfD
             '&:hover': { borderColor: 'rgba(255,255,255,0.4)', color: '#fff' },
           }}
         >
-          Close
+          {t('common.close')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { parseUtcDate } from '../../../notifications/services/notificationMapper';
@@ -146,13 +146,79 @@ const PcfRequestPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const requestIdFromUrl = searchParams.get('requestId');
 
+  // loadPartData is declared with useCallback BEFORE the useEffects that depend on it.
+  // This prevents the Temporal Dead Zone (TDZ) ReferenceError that occurs when a const
+  // arrow function is referenced in a useEffect dependency array before its declaration.
+  const loadPartData = useCallback(async (manufacturerPartId: string) => {
+    setPageState('loading');
+    setError(null);
+    setPcfStatusError(null);
+    setDownloadError(null);
+    setCurrentStep(0);
+
+    try {
+      // Step 1: Search for part
+      setCurrentStep(0);
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Step 2: Load subparts
+      setCurrentStep(1);
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      const partWithSubparts = await getCatalogPartWithSubparts(manufacturerPartId);
+      if (!partWithSubparts) {
+        throw new Error(`Catalog part not found: ${manufacturerPartId}`);
+      }
+
+      // Step 3: Check status
+      setCurrentStep(2);
+      await new Promise(resolve => setTimeout(resolve, 600));
+
+      // Step 4: Complete
+      setCurrentStep(3);
+      await new Promise(resolve => setTimeout(resolve, 400));
+
+      setPartData(partWithSubparts);
+
+      // Fetch PCF assembly progress from backend.
+      // A failure sets pcfStatusError which is shown in the UI — no local fallback.
+      try {
+        const status = await getPcfStatus(manufacturerPartId);
+        setPcfStatus(status);
+        setPcfStatusError(null);
+      } catch {
+        setPcfStatus(null);
+        setPcfStatusError(t('precalculation.statusError'));
+      }
+
+      setPageState('visualization');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('error.failedToLoadPart');
+      setError(message);
+      setPageState('error');
+    }
+  // All deps are stable state-setters or imported module-level functions
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t]);
+
+  // Helper function to get subparts with caching — uses only a ref (always stable)
+  const getSubpartsWithCache = useCallback(async (manufacturerPartId: string) => {
+    const cached = subpartsCacheRef.current.get(manufacturerPartId);
+    if (cached) {
+      return cached;
+    }
+    const result = await getSubparts(manufacturerPartId);
+    subpartsCacheRef.current.set(manufacturerPartId, result);
+    return result;
+  }, []);
+
   // Load part data when URL contains partId
   useEffect(() => {
     if (partIdFromUrl) {
       const decodedPartId = decodeURIComponent(partIdFromUrl);
       loadPartData(decodedPartId);
     }
-  }, [partIdFromUrl]);
+  }, [partIdFromUrl, loadPartData]);
 
   // Auto-resolve catalog part from notification requestId query param
   useEffect(() => {
@@ -194,18 +260,7 @@ const PcfRequestPage: React.FC = () => {
         setPageState('search');
       }
     })();
-  }, [requestIdFromUrl, partIdFromUrl, loadPartData]);
-
-  // Helper function to get subparts with caching
-  const getSubpartsWithCache = async (manufacturerPartId: string) => {
-    const cached = subpartsCacheRef.current.get(manufacturerPartId);
-    if (cached) {
-      return cached;
-    }
-    const result = await getSubparts(manufacturerPartId);
-    subpartsCacheRef.current.set(manufacturerPartId, result);
-    return result;
-  };
+  }, [requestIdFromUrl, partIdFromUrl, loadPartData, getSubpartsWithCache]);
 
   // Cleanup all polling intervals and cache when the component unmounts
   useEffect(() => {
@@ -215,56 +270,6 @@ const PcfRequestPage: React.FC = () => {
       subpartsCacheRef.current.clear();
     };
   }, []);
-
-  const loadPartData = async (manufacturerPartId: string) => {
-    setPageState('loading');
-    setError(null);
-    setPcfStatusError(null);
-    setDownloadError(null);
-    setCurrentStep(0);
-
-    try {
-      // Step 1: Search for part
-      setCurrentStep(0);
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 2: Load subparts
-      setCurrentStep(1);
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      const partWithSubparts = await getCatalogPartWithSubparts(manufacturerPartId);
-      if (!partWithSubparts) {
-        throw new Error(`Catalog part not found: ${manufacturerPartId}`);
-      }
-
-      // Step 3: Check status
-      setCurrentStep(2);
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 4: Complete
-      setCurrentStep(3);
-      await new Promise(resolve => setTimeout(resolve, 400));
-
-      setPartData(partWithSubparts);
-
-      // Fetch PCF assembly progress from backend.
-      // A failure sets pcfStatusError which is shown in the UI — no local fallback.
-      try {
-        const status = await getPcfStatus(manufacturerPartId);
-        setPcfStatus(status);
-        setPcfStatusError(null);
-      } catch {
-        setPcfStatus(null);
-        setPcfStatusError('Could not retrieve PCF collection status from the server. Refresh to retry.');
-      }
-
-      setPageState('visualization');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load part data';
-      setError(message);
-      setPageState('error');
-    }
-  };
 
   // Handle back to search
   const handleBackToSearch = () => {
@@ -303,8 +308,8 @@ const PcfRequestPage: React.FC = () => {
       const data = await downloadPcfData(partData.manufacturerPartId);
       downloadJson(data, `pcf-data-${partData.manufacturerPartId}.json`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unexpected error';
-      setDownloadError(`Download failed: ${message}. Please check the backend and try again.`);
+      const message = err instanceof Error ? err.message : t('precalculation.unexpectedError');
+      setDownloadError(t('precalculation.downloadError', { message }));
     } finally {
       setIsDownloading(false);
     }
@@ -363,18 +368,18 @@ const PcfRequestPage: React.FC = () => {
   const getStatusInfo = (status: SubpartPcfResponse['pcfStatus']) => {
     switch (status) {
       case 'delivered':
-        return { color: PCF_PRIMARY, icon: CheckCircle, label: 'Delivered', lineColor: PCF_PRIMARY };
+        return { color: PCF_PRIMARY, icon: CheckCircle, label: t('precalculation.status.delivered'), lineColor: PCF_PRIMARY };
       case 'received':
-        return { color: PCF_PRIMARY, icon: MoveToInbox, label: 'Received', lineColor: PCF_PRIMARY };
+        return { color: PCF_PRIMARY, icon: MoveToInbox, label: t('precalculation.status.received'), lineColor: PCF_PRIMARY };
       case 'updated':
-        return { color: '#0ea5e9', icon: SystemUpdateAlt, label: 'Updated', lineColor: '#0ea5e9' };
+        return { color: '#0ea5e9', icon: SystemUpdateAlt, label: t('precalculation.status.updated'), lineColor: '#0ea5e9' };
       case 'rejected':
-        return { color: '#ef4444', icon: Block, label: 'Rejected', lineColor: '#ef4444' };
+        return { color: '#ef4444', icon: Block, label: t('precalculation.status.rejected'), lineColor: '#ef4444' };
       case 'error':
-        return { color: '#ef4444', icon: ErrorIcon, label: 'Error', lineColor: '#ef4444' };
+        return { color: '#ef4444', icon: ErrorIcon, label: t('precalculation.status.error'), lineColor: '#ef4444' };
       case 'pending':
       default:
-        return { color: '#f59e0b', icon: HourglassEmpty, label: 'Pending', lineColor: '#f59e0b' };
+        return { color: '#f59e0b', icon: HourglassEmpty, label: t('precalculation.status.pending'), lineColor: '#f59e0b' };
     }
   };
 

@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -70,8 +71,7 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
   onSave,
   pcfData,
   part
-}) => {
-  const [formData, setFormData] = useState({
+}) => {  const { t } = useTranslation('pcf');  const [formData, setFormData] = useState({
     pcfExcludingBiogenic: 0,
     pcfIncludingBiogenic: 0,
     primaryDataShare: 0,
@@ -239,7 +239,7 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3 }}>
               <TextField
-                label="PCF (excluding biogenic)"
+                label={t('exchange.editDialog.pcfExcludingBiogenic')}
                 type="number"
                 value={formData.pcfExcludingBiogenic}
                 onChange={handleChange('pcfExcludingBiogenic')}
@@ -251,7 +251,7 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
                 fullWidth
               />
               <TextField
-                label="PCF (including biogenic)"
+                label={t('exchange.editDialog.pcfIncludingBiogenic')}
                 type="number"
                 value={formData.pcfIncludingBiogenic}
                 onChange={handleChange('pcfIncludingBiogenic')}
@@ -274,7 +274,7 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
               Data Quality
             </Typography>
             <TextField
-              label="Primary Data Share"
+              label={t('exchange.editDialog.primaryDataShare')}
               type="number"
               value={formData.primaryDataShare}
               onChange={handleChange('primaryDataShare')}
@@ -298,7 +298,7 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
             </Typography>
             <TextField
               select
-              label="Manufacturing Country (ISO 3166-1)"
+              label={t('exchange.editDialog.manufacturingCountry')}
               value={formData.geographyCountry}
               onChange={handleChange('geographyCountry')}
               sx={textFieldSx}
