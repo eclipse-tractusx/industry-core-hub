@@ -83,6 +83,8 @@ interface ImportMetaEnv {
   readonly VITE_UI_COMPACT_MODE: string
 }
 
+// Note: ImportMeta interface is used by TypeScript for Vite environment variable typing
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
