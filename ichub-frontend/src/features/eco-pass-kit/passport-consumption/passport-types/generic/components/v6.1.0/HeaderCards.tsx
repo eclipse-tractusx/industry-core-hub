@@ -21,8 +21,8 @@
  ********************************************************************************/
 
 import React from 'react';
-import { Card, Box, Typography, Chip, createTheme, ThemeProvider, Grid2 } from '@mui/material';
-import { Info, Factory, EnergySavingsLeaf, Science, Recycling, Event, Badge, Straighten, AspectRatio, Height as HeightIcon, ViewInAr, Scale, Business, Fingerprint, History, CheckCircle, Update, Today } from '@mui/icons-material';
+import { Card, Box, Typography, createTheme, ThemeProvider, Grid2 } from '@mui/material';
+import { Info, Factory, EnergySavingsLeaf, Science, Recycling, Event, Badge, Straighten, AspectRatio, Height as HeightIcon, ViewInAr, Scale, Business, Fingerprint, Update, Today } from '@mui/icons-material';
 import { PieChart } from '@mui/x-charts/PieChart';
 import { QRCodeSVG } from 'qrcode.react';
 import { HeaderCardProps } from '../../../base';
@@ -150,7 +150,6 @@ export const GeneralInfoCard: React.FC<HeaderCardProps> = ({ data, passportId })
   const state = sustainability?.status || 'N/A';
   const passportStatus = metadata?.status || 'N/A';
   const lastModification = metadata?.lastModification || 'N/A';
-  const predecessor = metadata?.predecessor || 'N/A';
 
   return (
     <Card
