@@ -70,7 +70,29 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Product Carbon Footprint calculation and lifecycle assessment tools."
+      "description": "Product Carbon Footprint calculation and lifecycle assessment tools.",
+      "features": {
+        "pcfProvision": {
+          "name": "PCF Provision & Management",
+          "description": "Create, manage, and share Product Carbon Footprint declarations with dataspace partners."
+        },
+        "pcfConsumption": {
+          "name": "PCF Consumption & Visualization",
+          "description": "Retrieve and visualize PCF data from dataspace partners, aggregate footprint data, and generate reports."
+        },
+        "pcfPrecalculation": {
+          "name": "PCF Precalculation",
+          "description": "Calculate product carbon footprint from subpart PCF data"
+        },
+        "pcfManagement": {
+          "name": "PCF Management",
+          "description": "Manage and upload PCF data for your catalog parts"
+        },
+        "pcfRequests": {
+          "name": "PCF Requests",
+          "description": "View and respond to incoming PCF requests"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",

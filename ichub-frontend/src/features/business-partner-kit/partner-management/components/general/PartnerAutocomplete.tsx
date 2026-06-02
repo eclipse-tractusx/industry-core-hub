@@ -192,8 +192,11 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
         return null;
       }
 
+      // Extract key from props to pass it directly to Box, not in spread
+      const { key, ...restProps } = props as HTMLAttributes<HTMLLIElement> & { key?: string };
+
       return (
-        <Box component="li" {...props} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1 }}>
+        <Box key={key} component="li" {...restProps} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', py: 1 }}>
           <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
             {option.name}
           </Typography>

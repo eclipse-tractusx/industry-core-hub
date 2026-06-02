@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Berechnung des Produkt-CO2-Fußabdrucks und Lebenszyklusbewertungstools."
+      "description": "Berechnung des Produkt-CO2-Fußabdrucks und Lebenszyklusbewertungstools.",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "PCF-Vorberechnung",
+          "description": "Produktkarbonfußabdruck aus Teilkomponenten-PCF-Daten berechnen"
+        },
+        "pcfManagement": {
+          "name": "PCF-Verwaltung",
+          "description": "PCF-Daten für Ihre Katalogartikel verwalten und hochladen"
+        },
+        "pcfRequests": {
+          "name": "PCF-Anfragen",
+          "description": "Eingehende PCF-Anfragen anzeigen und beantworten"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",

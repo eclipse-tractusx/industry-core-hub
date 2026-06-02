@@ -1,0 +1,126 @@
+info:
+  name: Add SubPart to Our Main Part
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+  body:
+    type: json
+    data: |-
+      {
+        "manufacturerPartId": "{{SubPartManufacturerPartId2}}",
+        "bpn": "{{SubBPN}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+examples:
+  - name: Example-1
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "manufacturerPartId": "{{SubPartManufacturerPartId1}}",
+            "bpn": "{{SubBPN}}"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:20:27 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "331"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "pending",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              }
+            ]
+          }
+  - name: Example-2
+    request:
+      url: "{{MainICHUB-URL}}/v1/addons/pcf-kit/consumption/parts/{{MainManufacturerPartId}}/subparts"
+      method: POST
+      body:
+        type: json
+        data: |-
+          {
+            "manufacturerPartId": "{{SubPartManufacturerPartId2}}",
+            "bpn": "{{SubBPN}}"
+          }
+    response:
+      status: 201
+      statusText: Created
+      headers:
+        - name: date
+          value: Thu, 12 Mar 2026 18:20:52 GMT
+        - name: content-type
+          value: application/json
+        - name: content-length
+          value: "593"
+        - name: connection
+          value: keep-alive
+        - name: strict-transport-security
+          value: max-age=31536000; includeSubDomains
+      body:
+        type: json
+        data: |-
+          {
+            "mainManufacturerPartId": "LKS-PART1",
+            "listSubManufacturerPartIds": [
+              {
+                "requestId": "502beadf-163d-45c9-b5ac-08d5740ed761",
+                "manufacturerPartId": "NEXT-PART2-1",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "pending",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              },
+              {
+                "requestId": "2a2bb927-b269-48f1-917a-b7b7c59a97d7",
+                "manufacturerPartId": "NEXT-PART2-2",
+                "customerPartId": null,
+                "requestingBpn": "BPNL00000000024R",
+                "targetBpn": "BPNL000000000342",
+                "status": "pending",
+                "type": "request",
+                "message": null,
+                "pcfLocation": null,
+                "pcfData": null
+              }
+            ]
+          }
