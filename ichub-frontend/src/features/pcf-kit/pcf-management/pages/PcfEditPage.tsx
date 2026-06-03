@@ -156,7 +156,7 @@ const PcfEditPage: React.FC = () => {
   // --------------- Error state (load failed or schema missing) ---------------
   if (loadError || !initialData || !pcfSchema) {
     const message = loadError
-      ?? (!pcfSchema ? t('error.schemaNotFound') : 'PCF data not found for this part.');
+      ?? (!pcfSchema ? t('error.schemaNotFound') : t('error.loadError'));
     return (
       <Box className="pcf-edit-page__error">
         <Alert severity="error" sx={{ maxWidth: 520 }}>{message}</Alert>

@@ -50,7 +50,8 @@
     "rejectNotImplemented": "拒绝功能尚未在后端实现",
     "failedToLoadPcf": "加载 PCF 数据失败",
     "failedToSavePcf": "保存 PCF 失败",
-    "schemaNotFound": "未找到 PCF 架构定义。请检查应用程序配置。"
+    "schemaNotFound": "未找到 PCF 架构定义。请检查应用程序配置。",
+    "loadError": "加载 PCF 数据时发生错误"
   },
   "precalculation": {
     "title": "PCF预计算",

@@ -50,7 +50,8 @@
     "rejectNotImplemented": "La funcionalidad de rechazo aún no está implementada en el backend",
     "failedToLoadPcf": "Error al cargar los datos PCF",
     "failedToSavePcf": "Error al guardar el PCF",
-    "schemaNotFound": "Definición de esquema PCF no encontrada. Por favor, compruebe la configuración de la aplicación."
+    "schemaNotFound": "Definición de esquema PCF no encontrada. Por favor, compruebe la configuración de la aplicación.",
+    "loadError": "Error al cargar los datos PCF"
   },
   "precalculation": {
     "title": "Precálculo de PCF",

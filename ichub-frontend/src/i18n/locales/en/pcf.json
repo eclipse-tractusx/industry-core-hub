@@ -50,7 +50,8 @@
     "rejectNotImplemented": "Reject functionality not yet implemented in backend",
     "failedToLoadPcf": "Failed to load PCF data",
     "failedToSavePcf": "Failed to save PCF",
-    "schemaNotFound": "PCF schema definition not found. Please check the application configuration."
+    "schemaNotFound": "PCF schema definition not found. Please check the application configuration.",
+    "loadError": "Error loading PCF data"
   },
   "precalculation": {
     "title": "PCF Precalculation",

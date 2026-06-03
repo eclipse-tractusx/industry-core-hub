@@ -36,7 +36,6 @@ import {
   Tooltip,
   LinearProgress,
   Chip,
-  Alert,
   Stepper,
   Step,
   StepLabel,
@@ -55,13 +54,7 @@ import {
   Refresh,
   Search,
   Co2,
-  Edit,
-  Visibility,
   DraftsOutlined,
-  CalendarMonth,
-  Info,
-  Public,
-  Speed,
   Inventory,
   AddBox,
   PlaylistAdd,
@@ -80,7 +73,6 @@ import {
   getPcfVersion,
   getPcfStatus,
   mapPcfStatus,
-  formatReferencePeriod,
 } from '../utils/pcfDataExtractors';
 import { PcfDetailsDialog, PcfEditDialog, PcfManagementSection } from '../../pcf-exchange/components';
 import {
@@ -546,16 +538,10 @@ const PcfManagementPage: React.FC = () => {
 
     const hasPcf = managedPart.hasPcf && rawPcfData;
     // Derive display values from nested Catena-X 9.0.0 structure using extractor helpers
-    const pcfExclBio  = getPcfExcludingBiogenic(rawPcfData) ?? 0;
-    const pcfInclBio  = getPcfIncludingBiogenic(rawPcfData) ?? 0;
-    const primaryData = getPrimaryDataShare(rawPcfData) ?? 0;
-    const geoCountry  = getGeographyCountry(rawPcfData) ?? 'N/A';
-    const period      = getReferencePeriod(rawPcfData);
-    const specVersion = getSpecVersion(rawPcfData) ?? 'N/A';
-    const version     = getPcfVersion(rawPcfData) ?? 1;
+  
+
     const rawStatus   = getPcfStatus(rawPcfData);
     const isPublished = mapPcfStatus(rawStatus) === 'PUBLISHED';
-    const isDraft     = !isPublished;
 
     return (
       <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>

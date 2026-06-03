@@ -50,7 +50,8 @@
     "rejectNotImplemented": "Ablehnungsfunktion ist im Backend noch nicht implementiert",
     "failedToLoadPcf": "PCF-Daten konnten nicht geladen werden",
     "failedToSavePcf": "PCF konnte nicht gespeichert werden",
-    "schemaNotFound": "PCF-Schemadefinition nicht gefunden. Bitte überprüfen Sie die Anwendungskonfiguration."
+    "schemaNotFound": "PCF-Schemadefinition nicht gefunden. Bitte überprüfen Sie die Anwendungskonfiguration.",
+    "loadError": "Fehler beim Laden der PCF-Daten"
   },
   "precalculation": {
     "title": "PCF-Vorberechnung",

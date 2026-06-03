@@ -124,7 +124,9 @@ const NotificationDetail: React.FC = () => {
     const requestId = selectedNotification?.pcfContent?.requestId;
     switch (notificationType) {
       case 'PCF_REQUEST_RECEIVED':
-        return { path: '/pcf/requests', labelKey: 'detail.viewIncomingPcfRequests' };
+        return { 
+          path: '/pcf/requests', 
+          labelKey: 'detail.viewIncomingPcfRequests' };
       case 'PCF_RESPONSE_RECEIVED':
         // Omit query param if requestId is empty
         if (!requestId) return null;

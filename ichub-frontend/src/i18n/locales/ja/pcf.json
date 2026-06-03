@@ -50,7 +50,8 @@
     "rejectNotImplemented": "拒否機能はバックエンドでまだ実装されていません",
     "failedToLoadPcf": "PCFデータの読み込みに失敗しました",
     "failedToSavePcf": "PCFの保存に失敗しました",
-    "schemaNotFound": "PCFスキーマ定義が見つかりません。アプリケーション設定を確認してください。"
+    "schemaNotFound": "PCFスキーマ定義が見つかりません。アプリケーション設定を確認してください。",
+    "loadError": "PCFデータの読み込み中にエラーが発生しました"
   },
   "precalculation": {
     "title": "PCF事前計算",
