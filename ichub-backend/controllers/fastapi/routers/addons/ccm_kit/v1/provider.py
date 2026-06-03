@@ -32,9 +32,12 @@ to initiate outbound operations towards a consumer:
 - ``POST /provider/publish``                               — publish a certificate as an EDC HttpData asset
 - ``DELETE /provider/publish/{id}``                        — unpublish a certificate from the EDC catalog
 - ``GET /provider/certificates/{certificate_id}/payload``  — serve the certificate JSON for the EDC data plane
+- ``GET /provider/shares``                                 — cross-certificate view of all sharing events
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from controllers.fastapi.routers.authentication.auth_api import (
@@ -47,6 +50,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmPublishResult,
     CcmPushRequest,
     CcmSendResult,
+    ShareItem,
 )
 from services.addons.ccm_kit.v1.ccm_provider_service import ccm_provider_service
 from tools.constants import INTERNAL_SERVER_ERROR
@@ -193,4 +197,42 @@ async def unpublish_certificate(certificate_id: int) -> None:
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception:
         logger.exception("Unhandled error in unpublish_certificate endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/shares",
+    response_model=List[ShareItem],
+    summary="Cross-certificate view of all sharing events",
+)
+async def list_shares(
+    consumer_bpnl: Optional[str] = Query(
+        default=None,
+        alias="consumerBpnl",
+        description="Filter by consumer BPNL.",
+    ),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by share status (Active / Pending / Revoked).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[ShareItem]:
+    """
+    Return a cross-certificate, paginated list of all sharing events
+    recorded by this provider node.
+
+    Each entry shows which certificate (type), which consumer received it,
+    the current share status, and timestamps.  Allows operators to audit
+    the complete sharing history from the provider side.
+    """
+    try:
+        return ccm_provider_service.list_shares(
+            consumer_bpnl=consumer_bpnl,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_shares endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)

@@ -26,13 +26,19 @@ CX-0135 Company Certificate Management — consumer-side API endpoints.
 
 Implements the consumer operations for the PULL flow:
 
-- ``POST /consumer/catalog-search`` — check if a provider has a CCM asset
-- ``POST /consumer/request``        — send a certificate request to a provider
-- ``POST /consumer/status``         — send a processing status to a provider
-- ``POST /consumer/pull``           — pull a certificate from a provider's catalog
+- ``POST /consumer/catalog-search``      — check if a provider has a CCM asset
+- ``POST /consumer/request``             — send a certificate request to a provider
+- ``POST /consumer/status``              — send a processing status to a provider
+- ``POST /consumer/pull``                — pull a certificate from a provider's catalog
+- ``GET  /consumer/received``            — list certificates received by this node
+- ``GET  /consumer/received/{id}``       — detail for one received certificate
+- ``GET  /consumer/requests``            — list outbound certificate requests
+- ``GET  /consumer/requests/{id}``       — detail for one outbound request
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from controllers.fastapi.routers.authentication.auth_api import (
     get_authentication_dependency,
@@ -46,6 +52,9 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmSendRequestPayload,
     CcmSendResult,
     CcmSendStatusPayload,
+    OutboundRequestItem,
+    ReceivedCertificateDetail,
+    ReceivedCertificateItem,
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import ccm_consumer_service
 from tools.constants import INTERNAL_SERVER_ERROR
@@ -143,4 +152,132 @@ async def pull_certificate(request: CcmPullRequest) -> CcmPullResult:
         return ccm_consumer_service.pull_certificate(request)
     except Exception:
         logger.exception("Unhandled error in pull_certificate endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/received",
+    response_model=List[ReceivedCertificateItem],
+    summary="List certificates received by this node",
+)
+async def list_received(
+    certified_bpn: Optional[str] = Query(
+        default=None,
+        alias="certifiedBpn",
+        description="Filter by BPNL of the certified legal entity.",
+    ),
+    certificate_type: Optional[str] = Query(
+        default=None,
+        alias="certificateType",
+        description="Filter by certificate type identifier (e.g. ISO9001).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[ReceivedCertificateItem]:
+    """
+    Return a paginated list of certificates received by this node via PUSH
+    or PULL.
+
+    Use the optional query parameters to narrow the results.  The binary
+    document content is not included; call ``GET /consumer/received/{id}``
+    to retrieve the full certificate payload including the PDF.
+    """
+    try:
+        return ccm_consumer_service.list_received(
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_received endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/received/{received_id}",
+    response_model=ReceivedCertificateDetail,
+    summary="Get detail for a single received certificate",
+)
+async def get_received(received_id: int) -> ReceivedCertificateDetail:
+    """
+    Return the full detail for a single received certificate, including the
+    Base64-encoded PDF document when available.
+    """
+    try:
+        result = ccm_consumer_service.get_received(received_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Received certificate not found.")
+        return result
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Unhandled error in get_received endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/requests",
+    response_model=List[OutboundRequestItem],
+    summary="List outbound certificate requests sent by this node",
+)
+async def list_requests(
+    provider_bpn: Optional[str] = Query(
+        default=None,
+        alias="providerBpn",
+        description="Filter by provider BPNL.",
+    ),
+    certified_bpn: Optional[str] = Query(
+        default=None,
+        alias="certifiedBpn",
+        description="Filter by certified entity BPNL.",
+    ),
+    certificate_type: Optional[str] = Query(
+        default=None,
+        alias="certificateType",
+        description="Filter by certificate type identifier.",
+    ),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by request status (Pending / Found / NotFound / Failed).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[OutboundRequestItem]:
+    """
+    Return a paginated list of certificate requests sent by this node to
+    remote providers.  Allows tracking the status of pending requests.
+    """
+    try:
+        return ccm_consumer_service.list_requests(
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_requests endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/requests/{request_id}",
+    response_model=OutboundRequestItem,
+    summary="Get detail for a single outbound certificate request",
+)
+async def get_request(request_id: int) -> OutboundRequestItem:
+    """
+    Return the detail for a single outbound certificate request.
+    """
+    try:
+        result = ccm_consumer_service.get_request(request_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Outbound request not found.")
+        return result
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Unhandled error in get_request endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)

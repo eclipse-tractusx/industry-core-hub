@@ -803,8 +803,7 @@ class TestStoreReceivedCertificate:
         )
 
         assert stored is True
-        repos.session.add.assert_called_once()
-        repos.commit.assert_called_once()
+        repos.ccm_received_repository.create_new.assert_called_once()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
@@ -829,7 +828,7 @@ class TestStoreReceivedCertificate:
         )
 
         assert stored is True
-        repos.session.add.assert_called_once()
+        repos.ccm_received_repository.create_new.assert_called_once()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
@@ -837,7 +836,7 @@ class TestStoreReceivedCertificate:
     def test_store_db_error(self, mock_factory, service):
         """Database commit failure returns False."""
         repos = Mock()
-        repos.commit.side_effect = Exception("DB connection lost")
+        repos.ccm_received_repository.create_new.side_effect = Exception("DB connection lost")
         mock_factory.create.return_value.__enter__.return_value = repos
 
         cert_data = {

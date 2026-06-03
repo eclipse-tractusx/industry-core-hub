@@ -705,3 +705,214 @@ class CcmAvailableNotification(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+# ---------------------------------------------------------------------------
+# View / list DTOs (consumer received, outbound requests, provider shares)
+# ---------------------------------------------------------------------------
+
+class ReceivedCertificateItem(BaseModel):
+    """
+    Summary item for a certificate received by this node.
+
+    Returned by ``GET /consumer/received`` and ``GET /consumer/received/{id}``.
+    The binary document is omitted in list responses; use the detail endpoint
+    to retrieve it.
+    """
+    id: int = Field(description="Internal primary key of the ccm_received record.")
+    document_id: str = Field(
+        alias="documentId",
+        description="Provider-assigned document reference ID.",
+    )
+    provider_bpn: str = Field(
+        alias="providerBpn",
+        description="BPNL of the provider that sent this certificate.",
+    )
+    certified_bpn: str = Field(
+        alias="certifiedBpn",
+        description="BPNL of the certified legal entity.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    trust_level: Optional[str] = Field(
+        default=None,
+        alias="trustLevel",
+        description="Trust level assigned by the provider (none/low/high/trusted).",
+    )
+    valid_from: Optional[str] = Field(
+        default=None,
+        alias="validFrom",
+        description="Start of the validity period (ISO 8601 date).",
+    )
+    valid_until: Optional[str] = Field(
+        default=None,
+        alias="validUntil",
+        description="Expiry date (ISO 8601 date).",
+    )
+    local_status: str = Field(
+        alias="localStatus",
+        description="Consumer-local processing status: Pending / Accepted / Rejected.",
+    )
+    status_updated_at: Optional[str] = Field(
+        default=None,
+        alias="statusUpdatedAt",
+        description="Timestamp of the most recent local_status change (ISO 8601).",
+    )
+    received_at: str = Field(
+        alias="receivedAt",
+        description="Timestamp when this certificate was received (ISO 8601).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class ReceivedCertificateDetail(ReceivedCertificateItem):
+    """
+    Full detail for a single received certificate.
+
+    Extends ReceivedCertificateItem with metadata fields that are not
+    included in list responses.
+    """
+    certificate_version: Optional[str] = Field(
+        default=None,
+        alias="certificateVersion",
+        description="Version of the certificate standard.",
+    )
+    issuer_name: Optional[str] = Field(
+        default=None,
+        alias="issuerName",
+        description="Name of the certification body.",
+    )
+    issuer_bpn: Optional[str] = Field(
+        default=None,
+        alias="issuerBpn",
+        description="BPNL of the certification body.",
+    )
+    validator_name: Optional[str] = Field(
+        default=None,
+        alias="validatorName",
+        description="Name of the third-party validator.",
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        alias="registrationNumber",
+        description="Official registration / serial number.",
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        alias="areaOfApplication",
+        description="Scope the certificate applies to.",
+    )
+    uploader_bpn: Optional[str] = Field(
+        default=None,
+        alias="uploaderBpn",
+        description="BPNL of the uploader.",
+    )
+    document_base64: Optional[str] = Field(
+        default=None,
+        alias="documentBase64",
+        description="Base64-encoded PDF document content (only in detail response).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class OutboundRequestItem(BaseModel):
+    """
+    Summary item for a certificate request sent by this node.
+
+    Returned by ``GET /consumer/requests`` and ``GET /consumer/requests/{id}``.
+    """
+    id: int = Field(description="Internal primary key of the ccm_outbound_request record.")
+    sender_bpn: str = Field(
+        alias="senderBpn",
+        description="BPNL of this node (the consumer) that sent the request.",
+    )
+    provider_bpn: str = Field(
+        alias="providerBpn",
+        description="BPNL of the remote provider.",
+    )
+    certified_bpn: str = Field(
+        alias="certifiedBpn",
+        description="BPNL of the certified entity requested.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    location_bpns: Optional[List[str]] = Field(
+        default=None,
+        alias="locationBpns",
+        description="BPNS/BPNA sites included in the original request.",
+    )
+    status: str = Field(
+        description="Outbound request status: Pending / Found / NotFound / Failed.",
+    )
+    notification_id: Optional[str] = Field(
+        default=None,
+        alias="notificationId",
+        description="UUID of the CX-0135 notification that was sent.",
+    )
+    document_id: Optional[str] = Field(
+        default=None,
+        alias="documentId",
+        description="Provider document ID (populated when the provider responds).",
+    )
+    requested_at: str = Field(
+        alias="requestedAt",
+        description="Timestamp when the request was sent (ISO 8601).",
+    )
+    updated_at: str = Field(
+        alias="updatedAt",
+        description="Timestamp of the last status update (ISO 8601).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class ShareItem(BaseModel):
+    """
+    Summary item for a single certificate-sharing event.
+
+    Returned by ``GET /provider/shares`` — a cross-certificate view of all
+    share records across all locally stored certificates.
+    """
+    share_id: int = Field(
+        alias="shareId",
+        description="Internal primary key of the certificate_share record.",
+    )
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal ID of the shared certificate.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    provider_bpnl: str = Field(
+        alias="providerBpnl",
+        description="BPNL of the certificate-owning provider (this node).",
+    )
+    consumer_bpnl: str = Field(
+        alias="consumerBpnl",
+        description="BPNL of the consumer who received the certificate.",
+    )
+    status: str = Field(
+        description="Share lifecycle status: Active / Pending / Revoked.",
+    )
+    last_shared_date: str = Field(
+        alias="lastSharedDate",
+        description="Timestamp of the most recent sharing event (ISO 8601).",
+    )
+    created_at: str = Field(
+        alias="createdAt",
+        description="Timestamp when this share record was created (ISO 8601).",
+    )
+
+    class Config:
+        populate_by_name = True

@@ -41,7 +41,7 @@ data-plane proxy — exactly mirroring the consumer-side send pattern.
 
 import base64
 import uuid
-from typing import Dict
+from typing import Dict, List, Optional
 
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
@@ -51,6 +51,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
     CcmPushRequest,
     CcmSendResult,
+    ShareItem,
 )
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
@@ -494,6 +495,77 @@ class CcmProviderService(CcmBaseService):
                 )
             repo.commit()
 
+    # ------------------------------------------------------------------
+    # Visibility: provider shares (cross-certificate view)
+    # ------------------------------------------------------------------
+
+    def list_shares(
+        self,
+        consumer_bpnl: Optional[str] = None,
+        status: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[ShareItem]:
+        """
+        Return a paginated cross-certificate view of all sharing events.
+
+        Joins ``certificate_share`` with ``ccm`` so each row includes the
+        certificate type, enabling operators to see the full sharing history
+        in a single call — across all certificates, optionally filtered by
+        consumer BPNL or share status.
+
+        Args:
+            consumer_bpnl: Optional filter by consumer BPNL.
+            status: Optional filter by ShareStatus string value (Active/Pending/Revoked).
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of ShareItem DTOs ordered by most recent first.
+        """
+        from models.metadata_database.addons.ccm_kit.v1.models import ShareStatus as _SS
+
+        with RepositoryManagerFactory.create() as repo:
+            # Reuse the paginated query from the repository and apply optional
+            # consumer BPNL + status filters.
+            if consumer_bpnl:
+                shares = repo.certificate_share_repository.find_by_consumer_bpnl(
+                    consumer_bpnl
+                )
+                # apply status filter in-memory if needed (list is already small)
+                if status:
+                    shares = [s for s in shares if s.status.value == status]
+                shares = shares[offset : offset + limit]
+            else:
+                # Full paginated scan; status filter applied after retrieval.
+                # The repository returns all pages; we slice post-filter to respect
+                # the requested offset/limit even when filtering reduces the result set.
+                all_shares = repo.certificate_share_repository.find_all_paginated(
+                    offset=0, limit=offset + limit + (limit if status else 0)
+                )
+                if status:
+                    all_shares = [s for s in all_shares if s.status.value == status]
+                shares = all_shares[offset : offset + limit]
+
+            # Eagerly load the parent certificate for each share so we can
+            # include certificate_type without a separate query per row.
+            result: List[ShareItem] = []
+            for share in shares:
+                cert = repo.ccm_repository.find_by_id_with_relations(share.certificate_id)
+                result.append(
+                    ShareItem(
+                        share_id=share.id,
+                        certificate_id=share.certificate_id,
+                        certificate_type=cert.certificate_type if cert else "",
+                        provider_bpnl=cert.bpnl if cert else "",
+                        consumer_bpnl=share.consumer_bpnl,
+                        status=share.status.value,
+                        last_shared_date=share.last_shared_date.isoformat(),
+                        created_at=share.created_at.isoformat(),
+                    )
+                )
+
+        return result
 
 # Singleton instance consumed by the controller.
 ccm_provider_service = CcmProviderService()

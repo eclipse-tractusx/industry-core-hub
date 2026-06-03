@@ -59,9 +59,12 @@ from models.metadata_database.pcf.models import (
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmOutboundRequest,
     CcmReceived,
     CcmSite,
     CertificateShare,
+    OutboundRequestStatus,
+    ReceivedCertificateStatus,
     ShareStatus,
     TrustLevel,
 )
@@ -1459,3 +1462,156 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
             stmt = stmt.where(CcmReceived.certificate_type == certificate_type)
         stmt = stmt.order_by(desc(CcmReceived.received_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
+
+    def find_by_id(self, received_id: int) -> Optional[CcmReceived]:
+        """
+        Look up a received certificate by primary key.
+
+        Args:
+            received_id: Primary key of the CcmReceived record.
+
+        Returns:
+            The matching CcmReceived instance, or None if not found.
+        """
+        return self._session.get(CcmReceived, received_id)
+
+    def update_local_status(
+        self,
+        document_id: str,
+        provider_bpn: str,
+        new_status: ReceivedCertificateStatus,
+    ) -> Optional[CcmReceived]:
+        """
+        Update the consumer-local processing status of a received certificate.
+
+        Uses the composite unique key ``(document_id, provider_bpn)`` to
+        locate the record.
+
+        Args:
+            document_id: Provider-assigned document reference ID.
+            provider_bpn: BPNL of the originating provider.
+            new_status: New ReceivedCertificateStatus value to apply.
+
+        Returns:
+            The updated CcmReceived record, or None if not found.
+        """
+        record = self.find_by_document_id(document_id, provider_bpn)
+        if record is None:
+            return None
+        record.local_status = new_status
+        record.status_updated_at = datetime.now(timezone.utc)
+        self._session.add(record)
+        return record
+
+
+class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
+    """
+    Repository for CcmOutboundRequest entities — certificate requests sent
+    by this node to remote providers.
+    """
+
+    def create_new(
+        self,
+        sender_bpn: str,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        **kwargs,
+    ) -> CcmOutboundRequest:
+        """
+        Stage a new outbound-request record.
+
+        Args:
+            sender_bpn: BPNL of this node.
+            provider_bpn: BPNL of the remote provider.
+            certified_bpn: BPNL of the certificate holder being requested.
+            certificate_type: Certificate type identifier.
+            **kwargs: Optional fields (location_bpns, governance,
+                      notification_id, document_id, status).
+
+        Returns:
+            The staged CcmOutboundRequest instance.
+        """
+        request = CcmOutboundRequest(
+            sender_bpn=sender_bpn,
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            **kwargs,
+        )
+        self.create(request)
+        return request
+
+    def find_by_id(self, request_id: int) -> Optional[CcmOutboundRequest]:
+        """
+        Look up an outbound request by primary key.
+
+        Args:
+            request_id: Primary key of the CcmOutboundRequest record.
+
+        Returns:
+            The matching CcmOutboundRequest instance, or None if not found.
+        """
+        return self._session.get(CcmOutboundRequest, request_id)
+
+    def find_all_filtered(
+        self,
+        provider_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[OutboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return outbound requests with optional filters.
+
+        Args:
+            provider_bpn: Filter by provider BPNL.
+            certified_bpn: Filter by certified entity BPNL.
+            certificate_type: Filter by certificate type.
+            status: Filter by OutboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of matching CcmOutboundRequest records, newest first.
+        """
+        stmt = select(CcmOutboundRequest)
+        if provider_bpn:
+            stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmOutboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmOutboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(
+        self,
+        request_id: int,
+        new_status: OutboundRequestStatus,
+        document_id: Optional[str] = None,
+    ) -> Optional[CcmOutboundRequest]:
+        """
+        Update the status of an outbound request.
+
+        Args:
+            request_id: Primary key of the record to update.
+            new_status: New OutboundRequestStatus value.
+            document_id: Optional provider document ID to store for correlation.
+
+        Returns:
+            The updated record, or None if not found.
+        """
+        record = self._session.get(CcmOutboundRequest, request_id)
+        if record is None:
+            return None
+        record.status = new_status
+        record.updated_at = datetime.now(timezone.utc)
+        if document_id is not None:
+            record.document_id = document_id
+        self._session.add(record)
+        return record

@@ -29,6 +29,8 @@ Models:
     - Ccm: Core certificate entity (SAMM BusinessPartnerCertificate v3.1.0).
     - CcmSite: Associated BPNS/BPNA sites for a certificate (normalised join table).
     - CertificateShare: Sharing-history record tracking which consumers received a certificate.
+    - CcmReceived: Certificates received by this node as a consumer via PUSH or PULL.
+    - CcmOutboundRequest: Certificate requests sent by this node to remote providers.
 
 These models are designed to interact with a PostgreSQL database using
 SQLAlchemy and SQLModel.
@@ -69,6 +71,37 @@ class ShareStatus(str, Enum):
     Active  = "Active"
     Pending = "Pending"
     Revoked = "Revoked"
+
+
+class ReceivedCertificateStatus(str, Enum):
+    """
+    Consumer-local lifecycle status for a certificate that was received.
+
+    Tracks how this node has processed the certificate after reception.
+
+    - Pending:  Received but not yet evaluated.
+    - Accepted: Consumer validated and accepted the certificate.
+    - Rejected: Consumer validated and rejected the certificate.
+    """
+    Pending  = "Pending"
+    Accepted = "Accepted"
+    Rejected = "Rejected"
+
+
+class OutboundRequestStatus(str, Enum):
+    """
+    Status of a certificate request that this node sent to a remote provider.
+
+    - Pending:   Request sent; waiting for the provider to respond.
+    - Found:     Provider confirmed the certificate exists (returned 200 COMPLETED
+                 or shared it via PUSH/PULL).
+    - NotFound:  Provider responded that no matching certificate exists (404).
+    - Failed:    Notification delivery failed (EDC/network error).
+    """
+    Pending  = "Pending"
+    Found    = "Found"
+    NotFound = "NotFound"
+    Failed   = "Failed"
 
 
 # ---------------------------------------------------------------------------
@@ -365,6 +398,31 @@ class CcmReceived(SQLModel, table=True):
         description="Binary PDF content (BYTEA in PostgreSQL).",
     )
 
+    # --- Consumer-local processing status ---
+    # Tracks whether this node has accepted or rejected the received certificate.
+    # Updated when POST /consumer/status is called by the consumer operator.
+    local_status: ReceivedCertificateStatus = Field(
+        default=ReceivedCertificateStatus.Pending,
+        sa_column=Column(
+            SAEnum(
+                ReceivedCertificateStatus,
+                values_callable=lambda x: [e.value for e in x],
+                name="received_certificate_status",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
+        description=(
+            "Consumer-local processing status: Pending / Accepted / Rejected. "
+            "Updated when this node calls POST /consumer/status."
+        ),
+    )
+    status_updated_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp of the most recent local_status change.",
+    )
+
     # --- Audit ---
     received_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -376,5 +434,93 @@ class CcmReceived(SQLModel, table=True):
         UniqueConstraint(
             "document_id", "provider_bpn",
             name="uq_ccm_received_doc_provider",
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Outbound certificate requests (consumer-side tracking)
+# ---------------------------------------------------------------------------
+
+class CcmOutboundRequest(SQLModel, table=True):
+    """
+    Tracks certificate requests sent by this node to remote providers.
+
+    Each row represents one POST /consumer/request call.  Storing these
+    records allows operators to query the status of outstanding requests
+    without relying solely on inbound PUSH or PULL responses.
+    """
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    # --- Who sent to whom ---
+    sender_bpn: str = Field(
+        index=True,
+        description="BPNL of this node (the consumer) that issued the request.",
+    )
+    provider_bpn: str = Field(
+        index=True,
+        description="BPNL of the remote provider the request was sent to.",
+    )
+    certified_bpn: str = Field(
+        index=True,
+        description="BPNL of the legal entity whose certificate was requested.",
+    )
+    certificate_type: str = Field(
+        index=True,
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    location_bpns: Optional[str] = Field(
+        default=None,
+        description="JSON-serialised list of BPNS/BPNA to narrow scope.",
+    )
+    governance: Optional[str] = Field(
+        default=None,
+        description="JSON-serialised governance policies used in contract negotiation.",
+    )
+
+    # --- Tracking ---
+    status: OutboundRequestStatus = Field(
+        default=OutboundRequestStatus.Pending,
+        sa_column=Column(
+            SAEnum(
+                OutboundRequestStatus,
+                values_callable=lambda x: [e.value for e in x],
+                name="outbound_request_status",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
+        description="Delivery/response status of this outbound request.",
+    )
+    # notification_id stored for correlation when the provider sends a PUSH back.
+    notification_id: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="UUID of the CX-0135 notification sent (from header.message_id).",
+    )
+    document_id: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="Provider document ID — populated if the provider sends a PUSH back "
+                    "and we can correlate it with this request.",
+    )
+
+    # --- Audit ---
+    requested_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp when the request was sent.",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp of the last status update.",
+    )
+
+    __tablename__ = "ccm_outbound_request"
+    __table_args__ = (
+        Index(
+            "ix_ccm_outbound_request_provider_certified",
+            "provider_bpn", "certified_bpn", "certificate_type",
         ),
     )

@@ -48,6 +48,7 @@ class RepositoryManager:
         self._ccm_site_repository = None
         self._certificate_share_repository = None
         self._ccm_received_repository = None
+        self._ccm_outbound_request_repository = None
         self._pcf_repository = None
         self._pcf_relationship_repository = None
 
@@ -228,6 +229,14 @@ class RepositoryManager:
             from managers.metadata_database.repositories import CcmReceivedRepository
             self._ccm_received_repository = CcmReceivedRepository(self._session)
         return self._ccm_received_repository
+
+    @property
+    def ccm_outbound_request_repository(self):
+        """Lazy initialization of the CcmOutboundRequest (outbound requests) repository."""
+        if self._ccm_outbound_request_repository is None:
+            from managers.metadata_database.repositories import CcmOutboundRequestRepository
+            self._ccm_outbound_request_repository = CcmOutboundRequestRepository(self._session)
+        return self._ccm_outbound_request_repository
 
     @property
     def pcf_repository(self):
