@@ -217,9 +217,10 @@ class CertificatesManager:
             sites_read = [SiteRead(siteBpn=s.site_bpn) for s in ccm.sites]
             shares_read = [self._share_to_read(s) for s in ccm.shares]
             document = self._build_document(ccm)
+            base_fields = self._ccm_to_base_fields(ccm, sites_read)
 
         return CertificateDetail(
-            **self._ccm_to_base_fields(ccm, sites_read),
+            **base_fields,
             document=document,
             sharingHistory=shares_read,
         )
@@ -324,9 +325,10 @@ class CertificatesManager:
             sites_read = [SiteRead(siteBpn=s.site_bpn) for s in ccm.sites]
             shares_read = [self._share_to_read(s) for s in ccm.shares]
             document = self._build_document(ccm)
+            base_fields = self._ccm_to_base_fields(ccm, sites_read)
 
         return CertificateDetail(
-            **self._ccm_to_base_fields(ccm, sites_read),
+            **base_fields,
             document=document,
             sharingHistory=shares_read,
         )
