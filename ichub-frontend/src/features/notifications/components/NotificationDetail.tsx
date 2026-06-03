@@ -1018,7 +1018,7 @@ const NotificationDetail: React.FC = () => {
                     },
                   }}
                 >
-                  {t(navTarget.labelKey)}
+                  {t(navTarget.labelKey, { defaultValue: navTarget.defaultLabel })}
                 </Button>
               ) : null;
             })()}
