@@ -22,6 +22,7 @@
 #################################################################################
 
 from typing import Annotated, List, Optional
+from datetime import date
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -105,7 +106,18 @@ async def get_certificate(certificate_id: int) -> CertificateDetail:
 )
 async def upload_certificate(
     file: Annotated[UploadFile, File(description="PDF certificate file (max 10 MB).")],
-    metadata: Annotated[UploadCertificateRequest, Form()],
+    bpnl: Annotated[str, Form()],
+    certificateType: Annotated[str, Form()],
+    issuer: Annotated[str, Form()],
+    validFrom: Annotated[date, Form()],
+    certificateName: Annotated[Optional[str], Form()] = None,
+    validUntil: Annotated[Optional[date], Form()] = None,
+    trustLevel: Annotated[str, Form()] = "none",
+    registrationNumber: Annotated[Optional[str], Form()] = None,
+    areaOfApplication: Annotated[Optional[str], Form()] = None,
+    validator: Annotated[Optional[str], Form()] = None,
+    sites: Annotated[Optional[str], Form()] = None,
+    description: Annotated[Optional[str], Form()] = None,
 ) -> UploadCertificateResponse:
     if not file.filename:
         raise HTTPException(
@@ -125,6 +137,22 @@ async def upload_certificate(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"File exceeds the {max_size // (1024 * 1024)} MB size limit.",
         )
+
+    # Reconstruct the metadata model from individual form fields
+    metadata = UploadCertificateRequest(
+        bpnl=bpnl,
+        certificateType=certificateType,
+        issuer=issuer,
+        validFrom=validFrom,
+        certificateName=certificateName,
+        validUntil=validUntil,
+        trustLevel=trustLevel,
+        registrationNumber=registrationNumber,
+        areaOfApplication=areaOfApplication,
+        validator=validator,
+        sites=sites,
+        description=description,
+    )
 
     return certificates_manager.upload_certificate(
         file_content=file_content,
@@ -146,8 +174,32 @@ async def upload_certificate(
 )
 async def update_certificate(
     certificate_id: int,
-    update_data: Annotated[CertificateUpdate, Form()],
+    certificateType: Annotated[Optional[str], Form()] = None,
+    certificateName: Annotated[Optional[str], Form()] = None,
+    issuer: Annotated[Optional[str], Form()] = None,
+    validFrom: Annotated[Optional[date], Form()] = None,
+    validUntil: Annotated[Optional[date], Form()] = None,
+    trustLevel: Annotated[Optional[str], Form()] = None,
+    registrationNumber: Annotated[Optional[str], Form()] = None,
+    areaOfApplication: Annotated[Optional[str], Form()] = None,
+    validator: Annotated[Optional[str], Form()] = None,
+    sites: Annotated[Optional[str], Form()] = None,
+    description: Annotated[Optional[str], Form()] = None,
 ) -> CertificateDetail:
+    # Reconstruct the update model from individual form fields
+    update_data = CertificateUpdate(
+        certificateType=certificateType,
+        certificateName=certificateName,
+        issuer=issuer,
+        validFrom=validFrom,
+        validUntil=validUntil,
+        trustLevel=trustLevel,
+        registrationNumber=registrationNumber,
+        areaOfApplication=areaOfApplication,
+        validator=validator,
+        sites=sites,
+        description=description,
+    )
     return certificates_manager.update_certificate(certificate_id, update_data)
 
 @router.delete(
