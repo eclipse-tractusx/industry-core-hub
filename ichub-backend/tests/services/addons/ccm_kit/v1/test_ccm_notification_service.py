@@ -453,7 +453,7 @@ class TestCcmNotificationService:
                     "documentID": "DOC-001",
                     "creationDate": "2024-06-01T00:00:00Z",
                     "contentType": "application/pdf",
-                    "contentBase64": "dGVzdA==",
+                    "contentBase64": "JVBERi0xLjQgdGVzdA==",
                 },
                 "issuer": {
                     "issuerName": "TÜV Rheinland",
@@ -471,6 +471,31 @@ class TestCcmNotificationService:
         assert "received" in body["message"].lower()
         mock_repos.ccm_received_repository.create_new.assert_called_once()
         mock_repos.commit.assert_called()
+
+    def test_push_rejects_non_pdf_content(self):
+        """
+        GIVEN a push notification whose decoded content is NOT a valid PDF
+        WHEN process_certificate_push is called
+        THEN a 400 response is returned with an appropriate error message.
+        """
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "DOC-INVALID",
+                    "contentType": "application/pdf",
+                    "contentBase64": "dGVzdA==",  # decodes to b"test"
+                },
+                "issuer": {"issuerName": "TÜV"},
+            },
+        )
+
+        status, body = self.service.process_certificate_push(notification)
+
+        assert status == 400
+        assert "not a valid PDF" in body["message"]
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"
@@ -496,7 +521,7 @@ class TestCcmNotificationService:
                 "document": {
                     "documentID": "DOC-001",
                     "contentType": "application/pdf",
-                    "contentBase64": "bmV3",
+                    "contentBase64": "JVBERi0xLjQgbmV3",
                 },
                 "issuer": {"issuerName": "TÜV"},
             },
@@ -626,7 +651,7 @@ class TestCcmNotificationService:
     ):
         """
         GIVEN a share in Revoked state
-        WHEN a status ACCEPTED (→ Active) notification arrives
+        WHEN a status ACCEPTED (-> Active) notification arrives
         THEN the transition is blocked with 409.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
@@ -658,7 +683,7 @@ class TestCcmNotificationService:
     ):
         """
         GIVEN a share in Active state
-        WHEN a status REJECTED (→ Revoked) notification arrives
+        WHEN a status REJECTED (-> Revoked) notification arrives
         THEN the transition is allowed.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
@@ -693,7 +718,7 @@ class TestCcmNotificationService:
     ):
         """
         GIVEN a share in Active state
-        WHEN a status RECEIVED (→ Pending) notification arrives
+        WHEN a status RECEIVED (-> Pending) notification arrives
         THEN the transition is blocked with 409.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos

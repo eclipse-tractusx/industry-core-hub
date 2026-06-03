@@ -1415,9 +1415,20 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
         self.create(received)
         return received
 
-    def find_by_document_id(self, document_id: str) -> Optional[CcmReceived]:
-        """Look up a received certificate by its provider-assigned document ID."""
+    def find_by_document_id(
+        self, document_id: str, provider_bpn: Optional[str] = None,
+    ) -> Optional[CcmReceived]:
+        """Look up a received certificate by its provider-assigned document ID.
+
+        Args:
+            document_id: The provider-assigned document reference ID.
+            provider_bpn: Optional BPNL of the provider.  When supplied the
+                lookup uses the composite unique key ``(document_id,
+                provider_bpn)`` for an exact match.
+        """
         stmt = select(CcmReceived).where(CcmReceived.document_id == document_id)
+        if provider_bpn is not None:
+            stmt = stmt.where(CcmReceived.provider_bpn == provider_bpn)
         return self._session.scalars(stmt).first()
 
     def find_by_provider_bpn(

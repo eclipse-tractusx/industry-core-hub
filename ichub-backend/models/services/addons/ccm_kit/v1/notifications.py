@@ -79,10 +79,12 @@ class CcmRequestContent(BaseModel):
     certified_bpn: str = Field(
         alias="certifiedBpn",
         pattern=_BPNL_PATTERN,
+        max_length=20,
         description="BPNL of the legal entity whose certificate is being requested.",
     )
     certificate_type: str = Field(
         alias="certificateType",
+        max_length=64,
         description="Certificate type identifier (e.g. ISO9001, IATF16949).",
     )
     location_bpns: Optional[List[str]] = Field(
@@ -169,6 +171,7 @@ class CcmSendStatusPayload(BaseModel):
     )
     document_id: str = Field(
         alias="documentId",
+        max_length=256,
         description="Reference ID of the certificate document.",
     )
     certificate_status: CertificateStatusValue = Field(
@@ -238,6 +241,7 @@ class CcmStatusContent(BaseModel):
     """
     document_id: str = Field(
         alias="documentId",
+        max_length=256,
         description="Internal reference ID of the certificate document.",
     )
     certificate_status: CertificateStatusValue = Field(
@@ -286,16 +290,19 @@ class CcmPushDocument(BaseModel):
     """
     document_id: str = Field(
         alias="documentID",
+        max_length=256,
         description="Provider-internal reference ID for this document.",
     )
     creation_date: Optional[str] = Field(
         default=None,
         alias="creationDate",
+        max_length=64,
         description="ISO 8601 timestamp when the document was created.",
     )
     content_type: str = Field(
         default="application/pdf",
         alias="contentType",
+        max_length=128,
         description="MIME type of the certificate document.",
     )
     content_base64: str = Field(
@@ -312,11 +319,13 @@ class CcmPushValidator(BaseModel):
     validator_name: Optional[str] = Field(
         default=None,
         alias="validatorName",
+        max_length=256,
         description="Name of the validating entity.",
     )
     validator_bpn: Optional[str] = Field(
         default=None,
         alias="validatorBpn",
+        max_length=20,
         description="BPNL of the validating entity.",
     )
 
@@ -328,11 +337,13 @@ class CcmPushIssuer(BaseModel):
     """Certification body that issued the certificate."""
     issuer_name: str = Field(
         alias="issuerName",
+        max_length=256,
         description="Name of the issuing authority (e.g. TÜV).",
     )
     issuer_bpn: Optional[str] = Field(
         default=None,
         alias="issuerBpn",
+        max_length=20,
         description="BPNL of the issuing authority.",
     )
 
@@ -344,11 +355,13 @@ class CcmPushCertificateType(BaseModel):
     """Certificate type with optional version."""
     certificate_type: str = Field(
         alias="certificateType",
+        max_length=64,
         description="Certificate type identifier (e.g. ISO9001).",
     )
     certificate_version: Optional[str] = Field(
         default=None,
         alias="certificateVersion",
+        max_length=32,
         description="Version of the certificate standard (e.g. 2015).",
     )
 
@@ -361,10 +374,12 @@ class CcmPushEnclosedSite(BaseModel):
     area_of_application: Optional[str] = Field(
         default=None,
         alias="areaOfApplication",
+        max_length=512,
         description="Scope of the certificate at this site.",
     )
     enclosed_site_bpn: str = Field(
         alias="enclosedSiteBpn",
+        max_length=20,
         description="BPNS or BPNA of the site covered.",
     )
 
@@ -383,6 +398,7 @@ class CcmPushContent(BaseModel):
     """
     business_partner_number: str = Field(
         alias="businessPartnerNumber",
+        max_length=20,
         description="BPNL of the certified legal entity.",
     )
     type: CcmPushCertificateType = Field(
@@ -396,10 +412,12 @@ class CcmPushContent(BaseModel):
     registration_number: Optional[str] = Field(
         default=None,
         alias="registrationNumber",
+        max_length=256,
         description="Official registration number at the certification authority.",
     )
     uploader: Optional[str] = Field(
         default=None,
+        max_length=20,
         description="BPNL of the company that originally provided the certificate.",
     )
     document: CcmPushDocument = Field(
@@ -412,21 +430,25 @@ class CcmPushContent(BaseModel):
     valid_until: Optional[str] = Field(
         default=None,
         alias="validUntil",
+        max_length=32,
         description="Expiry date (ISO 8601 date).",
     )
     valid_from: Optional[str] = Field(
         default=None,
         alias="validFrom",
+        max_length=32,
         description="Start date of validity (ISO 8601 date).",
     )
     trust_level: Optional[str] = Field(
         default=None,
         alias="trustLevel",
+        max_length=16,
         description="Trust level (none/low/high/trusted).",
     )
     area_of_application: Optional[str] = Field(
         default=None,
         alias="areaOfApplication",
+        max_length=512,
         description="Scope of the certificate.",
     )
     issuer: CcmPushIssuer = Field(
@@ -480,10 +502,12 @@ class CcmAvailableContent(BaseModel):
     """
     document_id: str = Field(
         alias="documentId",
+        max_length=256,
         description="Reference ID of the certificate now available.",
     )
     certificate_type: str = Field(
         alias="certificateType",
+        max_length=64,
         description="Type of the available certificate.",
     )
     location_bpns: Optional[List[str]] = Field(
@@ -555,6 +579,7 @@ class CcmPullRequest(BaseModel):
     )
     document_id: str = Field(
         alias="documentId",
+        max_length=256,
         description="The documentId (EDC asset ID) of the certificate to pull.",
     )
 

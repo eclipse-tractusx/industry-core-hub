@@ -38,7 +38,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import Column, Enum as SAEnum, LargeBinary
+from sqlalchemy import Column, Enum as SAEnum, LargeBinary, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -291,7 +291,6 @@ class CcmReceived(SQLModel, table=True):
     # --- Identity ---
     document_id: str = Field(
         index=True,
-        unique=True,
         description="Provider-assigned document reference ID.",
     )
     provider_bpn: str = Field(
@@ -324,11 +323,11 @@ class CcmReceived(SQLModel, table=True):
         default=None,
         description="Name of the third-party validator that verified this certificate.",
     )
-    valid_from: Optional[str] = Field(
+    valid_from: Optional[date] = Field(
         default=None,
         description="Start of the validity period.",
     )
-    valid_until: Optional[str] = Field(
+    valid_until: Optional[date] = Field(
         default=None,
         description="End of the validity period.",
     )
@@ -363,3 +362,9 @@ class CcmReceived(SQLModel, table=True):
     )
 
     __tablename__ = "ccm_received"
+    __table_args__ = (
+        UniqueConstraint(
+            "document_id", "provider_bpn",
+            name="uq_ccm_received_doc_provider",
+        ),
+    )

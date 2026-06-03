@@ -131,8 +131,8 @@ class CertificatesManager:
                 doc=file_content,
             )
 
-            # Flush to obtain the auto-generated primary key before creating sites.
-            repo.commit()
+            # Flush (without committing) to obtain the auto-generated PK.
+            repo.flush()
             repo.refresh(ccm_record)
 
             # Create site associations (one row per BPNS/BPNA).
@@ -142,7 +142,7 @@ class CertificatesManager:
                     site_bpn=site_bpn,
                 )
 
-            # Final commit persists everything atomically.
+            # Single commit — certificate + sites are persisted atomically.
             repo.commit()
 
             # Build site read models for the response.

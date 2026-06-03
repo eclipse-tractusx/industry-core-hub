@@ -67,6 +67,15 @@ class RepositoryManager:
         self._session.close()
 
     # Manual Session Control
+    def flush(self):
+        """Flush pending changes to the database without committing.
+
+        Useful to obtain auto-generated primary keys (e.g. after an INSERT)
+        while keeping the transaction open so that subsequent operations
+        are persisted atomically in a single ``commit()``.
+        """
+        self._session.flush()
+
     def commit(self):
         """Manually commit the session."""
         self._session.commit()

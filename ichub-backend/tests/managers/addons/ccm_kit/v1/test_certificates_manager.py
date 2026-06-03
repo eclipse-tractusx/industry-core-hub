@@ -108,6 +108,7 @@ class TestCertificatesManager:
         repos.certificate_share_repository = Mock()
         repos.commit = Mock()
         repos.refresh = Mock()
+        repos.flush = Mock()
         return repos
 
     # ------------------------------------------------------------------

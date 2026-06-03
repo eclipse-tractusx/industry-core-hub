@@ -21,7 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
 import binascii
@@ -333,6 +333,19 @@ class CcmNotificationService:
             logger.warning(f"Cannot parse documentId '{_s(document_id)}' as integer.")
             return None
 
+    @staticmethod
+    def _parse_date(value: str) -> Optional[date]:
+        """Parse an ISO 8601 date string (``YYYY-MM-DD``) into a ``date``.
+
+        Returns ``None`` if the string cannot be parsed, so the caller can
+        fall back gracefully without aborting the entire push.
+        """
+        try:
+            return date.fromisoformat(value[:10])
+        except (ValueError, TypeError):
+            logger.warning(f"Cannot parse date value '{_s(value)}'.")
+            return None
+
     # ------------------------------------------------------------------
     # Inbound PUSH processing (provider → this node as consumer)
     # ------------------------------------------------------------------
@@ -386,11 +399,21 @@ class CcmNotificationService:
                 return 400, {
                     "message": "Document content could not be decoded from Base64."
                 }
+            # Validate PDF magic bytes to reject non-PDF content.
+            if doc_bytes and not doc_bytes.startswith(b"%PDF-"):
+                logger.warning(
+                    f"Decoded content for {_s(content.document.document_id)} "
+                    f"is not a valid PDF (missing %%PDF- header)"
+                )
+                return 400, {
+                    "message": "Document is not a valid PDF.",
+                }
 
         with RepositoryManagerFactory.create() as repo:
-            # Check for duplicate
+            # Check for duplicate (scoped to this provider).
             existing = repo.ccm_received_repository.find_by_document_id(
-                content.document.document_id
+                content.document.document_id,
+                provider_bpn=sender_bpn,
             )
             if existing is not None:
                 logger.info(
@@ -414,9 +437,9 @@ class CcmNotificationService:
             if content.validator:
                 kwargs["validator_name"] = content.validator.validator_name
             if content.valid_from:
-                kwargs["valid_from"] = content.valid_from
+                kwargs["valid_from"] = self._parse_date(content.valid_from)
             if content.valid_until:
-                kwargs["valid_until"] = content.valid_until
+                kwargs["valid_until"] = self._parse_date(content.valid_until)
             if content.trust_level:
                 kwargs["trust_level"] = content.trust_level
             if content.registration_number:

@@ -78,6 +78,7 @@ class SiteRead(BaseModel):
     """
     site_bpn: str = Field(
         alias="siteBpn",
+        max_length=20,
         description="Business Partner Number Site (BPNS) or Address (BPNA)."
     )
 
@@ -95,10 +96,12 @@ class CertificateDocument(BaseModel):
     """
     document_title: str = Field(
         alias="documentTitle",
+        max_length=256,
         description="File name or title of the certificate PDF."
     )
     document_type: str = Field(
         alias="documentType",
+        max_length=128,
         description="MIME type of the document (e.g. 'application/pdf')."
     )
     document_content: str = Field(
@@ -120,22 +123,23 @@ class CertificateListItem(BaseModel):
 
     Does NOT include the PDF document to keep responses lean.
     """
-    certificate_id: str = Field(alias="certificateId")
+    certificate_id: str = Field(alias="certificateId", max_length=64)
     bpnl: str = Field(
         pattern=_BPNL_PATTERN,
+        max_length=20,
         description="BPNL of the certificate holder."
     )
-    certificate_type: str = Field(alias="certificateType")
-    certificate_name: Optional[str] = Field(default=None, alias="certificateName")
-    issuer: str
+    certificate_type: str = Field(alias="certificateType", max_length=64)
+    certificate_name: Optional[str] = Field(default=None, alias="certificateName", max_length=256)
+    issuer: str = Field(max_length=256)
     valid_from: date = Field(alias="validFrom")
     valid_until: Optional[date] = Field(default=None, alias="validUntil")
     trust_level: TrustLevelEnum = Field(default=TrustLevelEnum.none, alias="trustLevel")
-    registration_number: Optional[str] = Field(default=None, alias="registrationNumber")
-    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication")
-    validator: Optional[str] = Field(default=None)
-    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl")
-    description: Optional[str] = Field(default=None)
+    registration_number: Optional[str] = Field(default=None, alias="registrationNumber", max_length=256)
+    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication", max_length=512)
+    validator: Optional[str] = Field(default=None, max_length=256)
+    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl", max_length=20)
+    description: Optional[str] = Field(default=None, max_length=1024)
     sites: List[SiteRead] = Field(default_factory=list)
     created_at: Optional[datetime] = Field(default=None, alias="createdAt")
     updated_at: Optional[datetime] = Field(default=None, alias="updatedAt")
@@ -217,13 +221,16 @@ class UploadCertificateRequest(BaseModel):
     """
     bpnl: str = Field(
         pattern=_BPNL_PATTERN,
+        max_length=20,
         description="BPNL of the certificate holder."
     )
     certificate_type: str = Field(
         alias="certificateType",
+        max_length=64,
         description="Certificate type identifier (e.g. ISO9001, IATF16949)."
     )
     issuer: str = Field(
+        max_length=256,
         description="Certification body or authority that issued the certificate."
     )
     valid_from: date = Field(
@@ -238,16 +245,19 @@ class UploadCertificateRequest(BaseModel):
     certificate_name: Optional[str] = Field(
         default=None,
         alias="certificateName",
+        max_length=256,
         description="Human-readable display name for the certificate."
     )
     registration_number: Optional[str] = Field(
         default=None,
         alias="registrationNumber",
+        max_length=256,
         description="Official registration or serial number."
     )
     area_of_application: Optional[str] = Field(
         default=None,
         alias="areaOfApplication",
+        max_length=512,
         description="Textual scope of the certificate."
     )
     valid_until: Optional[date] = Field(
@@ -257,15 +267,18 @@ class UploadCertificateRequest(BaseModel):
     )
     validator: Optional[str] = Field(
         default=None,
+        max_length=256,
         description="BPN or URL of the third-party validator."
     )
     uploader_bpnl: Optional[str] = Field(
         default=None,
         alias="uploaderBpnl",
+        max_length=20,
         description="BPNL of the participant uploading the certificate."
     )
     description: Optional[str] = Field(
         default=None,
+        max_length=1024,
         description="Free-text notes about the certificate."
     )
     # Comma-separated list of BPNS/BPNA values supplied via form data.
@@ -296,17 +309,17 @@ class CertificateUpdate(BaseModel):
     The PDF document and BPNL are intentionally excluded — those cannot be
     changed after initial upload.
     """
-    certificate_type: Optional[str] = Field(default=None, alias="certificateType")
-    certificate_name: Optional[str] = Field(default=None, alias="certificateName")
-    issuer: Optional[str] = Field(default=None)
+    certificate_type: Optional[str] = Field(default=None, alias="certificateType", max_length=64)
+    certificate_name: Optional[str] = Field(default=None, alias="certificateName", max_length=256)
+    issuer: Optional[str] = Field(default=None, max_length=256)
     valid_from: Optional[date] = Field(default=None, alias="validFrom")
     valid_until: Optional[date] = Field(default=None, alias="validUntil")
     trust_level: Optional[TrustLevelEnum] = Field(default=None, alias="trustLevel")
-    registration_number: Optional[str] = Field(default=None, alias="registrationNumber")
-    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication")
-    validator: Optional[str] = Field(default=None)
-    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl")
-    description: Optional[str] = Field(default=None)
+    registration_number: Optional[str] = Field(default=None, alias="registrationNumber", max_length=256)
+    area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication", max_length=512)
+    validator: Optional[str] = Field(default=None, max_length=256)
+    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl", max_length=20)
+    description: Optional[str] = Field(default=None, max_length=1024)
     # Comma-separated BPNS/BPNA; if provided, replaces the existing site list.
     sites: Optional[str] = Field(default=None)
 
