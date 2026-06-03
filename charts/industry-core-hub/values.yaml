@@ -455,6 +455,8 @@ backend:
                   rightOperand: "active"
             prohibition: []
       ccm:
+        # -- Set to false to disable the CCM add-on (no EDC asset sync, no API routes registered)
+        enabled: true
         hostname: "http://<ichub-backend-hostname>"
         apiPath: "/addons/ccm-kit"
         uri: ""
@@ -473,13 +475,13 @@ backend:
               - action: "use"
                 constraint:
                   and:
-                    - leftOperand: "FrameworkAgreement"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                       operator: "eq"
                       rightOperand: "DataExchangeGovernance:1.0"
-                    - leftOperand: "Membership"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                       operator: "eq"
                       rightOperand: "active"
-                    - leftOperand: "UsagePurpose"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                       operator: "isAnyOf"
                       rightOperand: "cx.ccm.base:1"
             prohibition: []
@@ -492,7 +494,7 @@ backend:
             permission:
               - action: "access"
                 constraint:
-                  leftOperand: "Membership"
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []
@@ -511,13 +513,13 @@ backend:
                 - action: "use"
                   constraint:
                     and:
-                      - leftOperand: "FrameworkAgreement"
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                         operator: "eq"
                         rightOperand: "DataExchangeGovernance:1.0"
-                      - leftOperand: "Membership"
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                         operator: "eq"
                         rightOperand: "active"
-                      - leftOperand: "UsagePurpose"
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                         operator: "isAnyOf"
                         rightOperand: "cx.ccm.base:1"
               prohibition: []
@@ -530,7 +532,7 @@ backend:
               permission:
                 - action: "access"
                   constraint:
-                    leftOperand: "Membership"
+                    leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                     operator: "eq"
                     rightOperand: "active"
               prohibition: []

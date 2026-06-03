@@ -111,6 +111,13 @@ def _sync_ccm_asset_on_startup() -> None:
             )
             return
 
+        if not ccm_config.get("enabled", True):
+            startup_logger.info(
+                "[Startup] CCM is disabled (provider.ccm.enabled=false). "
+                "Skipping CCM asset sync."
+            )
+            return
+
         asset_config = ccm_config.get("asset_config", {})
         hostname = ccm_config.get("hostname", "").rstrip("/")
         api_path = ccm_config.get("apiPath", "").rstrip("/")

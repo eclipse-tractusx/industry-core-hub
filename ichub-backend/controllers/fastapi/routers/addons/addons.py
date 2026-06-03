@@ -22,6 +22,7 @@
 
 from fastapi import APIRouter, Depends
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
+from managers.config.config_manager import ConfigManager
 from .ecopass_kit import ecopass_kit
 from .ccm_kit import ccm_kit
 from .pcf_kit import pcf_kit
@@ -33,5 +34,9 @@ router = APIRouter(
 )
 
 router.include_router(ecopass_kit.router)
-router.include_router(ccm_kit.router)
+
+_ccm_provider_config = ConfigManager.get_config("provider.ccm", {})
+if _ccm_provider_config.get("enabled", True):
+    router.include_router(ccm_kit.router)
+
 router.include_router(pcf_kit.router)

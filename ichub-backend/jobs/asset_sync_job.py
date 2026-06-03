@@ -75,8 +75,9 @@ class AssetSyncJob:
             if self._pcf_kit_enablement_check():
                 self._sync_pcf_exchange_asset()
 
-            # Step 5: Sync Company Certificate Management notification asset
-            self._sync_ccm_asset()
+            # Step 5: Sync Company Certificate Management notification asset if enabled
+            if self._ccm_kit_enablement_check():
+                self._sync_ccm_asset()
             
             logger.info("[AssetSyncJob] Asset synchronization completed successfully.")
             
@@ -276,3 +277,17 @@ class AssetSyncJob:
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error checking PCF Kit enablement: {e}", exc_info=True)
             return False
+
+    def _ccm_kit_enablement_check(self) -> bool:
+        """
+        Check if the CCM Kit enablement is active in the configuration.
+
+        Returns:
+            bool: True if CCM Kit is enabled (default), False otherwise.
+        """
+        try:
+            ccm_config = ConfigManager.get_config("provider.ccm", {})
+            return ccm_config.get("enabled", True)
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error checking CCM Kit enablement: {e}", exc_info=True)
+            return True

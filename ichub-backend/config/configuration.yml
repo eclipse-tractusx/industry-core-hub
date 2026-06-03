@@ -422,6 +422,8 @@ provider:
         prohibitions: []
         obligations: []
   ccm:
+    # -- Set to false to disable the CCM add-on (no EDC asset sync, no API routes registered)
+    enabled: true
     hostname: "http://<ichub-backend-hostname>"
     apiPath: "/addons/ccm-kit"
     uri: ""
