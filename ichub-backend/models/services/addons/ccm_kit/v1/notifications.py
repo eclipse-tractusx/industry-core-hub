@@ -41,6 +41,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from tools.constants import BPNL_PATTERN as _BPNL_PATTERN
+from tractusx_sdk.industry.models.notifications import NotificationHeader  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -609,6 +610,81 @@ class CcmPullResult(BaseModel):
     stored: bool = Field(
         default=False,
         description="Whether the certificate was stored in the local database.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+# ---------------------------------------------------------------------------
+# Typed notification body models (OpenAPI / Swagger documentation)
+# ---------------------------------------------------------------------------
+
+class CcmRequestNotification(BaseModel):
+    """
+    Typed request body for ``POST /companycertificate/request``.
+
+    A consumer sends this notification to request a certificate from a provider.
+    """
+    header: NotificationHeader = Field(
+        description="Standard Tractus-X notification header."
+    )
+    content: CcmRequestContent = Field(
+        description="CCM request content: certifiedBpn + certificateType."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmStatusNotification(BaseModel):
+    """
+    Typed request body for ``POST /companycertificate/status``.
+
+    A consumer sends this notification to report the processing result for a
+    previously received certificate (RECEIVED, ACCEPTED, or REJECTED).
+    """
+    header: NotificationHeader = Field(
+        description="Standard Tractus-X notification header."
+    )
+    content: CcmStatusContent = Field(
+        description="CCM status content: documentId + certificateStatus."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPushNotification(BaseModel):
+    """
+    Typed request body for ``POST /companycertificate/push``.
+
+    A provider sends this notification to push the full certificate payload
+    (including the Base64-encoded document) to a consumer.
+    """
+    header: NotificationHeader = Field(
+        description="Standard Tractus-X notification header."
+    )
+    content: CcmPushContent = Field(
+        description="Full BusinessPartnerCertificate push payload."
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmAvailableNotification(BaseModel):
+    """
+    Typed request body for ``POST /companycertificate/available``.
+
+    A provider sends this notification to inform a consumer that a certificate
+    is now available for PULL retrieval via the EDC catalog.
+    """
+    header: NotificationHeader = Field(
+        description="Standard Tractus-X notification header."
+    )
+    content: CcmAvailableContent = Field(
+        description="CCM available content: documentId + certificateType."
     )
 
     class Config:

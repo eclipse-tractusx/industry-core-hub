@@ -277,12 +277,6 @@ class UploadCertificateRequest(BaseModel):
         max_length=256,
         description="BPN or URL of the third-party validator."
     )
-    uploader_bpnl: Optional[str] = Field(
-        default=None,
-        alias="uploaderBpnl",
-        max_length=20,
-        description="BPNL of the participant uploading the certificate."
-    )
     description: Optional[str] = Field(
         default=None,
         max_length=1024,
@@ -325,7 +319,6 @@ class CertificateUpdate(BaseModel):
     registration_number: Optional[str] = Field(default=None, alias="registrationNumber", max_length=256)
     area_of_application: Optional[str] = Field(default=None, alias="areaOfApplication", max_length=512)
     validator: Optional[str] = Field(default=None, max_length=256)
-    uploader_bpnl: Optional[str] = Field(default=None, alias="uploaderBpnl", max_length=20)
     description: Optional[str] = Field(default=None, max_length=1024)
     # Comma-separated BPNS/BPNA; if provided, replaces the existing site list.
     sites: Optional[str] = Field(default=None)

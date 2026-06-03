@@ -126,7 +126,6 @@ class CertificatesManager:
                 area_of_application=metadata.area_of_application,
                 valid_until=metadata.valid_until,
                 validator=metadata.validator,
-                uploader_bpnl=metadata.uploader_bpnl,
                 description=metadata.description,
                 doc=file_content,
             )
@@ -176,7 +175,6 @@ class CertificatesManager:
             registrationNumber=metadata.registration_number,
             areaOfApplication=metadata.area_of_application,
             validator=metadata.validator,
-            uploaderBpnl=metadata.uploader_bpnl,
             description=metadata.description,
             sites=sites_read,
             document=document,

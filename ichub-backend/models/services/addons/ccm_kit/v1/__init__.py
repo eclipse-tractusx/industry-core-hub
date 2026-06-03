@@ -64,4 +64,9 @@ from .notifications import (
     # Available models
     CcmAvailableContent,
     CcmAvailableRequest,
+    # Typed notification body models (for OpenAPI documentation)
+    CcmRequestNotification,
+    CcmStatusNotification,
+    CcmPushNotification,
+    CcmAvailableNotification,
 )

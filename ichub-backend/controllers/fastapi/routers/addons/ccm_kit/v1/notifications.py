@@ -35,12 +35,16 @@ Inbound notification endpoints for both PULL-flow and PUSH-flow:
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from tractusx_sdk.industry.models.notifications import Notification
-
 from controllers.fastapi.routers.authentication.auth_api import (
     get_authentication_dependency,
 )
 from managers.config.log_manager import LoggingManager
+from models.services.addons.ccm_kit.v1.notifications import (
+    CcmAvailableNotification,
+    CcmPushNotification,
+    CcmRequestNotification,
+    CcmStatusNotification,
+)
 from services.addons.ccm_kit.v1.ccm_notification_service import (
     ccm_notification_service,
 )
@@ -56,7 +60,7 @@ router = APIRouter(
 
 
 @router.post("/request")
-async def certificate_request(notification: Notification) -> JSONResponse:
+async def certificate_request(notification: CcmRequestNotification) -> JSONResponse:
     """
     Receive a certificate-request notification from a consumer.
 
@@ -78,7 +82,7 @@ async def certificate_request(notification: Notification) -> JSONResponse:
 
 
 @router.post("/status")
-async def update_certificate_status(notification: Notification) -> JSONResponse:
+async def update_certificate_status(notification: CcmStatusNotification) -> JSONResponse:
     """
     Receive a status-update notification from a consumer.
 
@@ -98,7 +102,7 @@ async def update_certificate_status(notification: Notification) -> JSONResponse:
 
 
 @router.post("/push")
-async def certificate_push(notification: Notification) -> JSONResponse:
+async def certificate_push(notification: CcmPushNotification) -> JSONResponse:
     """
     Receive a certificate-push notification from a provider.
 
@@ -118,7 +122,7 @@ async def certificate_push(notification: Notification) -> JSONResponse:
 
 
 @router.post("/available")
-async def certificate_available(notification: Notification) -> JSONResponse:
+async def certificate_available(notification: CcmAvailableNotification) -> JSONResponse:
     """
     Receive a certificate-available notification from a provider.
 
