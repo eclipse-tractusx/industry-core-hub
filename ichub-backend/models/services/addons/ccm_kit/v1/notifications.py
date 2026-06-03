@@ -36,7 +36,7 @@ Notification contexts:
 """
 
 from enum import Enum
-from typing import Any, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -189,12 +189,12 @@ class CcmSendStatusPayload(BaseModel):
         alias="locationBpns",
         description="Locations covered by this status feedback.",
     )
-    certificate_errors: Optional[List[Any]] = Field(
+    certificate_errors: Optional[List["CertificateErrorDetail"]] = Field(
         default=None,
         alias="certificateErrors",
         description="Top-level errors (when REJECTED).",
     )
-    location_errors: Optional[List[Any]] = Field(
+    location_errors: Optional[List["LocationErrorDetail"]] = Field(
         default=None,
         alias="locationErrors",
         description="Per-location errors (when REJECTED).",
@@ -228,6 +228,10 @@ class LocationErrorDetail(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+# Resolve forward references used in CcmSendStatusPayload
+CcmSendStatusPayload.model_rebuild()
 
 
 class CcmStatusContent(BaseModel):
@@ -474,6 +478,7 @@ class CcmPushRequest(BaseModel):
     )
     certificate_id: int = Field(
         alias="certificateId",
+        gt=0,
         description="Internal ID of the certificate to push.",
     )
     consumer_bpn: str = Field(
@@ -535,6 +540,7 @@ class CcmAvailableRequest(BaseModel):
     )
     certificate_id: int = Field(
         alias="certificateId",
+        gt=0,
         description="Internal ID of the certificate that is now available.",
     )
     consumer_bpn: str = Field(
@@ -550,6 +556,7 @@ class CcmPublishRequest(BaseModel):
     """Request body for publishing a certificate as an EDC asset."""
     certificate_id: int = Field(
         alias="certificateId",
+        gt=0,
         description="Internal DB ID of the certificate to publish.",
     )
 

@@ -38,7 +38,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import Column, Enum as SAEnum, LargeBinary, UniqueConstraint
+from sqlalchemy import Column, Enum as SAEnum, Index, LargeBinary, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -187,6 +187,9 @@ class Ccm(SQLModel, table=True):
     shares: List["CertificateShare"] = Relationship(back_populates="certificate")
 
     __tablename__ = "ccm"
+    __table_args__ = (
+        Index("ix_ccm_bpnl_certificate_type", "bpnl", "certificate_type"),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -270,6 +273,13 @@ class CertificateShare(SQLModel, table=True):
     certificate: Optional[Ccm] = Relationship(back_populates="shares")
 
     __tablename__ = "certificate_share"
+    __table_args__ = (
+        Index(
+            "ix_cert_share_certificate_id_consumer_bpnl",
+            "certificate_id",
+            "consumer_bpnl",
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------

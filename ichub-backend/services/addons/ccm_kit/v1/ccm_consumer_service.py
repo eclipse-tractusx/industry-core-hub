@@ -32,16 +32,20 @@ Provides four operations:
    EDC catalog via the PULL mechanism (HttpData asset).
 """
 
-import time
+import base64
+import binascii
 import math
+import time
 import uuid
 from typing import Dict, Optional
+
 import requests as http_requests
 
 from connector import consumer_connector_service
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
+from models.metadata_database.addons.ccm_kit.v1.models import CcmReceived
 from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
@@ -314,7 +318,7 @@ class CcmConsumerService(CcmBaseService):
                 edr_entry = consumer_connector_service.get_edr_entry(
                     negotiation_id=negotiation_id
                 )
-                if edr_entry:
+                if edr_entry and edr_entry.get("endpoint") and edr_entry.get("authorization"):
                     break
                 # Exponential backoff: 1s, 2s, 4s … capped at 10s.
                 delay = min(math.pow(2, attempt), 10)
@@ -338,9 +342,20 @@ class CcmConsumerService(CcmBaseService):
             headers = consumer_connector_service.get_data_plane_headers(
                 access_token=token
             )
-            response = http_requests.get(endpoint, headers=headers, timeout=30)
+            timeout_sec = int(
+                ConfigManager.get_config(
+                    "consumer.ccm.data_plane_timeout_sec", default=60
+                )
+            )
+            response = http_requests.get(endpoint, headers=headers, timeout=timeout_sec)
             response.raise_for_status()
-            certificate_data = response.json()
+            try:
+                certificate_data = response.json()
+            except ValueError as json_err:
+                logger.error(
+                    f"[CCM Consumer] Invalid JSON from data plane: {_s(json_err)}"
+                )
+                return CcmPullResult(certificate_data={}, stored=False)
 
         except Exception as e:
             logger.error(
@@ -437,9 +452,6 @@ class CcmConsumerService(CcmBaseService):
 
         Returns ``True`` on success, ``False`` on failure.
         """
-        import base64
-        from models.metadata_database.addons.ccm_kit.v1.models import CcmReceived
-
         try:
             # Parse fields from the BusinessPartnerCertificate payload
             doc_section = certificate_data.get("document", {})
@@ -451,7 +463,13 @@ class CcmConsumerService(CcmBaseService):
             doc_bytes = None
             content_b64 = doc_section.get("contentBase64")
             if content_b64:
-                doc_bytes = base64.b64decode(content_b64)
+                try:
+                    doc_bytes = base64.b64decode(content_b64)
+                except (binascii.Error) as b64_err:
+                    logger.warning(
+                        f"[CCM Consumer] Failed to decode base64 document "
+                        f"for {_s(document_id)}: {_s(b64_err)}"
+                    )
 
             received = CcmReceived(
                 document_id=document_id,

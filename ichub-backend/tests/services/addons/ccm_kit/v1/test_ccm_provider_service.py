@@ -458,3 +458,314 @@ class TestBuildPushContent:
         assert "areaOfApplication" not in content
         assert "uploader" not in content
         assert "validator" not in content
+
+
+# ---------------------------------------------------------------------------
+# Publish Certificate Tests
+# ---------------------------------------------------------------------------
+
+
+class TestPublishCertificate:
+    """Tests for CcmProviderService.publish_certificate"""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_publish_success(
+        self, mock_factory, mock_cpm, mock_config, service
+    ):
+        """
+        GIVEN a valid certificate without an existing EDC asset
+        WHEN publish_certificate is called
+        THEN an EDC asset is registered and the asset ID is persisted.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = None
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cpm.build_ccm_certificate_payload_url.return_value = (
+            "https://backend.example.com/provider/certificates/42/payload"
+        )
+        mock_config.get_config.return_value = {"permissions": [{"action": "use"}]}
+        mock_cpm.register_ccm_certificate_offer.return_value = (
+            "ichub:asset:ccm-cert:new-uuid", "policy-1", "contract-1", "def-1"
+        )
+
+        result = service.publish_certificate(CERT_ID)
+
+        assert result["document_id"] == "ichub:asset:ccm-cert:new-uuid"
+        assert result["certificate_id"] == CERT_ID
+        repos.ccm_repository.update.assert_called_once()
+        repos.commit.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_publish_certificate_not_found(self, mock_factory, service):
+        """
+        GIVEN a non-existent certificate ID
+        WHEN publish_certificate is called
+        THEN a ValueError is raised.
+        """
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(ValueError, match="not found"):
+            service.publish_certificate(999)
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_publish_reuses_existing_asset_id(
+        self, mock_factory, mock_cpm, mock_config, service
+    ):
+        """
+        GIVEN a certificate that already has an edc_asset_id
+        WHEN publish_certificate is called
+        THEN the existing asset ID is reused.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = "existing-asset-id"
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cpm.build_ccm_certificate_payload_url.return_value = (
+            "https://backend.example.com/provider/certificates/42/payload"
+        )
+        mock_config.get_config.return_value = {"permissions": [{"action": "use"}]}
+        mock_cpm.register_ccm_certificate_offer.return_value = (
+            "existing-asset-id", "policy-1", "contract-1", "def-1"
+        )
+
+        result = service.publish_certificate(CERT_ID)
+
+        call_args = mock_cpm.register_ccm_certificate_offer.call_args
+        assert call_args[1]["asset_id"] == "existing-asset-id"
+        assert result["asset_id"] == "existing-asset-id"
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_publish_missing_policy_config(
+        self, mock_factory, mock_cpm, mock_config, service
+    ):
+        """
+        GIVEN no policy configuration
+        WHEN publish_certificate is called
+        THEN a ValueError is raised about missing policy.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = None
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cpm.build_ccm_certificate_payload_url.return_value = (
+            "https://backend.example.com/provider/certificates/42/payload"
+        )
+        mock_config.get_config.return_value = None
+
+        with pytest.raises(ValueError, match="Missing configuration"):
+            service.publish_certificate(CERT_ID)
+
+
+# ---------------------------------------------------------------------------
+# Unpublish Certificate Tests
+# ---------------------------------------------------------------------------
+
+
+class TestUnpublishCertificate:
+    """Tests for CcmProviderService.unpublish_certificate"""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_unpublish_success(self, mock_factory, mock_cpm, service):
+        """
+        GIVEN a published certificate
+        WHEN unpublish_certificate is called
+        THEN the EDC asset is deleted and edc_asset_id is cleared.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = "asset-to-remove"
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        service.unpublish_certificate(CERT_ID)
+
+        mock_cpm.delete_ccm_certificate_offer.assert_called_once_with(
+            "asset-to-remove"
+        )
+        assert ccm.edc_asset_id is None
+        repos.commit.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_unpublish_not_found(self, mock_factory, service):
+        """
+        GIVEN a non-existent certificate ID
+        WHEN unpublish_certificate is called
+        THEN a ValueError is raised.
+        """
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(ValueError, match="not found"):
+            service.unpublish_certificate(999)
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_unpublish_not_published(self, mock_factory, service):
+        """
+        GIVEN a certificate that is not published
+        WHEN unpublish_certificate is called
+        THEN a ValueError is raised.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = None
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(ValueError, match="not published"):
+            service.unpublish_certificate(CERT_ID)
+
+
+# ---------------------------------------------------------------------------
+# Get Certificate Payload Tests
+# ---------------------------------------------------------------------------
+
+
+class TestGetCertificatePayload:
+    """Tests for CcmProviderService.get_certificate_payload"""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_payload_returns_push_content(self, mock_factory, service):
+        """
+        GIVEN a valid certificate
+        WHEN get_certificate_payload is called
+        THEN it returns the CX-0135 BusinessPartnerCertificate structure.
+        """
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        result = service.get_certificate_payload(CERT_ID)
+
+        assert result["businessPartnerNumber"] == "BPNL000000000001"
+        assert result["type"]["certificateType"] == "ISO9001"
+        assert "contentBase64" in result["document"]
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_payload_not_found(self, mock_factory, service):
+        """
+        GIVEN a non-existent certificate ID
+        WHEN get_certificate_payload is called
+        THEN a ValueError is raised.
+        """
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(ValueError, match="not found"):
+            service.get_certificate_payload(999)
+
+
+# ---------------------------------------------------------------------------
+# Push Share Status Error Handling Tests
+# ---------------------------------------------------------------------------
+
+
+class TestPushShareStatusErrorHandling:
+    """Tests for push_certificate when _update_share_status fails."""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".CcmProviderService._update_share_status"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_succeeds_even_if_share_update_fails(
+        self, mock_factory, mock_cm, mock_ncs_class, mock_update_share, service
+    ):
+        """
+        GIVEN a successful push notification
+        WHEN _update_share_status raises an exception
+        THEN the push result is still success (status update is best-effort).
+        """
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint.return_value = (
+            "https://endpoint.example.com",
+            "token123",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        mock_update_share.side_effect = Exception("DB connection lost")
+
+        result = service.push_certificate(_push_request(), SENDER_BPN)
+
+        assert result.success is True
+        mock_update_share.assert_called_once()

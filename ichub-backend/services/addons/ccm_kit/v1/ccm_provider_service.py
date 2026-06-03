@@ -136,10 +136,16 @@ class CcmProviderService(CcmBaseService):
 
         # --- 4. Update share record on success ---
         if result.success:
-            self._update_share_status(
-                certificate_id=request.certificate_id,
-                consumer_bpn=consumer_bpn,
-            )
+            try:
+                self._update_share_status(
+                    certificate_id=request.certificate_id,
+                    consumer_bpn=consumer_bpn,
+                )
+            except Exception as e:
+                logger.error(
+                    f"[CCM Provider] Push succeeded but failed to update "
+                    f"share status for cert {request.certificate_id}: {_s(e)}"
+                )
 
         return result
 
@@ -251,6 +257,11 @@ class CcmProviderService(CcmBaseService):
             policy_config = ConfigManager.get_config(
                 "provider.ccm.certificate_asset.policy"
             )
+            if policy_config is None:
+                raise ValueError(
+                    "Missing configuration 'provider.ccm.certificate_asset.policy'. "
+                    "Cannot publish certificate without a policy definition."
+                )
 
             # Register asset + policies + contract via the connector manager
             asset_id, _, _, _ = (

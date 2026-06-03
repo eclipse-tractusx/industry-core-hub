@@ -38,6 +38,7 @@ from services.addons.ccm_kit.v1.ccm_consumer_service import CcmConsumerService
 from tools.constants import CCM_DCT_TYPE
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
+    CcmPullRequest,
     CcmSendRequestPayload,
     CcmSendStatusPayload,
     CertificateStatusValue,
@@ -359,7 +360,9 @@ class TestSendCertificateStatus:
         call_args = mock_ncs.send_notification_to_endpoint.call_args
         notification = call_args[1]["notification"]
         assert notification.content.model_extra.get("certificateStatus") == "REJECTED"
-        assert notification.content.model_extra.get("certificateErrors") == [{"message": "Certificate expired"}]
+        cert_errors = notification.content.model_extra.get("certificateErrors")
+        assert len(cert_errors) == 1
+        assert cert_errors[0].message == "Certificate expired"
 
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_send_status_discovery_failure(self, mock_cm, service):
@@ -550,3 +553,265 @@ class TestExtractAssetId:
     def test_id_key_fallback(self):
         catalog = {"dcat:dataset": {"id": "fallback-id"}}
         assert CcmConsumerService._extract_asset_id(catalog) == "fallback-id"
+
+
+# ---------------------------------------------------------------------------
+# Pull Certificate Tests
+# ---------------------------------------------------------------------------
+
+
+class TestPullCertificate:
+    """Tests for CcmConsumerService.pull_certificate"""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service"
+        ".CcmConsumerService._store_received_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.http_requests"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_success(
+        self, mock_cm, mock_config, mock_ccs, mock_http, mock_store, service
+    ):
+        """Full pull flow succeeds end-to-end."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = "1"
+
+        mock_ccs.get_catalog_by_dct_type.return_value = {
+            "dcat:dataset": {
+                "@id": "doc-001",
+                "odrl:hasPolicy": {"@id": "policy-1"},
+            }
+        }
+        mock_ccs.start_edr_negotiation.return_value = "neg-123"
+        mock_ccs.get_edr_entry.return_value = {
+            "endpoint": "https://dp.example.com/data",
+            "authorization": "token-abc",
+        }
+        mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
+
+        response_mock = Mock()
+        response_mock.json.return_value = {"businessPartnerNumber": "BPNL000000000001"}
+        response_mock.raise_for_status.return_value = None
+        mock_http.get.return_value = response_mock
+
+        mock_store.return_value = True
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+        result = service.pull_certificate(request)
+
+        assert result.certificate_data == {"businessPartnerNumber": "BPNL000000000001"}
+        assert result.stored is True
+        mock_store.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_discovery_failure(self, mock_cm, service):
+        """Discovery failure returns empty result."""
+        mock_cm.consumer.get_connectors.return_value = []
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+        result = service.pull_certificate(request)
+
+        assert result.certificate_data == {}
+        assert result.stored is False
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_asset_not_in_catalog(self, mock_cm, mock_ccs, service):
+        """Requested asset ID is not found in provider's catalog."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_ccs.get_catalog_by_dct_type.return_value = {
+            "dcat:dataset": {"@id": "other-asset"}
+        }
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+        result = service.pull_certificate(request)
+
+        assert result.certificate_data == {}
+        assert result.stored is False
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.http_requests"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_edr_timeout(
+        self, mock_cm, mock_config, mock_ccs, mock_http, service
+    ):
+        """EDR polling exhausts retries without getting a valid entry."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = "2"
+
+        mock_ccs.get_catalog_by_dct_type.return_value = {
+            "dcat:dataset": {
+                "@id": "doc-001",
+                "odrl:hasPolicy": {"@id": "policy-1"},
+            }
+        }
+        mock_ccs.start_edr_negotiation.return_value = "neg-123"
+        mock_ccs.get_edr_entry.return_value = None
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+
+        # Patch time.sleep to avoid delays
+        with patch("services.addons.ccm_kit.v1.ccm_consumer_service.time.sleep"):
+            result = service.pull_certificate(request)
+
+        assert result.certificate_data == {}
+        assert result.stored is False
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.http_requests"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_invalid_json_response(
+        self, mock_cm, mock_config, mock_ccs, mock_http, service
+    ):
+        """Data plane returns non-JSON response."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = "1"
+
+        mock_ccs.get_catalog_by_dct_type.return_value = {
+            "dcat:dataset": {
+                "@id": "doc-001",
+                "odrl:hasPolicy": {"@id": "policy-1"},
+            }
+        }
+        mock_ccs.start_edr_negotiation.return_value = "neg-123"
+        mock_ccs.get_edr_entry.return_value = {
+            "endpoint": "https://dp.example.com/data",
+            "authorization": "token-abc",
+        }
+        mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
+
+        response_mock = Mock()
+        response_mock.raise_for_status.return_value = None
+        response_mock.json.side_effect = ValueError("No JSON object could be decoded")
+        mock_http.get.return_value = response_mock
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+        result = service.pull_certificate(request)
+
+        assert result.certificate_data == {}
+        assert result.stored is False
+
+
+# ---------------------------------------------------------------------------
+# _store_received_certificate Tests
+# ---------------------------------------------------------------------------
+
+
+class TestStoreReceivedCertificate:
+    """Tests for CcmConsumerService._store_received_certificate"""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
+    )
+    def test_store_success(self, mock_factory, service):
+        """Certificate data is stored successfully."""
+        repos = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+            "document": {"documentID": "1", "contentBase64": "AQID"},
+            "issuer": {"issuerName": "Test Issuer"},
+            "validator": {"validatorName": "Test Validator"},
+            "validFrom": "2024-01-01",
+            "validUntil": "2027-12-31",
+            "trustLevel": "high",
+            "registrationNumber": "REG-001",
+            "areaOfApplication": "Manufacturing",
+            "uploader": "BPNL00000003AYRE",
+        }
+
+        stored = service._store_received_certificate(
+            certificate_data=cert_data,
+            provider_bpn=PROVIDER_BPN,
+            document_id="doc-001",
+        )
+
+        assert stored is True
+        repos.session.add.assert_called_once()
+        repos.commit.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
+    )
+    def test_store_invalid_base64_still_stores(self, mock_factory, service):
+        """Invalid base64 content is logged as warning but storage proceeds."""
+        repos = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+            "document": {"contentBase64": "!!!invalid-base64!!!"},
+            "issuer": {},
+            "validator": {},
+        }
+
+        stored = service._store_received_certificate(
+            certificate_data=cert_data,
+            provider_bpn=PROVIDER_BPN,
+            document_id="doc-002",
+        )
+
+        assert stored is True
+        repos.session.add.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
+    )
+    def test_store_db_error(self, mock_factory, service):
+        """Database commit failure returns False."""
+        repos = Mock()
+        repos.commit.side_effect = Exception("DB connection lost")
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+            "document": {},
+            "issuer": {},
+            "validator": {},
+        }
+
+        stored = service._store_received_certificate(
+            certificate_data=cert_data,
+            provider_bpn=PROVIDER_BPN,
+            document_id="doc-003",
+        )
+
+        assert stored is False
