@@ -25,6 +25,7 @@ from urllib.parse import quote
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
 from tractusx_sdk.industry.services.notifications import NotificationService
 from managers.config.log_manager import LoggingManager
+from managers.config.config_manager import ConfigManager
 from tools.exceptions import NotFoundError
 from tools.constants import (
     ODRL_CONTEXT, CX_POLICY_CONTEXT, TYPE,
@@ -701,6 +702,10 @@ class ConnectorProviderManager:
         The URL points to the ``GET /provider/certificates/{id}/payload``
         endpoint on this ichub-backend instance.
 
+        Uses ``provider.ccm.hostname`` when available (the clean base URL
+        without any path prefix), falling back to the global ``ichub_url``
+        with trailing ``/v1`` stripped to avoid double-prefix issues.
+
         Args:
             certificate_id: Primary key of the certificate in the local DB.
 
@@ -708,9 +713,15 @@ class ConnectorProviderManager:
             Full URL string, e.g.
             ``https://ichub-backend/v1/addons/ccm-kit/provider/certificates/42/payload``.
         """
-        return (
-            f"{self.ichub_url}/v1/addons/ccm-kit/provider/certificates/{certificate_id}/payload"
-        )
+        ccm_hostname = ConfigManager.get_config("provider.ccm.hostname", default=None)
+        if ccm_hostname:
+            base = ccm_hostname.rstrip("/")
+        else:
+            base = self.ichub_url.rstrip("/")
+            # Fallback normalisation: strip trailing /v1 added by some hostname configs
+            if base.endswith("/v1"):
+                base = base[:-3]
+        return f"{base}/v1/addons/ccm-kit/provider/certificates/{certificate_id}/payload"
 
     def create_ccm_certificate_asset(
         self,
