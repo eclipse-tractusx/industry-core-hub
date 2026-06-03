@@ -144,10 +144,13 @@ class CertificatesManager:
             # Single commit — certificate + sites are persisted atomically.
             repo.commit()
 
+            created_at = ccm_record.created_at
+            updated_at = ccm_record.updated_at
+            certificate_id = str(ccm_record.id)
+
             # Build site read models for the response.
             sites_read = [SiteRead(siteBpn=s) for s in site_bpns]
 
-            certificate_id = str(ccm_record.id)
             logger.info(
                 "Certificate %s persisted for BPNL %s (type: %s)",
                 certificate_id,
@@ -178,8 +181,8 @@ class CertificatesManager:
             description=metadata.description,
             sites=sites_read,
             document=document,
-            createdAt=ccm_record.created_at,
-            updatedAt=ccm_record.updated_at,
+            createdAt=created_at,
+            updatedAt=updated_at,
         )
 
         return UploadCertificateResponse(
