@@ -108,11 +108,11 @@ async def send_pcf_request_to_participant(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests/{requestId}/response")
-async def consult_pcf_response(request_id: str = Path(..., alias="requestId")) -> JSONResponse:
+@router.get("/requests/{requestId}/response", response_model=PcfExchangeModel, response_model_by_alias=True)
+async def consult_pcf_response(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
     try:
         result = consumption_manager.consult_pcf_response(request_id=request_id)
-        return JSONResponse(status_code=200, content=result.model_dump(by_alias=True))
+        return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
