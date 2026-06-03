@@ -535,8 +535,7 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-
-        return [self._to_received_item(r) for r in records]
+            return [self._to_received_item(r) for r in records]
 
     def get_received(self, received_id: int) -> Optional[ReceivedCertificateDetail]:
         """
@@ -553,21 +552,21 @@ class CcmConsumerService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             record = repo.ccm_received_repository.find_by_id(received_id)
 
-        if record is None:
-            return None
+            if record is None:
+                return None
 
-        item = self._to_received_item(record)
-        detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
-        detail.certificate_version = record.certificate_version
-        detail.issuer_name = record.issuer_name
-        detail.issuer_bpn = record.issuer_bpn
-        detail.validator_name = record.validator_name
-        detail.registration_number = record.registration_number
-        detail.area_of_application = record.area_of_application
-        detail.uploader_bpn = record.uploader_bpn
-        if record.doc:
-            detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
-        return detail
+            item = self._to_received_item(record)
+            detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
+            detail.certificate_version = record.certificate_version
+            detail.issuer_name = record.issuer_name
+            detail.issuer_bpn = record.issuer_bpn
+            detail.validator_name = record.validator_name
+            detail.registration_number = record.registration_number
+            detail.area_of_application = record.area_of_application
+            detail.uploader_bpn = record.uploader_bpn
+            if record.doc:
+                detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
+            return detail
 
     # ------------------------------------------------------------------
     # Visibility: outbound requests
@@ -614,8 +613,7 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-
-        return [self._to_request_item(r) for r in records]
+            return [self._to_request_item(r) for r in records]
 
     def get_request(self, request_id: int) -> Optional[OutboundRequestItem]:
         """
@@ -630,10 +628,10 @@ class CcmConsumerService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             record = repo.ccm_outbound_request_repository.find_by_id(request_id)
 
-        if record is None:
-            return None
+            if record is None:
+                return None
 
-        return self._to_request_item(record)
+            return self._to_request_item(record)
 
     # ------------------------------------------------------------------
     # Private mapping helpers
