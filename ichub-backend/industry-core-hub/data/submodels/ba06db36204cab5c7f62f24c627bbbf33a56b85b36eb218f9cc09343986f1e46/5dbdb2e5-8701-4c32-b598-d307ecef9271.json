@@ -1,0 +1,16 @@
+{
+  "childItems": [
+    {
+      "quantity": {
+        "value": 2,
+        "unit": "unit:squareCentimetre"
+      },
+      "hasAlternatives": true,
+      "lastModifiedOn": "2024-01-15T10:30:00Z",
+      "createdOn": "2024-01-15T10:30:00Z",
+      "globalAssetId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+      "businessPartner": "BPNL00000003CSGV"
+    }
+  ],
+  "globalAssetId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000"
+}

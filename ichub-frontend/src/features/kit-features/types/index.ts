@@ -26,6 +26,8 @@ export interface KitFeatureItem {
   name: string;
   description: string;
   icon?: React.ReactElement; // Icon for the feature
+  color?: string; // Optional feature accent color for cards
+  glowColor?: string; // Optional stronger color used for icon/button glow
   enabled: boolean;
   default?: boolean; // If true, this feature cannot be toggled off
   module?: any; // The imported feature module (FeatureConfig)

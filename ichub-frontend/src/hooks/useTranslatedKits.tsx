@@ -41,7 +41,10 @@ import {
   PostAdd,
   Calculate,
   CloudUpload,
-  Inbox
+  Inbox,
+  Settings,
+  CloudDownload,
+  CloudUpload as CloudUploadArrow
 } from '@mui/icons-material';
 import { KitFeature } from '@/features/kit-features/types';
 import { FeatureConfig } from '@/types/routing';
@@ -66,6 +69,9 @@ import { passportProvisionFeature } from '@/features/eco-pass-kit/passport-provi
 import { pcfRequestFeature } from '@/features/pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from '@/features/pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from '@/features/pcf-kit/pcf-management/routes';
+import { traceabilityPreparationFeature } from '@/features/traceability-kit/traceability-preparation/routes';
+import { traceabilityQualityInvestigationFeature } from '@/features/traceability-kit/traceability-quality-investigation/routes';
+import { traceabilityQualityAlertsFeature } from '@/features/traceability-kit/traceability-quality-alerts/routes';
 
 /**
  * Hook that returns translated KIT configurations.
@@ -255,11 +261,45 @@ export const useTranslatedKits = (): KitFeature[] => {
       id: 'traceability',
       name: t('items.traceability.name'),
       description: t('items.traceability.description'),
-      status: 'coming-soon',
+      status: 'beta',
       icon: <Timeline />,
       image: TraceabilityKitImage,
-      features: [],
-      version: '0.0.0',
+      features: [
+        {
+          module: traceabilityPreparationFeature,
+          id: 'traceability-preparation',
+          name: t('items.traceability.features.traceabilityPreparation.name', { defaultValue: 'Traceability Preparation' }),
+          description: t('items.traceability.features.traceabilityPreparation.description', { defaultValue: 'Prepare parts and structures for traceability workflows.' }),
+          icon: <Settings />,
+          color: '#ff8c00',
+          glowColor: '#ff6600',
+          enabled: false,
+          default: false
+        },
+        {
+          module: traceabilityQualityInvestigationFeature,
+          id: 'traceability-quality-investigation',
+          name: t('items.traceability.features.traceabilityQualityInvestigation.name', { defaultValue: 'Traceability Quality Investigation' }),
+          description: t('items.traceability.features.traceabilityQualityInvestigation.description', { defaultValue: 'Investigate quality issues with traceability context across parts.' }),
+          icon: <CloudDownload />,
+          color: '#ff7a00',
+          glowColor: '#ff5a00',
+          enabled: false,
+          default: false
+        },
+        {
+          module: traceabilityQualityAlertsFeature,
+          id: 'traceability-quality-alerts',
+          name: t('items.traceability.features.traceabilityQualityAlerts.name', { defaultValue: 'Traceability Quality Alerts' }),
+          description: t('items.traceability.features.traceabilityQualityAlerts.description', { defaultValue: 'Create and monitor traceability-driven quality alerts.' }),
+          icon: <CloudUploadArrow />,
+          color: '#ff6a00',
+          glowColor: '#ff4500',
+          enabled: false,
+          default: false
+        }
+      ],
+      version: '1.0.0',
       domain: 'industry-core',
       documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/Traceability%20Kit/Adoption%20View%20Traceability%20Kit'
     }

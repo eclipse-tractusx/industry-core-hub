@@ -1,0 +1,19 @@
+{
+  "parentItems": [
+    {
+      "quantity": {
+        "value": 1,
+        "unit": "unit:yard"
+      },
+      "isOnlyPotentialParent": true,
+      "businessPartner": "BPNL00000003CSGV",
+      "createdOn": "2024-01-15T10:30:00Z",
+      "lastModifiedOn": "2024-01-15T10:30:00Z",
+      "globalAssetId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000"
+    }
+  ],
+  "customers": [
+    "Customer Item"
+  ],
+  "globalAssetId": "urn:uuid:550e8400-e29b-41d4-a716-446655440000"
+}

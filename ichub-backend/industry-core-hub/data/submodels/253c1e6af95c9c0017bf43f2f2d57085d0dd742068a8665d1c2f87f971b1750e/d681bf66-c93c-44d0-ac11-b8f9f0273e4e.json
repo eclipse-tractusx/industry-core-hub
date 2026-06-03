@@ -1,0 +1,93 @@
+{
+  "scopeOfPcfForm": [
+    {
+      "specVersion": "1.1",
+      "partialFullPcf": "Cradle-to-gate"
+    }
+  ],
+  "companyAndProductInformation": [
+    {
+      "companyInformation": [
+        {
+          "companyName": "Acme",
+          "companyIds": [
+            "1"
+          ]
+        }
+      ]
+    }
+  ],
+  "pcfAssessmentAndMethodology": [
+    {
+      "dataSourcesAndQuality": [
+        {
+          "primaryDataShare": 1,
+          "technologicalDQR": 2,
+          "temporalDQR": 2,
+          "geographicalDQR": 2
+        }
+      ]
+    }
+  ],
+  "general": [
+    {
+      "comment": "Mycomment",
+      "pcfLegalStatement": "Legal Statement"
+    }
+  ],
+  "carbonContent": [
+    {
+      "carbonContentTotal": 1,
+      "fossilCarbonContent": 1,
+      "biogenicCarbonContent": 1,
+      "packagingBiogenicCarbonContent": 1,
+      "recycledCarbonContent": 1
+    }
+  ],
+  "productLifeCycleStagesAndEmissions": [
+    {
+      "productionStage": [
+        {
+          "pcfIncludingBiogenicUptake": -1,
+          "pcfExcludingBiogenicUptake": 4,
+          "fossilGhgEmissions": 4,
+          "biogenicNonCO2Emissions": 4,
+          "biogenicCO2Uptake": -1,
+          "landUseChangeGhgEmissions": 4,
+          "landManagementBiogenicCO2Emissions": 4,
+          "packagingLandManagementBiogenicCO2Emissions": 4,
+          "landManagementBiogenicCO2Removals": -1,
+          "aircraftGhgEmissions": 4
+        }
+      ],
+      "distributionStage": [
+        {
+          "distributionStageIncluded": true,
+          "distributionStagePcfIncludingBiogenicUptake": -1,
+          "distributionStagePcfExcludingBiogenicUptake": 4,
+          "distributionStageFossilGhgEmissions": 4,
+          "distributionStageBiogenicNonCO2Emissions": 4,
+          "distributionStageBiogenicCO2Uptake": -1,
+          "distributionStageLandUseChangeGhgEmissions": 4,
+          "distributionStageLandManagementBiogenicCO2Emissions": 4,
+          "distributionStageLandManagementBiogenicCO2Removals": -1,
+          "distributionStageAircraftGhgEmissions": 4
+        }
+      ],
+      "packagingStage": [
+        {
+          "packagingEmissionsIncluded": true,
+          "packagingPcfIncludingBiogenicUptake": 4,
+          "packagingPcfExcludingBiogenicUptake": 4,
+          "packagingFossilGhgEmissions": 4,
+          "packagingBiogenicNonCO2Emissions": 4,
+          "packagingBiogenicCO2Uptake": -1,
+          "packagingLandUseChangeGhgEmissions": 4,
+          "packagingLandManagementBiogenicCO2Emissions": 4,
+          "packagingLandManagementBiogenicCO2Removals": -1,
+          "packagingAircraftGhgEmissions": 4
+        }
+      ]
+    }
+  ]
+}

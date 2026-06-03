@@ -15,12 +15,11 @@
   distributed under the License is distributed on an "AS IS" BASIS
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
   either express or implied. See the
-  License for the specific language govern in permission and limitations
+  License for the specific language governing permission and limitations
   under the License.
  
   SPDX-License-Identifier: Apache-2.0
 -->
-
 
 <!doctype html>
 <html lang="en">
@@ -45,21 +44,21 @@
         
         // API configuration
         ICHUB_BACKEND_URL: "http://localhost:9000/v1",
-        API_TIMEOUT: "30000",
+        API_TIMEOUT: "300000",
         API_RETRY_ATTEMPTS: "3",
         REQUIRE_HTTPS_URL_PATTERN: "false",
         
         // API key configuration
-        API_KEY: "",
-        API_KEY_HEADER: "X-API-Key",
+        API_KEY: "HACKATHON1-HACKATHON1-HACKATHON1",
+        API_KEY_HEADER: "X-Api-Key",
         ENABLE_API_KEY_ROTATION: "false",
         API_KEY_EXPIRY_WARNING_DAYS: "7",
         
-        // Authentication configuration
-        AUTH_ENABLED: "true",
-        AUTH_PROVIDER: "keycloak",
+        // Authentication configuration - DISABLED for local testing
+        AUTH_ENABLED: "false",
+        AUTH_PROVIDER: "none",
         
-        // Keycloak configuration
+        // Keycloak configuration (disabled)
         KEYCLOAK_URL: "http://localhost:8080",
         KEYCLOAK_REALM: "ICHub",
         KEYCLOAK_CLIENT_ID: "industry-core-hub-frontend",
@@ -67,7 +66,7 @@
         KEYCLOAK_CHECK_LOGIN_IFRAME: "false",
         KEYCLOAK_SILENT_CHECK_SSO_REDIRECT_URI: "",
         KEYCLOAK_PKCE_METHOD: "S256",
-        KEYCLOAK_ENABLE_LOGGING: "true",
+        KEYCLOAK_ENABLE_LOGGING: "false",
         KEYCLOAK_MIN_VALIDITY: "30",
         KEYCLOAK_CHECK_LOGIN_IFRAME_INTERVAL: "5",
         KEYCLOAK_FLOW: "standard",
@@ -78,12 +77,10 @@
         AUTH_LOGOUT_REDIRECT_URI: "",
         
         // Participant configuration
-        PARTICIPANT_ID: "",
+        PARTICIPANT_ID: "BPNL00000000080L",
         BPN_VALIDATION_PATTERN: "",
         
-        // Governance and policies - must be configured via GOVERNANCE_CONFIG, DTR_POLICIES_CONFIG and PCF_EXCHANGE_POLICIES_CONFIG env vars
-        // Format: JSON array string, e.g. '[{"semanticid":"...","policies":[...]}]'
-        // See Helm chart values or docker-compose for example values
+        // Governance and policies
         GOVERNANCE_CONFIG: "[]",
         DTR_POLICIES_CONFIG: "[]",
         PCF_EXCHANGE_POLICIES_CONFIG: "[]",
@@ -118,15 +115,11 @@
           console.log('🔧 CONFIG LOADED:', {
             AUTH_ENABLED: ENV.AUTH_ENABLED,
             AUTH_PROVIDER: ENV.AUTH_PROVIDER,
+            ICHUB_BACKEND_URL: ENV.ICHUB_BACKEND_URL,
+            PARTICIPANT_ID: ENV.PARTICIPANT_ID,
             timestamp: new Date().toISOString()
           });
         } catch (e) {}
-      }
-      // Conditional performance monitoring (development only)
-      if (ENV.ENABLE_PERFORMANCE_MONITORING === 'true' && ENV.ENABLE_DEV_TOOLS === 'true') {
-        window.addEventListener('load', () => {
-          try { console.info('App loaded in:', performance.now(), 'ms'); } catch(e) {}
-        });
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>

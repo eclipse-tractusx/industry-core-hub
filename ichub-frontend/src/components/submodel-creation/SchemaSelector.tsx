@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { scrollToElement } from '../../utils/fieldNavigation';
 import {
     Dialog,
@@ -50,13 +50,16 @@ import {
     AccountTree as AccountTreeIcon,
     OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
-import { SchemaDefinition, SCHEMA_REGISTRY } from '../../schemas';
+import { SchemaDefinition, SchemaFilters, getAvailableSchemaEntries } from '../../schemas';
 
 interface SchemaSelectorProps {
     open: boolean;
     onClose: () => void;
     onSchemaSelect: (schemaKey: string, schema: SchemaDefinition) => void;
     manufacturerPartId?: string;
+    schemaFilters?: SchemaFilters;
+    dialogTitle?: string;
+    dialogDescription?: string;
 }
 
 // Dark theme matching the application style
@@ -126,13 +129,17 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     open,
     onClose,
     onSchemaSelect,
-    manufacturerPartId
+    manufacturerPartId,
+    schemaFilters,
+    dialogTitle,
+    dialogDescription
 }) => {
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
     const descRefs = useRef<Record<string, HTMLElement | null>>({});
     const [overflowMap, setOverflowMap] = useState<Record<string, boolean>>({});
+    const schemaEntries = useMemo(() => getAvailableSchemaEntries(schemaFilters), [schemaFilters]);
 
     // Detect which schema descriptions overflow their clamped container
     useEffect(() => {
@@ -205,10 +212,10 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                             <AccountTreeIcon sx={{ fontSize: 28 }} />
                             <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                                    Select Schema for New Submodel
+                                    {dialogTitle || 'Select Schema for New Submodel'}
                                 </Typography>
                                 <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                                    {manufacturerPartId ? `Creating submodel for: ${manufacturerPartId}` : 'Choose a schema template to create your submodel'}
+                                    {dialogDescription || (manufacturerPartId ? `Creating submodel for: ${manufacturerPartId}` : 'Choose a schema template to create your submodel')}
                                 </Typography>
                             </Box>
                         </Box>
@@ -256,8 +263,15 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                         </Box>
 
                         <Grid2 container spacing={3}>
+                            {schemaEntries.length === 0 && (
+                                <Grid2 size={12}>
+                                    <Alert severity="info" sx={{ backgroundColor: alpha('#60a5fa', 0.08) }}>
+                                        No schema templates match the current selection.
+                                    </Alert>
+                                </Grid2>
+                            )}
                             {/* Available Schema Cards */}  
-                            {Object.entries(SCHEMA_REGISTRY).map(([schemaKey, schema]: [string, SchemaDefinition]) => {
+                            {schemaEntries.map(([schemaKey, schema]: [string, SchemaDefinition]) => {
                                 return (
                                     <Grid2 
                                         key={schemaKey} 

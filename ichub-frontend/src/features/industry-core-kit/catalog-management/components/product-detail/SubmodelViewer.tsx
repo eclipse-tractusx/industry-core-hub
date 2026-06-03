@@ -137,6 +137,30 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         {t('productDetail.submodelViewer.noSubmodelsDescription')}
                     </Typography>
+                    {onCreateSubmodel && (
+                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={onCreateSubmodel}
+                                sx={{
+                                    background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                                    borderRadius: '10px',
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)',
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+                                        transform: 'translateY(-1px)',
+                                        boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
+                                    },
+                                    transition: 'all 0.2s ease-in-out',
+                                }}
+                            >
+                                {t('productDetail.submodelViewer.newSubmodel')}
+                            </Button>
+                        </Box>
+                    )}
                 </CardContent>
             </Card>
         );

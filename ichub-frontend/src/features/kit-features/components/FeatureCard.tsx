@@ -41,6 +41,8 @@ interface Feature {
   name: string;
   description: string;
   icon?: React.ReactNode;
+  color?: string;
+  glowColor?: string;
   enabled: boolean;
   default?: boolean;
   module?: { navigationPath?: string };
@@ -55,6 +57,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
   const navigate = useNavigate();
   const { t } = useTranslation('kits');
   const { t: tCommon } = useTranslation('common');
+  const featureColor = feature.color || '#42a5f5';
+  const featureGlowColor = feature.glowColor || featureColor;
 
   const handleGoToView = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,7 +73,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
         height: '100%',
         backgroundColor: 'transparent',
         backgroundImage: 'none',
-        border: `1px solid ${feature.enabled ? 'rgba(66, 165, 245, 0.5)' : 'rgba(255, 255, 255, 0.15)'}`,
+        border: `1px solid ${feature.enabled ? `${featureColor}80` : 'rgba(255, 255, 255, 0.15)'}`,
         transition: 'all 0.3s ease',
         display: 'flex',
         flexDirection: 'column',
@@ -78,8 +82,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
         '&:hover': {
           backgroundColor: 'rgba(10, 10, 10, 0.5)',
           transform: 'translateY(-4px)',
-          boxShadow: feature.enabled ? '0 8px 24px rgba(66, 165, 245, 0.3)' : '0 8px 24px rgba(128, 128, 128, 0.2)',
-          borderColor: feature.enabled ? 'rgba(66, 165, 245, 0.7)' : 'rgba(255, 255, 255, 0.25)'
+          boxShadow: feature.enabled ? `0 8px 24px ${featureGlowColor}55` : '0 8px 24px rgba(128, 128, 128, 0.2)',
+          borderColor: feature.enabled ? `${featureColor}b3` : 'rgba(255, 255, 255, 0.25)'
         }
       }}
     >
@@ -120,9 +124,9 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
                 position: 'relative',
                 zIndex: 1,
                 filter: feature.enabled 
-                  ? 'drop-shadow(0 4px 20px rgba(66, 165, 245, 0.4))'
+                  ? `drop-shadow(0 4px 20px ${featureGlowColor}66)`
                   : 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3))',
-                color: feature.enabled ? '#42a5f5' : 'rgba(255, 255, 255, 0.4)',
+                color: feature.enabled ? featureColor : 'rgba(255, 255, 255, 0.4)',
                 transition: 'all 0.15s ease-in'
               }
             }}
@@ -235,7 +239,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
             onClick={handleGoToView}
             sx={{
               mt: 2,
-              backgroundColor: feature.default ? '#42a5f5' : '#4caf50',
+              backgroundColor: feature.default ? '#42a5f5' : featureColor,
               color: '#ffffff',
               fontWeight: 500,
               py: 0.75,
@@ -243,7 +247,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ feature, onToggle }) => {
               borderRadius: 1,
               textTransform: 'none',
               '&:hover': {
-                backgroundColor: feature.default ? '#1976d2' : '#388e3c'
+                backgroundColor: feature.default ? '#1976d2' : featureGlowColor
               }
             }}
           >

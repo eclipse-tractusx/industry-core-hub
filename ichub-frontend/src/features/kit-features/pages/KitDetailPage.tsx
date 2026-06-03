@@ -71,7 +71,7 @@ const KitDetailPage: React.FC = () => {
     const colors: { [key: string]: string } = {
       available: '#00aa44',
       'coming-soon': '#ff6600',
-      beta: '#1976d2'
+      beta: '#ff6600'
     };
     return colors[status] || '#0f71cb';
   };

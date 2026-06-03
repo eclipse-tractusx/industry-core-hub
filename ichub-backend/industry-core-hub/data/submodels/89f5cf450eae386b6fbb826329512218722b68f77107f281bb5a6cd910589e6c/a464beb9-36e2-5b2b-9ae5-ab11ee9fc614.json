@@ -1,0 +1,130 @@
+{
+  "scopeOfPcfForm": [
+    {
+      "specVersion": "1.1",
+      "partialFullPcf": "Cradle-to-gate"
+    },
+    {
+      "specVersion": "1.2",
+      "partialFullPcf": "Cradle-to-grave"
+    }
+  ],
+  "companyAndProductInformation": [
+    {
+      "companyInformation": [
+        {
+          "companyName": "LKSNext",
+          "companyIds": [
+            "Foco"
+          ]
+        }
+      ],
+      "productInformation": [
+        {
+          "productNameCompany": "Acmy",
+          "productIds": [
+            "AcmyIds"
+          ],
+          "declaredUnitOfMeasurement": "kilogram",
+          "declaredUnitAmount": 32,
+          "productMassPerDeclaredUnit": 3,
+          "productClassifications": [
+            "MyClassification"
+          ],
+          "productDescription": "Product description"
+        }
+      ]
+    }
+  ],
+  "pcfAssessmentAndMethodology": [
+    {
+      "dataSourcesAndQuality": [
+        {
+          "primaryDataShare": 2,
+          "secondaryEmissionFactorSources": [
+            "Secondary Emission"
+          ],
+          "technologicalDQR": 3,
+          "temporalDQR": 4,
+          "geographicalDQR": 4
+        }
+      ],
+      "pcfAssessmentInformation": [],
+      "verificationAndCertificationShares": [],
+      "pcfMethodology": []
+    }
+  ],
+  "general": [
+    {
+      "comment": "My comment",
+      "pcfLegalStatement": "Legal statement"
+    }
+  ],
+  "carbonContent": [
+    {
+      "carbonContentTotal": 8,
+      "fossilCarbonContent": 56,
+      "biogenicCarbonContent": 67,
+      "packagingBiogenicCarbonContent": 89,
+      "recycledCarbonContent": 93
+    }
+  ],
+  "productLifeCycleStagesAndEmissions": [
+    {
+      "productionStage": [
+        {
+          "pcfIncludingBiogenicUptake": 4,
+          "pcfExcludingBiogenicUptake": 9,
+          "fossilGhgEmissions": 7,
+          "biogenicNonCO2Emissions": 6,
+          "biogenicCO2Uptake": -2,
+          "landUseChangeGhgEmissions": 2,
+          "landManagementBiogenicCO2Emissions": 9,
+          "packagingLandManagementBiogenicCO2Emissions": 6,
+          "landManagementBiogenicCO2Removals": -6,
+          "aircraftGhgEmissions": 4
+        }
+      ],
+      "distributionStage": [
+        {
+          "distributionStageIncluded": true,
+          "distributionStagePcfIncludingBiogenicUptake": -1,
+          "distributionStagePcfExcludingBiogenicUptake": 1,
+          "distributionStageFossilGhgEmissions": 2,
+          "distributionStageBiogenicNonCO2Emissions": 1,
+          "distributionStageBiogenicCO2Uptake": 2,
+          "distributionStageLandUseChangeGhgEmissions": 3,
+          "distributionStageLandManagementBiogenicCO2Emissions": 1,
+          "distributionStageLandManagementBiogenicCO2Removals": -1,
+          "distributionStageAircraftGhgEmissions": 2
+        }
+      ],
+      "packagingStage": [
+        {
+          "packagingEmissionsIncluded": true,
+          "packagingPcfIncludingBiogenicUptake": 8,
+          "packagingPcfExcludingBiogenicUptake": 9,
+          "packagingFossilGhgEmissions": 8,
+          "packagingBiogenicNonCO2Emissions": 5,
+          "packagingBiogenicCO2Uptake": -4,
+          "packagingLandUseChangeGhgEmissions": 6,
+          "packagingLandManagementBiogenicCO2Emissions": 8,
+          "packagingLandManagementBiogenicCO2Removals": -2,
+          "packagingAircraftGhgEmissions": 5
+        }
+      ]
+    }
+  ],
+  "attestationOfConformance": [
+    {
+      "attestationType": "AttType",
+      "standardName": "MyType",
+      "attestationStandard": "AttStandard",
+      "attestationOfConformanceId": "ConfId",
+      "providerName": "MyProvider",
+      "attestationOfConformanceLink": "http://www.google.com",
+      "providerId": "45",
+      "completedAt": "2024-01-15T10:30:00Z"
+    }
+  ]
+}

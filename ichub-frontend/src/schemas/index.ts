@@ -31,10 +31,12 @@
  * 3. The schema will be automatically interpreted and registered based on its semantic ID
  */
 
-import { loadSchemas } from './schemaLoader';
+import { createSchemaKey, loadSchema } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
 import UsTariffInformationSchema from './UsTariffInformation-schema.json';
 import PcfSchema from './Pcf-schema.json';
+import SingleLevelBomAsBuiltSchema from './SingleLevelBomAsBuilt-schema.json';
+import SingleLevelUsageAsBuiltSchema from './SingleLevelUsageAsBuilt-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -46,6 +48,12 @@ export interface SchemaMetadata {
   color: string;
   tags: string[];
   namespace?: string; // Optional namespace for schema identification
+}
+
+export interface SchemaFilters {
+  semanticIds?: string[];
+  tags?: string[];
+  namespace?: string;
 }
 
 export interface SectionConfig {
@@ -63,6 +71,12 @@ export interface SchemaDefinition<T = any> {
   properties?: Record<string, any>; // Schema properties for section detection
 }
 
+interface SchemaRegistration {
+  schema: JSONSchema;
+  metadata?: Partial<SchemaMetadata>;
+  key?: string;
+}
+
 /**
  * Define schemas to load
  * 
@@ -73,26 +87,101 @@ export interface SchemaDefinition<T = any> {
  * 
  * Simply import the JSON schema file and add it to this array.
  */
-const schemasToLoad = [
-  digitalProductPassportSchema as JSONSchema,
-  UsTariffInformationSchema as JSONSchema,
-  PcfSchema as JSONSchema
+const schemasToLoad: SchemaRegistration[] = [
+  {
+    schema: digitalProductPassportSchema as JSONSchema,
+    metadata: {
+      tags: ['eco-pass']
+    }
+  },
+  {
+    schema: UsTariffInformationSchema as JSONSchema,
+    metadata: {
+      tags: ['industry-core', 'compliance']
+    }
+  },
+  {
+    schema: PcfSchema as JSONSchema,
+    metadata: {
+      tags: ['pcf', 'sustainability']
+    }
+  },
+  {
+    schema: SingleLevelBomAsBuiltSchema as JSONSchema,
+    metadata: {
+      icon: 'AccountTree',
+      color: '#2e7d32',
+      tags: ['traceability', 'as-built', 'bom']
+    }
+  },
+  {
+    schema: SingleLevelUsageAsBuiltSchema as JSONSchema,
+    metadata: {
+      icon: 'Hub',
+      color: '#1565c0',
+      tags: ['traceability', 'as-built', 'usage']
+    }
+  }
   // Add more schemas here:
-  // serialPartSchema as JSONSchema,
-  // batchSchema as JSONSchema,
+  // { schema: serialPartSchema as JSONSchema, metadata: { tags: ['traceability'] } },
+  // { schema: batchSchema as JSONSchema, metadata: { tags: ['traceability'] } },
 ];
+
+const matchesSchemaFilters = (
+  schema: SchemaDefinition,
+  filters?: SchemaFilters
+): boolean => {
+  if (!filters) {
+    return true;
+  }
+
+  if (filters.semanticIds?.length && !filters.semanticIds.includes(schema.metadata.semanticId)) {
+    return false;
+  }
+
+  if (filters.namespace && schema.metadata.namespace !== filters.namespace) {
+    return false;
+  }
+
+  if (filters.tags?.length) {
+    const schemaTags = schema.metadata.tags ?? [];
+    if (!filters.tags.some(tag => schemaTags.includes(tag))) {
+      return false;
+    }
+  }
+
+  return true;
+};
 
 /**
  * Registry of all available schemas
  * Automatically populated by loading and interpreting JSON schemas
  */
-const SCHEMA_REGISTRY: Record<string, SchemaDefinition> = loadSchemas(schemasToLoad);
+const SCHEMA_REGISTRY: Record<string, SchemaDefinition> = schemasToLoad.reduce<Record<string, SchemaDefinition>>(
+  (registry, { schema, metadata, key }) => {
+    const schemaDefinition = loadSchema(schema, metadata);
+    const registryKey = key ?? createSchemaKey(schemaDefinition.metadata.semanticId);
+    registry[registryKey] = schemaDefinition;
+    return registry;
+  },
+  {}
+);
 
 /**
  * Get all available schemas
  */
-export const getAvailableSchemas = (): SchemaDefinition[] => {
-  return Object.values(SCHEMA_REGISTRY);
+export const getAvailableSchemas = (filters?: SchemaFilters): SchemaDefinition[] => {
+  return Object.values(SCHEMA_REGISTRY).filter(schema => matchesSchemaFilters(schema, filters));
+};
+
+/**
+ * Get available schema registry entries with their keys.
+ * Useful for selector UIs that need both the key and the schema metadata.
+ */
+export const getAvailableSchemaEntries = (
+  filters?: SchemaFilters
+): Array<[string, SchemaDefinition]> => {
+  return Object.entries(SCHEMA_REGISTRY).filter(([, schema]) => matchesSchemaFilters(schema, filters));
 };
 
 /**
