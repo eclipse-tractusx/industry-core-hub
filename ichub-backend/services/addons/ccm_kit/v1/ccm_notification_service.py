@@ -145,18 +145,21 @@ class CcmNotificationService:
 
             repo.commit()
 
+            ccm_id = ccm.id
+            ccm_edc_asset_id = ccm.edc_asset_id
+
         # --- 5. If certificate is already published as EDC asset, respond COMPLETED ---
-        if ccm.edc_asset_id:
+        if ccm_edc_asset_id:
             logger.info(
-                f"Certificate {ccm.id} is published (asset {_s(ccm.edc_asset_id)}). "
+                f"Certificate {ccm_id} is published (asset {_s(ccm_edc_asset_id)}). "
                 f"Responding COMPLETED with documentId."
             )
             return 200, {
                 "requestStatus": "COMPLETED",
-                "documentId": ccm.edc_asset_id,
+                "documentId": ccm_edc_asset_id,
                 "message": (
                     f"Certificate available for PULL. "
-                    f"documentId={ccm.edc_asset_id}"
+                    f"documentId={ccm_edc_asset_id}"
                 ),
             }
 
@@ -166,14 +169,14 @@ class CcmNotificationService:
         )
         if auto_push:
             logger.info(
-                f"Auto-push enabled — pushing certificate {ccm.id} "
+                f"Auto-push enabled — pushing certificate {ccm_id} "
                 f"to {_s(sender_bpn)}"
             )
             provider_bpn = notification.header.receiver_bpn
-            self._auto_push_certificate(ccm.id, sender_bpn, provider_bpn)
+            self._auto_push_certificate(ccm_id, sender_bpn, provider_bpn)
         else:
             logger.info(
-                f"Certificate {ccm.id} registered for consumer {_s(sender_bpn)} "
+                f"Certificate {ccm_id} registered for consumer {_s(sender_bpn)} "
                 f"(auto-push disabled, manual push required)."
             )
 
