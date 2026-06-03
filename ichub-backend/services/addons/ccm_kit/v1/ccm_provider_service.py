@@ -132,6 +132,7 @@ class CcmProviderService(CcmBaseService):
             target_bpn=consumer_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_PUSH,
+            policies=request.governance,
         )
 
         # --- 4. Update share record on success ---
@@ -213,6 +214,7 @@ class CcmProviderService(CcmBaseService):
             target_bpn=consumer_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_AVAILABLE,
+            policies=request.governance,
         )
 
     # ------------------------------------------------------------------

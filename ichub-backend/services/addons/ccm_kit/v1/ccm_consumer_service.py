@@ -104,8 +104,8 @@ class CcmConsumerService(CcmBaseService):
             )
 
         try:
-            catalog = consumer_connector_service.get_catalog_by_dct_type(
-                counter_party_id=provider_bpn,
+            catalog = consumer_connector_service.get_catalog_by_dct_type_with_bpnl(
+                bpnl=provider_bpn,
                 counter_party_address=dsp_url,
                 dct_type=CCM_DCT_TYPE,
             )
@@ -174,6 +174,7 @@ class CcmConsumerService(CcmBaseService):
             target_bpn=provider_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_REQUEST,
+            policies=payload.governance,
         )
 
     # ------------------------------------------------------------------
@@ -231,6 +232,7 @@ class CcmConsumerService(CcmBaseService):
             target_bpn=provider_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_STATUS,
+            policies=payload.governance,
         )
 
     # ------------------------------------------------------------------
@@ -279,8 +281,8 @@ class CcmConsumerService(CcmBaseService):
 
         # --- 2. Query catalog for the specific certificate asset ---
         try:
-            catalog = consumer_connector_service.get_catalog_by_dct_type(
-                counter_party_id=provider_bpn,
+            catalog = consumer_connector_service.get_catalog_by_dct_type_with_bpnl(
+                bpnl=provider_bpn,
                 counter_party_address=dsp_url,
                 dct_type=CCM_CERTIFICATE_DCT_TYPE,
             )
@@ -298,10 +300,14 @@ class CcmConsumerService(CcmBaseService):
             )
             return CcmPullResult(certificate_data={}, stored=False)
 
+        # For Saturn, counterPartyId must be the DID; extract it from the catalog
+        # participantId field (falls back to raw BPN for Jupiter deployments).
+        counter_party_did = catalog.get("participantId", provider_bpn)
+
         # --- 4. Negotiate EDR and retrieve data ---
         try:
             negotiation_id = consumer_connector_service.start_edr_negotiation(
-                counter_party_id=provider_bpn,
+                counter_party_id=counter_party_did,
                 counter_party_address=dsp_url,
                 target=document_id,
                 policy=policy,

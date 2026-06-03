@@ -160,7 +160,7 @@ class TestPushCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
 
         mock_ncs = Mock()
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://endpoint.example.com",
             "token123",
         )
@@ -247,7 +247,7 @@ class TestPushCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
 
         mock_ncs = Mock()
-        mock_ncs.get_notification_endpoint.side_effect = NotificationError(
+        mock_ncs.get_notification_endpoint_with_bpnl.side_effect = NotificationError(
             "EDR negotiation failed"
         )
         mock_ncs_class.return_value = mock_ncs
@@ -256,6 +256,57 @@ class TestPushCertificate:
 
         assert result.success is False
         assert "negotiation" in result.error.lower()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".CcmProviderService._update_share_status"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_with_governance(
+        self, mock_factory, mock_cm, mock_ncs_class, mock_update_share, service
+    ):
+        """
+        GIVEN a push request with governance policies
+        WHEN push_certificate is called
+        THEN the governance policies are passed to the notification service.
+        """
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token-gov",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        api_governance = [{"permission": [{"action": "use"}]}]
+        request = CcmPushRequest(
+            senderBpn=SENDER_BPN,
+            certificateId=CERT_ID,
+            consumerBpn=CONSUMER_BPN,
+            governance=api_governance,
+        )
+
+        result = service.push_certificate(request, SENDER_BPN)
+
+        assert result.success is True
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["policies"] == api_governance
 
 
 # ---------------------------------------------------------------------------
@@ -293,7 +344,7 @@ class TestSendCertificateAvailable:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
 
         mock_ncs = Mock()
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://endpoint.example.com",
             "token123",
         )
@@ -382,7 +433,7 @@ class TestSendCertificateAvailable:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
 
         mock_ncs = Mock()
-        mock_ncs.get_notification_endpoint.side_effect = NotificationError(
+        mock_ncs.get_notification_endpoint_with_bpnl.side_effect = NotificationError(
             "Connection refused"
         )
         mock_ncs_class.return_value = mock_ncs
@@ -393,6 +444,53 @@ class TestSendCertificateAvailable:
 
         assert result.success is False
         assert "connection" in result.error.lower()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_with_governance(
+        self, mock_factory, mock_cm, mock_ncs_class, service
+    ):
+        """
+        GIVEN an available request with governance policies
+        WHEN send_certificate_available is called
+        THEN the governance policies are passed to the notification service.
+        """
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token-gov",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        api_governance = [{"permission": [{"action": "use"}]}]
+        request = CcmAvailableRequest(
+            senderBpn=SENDER_BPN,
+            certificateId=CERT_ID,
+            consumerBpn=CONSUMER_BPN,
+            governance=api_governance,
+        )
+
+        result = service.send_certificate_available(request, SENDER_BPN)
+
+        assert result.success is True
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["policies"] == api_governance
 
 
 # ---------------------------------------------------------------------------
@@ -761,7 +859,7 @@ class TestPushShareStatusErrorHandling:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
 
         mock_ncs = Mock()
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://endpoint.example.com",
             "token123",
         )

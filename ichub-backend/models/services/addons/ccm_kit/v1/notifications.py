@@ -36,7 +36,7 @@ Notification contexts:
 """
 
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -153,6 +153,10 @@ class CcmSendRequestPayload(BaseModel):
         alias="locationBpns",
         description="Optional BPNS/BPNA to narrow scope.",
     )
+    governance: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Governance policies for contract negotiation.",
+    )
 
     class Config:
         populate_by_name = True
@@ -199,6 +203,10 @@ class CcmSendStatusPayload(BaseModel):
         default=None,
         alias="locationErrors",
         description="Per-location errors (when REJECTED).",
+    )
+    governance: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Governance policies for contract negotiation.",
     )
 
     class Config:
@@ -487,6 +495,10 @@ class CcmPushRequest(BaseModel):
         pattern=_BPNL_PATTERN,
         description="BPNL of the consumer to push the certificate to.",
     )
+    governance: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Governance policies for contract negotiation.",
+    )
 
     class Config:
         populate_by_name = True
@@ -548,6 +560,10 @@ class CcmAvailableRequest(BaseModel):
         alias="consumerBpn",
         pattern=_BPNL_PATTERN,
         description="BPNL of the consumer to notify.",
+    )
+    governance: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Governance policies for contract negotiation.",
     )
 
     class Config:

@@ -75,7 +75,7 @@ class TestCatalogSearch:
     def test_catalog_search_found(self, mock_cm, mock_ccs, service):
         """Catalog contains a CCM notification asset."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": {
                 "@id": "ichub:asset:ccm-notification:1",
                 "dct:type": {"@id": CCM_DCT_TYPE},
@@ -100,7 +100,7 @@ class TestCatalogSearch:
     def test_catalog_search_not_found_empty_dataset(self, mock_cm, mock_ccs, service):
         """Catalog response has no dataset."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.return_value = {}
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {}
 
         request = CcmCatalogSearchRequest(providerBpn=PROVIDER_BPN)
         result = service.search_catalog(request)
@@ -125,7 +125,7 @@ class TestCatalogSearch:
     def test_catalog_search_catalog_query_error(self, mock_cm, mock_ccs, service):
         """Catalog query raises an exception."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.side_effect = Exception("Connection timeout")
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.side_effect = Exception("Connection timeout")
 
         request = CcmCatalogSearchRequest(providerBpn=PROVIDER_BPN)
         result = service.search_catalog(request)
@@ -139,7 +139,7 @@ class TestCatalogSearch:
     def test_catalog_search_dataset_list(self, mock_cm, mock_ccs, service):
         """Catalog response has dataset as a list (multiple assets)."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": [
                 {"@id": "ichub:asset:ccm-notification:1"},
                 {"@id": "ichub:asset:ccm-notification:2"},
@@ -157,7 +157,7 @@ class TestCatalogSearch:
     def test_catalog_search_saturn_keys(self, mock_cm, mock_ccs, service):
         """Catalog response uses Saturn-style keys (no dcat: prefix)."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dataset": {"@id": "saturn-asset-id"}
         }
 
@@ -186,7 +186,7 @@ class TestSendCertificateRequest:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token123",
         )
@@ -205,10 +205,10 @@ class TestSendCertificateRequest:
         assert result.error is None
 
         # Verify DSP negotiation used CCM dct_type
-        mock_ncs.get_notification_endpoint.assert_called_once()
-        call_kwargs = mock_ncs.get_notification_endpoint.call_args[1]
+        mock_ncs.get_notification_endpoint_with_bpnl.assert_called_once()
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["dct_type"] == CCM_DCT_TYPE
-        assert call_kwargs["provider_bpn"] == PROVIDER_BPN
+        assert call_kwargs["bpnl"] == PROVIDER_BPN
 
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     def test_send_request_discovery_failure(self, mock_cm, service):
@@ -237,7 +237,7 @@ class TestSendCertificateRequest:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.side_effect = NotificationError(
+        mock_ncs.get_notification_endpoint_with_bpnl.side_effect = NotificationError(
             "Contract negotiation failed"
         )
 
@@ -263,7 +263,7 @@ class TestSendCertificateRequest:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token123",
         )
@@ -287,6 +287,37 @@ class TestSendCertificateRequest:
             "BPNS000000000001", "BPNA000000000002"
         ]
 
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_request_with_governance(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """Governance in payload is passed as policies to the notification service."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public",
+            "token-gov",
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        api_governance = [{"permission": [{"action": "use"}]}]
+        payload = CcmSendRequestPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            certifiedBpn="BPNL00000003XYZQ",
+            certificateType="ISO9001",
+            governance=api_governance,
+        )
+        result = service.send_certificate_request(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["policies"] == api_governance
+
 
 # ---------------------------------------------------------------------------
 # Send Certificate Status Tests
@@ -306,7 +337,7 @@ class TestSendCertificateStatus:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token456",
         )
@@ -338,7 +369,7 @@ class TestSendCertificateStatus:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token789",
         )
@@ -392,7 +423,7 @@ class TestSendCertificateStatus:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token999",
         )
@@ -409,7 +440,7 @@ class TestSendCertificateStatus:
         assert result.success is True
 
         # Verify policies were passed
-        call_kwargs = mock_ncs.get_notification_endpoint.call_args[1]
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == [ccm_policy]
 
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
@@ -423,7 +454,7 @@ class TestSendCertificateStatus:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token-rel",
         )
@@ -457,7 +488,7 @@ class TestSendCertificateStatus:
 
         mock_ncs = Mock()
         mock_ncs_class.return_value = mock_ncs
-        mock_ncs.get_notification_endpoint.return_value = (
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
             "https://dataplane.example.com/public",
             "token-no-rel",
         )
@@ -476,6 +507,38 @@ class TestSendCertificateStatus:
         call_args = mock_ncs.send_notification_to_endpoint.call_args
         notification = call_args[1]["notification"]
         assert notification.header.related_message_id is None
+
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_status_governance_overrides_config(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """API governance takes priority over config-based policies."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        config_policy = {"permissions": [{"action": "use"}]}
+        mock_config.get_config.return_value = config_policy
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public",
+            "token-override",
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        api_governance = [{"permission": [{"action": "read"}]}]
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="12345",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+            governance=api_governance,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["policies"] == api_governance
 
 
 # ---------------------------------------------------------------------------
@@ -586,7 +649,7 @@ class TestPullCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "1"
 
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": {
                 "@id": "doc-001",
                 "odrl:hasPolicy": {"@id": "policy-1"},
@@ -635,7 +698,7 @@ class TestPullCertificate:
     def test_pull_asset_not_in_catalog(self, mock_cm, mock_ccs, service):
         """Requested asset ID is not found in provider's catalog."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": {"@id": "other-asset"}
         }
 
@@ -664,7 +727,7 @@ class TestPullCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "2"
 
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": {
                 "@id": "doc-001",
                 "odrl:hasPolicy": {"@id": "policy-1"},
@@ -701,7 +764,7 @@ class TestPullCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "1"
 
-        mock_ccs.get_catalog_by_dct_type.return_value = {
+        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
             "dcat:dataset": {
                 "@id": "doc-001",
                 "odrl:hasPolicy": {"@id": "policy-1"},

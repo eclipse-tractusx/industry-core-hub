@@ -114,6 +114,7 @@ class CcmBaseService:
         target_bpn: str,
         notification: Notification,
         endpoint_path: str,
+        policies: Optional[List[Dict]] = None,
     ) -> CcmSendResult:
         """
         Negotiate EDR and send a notification to the target's CCM endpoint.
@@ -130,7 +131,7 @@ class CcmBaseService:
             )
             return CcmSendResult(success=False, error=f"Discovery failed: {e}")
 
-        policies = self._resolve_policies()
+        policies = policies if policies is not None else self._resolve_policies()
 
         notification_service = NotificationConsumerService(
             consumer_connector_service,
@@ -142,9 +143,9 @@ class CcmBaseService:
         )
 
         try:
-            endpoint, token = notification_service.get_notification_endpoint(
-                provider_bpn=target_bpn,
-                provider_dsp_url=dsp_url,
+            endpoint, token = notification_service.get_notification_endpoint_with_bpnl(
+                bpnl=target_bpn,
+                counter_party_address=dsp_url,
                 policies=policies,
                 dct_type=CCM_DCT_TYPE,
             )
