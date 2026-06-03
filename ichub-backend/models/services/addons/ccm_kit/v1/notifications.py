@@ -607,6 +607,11 @@ class CcmPullRequest(BaseModel):
         max_length=256,
         description="The documentId (EDC asset ID) of the certificate to pull.",
     )
+    governance: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Governance policies for contract negotiation. "
+                    "Overrides the server-side provider.ccm.policy.usage config when provided.",
+    )
 
     class Config:
         populate_by_name = True

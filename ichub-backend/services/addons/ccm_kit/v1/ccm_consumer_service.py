@@ -278,7 +278,7 @@ class CcmConsumerService(CcmBaseService):
 
         # --- 2 & 3. DSP exchange + data plane fetch ---
         try:
-            policies = self._resolve_policies()
+            policies = request.governance if request.governance is not None else self._resolve_policies()
             max_wait = int(
                 ConfigManager.get_config("consumer.ccm.edr_max_wait_sec", default=60)
             )
