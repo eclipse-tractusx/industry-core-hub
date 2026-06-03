@@ -70,6 +70,45 @@ class CcmBaseService:
             )
         return connectors[0]
 
+    def _evict_edr_cache(self, bpnl: str) -> None:
+        """
+        Clear any stale EDR cache entries for the given counterparty before
+        starting a fresh DSP negotiation.
+
+        In Saturn the cache is keyed by the counterparty DID.  We resolve the
+        DID first for a precise eviction; if discovery fails we fall back to
+        the BPN, which ``clear_connections_by_party`` also handles via
+        substring matching.
+
+        This is a no-op when the connector implementation does not expose a
+        ``connection_manager`` (e.g. Jupiter).
+        """
+        if not hasattr(consumer_connector_service, "connection_manager"):
+            return
+        party_key = bpnl
+        if hasattr(consumer_connector_service, "get_discovery_info"):
+            try:
+                _, party_key, _ = consumer_connector_service.get_discovery_info(
+                    bpnl=bpnl
+                )
+                logger.debug(
+                    f"{self._log_prefix} Resolved counterparty DID for BPN "
+                    f"[{_s(bpnl)}]: {_s(party_key)}"
+                )
+            except Exception as discovery_err:
+                logger.warning(
+                    f"{self._log_prefix} Could not resolve DID for BPN "
+                    f"[{_s(bpnl)}], falling back to BPN substring clear: "
+                    f"{_s(discovery_err)}"
+                )
+        removed = consumer_connector_service.connection_manager.clear_connections_by_party(
+            party_key
+        )
+        logger.debug(
+            f"{self._log_prefix} Cleared EDR cache for [{_s(party_key)}] "
+            f"(removed {removed} entries)"
+        )
+
     def _resolve_policies(self) -> Optional[List[Dict]]:
         """Get CCM usage policies from configuration."""
         policy = ConfigManager.get_config("provider.ccm.policy.usage")
@@ -132,6 +171,9 @@ class CcmBaseService:
             return CcmSendResult(success=False, error=f"Discovery failed: {e}")
 
         policies = policies if policies is not None else self._resolve_policies()
+
+        # Evict any stale EDR for this counterparty before negotiating.
+        self._evict_edr_cache(target_bpn)
 
         notification_service = NotificationConsumerService(
             consumer_connector_service,

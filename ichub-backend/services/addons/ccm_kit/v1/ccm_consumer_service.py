@@ -289,6 +289,9 @@ class CcmConsumerService(CcmBaseService):
                     operator="=",
                 )
             ]
+            # Evict any stale EDR for this counterparty before negotiating.
+            self._evict_edr_cache(provider_bpn)
+
             # Performs catalog lookup → contract negotiation → EDR polling.
             # do_dsp_with_bpnl handles Saturn BPN→DID resolution internally;
             # for Jupiter it passes the BPN directly as counter_party_id.
