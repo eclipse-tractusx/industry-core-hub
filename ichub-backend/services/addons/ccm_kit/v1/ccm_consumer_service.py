@@ -34,8 +34,6 @@ Provides four operations:
 
 import base64
 import binascii
-import math
-import time
 import uuid
 from typing import Dict, Optional
 
@@ -58,7 +56,6 @@ from models.services.addons.ccm_kit.v1.notifications import (
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from tools.constants import (
-    CCM_CERTIFICATE_DCT_TYPE,
     CCM_CONTEXT_REQUEST,
     CCM_CONTEXT_STATUS,
     CCM_DCT_TYPE,
@@ -247,11 +244,11 @@ class CcmConsumerService(CcmBaseService):
         Discover and pull a certificate from a provider's EDC catalog.
 
         1. Resolve the provider's DSP URL.
-        2. Query the catalog for the certificate asset by its ``documentId``
-           (= EDC asset ID).
-        3. Negotiate a contract and obtain an EDR.
-        4. Retrieve the certificate data via the data plane.
-        5. Store the certificate in the local ``ccm_received`` table.
+        2. Perform the full DSP exchange (catalog → contract negotiation → EDR)
+           via ``do_dsp_with_bpnl``, which handles Saturn BPN→DID resolution
+           internally and polls for the EDR with configurable ``max_wait``.
+        3. Retrieve the certificate data via the data plane.
+        4. Store the certificate in the local ``ccm_received`` table.
 
         Args:
             request: Contains ``provider_bpn`` and ``document_id``.
@@ -279,71 +276,32 @@ class CcmConsumerService(CcmBaseService):
                 stored=False,
             )
 
-        # --- 2. Query catalog for the specific certificate asset ---
+        # --- 2 & 3. DSP exchange + data plane fetch ---
         try:
-            catalog = consumer_connector_service.get_catalog_by_dct_type_with_bpnl(
+            policies = self._resolve_policies()
+            max_wait = int(
+                ConfigManager.get_config("consumer.ccm.edr_max_wait_sec", default=60)
+            )
+            filter_expression = [
+                consumer_connector_service.get_filter_expression(
+                    key="https://w3id.org/edc/v0.0.1/ns/id",
+                    value=document_id,
+                    operator="=",
+                )
+            ]
+            # Performs catalog lookup → contract negotiation → EDR polling.
+            # do_dsp_with_bpnl handles Saturn BPN→DID resolution internally;
+            # for Jupiter it passes the BPN directly as counter_party_id.
+            endpoint, token = consumer_connector_service.do_dsp_with_bpnl(
                 bpnl=provider_bpn,
                 counter_party_address=dsp_url,
-                dct_type=CCM_CERTIFICATE_DCT_TYPE,
+                filter_expression=filter_expression,
+                policies=policies,
+                max_wait=max_wait,
+                poll_interval=1,
             )
-        except Exception as e:
-            logger.error(
-                f"[CCM Consumer] Catalog query failed: {_s(e)}"
-            )
-            return CcmPullResult(certificate_data={}, stored=False)
-
-        # --- 3. Find the matching dataset by asset ID ---
-        dataset, policy = self._find_dataset_by_id(catalog, document_id)
-        if dataset is None or policy is None:
-            logger.warning(
-                f"[CCM Consumer] Asset {_s(document_id)} not found in catalog."
-            )
-            return CcmPullResult(certificate_data={}, stored=False)
-
-        # For Saturn, counterPartyId must be the DID; extract it from the catalog
-        # participantId field (falls back to raw BPN for Jupiter deployments).
-        counter_party_did = catalog.get("participantId", provider_bpn)
-
-        # --- 4. Negotiate EDR and retrieve data ---
-        try:
-            negotiation_id = consumer_connector_service.start_edr_negotiation(
-                counter_party_id=counter_party_did,
-                counter_party_address=dsp_url,
-                target=document_id,
-                policy=policy,
-            )
-            if negotiation_id is None:
-                raise RuntimeError("EDR negotiation returned None.")
-
-            # Wait for EDR to be available (configurable timeout with backoff).
-            edr_max_retries = int(
-                ConfigManager.get_config("consumer.ccm.edr_max_retries", default=30)
-            )
-            edr_entry = None
-            for attempt in range(edr_max_retries):
-                edr_entry = consumer_connector_service.get_edr_entry(
-                    negotiation_id=negotiation_id
-                )
-                if edr_entry and edr_entry.get("endpoint") and edr_entry.get("authorization"):
-                    break
-                # Exponential backoff: 1s, 2s, 4s … capped at 10s.
-                delay = min(math.pow(2, attempt), 10)
-                time.sleep(delay)
-
-            if not edr_entry:
-                raise RuntimeError(
-                    f"EDR not available after timeout for negotiation {negotiation_id}."
-                )
-
-            # Retrieve data from data plane
-            endpoint = edr_entry.get("endpoint")
-            token = edr_entry.get("authorization")
-
             if not endpoint or not token:
-                raise RuntimeError(
-                    f"EDR entry missing endpoint or authorization token "
-                    f"for negotiation {negotiation_id}."
-                )
+                raise RuntimeError("DSP exchange did not return endpoint or token.")
 
             headers = consumer_connector_service.get_data_plane_headers(
                 access_token=token
@@ -355,21 +313,19 @@ class CcmConsumerService(CcmBaseService):
             )
             response = http_requests.get(endpoint, headers=headers, timeout=timeout_sec)
             response.raise_for_status()
-            try:
-                certificate_data = response.json()
-            except ValueError as json_err:
-                logger.error(
-                    f"[CCM Consumer] Invalid JSON from data plane: {_s(json_err)}"
-                )
-                return CcmPullResult(certificate_data={}, stored=False)
-
+            certificate_data = response.json()
+        except ValueError as json_err:
+            logger.error(
+                f"[CCM Consumer] Invalid JSON from data plane: {_s(json_err)}"
+            )
+            return CcmPullResult(certificate_data={}, stored=False)
         except Exception as e:
             logger.error(
                 f"[CCM Consumer] Failed to pull certificate data: {_s(e)}"
             )
             return CcmPullResult(certificate_data={}, stored=False)
 
-        # --- 5. Store in ccm_received ---
+        # --- 4. Store in ccm_received ---
         stored = self._store_received_certificate(
             certificate_data=certificate_data,
             provider_bpn=provider_bpn,
@@ -418,34 +374,6 @@ class CcmConsumerService(CcmBaseService):
 
         return None
 
-
-    @staticmethod
-    def _find_dataset_by_id(catalog: dict, asset_id: str):
-        """
-        Find a specific dataset in the catalog response by its ``@id``.
-
-        Returns:
-            Tuple of ``(dataset_dict, policy_dict)`` or ``(None, None)``.
-        """
-        if not catalog:
-            return None, None
-
-        datasets = catalog.get("dcat:dataset") or catalog.get("dataset")
-        if not datasets:
-            return None, None
-
-        if isinstance(datasets, dict):
-            datasets = [datasets]
-
-        for ds in datasets:
-            if ds.get("@id", ds.get("id")) != asset_id:
-                continue
-            policy = ds.get("odrl:hasPolicy") or ds.get("hasPolicy")
-            if isinstance(policy, list):
-                policy = policy[0] if policy else None
-            return ds, policy
-
-        return None, None
 
     @staticmethod
     def _store_received_certificate(

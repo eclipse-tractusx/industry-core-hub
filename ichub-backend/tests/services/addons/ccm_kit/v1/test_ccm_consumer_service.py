@@ -646,17 +646,8 @@ class TestPullCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "1"
 
-        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
-            "dcat:dataset": {
-                "@id": "doc-001",
-                "odrl:hasPolicy": {"@id": "policy-1"},
-            }
-        }
-        mock_ccs.start_edr_negotiation.return_value = "neg-123"
-        mock_ccs.get_edr_entry.return_value = {
-            "endpoint": "https://dp.example.com/data",
-            "authorization": "token-abc",
-        }
+        mock_ccs.get_filter_expression.return_value = {}
+        mock_ccs.do_dsp_with_bpnl.return_value = ("https://dp.example.com/data", "token-abc")
         mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
 
         response_mock = Mock()
@@ -690,14 +681,19 @@ class TestPullCertificate:
         "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
     )
     @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager"
+    )
+    @patch(
         "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
-    def test_pull_asset_not_in_catalog(self, mock_cm, mock_ccs, service):
-        """Requested asset ID is not found in provider's catalog."""
+    def test_pull_dsp_failure(self, mock_cm, mock_config, mock_ccs, service):
+        """DSP negotiation failure (e.g. asset not in catalog) returns empty result."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
-        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
-            "dcat:dataset": {"@id": "other-asset"}
-        }
+        mock_config.get_config.return_value = "5"
+        mock_ccs.get_filter_expression.return_value = {}
+        mock_ccs.do_dsp_with_bpnl.side_effect = RuntimeError(
+            "Asset not found in provider catalog"
+        )
 
         request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
         result = service.pull_certificate(request)
@@ -720,24 +716,17 @@ class TestPullCertificate:
     def test_pull_edr_timeout(
         self, mock_cm, mock_config, mock_ccs, mock_http, service
     ):
-        """EDR polling exhausts retries without getting a valid entry."""
+        """DSP polling exhausts retries without obtaining an EDR — returns empty result."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "2"
 
-        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
-            "dcat:dataset": {
-                "@id": "doc-001",
-                "odrl:hasPolicy": {"@id": "policy-1"},
-            }
-        }
-        mock_ccs.start_edr_negotiation.return_value = "neg-123"
-        mock_ccs.get_edr_entry.return_value = None
+        mock_ccs.get_filter_expression.return_value = {}
+        mock_ccs.do_dsp_with_bpnl.side_effect = RuntimeError(
+            "EDR entry not available after timeout"
+        )
 
         request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
-
-        # Patch time.sleep to avoid delays
-        with patch("services.addons.ccm_kit.v1.ccm_consumer_service.time.sleep"):
-            result = service.pull_certificate(request)
+        result = service.pull_certificate(request)
 
         assert result.certificate_data == {}
         assert result.stored is False
@@ -761,17 +750,8 @@ class TestPullCertificate:
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "1"
 
-        mock_ccs.get_catalog_by_dct_type_with_bpnl.return_value = {
-            "dcat:dataset": {
-                "@id": "doc-001",
-                "odrl:hasPolicy": {"@id": "policy-1"},
-            }
-        }
-        mock_ccs.start_edr_negotiation.return_value = "neg-123"
-        mock_ccs.get_edr_entry.return_value = {
-            "endpoint": "https://dp.example.com/data",
-            "authorization": "token-abc",
-        }
+        mock_ccs.get_filter_expression.return_value = {}
+        mock_ccs.do_dsp_with_bpnl.return_value = ("https://dp.example.com/data", "token-abc")
         mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
 
         response_mock = Mock()
