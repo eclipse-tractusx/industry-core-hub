@@ -104,11 +104,6 @@ class CcmCatalogSearchRequest(BaseModel):
         pattern=_BPNL_PATTERN,
         description="BPNL of the provider whose catalog to search.",
     )
-    certificate_type: Optional[str] = Field(
-        default=None,
-        alias="certificateType",
-        description="Optional certificate type to filter for.",
-    )
 
     class Config:
         populate_by_name = True

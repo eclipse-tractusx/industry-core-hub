@@ -82,10 +82,7 @@ class TestCatalogSearch:
             }
         }
 
-        request = CcmCatalogSearchRequest(
-            providerBpn=PROVIDER_BPN,
-            certificateType="ISO9001",
-        )
+        request = CcmCatalogSearchRequest(providerBpn=PROVIDER_BPN)
         result = service.search_catalog(request)
 
         assert result.found is True
