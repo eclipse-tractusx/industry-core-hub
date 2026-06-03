@@ -604,6 +604,12 @@ class ConnectorProviderManager:
         Returns:
             Tuple of ``(asset_id, usage_policy_id, access_policy_id, contract_id)``.
         """
+        # In case the authorization is enabled, we need to add the backend API key to the headers
+        if self.authorization:
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
         # Step 1: ensure the EDC asset exists
         asset_id = self.get_or_create_ccm_notification_asset(
             ccm_url=ccm_notification_url,
