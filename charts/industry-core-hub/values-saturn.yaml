@@ -412,7 +412,7 @@ backend:
             obligation: []
       ccm:
         hostname: "http://<ichub-backend-hostname>"
-        apiPath: "/addons/ccm-kit"
+        apiPath: "/v1/addons/ccm-kit"
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"

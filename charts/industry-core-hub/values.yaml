@@ -458,7 +458,7 @@ backend:
         # -- Set to false to disable the CCM add-on (no EDC asset sync, no API routes registered)
         enabled: true
         hostname: "http://<ichub-backend-hostname>"
-        apiPath: "/addons/ccm-kit"
+        apiPath: "/v1/addons/ccm-kit"
         uri: ""
         # -- Auto-push certificate to consumers upon receiving a request notification
         auto_push_on_request: false

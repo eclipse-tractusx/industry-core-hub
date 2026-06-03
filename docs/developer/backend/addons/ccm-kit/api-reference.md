@@ -525,7 +525,7 @@ All notifications use the generic `Notification` wrapper from the Tractus-X SDK.
 |---|---|---|
 | `provider.ccm.enabled` | `true` | Enable/disable the entire CCM add-on |
 | `provider.ccm.hostname` | `http://<ichub-backend-hostname>` | Backend hostname (used to build the CCM asset DataAddress) |
-| `provider.ccm.apiPath` | `/addons/ccm-kit` | API path appended to hostname for the EDC DataAddress |
+| `provider.ccm.apiPath` | `/v1/addons/ccm-kit` | API path appended to hostname for the EDC DataAddress |
 | `provider.ccm.auto_push_on_request` | `false` | Automatically push certificate when a Request notification arrives |
 | `provider.ccm.asset_config.dct_type` | `https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi` | DCT type used to register the notification asset in EDC |
 | `provider.ccm.asset_config.existing_asset_id` | *(unset)* | Pin to an existing EDC asset ID instead of creating a new one |

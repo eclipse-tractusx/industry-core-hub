@@ -481,7 +481,7 @@ backend:
       # -- Company Certificate Management (CX-0135) Notification API
       ccm:
         hostname: "https://backend-ichub.int.catena-x.net"
-        apiPath: "/addons/ccm-kit"
+        apiPath: "/v1/addons/ccm-kit"
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
