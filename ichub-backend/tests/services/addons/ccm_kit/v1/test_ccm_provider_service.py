@@ -505,7 +505,9 @@ class TestPublishCertificate:
 
         assert result["document_id"] == "ichub:asset:ccm-cert:new-uuid"
         assert result["certificate_id"] == CERT_ID
-        repos.ccm_repository.update.assert_called_once()
+        repos.ccm_repository.update_fields.assert_called_once_with(
+            ccm.id, {"edc_asset_id": "ichub:asset:ccm-cert:new-uuid"}
+        )
         repos.commit.assert_called_once()
 
     @patch(
@@ -631,7 +633,9 @@ class TestUnpublishCertificate:
         mock_cpm.delete_ccm_certificate_offer.assert_called_once_with(
             "asset-to-remove"
         )
-        assert ccm.edc_asset_id is None
+        repos.ccm_repository.update_fields.assert_called_once_with(
+            ccm.id, {"edc_asset_id": None}
+        )
         repos.commit.assert_called_once()
 
     @patch(

@@ -273,8 +273,7 @@ class CcmProviderService(CcmBaseService):
             )
 
             # Persist the EDC asset ID on the certificate record
-            ccm.edc_asset_id = asset_id
-            repo.ccm_repository.update(ccm)
+            repo.ccm_repository.update_fields(ccm.id, {"edc_asset_id": asset_id})
             repo.commit()
 
             logger.info(
@@ -311,8 +310,7 @@ class CcmProviderService(CcmBaseService):
                 ccm.edc_asset_id
             )
 
-            ccm.edc_asset_id = None
-            repo.ccm_repository.update(ccm)
+            repo.ccm_repository.update_fields(ccm.id, {"edc_asset_id": None})
             repo.commit()
 
             logger.info(
