@@ -277,6 +277,21 @@ class CcmNotificationService:
             )
             repo.commit()
 
+        # Log rejection details so providers can diagnose why a certificate
+        # was rejected by the consumer.
+        if content.certificate_status == CertificateStatusValue.REJECTED:
+            if content.certificate_errors:
+                logger.info(
+                    f"Certificate errors for {_s(content.document_id)} from "
+                    f"{_s(sender_bpn)}: {[e.message for e in content.certificate_errors]}"
+                )
+            if content.location_errors:
+                logger.info(
+                    f"Location errors for {_s(content.document_id)} from "
+                    f"{_s(sender_bpn)}: "
+                    f"{[{_s(le.bpn): [e.message for e in le.location_errors]} for le in content.location_errors]}"
+                )
+
         logger.info(
             f"CertificateShare {share.id} updated to {new_status.value} "
             f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"

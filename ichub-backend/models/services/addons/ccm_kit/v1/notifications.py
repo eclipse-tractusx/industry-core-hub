@@ -178,6 +178,12 @@ class CcmSendStatusPayload(BaseModel):
         alias="certificateStatus",
         description="Consumer's processing result.",
     )
+    related_message_id: Optional[str] = Field(
+        default=None,
+        alias="relatedMessageId",
+        max_length=64,
+        description="UUID of the original notification this status responds to.",
+    )
     location_bpns: Optional[List[str]] = Field(
         default=None,
         alias="locationBpns",

@@ -320,6 +320,43 @@ class TestCcmNotificationService:
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
     )
+    def test_status_rejected_logs_errors(self, mock_factory, mock_repos, caplog):
+        """
+        GIVEN a REJECTED status with certificateErrors and locationErrors
+        WHEN update_certificate_status is called
+        THEN rejection details are logged at INFO level.
+        """
+        import logging
+
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=10)
+        share = _make_share(id=3, certificate_id=10)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "10",
+                "certificateStatus": "REJECTED",
+                "certificateErrors": [{"message": "Certificate expired"}],
+                "locationErrors": [
+                    {"bpn": "BPNS000000000001", "locationErrors": [{"message": "Invalid site"}]},
+                ],
+            },
+        )
+
+        with caplog.at_level(logging.INFO):
+            status, body = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        assert "Certificate expired" in caplog.text
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
     def test_status_received(self, mock_factory, mock_repos):
         """
         GIVEN a status notification with certificateStatus=RECEIVED

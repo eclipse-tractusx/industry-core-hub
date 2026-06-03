@@ -83,16 +83,29 @@ class CcmBaseService:
         sender_bpn: str,
         receiver_bpn: str,
         content_fields: Dict,
+        related_message_id: Optional[uuid.UUID] = None,
     ) -> Notification:
-        """Build a SDK Notification with the given content fields."""
-        header = NotificationHeader(
-            messageId=uuid.uuid4(),
-            context=context,
-            sentDateTime=datetime.now(timezone.utc),
-            senderBpn=sender_bpn,
-            receiverBpn=receiver_bpn,
-            version="1.0.0",
-        )
+        """Build a SDK Notification with the given content fields.
+
+        Args:
+            context: CX-0135 notification context string.
+            sender_bpn: BPNL of the sending party.
+            receiver_bpn: BPNL of the receiving party.
+            content_fields: CCM-specific content payload fields.
+            related_message_id: Optional UUID of the original notification
+                this message is responding to (e.g. status → push).
+        """
+        header_kwargs: Dict = {
+            "messageId": uuid.uuid4(),
+            "context": context,
+            "sentDateTime": datetime.now(timezone.utc),
+            "senderBpn": sender_bpn,
+            "receiverBpn": receiver_bpn,
+        }
+        if related_message_id is not None:
+            header_kwargs["relatedMessageId"] = related_message_id
+
+        header = NotificationHeader(**header_kwargs)
         content = NotificationContent(**content_fields)
         return Notification(header=header, content=content)
 

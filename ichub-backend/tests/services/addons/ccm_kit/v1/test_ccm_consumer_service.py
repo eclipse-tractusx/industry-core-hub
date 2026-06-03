@@ -409,10 +409,118 @@ class TestSendCertificateStatus:
         call_kwargs = mock_ncs.get_notification_endpoint.call_args[1]
         assert call_kwargs["policies"] == [ccm_policy]
 
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_status_with_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """Status notification sets relatedMessageId when provided."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint.return_value = (
+            "https://dataplane.example.com/public",
+            "token-rel",
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        original_msg_id = "d9452f24-3bf3-4134-b3de-123456789abc"
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="12345",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+            relatedMessageId=original_msg_id,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+
+        # Verify relatedMessageId is set in the notification header
+        call_args = mock_ncs.send_notification_to_endpoint.call_args
+        notification = call_args[1]["notification"]
+        assert str(notification.header.related_message_id) == original_msg_id
+
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_status_without_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """Status notification omits relatedMessageId when not provided."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint.return_value = (
+            "https://dataplane.example.com/public",
+            "token-no-rel",
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="12345",
+            certificateStatus=CertificateStatusValue.RECEIVED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+
+        call_args = mock_ncs.send_notification_to_endpoint.call_args
+        notification = call_args[1]["notification"]
+        assert notification.header.related_message_id is None
+
 
 # ---------------------------------------------------------------------------
 # Internal helper tests
 # ---------------------------------------------------------------------------
+
+class TestBuildNotification:
+    """Tests for CcmBaseService._build_notification (via CcmConsumerService)."""
+
+    def test_header_version_uses_sdk_default(self, service):
+        """Header version must follow shared.message_header (SDK default 3.0.0)."""
+        from tractusx_sdk.industry.constants import DEFAULT_HEADER_VERSION
+
+        notification = service._build_notification(
+            context="Test-Context:1.0.0",
+            sender_bpn=CONSUMER_BPN,
+            receiver_bpn=PROVIDER_BPN,
+            content_fields={"key": "value"},
+        )
+
+        assert notification.header.version == DEFAULT_HEADER_VERSION
+
+    def test_related_message_id_set_when_provided(self, service):
+        """relatedMessageId is set in header when passed."""
+        import uuid
+        msg_id = uuid.uuid4()
+
+        notification = service._build_notification(
+            context="Test-Context:1.0.0",
+            sender_bpn=CONSUMER_BPN,
+            receiver_bpn=PROVIDER_BPN,
+            content_fields={"key": "value"},
+            related_message_id=msg_id,
+        )
+
+        assert notification.header.related_message_id == msg_id
+
+    def test_related_message_id_none_by_default(self, service):
+        """relatedMessageId is None when not provided."""
+        notification = service._build_notification(
+            context="Test-Context:1.0.0",
+            sender_bpn=CONSUMER_BPN,
+            receiver_bpn=PROVIDER_BPN,
+            content_fields={"key": "value"},
+        )
+
+        assert notification.header.related_message_id is None
+
 
 class TestExtractAssetId:
     """Tests for CcmConsumerService._extract_asset_id"""

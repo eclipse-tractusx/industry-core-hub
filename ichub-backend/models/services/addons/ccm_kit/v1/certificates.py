@@ -36,14 +36,21 @@ from tools.constants import BPNL_PATTERN as _BPNL_PATTERN
 
 class CertificateType(str, Enum):
     """
-    Allowed certificate types as per CX-0135 CertificateType characteristic.
-    Extended with OTHER for any certification not explicitly listed.
+    Known certificate types as per CX-0135 CertificateType characteristic.
+
+    Note: This enum is **not enforced** on model fields — ``certificate_type``
+    is a free ``str`` everywhere because CX-0135 states the list is not
+    exhaustive.  The enum is kept for reference and documentation only.
     """
     ISO9001   = "ISO9001"
     ISO14001  = "ISO14001"
     ISO45001  = "ISO45001"
     IATF16949 = "IATF16949"
     ISO27001  = "ISO27001"
+    ISO50001  = "ISO50001"
+    ISO22301  = "ISO22301"
+    ISO20000  = "ISO20000"
+    VDA6_4    = "VDA6.4"
     OTHER     = "OTHER"
 
 

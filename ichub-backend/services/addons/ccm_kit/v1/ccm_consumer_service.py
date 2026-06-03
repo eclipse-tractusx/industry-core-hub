@@ -34,6 +34,7 @@ Provides four operations:
 
 import time
 import math
+import uuid
 from typing import Dict, Optional
 import requests as http_requests
 
@@ -203,11 +204,23 @@ class CcmConsumerService(CcmBaseService):
         if payload.location_errors:
             content_fields["locationErrors"] = payload.location_errors
 
+        # Resolve relatedMessageId — links this status to the original notification.
+        related_msg_id: Optional[uuid.UUID] = None
+        if payload.related_message_id:
+            try:
+                related_msg_id = uuid.UUID(payload.related_message_id)
+            except ValueError:
+                logger.warning(
+                    f"[CCM Consumer] Invalid relatedMessageId: "
+                    f"{_s(payload.related_message_id)}"
+                )
+
         notification = self._build_notification(
             context=CCM_CONTEXT_STATUS,
             sender_bpn=sender_bpn,
             receiver_bpn=provider_bpn,
             content_fields=content_fields,
+            related_message_id=related_msg_id,
         )
 
         return self._send_notification(
