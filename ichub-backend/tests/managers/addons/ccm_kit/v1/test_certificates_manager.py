@@ -332,9 +332,11 @@ class TestCertificatesManager:
     # ------------------------------------------------------------------
 
     def test_parse_sites_normal(self):
-        """Comma-separated string is split and stripped correctly."""
-        result = CertificatesManager._parse_sites("BPNS001, BPNA002 , BPNS003")
-        assert result == ["BPNS001", "BPNA002", "BPNS003"]
+        """Comma-separated string is split, validated and stripped correctly."""
+        result = CertificatesManager._parse_sites(
+            "BPNS00000000001A, BPNA00000000002B , BPNS00000000003C"
+        )
+        assert result == ["BPNS00000000001A", "BPNA00000000002B", "BPNS00000000003C"]
 
     def test_parse_sites_none(self):
         """None input returns empty list."""
@@ -350,3 +352,44 @@ class TestCertificatesManager:
         raw = b"hello world"
         expected = base64.b64encode(raw).decode("utf-8")
         assert CertificatesManager._bytes_to_base64(raw) == expected
+
+    # ------------------------------------------------------------------
+    # _parse_sites – validation & deduplication
+    # ------------------------------------------------------------------
+
+    def test_parse_sites_drops_invalid_bpn(self):
+        """Invalid BPN format entries are silently dropped."""
+        result = CertificatesManager._parse_sites(
+            "BPNS00000000001A,INVALID,BPNA00000000002B"
+        )
+        assert result == ["BPNS00000000001A", "BPNA00000000002B"]
+
+    def test_parse_sites_deduplicates(self):
+        """Duplicate entries are removed preserving first-seen order."""
+        result = CertificatesManager._parse_sites(
+            "BPNS00000000001A,BPNS00000000001A,BPNA00000000002B"
+        )
+        assert result == ["BPNS00000000001A", "BPNA00000000002B"]
+
+    def test_parse_sites_rejects_bpnl(self):
+        """BPNL values are not valid site BPNs and should be dropped."""
+        result = CertificatesManager._parse_sites("BPNL000000000001")
+        assert result == []
+
+    # ------------------------------------------------------------------
+    # upload_certificate – PDF magic bytes validation
+    # ------------------------------------------------------------------
+
+    def test_upload_certificate_invalid_magic_bytes(self):
+        """
+        GIVEN a file named .pdf but whose content does not start with %PDF-
+        WHEN upload_certificate is called
+        THEN an InvalidError is raised.
+        """
+        metadata = _make_upload_request()
+        with pytest.raises(InvalidError):
+            self.manager.upload_certificate(
+                file_content=b"PK\x03\x04 not a pdf",
+                file_name="fake.pdf",
+                metadata=metadata,
+            )

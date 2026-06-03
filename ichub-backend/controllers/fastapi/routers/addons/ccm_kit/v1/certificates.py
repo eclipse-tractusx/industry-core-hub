@@ -28,6 +28,7 @@ from fastapi.responses import JSONResponse
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.addons_service.ccm_kit.v1.certificates import certificates_manager
+from managers.config.config_manager import ConfigManager
 from models.services.addons.ccm_kit.v1 import (
     CertificateDetail,
     CertificateListItem,
@@ -112,7 +113,18 @@ async def upload_certificate(
             detail="No file provided.",
         )
 
-    file_content = await file.read()
+    # Guard against oversized uploads before reading the full body into memory.
+    max_size = int(
+        ConfigManager.get_config(
+            "ccm.upload.max_pdf_size_bytes", default=10 * 1024 * 1024
+        )
+    )
+    file_content = await file.read(max_size + 1)
+    if len(file_content) > max_size:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File exceeds the {max_size // (1024 * 1024)} MB size limit.",
+        )
 
     return certificates_manager.upload_certificate(
         file_content=file_content,

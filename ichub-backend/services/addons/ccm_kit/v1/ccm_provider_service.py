@@ -287,8 +287,6 @@ class CcmProviderService(CcmBaseService):
         Raises:
             ValueError: If the certificate is not found or not published.
         """
-        from connector import connector_provider_manager
-
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
@@ -331,8 +329,6 @@ class CcmProviderService(CcmBaseService):
         Raises:
             ValueError: If the certificate is not found or not published.
         """
-        from connector import connector_provider_manager
-
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:

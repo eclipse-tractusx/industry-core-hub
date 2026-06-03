@@ -78,6 +78,12 @@ CCM_ENDPOINT_STATUS = "/companycertificate/status"
 CCM_ENDPOINT_PUSH = "/companycertificate/push"
 CCM_ENDPOINT_AVAILABLE = "/companycertificate/available"
 
+# ==================== BPN FORMAT PATTERNS (CX-0018) =======================
+# Legal-entity BPN — exactly 12 alphanumeric chars after the BPNL prefix.
+BPNL_PATTERN = r"^BPNL[a-zA-Z0-9]{12}$"
+# Site (BPNS) or address (BPNA) BPN — same length constraint.
+BPN_SITE_PATTERN = r"^BPN[SA][a-zA-Z0-9]{12}$"
+
 # ==================== CCM PULL MECHANISM (CX-0135) =========================
 # DCT type for individual certificate assets published via the PULL mechanism
 CCM_CERTIFICATE_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CompanyCertificate"

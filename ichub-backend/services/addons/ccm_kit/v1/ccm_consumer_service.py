@@ -33,10 +33,12 @@ Provides four operations:
 """
 
 import time
+import math
 from typing import Dict, Optional
 import requests as http_requests
 
 from connector import consumer_connector_service
+from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
@@ -290,15 +292,20 @@ class CcmConsumerService(CcmBaseService):
             if negotiation_id is None:
                 raise RuntimeError("EDR negotiation returned None.")
 
-            # Wait for EDR to be available
+            # Wait for EDR to be available (configurable timeout with backoff).
+            edr_max_retries = int(
+                ConfigManager.get_config("consumer.ccm.edr_max_retries", default=30)
+            )
             edr_entry = None
-            for _ in range(30):
+            for attempt in range(edr_max_retries):
                 edr_entry = consumer_connector_service.get_edr_entry(
                     negotiation_id=negotiation_id
                 )
                 if edr_entry:
                     break
-                time.sleep(1)
+                # Exponential backoff: 1s, 2s, 4s … capped at 10s.
+                delay = min(math.pow(2, attempt), 10)
+                time.sleep(delay)
 
             if not edr_entry:
                 raise RuntimeError(
@@ -308,6 +315,12 @@ class CcmConsumerService(CcmBaseService):
             # Retrieve data from data plane
             endpoint = edr_entry.get("endpoint")
             token = edr_entry.get("authorization")
+
+            if not endpoint or not token:
+                raise RuntimeError(
+                    f"EDR entry missing endpoint or authorization token "
+                    f"for negotiation {negotiation_id}."
+                )
 
             headers = consumer_connector_service.get_data_plane_headers(
                 access_token=token

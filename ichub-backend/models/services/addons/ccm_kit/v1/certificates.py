@@ -25,7 +25,9 @@ from datetime import date, datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from tools.constants import BPNL_PATTERN as _BPNL_PATTERN
 
 
 # ---------------------------------------------------------------------------
@@ -119,7 +121,10 @@ class CertificateListItem(BaseModel):
     Does NOT include the PDF document to keep responses lean.
     """
     certificate_id: str = Field(alias="certificateId")
-    bpnl: str = Field(description="BPNL of the certificate holder.")
+    bpnl: str = Field(
+        pattern=_BPNL_PATTERN,
+        description="BPNL of the certificate holder."
+    )
     certificate_type: str = Field(alias="certificateType")
     certificate_name: Optional[str] = Field(default=None, alias="certificateName")
     issuer: str
@@ -211,6 +216,7 @@ class UploadCertificateRequest(BaseModel):
     Maps to BusinessPartnerCertificate v3.1.0 field set.
     """
     bpnl: str = Field(
+        pattern=_BPNL_PATTERN,
         description="BPNL of the certificate holder."
     )
     certificate_type: str = Field(
@@ -268,6 +274,15 @@ class UploadCertificateRequest(BaseModel):
         default=None,
         description="Comma-separated BPNS/BPNA values associated with this certificate."
     )
+
+    @model_validator(mode="after")
+    def _validate_date_range(self) -> "UploadCertificateRequest":
+        """Ensure valid_from is not later than valid_until when both are set."""
+        if self.valid_until is not None and self.valid_from > self.valid_until:
+            raise ValueError(
+                "validFrom must not be later than validUntil."
+            )
+        return self
 
     class Config:
         populate_by_name = True

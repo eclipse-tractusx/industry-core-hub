@@ -22,7 +22,10 @@
 #################################################################################
 
 import base64
+import re
 from typing import List, Optional
+
+from tools.constants import BPN_SITE_PATTERN as _BPN_SITE_PATTERN_STR
 
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
@@ -93,6 +96,12 @@ class CertificatesManager:
         """
         if not file_name.lower().endswith(".pdf"):
             raise InvalidError("Only PDF files are accepted for certificates.")
+
+        # Validate PDF magic bytes (%PDF-) to reject non-PDF content.
+        if file_content[:5] != b"%PDF-":
+            raise InvalidError(
+                "File content is not a valid PDF (missing %PDF- header)."
+            )
 
         logger.info(
             "Processing certificate PDF '%s' (%d bytes) for BPNL %s",
@@ -365,17 +374,35 @@ class CertificatesManager:
         """Return a UTF-8 Base64 string for the given raw bytes."""
         return base64.b64encode(data).decode("utf-8")
 
+    # Regex for valid BPNS or BPNA identifiers (compiled from the central constant).
+    _SITE_BPN_RE = re.compile(_BPN_SITE_PATTERN_STR)
+
     @staticmethod
     def _parse_sites(sites_str: Optional[str]) -> List[str]:
         """
         Parse a comma-separated BPNS/BPNA string into a deduplicated list.
 
+        Each value is validated against the ``BPN[SA]`` format.  Invalid
+        entries are silently dropped and a warning is logged.
+
         Example:
-            "BPNS000000000001, BPNA000000000002" → ["BPNS000000000001", "BPNA000000000002"]
+            "BPNS000000000001, BPNA000000000002" -> ["BPNS000000000001", "BPNA000000000002"]
         """
         if not sites_str:
             return []
-        return [s.strip() for s in sites_str.split(",") if s.strip()]
+        seen: set = set()
+        result: List[str] = []
+        for raw in sites_str.split(","):
+            bpn = raw.strip()
+            if not bpn:
+                continue
+            if not CertificatesManager._SITE_BPN_RE.match(bpn):
+                logger.warning("Ignoring invalid site BPN: %s", _s(bpn))
+                continue
+            if bpn not in seen:
+                seen.add(bpn)
+                result.append(bpn)
+        return result
 
     @staticmethod
     def _share_to_read(share: CertificateShare) -> CertificateShareRead:

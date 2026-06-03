@@ -24,6 +24,7 @@
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
+import binascii
 
 from tractusx_sdk.industry.models.notifications import Notification
 
@@ -54,6 +55,13 @@ _STATUS_MAP: Dict[CertificateStatusValue, ShareStatus] = {
     CertificateStatusValue.RECEIVED: ShareStatus.Pending,
     CertificateStatusValue.ACCEPTED: ShareStatus.Active,
     CertificateStatusValue.REJECTED: ShareStatus.Revoked,
+}
+
+# Valid share-status transitions (current → set of allowed new statuses).
+_VALID_TRANSITIONS: Dict[ShareStatus, set] = {
+    ShareStatus.Pending: {ShareStatus.Pending, ShareStatus.Active, ShareStatus.Revoked},
+    ShareStatus.Active: {ShareStatus.Revoked},
+    ShareStatus.Revoked: set(),  # terminal state — no further transitions
 }
 
 
@@ -239,7 +247,30 @@ class CcmNotificationService:
                 }
 
             # --- 4. Update status ---
-            new_status = _STATUS_MAP[content.certificate_status]
+            new_status = _STATUS_MAP.get(content.certificate_status)
+            if new_status is None:
+                return 400, {
+                    "message": (
+                        f"Unknown certificate status "
+                        f"'{content.certificate_status.value}'."
+                    ),
+                }
+
+            # Enforce valid state transitions.
+            current_status = share.status
+            allowed = _VALID_TRANSITIONS.get(current_status, set())
+            if new_status not in allowed:
+                logger.warning(
+                    f"Invalid status transition {current_status.value} → "
+                    f"{new_status.value} for share {share.id}"
+                )
+                return 409, {
+                    "message": (
+                        f"Cannot transition from '{current_status.value}' "
+                        f"to '{new_status.value}'."
+                    ),
+                }
+
             repo.certificate_share_repository.update_status(
                 share_id=share.id,
                 new_status=new_status,
@@ -332,15 +363,29 @@ class CcmNotificationService:
             f"documentID={_s(content.document.document_id)}"
         )
 
-        # Decode binary document
+        # Decode binary document (guard against oversized payloads).
+        max_b64_size = int(
+            ConfigManager.get_config(
+                "ccm.push.max_b64_size_bytes", default=14 * 1024 * 1024
+            )
+        )  # default ~10 MB decoded ≈ 14 MB Base64
         doc_bytes: Optional[bytes] = None
         if content.document.content_base64:
+            if len(content.document.content_base64) > max_b64_size:
+                logger.warning(
+                    f"Base64 document for {_s(content.document.document_id)} "
+                    f"exceeds size limit ({len(content.document.content_base64)} bytes)"
+                )
+                return 413, {
+                    "message": "Document exceeds the allowed size limit.",
+                }
             try:
                 doc_bytes = base64.b64decode(content.document.content_base64)
-            except Exception:
-                logger.warning(
-                    f"Failed to decode Base64 document for {_s(content.document.document_id)}"
-                )
+            except binascii.Error:
+                logger.warning(f"Failed to decode Base64 document for {_s(content.document.document_id)}")
+                return 400, {
+                    "message": "Document content could not be decoded from Base64."
+                }
 
         with RepositoryManagerFactory.create() as repo:
             # Check for duplicate

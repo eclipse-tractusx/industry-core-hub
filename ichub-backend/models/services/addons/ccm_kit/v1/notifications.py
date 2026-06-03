@@ -40,6 +40,8 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
+from tools.constants import BPNL_PATTERN as _BPNL_PATTERN
+
 
 # ---------------------------------------------------------------------------
 # Enumerations
@@ -76,6 +78,7 @@ class CcmRequestContent(BaseModel):
     """
     certified_bpn: str = Field(
         alias="certifiedBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the legal entity whose certificate is being requested.",
     )
     certificate_type: str = Field(
@@ -95,6 +98,7 @@ class CcmCatalogSearchRequest(BaseModel):
     """Request body for consumer catalog search endpoint."""
     provider_bpn: str = Field(
         alias="providerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider whose catalog to search.",
     )
     certificate_type: Optional[str] = Field(
@@ -124,14 +128,17 @@ class CcmSendRequestPayload(BaseModel):
     """Request body for consumer send-request endpoint."""
     sender_bpn: str = Field(
         alias="senderBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the consumer sending this request (own BPN).",
     )
     provider_bpn: str = Field(
         alias="providerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider to request the certificate from.",
     )
     certified_bpn: str = Field(
         alias="certifiedBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the legal entity whose certificate is being requested.",
     )
     certificate_type: str = Field(
@@ -152,10 +159,12 @@ class CcmSendStatusPayload(BaseModel):
     """Request body for consumer send-status endpoint."""
     sender_bpn: str = Field(
         alias="senderBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the consumer sending this status (own BPN).",
     )
     provider_bpn: str = Field(
         alias="providerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider the status is sent to.",
     )
     document_id: str = Field(
@@ -432,6 +441,7 @@ class CcmPushRequest(BaseModel):
     """Request body for the provider push trigger endpoint."""
     sender_bpn: str = Field(
         alias="senderBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider sending this push (own BPN).",
     )
     certificate_id: int = Field(
@@ -440,6 +450,7 @@ class CcmPushRequest(BaseModel):
     )
     consumer_bpn: str = Field(
         alias="consumerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the consumer to push the certificate to.",
     )
 
@@ -489,6 +500,7 @@ class CcmAvailableRequest(BaseModel):
     """Request body for the provider available-notification trigger endpoint."""
     sender_bpn: str = Field(
         alias="senderBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider sending this notification (own BPN).",
     )
     certificate_id: int = Field(
@@ -497,6 +509,7 @@ class CcmAvailableRequest(BaseModel):
     )
     consumer_bpn: str = Field(
         alias="consumerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the consumer to notify.",
     )
 
@@ -537,6 +550,7 @@ class CcmPullRequest(BaseModel):
     """Request body for pulling a certificate from a provider's catalog."""
     provider_bpn: str = Field(
         alias="providerBpn",
+        pattern=_BPNL_PATTERN,
         description="BPNL of the provider to pull from.",
     )
     document_id: str = Field(

@@ -80,6 +80,7 @@ def _make_ccm(**kwargs) -> Mock:
     m.id = kwargs.get("id", 42)
     m.bpnl = kwargs.get("bpnl", "BPNL000000000001")
     m.certificate_type = kwargs.get("certificate_type", "ISO9001")
+    m.edc_asset_id = kwargs.get("edc_asset_id", None)
     m.sites = kwargs.get("sites", [])
     m.shares = kwargs.get("shares", [])
     return m
@@ -611,3 +612,106 @@ class TestCcmNotificationService:
 
         assert status == 200
         mock_auto_push.assert_not_called()
+
+    # ==================================================================
+    # State-machine transition enforcement
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_transition_revoked_to_active_blocked(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a share in Revoked state
+        WHEN a status ACCEPTED (→ Active) notification arrives
+        THEN the transition is blocked with 409.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=10)
+        share = _make_share(id=1, certificate_id=10, status=ShareStatus.Revoked)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "10",
+                "certificateStatus": "ACCEPTED",
+            },
+        )
+
+        status, body = self.service.update_certificate_status(notification)
+
+        assert status == 409
+        assert "cannot transition" in body["message"].lower()
+        mock_repos.certificate_share_repository.update_status.assert_not_called()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_transition_active_to_revoked_allowed(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a share in Active state
+        WHEN a status REJECTED (→ Revoked) notification arrives
+        THEN the transition is allowed.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=20)
+        share = _make_share(id=5, certificate_id=20, status=ShareStatus.Active)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "20",
+                "certificateStatus": "REJECTED",
+            },
+        )
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
+            share_id=5,
+            new_status=ShareStatus.Revoked,
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_transition_active_to_pending_blocked(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a share in Active state
+        WHEN a status RECEIVED (→ Pending) notification arrives
+        THEN the transition is blocked with 409.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=30)
+        share = _make_share(id=8, certificate_id=30, status=ShareStatus.Active)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "30",
+                "certificateStatus": "RECEIVED",
+            },
+        )
+
+        status, body = self.service.update_certificate_status(notification)
+
+        assert status == 409
+        assert "cannot transition" in body["message"].lower()
+        mock_repos.certificate_share_repository.update_status.assert_not_called()

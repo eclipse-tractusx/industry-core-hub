@@ -121,7 +121,11 @@ class CcmBaseService:
 
         notification_service = NotificationConsumerService(
             consumer_connector_service,
-            verbose=True,
+            verbose=bool(
+                ConfigManager.get_config(
+                    "ccm.notification.verbose", default=True
+                )
+            ),
         )
 
         try:

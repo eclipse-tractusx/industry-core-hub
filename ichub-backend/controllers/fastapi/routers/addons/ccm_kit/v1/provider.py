@@ -155,6 +155,27 @@ async def get_certificate_payload(certificate_id: int) -> JSONResponse:
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
+@router.put(
+    "/publish/{certificate_id}",
+    response_model=CcmPublishResult,
+    summary="Republish a certificate (refresh EDC policy)",
+)
+async def republish_certificate(certificate_id: int) -> CcmPublishResult:
+    """
+    Refresh the EDC contract/policy configuration of an already-published
+    certificate.  The asset DataAddress is unchanged — only the ODRL policy
+    is updated.  Use this when the BPN allowlist or usage constraints change.
+    """
+    try:
+        result = ccm_provider_service.republish_certificate(certificate_id)
+        return CcmPublishResult(**result)
+    except ValueError as ve:
+        raise HTTPException(status_code=404, detail=str(ve))
+    except Exception:
+        logger.exception("Unhandled error in republish_certificate endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
 @router.delete(
     "/publish/{certificate_id}",
     status_code=204,
