@@ -71,7 +71,9 @@ const PcfEditDialog: React.FC<PcfEditDialogProps> = ({
   onSave,
   pcfData,
   part
-}) => {  const { t } = useTranslation('pcf');  const [formData, setFormData] = useState({
+}) => {
+  const { t } = useTranslation('pcf');
+  const [formData, setFormData] = useState({
     pcfExcludingBiogenic: 0,
     pcfIncludingBiogenic: 0,
     primaryDataShare: 0,
