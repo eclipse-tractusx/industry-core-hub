@@ -306,6 +306,12 @@ backend:
           managementPath: "/management"
           protocolPath: "/api/v1/dsp"
           catalogPath: "/catalog"
+      # -- Consumer CCM addon configuration
+      ccm:
+        # -- Max retries when polling for EDR availability during PULL flow
+        edr_max_retries: 30
+        # -- HTTP timeout (seconds) for data-plane requests when pulling certificates
+        data_plane_timeout_sec: 60
     # -- Provider configuration
     provider:
       connector:
@@ -452,6 +458,8 @@ backend:
         hostname: "http://<ichub-backend-hostname>"
         apiPath: "/addons/ccm-kit"
         uri: ""
+        # -- Auto-push certificate to consumers upon receiving a request notification
+        auto_push_on_request: false
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
           # existing_asset_id: <ccm-asset>  # -- optional: pin to a specific asset ID
@@ -554,6 +562,14 @@ backend:
           timeout: 30
           # -- SSL certificate verification
           verify_ssl: true
+      # -- CCM cross-cutting configuration
+      ccm_settings:
+        notification:
+          # -- Enable verbose logging for CCM notification service
+          verbose: true
+        push:
+          # -- Maximum allowed size (bytes) of Base64-encoded certificate documents (~10 MB decoded = 14 MB Base64)
+          max_b64_size_bytes: 14745728
 
   podAnnotations: {}
 
