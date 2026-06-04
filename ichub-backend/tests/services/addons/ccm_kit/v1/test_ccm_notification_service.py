@@ -405,13 +405,15 @@ class TestCcmNotificationService:
     def test_status_received(self, mock_factory, mock_repos):
         """
         GIVEN a status notification with certificateStatus=RECEIVED
+        AND the share is already Pending (RECEIVED maps to Pending)
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Pending
-        AND consumer_status is stamped as RECEIVED on the inbound request.
+        THEN the share is NOT written again (idempotent no-op for share status)
+        AND consumer_status IS still stamped on the inbound request
+        AND 200 is returned.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=5)
-        share = _make_share(id=2, certificate_id=5)
+        share = _make_share(id=2, certificate_id=5)  # default status=Pending
         mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
         mock_repos.certificate_share_repository.update_status.return_value = share
@@ -424,14 +426,13 @@ class TestCcmNotificationService:
             },
         )
 
-        status, _ = self.service.update_certificate_status(notification)
+        status, body = self.service.update_certificate_status(notification)
 
         assert status == 200
-        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
-            share_id=2,
-            new_status=ShareStatus.Pending,
-            rejection_reason=None,
-        )
+        assert "already" in body["message"].lower()
+        # Share must NOT be written (idempotent)
+        mock_repos.certificate_share_repository.update_status.assert_not_called()
+        # consumer_status must still be stamped
         mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
             consumer_bpn="BPNL000000000099",
             certified_bpn="BPNL000000000001",

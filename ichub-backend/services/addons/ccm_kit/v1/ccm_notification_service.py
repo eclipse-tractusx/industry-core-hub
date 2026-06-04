@@ -367,6 +367,29 @@ class CcmNotificationService:
 
             # Enforce valid state transitions.
             current_status = share.status
+            if new_status == current_status:
+                logger.info(
+                    f"Idempotent status re-send for share {share.id}: "
+                    f"{current_status.value} → {new_status.value} (share no-op)"
+                )
+                inbound_notification_id: Optional[str] = None
+                raw_related = getattr(notification.header, "related_message_id", None)
+                if raw_related is not None:
+                    inbound_notification_id = str(raw_related)
+                repo.ccm_inbound_request_repository.update_consumer_status(
+                    consumer_bpn=sender_bpn,
+                    certified_bpn=ccm.bpnl,
+                    certificate_type=ccm.certificate_type,
+                    consumer_status=content.certificate_status.value,
+                    notification_id=inbound_notification_id,
+                )
+                repo.commit()
+                return 200, {
+                    "message": (
+                        f"Status '{content.certificate_status.value}' already "
+                        f"recorded for certificate '{content.document_id}'."
+                    ),
+                }
             allowed = _VALID_TRANSITIONS.get(current_status, set())
             if new_status not in allowed:
                 logger.warning(
