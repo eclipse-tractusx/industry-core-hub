@@ -36,6 +36,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { KitFeature } from '../types';
+import { useFeatures } from '@/contexts/FeatureContext';
 
 interface KitCardProps {
   kit: KitFeature;
@@ -46,12 +47,19 @@ const KitCard: React.FC<KitCardProps> = ({ kit, isCenter = false }) => {
   const { t } = useTranslation('kits');
   const { t: tCommon } = useTranslation('common');
   const navigate = useNavigate();
+  const { featureStates } = useFeatures();
+
+  const isKitActive = kit.features.some((feature) => featureStates[feature.id]);
 
   const handleViewFeatures = () => {
     navigate(`/kit-features/${kit.id}`);
   };
 
   const getStatusColor = (status: string) => {
+    if (status === 'beta') {
+      return isKitActive ? '#00aa44' : '#ff6600';
+    }
+
     const colors: { [key: string]: string } = {
       available: '#00aa44',
       'coming-soon': '#ff6600', 

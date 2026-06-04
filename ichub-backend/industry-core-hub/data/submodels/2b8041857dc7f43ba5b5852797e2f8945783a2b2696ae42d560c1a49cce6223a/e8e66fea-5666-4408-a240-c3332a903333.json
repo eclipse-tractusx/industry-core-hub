@@ -1,0 +1,275 @@
+{
+  "metadata": {
+    "version": "1.1",
+    "status": "approved",
+    "expirationDate": "2026-06-30",
+    "issueDate": "2026-06-02",
+    "economicOperatorId": "BPNL00000003CSGV",
+    "passportIdentifier": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+    "predecessor": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+    "backupReference": "refBackend",
+    "lastModification": "2026-06-04",
+    "language": "English"
+  },
+  "identification": {
+    "serial": [
+      {
+        "key": "manufacturerId",
+        "value": "33344"
+      }
+    ],
+    "type": {
+      "manufacturerPartId": "112233",
+      "nameAtManufacturer": "MyManufacturer"
+    },
+    "codes": [
+      {
+        "key": "1234",
+        "value": "333444"
+      }
+    ],
+    "dataCarrier": {
+      "carrierType": "MYtype",
+      "carrierLayout": "MyLayout"
+    },
+    "classification": [
+      {
+        "classificationStandard": "standarClass",
+        "classificationID": "16:42",
+        "classificationDescription": "My description"
+      }
+    ]
+  },
+  "operation": {
+    "manufacturer": {
+      "facility": [
+        {
+          "facility": "BPNA00000003CSGV"
+        }
+      ],
+      "manufacturer": "BPNL00000003CSGV",
+      "manufacturingDate": "2026-06-01"
+    },
+    "import": {
+      "content": {
+        "eori": "DE123456789012",
+        "id": "BPNL00000003CSGV"
+      },
+      "applicable": true
+    },
+    "other": {
+      "id": "1234",
+      "role": "admin"
+    }
+  },
+  "handling": {
+    "content": {
+      "producer": [
+        {
+          "id": "BPNL00000003CSGV"
+        }
+      ],
+      "sparePart": [
+        {
+          "manufacturerPartId": "4455",
+          "nameAtManufacturer": "MyManufacturer"
+        }
+      ]
+    },
+    "applicable": false
+  },
+  "characteristics": {
+    "lifespan": [
+      {
+        "unit": "unit:month",
+        "value": 1,
+        "key": "mean time between failures"
+      }
+    ],
+    "physicalDimension": {
+      "width": {
+        "value": 1,
+        "unit": "unit:kilometre"
+      },
+      "length": {
+        "value": 1,
+        "unit": "unit:metre"
+      },
+      "diameter": {
+        "value": 2,
+        "unit": "unit:centimetre"
+      },
+      "height": {
+        "value": 1,
+        "unit": "unit:centimetre"
+      },
+      "grossWeight": {
+        "value": 1,
+        "unit": "unit:kilogram"
+      },
+      "grossVolume": {
+        "value": 3,
+        "unit": "unit:cubicInch"
+      },
+      "weight": {
+        "value": 1,
+        "unit": "unit:kilogram"
+      },
+      "volume": {
+        "value": 1,
+        "unit": "unit:cubicInch"
+      }
+    },
+    "physicalState": "solid",
+    "generalPerformanceClass": "Performance calss"
+  },
+  "commercial": {
+    "placedOnMarket": "2026-06-03",
+    "purpose": [
+      "Purpose Item"
+    ],
+    "recallInformation": {
+      "applicable": false,
+      "recallInformationDocumentation": [
+        {
+          "content": "My Content",
+          "contentType": "My content Type",
+          "header": "Header"
+        }
+      ]
+    }
+  },
+  "materials": {
+    "materialComposition": {
+      "content": [
+        {
+          "recycled": 2,
+          "renewable": 2,
+          "unit": "unit:percent",
+          "id": [
+            {
+              "id": "89",
+              "type": "CAS",
+              "name": "CAS"
+            }
+          ],
+          "critical": true,
+          "concentration": 2,
+          "documentation": [
+            {
+              "content": "My Content",
+              "contentType": "My Content Type",
+              "header": "Header"
+            }
+          ]
+        }
+      ],
+      "applicable": true
+    },
+    "substancesOfConcern": {
+      "applicable": true,
+      "content": [
+        {
+          "location": "Arrasate",
+          "unit": "unit:partPerMillion",
+          "concentration": 2,
+          "exemption": "Exemption",
+          "hazardClassification": {
+            "category": "My Content",
+            "class": "Class",
+            "statement": "MY Stament"
+          },
+          "concentrationRange": [
+            {
+              "min": 1,
+              "max": 4
+            }
+          ],
+          "id": [
+            {
+              "id": "1234",
+              "type": "CAS",
+              "name": "CAS"
+            }
+          ],
+          "documentation": [
+            {
+              "content": "My Content",
+              "contentType": "My Content",
+              "header": "My Content"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sustainability": {
+    "status": "original",
+    "productFootprint": {
+      "environmental": [
+        {
+          "value": 2,
+          "rulebook": [
+            {
+              "content": "My Content",
+              "contentType": "My Content Type",
+              "header": "Header"
+            }
+          ],
+          "lifecycle": "Lifecycle",
+          "unit": "meter",
+          "type": "Ozone Depletion",
+          "performanceClass": "Performance Class",
+          "manufacturingPlant": [
+            {
+              "facility": "BPNA00000003CSGV"
+            }
+          ],
+          "declaration": [
+            {
+              "content": "My Content",
+              "contentType": "My Content",
+              "header": "My Content"
+            }
+          ]
+        }
+      ],
+      "carbon": [
+        {
+          "value": 2,
+          "rulebook": [
+            {
+              "content": "My Content",
+              "contentType": "My Content",
+              "header": "My Content"
+            }
+          ],
+          "lifecycle": "Lifecycle",
+          "unit": "meter",
+          "type": "Eco-Toxicity",
+          "performanceClass": "Performance Class",
+          "manufacturingPlant": [
+            {
+              "facility": "BPNA00000003CSGV"
+            }
+          ],
+          "declaration": [
+            {
+              "content": "My Content",
+              "contentType": "My Content",
+              "header": "My Content"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sources": [
+    {
+      "content": "My Content",
+      "category": "Environmental Impact",
+      "type": "My Type",
+      "header": "Header"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "globalAssetId": "urn:uuid:364879eb-89e9-4d09-befa-d0b22c748b88",
+  "childItems": [
+    {
+      "quantity": {
+        "value": 1,
+        "unit": "unit:piece"
+      },
+      "hasAlternatives": false,
+      "createdOn": "2026-06-04T13:39:03.883Z",
+      "lastModifiedOn": "2026-06-04T13:39:03.883Z",
+      "globalAssetId": "urn:uuid:364879eb-89e9-4d09-befa-d0b22c748b88",
+      "businessPartner": "BPNL00000003CRHK"
+    }
+  ]
+}

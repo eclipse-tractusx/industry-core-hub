@@ -165,9 +165,26 @@ export const createTwinAspect = async (
     console.error('Error creating twin aspect:', error);
     
     if (axios.isAxiosError(error)) {
+      const responseData = error.response?.data;
+      let backendMessage: string | undefined;
+
+      if (typeof responseData === 'string') {
+        backendMessage = responseData;
+      } else if (responseData && typeof responseData === 'object') {
+        const maybeMessage = (responseData as { message?: string }).message;
+        const maybeDetail = (responseData as { detail?: string }).detail;
+        if (maybeMessage) {
+          backendMessage = maybeMessage;
+        } else if (maybeDetail) {
+          backendMessage = maybeDetail;
+        } else {
+          backendMessage = JSON.stringify(responseData);
+        }
+      }
+
       return {
         success: false,
-        message: error.response?.data?.message || error.response?.data?.detail || 'Failed to create twin aspect'
+        message: backendMessage || `Failed to create twin aspect (${error.response?.status || 'unknown status'})`
       };
     }
     
