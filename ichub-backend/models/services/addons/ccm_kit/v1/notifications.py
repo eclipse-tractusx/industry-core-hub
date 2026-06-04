@@ -497,6 +497,14 @@ class CcmPushRequest(BaseModel):
         default=None,
         description="Governance policies for contract negotiation.",
     )
+    related_message_id: Optional[str] = Field(
+        default=None,
+        alias="relatedMessageId",
+        description=(
+            "messageId of the inbound request notification this push responds to. "
+            "When provided, takes priority over the auto-resolved value."
+        ),
+    )
 
     class Config:
         populate_by_name = True
@@ -562,6 +570,14 @@ class CcmAvailableRequest(BaseModel):
     governance: Optional[List[Dict[str, Any]]] = Field(
         default=None,
         description="Governance policies for contract negotiation.",
+    )
+    related_message_id: Optional[str] = Field(
+        default=None,
+        alias="relatedMessageId",
+        description=(
+            "messageId of the inbound request notification this available responds to. "
+            "When provided, takes priority over the auto-resolved value."
+        ),
     )
 
     class Config:

@@ -131,20 +131,29 @@ class CcmProviderService(CcmBaseService):
 
         # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
         related_msg_id: Optional[uuid.UUID] = None
-        try:
-            with RepositoryManagerFactory.create() as repo:
-                inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
-                    consumer_bpn=consumer_bpn,
-                    certified_bpn=certified_bpn,
-                    certificate_type=certificate_type_val,
-                    limit=1,
+        if request.related_message_id:
+            try:
+                related_msg_id = uuid.UUID(request.related_message_id)
+            except ValueError:
+                logger.warning(
+                    "[CCM Provider] Invalid relatedMessageId in push request: %s",
+                    _s(request.related_message_id),
                 )
-                if inbound_requests and inbound_requests[0].notification_id:
-                    related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
-        except Exception as e:
-            logger.debug(
-                f"[CCM Provider] Could not resolve relatedMessageId for push: {_s(e)}"
-            )
+        if related_msg_id is None:
+            try:
+                with RepositoryManagerFactory.create() as repo:
+                    inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
+                        consumer_bpn=consumer_bpn,
+                        certified_bpn=certified_bpn,
+                        certificate_type=certificate_type_val,
+                        limit=1,
+                    )
+                    if inbound_requests and inbound_requests[0].notification_id:
+                        related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
+            except Exception as e:
+                logger.debug(
+                    f"[CCM Provider] Could not resolve relatedMessageId for push: {_s(e)}"
+                )
 
         # --- 4. Build and send notification ---
         notification = self._build_notification(
@@ -252,20 +261,29 @@ class CcmProviderService(CcmBaseService):
 
         # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
         related_msg_id: Optional[uuid.UUID] = None
-        try:
-            with RepositoryManagerFactory.create() as repo:
-                inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
-                    consumer_bpn=consumer_bpn,
-                    certified_bpn=certified_bpn,
-                    certificate_type=certificate_type_val,
-                    limit=1,
+        if request.related_message_id:
+            try:
+                related_msg_id = uuid.UUID(request.related_message_id)
+            except ValueError:
+                logger.warning(
+                    "[CCM Provider] Invalid relatedMessageId in available request: %s",
+                    _s(request.related_message_id),
                 )
-                if inbound_requests and inbound_requests[0].notification_id:
-                    related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
-        except Exception as e:
-            logger.debug(
-                f"[CCM Provider] Could not resolve relatedMessageId for available: {_s(e)}"
-            )
+        if related_msg_id is None:
+            try:
+                with RepositoryManagerFactory.create() as repo:
+                    inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
+                        consumer_bpn=consumer_bpn,
+                        certified_bpn=certified_bpn,
+                        certificate_type=certificate_type_val,
+                        limit=1,
+                    )
+                    if inbound_requests and inbound_requests[0].notification_id:
+                        related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
+            except Exception as e:
+                logger.debug(
+                    f"[CCM Provider] Could not resolve relatedMessageId for available: {_s(e)}"
+                )
 
         # --- 4. Build and send notification ---
         notification = self._build_notification(
