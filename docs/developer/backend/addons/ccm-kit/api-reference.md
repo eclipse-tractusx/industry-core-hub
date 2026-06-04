@@ -11,15 +11,16 @@
 3. [Key Concepts](#3-key-concepts)
 4. [Data Model](#4-data-model)
 5. [PUSH Flow — Provider sends certificate to consumer](#5-push-flow--provider-sends-certificate-to-consumer)
-6. [PULL Flow — Consumer fetches certificate from provider](#6-pull-flow--consumer-fetches-certificate-from-provider)
-7. [REQUEST Flow — Consumer requests a certificate from provider](#7-request-flow--consumer-requests-a-certificate-from-provider)
-8. [STATUS Flow — Consumer reports processing result](#8-status-flow--consumer-reports-processing-result)
-9. [Certificate Lifecycle (CRUD)](#9-certificate-lifecycle-crud)
-10. [API Reference](#10-api-reference)
-11. [Notification Envelopes (CX-0135)](#11-notification-envelopes-cx-0135)
-12. [Configuration Reference](#12-configuration-reference)
-13. [Enabling / Disabling CCM](#13-enabling--disabling-ccm)
-14. [Error Handling Patterns](#14-error-handling-patterns)
+6. [AVAILABLE Flow — Provider notifies consumer certificate is ready](#6-available-flow--provider-notifies-consumer-certificate-is-ready)
+7. [PULL Flow — Consumer fetches certificate from provider](#7-pull-flow--consumer-fetches-certificate-from-provider)
+8. [REQUEST Flow — Consumer requests a certificate from provider](#8-request-flow--consumer-requests-a-certificate-from-provider)
+9. [STATUS Flow — Consumer reports processing result](#9-status-flow--consumer-reports-processing-result)
+10. [Certificate Lifecycle (CRUD)](#10-certificate-lifecycle-crud)
+11. [API Reference](#11-api-reference)
+12. [Notification Envelopes (CX-0135)](#12-notification-envelopes-cx-0135)
+13. [Configuration Reference](#13-configuration-reference)
+14. [Enabling / Disabling CCM](#14-enabling--disabling-ccm)
+15. [Error Handling Patterns](#15-error-handling-patterns)
 
 ---
 
@@ -144,17 +145,92 @@ The **Kubernetes sync Job** in `jobs/asset_sync_job.py` (`_sync_ccm_asset`) re-r
 | `consumer_bpnl` | `TEXT` | Consumer who received it |
 | `status` | `ENUM` | `Active` / `Pending` / `Revoked` |
 | `last_shared_date` | `TIMESTAMP` | Most recent share timestamp |
+| `rejection_reason` | `TEXT?` | JSON with `certificateErrors` + `locationErrors` when status is `Revoked` |
 | `created_at` | `TIMESTAMP` | Record creation |
 
 **Index:** composite `(certificate_id, consumer_bpnl)`.
 
-### 4.2 Consumer-side table
+**Status transitions:**
+
+| Current status | Allowed transitions |
+|---|---|
+| `Pending` | `Pending` (idempotent), `Active`, `Revoked` |
+| `Active` | `Revoked` |
+| `Revoked` | *(terminal — no further transitions)* |
+
+#### `ccm_inbound_request` — Provider-side request tracking
+
+Created for every `POST /companycertificate/request` received from a consumer, regardless of whether a matching certificate exists. Enables the provider to monitor demand for certificates not yet uploaded, and to confirm full delivery by tracking PUSH / Available transitions.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | `INTEGER PK` | — |
+| `consumer_bpn` | `TEXT` | BPNL of the consumer that issued the request |
+| `certified_bpn` | `TEXT` | BPNL of the legal entity whose certificate was requested |
+| `certificate_type` | `TEXT` | Certificate type identifier (e.g. `ISO9001`) |
+| `location_bpns` | `TEXT?` | JSON-serialised list of BPNS/BPNA to narrow scope |
+| `certificate_id` | `INTEGER FK→ccm.id?` | Matching certificate (NULL when status is `NotFound`) |
+| `status` | `ENUM` | `NotFound` / `Registered` / `Available` / `Pushed` |
+| `notification_id` | `TEXT?` | `messageId` from the CX-0135 request notification header — used as `relatedMessageId` in the provider's response push/available notification |
+| `consumer_status` | `TEXT?` | Consumer's acceptance feedback: `RECEIVED` / `ACCEPTED` / `REJECTED`. NULL until the consumer sends a STATUS notification back |
+| `received_at` | `TIMESTAMP` | Timestamp when the request was received |
+| `updated_at` | `TIMESTAMP` | Timestamp of the last status update |
+
+**Index:** composite `(consumer_bpn, certified_bpn, certificate_type)`.
+
+**Status lifecycle:** `NotFound` → `Registered` (cert added later) → `Available` | `Pushed`
+
+### 4.2 Consumer-side tables
 
 #### `ccm_received` — Received certificates
 
-Stores certificates received via the PUSH notification flow. Fields mirror the CX-0135 push payload:
+Stores certificates received via PUSH notifications or pulled from the provider's EDC catalog.
 
-`id`, `document_id`, `provider_bpn`, `certified_bpn`, `certificate_type`, `certificate_version`, `issuer_name`, `issuer_bpn`, `validator_name`, `valid_from`, `valid_until`, `trust_level`, `registration_number`, `area_of_application`, `uploader_bpn`, `doc` (BYTEA), `received_at`
+| Column | Type | Description |
+|---|---|---|
+| `id` | `INTEGER PK` | — |
+| `document_id` | `TEXT` | Provider-assigned document reference ID (unique per provider) |
+| `provider_bpn` | `TEXT` | BPNL of the provider that sent/published the certificate |
+| `certified_bpn` | `TEXT` | BPNL of the legal entity the certificate belongs to |
+| `certificate_type` | `TEXT` | Certificate type identifier (e.g. `ISO9001`) |
+| `certificate_version` | `TEXT?` | Version of the certificate standard (e.g. `2015`) |
+| `issuer_name` | `TEXT?` | Name of the certification body |
+| `issuer_bpn` | `TEXT?` | BPNL of the certification body |
+| `validator_name` | `TEXT?` | Name of the third-party validator |
+| `valid_from` | `DATE?` | Start of validity period |
+| `valid_until` | `DATE?` | End of validity period |
+| `trust_level` | `TEXT?` | `none` / `low` / `high` / `trusted` |
+| `registration_number` | `TEXT?` | Official registration/serial number |
+| `area_of_application` | `TEXT?` | Scope the certificate applies to |
+| `uploader_bpn` | `TEXT?` | BPNL of the uploader |
+| `doc` | `BYTEA?` | Binary PDF content |
+| `local_status` | `ENUM` | Consumer-local processing status: `Pending` / `Accepted` / `Rejected`. Updated when `POST /consumer/status` is called |
+| `status_updated_at` | `TIMESTAMP?` | Timestamp of the most recent `local_status` change |
+| `notification_message_id` | `TEXT?` | `messageId` from the push or available notification that delivered this certificate — used as `relatedMessageId` when sending status feedback back to the provider |
+| `received_at` | `TIMESTAMP` | Timestamp when the certificate was received |
+
+**Unique constraint:** `(document_id, provider_bpn)` — duplicate pushes update the existing record.
+
+#### `ccm_outbound_request` — Consumer-side request tracking
+
+Created for every `POST /consumer/request` call. Allows operators to inspect the status of outstanding certificate requests without relying solely on inbound notifications.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | `INTEGER PK` | — |
+| `sender_bpn` | `TEXT` | BPNL of this node (the consumer) |
+| `provider_bpn` | `TEXT` | BPNL of the provider the request was sent to |
+| `certified_bpn` | `TEXT` | BPNL of the legal entity whose certificate was requested |
+| `certificate_type` | `TEXT` | Certificate type identifier (e.g. `ISO9001`) |
+| `location_bpns` | `TEXT?` | JSON-serialised list of BPNS/BPNA |
+| `governance` | `TEXT?` | JSON-serialised governance policies used in the contract negotiation |
+| `status` | `ENUM` | `Pending` / `Found` / `NotFound` / `Failed` |
+| `notification_id` | `TEXT?` | `messageId` of the REQUEST notification sent (from `header.message_id`) — matched against `relatedMessageId` in the provider's PUSH or AVAILABLE response to correlate the notification chain |
+| `document_id` | `TEXT?` | Provider document ID — populated when a PUSH or AVAILABLE notification is correlated to this request |
+| `requested_at` | `TIMESTAMP` | Timestamp when the request was sent |
+| `updated_at` | `TIMESTAMP` | Timestamp of the last status update |
+
+**Index:** composite `(provider_bpn, certified_bpn, certificate_type)`.
 
 ---
 
@@ -166,7 +242,7 @@ The provider initiates a push: it sends the full certificate (including PDF as B
 Frontend / Operator
         │
         │  POST /v1/addons/ccm-kit/provider/push
-        │  { senderBpn, certificateId, consumerBpn }
+        │  { senderBpn, certificateId, consumerBpn, relatedMessageId? }
         ▼
 CcmProviderService.push_certificate()
         │
@@ -174,13 +250,21 @@ CcmProviderService.push_certificate()
         ├── Build CX-0135 push content (BusinessPartnerCertificate JSON)
         │     - Base64-encode the PDF document
         │     - Populate type, issuer, sites, validator, dates, trustLevel
+        ├── Resolve relatedMessageId (CX-0135 notification chain linking)
+        │     - If relatedMessageId is explicit in the request → use it directly
+        │     - Otherwise → auto-resolve from the most recent CcmInboundRequest
+        │       for (consumerBpn, certifiedBpn, certificateType) ordered by updated_at
         ├── Discover consumer's CCM notification asset via EDC catalog
         │     (filter: dct:type = CompanyCertificateManagementNotificationApi)
         ├── Negotiate contract + wait for EDR
         ├── POST to consumer EDC data plane:
         │     endpoint: /companycertificate/push
         │     context:  CompanyCertificateManagement-CCMAPI-Push:1.0.0
-        └── Record sharing in certificate_share table (status=Active)
+        │     header:   relatedMessageId = (resolved above)
+        ├── Record sharing in certificate_share table (status=Active)
+        └── Advance CcmInboundRequest to status=Pushed
+              - If explicit relatedMessageId → only the matching request
+              - Otherwise → all Pending/Registered requests for that consumer
                 │
                 ▼
         Consumer's /companycertificate/push  (inbound)
@@ -188,8 +272,14 @@ CcmProviderService.push_certificate()
         CcmNotificationService.process_certificate_push()
                 │
                 ├── Validate context = CCMAPI-Push:1.0.0
-                ├── Base64-decode the document
-                └── Persist to ccm_received table
+                ├── Check for duplicate (document_id + provider_bpn)
+                │     duplicate → update existing record instead of inserting
+                ├── Base64-decode and PDF-magic-byte-validate the document
+                ├── Persist to ccm_received table
+                │     (notification_message_id = push notification messageId)
+                └── Correlate CcmOutboundRequest → status=Found
+                      - If relatedMessageId in header → only the matching request
+                      - Otherwise → all active requests for that provider + type
 ```
 
 **Request:**
@@ -198,9 +288,12 @@ POST /v1/addons/ccm-kit/provider/push
 {
   "senderBpn": "BPNL00000003AYRE",
   "certificateId": 42,
-  "consumerBpn": "BPNL000000000001"
+  "consumerBpn": "BPNL000000000001",
+  "relatedMessageId": "uuid-of-consumer-request-notification"
 }
 ```
+
+> `relatedMessageId` is optional. When omitted the backend auto-resolves it from the most recent inbound request record, preserving the CX-0135 notification chain without requiring the operator to track message IDs manually.
 
 **Response:**
 ```json
@@ -209,7 +302,71 @@ POST /v1/addons/ccm-kit/provider/push
 
 ---
 
-## 6. PULL Flow — Consumer fetches certificate from provider
+## 6. AVAILABLE Flow — Provider notifies consumer certificate is ready
+
+The provider sends a lightweight notification informing a consumer that a certificate is now published in the EDC catalog and can be retrieved via the PULL mechanism. The consumer backend then pulls the certificate automatically.
+
+```
+Frontend / Operator
+        │
+        │  POST /v1/addons/ccm-kit/provider/available
+        │  { senderBpn, certificateId, consumerBpn, relatedMessageId? }
+        ▼
+CcmProviderService.send_certificate_available()
+        │
+        ├── Lookup certificate metadata
+        │     documentId = edc_asset_id (falls back to internal DB id)
+        ├── Resolve relatedMessageId (same auto-resolve logic as PUSH)
+        ├── Build CX-0135 Available notification
+        │     context: CompanyCertificateManagement-CCMAPI-Available:1.0.0
+        │     content: { documentId, certificateType, locationBpns? }
+        ├── Send via EDC → consumer's /companycertificate/available
+        ├── Advance CcmInboundRequest to status=Available
+        │     (scoped to explicit relatedMessageId if provided)
+        └── Ensure CertificateShare record exists (creates Pending if absent)
+                │
+                ▼
+        Consumer's /companycertificate/available  (inbound)
+                │
+        CcmNotificationService.process_certificate_available()
+                │
+                ├── Validate context = CCMAPI-Available:1.0.0
+                ├── Correlate CcmOutboundRequest → status=Found (documentId stored)
+                │     (scoped by relatedMessageId when present in header)
+                └── Auto-pull certificate (if documentId provided)
+                      │
+                      ▼
+              CcmConsumerService.pull_certificate()
+                      │
+                      ├── Full DSP exchange (catalog → negotiate → EDR)
+                      ├── GET data-plane endpoint
+                      ├── Store in ccm_received
+                      │     notification_message_id = available notification messageId
+                      └── Correlate CcmOutboundRequest → status=Found
+                            (scoped by relatedMessageId from the available notification)
+```
+
+**Request:**
+```json
+POST /v1/addons/ccm-kit/provider/available
+{
+  "senderBpn": "BPNL00000003AYRE",
+  "certificateId": 42,
+  "consumerBpn": "BPNL000000000001",
+  "relatedMessageId": "uuid-of-consumer-request-notification"
+}
+```
+
+> `relatedMessageId` is optional — auto-resolved from the most recent inbound request if omitted.
+
+**Response:**
+```json
+{ "success": true, "messageId": "uuid-of-sent-notification" }
+```
+
+---
+
+## 7. PULL Flow — Consumer fetches certificate from provider
 
 The consumer knows a certificate is available (from an Available notification or out-of-band knowledge) and pulls it through the EDC.
 
@@ -222,15 +379,17 @@ Frontend / Consumer Operator
 CcmConsumerService.pull_certificate()
         │
         ├── Resolve provider's EDC connector URL via BPN Discovery
-        ├── Search provider catalog for asset matching documentId
-        │     (dct:type = CompanyCertificate)
-        ├── Initiate contract negotiation for that asset
-        ├── Poll for EDR  (up to edr_max_retries × 1 s, default 30 s)
-        │     EDR contains { endpoint, authorization }
+        ├── Full DSP exchange via do_dsp_with_bpnl:
+        │     catalog lookup (filter: @id = documentId)
+        │     → contract negotiation
+        │     → EDR polling (max_wait = consumer.ccm.edr_max_wait_sec, default 60 s)
         ├── GET data-plane endpoint with Authorization header
         │     timeout = data_plane_timeout_sec (default 60 s)
         ├── Parse JSON response → BusinessPartnerCertificate payload
-        └── Store result in ccm_received table
+        ├── Store in ccm_received table
+        │     notification_message_id = (forwarded from triggering notification)
+        └── Correlate CcmOutboundRequest → status=Found
+              - Scoped to matching relatedMessageId when forwarded from auto-pull
                 │
                 ▼
         { certificateData: { ... }, stored: true }
@@ -266,7 +425,7 @@ POST /v1/addons/ccm-kit/consumer/pull
 
 ---
 
-## 7. REQUEST Flow — Consumer requests a certificate from provider
+## 8. REQUEST Flow — Consumer requests a certificate from provider
 
 The consumer does not yet have a certificate and asks the provider for one.
 
@@ -282,15 +441,21 @@ CcmConsumerService.send_certificate_request()
         ├── Build CX-0135 Request notification
         │     context: CompanyCertificateManagement-CCMAPI-Request:1.0.0
         │     content: { certifiedBpn, certificateType, locationBpns }
-        └── Send via EDC → provider's /companycertificate/request
+        ├── Send via EDC → provider's /companycertificate/request
+        └── Persist CcmOutboundRequest (status=Pending / Found / NotFound / Failed)
                 │
                 ▼
         Provider: CcmNotificationService.process_certificate_request()
                 │
-                ├── Look up certificate by (certifiedBpn, certificateType)
-                ├── Register consumer in certificate_share (status=Pending)
-                └── If auto_push_on_request=true → trigger PUSH immediately
-                        (or leave for manual trigger via POST /provider/push)
+                ├── Always persist CcmInboundRequest (notification_id = messageId)
+                │     ├── Certificate NOT found → status=NotFound, return 200 REJECTED
+                │     └── Certificate found:
+                │           ├── Create/update CertificateShare (status=Pending)
+                │           ├── CcmInboundRequest status=Registered
+                │           ├── Certificate published → return 200 COMPLETED (documentId)
+                │           └── Certificate not published → return 202 IN_PROGRESS
+                └── If auto_push_on_request=true AND certificate found but not published
+                      → trigger PUSH immediately (asynchronous, failure does not affect response)
 ```
 
 **Request:**
@@ -312,11 +477,19 @@ POST /v1/addons/ccm-kit/consumer/request
 
 > **Config tip:** Set `provider.ccm.auto_push_on_request: true` to have the provider automatically push the certificate as soon as a request notification arrives. Defaults to `false` (manual push).
 
+**CX-0135 provider response codes:**
+
+| `requestStatus` | HTTP | Meaning |
+|---|---|---|
+| `COMPLETED` | 200 | Certificate already published; `documentId` returned |
+| `REJECTED` | 200 | No matching certificate found; `requestErrors` explains why |
+| `IN_PROGRESS` | 202 | Certificate found but not yet published; consumer should wait for PUSH or AVAILABLE |
+
 ---
 
-## 8. STATUS Flow — Consumer reports processing result
+## 9. STATUS Flow — Consumer reports processing result
 
-After receiving a certificate (via PUSH), the consumer acknowledges it.
+After receiving a certificate (via PUSH or PULL), the consumer acknowledges its processing result.
 
 ```
 Frontend / Consumer Operator
@@ -328,15 +501,48 @@ Frontend / Consumer Operator
 CcmConsumerService.send_certificate_status()
         │
         ├── Validate certificateStatus ∈ {RECEIVED, ACCEPTED, REJECTED}
+        ├── Resolve relatedMessageId for the notification header
+        │     - If explicit in request → use it directly
+        │     - Otherwise → auto-resolve from ccm_received.notification_message_id
+        │       for (documentId, providerBpn) — links status back to the push/available
         ├── Build CX-0135 Status notification
         │     context: CompanyCertificateManagement-CCMAPI-Status:1.0.0
-        └── Send via EDC → provider's /companycertificate/status
+        │     header:  relatedMessageId = (resolved above)
+        ├── Send via EDC → provider's /companycertificate/status
+        └── Update ccm_received.local_status for this node's own record
                 │
                 ▼
         Provider: CcmNotificationService.update_certificate_status()
                 │
-                └── Update certificate_share.status for consumer_bpnl
+                ├── Resolve certificate by documentId
+                │     (integer PK fallback → edc_asset_id lookup → share fallback)
+                ├── Find CertificateShare for (certificate, consumer_bpnl)
+                ├── Map certificateStatus → ShareStatus:
+                │     RECEIVED  → Pending   (consumer is validating)
+                │     ACCEPTED  → Active    (certificate accepted)
+                │     REJECTED  → Revoked   (certificate rejected)
+                ├── Idempotency guard — if new ShareStatus == current ShareStatus:
+                │     ├── Skip the share DB write (no-op)
+                │     ├── Still stamp CcmInboundRequest.consumer_status
+                │     └── Return 200 (idempotent)
+                ├── Validate state transition (see table below)
+                │     invalid transition → 409 Conflict
+                ├── Update CertificateShare.status (+ rejection_reason if REJECTED)
+                └── Stamp CcmInboundRequest.consumer_status
+                      - Targeted by relatedMessageId when present in header
+                      - Falls back to most-recently-updated record for same
+                        (consumer_bpn, certified_bpn, certificate_type)
 ```
+
+**State-transition rules (CertificateShare):**
+
+| Current | `RECEIVED` (→ Pending) | `ACCEPTED` (→ Active) | `REJECTED` (→ Revoked) |
+|---|---|---|---|
+| `Pending` | ✔ idempotent | ✔ allowed | ✔ allowed |
+| `Active` | ✘ 409 | ✔ idempotent | ✔ allowed |
+| `Revoked` | ✘ 409 | ✘ 409 | ✔ idempotent |
+
+> **EDC data-plane note:** The EDC data plane wraps any non-2xx HTTP response from the backend as HTTP 500. The idempotency guard ensures that re-sending an already-`Active` status returns 200 (not 409), preventing spurious EDC 500 errors.
 
 **Request (ACCEPTED):**
 ```json
@@ -369,9 +575,11 @@ POST /v1/addons/ccm-kit/consumer/status
 }
 ```
 
+> When `REJECTED`, the `certificateErrors` and `locationErrors` arrays are serialised to JSON and stored in `CertificateShare.rejection_reason` for provider visibility.
+
 ---
 
-## 9. Certificate Lifecycle (CRUD)
+## 10. Certificate Lifecycle (CRUD)
 
 These endpoints manage the local certificate store on the **provider side**. They are not part of the CX-0135 dataspace exchange — they are internal management APIs.
 
@@ -387,7 +595,7 @@ These endpoints manage the local certificate store on the **provider side**. The
 └──────────────────────────────────────────────────────┘
 ```
 
-### 9.1 Upload
+### 10.1 Upload
 
 `POST /v1/addons/ccm-kit/certificates/` — `multipart/form-data`
 
@@ -411,25 +619,25 @@ Returns `201 Created` with the full `CertificateDetail` including Base64-encoded
 
 > **Size guard:** The server reads up to `max_pdf_size_bytes + 1` bytes and returns `413` before persisting if the limit is exceeded.
 
-### 9.2 List
+### 10.2 List
 
 `GET /v1/addons/ccm-kit/certificates/?bpnl=...&certificateType=...&offset=0&limit=100`
 
 Returns `CertificateListItem[]` — no document binary content included.
 
-### 9.3 Get detail
+### 10.3 Get detail
 
 `GET /v1/addons/ccm-kit/certificates/{certificate_id}`
 
 Returns `CertificateDetail` — includes Base64 document and full sharing history.
 
-### 9.4 Update metadata
+### 10.4 Update metadata
 
 `PUT /v1/addons/ccm-kit/certificates/{certificate_id}` — `multipart/form-data`
 
 Only non-null fields are written. `bpnl` and `doc` are immutable. Supplying `sites` replaces the full site list.
 
-### 9.5 Delete
+### 10.5 Delete
 
 `DELETE /v1/addons/ccm-kit/certificates/{certificate_id}` → `204 No Content`
 
@@ -437,7 +645,7 @@ Permanently deletes the certificate, all site entries, and all sharing history r
 
 ---
 
-## 10. API Reference
+## 11. API Reference
 
 All routes are prefixed with `/v1/addons/ccm-kit` and require authentication.
 
@@ -486,7 +694,7 @@ All routes are prefixed with `/v1/addons/ccm-kit` and require authentication.
 
 ---
 
-## 11. Notification Envelopes (CX-0135)
+## 12. Notification Envelopes (CX-0135)
 
 All notifications use the generic `Notification` wrapper from the Tractus-X SDK. The `context` field identifies the notification type and routes it to the correct handler.
 
@@ -517,7 +725,7 @@ All notifications use the generic `Notification` wrapper from the Tractus-X SDK.
 
 ---
 
-## 12. Configuration Reference
+## 13. Configuration Reference
 
 ### `provider.ccm` (in `configuration.yml`)
 
@@ -539,7 +747,7 @@ All notifications use the generic `Notification` wrapper from the Tractus-X SDK.
 
 | Key | Default | Description |
 |---|---|---|
-| `consumer.ccm.edr_max_retries` | `30` | Maximum polling iterations when waiting for an EDR during PULL |
+| `consumer.ccm.edr_max_wait_sec` | `60` | Maximum seconds to wait for an EDR during PULL (replaces the old `edr_max_retries` poll-loop approach) |
 | `consumer.ccm.data_plane_timeout_sec` | `60` | HTTP timeout (seconds) for the data-plane request during PULL |
 
 ### `ccm` (cross-cutting)
@@ -552,7 +760,7 @@ All notifications use the generic `Notification` wrapper from the Tractus-X SDK.
 
 ---
 
-## 13. Enabling / Disabling CCM
+## 14. Enabling / Disabling CCM
 
 Set `provider.ccm.enabled: false` to fully disable the add-on:
 
@@ -584,7 +792,7 @@ When disabled, three integration points are gated:
 
 ---
 
-## 14. Error Handling Patterns
+## 15. Error Handling Patterns
 
 ### HTTP status codes
 
@@ -604,10 +812,28 @@ When disabled, three integration points are gated:
 | Scenario | Behaviour |
 |---|---|
 | EDC catalog search returns no matching asset | Returns `{ found: false }` or raises 500 with descriptive message |
-| EDR not received within `edr_max_retries` | Returns error: `"EDR not available after N retries"` |
+| EDR not received within `edr_max_wait_sec` | Returns error: `"DSP exchange did not return endpoint or token"` |
 | Invalid JSON from data plane | Returns error with raw response preview |
 | Base64 decode failure on received document | Raises descriptive error, certificate not stored |
 | EDR entry missing `endpoint` or `authorization` | Raises `ValueError` before any data-plane call |
+
+### Notification inbound (PUSH) — validation errors
+
+| Scenario | Response |
+|---|---|
+| Base64 document exceeds `ccm.push.max_b64_size_bytes` | `413` — document rejected before storage |
+| Base64 content cannot be decoded | `400` — `"Document content could not be decoded from Base64"` |
+| Decoded content is not a valid PDF (missing `%PDF-` header) | `400` — `"Document is not a valid PDF"` |
+| Duplicate push for same `(document_id, provider_bpn)` | `200` — existing record updated |
+
+### Notification inbound (STATUS) — error codes
+
+| Scenario | Response |
+|---|---|
+| `documentId` not found (by PK, EDC asset ID, or share fallback) | `404` |
+| No `CertificateShare` for this consumer | `404` |
+| Invalid state transition (e.g. `Revoked → Active`) | `409 Conflict` |
+| Idempotent re-send (same status already recorded) | `200` — share write skipped, `consumer_status` still stamped |
 
 ### Notification inbound — response codes
 
