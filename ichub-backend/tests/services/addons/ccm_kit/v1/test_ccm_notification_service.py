@@ -412,12 +412,20 @@ class TestCcmNotificationService:
         assert status == 404
         assert "not found" in body["message"].lower()
 
-    def test_status_invalid_document_id(self):
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_invalid_document_id(self, mock_factory, mock_repos):
         """
-        GIVEN a status notification with a non-numeric documentId
+        GIVEN a status notification with a non-numeric documentId that is
+        also not a known EDC asset ID
         WHEN process_certificate_status is called
-        THEN the response is (404, ...) because the ID cannot be resolved.
+        THEN the response is (404, ...) because the certificate cannot be found.
         """
+        mock_repos.ccm_repository.find_by_edc_asset_id.return_value = None
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
         notification = _make_notification(
             context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
             content_extras={
@@ -429,7 +437,7 @@ class TestCcmNotificationService:
         status, body = self.service.update_certificate_status(notification)
 
         assert status == 404
-        assert "could not be resolved" in body["message"].lower()
+        assert "not found" in body["message"].lower()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"

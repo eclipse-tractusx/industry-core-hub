@@ -216,18 +216,17 @@ class CcmNotificationService:
         )
 
         # --- 2. Resolve certificate ID ---
+        # documentId may be an integer PK (old format) or an EDC asset ID string.
         certificate_id = self._resolve_document_id(content.document_id)
-        if certificate_id is None:
-            return 404, {
-                "message": (
-                    f"Invalid documentId '{content.document_id}': "
-                    f"could not be resolved to a certificate."
-                ),
-            }
 
         with RepositoryManagerFactory.create() as repo:
             # Verify the certificate still exists.
-            ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            if certificate_id is not None:
+                ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            else:
+                # Fall back to EDC asset ID lookup.
+                ccm = repo.ccm_repository.find_by_edc_asset_id(content.document_id)
+
             if ccm is None:
                 return 404, {
                     "message": (
@@ -239,7 +238,7 @@ class CcmNotificationService:
             # --- 3. Find share record ---
             share = (
                 repo.certificate_share_repository
-                .find_by_certificate_and_consumer(certificate_id, sender_bpn)
+                .find_by_certificate_and_consumer(ccm.id, sender_bpn)
             )
             if share is None:
                 return 404, {

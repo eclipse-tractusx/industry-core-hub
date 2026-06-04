@@ -1155,6 +1155,24 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    def find_by_edc_asset_id(self, edc_asset_id: str) -> Optional[Ccm]:
+        """
+        Fetch a single Ccm record by its EDC asset ID, with ``sites`` and
+        ``shares`` eagerly loaded.
+
+        Used when a consumer sends a status notification whose ``documentId``
+        is the EDC asset ID string rather than the integer primary key.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id == edc_asset_id)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+        )
+        return self._session.scalars(stmt).first()
+
     def find_by_bpnl_and_type(
         self, bpnl: str, certificate_type: str
     ) -> Optional[Ccm]:
