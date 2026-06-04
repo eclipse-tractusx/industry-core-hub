@@ -36,7 +36,6 @@ import {
   Tooltip,
   LinearProgress,
   Chip,
-  Alert,
   Stepper,
   Step,
   StepLabel,
@@ -55,24 +54,27 @@ import {
   Refresh,
   Search,
   Co2,
-  Edit,
-  Visibility,
   DraftsOutlined,
-  CalendarMonth,
-  Info,
-  Public,
-  Speed,
   Inventory,
   AddBox,
   PlaylistAdd,
   OpenInNew
 } from '@mui/icons-material';
 import { CatalogPartSearch, CatalogPartSearchResult, PartInfoHeader, PcfDataEditor } from '../../shared/components';
+import { ManagedPart } from '../../pcf-exchange/api/pcfExchangeApi';
+import type { PcfNestedData } from '../types/pcfNestedData';
 import {
-  ManagedPart,
-  PcfDataRecord
-} from '../../pcf-exchange/api/pcfExchangeApi';
-import { PcfDetailsDialog, PcfEditDialog } from '../../pcf-exchange/components';
+  getPcfExcludingBiogenic,
+  getPcfIncludingBiogenic,
+  getPrimaryDataShare,
+  getGeographyCountry,
+  getReferencePeriod,
+  getSpecVersion,
+  getPcfVersion,
+  getPcfStatus,
+  mapPcfStatus,
+} from '../utils/pcfDataExtractors';
+import { PcfDetailsDialog, PcfEditDialog, PcfManagementSection } from '../../pcf-exchange/components';
 import {
   getPcfByManufacturerPartId,
   uploadPcf,
@@ -84,40 +86,6 @@ import { fetchCatalogPart } from '@/features/industry-core-kit/catalog-managemen
 import { ParticipantSelectionDialog } from '../components';
 import { getPcfExchangePoliciesConfig } from '@/services/EnvironmentService';
 import { generatePoliciesFromDefinition } from '@/features/industry-core-kit/part-discovery/utils/governancePolicyUtils';
-
-/** Map raw backend PCF JSON (nested Catena-X 9.0.0 format) to the flat PcfDataRecord expected by dialogs. */
-const toPcfDataRecord = (raw: Record<string, unknown> | null): PcfDataRecord | null => {
-  if (!raw) return null;
-  const pcfVersion = (raw as Record<string, unknown[]>)?.pcfAssessmentAndMethodology?.[0] as Record<string, unknown[]> | undefined;
-  const versionBlock = pcfVersion?.idAndVersion?.[0] as Record<string, unknown> | undefined;
-  const timeBlock = pcfVersion?.time?.[0] as Record<string, unknown> | undefined;
-  const qualityBlock = pcfVersion?.dataSourcesAndQuality?.[0] as Record<string, unknown> | undefined;
-  const geoBlock = pcfVersion?.geography?.[0] as Record<string, unknown> | undefined;
-  const carbonBlock = ((raw as Record<string, unknown[]>)?.productLifeCycleStagesAndEmissions?.[0] as Record<string, unknown[]> | undefined)?.productionStage?.[0] as Record<string, unknown> | undefined;
-  const scopeBlock = (raw as Record<string, unknown[]>)?.scopeOfPcfForm?.[0] as Record<string, unknown> | undefined;
-  const statusStr = String(versionBlock?.status ?? 'Active');
-  return {
-    id: (raw.id as string) ?? '',
-    partCatenaXId: (raw.partCatenaXId as string) ?? '',
-    version: Number(versionBlock?.version ?? 1),
-    specVersion: (scopeBlock?.specVersion as string) ?? 'N/A',
-    status: statusStr === 'Active' ? 'PUBLISHED' : 'DRAFT',
-    created: ((raw.createdAt ?? raw.created) as string) ?? '',
-    updated: ((raw.updatedAt ?? raw.updated) as string) ?? '',
-    companyName: (raw.companyName as string) ?? '',
-    companyBpn: (raw.companyBpn as string) ?? '',
-    productDescription: (raw.productDescription as string) ?? '',
-    productName: (raw.productName as string) ?? '',
-    pcfExcludingBiogenic: Number(carbonBlock?.pcfExcludingBiogenicUptake ?? 0),
-    pcfIncludingBiogenic: Number(carbonBlock?.pcfIncludingBiogenicUptake ?? 0),
-    fossilGhgEmissions: Number(carbonBlock?.fossilGhgEmissions ?? 0),
-    biogenicCarbonContent: Number(carbonBlock?.biogenicCarbonContent ?? 0),
-    referencePeriodStart: (timeBlock?.referencePeriodStart as string) ?? '',
-    referencePeriodEnd: (timeBlock?.referencePeriodEnd as string) ?? '',
-    primaryDataShare: Number(qualityBlock?.primaryDataShare ?? 0),
-    geographyCountry: (geoBlock?.geographyCountry as string) ?? 'N/A',
-  };
-};
 
 // PCF Green Theme
 const PCF_PRIMARY = '#10b981';
@@ -181,9 +149,8 @@ const PcfManagementPage: React.FC = () => {
 
   // Data state
   const [managedPart, setManagedPart] = useState<ManagedPart | null>(null);
-  const [pcfData, setPcfData] = useState<Record<string, unknown> | null>(null);
   const [manufacturerId, setManufacturerId] = useState<string>('');
-  const [rawPcfData, setRawPcfData] = useState<Record<string, unknown> | null>(null);
+  const [rawPcfData, setRawPcfData] = useState<PcfNestedData | null>(null);
 
   // Dialog state
   const [pcfDetailsDialogOpen, setPcfDetailsDialogOpen] = useState(false);
@@ -251,7 +218,6 @@ const PcfManagementPage: React.FC = () => {
         setCurrentStep(3);
         await new Promise(resolve => setTimeout(resolve, 300));
         setManagedPart(part);
-        setPcfData(null);
         setRawPcfData(null);
         setPageState('visualization');
         return;
@@ -303,7 +269,6 @@ const PcfManagementPage: React.FC = () => {
       if (!hasPcf) {
         setPartReadiness('registered-no-pcf');
         setManagedPart(part);
-        setPcfData(null);
         setRawPcfData(null);
         setPageState('visualization');
         return;
@@ -311,13 +276,10 @@ const PcfManagementPage: React.FC = () => {
 
       setPartReadiness('has-pcf');
       setManagedPart(part);
-      setRawPcfData(pcfDataRecord || null);
-      
-      // Use the real backend PCF data for display (no mock layer)
-      setPcfData(pcfDataRecord || null);
+      setRawPcfData((pcfDataRecord as PcfNestedData) || null);
       setPageState('visualization');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load part data';
+      const message = err instanceof Error ? err.message : t('error.failedToLoadPart');
       setError(message);
       setPageState('error');
     }
@@ -336,7 +298,7 @@ const PcfManagementPage: React.FC = () => {
   const handleBackToSearch = () => {
     setPageState('search');
     setManagedPart(null);
-    setPcfData(null);
+    setRawPcfData(null);
     setError(null);
     navigate('/pcf/management');
   };
@@ -384,36 +346,18 @@ const PcfManagementPage: React.FC = () => {
     }
   };
 
-  // Handle upload/publish PCF (when PCF already exists)
   // Handle saving edited PCF fields from PcfEditDialog
-  const handleEditSave = async (data: Partial<PcfDataRecord>) => {
-    if (!rawPcfData || !managedPart) return;
-
-    // Deep-clone and patch the nested backend structure with the edited flat fields
-    const updated = JSON.parse(JSON.stringify(rawPcfData)) as Record<string, unknown[]>;
-
-    const carbonBlock = updated?.productLifeCycleStagesAndEmissions?.[0] as Record<string, unknown[]> | undefined;
-    const prodStage = carbonBlock?.productionStage?.[0] as Record<string, unknown> | undefined;
-    if (prodStage) {
-      if (data.pcfExcludingBiogenic !== undefined) prodStage.pcfExcludingBiogenicUptake = data.pcfExcludingBiogenic;
-      if (data.pcfIncludingBiogenic !== undefined) prodStage.pcfIncludingBiogenicUptake = data.pcfIncludingBiogenic;
-    }
-
-    const pcfVer = updated?.pcfAssessmentAndMethodology?.[0] as Record<string, unknown[]> | undefined;
-    const qualityBlock = pcfVer?.dataSourcesAndQuality?.[0] as Record<string, unknown> | undefined;
-    if (qualityBlock && data.primaryDataShare !== undefined) qualityBlock.primaryDataShare = data.primaryDataShare;
-
-    const geoBlock = pcfVer?.geography?.[0] as Record<string, unknown> | undefined;
-    if (geoBlock && data.geographyCountry !== undefined) geoBlock.geographyCountry = data.geographyCountry;
+  // PcfEditDialog builds the full updated nested structure and passes it here.
+  const handleEditSave = async (data: Record<string, unknown>) => {
+    if (!managedPart) return;
 
     setIsUpdating(true);
     try {
       const participants = await updatePcfAndGetParticipants(
         managedPart.manufacturerPartId,
-        updated
+        data
       );
-      setRawPcfData(updated);
-      setPcfData(updated);
+      setRawPcfData(data as PcfNestedData);
       setPcfEditDialogOpen(false);
       // Always open the notify dialog so the user sees who will be notified
       // (or learns that no one has requested this PCF yet).
@@ -592,28 +536,12 @@ const PcfManagementPage: React.FC = () => {
   const renderVisualization = () => {
     if (!managedPart) return null;
 
-    const hasPcf = managedPart.hasPcf && pcfData;
-    // The backend PCF JSON uses Catena-X 9.0.0 nested structure.
-    // These helpers safely extract fields used for the dashboard display.
-    const pcfVersion   = (pcfData as Record<string, unknown[]> | null)?.pcfAssessmentAndMethodology?.[0] as Record<string, unknown[]> | undefined;
-    const versionBlock = pcfVersion?.idAndVersion?.[0] as Record<string, unknown> | undefined;
-    const timeBlock    = pcfVersion?.time?.[0] as Record<string, unknown> | undefined;
-    const qualityBlock = pcfVersion?.dataSourcesAndQuality?.[0] as Record<string, unknown> | undefined;
-    const geoBlock     = pcfVersion?.geography?.[0] as Record<string, unknown> | undefined;
-    const carbonBlock  = ((pcfData as Record<string, unknown[]> | null)?.productLifeCycleStagesAndEmissions?.[0] as Record<string, unknown[]> | undefined)?.productionStage?.[0] as Record<string, unknown> | undefined;
-    const scopeBlock   = ((pcfData as Record<string, unknown[]> | null)?.scopeOfPcfForm?.[0]) as Record<string, unknown> | undefined;
+    const hasPcf = managedPart.hasPcf && rawPcfData;
+    // Derive display values from nested Catena-X 9.0.0 structure using extractor helpers
+  
 
-    const pcfExclBio    = Number(carbonBlock?.pcfExcludingBiogenicUptake ?? 0);
-    const pcfInclBio    = Number(carbonBlock?.pcfIncludingBiogenicUptake ?? 0);
-    const primaryData   = Number(qualityBlock?.primaryDataShare ?? 0);
-    const geoCountry    = String(geoBlock?.geographyCountry ?? 'N/A');
-    const refStart      = timeBlock?.referencePeriodStart as string | undefined;
-    const refEnd        = timeBlock?.referencePeriodEnd as string | undefined;
-    const specVersion   = String(scopeBlock?.specVersion ?? 'N/A');
-    const version       = Number(versionBlock?.version ?? 1);
-    const status        = String(versionBlock?.status ?? 'Active');
-    const isPublished   = status === 'Active';
-    const isDraft       = !isPublished;
+    const rawStatus   = getPcfStatus(rawPcfData);
+    const isPublished = mapPcfStatus(rawStatus) === 'PUBLISHED';
 
     return (
       <Box sx={{ minHeight: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -896,7 +824,7 @@ const PcfManagementPage: React.FC = () => {
                         <Box sx={{ mb: 2 }}>
                           <Chip
                             icon={<DraftsOutlined sx={{ fontSize: 14 }} />}
-                            label="Draft Part"
+                            label={t('management.draftPart')}
                             size="small"
                             sx={{
                               backgroundColor: alpha('#eab308', 0.15),
@@ -978,219 +906,18 @@ const PcfManagementPage: React.FC = () => {
                 </Box>
               )}
 
-              {/* Has PCF Data */}
-              {hasPcf && !isPcfLoading && rawPcfData && (
-                <>
-                  {/* PCF Values Grid */}
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                      gap: 2,
-                      p: 2,
-                      borderRadius: '12px',
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      border: '1px solid rgba(255, 255, 255, 0.06)'
-                    }}
-                  >
-                    {/* PCF Value (excl. biogenic) */}
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Co2 sx={{ fontSize: 14, color: PCF_PRIMARY }} />
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          {t('management.pcfExclBiogenic')}
-                        </Typography>
-                      </Box>
-                      <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-                        {pcfExclBio.toFixed(1)}
-                        <Typography component="span" variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', ml: 0.5 }}>
-                          {t('common.kgCo2e')}
-                        </Typography>
-                      </Typography>
-                    </Box>
-
-                    {/* PCF Value (incl. biogenic) */}
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Co2 sx={{ fontSize: 14, color: '#3b82f6' }} />
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          {t('management.pcfInclBiogenic')}
-                        </Typography>
-                      </Box>
-                      <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-                        {pcfInclBio.toFixed(1)}
-                        <Typography component="span" variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', ml: 0.5 }}>
-                          {t('common.kgCo2e')}
-                        </Typography>
-                      </Typography>
-                    </Box>
-
-                    {/* Primary Data Share */}
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Speed sx={{ fontSize: 14, color: '#a855f7' }} />
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          {t('management.primaryData')}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-                          {primaryData.toFixed(0)}%
-                        </Typography>
-                        <LinearProgress
-                          variant="determinate"
-                          value={primaryData}
-                          sx={{
-                            flex: 1,
-                            height: 6,
-                            borderRadius: 3,
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            '& .MuiLinearProgress-bar': {
-                              borderRadius: 3,
-                              backgroundColor:
-                                primaryData >= 70
-                                  ? PCF_PRIMARY
-                                  : primaryData >= 50
-                                  ? '#eab308'
-                                  : '#ef4444'
-                            }
-                          }}
-                        />
-                      </Box>
-                    </Box>
-
-                    {/* Geography */}
-                    <Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                        <Public sx={{ fontSize: 14, color: '#f97316' }} />
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                          {t('management.geography')}
-                        </Typography>
-                      </Box>
-                      <Typography variant="h6" sx={{ color: '#fff', fontWeight: 700 }}>
-                        {geoCountry}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Metadata */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 2,
-                      mt: 2,
-                      pt: 2,
-                      borderTop: '1px solid rgba(255, 255, 255, 0.06)'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <CalendarMonth sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)' }} />
-                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                        {t('management.reference')}{formatDate(refStart)} - {formatDate(refEnd)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Info sx={{ fontSize: 14, color: 'rgba(255, 255, 255, 0.4)' }} />
-                      <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                        {t('management.specVersion')}{specVersion}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <Tooltip title={`${t('management.status')}${status}`}>
-                        <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)', cursor: 'help' }}>
-                          {t('management.version')}{version}
-                        </Typography>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-
-                  {/* Draft Alert */}
-                  {isDraft && (
-                    <Alert
-                      severity="warning"
-                      icon={<DraftsOutlined />}
-                      sx={{
-                        mt: 2,
-                        borderRadius: '10px',
-                        backgroundColor: alpha('#eab308', 0.1),
-                        border: `1px solid ${alpha('#eab308', 0.2)}`,
-                        '& .MuiAlert-icon': { color: '#eab308' },
-                        '& .MuiAlert-message': { color: '#eab308' }
-                      }}
-                    >
-                      <Typography variant="body2" sx={{ color: '#eab308' }}>
-                        {t('management.draftAlert')}
-                      </Typography>
-                    </Alert>
-                  )}
-
-                  {/* Action Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1.5, mt: 3 }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Visibility />}
-                      onClick={() => navigate(`/pcf/management/details/${managedPart?.manufacturerPartId}`)}
-                      sx={{
-                        flex: 1,
-                        py: 1.25,
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        '&:hover': {
-                          borderColor: PCF_PRIMARY,
-                          backgroundColor: alpha(PCF_PRIMARY, 0.1),
-                          color: '#fff',
-                          '& .MuiSvgIcon-root': { color: PCF_PRIMARY }
-                        }
-                      }}
-                    >
-                      {t('management.viewDetails')}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      startIcon={<Edit />}
-                      onClick={() => navigate(`/pcf/management/edit/${managedPart?.manufacturerPartId}`)}
-                      sx={{
-                        flex: 1,
-                        py: 1.25,
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        '&:hover': {
-                          borderColor: '#3b82f6',
-                          backgroundColor: alpha('#3b82f6', 0.1),
-                          color: '#fff',
-                          '& .MuiSvgIcon-root': { color: '#3b82f6' }
-                        }
-                      }}
-                    >
-                      {t('management.update')}
-                    </Button>
-                    {isDraft && (
-                      <Button
-                        variant="contained"
-                        startIcon={<CloudUploadIcon />}
-                        onClick={handleUploadPcf}
-                        sx={{
-                          flex: 1,
-                          py: 1.25,
-                          borderRadius: '10px',
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          background: `linear-gradient(135deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`,
-                          '&:hover': { background: `linear-gradient(135deg, ${PCF_SECONDARY} 0%, ${PCF_PRIMARY} 100%)` }
-                        }}
-                      >
-                        {t('management.upload')}
-                      </Button>
-                    )}
-                  </Box>
-                </>
+              {/* Has PCF Data — rendered inline inside this Card (no nested card) */}
+              {hasPcf && !isPcfLoading && managedPart && (
+                <PcfManagementSection
+                  part={managedPart}
+                  pcfData={rawPcfData}
+                  onVisualize={() => navigate(`/pcf/management/details/${encodeURIComponent(managedPart.manufacturerPartId)}`)}
+                  onEdit={() => navigate(`/pcf/management/edit/${encodeURIComponent(managedPart.manufacturerPartId)}`)}
+                  onUpload={handleUploadPcf}
+                  onPublish={handleUploadPcf}
+                  isLoading={isPcfLoading}
+                  contentOnly
+                />
               )}
             </CardContent>
           </Card>
@@ -1199,7 +926,7 @@ const PcfManagementPage: React.FC = () => {
         <PcfDetailsDialog
           open={pcfDetailsDialogOpen}
           onClose={() => setPcfDetailsDialogOpen(false)}
-          pcfData={toPcfDataRecord(pcfData)}
+          pcfData={rawPcfData}
           part={managedPart}
         />
 
@@ -1207,7 +934,7 @@ const PcfManagementPage: React.FC = () => {
           open={pcfEditDialogOpen}
           onClose={() => setPcfEditDialogOpen(false)}
           onSave={handleEditSave}
-          pcfData={toPcfDataRecord(pcfData)}
+          pcfData={rawPcfData}
           part={managedPart}
         />
 

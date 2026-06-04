@@ -156,13 +156,13 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
 
     // Check file type
     if (!file.name.endsWith('.json') && file.type !== 'application/json') {
-      setUploadError('Invalid file type. Please upload a JSON file.');
+      setUploadError(t('editor.invalidFileType'));
       return;
     }
 
     // Check file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      setUploadError('File is too large. Maximum size is 10MB.');
+      setUploadError(t('editor.fileTooLarge'));
       return;
     }
 
@@ -175,7 +175,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
 
         // Basic validation - check if it's an object
         if (typeof jsonData !== 'object' || jsonData === null) {
-          setUploadError('Invalid PCF format. Expected a JSON object.');
+          setUploadError(t('editor.invalidFormat'));
           return;
         }
 
@@ -183,19 +183,19 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
         setPcfData(jsonData);
         setValidationStatus('idle');
         setUploadError(null);
-        setSuccessMessage('PCF data loaded successfully. Please validate before saving.');
+        setSuccessMessage(t('editor.loadedSuccess'));
         
         // Clear success message after 4 seconds
         setTimeout(() => {
           setSuccessMessage(null);
         }, 4000);
       } catch {
-        setUploadError('Failed to parse JSON file. Please check the file format.');
+        setUploadError(t('editor.parseError'));
       }
     };
 
     reader.onerror = () => {
-      setUploadError('Failed to read file. Please try again.');
+      setUploadError(t('editor.readError'));
     };
 
     reader.readAsText(file);
@@ -219,7 +219,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
         } else {
           setValidationStatus('success');
           setUploadError(null);
-          setSuccessMessage('PCF data validated successfully!');
+          setSuccessMessage(t('editor.validatedSuccess'));
           setTimeout(() => {
             setSuccessMessage(null);
           }, 4000);
@@ -227,7 +227,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
       } else {
         // No schema validation available - accept as is
         setValidationStatus('success');
-        setSuccessMessage('PCF data accepted (no schema validation available).');
+        setSuccessMessage(t('editor.noSchemaValidation'));
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -263,7 +263,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
   const handleSubmodelCreatorSave = async (submodelData: Record<string, unknown>) => {
     setPcfData(submodelData);
     setValidationStatus('success');
-    setSuccessMessage('PCF data created with Form Builder and ready to save.');
+    setSuccessMessage(t('editor.formBuilderSuccess'));
     setShowSubmodelCreator(false);
   };
 
@@ -590,7 +590,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
           selectedSchema={pcfSchema}
           schemaKey={createSchemaKey(pcfSchema.metadata.semanticId)}
           manufacturerPartId={manufacturerPartId}
-          saveButtonLabel="Use as PCF Data"
+          saveButtonLabel={t('editor.useAsPcfData')}
         />
       )}
     </Box>
