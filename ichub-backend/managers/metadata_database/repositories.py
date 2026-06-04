@@ -1615,3 +1615,27 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             record.document_id = document_id
         self._session.add(record)
         return record
+
+    def find_pending_by_match(
+        self,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return all Pending outbound requests for the given
+        (provider_bpn, certified_bpn, certificate_type) combination.
+
+        Used to correlate an incoming PUSH notification with the request(s)
+        that originally triggered it, so their status can be advanced to
+        Found atomically when the certificate is stored.
+        """
+        stmt = (
+            select(CcmOutboundRequest)
+            .where(CcmOutboundRequest.provider_bpn == provider_bpn)
+            .where(CcmOutboundRequest.certified_bpn == certified_bpn)
+            .where(CcmOutboundRequest.certificate_type == certificate_type)
+            .where(CcmOutboundRequest.status == OutboundRequestStatus.Pending)
+            .order_by(desc(CcmOutboundRequest.requested_at))
+        )
+        return list(self._session.scalars(stmt).all())

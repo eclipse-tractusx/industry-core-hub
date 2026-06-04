@@ -32,7 +32,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
-from models.metadata_database.addons.ccm_kit.v1.models import ShareStatus
+from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus, ShareStatus
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableContent,
     CcmPushContent,
@@ -439,6 +439,13 @@ class CcmNotificationService:
                 )
                 existing.doc = doc_bytes
                 existing.received_at = datetime.now(timezone.utc)
+                self._correlate_outbound_requests(
+                    repo=repo,
+                    provider_bpn=sender_bpn,
+                    certified_bpn=content.business_partner_number,
+                    certificate_type=content.type.certificate_type,
+                    document_id=content.document.document_id,
+                )
                 repo.commit()
                 return 200, {
                     "message": (
@@ -476,6 +483,13 @@ class CcmNotificationService:
                 certificate_type=content.type.certificate_type,
                 doc=doc_bytes,
                 **kwargs,
+            )
+            self._correlate_outbound_requests(
+                repo=repo,
+                provider_bpn=sender_bpn,
+                certified_bpn=content.business_partner_number,
+                certificate_type=content.type.certificate_type,
+                document_id=content.document.document_id,
             )
             repo.commit()
 
@@ -578,6 +592,38 @@ class CcmNotificationService:
             logger.exception(
                 f"Auto-push raised for certificate {certificate_id} "
                 f"to {_s(consumer_bpn)}"
+            )
+
+    @staticmethod
+    def _correlate_outbound_requests(
+        repo,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        document_id: str,
+    ) -> None:
+        """
+        Advance all Pending outbound requests that match this incoming PUSH
+        to ``Found``, storing the ``document_id`` for later reference.
+
+        Called inside the active repository session (before ``repo.commit()``) so
+        the CcmOutboundRequest rows are updated atomically with the new
+        CcmReceived row.
+        """
+        pending = repo.ccm_outbound_request_repository.find_pending_by_match(
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+        )
+        for req in pending:
+            repo.ccm_outbound_request_repository.update_status(
+                request_id=req.id,
+                new_status=OutboundRequestStatus.Found,
+                document_id=document_id,
+            )
+            logger.info(
+                f"[CCM] Outbound request {req.id} → Found "
+                f"(documentId={_s(document_id)})"
             )
 
     @staticmethod

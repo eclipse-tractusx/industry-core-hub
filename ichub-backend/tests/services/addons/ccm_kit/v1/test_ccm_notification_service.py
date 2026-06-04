@@ -476,6 +476,8 @@ class TestCcmNotificationService:
         """
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_pending_by_match.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
@@ -548,6 +550,8 @@ class TestCcmNotificationService:
         existing.doc = b"old"
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_pending_by_match.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
