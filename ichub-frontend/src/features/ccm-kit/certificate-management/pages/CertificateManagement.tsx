@@ -2,6 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -47,6 +48,36 @@ import { DiscoverPartnerDialog } from '../components/dialogs/DiscoverPartnerDial
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import { kitThemes } from '@/theme/colors';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
+
+// ── Soporte TypeScript para la variable global de Vite/Index.html ───────────
+declare global {
+  interface Window {
+    PARTICIPANT_ID?: string;
+  }
+}
+
+// ── Mapeador del Modelo del Backend al Modelo del Frontend ──────────────────
+const mapBackendToFrontendCertificate = (backendCert: any): Certificate => {
+  const today = new Date();
+  const validUntil = new Date(backendCert.validUntil);
+  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  // El backend no envía un estado explícito, lo calculamos basándonos en validUntil
+  let status: CertificateStatus = 'VALID';
+  if (validUntil <= today) status = 'EXPIRED';
+  else if (validUntil <= thirtyDaysFromNow) status = 'EXPIRING';
+
+  return {
+    id: backendCert.certificateId,
+    name: backendCert.certificateName,
+    bpn: backendCert.bpnl,
+    type: backendCert.certificateType,
+    issuer: backendCert.issuer,
+    validFrom: backendCert.validFrom,
+    validUntil: backendCert.validUntil,
+    status: status, // Campo calculado localmente
+  };
+};
 
 const calculateStats = (certs: Certificate[]): CertificateStats => {
   const today = new Date();
@@ -98,29 +129,44 @@ const CertificateManagement = () => {
     open: false, message: '', severity: 'success',
   });
 
-  // ── Data loading ──────────────────────────────────────────────────────────
+  // ── Data loading desde API real ───────────────────────────────────────────
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const certificatesData = await fetchAllCertificates();
-      setCertificates(certificatesData);
-      setStats(calculateStats(certificatesData));
+      
+      // Intentamos recuperar el BPN del usuario logueado desde la variable global de index.html
+      // Si no existe, usamos el valor de pruebas que especificaste como fallback
+      const currentBpn = window.PARTICIPANT_ID || 'BPNL00000003CRHK';
+
+      // Hacemos uso del Backend pasando los Query Params requeridos
+      const rawData = await fetchAllCertificates({
+        bpnl: currentBpn,
+        certificateType: filters.type || null, // Se envía null si no hay filtro seleccionado
+        offset: 0,
+        limit: 100,
+      });
+
+      // Transformamos los datos mediante el mapeador antes de guardarlos en el estado
+      const mappedCertificates = rawData.map(mapBackendToFrontendCertificate);
+      
+      setCertificates(mappedCertificates);
+      setStats(calculateStats(mappedCertificates));
     } catch (err) {
       console.error('Error loading certificates:', err);
       setError(t('messages.loadFailed'));
     } finally {
       setIsLoading(false);
     }
-  }, [t]);
+    // Añadimos filters.type como dependencia para que vuelva a consultar a la API al cambiar de tipo
+  }, [t, filters.type]);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // ── Filtering ─────────────────────────────────────────────────────────────
-  // The status quick-filter from SummaryStatsBar takes precedence when active;
-  // if SearchFilterBar also has a status set, both are respected (AND logic).
+  // ── Filtering Local (Solo Búsqueda por Texto y Estado de los Botones) ─────
   const filteredCertificates = useMemo(() => {
     return certificates.filter((cert) => {
+      // 1. Filtro por caja de texto (Search)
       if (filters.search) {
         const q = filters.search.toLowerCase();
         if (
@@ -130,22 +176,25 @@ const CertificateManagement = () => {
         )
           return false;
       }
-      if (filters.type && cert.type !== filters.type) return false;
+      
+      // NOTA: El filtro por tipo (filters.type) ya fue removido de aquí porque 
+      // ahora se encarga de resolverlo la API en el backend directamente.
+
+      // 2. Filtro por Estado (Calculado localmente)
       const effectiveStatus = statusQuickFilter || filters.status;
       if (effectiveStatus && cert.status !== effectiveStatus) return false;
+      
       return true;
     });
-  }, [certificates, filters, statusQuickFilter]);
+  }, [certificates, filters.search, filters.status, statusQuickFilter]);
 
   const handleStatFilterChange = (status: CertificateStatus | '') => {
     setStatusQuickFilter(status);
-    // Keep SearchFilterBar status in sync so the dropdown reflects the active filter
     setFilters((prev) => ({ ...prev, status: status }));
   };
 
   const handleFilterBarChange = (newFilters: CertificateFilter) => {
     setFilters(newFilters);
-    // If the SearchFilterBar explicitly changes status, clear the quick-filter shortcut
     if (newFilters.status !== statusQuickFilter) {
       setStatusQuickFilter(newFilters.status as CertificateStatus | '');
     }
@@ -377,4 +426,3 @@ const CertificateManagement = () => {
 };
 
 export default CertificateManagement;
-

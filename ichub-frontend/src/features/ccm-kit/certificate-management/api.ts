@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -89,15 +90,6 @@ const buildQueryString = (
 /**
  * Fetch paginated list of certificates
  * GET /api/ccm/certificates
- * 
- * Query parameters for filtering:
- * - type: filter by certificate type
- * - status: filter by validity status (valid/expiring/expired)
- * - shared: filter by shared or not shared
- * - search: text search across name, issuer, BPN
- * 
- * Pagination: page, page_size
- * Sorting: sort_by (name, type, valid_until, shared_date), sort_order (asc, desc)
  */
 export const fetchCertificates = async (
   filter?: Partial<CertificateFilter>,
@@ -122,33 +114,48 @@ export const fetchCertificates = async (
 };
 
 /**
- * Fetch all certificates (non-paginated, for backward compatibility)
+ * Fetch certificates from CCM Addon Kit Endpoint
+ * GET /addons/ccm-kit/certificates/
+ * * Query parameters mapping:
+ * - bpnl: Business Partner Number of the context user (Mandatory)
+ * - certificateType: Type filtering parameter (Optional)
+ * - offset: Pagination offset parameter
+ * - limit: Pagination limitation size
  */
-export const fetchAllCertificates = async (): Promise<Certificate[]> => {
+export const fetchAllCertificates = async (params: {
+  bpnl: string;
+  certificateType: string | null;
+  offset: number;
+  limit: number;
+}): Promise<any[]> => {
   try {
     if (!backendUrl) {
-      console.warn('[CCM] Backend URL not configured — using mock certificates');
+      console.warn('[CCM] Backend URL not configured — using mock certificates fallback');
       return mockFetchCertificates();
     }
     
-    const response = await httpClient.get<PaginatedResponse<Certificate>>(
-      `${backendUrl}${CCM_BASE_PATH}/certificates?page_size=1000`
+    const response = await httpClient.get<any[]>(
+      `${backendUrl}/addons/ccm-kit/certificates/`,
+      {
+        params: {
+          bpnl: params.bpnl,
+          certificateType: params.certificateType,
+          offset: params.offset,
+          limit: params.limit,
+        },
+      }
     );
-    return response.data.data || [];
+    return response.data || [];
   } catch (error) {
-    console.warn('[CCM] Certificates API unavailable — using mock data', error);
-    return mockFetchCertificates();
+    console.error('[CCM] Error fetching certificates from backend endpoint:', error);
+    // Propagamos el error al componente padre para evitar fallos de renderizado silenciosos
+    throw error; 
   }
 };
 
 /**
  * Fetch certificate detail by ID
  * GET /api/ccm/certificates/{id}
- * 
- * Returns full certificate detail including:
- * - All metadata fields
- * - Sharing history (all partners shared with, dates, statuses, methods)
- * - BASE64 content (or download link for the PDF file)
  */
 export const fetchCertificateById = async (certificateId: string): Promise<CertificateDetail | null> => {
   try {
@@ -170,23 +177,6 @@ export const fetchCertificateById = async (certificateId: string): Promise<Certi
 /**
  * Upload a new certificate
  * POST /api/ccm/certificates
- * 
- * Accepts multipart request with PDF file + metadata
- * PDF file is converted to BASE64 encoded string
- * 
- * Metadata fields mapped to BusinessPartnerCertificate v3.1.0:
- * - Certificate Type (e.g., ISO 9001, IATF 16949, ISO 14001)
- * - Certificate Name
- * - Issuer / Certification Body
- * - Valid From / Valid Until
- * - BPN-L of the certificate holder
- * - Description (optional)
- * 
- * Validation:
- * - File type validation (PDF only or PDF/PNG/JPG)
- * - File size limit (max 10MB)
- * - Required fields validation (type, name, issuer, dates)
- * - Date consistency (Valid From < Valid Until)
  */
 export const createCertificate = async (certificateData: CertificateFormData): Promise<Certificate> => {
   const formData = new FormData();
@@ -206,7 +196,6 @@ export const createCertificate = async (certificateData: CertificateFormData): P
   }
 
   if (certificateData.enclosedSitesBpn?.length) {
-    // Send as JSON array string — backend expects JSON-encoded list
     formData.append('enclosedSitesBpn', JSON.stringify(certificateData.enclosedSitesBpn));
   }
 
@@ -233,9 +222,6 @@ export const createCertificate = async (certificateData: CertificateFormData): P
 /**
  * Replace the PDF document of an existing certificate.
  * PUT /api/ccm/certificates/{id}/document
- *
- * @param certificateId - ID of the certificate to update
- * @param document - New PDF file
  */
 export const updateCertificateDocument = async (
   certificateId: string,
@@ -257,21 +243,6 @@ export const updateCertificateDocument = async (
 /**
  * Share a certificate with a partner via EDC
  * POST /api/ccm/certificates/{id}/share
- * 
- * Triggers EDC sharing workflow:
- * - Creates an EDC Data Asset for the certificate using CX-0135 data model
- * - Configures Access Policy and Usage Policy as specified in CX-0135
- * - Registers the asset with the EDC connector for the target partner's BPN
- * 
- * Stores sharing record in database:
- * - Target Partner BPN
- * - Shared Date
- * - EDC Contract ID
- * - Status (Active/Pending/Revoked)
- * 
- * @param certificateId - ID of the certificate to share
- * @param partnerBpn - BPN of the target partner
- * @param method - Sharing method: 'PULL' (EDC data offer) or 'PUSH' (notification)
  */
 export const shareCertificate = async (
   certificateId: string,
@@ -288,8 +259,6 @@ export const shareCertificate = async (
 /**
  * Revoke shared access to a certificate
  * DELETE /api/ccm/certificates/{id}/share/{shareId}
- * 
- * Revokes the EDC contract and updates sharing record status to 'Revoked'
  */
 export const revokeShare = async (certificateId: string, shareId: string): Promise<void> => {
   await httpClient.delete(
@@ -323,9 +292,6 @@ export const fetchSharingRecords = async (): Promise<SharedCertificate[]> => {
 
 /**
  * Trigger DTR registration for a certificate.
- * Creates the Submodel Descriptor in the Digital Twin Registry and the
- * corresponding EDC Asset + Access/Usage Policies.
- * POST /api/ccm/certificates/{id}/register-dtr
  */
 export const registerCertificateInDtr = async (
   certificateId: string,
@@ -344,8 +310,6 @@ export const registerCertificateInDtr = async (
 
 /**
  * Search for a partner's certificates by BPN.
- * Triggers the full discovery flow: BPN Lookup → DTR Resolution → Asset Discovery.
- * POST /api/ccm/consumer/search
  */
 export const searchPartnerCertificates = async (
   partnerBpn: string,
@@ -363,7 +327,6 @@ export const searchPartnerCertificates = async (
 
 /**
  * Initiate EDC contract negotiation to access a partner certificate.
- * POST /api/ccm/consumer/negotiate
  */
 export const initiateNegotiation = async (
   partnerBpn: string,
@@ -382,9 +345,6 @@ export const initiateNegotiation = async (
 
 /**
  * Poll the status of an ongoing EDC contract negotiation.
- * GET /api/ccm/consumer/negotiate/{negotiationId}/status
- *
- * @param callCount - number of times this has been called; used by mock to simulate progression
  */
 export const checkNegotiationStatus = async (
   negotiationId: string,
@@ -401,7 +361,6 @@ export const checkNegotiationStatus = async (
 
 /**
  * Fetch the certificate payload retrieved after a successful EDC transfer.
- * GET /api/ccm/consumer/transfer/{transferId}
  */
 export const fetchTransferredCertificate = async (
   transferId: string,
@@ -420,7 +379,6 @@ export const fetchTransferredCertificate = async (
 
 /**
  * Fetch all incoming certificate push notifications.
- * GET /api/ccm/notifications/incoming
  */
 export const fetchIncomingNotifications = async (): Promise<IncomingCertificateNotification[]> => {
   try {
@@ -440,7 +398,6 @@ export const fetchIncomingNotifications = async (): Promise<IncomingCertificateN
 
 /**
  * Acknowledge an incoming certificate notification.
- * POST /api/ccm/notifications/incoming/{id}/acknowledge
  */
 export const acknowledgeNotification = async (notificationId: string): Promise<void> => {
   if (!backendUrl) {
@@ -452,7 +409,6 @@ export const acknowledgeNotification = async (notificationId: string): Promise<v
 
 /**
  * Reject an incoming certificate notification.
- * POST /api/ccm/notifications/incoming/{id}/reject
  */
 export const rejectNotification = async (notificationId: string): Promise<void> => {
   if (!backendUrl) {
