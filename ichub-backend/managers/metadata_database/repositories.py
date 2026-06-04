@@ -1649,7 +1649,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmOutboundRequest.status == status)
-        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def find_latest_per_combo(
@@ -1703,7 +1703,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmOutboundRequest.status == status)
-        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def update_status(
@@ -1753,7 +1753,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             .where(CcmOutboundRequest.certified_bpn == certified_bpn)
             .where(CcmOutboundRequest.certificate_type == certificate_type)
             .where(CcmOutboundRequest.status == OutboundRequestStatus.Pending)
-            .order_by(desc(CcmOutboundRequest.requested_at))
+            .order_by(desc(CcmOutboundRequest.updated_at))
         )
         return list(self._session.scalars(stmt).all())
 
@@ -1808,7 +1808,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
                     ),
                 )
             )
-            .order_by(desc(CcmOutboundRequest.requested_at))
+            .order_by(desc(CcmOutboundRequest.updated_at))
         )
         return list(self._session.scalars(stmt).all())
 
@@ -1890,7 +1890,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmInboundRequest.status == status)
-        stmt = stmt.order_by(desc(CcmInboundRequest.received_at)).offset(offset).limit(limit)
+        stmt = stmt.order_by(desc(CcmInboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def find_latest_per_combo(
@@ -1942,7 +1942,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmInboundRequest.status == status)
-        stmt = stmt.order_by(desc(CcmInboundRequest.received_at)).offset(offset).limit(limit)
+        stmt = stmt.order_by(desc(CcmInboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def update_status(
@@ -2082,7 +2082,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
                 .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
                 .where(CcmInboundRequest.certified_bpn == certified_bpn)
                 .where(CcmInboundRequest.certificate_type == certificate_type)
-                .order_by(desc(CcmInboundRequest.received_at))
+                .order_by(desc(CcmInboundRequest.updated_at))
                 .limit(1)
             )
             record = self._session.scalars(fallback_stmt).first()
