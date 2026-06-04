@@ -594,12 +594,14 @@ class CcmNotificationService:
                 existing.doc = doc_bytes
                 existing.received_at = datetime.now(timezone.utc)
                 existing.notification_message_id = str(notification.header.message_id)
+                _related_push = getattr(notification.header, "related_message_id", None)
                 self._correlate_outbound_requests(
                     repo=repo,
                     provider_bpn=sender_bpn,
                     certified_bpn=content.business_partner_number,
                     certificate_type=content.type.certificate_type,
                     document_id=content.document.document_id,
+                    related_message_id=str(_related_push) if _related_push else None,
                 )
                 repo.commit()
                 return 200, {
@@ -640,12 +642,14 @@ class CcmNotificationService:
                 notification_message_id=str(notification.header.message_id),
                 **kwargs,
             )
+            _related_push = getattr(notification.header, "related_message_id", None)
             self._correlate_outbound_requests(
                 repo=repo,
                 provider_bpn=sender_bpn,
                 certified_bpn=content.business_partner_number,
                 certificate_type=content.type.certificate_type,
                 document_id=content.document.document_id,
+                related_message_id=str(_related_push) if _related_push else None,
             )
             repo.commit()
 
@@ -695,11 +699,14 @@ class CcmNotificationService:
             f"certificateType={_s(content.certificate_type)}"
         )
 
-        # Advance matching outbound requests to Found with the documentId
+        # Advance matching outbound requests to Found with the documentId.
+        # Pass relatedMessageId to restrict to the specific request when present.
+        _related_msg_id = getattr(notification.header, "related_message_id", None)
         self._correlate_outbound_requests_available(
             provider_bpn=sender_bpn,
             certificate_type=content.certificate_type,
             document_id=content.document_id,
+            related_message_id=str(_related_msg_id) if _related_msg_id else None,
         )
 
         # If a documentId is provided, attempt auto-pull
@@ -708,6 +715,7 @@ class CcmNotificationService:
                 provider_bpn=sender_bpn,
                 document_id=content.document_id,
                 notification_message_id=str(notification.header.message_id),
+                related_message_id=str(_related_msg_id) if _related_msg_id else None,
             )
 
         return 200, {
@@ -771,6 +779,7 @@ class CcmNotificationService:
         certified_bpn: str,
         certificate_type: str,
         document_id: str,
+        related_message_id: Optional[str] = None,
     ) -> None:
         """
         Advance all active outbound requests that match this incoming PUSH
@@ -781,6 +790,12 @@ class CcmNotificationService:
         that a late PUSH also resolves requests that were previously marked
         ``NotFound`` by the provider.
 
+        When ``related_message_id`` is provided it is matched against each
+        outbound request's ``notification_id`` (the messageId of the original
+        REQUEST sent by the consumer) so that only the targeted request is
+        advanced.  Falls back to the full active list if no exact match is
+        found.
+
         Called inside the active repository session (before ``repo.commit()``) so
         the CcmOutboundRequest rows are updated atomically with the new
         CcmReceived row.
@@ -790,6 +805,10 @@ class CcmNotificationService:
             certificate_type=certificate_type,
             certified_bpn=certified_bpn,
         )
+        if related_message_id is not None:
+            targeted = [r for r in active if r.notification_id == related_message_id]
+            if targeted:
+                active = targeted
         for req in active:
             repo.ccm_outbound_request_repository.update_status(
                 request_id=req.id,
@@ -806,6 +825,7 @@ class CcmNotificationService:
         provider_bpn: str,
         certificate_type: str,
         document_id: str,
+        related_message_id: Optional[str] = None,
     ) -> None:
         """
         Advance all Pending and NotFound outbound requests from this provider
@@ -816,10 +836,18 @@ class CcmNotificationService:
         because the provider may have responded "not found" initially and only
         later published the certificate and sent an Available notification.
 
+        When ``related_message_id`` is provided it is matched against each
+        outbound request's ``notification_id`` (the messageId of the original
+        REQUEST sent by the consumer) so that only the targeted request is
+        advanced.  Falls back to the full active list if no exact match is
+        found.
+
         Args:
             provider_bpn: BPNL of the provider sending the notification.
             certificate_type: Certificate type from the notification content.
             document_id: EDC asset ID of the published certificate.
+            related_message_id: Optional messageId of the original consumer
+                REQUEST this notification is responding to.
         """
         try:
             with RepositoryManagerFactory.create() as repo:
@@ -827,6 +855,10 @@ class CcmNotificationService:
                     provider_bpn=provider_bpn,
                     certificate_type=certificate_type,
                 )
+                if related_message_id is not None:
+                    targeted = [r for r in active if r.notification_id == related_message_id]
+                    if targeted:
+                        active = targeted
                 for req in active:
                     repo.ccm_outbound_request_repository.update_status(
                         request_id=req.id,
@@ -847,7 +879,12 @@ class CcmNotificationService:
             )
 
     @staticmethod
-    def _auto_pull_certificate(provider_bpn: str, document_id: str, notification_message_id: Optional[str] = None) -> None:
+    def _auto_pull_certificate(
+        provider_bpn: str,
+        document_id: str,
+        notification_message_id: Optional[str] = None,
+        related_message_id: Optional[str] = None,
+    ) -> None:
         """
         Trigger a PULL of the certificate from the provider.
 
@@ -861,6 +898,10 @@ class CcmNotificationService:
             notification_message_id: messageId from the available notification
                 header, stored on the received certificate for relatedMessageId
                 linking per CX-0135.
+            related_message_id: relatedMessageId from the available notification
+                header — the original REQUEST messageId — forwarded to the
+                outbound-request correlator so only the targeted request is
+                advanced to Found.
         """
         try:
             pull_request = CcmPullRequest(
@@ -870,6 +911,7 @@ class CcmNotificationService:
             result = ccm_consumer_service.pull_certificate(
                 pull_request,
                 notification_message_id=notification_message_id,
+                related_message_id=related_message_id,
             )
             if not result.stored:
                 logger.warning(

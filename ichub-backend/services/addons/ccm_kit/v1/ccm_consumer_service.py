@@ -361,6 +361,7 @@ class CcmConsumerService(CcmBaseService):
         self,
         request: CcmPullRequest,
         notification_message_id: Optional[str] = None,
+        related_message_id: Optional[str] = None,
     ) -> CcmPullResult:
         """
         Discover and pull a certificate from a provider's EDC catalog.
@@ -377,6 +378,10 @@ class CcmConsumerService(CcmBaseService):
             notification_message_id: Optional messageId from the push or
                 available notification that triggered this pull.  Stored on
                 the ``CcmReceived`` record for ``relatedMessageId`` linking.
+            related_message_id: Optional relatedMessageId from the triggering
+                available notification — the original REQUEST messageId.
+                Forwarded to the outbound-request correlator so only the
+                targeted request is advanced to Found.
 
         Returns:
             CcmPullResult with the certificate payload and storage status.
@@ -474,6 +479,7 @@ class CcmConsumerService(CcmBaseService):
                         certified_bpn=cert_bpn,
                         certificate_type=cert_type,
                         document_id=document_id,
+                        related_message_id=related_message_id,
                     )
                 except Exception as e:
                     logger.error(
@@ -594,6 +600,7 @@ class CcmConsumerService(CcmBaseService):
         certified_bpn: str,
         certificate_type: str,
         document_id: str,
+        related_message_id: Optional[str] = None,
     ) -> None:
         """
         Advance active outbound requests to ``Found`` after a manual pull.
@@ -601,6 +608,12 @@ class CcmConsumerService(CcmBaseService):
         Matches ``Pending``, ``NotFound``, and ``Found``-without-``document_id``
         requests for the ``(provider_bpn, certificate_type, certified_bpn)``
         combination and sets ``document_id`` on each.
+
+        When ``related_message_id`` is provided it restricts the update to
+        the single request whose ``notification_id`` matches (i.e. the
+        original REQUEST messageId referenced by the triggering AVAILABLE
+        notification), with a fallback to all active records if no exact
+        match is found.
         """
         with RepositoryManagerFactory.create() as repo:
             active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
@@ -608,6 +621,10 @@ class CcmConsumerService(CcmBaseService):
                 certificate_type=certificate_type,
                 certified_bpn=certified_bpn,
             )
+            if related_message_id is not None:
+                targeted = [r for r in active if r.notification_id == related_message_id]
+                if targeted:
+                    active = targeted
             for req in active:
                 repo.ccm_outbound_request_repository.update_status(
                     request_id=req.id,

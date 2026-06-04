@@ -756,6 +756,7 @@ class TestPullCertificate:
             certified_bpn="BPNL000000000001",
             certificate_type="ISO9001",
             document_id="doc-001",
+            related_message_id=None,
         )
 
     @patch(
