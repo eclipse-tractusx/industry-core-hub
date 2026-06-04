@@ -555,8 +555,9 @@ class CcmNotificationService:
         Process a ``POST /companycertificate/available`` notification.
 
         The provider informs us that a certificate is available for PULL
-        retrieval.  If a ``documentId`` is present, we attempt to pull the
-        certificate automatically via the consumer PULL flow.
+        retrieval.  We advance any Pending or NotFound outbound requests for
+        this provider + certificate type to ``Found`` (storing the documentId),
+        then attempt to pull the certificate automatically.
 
         Args:
             notification: SDK Notification with header + available content.
@@ -571,6 +572,13 @@ class CcmNotificationService:
             f"CCM available from {_s(sender_bpn)}: "
             f"documentId={_s(content.document_id)} "
             f"certificateType={_s(content.certificate_type)}"
+        )
+
+        # Advance matching outbound requests to Found with the documentId
+        self._correlate_outbound_requests_available(
+            provider_bpn=sender_bpn,
+            certificate_type=content.certificate_type,
+            document_id=content.document_id,
         )
 
         # If a documentId is provided, attempt auto-pull
@@ -664,6 +672,51 @@ class CcmNotificationService:
             logger.info(
                 f"[CCM] Outbound request {req.id} → Found "
                 f"(documentId={_s(document_id)})"
+            )
+
+    @staticmethod
+    def _correlate_outbound_requests_available(
+        provider_bpn: str,
+        certificate_type: str,
+        document_id: str,
+    ) -> None:
+        """
+        Advance all Pending and NotFound outbound requests from this provider
+        + certificate type to ``Found``, storing the ``document_id``.
+
+        Called when a Certificate Available (PULL) notification is received.
+        Unlike the PUSH correlator, this also covers ``NotFound`` requests
+        because the provider may have responded "not found" initially and only
+        later published the certificate and sent an Available notification.
+
+        Args:
+            provider_bpn: BPNL of the provider sending the notification.
+            certificate_type: Certificate type from the notification content.
+            document_id: EDC asset ID of the published certificate.
+        """
+        try:
+            with RepositoryManagerFactory.create() as repo:
+                active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                    provider_bpn=provider_bpn,
+                    certificate_type=certificate_type,
+                )
+                for req in active:
+                    repo.ccm_outbound_request_repository.update_status(
+                        request_id=req.id,
+                        new_status=OutboundRequestStatus.Found,
+                        document_id=document_id,
+                    )
+                    logger.info(
+                        f"[CCM] Outbound request {req.id} ({req.status.value}) "
+                        f"→ Found via Available notification "
+                        f"(documentId={_s(document_id)})"
+                    )
+                if active:
+                    repo.commit()
+        except Exception:
+            logger.exception(
+                f"[CCM] Failed to correlate outbound requests for Available "
+                f"notification from {_s(provider_bpn)} / {_s(certificate_type)}"
             )
 
     @staticmethod

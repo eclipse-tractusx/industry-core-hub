@@ -39,6 +39,7 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CcmSite,
+    InboundRequestStatus,
     TrustLevel,
 )
 from models.services.addons.ccm_kit.v1.notifications import (
@@ -176,6 +177,13 @@ class TestPushCertificate:
             certificate_id=CERT_ID,
             consumer_bpn=CONSUMER_BPN,
         )
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Pushed,
+        )
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -309,6 +317,13 @@ class TestPushCertificate:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Pushed,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -360,6 +375,13 @@ class TestSendCertificateAvailable:
         assert result.success is True
         assert result.message_id is not None
         mock_ncs.send_notification_to_endpoint.assert_called_once()
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Available,
+        )
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -495,6 +517,13 @@ class TestSendCertificateAvailable:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Available,
+        )
 
 
 # ---------------------------------------------------------------------------

@@ -122,6 +122,8 @@ class CcmProviderService(CcmBaseService):
 
             # --- 2. Build push payload ---
             content_fields = self._build_push_content(ccm)
+            certified_bpn = ccm.bpnl
+            certificate_type_val = ccm.certificate_type
 
         # --- 3. Build and send notification ---
         notification = self._build_notification(
@@ -153,6 +155,8 @@ class CcmProviderService(CcmBaseService):
             with RepositoryManagerFactory.create() as repo:
                 updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
                     consumer_bpn=consumer_bpn,
+                    certified_bpn=certified_bpn,
+                    certificate_type=certificate_type_val,
                     certificate_id=request.certificate_id,
                     new_status=InboundRequestStatus.Pushed,
                 )
@@ -217,6 +221,8 @@ class CcmProviderService(CcmBaseService):
             if location_bpns:
                 content_fields["locationBpns"] = location_bpns
             cert_id = ccm.id
+            certified_bpn = ccm.bpnl
+            certificate_type_val = ccm.certificate_type
 
         # --- 3. Build and send notification ---
         notification = self._build_notification(
@@ -238,6 +244,8 @@ class CcmProviderService(CcmBaseService):
             with RepositoryManagerFactory.create() as repo:
                 updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
                     consumer_bpn=consumer_bpn,
+                    certified_bpn=certified_bpn,
+                    certificate_type=certificate_type_val,
                     certificate_id=cert_id,
                     new_status=InboundRequestStatus.Available,
                 )

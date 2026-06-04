@@ -1673,6 +1673,41 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         )
         return list(self._session.scalars(stmt).all())
 
+    def find_active_by_provider_and_type(
+        self,
+        provider_bpn: str,
+        certificate_type: str,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return all Pending and NotFound outbound requests for the given
+        (provider_bpn, certificate_type) combination.
+
+        Used when the provider sends a Certificate Available notification
+        (PULL mechanism) so the consumer can advance those requests to
+        Found and store the documentId.  Both statuses are included because
+        the provider may have initially responded with "NotFound" and only
+        later published the certificate.
+
+        Args:
+            provider_bpn: BPNL of the remote provider.
+            certificate_type: Certificate type identifier.
+
+        Returns:
+            List of matching CcmOutboundRequest records, newest first.
+        """
+        stmt = (
+            select(CcmOutboundRequest)
+            .where(CcmOutboundRequest.provider_bpn == provider_bpn)
+            .where(CcmOutboundRequest.certificate_type == certificate_type)
+            .where(
+                CcmOutboundRequest.status.in_(
+                    [OutboundRequestStatus.Pending, OutboundRequestStatus.NotFound]
+                )
+            )
+            .order_by(desc(CcmOutboundRequest.requested_at))
+        )
+        return list(self._session.scalars(stmt).all())
+
 
 # ---------------------------------------------------------------------------
 # Inbound certificate request repository (provider-side)
@@ -1785,6 +1820,8 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
     def advance_status_for_consumer(
         self,
         consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
         certificate_id: int,
         new_status: InboundRequestStatus,
     ) -> List[CcmInboundRequest]:
@@ -1797,9 +1834,17 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         taken.  Only records that are not yet in a terminal-equivalent state
         (``Pushed``) are updated.
 
+        Matches on ``consumer_bpn + certified_bpn + certificate_type`` — the
+        natural certificate key — rather than ``certificate_id`` alone, because
+        "NotFound" inbound records have ``certificate_id = NULL`` until a cert
+        is actually created.  The ``certificate_id`` FK is stamped on every
+        matched record so it is always resolved after this call.
+
         Args:
             consumer_bpn: BPNL of the consumer.
-            certificate_id: FK of the certificate.
+            certified_bpn: BPNL of the certified entity (cert holder).
+            certificate_type: Certificate type identifier.
+            certificate_id: FK of the certificate (set on all matched records).
             new_status: New status to set (Available or Pushed).
 
         Returns:
@@ -1808,13 +1853,15 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         stmt = (
             select(CcmInboundRequest)
             .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
-            .where(CcmInboundRequest.certificate_id == certificate_id)
+            .where(CcmInboundRequest.certified_bpn == certified_bpn)
+            .where(CcmInboundRequest.certificate_type == certificate_type)
             .where(CcmInboundRequest.status != InboundRequestStatus.Pushed)
         )
         records = list(self._session.scalars(stmt).all())
         now = datetime.now(timezone.utc)
         for r in records:
             r.status = new_status
+            r.certificate_id = certificate_id
             r.updated_at = now
             self._session.add(r)
         return records
