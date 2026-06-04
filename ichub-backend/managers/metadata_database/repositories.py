@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case
+from sqlalchemy import case, and_, or_
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -1700,8 +1700,17 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             .where(CcmOutboundRequest.provider_bpn == provider_bpn)
             .where(CcmOutboundRequest.certificate_type == certificate_type)
             .where(
-                CcmOutboundRequest.status.in_(
-                    [OutboundRequestStatus.Pending, OutboundRequestStatus.NotFound]
+                or_(
+                    CcmOutboundRequest.status.in_(
+                        [OutboundRequestStatus.Pending, OutboundRequestStatus.NotFound]
+                    ),
+                    # Also update Found records that are missing a documentId
+                    # (e.g. request was correlated via push response but no
+                    # documentId was recorded; the Available notification fills it in)
+                    and_(
+                        CcmOutboundRequest.status == OutboundRequestStatus.Found,
+                        CcmOutboundRequest.document_id.is_(None),
+                    ),
                 )
             )
             .order_by(desc(CcmOutboundRequest.requested_at))
@@ -1824,6 +1833,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         certificate_type: str,
         certificate_id: int,
         new_status: InboundRequestStatus,
+        skip_statuses: Optional[List[InboundRequestStatus]] = None,
     ) -> List[CcmInboundRequest]:
         """
         Bulk-update inbound request records for a given consumer + certificate
@@ -1831,8 +1841,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
 
         Used when the provider sends a PUSH or Available notification to a
         consumer so that all related inbound request records reflect the action
-        taken.  Only records that are not yet in a terminal-equivalent state
-        (``Pushed``) are updated.
+        taken.
 
         Matches on ``consumer_bpn + certified_bpn + certificate_type`` — the
         natural certificate key — rather than ``certificate_id`` alone, because
@@ -1846,16 +1855,23 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             certificate_type: Certificate type identifier.
             certificate_id: FK of the certificate (set on all matched records).
             new_status: New status to set (Available or Pushed).
+            skip_statuses: Records already in these statuses are left untouched.
+                Defaults to ``[Pushed]`` when not specified.  Pass
+                ``[Pushed, Available]`` for the Push flow so that records already
+                delivered via the PULL (Available) path are not overridden by a
+                Push notification triggered by a *different* consumer request.
 
         Returns:
             List of updated records.
         """
+        if skip_statuses is None:
+            skip_statuses = [InboundRequestStatus.Pushed]
         stmt = (
             select(CcmInboundRequest)
             .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
             .where(CcmInboundRequest.certified_bpn == certified_bpn)
             .where(CcmInboundRequest.certificate_type == certificate_type)
-            .where(CcmInboundRequest.status != InboundRequestStatus.Pushed)
+            .where(CcmInboundRequest.status.not_in(skip_statuses))
         )
         records = list(self._session.scalars(stmt).all())
         now = datetime.now(timezone.utc)

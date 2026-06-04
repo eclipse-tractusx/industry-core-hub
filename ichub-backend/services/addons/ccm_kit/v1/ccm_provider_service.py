@@ -159,6 +159,10 @@ class CcmProviderService(CcmBaseService):
                     certificate_type=certificate_type_val,
                     certificate_id=request.certificate_id,
                     new_status=InboundRequestStatus.Pushed,
+                    skip_statuses=[
+                        InboundRequestStatus.Available,
+                        InboundRequestStatus.Pushed,
+                    ],
                 )
                 if updated:
                     repo.commit()

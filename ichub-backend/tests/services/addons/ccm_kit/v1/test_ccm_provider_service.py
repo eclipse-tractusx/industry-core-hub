@@ -183,6 +183,10 @@ class TestPushCertificate:
             certificate_type=ccm.certificate_type,
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Pushed,
+            skip_statuses=[
+                InboundRequestStatus.Available,
+                InboundRequestStatus.Pushed,
+            ],
         )
 
     @patch(
@@ -323,6 +327,10 @@ class TestPushCertificate:
             certificate_type=ccm.certificate_type,
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Pushed,
+            skip_statuses=[
+                InboundRequestStatus.Available,
+                InboundRequestStatus.Pushed,
+            ],
         )
 
 
