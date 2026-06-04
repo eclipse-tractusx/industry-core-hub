@@ -46,6 +46,7 @@ from controllers.fastapi.routers.authentication.auth_api import (
 from managers.config.log_manager import LoggingManager
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
+    CcmInboundRequestItem,
     CcmPublishedItem,
     CcmPublishRequest,
     CcmPublishResult,
@@ -281,4 +282,56 @@ async def list_shares(
         )
     except Exception:
         logger.exception("Unhandled error in list_shares endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/inbound-requests",
+    response_model=List[CcmInboundRequestItem],
+    summary="List certificate requests received by this provider node",
+)
+async def list_inbound_requests(
+    consumer_bpn: Optional[str] = Query(
+        default=None,
+        alias="consumerBpn",
+        description="Filter by requesting consumer BPNL.",
+    ),
+    certified_bpn: Optional[str] = Query(
+        default=None,
+        alias="certifiedBpn",
+        description="Filter by certified entity BPNL.",
+    ),
+    certificate_type: Optional[str] = Query(
+        default=None,
+        alias="certificateType",
+        description="Filter by certificate type.",
+    ),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by status (NotFound / Registered / Available / Pushed).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[CcmInboundRequestItem]:
+    """
+    Return all inbound certificate requests received by this provider node.
+
+    Includes requests where the certificate did **not** exist at the time of
+    the request (``status = NotFound``), giving the provider visibility into
+    consumer demand.  The provider can use this information to:
+
+    - Decide to add a certificate to their catalog.
+    - Proactively push the certificate to the interested consumer once available.
+    """
+    try:
+        return ccm_provider_service.list_inbound_requests(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_inbound_requests endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)

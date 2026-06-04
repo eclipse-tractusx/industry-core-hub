@@ -36,6 +36,7 @@ from services.addons.ccm_kit.v1.ccm_notification_service import CcmNotificationS
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CertificateShare,
+    InboundRequestStatus,
     ShareStatus,
 )
 
@@ -114,6 +115,7 @@ class TestCcmNotificationService:
         repos = Mock()
         repos.ccm_repository = Mock()
         repos.certificate_share_repository = Mock()
+        repos.ccm_inbound_request_repository = Mock()
         repos.commit = Mock()
         repos.refresh = Mock()
         return repos
@@ -159,6 +161,10 @@ class TestCcmNotificationService:
             consumer_bpnl="BPNL000000000099",
             status=ShareStatus.Pending,
         )
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("status") == InboundRequestStatus.Registered or \
+               call_kwargs.args[3] == InboundRequestStatus.Registered
         mock_repos.commit.assert_called_once()
 
     @patch(
@@ -190,6 +196,7 @@ class TestCcmNotificationService:
         assert status == 202
         assert body["content"]["requestStatus"] == "IN_PROGRESS"
         mock_repos.certificate_share_repository.create_new.assert_not_called()
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
         mock_repos.commit.assert_called_once()
 
     @patch(
@@ -220,6 +227,12 @@ class TestCcmNotificationService:
         assert len(body["content"]["requestErrors"]) == 1
         assert "no certificate found" in body["content"]["requestErrors"][0]["message"].lower()
         mock_repos.certificate_share_repository.create_new.assert_not_called()
+        # Demand should be recorded even when cert not found.
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("status") == InboundRequestStatus.NotFound or \
+               call_kwargs.args[3] == InboundRequestStatus.NotFound
+        mock_repos.commit.assert_called_once()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"

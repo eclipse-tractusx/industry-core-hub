@@ -155,6 +155,7 @@ class TestPushCertificate:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -283,6 +284,7 @@ class TestPushCertificate:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -339,6 +341,7 @@ class TestSendCertificateAvailable:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -467,6 +470,7 @@ class TestSendCertificateAvailable:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -854,6 +858,7 @@ class TestPushShareStatusErrorHandling:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]

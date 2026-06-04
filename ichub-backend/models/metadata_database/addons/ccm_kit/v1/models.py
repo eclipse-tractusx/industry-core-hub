@@ -31,6 +31,7 @@ Models:
     - CertificateShare: Sharing-history record tracking which consumers received a certificate.
     - CcmReceived: Certificates received by this node as a consumer via PUSH or PULL.
     - CcmOutboundRequest: Certificate requests sent by this node to remote providers.
+    - CcmInboundRequest: Certificate requests received from external consumers (provider-side tracking).
 
 These models are designed to interact with a PostgreSQL database using
 SQLAlchemy and SQLModel.
@@ -522,5 +523,112 @@ class CcmOutboundRequest(SQLModel, table=True):
         Index(
             "ix_ccm_outbound_request_provider_certified",
             "provider_bpn", "certified_bpn", "certificate_type",
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Inbound certificate requests (provider-side tracking)
+# ---------------------------------------------------------------------------
+
+class InboundRequestStatus(str, Enum):
+    """
+    Status of a certificate request received from an external consumer.
+
+    - NotFound:   No matching certificate exists; consumer interest recorded so
+                  the provider can later act on the demand.
+    - Registered: A matching certificate was found; a CertificateShare record
+                  was created to share it with the consumer.
+    - Available:  Provider sent a CX-0135 Available notification telling the
+                  consumer that the certificate is now in the EDC catalog and
+                  ready to be pulled (PULL mechanism).
+    - Pushed:     Provider actively sent the full certificate payload to the
+                  consumer via a CX-0135 Push notification (PUSH mechanism).
+    """
+    NotFound   = "NotFound"
+    Registered = "Registered"
+    Available  = "Available"
+    Pushed     = "Pushed"
+
+
+class CcmInboundRequest(SQLModel, table=True):
+    """
+    Tracks ALL certificate requests received from external consumers.
+
+    A row is created for every inbound POST /companycertificate/request, whether
+    or not a matching certificate exists at the time of the request.  This allows
+    the provider to:
+
+    - Monitor demand for certificates they do not yet have.
+    - Later add a certificate and proactively push it to interested consumers.
+    - Audit who requested which certificates and when.
+
+    Status lifecycle:
+      NotFound → Registered (cert added later) → Available | Pushed
+    """
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+    # --- Who requested what ---
+    consumer_bpn: str = Field(
+        index=True,
+        description="BPNL of the consumer that issued the request.",
+    )
+    certified_bpn: str = Field(
+        index=True,
+        description="BPNL of the legal entity whose certificate was requested.",
+    )
+    certificate_type: str = Field(
+        index=True,
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    location_bpns: Optional[str] = Field(
+        default=None,
+        description="JSON-serialised list of BPNS/BPNA to narrow the scope.",
+    )
+
+    # --- Resolution ---
+    certificate_id: Optional[int] = Field(
+        default=None,
+        foreign_key="ccm.id",
+        index=True,
+        description="FK to the matching certificate (NULL when NotFound).",
+    )
+    status: InboundRequestStatus = Field(
+        sa_column=Column(
+            SAEnum(
+                InboundRequestStatus,
+                values_callable=lambda x: [e.value for e in x],
+                name="inbound_request_status",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
+        description="Current status of this inbound request.",
+    )
+
+    # --- Correlation ---
+    notification_id: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="UUID from the CX-0135 notification header (message_id).",
+    )
+
+    # --- Audit ---
+    received_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp when the request was received.",
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp of the last status update.",
+    )
+
+    __tablename__ = "ccm_inbound_request"
+    __table_args__ = (
+        Index(
+            "ix_ccm_inbound_request_consumer_certified",
+            "consumer_bpn", "certified_bpn", "certificate_type",
         ),
     )

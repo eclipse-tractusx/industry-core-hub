@@ -59,10 +59,12 @@ from models.metadata_database.pcf.models import (
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmInboundRequest,
     CcmOutboundRequest,
     CcmReceived,
     CcmSite,
     CertificateShare,
+    InboundRequestStatus,
     OutboundRequestStatus,
     ReceivedCertificateStatus,
     ShareStatus,
@@ -1670,3 +1672,149 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             .order_by(desc(CcmOutboundRequest.requested_at))
         )
         return list(self._session.scalars(stmt).all())
+
+
+# ---------------------------------------------------------------------------
+# Inbound certificate request repository (provider-side)
+# ---------------------------------------------------------------------------
+
+class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
+    """
+    Repository for CcmInboundRequest entities — certificate requests received
+    by this node from external consumers.
+    """
+
+    def create_new(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        status: InboundRequestStatus,
+        **kwargs,
+    ) -> CcmInboundRequest:
+        """
+        Persist a new inbound-request record.
+
+        Args:
+            consumer_bpn: BPNL of the requesting consumer.
+            certified_bpn: BPNL of the legal entity whose certificate was requested.
+            certificate_type: Certificate type identifier.
+            status: Initial InboundRequestStatus.
+            **kwargs: Optional fields (location_bpns, certificate_id, notification_id).
+
+        Returns:
+            The staged CcmInboundRequest instance.
+        """
+        record = CcmInboundRequest(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            status=status,
+            **kwargs,
+        )
+        self.create(record)
+        return record
+
+    def find_by_id(self, request_id: int) -> Optional[CcmInboundRequest]:
+        """Return a single inbound request by primary key."""
+        return self._session.get(CcmInboundRequest, request_id)
+
+    def find_all_filtered(
+        self,
+        consumer_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[InboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequest]:
+        """
+        Return inbound requests with optional filters, newest first.
+
+        Args:
+            consumer_bpn: Filter by consumer BPNL.
+            certified_bpn: Filter by certified entity BPNL.
+            certificate_type: Filter by certificate type.
+            status: Filter by InboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum records to return.
+
+        Returns:
+            List of matching CcmInboundRequest records.
+        """
+        stmt = select(CcmInboundRequest)
+        if consumer_bpn:
+            stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmInboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmInboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmInboundRequest.received_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(
+        self,
+        request_id: int,
+        new_status: InboundRequestStatus,
+        certificate_id: Optional[int] = None,
+    ) -> Optional[CcmInboundRequest]:
+        """
+        Update the status (and optionally resolve the certificate FK) on an
+        inbound request.
+
+        Args:
+            request_id: Primary key of the record to update.
+            new_status: New InboundRequestStatus value.
+            certificate_id: FK to the certificate, if now resolved.
+
+        Returns:
+            The updated record, or None if not found.
+        """
+        record = self._session.get(CcmInboundRequest, request_id)
+        if record is None:
+            return None
+        record.status = new_status
+        record.updated_at = datetime.now(timezone.utc)
+        if certificate_id is not None:
+            record.certificate_id = certificate_id
+        self._session.add(record)
+        return record
+
+    def advance_status_for_consumer(
+        self,
+        consumer_bpn: str,
+        certificate_id: int,
+        new_status: InboundRequestStatus,
+    ) -> List[CcmInboundRequest]:
+        """
+        Bulk-update inbound request records for a given consumer + certificate
+        to a new status.
+
+        Used when the provider sends a PUSH or Available notification to a
+        consumer so that all related inbound request records reflect the action
+        taken.  Only records that are not yet in a terminal-equivalent state
+        (``Pushed``) are updated.
+
+        Args:
+            consumer_bpn: BPNL of the consumer.
+            certificate_id: FK of the certificate.
+            new_status: New status to set (Available or Pushed).
+
+        Returns:
+            List of updated records.
+        """
+        stmt = (
+            select(CcmInboundRequest)
+            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+            .where(CcmInboundRequest.certificate_id == certificate_id)
+            .where(CcmInboundRequest.status != InboundRequestStatus.Pushed)
+        )
+        records = list(self._session.scalars(stmt).all())
+        now = datetime.now(timezone.utc)
+        for r in records:
+            r.status = new_status
+            r.updated_at = now
+            self._session.add(r)
+        return records

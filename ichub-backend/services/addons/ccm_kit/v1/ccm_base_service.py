@@ -85,6 +85,11 @@ class CcmBaseService:
         """
         if not hasattr(consumer_connector_service, "connection_manager"):
             return
+        if not hasattr(
+            consumer_connector_service.connection_manager,
+            "clear_connections_by_party",
+        ):
+            return
         party_key = bpnl
         if hasattr(consumer_connector_service, "get_discovery_info"):
             try:

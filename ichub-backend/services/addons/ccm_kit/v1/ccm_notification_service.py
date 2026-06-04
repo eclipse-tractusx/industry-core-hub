@@ -33,7 +33,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
-from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus, ShareStatus
+from models.metadata_database.addons.ccm_kit.v1.models import InboundRequestStatus, OutboundRequestStatus, ShareStatus
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableContent,
     CcmPushContent,
@@ -123,6 +123,16 @@ class CcmNotificationService:
                     f"No certificate found for bpnl={_s(content.certified_bpn)} "
                     f"type={_s(content.certificate_type)} (requested by {_s(sender_bpn)})"
                 )
+                # Persist the consumer's demand so the provider can act on it later.
+                repo.ccm_inbound_request_repository.create_new(
+                    consumer_bpn=sender_bpn,
+                    certified_bpn=content.certified_bpn,
+                    certificate_type=content.certificate_type,
+                    status=InboundRequestStatus.NotFound,
+                    location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                    notification_id=str(notification.header.message_id),
+                )
+                repo.commit()
                 return 200, {
                     "header": self._build_response_header(notification),
                     "content": {
@@ -162,6 +172,17 @@ class CcmNotificationService:
                     f"Updated existing CertificateShare {existing_share.id} "
                     f"for consumer {_s(sender_bpn)}"
                 )
+
+            # Record the inbound request so the provider has full visibility.
+            repo.ccm_inbound_request_repository.create_new(
+                consumer_bpn=sender_bpn,
+                certified_bpn=content.certified_bpn,
+                certificate_type=content.certificate_type,
+                status=InboundRequestStatus.Registered,
+                certificate_id=ccm.id,
+                location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                notification_id=str(notification.header.message_id),
+            )
 
             repo.commit()
 

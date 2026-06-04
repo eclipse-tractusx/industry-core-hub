@@ -939,3 +939,58 @@ class ShareItem(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class CcmInboundRequestItem(BaseModel):
+    """
+    Summary item for a single certificate request received by the provider.
+
+    Returned by ``GET /provider/inbound-requests`` — a full list of all
+    inbound requests, including those where no matching certificate existed
+    at the time of the request (status = ``NotFound``).
+    """
+    request_id: int = Field(
+        alias="requestId",
+        description="Internal primary key of the ccm_inbound_request record.",
+    )
+    consumer_bpn: str = Field(
+        alias="consumerBpn",
+        description="BPNL of the consumer who sent the request.",
+    )
+    certified_bpn: str = Field(
+        alias="certifiedBpn",
+        description="BPNL of the legal entity whose certificate was requested.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    location_bpns: Optional[str] = Field(
+        default=None,
+        alias="locationBpns",
+        description="JSON-serialised list of BPNS/BPNA scope (if provided).",
+    )
+    certificate_id: Optional[int] = Field(
+        default=None,
+        alias="certificateId",
+        description="FK to the matched certificate (NULL when NotFound).",
+    )
+    status: str = Field(
+        description="Inbound request status: NotFound / Registered / Available / Pushed.",
+    )
+    notification_id: Optional[str] = Field(
+        default=None,
+        alias="notificationId",
+        description="CX-0135 notification message_id for correlation.",
+    )
+    received_at: str = Field(
+        alias="receivedAt",
+        description="Timestamp when the request was received (ISO 8601).",
+    )
+    updated_at: str = Field(
+        alias="updatedAt",
+        description="Timestamp of the last status update (ISO 8601).",
+    )
+
+    class Config:
+        populate_by_name = True

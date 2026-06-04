@@ -49,10 +49,12 @@ from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
+    CcmInboundRequestItem,
     CcmPushRequest,
     CcmSendResult,
     ShareItem,
 )
+from models.metadata_database.addons.ccm_kit.v1.models import InboundRequestStatus
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from tools.constants import (
@@ -136,7 +138,7 @@ class CcmProviderService(CcmBaseService):
             policies=request.governance,
         )
 
-        # --- 4. Update share record on success ---
+        # --- 4. Update share record and inbound request tracking on success ---
         if result.success:
             try:
                 self._update_share_status(
@@ -148,6 +150,18 @@ class CcmProviderService(CcmBaseService):
                     f"[CCM Provider] Push succeeded but failed to update "
                     f"share status for cert {request.certificate_id}: {_s(e)}"
                 )
+            with RepositoryManagerFactory.create() as repo:
+                updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
+                    consumer_bpn=consumer_bpn,
+                    certificate_id=request.certificate_id,
+                    new_status=InboundRequestStatus.Pushed,
+                )
+                if updated:
+                    repo.commit()
+                    logger.info(
+                        f"[CCM Provider] Marked {len(updated)} inbound request(s) as Pushed "
+                        f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
+                    )
 
         return result
 
@@ -202,6 +216,7 @@ class CcmProviderService(CcmBaseService):
             }
             if location_bpns:
                 content_fields["locationBpns"] = location_bpns
+            cert_id = ccm.id
 
         # --- 3. Build and send notification ---
         notification = self._build_notification(
@@ -211,12 +226,29 @@ class CcmProviderService(CcmBaseService):
             content_fields=content_fields,
         )
 
-        return self._send_notification(
+        result = self._send_notification(
             target_bpn=consumer_bpn,
             notification=notification,
             endpoint_path=CCM_ENDPOINT_AVAILABLE,
             policies=request.governance,
         )
+
+        # --- 4. Track notification in inbound request records ---
+        if result.success:
+            with RepositoryManagerFactory.create() as repo:
+                updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
+                    consumer_bpn=consumer_bpn,
+                    certificate_id=cert_id,
+                    new_status=InboundRequestStatus.Available,
+                )
+                if updated:
+                    repo.commit()
+                    logger.info(
+                        f"[CCM Provider] Marked {len(updated)} inbound request(s) as Available "
+                        f"for consumer {_s(consumer_bpn)} / cert {cert_id}."
+                    )
+
+        return result
 
     # ------------------------------------------------------------------
     # Publish / unpublish certificate as EDC HttpData asset (PULL)
@@ -613,6 +645,67 @@ class CcmProviderService(CcmBaseService):
                 logger.info(
                     f"[CCM PULL] Cleared edc_asset_id on certificate {ccm.id}."
                 )
+
+    def list_inbound_requests(
+        self,
+        consumer_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequestItem]:
+        """
+        Return all inbound certificate requests received by this provider node,
+        optionally filtered.
+
+        Includes requests where the certificate was not found (``NotFound``),
+        allowing the provider to see consumer demand for certificates they do
+        not yet have in their catalog.
+
+        Args:
+            consumer_bpn: Filter by requesting consumer BPNL.
+            certified_bpn: Filter by certified entity BPNL.
+            certificate_type: Filter by certificate type.
+            status: Filter by InboundRequestStatus string value.
+            offset: Pagination offset.
+            limit: Maximum records to return.
+
+        Returns:
+            List of CcmInboundRequestItem response objects.
+        """
+        status_enum: Optional[InboundRequestStatus] = None
+        if status is not None:
+            try:
+                status_enum = InboundRequestStatus(status)
+            except ValueError:
+                logger.warning(f"Unknown inbound request status filter: {_s(status)}")
+
+        with RepositoryManagerFactory.create() as repo:
+            records = repo.ccm_inbound_request_repository.find_all_filtered(
+                consumer_bpn=consumer_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
+                status=status_enum,
+                offset=offset,
+                limit=limit,
+            )
+            return [
+                CcmInboundRequestItem(
+                    requestId=r.id,
+                    consumerBpn=r.consumer_bpn,
+                    certifiedBpn=r.certified_bpn,
+                    certificateType=r.certificate_type,
+                    locationBpns=r.location_bpns,
+                    certificateId=r.certificate_id,
+                    status=r.status.value,
+                    notificationId=r.notification_id,
+                    receivedAt=r.received_at.isoformat(),
+                    updatedAt=r.updated_at.isoformat(),
+                )
+                for r in records
+            ]
+
 
 # Singleton instance consumed by the controller.
 ccm_provider_service = CcmProviderService()
