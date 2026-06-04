@@ -651,19 +651,24 @@ class CcmNotificationService:
         document_id: str,
     ) -> None:
         """
-        Advance all Pending outbound requests that match this incoming PUSH
+        Advance all active outbound requests that match this incoming PUSH
         to ``Found``, storing the ``document_id`` for later reference.
+
+        "Active" includes ``Pending``, ``NotFound``, and ``Found``-without-
+        ``document_id`` — mirroring the Available-notification correlator so
+        that a late PUSH also resolves requests that were previously marked
+        ``NotFound`` by the provider.
 
         Called inside the active repository session (before ``repo.commit()``) so
         the CcmOutboundRequest rows are updated atomically with the new
         CcmReceived row.
         """
-        pending = repo.ccm_outbound_request_repository.find_pending_by_match(
+        active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
             provider_bpn=provider_bpn,
-            certified_bpn=certified_bpn,
             certificate_type=certificate_type,
+            certified_bpn=certified_bpn,
         )
-        for req in pending:
+        for req in active:
             repo.ccm_outbound_request_repository.update_status(
                 request_id=req.id,
                 new_status=OutboundRequestStatus.Found,

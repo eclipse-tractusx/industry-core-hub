@@ -439,6 +439,26 @@ class CcmConsumerService(CcmBaseService):
             document_id=document_id,
         )
 
+        # --- 5. Correlate outbound requests ---
+        if stored:
+            cert_bpn = certificate_data.get("businessPartnerNumber", "")
+            cert_type = (
+                certificate_data.get("type", {}).get("certificateType", "")
+            )
+            if cert_bpn and cert_type:
+                try:
+                    self._correlate_outbound_after_pull(
+                        provider_bpn=provider_bpn,
+                        certified_bpn=cert_bpn,
+                        certificate_type=cert_type,
+                        document_id=document_id,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"[CCM Consumer] Outbound correlation failed after pull "
+                        f"for {_s(document_id)}: {_s(e)}"
+                    )
+
         logger.info(
             f"[CCM Consumer] Successfully pulled certificate {_s(document_id)} "
             f"from [{_s(provider_bpn)}]. Stored={stored}"
@@ -534,6 +554,39 @@ class CcmConsumerService(CcmBaseService):
             logger.error(f"[CCM Consumer] Failed to store received certificate: {_s(e)}")
             return False
 
+    @staticmethod
+    def _correlate_outbound_after_pull(
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        document_id: str,
+    ) -> None:
+        """
+        Advance active outbound requests to ``Found`` after a manual pull.
+
+        Matches ``Pending``, ``NotFound``, and ``Found``-without-``document_id``
+        requests for the ``(provider_bpn, certificate_type, certified_bpn)``
+        combination and sets ``document_id`` on each.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                provider_bpn=provider_bpn,
+                certificate_type=certificate_type,
+                certified_bpn=certified_bpn,
+            )
+            for req in active:
+                repo.ccm_outbound_request_repository.update_status(
+                    request_id=req.id,
+                    new_status=OutboundRequestStatus.Found,
+                    document_id=document_id,
+                )
+                logger.info(
+                    f"[CCM Consumer] Outbound request {req.id} → Found "
+                    f"(documentId={_s(document_id)}) after pull"
+                )
+            if active:
+                repo.commit()
+
     # ------------------------------------------------------------------
     # Visibility: received certificates
     # ------------------------------------------------------------------
@@ -588,18 +641,48 @@ class CcmConsumerService(CcmBaseService):
             if record is None:
                 return None
 
-            item = self._to_received_item(record)
-            detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
-            detail.certificate_version = record.certificate_version
-            detail.issuer_name = record.issuer_name
-            detail.issuer_bpn = record.issuer_bpn
-            detail.validator_name = record.validator_name
-            detail.registration_number = record.registration_number
-            detail.area_of_application = record.area_of_application
-            detail.uploader_bpn = record.uploader_bpn
-            if record.doc:
-                detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
-            return detail
+            return self._to_received_detail(record)
+
+    def get_received_by_document_id(
+        self, document_id: str, provider_bpn: str,
+    ) -> Optional[ReceivedCertificateDetail]:
+        """
+        Return the full detail for a received certificate identified by the
+        provider-assigned ``document_id`` and ``provider_bpn``.
+
+        Args:
+            document_id: Provider-assigned document reference.
+            provider_bpn: BPNL of the provider that sent the certificate.
+
+        Returns:
+            ReceivedCertificateDetail, or None if not found.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            record = repo.ccm_received_repository.find_by_document_id(
+                document_id, provider_bpn=provider_bpn,
+            )
+
+            if record is None:
+                return None
+
+            return self._to_received_detail(record)
+
+    def _to_received_detail(
+        self, record: "CcmReceived",
+    ) -> ReceivedCertificateDetail:
+        """Map a CcmReceived ORM instance to a full ReceivedCertificateDetail DTO."""
+        item = self._to_received_item(record)
+        detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
+        detail.certificate_version = record.certificate_version
+        detail.issuer_name = record.issuer_name
+        detail.issuer_bpn = record.issuer_bpn
+        detail.validator_name = record.validator_name
+        detail.registration_number = record.registration_number
+        detail.area_of_application = record.area_of_application
+        detail.uploader_bpn = record.uploader_bpn
+        if record.doc:
+            detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
+        return detail
 
     # ------------------------------------------------------------------
     # Visibility: outbound requests

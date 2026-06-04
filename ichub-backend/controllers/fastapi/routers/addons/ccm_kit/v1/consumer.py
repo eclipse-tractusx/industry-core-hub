@@ -31,7 +31,7 @@ Implements the consumer operations for the PULL flow:
 - ``POST /consumer/status``              — send a processing status to a provider
 - ``POST /consumer/pull``                — pull a certificate from a provider's catalog
 - ``GET  /consumer/received``            — list certificates received by this node
-- ``GET  /consumer/received/{id}``       — detail for one received certificate
+- ``GET  /consumer/received/{document_id}`` — detail for one received certificate
 - ``GET  /consumer/requests``            — list outbound certificate requests
 - ``GET  /consumer/requests/{id}``       — detail for one outbound request
 """
@@ -205,17 +205,29 @@ async def list_received(
 
 
 @router.get(
-    "/received/{received_id}",
+    "/received/{document_id}",
     response_model=ReceivedCertificateDetail,
     summary="Get detail for a single received certificate",
 )
-async def get_received(received_id: int) -> ReceivedCertificateDetail:
+async def get_received(
+    document_id: str,
+    provider_bpn: str = Query(
+        ...,
+        alias="providerBpn",
+        description="BPNL of the provider that sent the certificate.",
+    ),
+) -> ReceivedCertificateDetail:
     """
     Return the full detail for a single received certificate, including the
     Base64-encoded PDF document when available.
+
+    The certificate is identified by the provider-assigned ``documentId``
+    together with the ``providerBpn`` (which form a unique pair).
     """
     try:
-        result = ccm_consumer_service.get_received(received_id)
+        result = ccm_consumer_service.get_received_by_document_id(
+            document_id, provider_bpn,
+        )
         if result is None:
             raise HTTPException(status_code=404, detail="Received certificate not found.")
         return result

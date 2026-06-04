@@ -1731,6 +1731,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         self,
         provider_bpn: str,
         certificate_type: str,
+        certified_bpn: Optional[str] = None,
     ) -> List[CcmOutboundRequest]:
         """
         Return all Pending and NotFound outbound requests for the given
@@ -1745,6 +1746,9 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         Args:
             provider_bpn: BPNL of the remote provider.
             certificate_type: Certificate type identifier.
+            certified_bpn: Optional BPNL of the certified entity.  When
+                provided the query is narrowed to an exact match on all
+                three natural-key columns.
 
         Returns:
             List of matching CcmOutboundRequest records, newest first.
@@ -1753,6 +1757,13 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             select(CcmOutboundRequest)
             .where(CcmOutboundRequest.provider_bpn == provider_bpn)
             .where(CcmOutboundRequest.certificate_type == certificate_type)
+        )
+        if certified_bpn is not None:
+            stmt = stmt.where(
+                CcmOutboundRequest.certified_bpn == certified_bpn
+            )
+        stmt = (
+            stmt
             .where(
                 or_(
                     CcmOutboundRequest.status.in_(

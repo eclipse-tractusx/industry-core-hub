@@ -37,6 +37,7 @@ from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CertificateShare,
     InboundRequestStatus,
+    OutboundRequestStatus,
     ShareStatus,
 )
 
@@ -503,7 +504,7 @@ class TestCcmNotificationService:
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = None
         mock_repos.ccm_outbound_request_repository = Mock()
-        mock_repos.ccm_outbound_request_repository.find_pending_by_match.return_value = []
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
@@ -577,7 +578,7 @@ class TestCcmNotificationService:
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = existing
         mock_repos.ccm_outbound_request_repository = Mock()
-        mock_repos.ccm_outbound_request_repository.find_pending_by_match.return_value = []
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
@@ -600,6 +601,56 @@ class TestCcmNotificationService:
         assert "updated" in body["message"].lower()
         mock_repos.ccm_received_repository.create_new.assert_not_called()
         mock_repos.commit.assert_called()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_correlates_not_found_outbound_requests(
+        self, mock_factory, mock_repos,
+    ):
+        """
+        GIVEN a push notification AND an outbound request in NotFound status
+        WHEN process_certificate_push is called
+        THEN the NotFound request is advanced to Found with the document_id.
+        """
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+
+        outbound_req = Mock(id=42)
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = [
+            outbound_req
+        ]
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "DOC-099",
+                    "contentType": "application/pdf",
+                    "contentBase64": "JVBERi0xLjQgdGVzdA==",
+                },
+                "issuer": {"issuerName": "TÜV"},
+            },
+        )
+
+        status, body = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.assert_called_once_with(
+            provider_bpn="BPNL000000000099",
+            certificate_type="ISO9001",
+            certified_bpn="BPNL000000000001",
+        )
+        mock_repos.ccm_outbound_request_repository.update_status.assert_called_once_with(
+            request_id=42,
+            new_status=OutboundRequestStatus.Found,
+            document_id="DOC-099",
+        )
 
     # ==================================================================
     # process_certificate_available
