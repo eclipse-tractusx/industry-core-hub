@@ -607,6 +607,7 @@ class CcmProviderService(CcmBaseService):
                         provider_bpnl=cert.bpnl if cert else "",
                         consumer_bpnl=share.consumer_bpnl,
                         status=share.status.value,
+                        rejection_reason=share.rejection_reason,
                         last_shared_date=share.last_shared_date.isoformat(),
                         created_at=share.created_at.isoformat(),
                     )
@@ -756,6 +757,7 @@ class CcmProviderService(CcmBaseService):
             locationBpns=r.location_bpns,
             certificateId=r.certificate_id,
             status=r.status.value,
+            consumerStatus=r.consumer_status,
             notificationId=r.notification_id,
             receivedAt=r.received_at.isoformat(),
             updatedAt=r.updated_at.isoformat(),

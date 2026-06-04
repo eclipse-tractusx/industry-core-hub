@@ -275,7 +275,8 @@ class TestCcmNotificationService:
         """
         GIVEN a status notification with certificateStatus=ACCEPTED
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Active.
+        THEN the CertificateShare status is updated to Active (rejection_reason cleared)
+        AND consumer_status is stamped as ACCEPTED on the inbound request.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=42)
@@ -299,6 +300,13 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=share.id,
             new_status=ShareStatus.Active,
+            rejection_reason=None,
+        )
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="ACCEPTED",
         )
         mock_repos.commit.assert_called_once()
 
@@ -308,9 +316,10 @@ class TestCcmNotificationService:
     )
     def test_status_rejected(self, mock_factory, mock_repos):
         """
-        GIVEN a status notification with certificateStatus=REJECTED
+        GIVEN a status notification with certificateStatus=REJECTED (no error details)
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Revoked.
+        THEN the CertificateShare status is updated to Revoked (rejection_reason=None)
+        AND the inbound request consumer_status is stamped as REJECTED.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=10)
@@ -333,6 +342,13 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=3,
             new_status=ShareStatus.Revoked,
+            rejection_reason=None,
+        )
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="REJECTED",
         )
 
     @patch(
@@ -343,8 +359,9 @@ class TestCcmNotificationService:
         """
         GIVEN a REJECTED status with certificateErrors and locationErrors
         WHEN update_certificate_status is called
-        THEN rejection details are logged at INFO level.
+        THEN rejection details are logged AND stored as JSON on the share.
         """
+        import json
         import logging
 
         mock_factory.return_value.__enter__.return_value = mock_repos
@@ -372,6 +389,12 @@ class TestCcmNotificationService:
         assert status == 200
         assert "Certificate expired" in caplog.text
 
+        # Verify rejection_reason is passed as serialised JSON.
+        call_kwargs = mock_repos.certificate_share_repository.update_status.call_args.kwargs
+        reason = json.loads(call_kwargs["rejection_reason"])
+        assert reason["certificateErrors"] == ["Certificate expired"]
+        assert {"BPNS000000000001": ["Invalid site"]} in reason["locationErrors"]
+
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
@@ -380,7 +403,8 @@ class TestCcmNotificationService:
         """
         GIVEN a status notification with certificateStatus=RECEIVED
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Pending.
+        THEN the CertificateShare status is updated to Pending
+        AND consumer_status is stamped as RECEIVED on the inbound request.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=5)
@@ -403,6 +427,13 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=2,
             new_status=ShareStatus.Pending,
+            rejection_reason=None,
+        )
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="RECEIVED",
         )
 
     @patch(
@@ -825,6 +856,7 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=5,
             new_status=ShareStatus.Revoked,
+            rejection_reason=None,
         )
 
     @patch(

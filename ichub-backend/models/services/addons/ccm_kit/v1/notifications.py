@@ -928,6 +928,14 @@ class ShareItem(BaseModel):
     status: str = Field(
         description="Share lifecycle status: Active / Pending / Revoked.",
     )
+    rejection_reason: Optional[str] = Field(
+        default=None,
+        alias="rejectionReason",
+        description=(
+            "JSON-serialised rejection details from the consumer. "
+            "Only present when status is Revoked."
+        ),
+    )
     last_shared_date: str = Field(
         alias="lastSharedDate",
         description="Timestamp of the most recent sharing event (ISO 8601).",
@@ -977,6 +985,14 @@ class CcmInboundRequestItem(BaseModel):
     )
     status: str = Field(
         description="Inbound request status: NotFound / Registered / Available / Pushed.",
+    )
+    consumer_status: Optional[str] = Field(
+        default=None,
+        alias="consumerStatus",
+        description=(
+            "Consumer's acceptance feedback: RECEIVED / ACCEPTED / REJECTED. "
+            "NULL until the consumer sends a status notification."
+        ),
     )
     notification_id: Optional[str] = Field(
         default=None,

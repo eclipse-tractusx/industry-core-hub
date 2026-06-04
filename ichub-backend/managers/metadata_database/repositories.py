@@ -1386,10 +1386,17 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
         return self._session.scalars(stmt).first()
 
     def update_status(
-        self, share_id: int, new_status: ShareStatus
+        self, share_id: int, new_status: ShareStatus,
+        rejection_reason: Optional[str] = None,
     ) -> Optional[CertificateShare]:
         """
         Update the lifecycle status of a sharing record.
+
+        Args:
+            share_id: Primary key of the sharing record.
+            new_status: New ShareStatus value.
+            rejection_reason: JSON-serialised rejection details (set on
+                REJECTED, cleared on ACCEPTED).
 
         Returns:
             The updated record, or None if not found.
@@ -1398,6 +1405,7 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
         if db_obj is None:
             return None
         db_obj.status = new_status
+        db_obj.rejection_reason = rejection_reason
         db_obj.last_shared_date = datetime.now(timezone.utc)
         self._session.add(db_obj)
         return db_obj
@@ -1998,3 +2006,43 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             r.updated_at = now
             self._session.add(r)
         return records
+
+    def update_consumer_status(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        consumer_status: str,
+    ) -> Optional[CcmInboundRequest]:
+        """
+        Stamp ``consumer_status`` on the latest inbound request for a
+        given consumer + certificate natural key.
+
+        Called when the provider receives a status notification from the
+        consumer (RECEIVED / ACCEPTED / REJECTED) so the provider's
+        inbound-request view reflects the consumer's feedback.
+
+        Args:
+            consumer_bpn: BPNL of the consumer.
+            certified_bpn: BPNL of the certified entity.
+            certificate_type: Certificate type identifier.
+            consumer_status: Consumer feedback value (RECEIVED/ACCEPTED/REJECTED).
+
+        Returns:
+            The updated record, or None if no matching request exists.
+        """
+        stmt = (
+            select(CcmInboundRequest)
+            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+            .where(CcmInboundRequest.certified_bpn == certified_bpn)
+            .where(CcmInboundRequest.certificate_type == certificate_type)
+            .order_by(desc(CcmInboundRequest.received_at))
+            .limit(1)
+        )
+        record = self._session.scalars(stmt).first()
+        if record is None:
+            return None
+        record.consumer_status = consumer_status
+        record.updated_at = datetime.now(timezone.utc)
+        self._session.add(record)
+        return record

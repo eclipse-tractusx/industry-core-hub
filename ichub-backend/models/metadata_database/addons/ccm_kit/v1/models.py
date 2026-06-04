@@ -41,7 +41,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import Column, Enum as SAEnum, Index, LargeBinary, UniqueConstraint
+from sqlalchemy import Column, Enum as SAEnum, Index, LargeBinary, Text, UniqueConstraint
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -297,6 +297,15 @@ class CertificateShare(SQLModel, table=True):
             nullable=False,
         ),
         description="Current status of this sharing record (Active/Pending/Revoked)."
+    )
+    rejection_reason: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description=(
+            "JSON-serialised rejection details from the consumer "
+            "(certificateErrors + locationErrors).  NULL when status "
+            "is not Revoked."
+        ),
     )
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -613,6 +622,16 @@ class CcmInboundRequest(SQLModel, table=True):
         default=None,
         index=True,
         description="UUID from the CX-0135 notification header (message_id).",
+    )
+
+    # --- Consumer feedback (denormalised from CertificateShare) ---
+    consumer_status: Optional[str] = Field(
+        default=None,
+        description=(
+            "Consumer's acceptance feedback after receiving the certificate: "
+            "RECEIVED / ACCEPTED / REJECTED.  NULL until the consumer sends "
+            "a status notification."
+        ),
     )
 
     # --- Audit ---

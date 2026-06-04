@@ -38,8 +38,11 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmInboundRequest,
     CcmSite,
+    CertificateShare,
     InboundRequestStatus,
+    ShareStatus,
     TrustLevel,
 )
 from models.services.addons.ccm_kit.v1.notifications import (
@@ -913,3 +916,95 @@ class TestPushShareStatusErrorHandling:
 
         assert result.success is True
         mock_update_share.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Mapper Tests (ShareItem / CcmInboundRequestItem)
+# ---------------------------------------------------------------------------
+
+
+class TestProviderServiceMappers:
+    """Tests for _to_inbound_request_item and ShareItem construction."""
+
+    def test_inbound_request_item_includes_consumer_status(self):
+        """
+        GIVEN a CcmInboundRequest with consumer_status set
+        WHEN _to_inbound_request_item is called
+        THEN the resulting DTO includes consumerStatus.
+        """
+        record = Mock(spec=CcmInboundRequest)
+        record.id = 1
+        record.consumer_bpn = "BPNL000000000099"
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.certificate_id = 42
+        record.status = InboundRequestStatus.Pushed
+        record.consumer_status = "ACCEPTED"
+        record.notification_id = "notif-123"
+        record.received_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2025, 1, 2, tzinfo=timezone.utc)
+
+        item = CcmProviderService._to_inbound_request_item(record)
+
+        assert item.consumer_status == "ACCEPTED"
+        assert item.status == "Pushed"
+
+    def test_inbound_request_item_consumer_status_none(self):
+        """
+        GIVEN a CcmInboundRequest with consumer_status = None
+        WHEN _to_inbound_request_item is called
+        THEN consumerStatus is None in the DTO.
+        """
+        record = Mock(spec=CcmInboundRequest)
+        record.id = 2
+        record.consumer_bpn = "BPNL000000000099"
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.certificate_id = None
+        record.status = InboundRequestStatus.NotFound
+        record.consumer_status = None
+        record.notification_id = None
+        record.received_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        item = CcmProviderService._to_inbound_request_item(record)
+
+        assert item.consumer_status is None
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_list_shares_includes_rejection_reason(self, mock_factory):
+        """
+        GIVEN a CertificateShare with rejection_reason set
+        WHEN list_shares is called
+        THEN the resulting ShareItem includes rejectionReason.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 7
+        share.certificate_id = 42
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = ShareStatus.Revoked
+        share.rejection_reason = '{"certificateErrors": ["Expired"]}'
+        share.last_shared_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        service = CcmProviderService()
+        items = service.list_shares()
+
+        assert len(items) == 1
+        assert items[0].rejection_reason == '{"certificateErrors": ["Expired"]}'
+        assert items[0].status == "Revoked"

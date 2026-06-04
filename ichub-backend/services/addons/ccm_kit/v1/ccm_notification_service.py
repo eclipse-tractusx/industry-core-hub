@@ -25,6 +25,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
 import binascii
+import json
 import uuid
 
 from tractusx_sdk.industry.models.notifications import Notification
@@ -314,10 +315,40 @@ class CcmNotificationService:
                 }
 
             share_id = share.id
+            certified_bpn = ccm.bpnl
+            certificate_type = ccm.certificate_type
+
+            # Build rejection_reason JSON when consumer rejects.
+            rejection_reason: Optional[str] = None
+            if content.certificate_status == CertificateStatusValue.REJECTED:
+                rejection_payload: Dict[str, Any] = {}
+                if content.certificate_errors:
+                    rejection_payload["certificateErrors"] = [
+                        e.message for e in content.certificate_errors
+                    ]
+                if content.location_errors:
+                    rejection_payload["locationErrors"] = [
+                        {le.bpn: [e.message for e in le.location_errors]}
+                        for le in content.location_errors
+                    ]
+                if rejection_payload:
+                    rejection_reason = json.dumps(rejection_payload)
+
             repo.certificate_share_repository.update_status(
                 share_id=share_id,
                 new_status=new_status,
+                rejection_reason=rejection_reason,
             )
+
+            # Stamp consumer feedback on the latest matching inbound request
+            # so the provider's inbound-request view reflects it.
+            repo.ccm_inbound_request_repository.update_consumer_status(
+                consumer_bpn=sender_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
+                consumer_status=content.certificate_status.value,
+            )
+
             repo.commit()
 
         # Log rejection details so providers can diagnose why a certificate
