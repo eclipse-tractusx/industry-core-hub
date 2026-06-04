@@ -85,6 +85,7 @@ def _make_ccm(**kwargs) -> Mock:
     m.validator = kwargs.get("validator", "Validator GmbH")
     m.doc = kwargs.get("doc", b"%PDF-1.4 test content")
     m.created_at = kwargs.get("created_at", datetime(2024, 6, 1, tzinfo=timezone.utc))
+    m.edc_asset_id = kwargs.get("edc_asset_id", None)
 
     # Sites
     site_mocks = kwargs.get("sites", None)
@@ -1008,3 +1009,122 @@ class TestProviderServiceMappers:
         assert len(items) == 1
         assert items[0].rejection_reason == '{"certificateErrors": ["Expired"]}'
         assert items[0].status == "Revoked"
+
+
+# =====================================================================
+# CX-0135 compliance tests
+# =====================================================================
+
+
+class TestCX0135Compliance:
+    """Tests for CX-0135 standard compliance changes."""
+
+    # ------------------------------------------------------------------
+    # Phase 1.1: Asset ID is now a plain UUID
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".ConfigManager"
+    )
+    def test_publish_generates_uuid_asset_id(
+        self, mock_config, mock_conn, mock_factory, service
+    ):
+        """
+        GIVEN a certificate without an edc_asset_id
+        WHEN publish_certificate is called
+        THEN the new asset_id is a plain UUID (no prefix).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id=None)
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_config.get_config.return_value = {"some": "policy"}
+        # register_ccm_certificate_offer returns (asset_id, policy_id, contract_id, _)
+        # It receives the generated asset_id — capture it.
+        mock_conn.register_ccm_certificate_offer.side_effect = (
+            lambda asset_id, **kw: (asset_id, "pol", "con", None)
+        )
+
+        from uuid import UUID
+
+        result = service.publish_certificate(CERT_ID)
+
+        # The returned asset_id should be a valid UUID (no prefix)
+        UUID(result["document_id"])  # raises ValueError if not a valid UUID
+        assert "ichub:asset:" not in result["document_id"]
+
+    # ------------------------------------------------------------------
+    # Phase 1.2: _build_push_content uses edc_asset_id
+    # ------------------------------------------------------------------
+
+    def test_build_push_content_uses_edc_asset_id(self, service):
+        """
+        GIVEN a Ccm with edc_asset_id set
+        WHEN _build_push_content is called
+        THEN documentID in the result equals the edc_asset_id (not the int PK).
+        """
+        ccm = _make_ccm(edc_asset_id="550e8400-e29b-41d4-a716-446655440000")
+        result = service._build_push_content(ccm)
+        assert result["document"]["documentID"] == "550e8400-e29b-41d4-a716-446655440000"
+
+    def test_build_push_content_falls_back_to_pk(self, service):
+        """
+        GIVEN a Ccm without edc_asset_id
+        WHEN _build_push_content is called
+        THEN documentID falls back to str(ccm.id).
+        """
+        ccm = _make_ccm(edc_asset_id=None)
+        result = service._build_push_content(ccm)
+        assert result["document"]["documentID"] == str(ccm.id)
+
+    # ------------------------------------------------------------------
+    # Phase 2.5: push_certificate sets relatedMessageId from inbound req
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_push_sets_related_message_id(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN an inbound request with a notification_id
+        WHEN push_certificate is called for the same consumer
+        THEN the outgoing notification includes relatedMessageId.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "11111111-2222-3333-4444-555555555555"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        # Post-success path mocks
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 1
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        service.push_certificate(_push_request(), SENDER_BPN)
+
+        # Verify _send_notification received a notification with relatedMessageId
+        call_args = mock_send.call_args
+        sent_notification = call_args.kwargs.get("notification") or call_args.args[1]
+        from uuid import UUID
+        assert sent_notification.header.related_message_id == UUID("11111111-2222-3333-4444-555555555555")

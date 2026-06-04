@@ -935,3 +935,115 @@ class TestCcmNotificationService:
         assert status == 409
         assert "cannot transition" in body["message"].lower()
         mock_repos.certificate_share_repository.update_status.assert_not_called()
+
+    # ==================================================================
+    # CX-0135 context validation (Phase 3)
+    # ==================================================================
+
+    def test_request_wrong_context_returns_400(self):
+        """GIVEN a notification with a wrong context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+            },
+        )
+        status, body = self.service.process_certificate_request(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_status_wrong_context_returns_400(self):
+        """GIVEN a status notification with Push context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "RECEIVED",
+            },
+        )
+        status, body = self.service.update_certificate_status(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_push_wrong_context_returns_400(self):
+        """GIVEN a push notification with Request context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+        )
+        status, body = self.service.process_certificate_push(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_available_wrong_context_returns_400(self):
+        """GIVEN an available notification with Status context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+        )
+        status, body = self.service.process_certificate_available(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    # ==================================================================
+    # _resolve_document_id — UUID-first behaviour (Phase 1.3)
+    # ==================================================================
+
+    def test_resolve_document_id_integer(self):
+        """Legacy integer document IDs still resolve."""
+        assert CcmNotificationService._resolve_document_id("42") == 42
+
+    def test_resolve_document_id_uuid_returns_none(self):
+        """UUID document IDs should return None (not integer)."""
+        result = CcmNotificationService._resolve_document_id(
+            "550e8400-e29b-41d4-a716-446655440000"
+        )
+        assert result is None
+
+    def test_resolve_document_id_none_returns_none(self):
+        """None input should return None safely."""
+        assert CcmNotificationService._resolve_document_id(None) is None
+
+    # ==================================================================
+    # Push stores notification_message_id (Phase 2.2)
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_stores_notification_message_id(self, mock_factory, mock_repos):
+        """
+        GIVEN a push notification with a valid certificate payload
+        WHEN process_certificate_push is called
+        THEN the stored CcmReceived record includes the notification's messageId.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+
+        msg_id = str(uuid4())
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "doc-abc",
+                    "creationDate": "2024-06-01T00:00:00Z",
+                    "contentType": "application/pdf",
+                    "contentBase64": "JVBERi0xLjQgdGVzdA==",
+                },
+                "issuer": {
+                    "issuerName": "TÜV Rheinland",
+                },
+            },
+        )
+        notification.header.message_id = msg_id
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        call_kwargs = mock_repos.ccm_received_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("notification_message_id") == msg_id

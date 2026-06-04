@@ -1157,13 +1157,17 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    _LEGACY_ASSET_PREFIX = "ichub:asset:ccm-cert:"
+
     def find_by_edc_asset_id(self, edc_asset_id: str) -> Optional[Ccm]:
         """
         Fetch a single Ccm record by its EDC asset ID, with ``sites`` and
         ``shares`` eagerly loaded.
 
-        Used when a consumer sends a status notification whose ``documentId``
-        is the EDC asset ID string rather than the integer primary key.
+        Handles both the current UUID-only format and the legacy
+        ``ichub:asset:ccm-cert:<uuid>`` format transparently.  If an
+        exact match is not found and the input carries the legacy prefix,
+        a second lookup using the bare UUID is attempted (and vice-versa).
         """
         stmt = (
             select(Ccm)
@@ -1173,7 +1177,25 @@ class CcmRepository(BaseRepository[Ccm]):
                 selectinload(Ccm.shares),
             )
         )
-        return self._session.scalars(stmt).first()
+        result = self._session.scalars(stmt).first()
+        if result is not None:
+            return result
+
+        # Legacy compatibility: try the alternate form.
+        if edc_asset_id.startswith(self._LEGACY_ASSET_PREFIX):
+            alt_id = edc_asset_id[len(self._LEGACY_ASSET_PREFIX):]
+        else:
+            alt_id = f"{self._LEGACY_ASSET_PREFIX}{edc_asset_id}"
+
+        stmt_alt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id == alt_id)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+        )
+        return self._session.scalars(stmt_alt).first()
 
     def find_published(self) -> List[Ccm]:
         """

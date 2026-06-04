@@ -129,12 +129,30 @@ class CcmProviderService(CcmBaseService):
             certified_bpn = ccm.bpnl
             certificate_type_val = ccm.certificate_type
 
-        # --- 3. Build and send notification ---
+        # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
+        related_msg_id: Optional[uuid.UUID] = None
+        try:
+            with RepositoryManagerFactory.create() as repo:
+                inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
+                    consumer_bpn=consumer_bpn,
+                    certified_bpn=certified_bpn,
+                    certificate_type=certificate_type_val,
+                    limit=1,
+                )
+                if inbound_requests and inbound_requests[0].notification_id:
+                    related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
+        except Exception as e:
+            logger.debug(
+                f"[CCM Provider] Could not resolve relatedMessageId for push: {_s(e)}"
+            )
+
+        # --- 4. Build and send notification ---
         notification = self._build_notification(
             context=CCM_CONTEXT_PUSH,
             sender_bpn=sender_bpn,
             receiver_bpn=consumer_bpn,
             content_fields=content_fields,
+            related_message_id=related_msg_id,
         )
 
         result = self._send_notification(
@@ -144,7 +162,7 @@ class CcmProviderService(CcmBaseService):
             policies=request.governance,
         )
 
-        # --- 4. Update share record and inbound request tracking on success ---
+        # --- 5. Update share record and inbound request tracking on success ---
         if result.success:
             try:
                 self._update_share_status(
@@ -232,12 +250,30 @@ class CcmProviderService(CcmBaseService):
             certified_bpn = ccm.bpnl
             certificate_type_val = ccm.certificate_type
 
-        # --- 3. Build and send notification ---
+        # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
+        related_msg_id: Optional[uuid.UUID] = None
+        try:
+            with RepositoryManagerFactory.create() as repo:
+                inbound_requests = repo.ccm_inbound_request_repository.find_all_filtered(
+                    consumer_bpn=consumer_bpn,
+                    certified_bpn=certified_bpn,
+                    certificate_type=certificate_type_val,
+                    limit=1,
+                )
+                if inbound_requests and inbound_requests[0].notification_id:
+                    related_msg_id = uuid.UUID(inbound_requests[0].notification_id)
+        except Exception as e:
+            logger.debug(
+                f"[CCM Provider] Could not resolve relatedMessageId for available: {_s(e)}"
+            )
+
+        # --- 4. Build and send notification ---
         notification = self._build_notification(
             context=CCM_CONTEXT_AVAILABLE,
             sender_bpn=sender_bpn,
             receiver_bpn=consumer_bpn,
             content_fields=content_fields,
+            related_message_id=related_msg_id,
         )
 
         result = self._send_notification(
@@ -247,7 +283,7 @@ class CcmProviderService(CcmBaseService):
             policies=request.governance,
         )
 
-        # --- 4. Track notification + ensure share record exists ---
+        # --- 5. Track notification + ensure share record exists ---
         if result.success:
             with RepositoryManagerFactory.create() as repo:
                 updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
@@ -316,8 +352,9 @@ class CcmProviderService(CcmBaseService):
             if ccm is None:
                 raise ValueError(f"Certificate with ID {certificate_id} not found.")
 
-            # Reuse existing asset ID or generate a new one
-            asset_id = ccm.edc_asset_id or f"ichub:asset:ccm-cert:{uuid.uuid4()}"
+            # Reuse existing asset ID or generate a new one.
+            # CX-0135 requires documentId to be a plain UUID.
+            asset_id = ccm.edc_asset_id or str(uuid.uuid4())
 
             # Build the HttpData base URL pointing to our payload endpoint
             base_url = connector_provider_manager.build_ccm_certificate_payload_url(
@@ -498,7 +535,7 @@ class CcmProviderService(CcmBaseService):
                 "certificateType": ccm.certificate_type,
             },
             "document": {
-                "documentID": str(ccm.id),
+                "documentID": ccm.edc_asset_id or str(ccm.id),
                 "creationDate": ccm.created_at.isoformat(),
                 "contentType": "application/pdf",
                 "contentBase64": doc_b64,

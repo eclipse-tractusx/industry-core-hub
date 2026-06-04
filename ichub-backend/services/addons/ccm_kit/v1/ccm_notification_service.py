@@ -46,6 +46,12 @@ from models.services.addons.ccm_kit.v1.notifications import (
 from services.addons.ccm_kit.v1.ccm_consumer_service import (
     ccm_consumer_service,
 )
+from tools.constants import (
+    CCM_CONTEXT_AVAILABLE,
+    CCM_CONTEXT_PUSH,
+    CCM_CONTEXT_REQUEST,
+    CCM_CONTEXT_STATUS,
+)
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -83,6 +89,30 @@ class CcmNotificationService:
             "relatedMessageId": str(notification.header.message_id),
         }
 
+    @staticmethod
+    def _validate_context(
+        notification: Notification,
+        expected_context: str,
+    ) -> Optional[Tuple[int, Dict[str, Any]]]:
+        """Validate that the notification context matches the expected value.
+
+        Returns ``None`` when the context is correct, or a ``(400, body)``
+        tuple to return immediately when the context is wrong.
+        """
+        actual = notification.header.context
+        if actual != expected_context:
+            logger.warning(
+                f"Context mismatch: expected '{expected_context}', "
+                f"got '{_s(actual)}' (messageId={notification.header.message_id})"
+            )
+            return 400, {
+                "message": (
+                    f"Invalid notification context. Expected "
+                    f"'{expected_context}', received '{actual}'."
+                ),
+            }
+        return None
+
     def process_certificate_request(
         self, notification: Notification
     ) -> Tuple[int, Dict[str, Any]]:
@@ -101,6 +131,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_REQUEST)
+        if ctx_error is not None:
+            return ctx_error
+
         # --- 1. Parse content ---
         content = self._parse_request_content(notification)
         sender_bpn = notification.header.sender_bpn
@@ -246,6 +281,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_STATUS)
+        if ctx_error is not None:
+            return ctx_error
+
         # --- 1. Parse content ---
         content = self._parse_status_content(notification)
         sender_bpn = notification.header.sender_bpn
@@ -253,7 +293,8 @@ class CcmNotificationService:
         logger.info(
             f"CCM status from {_s(sender_bpn)}: "
             f"documentId={_s(content.document_id)} "
-            f"status={_s(content.certificate_status.value)}"
+            f"status={_s(content.certificate_status.value)} "
+            f"relatedMessageId={_s(getattr(notification.header, 'related_message_id', None))}"
         )
 
         # --- 2. Resolve certificate ID ---
@@ -433,18 +474,22 @@ class CcmNotificationService:
     @staticmethod
     def _resolve_document_id(document_id: str) -> Optional[int]:
         """
-        Convert a ``documentId`` string to an integer certificate PK.
+        Try to interpret ``documentId`` as an integer certificate PK.
 
-        The provider sets ``documentId = str(ccm.id)`` when pushing
-        certificates.  This method reverses that mapping.
+        Per CX-0135, ``documentId`` is normally a UUID (the EDC asset ID).
+        Legacy providers may still send the integer primary key.  This
+        method returns the integer only when the value is clearly numeric;
+        otherwise the caller should fall back to
+        ``find_by_edc_asset_id()``.
 
         Returns:
-            The integer PK, or ``None`` if the string is not a valid integer.
+            The integer PK, or ``None`` if the string is a UUID or any
+            other non-integer value.
         """
         try:
             return int(document_id)
         except (ValueError, TypeError):
-            logger.warning(f"Cannot parse documentId '{_s(document_id)}' as integer.")
+            logger.debug(f"documentId '{_s(document_id)}' is not an integer PK — will try EDC asset ID lookup.")
             return None
 
     @staticmethod
@@ -480,6 +525,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_PUSH)
+        if ctx_error is not None:
+            return ctx_error
+
         content = self._parse_push_content(notification)
         sender_bpn = notification.header.sender_bpn
 
@@ -535,6 +585,7 @@ class CcmNotificationService:
                 )
                 existing.doc = doc_bytes
                 existing.received_at = datetime.now(timezone.utc)
+                existing.notification_message_id = str(notification.header.message_id)
                 self._correlate_outbound_requests(
                     repo=repo,
                     provider_bpn=sender_bpn,
@@ -578,6 +629,7 @@ class CcmNotificationService:
                 certified_bpn=content.business_partner_number,
                 certificate_type=content.type.certificate_type,
                 doc=doc_bytes,
+                notification_message_id=str(notification.header.message_id),
                 **kwargs,
             )
             self._correlate_outbound_requests(
@@ -621,6 +673,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_AVAILABLE)
+        if ctx_error is not None:
+            return ctx_error
+
         content = self._parse_available_content(notification)
         sender_bpn = notification.header.sender_bpn
 
@@ -642,6 +699,7 @@ class CcmNotificationService:
             self._auto_pull_certificate(
                 provider_bpn=sender_bpn,
                 document_id=content.document_id,
+                notification_message_id=str(notification.header.message_id),
             )
 
         return 200, {
@@ -781,7 +839,7 @@ class CcmNotificationService:
             )
 
     @staticmethod
-    def _auto_pull_certificate(provider_bpn: str, document_id: str) -> None:
+    def _auto_pull_certificate(provider_bpn: str, document_id: str, notification_message_id: Optional[str] = None) -> None:
         """
         Trigger a PULL of the certificate from the provider.
 
@@ -792,13 +850,19 @@ class CcmNotificationService:
         Args:
             provider_bpn: BPNL of the provider that published the certificate.
             document_id: EDC asset ID of the certificate to pull.
+            notification_message_id: messageId from the available notification
+                header, stored on the received certificate for relatedMessageId
+                linking per CX-0135.
         """
         try:
             pull_request = CcmPullRequest(
                 provider_bpn=provider_bpn,
                 document_id=document_id,
             )
-            result = ccm_consumer_service.pull_certificate(pull_request)
+            result = ccm_consumer_service.pull_certificate(
+                pull_request,
+                notification_message_id=notification_message_id,
+            )
             if not result.stored:
                 logger.warning(
                     f"Auto-pull for certificate {_s(document_id)} "

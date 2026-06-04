@@ -433,6 +433,17 @@ class CcmReceived(SQLModel, table=True):
         description="Timestamp of the most recent local_status change.",
     )
 
+    # --- Notification linking (CX-0135 §header) ---
+    notification_message_id: Optional[str] = Field(
+        default=None,
+        index=True,
+        description=(
+            "messageId from the push or available notification header that "
+            "delivered this certificate.  Used as relatedMessageId when the "
+            "consumer sends status feedback back to the provider."
+        ),
+    )
+
     # --- Audit ---
     received_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),

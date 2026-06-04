@@ -36,7 +36,7 @@ import base64
 import binascii
 import json
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests as http_requests
 
@@ -294,6 +294,23 @@ class CcmConsumerService(CcmBaseService):
                     f"[CCM Consumer] Invalid relatedMessageId: "
                     f"{_s(payload.related_message_id)}"
                 )
+        else:
+            # CX-0135: auto-populate from the stored push/available messageId.
+            try:
+                with RepositoryManagerFactory.create() as repo:
+                    received = repo.ccm_received_repository.find_by_document_id(
+                        payload.document_id, provider_bpn=provider_bpn,
+                    )
+                    if received and received.notification_message_id:
+                        related_msg_id = uuid.UUID(received.notification_message_id)
+                        logger.debug(
+                            f"[CCM Consumer] Auto-resolved relatedMessageId="
+                            f"{related_msg_id} from CcmReceived."
+                        )
+            except Exception as e:
+                logger.debug(
+                    f"[CCM Consumer] Could not auto-resolve relatedMessageId: {_s(e)}"
+                )
 
         notification = self._build_notification(
             context=CCM_CONTEXT_STATUS,
@@ -343,6 +360,7 @@ class CcmConsumerService(CcmBaseService):
     def pull_certificate(
         self,
         request: CcmPullRequest,
+        notification_message_id: Optional[str] = None,
     ) -> CcmPullResult:
         """
         Discover and pull a certificate from a provider's EDC catalog.
@@ -356,6 +374,9 @@ class CcmConsumerService(CcmBaseService):
 
         Args:
             request: Contains ``provider_bpn`` and ``document_id``.
+            notification_message_id: Optional messageId from the push or
+                available notification that triggered this pull.  Stored on
+                the ``CcmReceived`` record for ``relatedMessageId`` linking.
 
         Returns:
             CcmPullResult with the certificate payload and storage status.
@@ -437,6 +458,7 @@ class CcmConsumerService(CcmBaseService):
             certificate_data=certificate_data,
             provider_bpn=provider_bpn,
             document_id=document_id,
+            notification_message_id=notification_message_id,
         )
 
         # --- 5. Correlate outbound requests ---
@@ -507,9 +529,17 @@ class CcmConsumerService(CcmBaseService):
         certificate_data: dict,
         provider_bpn: str,
         document_id: str,
+        notification_message_id: Optional[str] = None,
     ) -> bool:
         """
         Persist a pulled certificate in the ``ccm_received`` table.
+
+        Args:
+            certificate_data: The parsed certificate payload.
+            provider_bpn: BPNL of the provider.
+            document_id: EDC asset / document ID.
+            notification_message_id: Optional messageId from the notification
+                that triggered this storage (for relatedMessageId linking).
 
         Returns ``True`` on success, ``False`` on failure.
         """
@@ -533,6 +563,9 @@ class CcmConsumerService(CcmBaseService):
                     )
 
             with RepositoryManagerFactory.create() as repo:
+                extra_kwargs: Dict[str, Any] = {}
+                if notification_message_id:
+                    extra_kwargs["notification_message_id"] = notification_message_id
                 repo.ccm_received_repository.create_new(
                     document_id=document_id,
                     provider_bpn=provider_bpn,
@@ -547,6 +580,7 @@ class CcmConsumerService(CcmBaseService):
                     uploader_bpn=certificate_data.get("uploader"),
                     validator_name=validator_section.get("validatorName"),
                     doc=doc_bytes,
+                    **extra_kwargs,
                 )
 
             return True
