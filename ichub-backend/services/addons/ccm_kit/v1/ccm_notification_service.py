@@ -273,8 +273,9 @@ class CcmNotificationService:
                     ),
                 }
 
+            share_id = share.id
             repo.certificate_share_repository.update_status(
-                share_id=share.id,
+                share_id=share_id,
                 new_status=new_status,
             )
             repo.commit()
@@ -295,7 +296,7 @@ class CcmNotificationService:
                 )
 
         logger.info(
-            f"CertificateShare {share.id} updated to {new_status.value} "
+            f"CertificateShare {share_id} updated to {new_status.value} "
             f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"
         )
 
