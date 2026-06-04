@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -19,5 +20,3 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
-
-from .certificates import certificates_manager

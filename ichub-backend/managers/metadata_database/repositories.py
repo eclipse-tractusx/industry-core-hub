@@ -29,7 +29,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from models.metadata_database.provider.models import (
     BusinessPartner,
@@ -50,15 +50,23 @@ from models.metadata_database.notification.models import (
     NotificationDirection,
     NotificationStatus
 )
-
-from models.metadata_database.addons.ccm_kit.v1.models import Ccm
-
 from models.metadata_database.pcf.models import (
     PcfExchangeEntity,
     PcfExchangeDirection,
     PcfExchangeStatus,
     PcfExchangeType,
     PcfRelationshipEntity
+)
+from models.metadata_database.addons.ccm_kit.v1.models import (
+    Ccm,
+    CcmOutboundRequest,
+    CcmReceived,
+    CcmSite,
+    CertificateShare,
+    OutboundRequestStatus,
+    ReceivedCertificateStatus,
+    ShareStatus,
+    TrustLevel,
 )
 from tractusx_sdk.industry.models.notifications import Notification
 
@@ -781,47 +789,6 @@ class NotificationRepository(BaseRepository[NotificationEntity]):
         
         self.delete_obj(db_obj)
         return True
-
-class CcmRepository(BaseRepository[Ccm]):
-    def create_new(
-        self,
-        certificate_type: str,
-        certificate_name: str,
-        issuer_or_certification: str,
-        valid_from: str,
-        valid_to: str,
-        bpn: str,
-        description: str,
-        doc: bytes
-    ) -> Ccm:
-        """
-        Create a new CCM (Company Certificate Management) record.
-        
-        Args:
-            certificate_type: Type of certificate (e.g., ISO 9001, IATF 16949)
-            certificate_name: Name of the certificate
-            issuer_or_certification: Certification body or authority
-            valid_from: Start date of certificate validity
-            valid_to: End date of certificate validity
-            bpn: Business Partner Number (BPN-L) of the holder
-            description: Optional description
-            doc: Binary PDF document content (stored as BYTEA in PostgreSQL)
-            
-        Returns:
-            Ccm: The created CCM record
-        """
-        ccm = Ccm(
-            certificate_type=certificate_type,
-            certificate_name=certificate_name,
-            issuer_or_certification=issuer_or_certification,
-            valid_from=valid_from,
-            valid_to=valid_to,
-            bpn=bpn,
-            description=description,
-            doc=doc
-        )
-        self.create(ccm)
-        return ccm
     
 class PCFRepository(BaseRepository[PcfExchangeEntity]):
     """
@@ -1108,3 +1075,543 @@ class PCFRelationshipRepository(BaseRepository[PcfRelationshipEntity]):
             self._session.add(relationship)
             return relationship
         return None
+
+
+class CcmRepository(BaseRepository[Ccm]):
+    """
+    Repository for Company Certificate Management (CCM) records.
+
+    Provides targeted query methods on top of the generic BaseRepository
+    operations for the Ccm entity.
+    """
+
+    def create_new(
+        self,
+        bpnl: str,
+        certificate_type: str,
+        issuer: str,
+        valid_from: date,
+        trust_level: TrustLevel = TrustLevel.none,
+        certificate_name: Optional[str] = None,
+        registration_number: Optional[str] = None,
+        area_of_application: Optional[str] = None,
+        valid_until: Optional[date] = None,
+        validator: Optional[str] = None,
+        uploader_bpnl: Optional[str] = None,
+        description: Optional[str] = None,
+        doc: Optional[bytes] = None,
+    ) -> Ccm:
+        """
+        Persist a new CCM certificate record.
+
+        Args:
+            bpnl: BPNL of the certificate holder.
+            certificate_type: Certificate type identifier (e.g. ISO9001).
+            issuer: Certification body or authority.
+            valid_from: Start date of the certificate's validity period.
+            trust_level: Assigned trust level (default: none).
+            certificate_name: Optional human-readable display name.
+            registration_number: Official certificate registration/serial number.
+            area_of_application: Textual scope of the certificate.
+            valid_until: Optional expiry date.
+            validator: BPN or URL of the third-party validator.
+            uploader_bpnl: BPNL of the participant who uploaded the certificate.
+            description: Free-text notes.
+            doc: Raw PDF bytes (BYTEA in PostgreSQL).
+
+        Returns:
+            Ccm: The newly created, unsaved record (caller must commit).
+        """
+        ccm = Ccm(
+            bpnl=bpnl,
+            certificate_type=certificate_type,
+            issuer=issuer,
+            valid_from=valid_from,
+            trust_level=trust_level,
+            certificate_name=certificate_name,
+            registration_number=registration_number,
+            area_of_application=area_of_application,
+            valid_until=valid_until,
+            validator=validator,
+            uploader_bpnl=uploader_bpnl,
+            description=description,
+            doc=doc,
+        )
+        self.create(ccm)
+        return ccm
+
+    def find_by_id_with_relations(self, ccm_id: int) -> Optional[Ccm]:
+        """
+        Fetch a single Ccm record with its ``sites`` and ``shares`` eagerly
+        loaded in one query, avoiding N+1 issues.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.id == ccm_id)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+        )
+        return self._session.scalars(stmt).first()
+
+    def find_by_bpnl_and_type(
+        self, bpnl: str, certificate_type: str
+    ) -> Optional[Ccm]:
+        """
+        Find the most recent certificate matching a given BPNL and type.
+
+        Eagerly loads ``sites`` and ``shares`` relationships.  Returns the
+        newest record (by ``created_at``) or ``None`` if no match exists.
+
+        Args:
+            bpnl: Business Partner Number Legal of the certificate holder.
+            certificate_type: Certificate type identifier (e.g. ISO9001).
+
+        Returns:
+            The matching Ccm record with relations, or None.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.bpnl == bpnl, Ccm.certificate_type == certificate_type)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+            .order_by(desc(Ccm.created_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()
+
+    def find_all_filtered(
+        self,
+        bpnl: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[Ccm]:
+        """
+        Return a paginated list of certificates, optionally filtered by BPNL
+        and/or certificate type.  Sites and shares are NOT loaded here to keep
+        list responses lightweight.
+        """
+        stmt = select(Ccm).order_by(desc(Ccm.created_at))
+
+        if bpnl:
+            stmt = stmt.where(Ccm.bpnl == bpnl)
+        if certificate_type:
+            stmt = stmt.where(Ccm.certificate_type == certificate_type)
+
+        stmt = stmt.offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def update_fields(self, ccm_id: int, fields: dict) -> Optional[Ccm]:
+        """
+        Apply a partial update to an existing Ccm record.
+
+        Args:
+            ccm_id: Primary key of the record to update.
+            fields: Dictionary of column-name → new-value pairs.
+
+        Returns:
+            The updated Ccm record, or None if not found.
+        """
+        db_obj = self._session.get(Ccm, ccm_id)
+        if db_obj is None:
+            return None
+
+        # Always refresh the updated_at timestamp on any write.
+        fields["updated_at"] = datetime.now(timezone.utc)
+
+        for key, value in fields.items():
+            if hasattr(db_obj, key):
+                setattr(db_obj, key, value)
+
+        self._session.add(db_obj)
+        return db_obj
+
+    def delete_by_id(self, ccm_id: int) -> bool:
+        """
+        Delete a Ccm record by primary key.
+
+        Returns:
+            True if the record was found and deleted, False otherwise.
+        """
+        db_obj = self._session.get(Ccm, ccm_id)
+        if db_obj is None:
+            return False
+        self._session.delete(db_obj)
+        return True
+
+
+class CcmSiteRepository(BaseRepository[CcmSite]):
+    """
+    Repository for CcmSite entities (BPNS/BPNA sites linked to a certificate).
+    """
+
+    def create_new(self, ccm_id: int, site_bpn: str) -> CcmSite:
+        """
+        Create and stage a new CcmSite record.
+
+        Args:
+            ccm_id: FK of the parent certificate.
+            site_bpn: BPNS or BPNA value.
+
+        Returns:
+            The staged (unsaved) CcmSite instance.
+        """
+        site = CcmSite(ccm_id=ccm_id, site_bpn=site_bpn)
+        self.create(site)
+        return site
+
+    def find_by_ccm_id(self, ccm_id: int) -> List[CcmSite]:
+        """Return all sites associated with the given certificate ID."""
+        stmt = select(CcmSite).where(CcmSite.ccm_id == ccm_id)
+        return list(self._session.scalars(stmt).all())
+
+    def delete_by_ccm_id(self, ccm_id: int) -> int:
+        """
+        Remove all site rows for a given certificate.
+
+        Returns:
+            Number of rows deleted.
+        """
+        sites = self.find_by_ccm_id(ccm_id)
+        for site in sites:
+            self._session.delete(site)
+        return len(sites)
+
+
+class CertificateShareRepository(BaseRepository[CertificateShare]):
+    """
+    Repository for CertificateShare entities (sharing-history records).
+    """
+
+    def create_new(
+        self,
+        certificate_id: int,
+        consumer_bpnl: str,
+        status: ShareStatus = ShareStatus.Pending,
+    ) -> CertificateShare:
+        """
+        Stage a new sharing record for a certificate.
+
+        Args:
+            certificate_id: FK of the certificate being shared.
+            consumer_bpnl: BPNL of the recipient.
+            status: Initial status (default: Pending).
+
+        Returns:
+            The staged (unsaved) CertificateShare instance.
+        """
+        share = CertificateShare(
+            certificate_id=certificate_id,
+            consumer_bpnl=consumer_bpnl,
+            status=status,
+        )
+        self.create(share)
+        return share
+
+    def find_by_certificate_id(self, certificate_id: int) -> List[CertificateShare]:
+        """Return all sharing records for a given certificate."""
+        stmt = (
+            select(CertificateShare)
+            .where(CertificateShare.certificate_id == certificate_id)
+            .order_by(desc(CertificateShare.last_shared_date))
+        )
+        return list(self._session.scalars(stmt).all())
+
+    def find_by_consumer_bpnl(self, consumer_bpnl: str) -> List[CertificateShare]:
+        """Return all sharing records for a given consumer BPNL."""
+        stmt = (
+            select(CertificateShare)
+            .where(CertificateShare.consumer_bpnl == consumer_bpnl)
+            .order_by(desc(CertificateShare.last_shared_date))
+        )
+        return list(self._session.scalars(stmt).all())
+
+    def find_by_certificate_and_consumer(
+        self, certificate_id: int, consumer_bpnl: str
+    ) -> Optional[CertificateShare]:
+        """
+        Look up an existing share record for a specific certificate/consumer pair.
+
+        Args:
+            certificate_id: FK of the certificate.
+            consumer_bpnl: BPNL of the consumer.
+
+        Returns:
+            The matching CertificateShare, or None if not found.
+        """
+        stmt = (
+            select(CertificateShare)
+            .where(
+                CertificateShare.certificate_id == certificate_id,
+                CertificateShare.consumer_bpnl == consumer_bpnl,
+            )
+        )
+        return self._session.scalars(stmt).first()
+
+    def update_status(
+        self, share_id: int, new_status: ShareStatus
+    ) -> Optional[CertificateShare]:
+        """
+        Update the lifecycle status of a sharing record.
+
+        Returns:
+            The updated record, or None if not found.
+        """
+        db_obj = self._session.get(CertificateShare, share_id)
+        if db_obj is None:
+            return None
+        db_obj.status = new_status
+        db_obj.last_shared_date = datetime.now(timezone.utc)
+        self._session.add(db_obj)
+        return db_obj
+
+    def find_all_paginated(
+        self, offset: int = 0, limit: int = 100
+    ) -> List[CertificateShare]:
+        """Return all sharing records with pagination, newest first."""
+        stmt = (
+            select(CertificateShare)
+            .order_by(desc(CertificateShare.last_shared_date))
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self._session.scalars(stmt).all())
+
+
+class CcmReceivedRepository(BaseRepository[CcmReceived]):
+    """
+    Repository for CcmReceived entities — certificates received via PUSH.
+    """
+
+    def create_new(
+        self,
+        document_id: str,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        **kwargs,
+    ) -> CcmReceived:
+        """
+        Stage a new received-certificate record.
+
+        Args:
+            document_id: Provider-assigned document reference ID.
+            provider_bpn: BPNL of the provider that pushed the certificate.
+            certified_bpn: BPNL of the certified legal entity.
+            certificate_type: Certificate type identifier.
+            **kwargs: Optional fields (certificate_version, issuer_name, etc.).
+
+        Returns:
+            The staged CcmReceived instance.
+        """
+        received = CcmReceived(
+            document_id=document_id,
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            **kwargs,
+        )
+        self.create(received)
+        return received
+
+    def find_by_document_id(
+        self, document_id: str, provider_bpn: Optional[str] = None,
+    ) -> Optional[CcmReceived]:
+        """Look up a received certificate by its provider-assigned document ID.
+
+        Args:
+            document_id: The provider-assigned document reference ID.
+            provider_bpn: Optional BPNL of the provider.  When supplied the
+                lookup uses the composite unique key ``(document_id,
+                provider_bpn)`` for an exact match.
+        """
+        stmt = select(CcmReceived).where(CcmReceived.document_id == document_id)
+        if provider_bpn is not None:
+            stmt = stmt.where(CcmReceived.provider_bpn == provider_bpn)
+        return self._session.scalars(stmt).first()
+
+    def find_by_provider_bpn(
+        self, provider_bpn: str, offset: int = 0, limit: int = 100
+    ) -> List[CcmReceived]:
+        """Return all certificates received from a given provider."""
+        stmt = (
+            select(CcmReceived)
+            .where(CcmReceived.provider_bpn == provider_bpn)
+            .order_by(desc(CcmReceived.received_at))
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self._session.scalars(stmt).all())
+
+    def find_all_filtered(
+        self,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmReceived]:
+        """Return received certificates with optional filters."""
+        stmt = select(CcmReceived)
+        if certified_bpn:
+            stmt = stmt.where(CcmReceived.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmReceived.certificate_type == certificate_type)
+        stmt = stmt.order_by(desc(CcmReceived.received_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def find_by_id(self, received_id: int) -> Optional[CcmReceived]:
+        """
+        Look up a received certificate by primary key.
+
+        Args:
+            received_id: Primary key of the CcmReceived record.
+
+        Returns:
+            The matching CcmReceived instance, or None if not found.
+        """
+        return self._session.get(CcmReceived, received_id)
+
+    def update_local_status(
+        self,
+        document_id: str,
+        provider_bpn: str,
+        new_status: ReceivedCertificateStatus,
+    ) -> Optional[CcmReceived]:
+        """
+        Update the consumer-local processing status of a received certificate.
+
+        Uses the composite unique key ``(document_id, provider_bpn)`` to
+        locate the record.
+
+        Args:
+            document_id: Provider-assigned document reference ID.
+            provider_bpn: BPNL of the originating provider.
+            new_status: New ReceivedCertificateStatus value to apply.
+
+        Returns:
+            The updated CcmReceived record, or None if not found.
+        """
+        record = self.find_by_document_id(document_id, provider_bpn)
+        if record is None:
+            return None
+        record.local_status = new_status
+        record.status_updated_at = datetime.now(timezone.utc)
+        self._session.add(record)
+        return record
+
+
+class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
+    """
+    Repository for CcmOutboundRequest entities — certificate requests sent
+    by this node to remote providers.
+    """
+
+    def create_new(
+        self,
+        sender_bpn: str,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        **kwargs,
+    ) -> CcmOutboundRequest:
+        """
+        Stage a new outbound-request record.
+
+        Args:
+            sender_bpn: BPNL of this node.
+            provider_bpn: BPNL of the remote provider.
+            certified_bpn: BPNL of the certificate holder being requested.
+            certificate_type: Certificate type identifier.
+            **kwargs: Optional fields (location_bpns, governance,
+                      notification_id, document_id, status).
+
+        Returns:
+            The staged CcmOutboundRequest instance.
+        """
+        request = CcmOutboundRequest(
+            sender_bpn=sender_bpn,
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            **kwargs,
+        )
+        self.create(request)
+        return request
+
+    def find_by_id(self, request_id: int) -> Optional[CcmOutboundRequest]:
+        """
+        Look up an outbound request by primary key.
+
+        Args:
+            request_id: Primary key of the CcmOutboundRequest record.
+
+        Returns:
+            The matching CcmOutboundRequest instance, or None if not found.
+        """
+        return self._session.get(CcmOutboundRequest, request_id)
+
+    def find_all_filtered(
+        self,
+        provider_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[OutboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return outbound requests with optional filters.
+
+        Args:
+            provider_bpn: Filter by provider BPNL.
+            certified_bpn: Filter by certified entity BPNL.
+            certificate_type: Filter by certificate type.
+            status: Filter by OutboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of matching CcmOutboundRequest records, newest first.
+        """
+        stmt = select(CcmOutboundRequest)
+        if provider_bpn:
+            stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmOutboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmOutboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(
+        self,
+        request_id: int,
+        new_status: OutboundRequestStatus,
+        document_id: Optional[str] = None,
+    ) -> Optional[CcmOutboundRequest]:
+        """
+        Update the status of an outbound request.
+
+        Args:
+            request_id: Primary key of the record to update.
+            new_status: New OutboundRequestStatus value.
+            document_id: Optional provider document ID to store for correlation.
+
+        Returns:
+            The updated record, or None if not found.
+        """
+        record = self._session.get(CcmOutboundRequest, request_id)
+        if record is None:
+            return None
+        record.status = new_status
+        record.updated_at = datetime.now(timezone.utc)
+        if document_id is not None:
+            record.document_id = document_id
+        self._session.add(record)
+        return record

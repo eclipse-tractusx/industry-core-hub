@@ -38,8 +38,6 @@ import {
   Badge,
   Policy,
   PostAdd,
-  MarkunreadMailbox,
-  WorkspacePremium as WorkspacePremiumIcon,
   Calculate,
   CloudUpload,
   Inbox
@@ -67,7 +65,6 @@ import { serializedPartsFeature } from './industry-core-kit/serialized-parts/rou
 import { passportConsumptionFeature } from './eco-pass-kit/passport-consumption/routes';
 import { passportProvisionFeature } from './eco-pass-kit/passport-provision/routes';
 import { certificateManagementFeature } from './ccm-kit/certificate-management/routes';
-import { shareCertificatesFeature } from './ccm-kit/share-certificates/routes';
 import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
