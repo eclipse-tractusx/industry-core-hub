@@ -128,11 +128,11 @@ class TestCcmNotificationService:
     )
     def test_request_certificate_found_new_share(self, mock_factory, mock_repos):
         """
-        GIVEN a request notification for an existing certificate
+        GIVEN a request notification for an existing certificate that is not yet published
         WHEN process_certificate_request is called
         AND the consumer has no prior share record
         THEN a new CertificateShare is created with status Pending
-        AND the response is (200, ...).
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -148,8 +148,8 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 200
-        assert "found" in body["message"].lower()
+        assert status == 202
+        assert body["content"]["requestStatus"] == "IN_PROGRESS"
         mock_repos.ccm_repository.find_by_bpnl_and_type.assert_called_once_with(
             bpnl="BPNL000000000001",
             certificate_type="ISO9001",
@@ -167,10 +167,10 @@ class TestCcmNotificationService:
     )
     def test_request_certificate_found_existing_share(self, mock_factory, mock_repos):
         """
-        GIVEN a request notification for an existing certificate
+        GIVEN a request notification for an existing certificate that is not yet published
         WHEN the consumer already has a share record
         THEN no new share is created, but the existing share's timestamp is updated
-        AND the response is (200, ...).
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -187,7 +187,8 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
+        assert body["content"]["requestStatus"] == "IN_PROGRESS"
         mock_repos.certificate_share_repository.create_new.assert_not_called()
         mock_repos.commit.assert_called_once()
 
@@ -199,7 +200,8 @@ class TestCcmNotificationService:
         """
         GIVEN a request notification for a certificate that does not exist
         WHEN process_certificate_request is called
-        THEN the response is (404, ...) and no share is created.
+        THEN the response is (200, REJECTED) per CX-0135 with requestErrors
+        AND no share is created.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = None
@@ -213,8 +215,10 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 404
-        assert "no certificate found" in body["message"].lower()
+        assert status == 200
+        assert body["content"]["requestStatus"] == "REJECTED"
+        assert len(body["content"]["requestErrors"]) == 1
+        assert "no certificate found" in body["content"]["requestErrors"][0]["message"].lower()
         mock_repos.certificate_share_repository.create_new.assert_not_called()
 
     @patch(
@@ -225,7 +229,8 @@ class TestCcmNotificationService:
         """
         GIVEN a request notification that includes locationBpns
         WHEN process_certificate_request is called
-        THEN the request is processed normally (locationBpns is optional, parsed but not yet filtered).
+        THEN the request is processed normally (locationBpns is optional, parsed but not yet filtered)
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -242,7 +247,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
 
     # ==================================================================
     # process_certificate_status
@@ -646,7 +651,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
         mock_auto_push.assert_called_once_with(ccm.id, "BPNL000000000099", "BPNL000000000001")
 
     @patch(
@@ -684,7 +689,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
         mock_auto_push.assert_not_called()
 
     # ==================================================================

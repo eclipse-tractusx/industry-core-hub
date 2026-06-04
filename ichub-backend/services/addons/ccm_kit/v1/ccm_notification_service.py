@@ -25,6 +25,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
 import binascii
+import uuid
 
 from tractusx_sdk.industry.models.notifications import Notification
 
@@ -70,17 +71,28 @@ class CcmNotificationService:
     Handles the business logic for incoming CCM notification API calls.
     """
 
+    def _build_response_header(self, notification: Notification) -> Dict[str, Any]:
+        """Return a CX-0135-compliant response header dict."""
+        return {
+            "messageId": str(uuid.uuid4()),
+            "context": notification.header.context,
+            "sentDateTime": datetime.now(timezone.utc).isoformat(),
+            "senderBpn": notification.header.receiver_bpn,
+            "receiverBpn": notification.header.sender_bpn,
+            "relatedMessageId": str(notification.header.message_id),
+        }
+
     def process_certificate_request(
         self, notification: Notification
     ) -> Tuple[int, Dict[str, Any]]:
         """
         Process a ``POST /companycertificate/request`` notification.
 
-        1. Parse the CCM-specific content (``certifiedBpn``, ``certificateType``).
-        2. Look up the certificate in the local database.
-        3. If not found → return ``(404, {...})``.
-        4. If found → register the consumer BPNL in ``certificate_shares``
-           with status ``Pending`` and return ``(200, {...})``.
+        CX-0135 response matrix:
+        * ``200 COMPLETED``  — certificate is already published; ``documentId`` is returned.
+        * ``200 REJECTED``   — certificate not found; ``requestErrors`` explains why.
+        * ``202 IN_PROGRESS`` — certificate found but not yet published;
+          consumer should poll again or wait for a PUSH notification.
 
         Args:
             notification: SDK Notification with header + content.
@@ -105,18 +117,26 @@ class CcmNotificationService:
                 certificate_type=content.certificate_type,
             )
 
-            # --- 3. Not found ---
+            # --- 3. Not found → 200 REJECTED (CX-0135 §3.4) ---
             if ccm is None:
                 logger.warning(
                     f"No certificate found for bpnl={_s(content.certified_bpn)} "
                     f"type={_s(content.certificate_type)} (requested by {_s(sender_bpn)})"
                 )
-                return 404, {
-                    "message": (
-                        f"No certificate found for BPNL "
-                        f"{content.certified_bpn} with type "
-                        f"{content.certificate_type}."
-                    ),
+                return 200, {
+                    "header": self._build_response_header(notification),
+                    "content": {
+                        "requestStatus": "REJECTED",
+                        "requestErrors": [
+                            {
+                                "message": (
+                                    f"No certificate found for BPNL "
+                                    f"{content.certified_bpn} with type "
+                                    f"{content.certificate_type}."
+                                )
+                            }
+                        ],
+                    },
                 }
 
             # --- 4. Register consumer in certificate_shares ---
@@ -148,19 +168,18 @@ class CcmNotificationService:
             ccm_id = ccm.id
             ccm_edc_asset_id = ccm.edc_asset_id
 
-        # --- 5. If certificate is already published as EDC asset, respond COMPLETED ---
+        # --- 5. Certificate already published → 200 COMPLETED (CX-0135 §3.4) ---
         if ccm_edc_asset_id:
             logger.info(
                 f"Certificate {ccm_id} is published (asset {_s(ccm_edc_asset_id)}). "
                 f"Responding COMPLETED with documentId."
             )
             return 200, {
-                "requestStatus": "COMPLETED",
-                "documentId": ccm_edc_asset_id,
-                "message": (
-                    f"Certificate available for PULL. "
-                    f"documentId={ccm_edc_asset_id}"
-                ),
+                "header": self._build_response_header(notification),
+                "content": {
+                    "requestStatus": "COMPLETED",
+                    "documentId": ccm_edc_asset_id,
+                },
             }
 
         # Auto-push if configured
@@ -180,12 +199,12 @@ class CcmNotificationService:
                 f"(auto-push disabled, manual push required)."
             )
 
-        return 200, {
-            "message": (
-                f"Certificate found for BPNL {content.certified_bpn} "
-                f"with type {content.certificate_type}. "
-                f"{'Push delivery initiated.' if auto_push else 'Consumer registered for sharing.'}"
-            ),
+        # --- 6. Certificate found but not yet published → 202 IN_PROGRESS (CX-0135 §3.4) ---
+        return 202, {
+            "header": self._build_response_header(notification),
+            "content": {
+                "requestStatus": "IN_PROGRESS",
+            },
         }
 
     def update_certificate_status(

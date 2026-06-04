@@ -105,12 +105,17 @@ async def send_certificate_request(payload: CcmSendRequestPayload) -> CcmSendRes
     specific certificate identified by ``certifiedBpn`` and ``certificateType``.
     """
     try:
-        return ccm_consumer_service.send_certificate_request(
+        result = ccm_consumer_service.send_certificate_request(
             payload, payload.sender_bpn
         )
+        if not result.success:
+            raise HTTPException(status_code=502, detail=result.error)
+        return result
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Unhandled error in send_certificate_request endpoint")
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
 @router.post(
@@ -127,12 +132,17 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
     provider.
     """
     try:
-        return ccm_consumer_service.send_certificate_status(
+        result = ccm_consumer_service.send_certificate_status(
             payload, payload.sender_bpn
         )
+        if not result.success:
+            raise HTTPException(status_code=502, detail=result.error)
+        return result
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Unhandled error in send_certificate_status endpoint")
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
 @router.post(
