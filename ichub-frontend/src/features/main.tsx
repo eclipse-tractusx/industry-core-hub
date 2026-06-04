@@ -38,6 +38,8 @@ import {
   Badge,
   Policy,
   PostAdd,
+  WorkspacePremium,
+  MarkunreadMailbox,
   Calculate,
   CloudUpload,
   Inbox
@@ -68,6 +70,7 @@ import { certificateManagementFeature } from './ccm-kit/certificate-management/r
 import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
+import { shareCertificatesFeature } from './ccm-kit/share-certificates/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -264,7 +267,7 @@ export const kits: KitFeature[] = [
     name: 'CCM KIT',
     description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
     status: 'available',
-    icon: <WorkspacePremiumIcon />,
+    icon: <WorkspacePremium />,
     image: CcmKitImage,
     features: [
       {
@@ -272,7 +275,7 @@ export const kits: KitFeature[] = [
         id: 'certificate-management',
         name: 'Certificate Management',
         description: 'Upload, manage, share and consume compliance certificates across the supply chain.',
-        icon: <WorkspacePremiumIcon />,
+        icon: <WorkspacePremium />,
         enabled: true,
         default: false
       },

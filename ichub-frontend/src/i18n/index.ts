@@ -131,8 +131,7 @@ export const resources = {
     serializedParts: enSerializedParts,
     notifications: enNotifications,
     certificateManagement: enCertificateManagement,
-    pcf: enPcf,
-    notifications: enNotifications
+    pcf: enPcf
   },
   es: {
     common: esCommon,
@@ -145,8 +144,7 @@ export const resources = {
     serializedParts: esSerializedParts,
     notifications: esNotifications,
     certificateManagement: esCertificateManagement,
-    pcf: esPcf,
-    notifications: esNotifications
+    pcf: esPcf
   },
   de: {
     common: deCommon,
@@ -159,8 +157,7 @@ export const resources = {
     serializedParts: deSerializedParts,
     notifications: deNotifications,
     certificateManagement: deCertificateManagement,
-    pcf: dePcf,
-    notifications: deNotifications
+    pcf: dePcf
   },
   fr: {
     common: frCommon,
@@ -173,8 +170,7 @@ export const resources = {
     serializedParts: frSerializedParts,
     notifications: frNotifications,
     certificateManagement: frCertificateManagement,
-    pcf: frPcf,
-    notifications: frNotifications
+    pcf: frPcf
   },
   zh: {
     common: zhCommon,
@@ -187,8 +183,7 @@ export const resources = {
     serializedParts: zhSerializedParts,
     notifications: zhNotifications,
     certificateManagement: zhCertificateManagement,
-    pcf: zhPcf,
-    notifications: zhNotifications
+    pcf: zhPcf
   },
   ja: {
     common: jaCommon,
@@ -201,8 +196,7 @@ export const resources = {
     serializedParts: jaSerializedParts,
     notifications: jaNotifications,
     certificateManagement: jaCertificateManagement,
-    pcf: jaPcf,
-    notifications: jaNotifications
+    pcf: jaPcf
   },
   pt: {
     common: ptCommon,
@@ -215,8 +209,7 @@ export const resources = {
     serializedParts: ptSerializedParts,
     notifications: ptNotifications,
     certificateManagement: ptCertificateManagement,
-    pcf: ptPcf,
-    notifications: ptNotifications
+    pcf: ptPcf
   }
 } as const;
 
