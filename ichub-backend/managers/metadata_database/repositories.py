@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case, and_, or_
+from sqlalchemy import case, and_, or_, func
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -1622,6 +1622,60 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
+    def find_latest_per_combo(
+        self,
+        provider_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[OutboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return only the most recent outbound request per unique
+        ``(provider_bpn, certified_bpn, certificate_type)`` combination.
+
+        This gives a deduplicated "current state" view — one row per
+        certificate of interest — while the full history is preserved in
+        the database and accessible via ``find_all_filtered()``.
+
+        Args:
+            provider_bpn: Optional filter by provider BPNL.
+            certified_bpn: Optional filter by certified entity BPNL.
+            certificate_type: Optional filter by certificate type.
+            status: Optional filter by OutboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of the newest CcmOutboundRequest per combination,
+            ordered by ``requested_at`` descending.
+        """
+        # Subquery: max(id) per combo key — id is monotonically increasing,
+        # so max(id) equals the most recently inserted row per group.
+        latest_ids = (
+            select(func.max(CcmOutboundRequest.id).label("max_id"))
+            .group_by(
+                CcmOutboundRequest.provider_bpn,
+                CcmOutboundRequest.certified_bpn,
+                CcmOutboundRequest.certificate_type,
+            )
+            .subquery()
+        )
+        stmt = select(CcmOutboundRequest).where(
+            CcmOutboundRequest.id.in_(select(latest_ids.c.max_id))
+        )
+        if provider_bpn:
+            stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmOutboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmOutboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
     def update_status(
         self,
         request_id: int,
@@ -1787,6 +1841,58 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             List of matching CcmInboundRequest records.
         """
         stmt = select(CcmInboundRequest)
+        if consumer_bpn:
+            stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmInboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmInboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmInboundRequest.received_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def find_latest_per_combo(
+        self,
+        consumer_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[InboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequest]:
+        """
+        Return only the most recent inbound request per unique
+        ``(consumer_bpn, certified_bpn, certificate_type)`` combination.
+
+        This gives a deduplicated "current state" view — one row per
+        consumer-certificate pair — while the full history is preserved
+        in the database and accessible via ``find_all_filtered()``.
+
+        Args:
+            consumer_bpn: Optional filter by consumer BPNL.
+            certified_bpn: Optional filter by certified entity BPNL.
+            certificate_type: Optional filter by certificate type.
+            status: Optional filter by InboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of the newest CcmInboundRequest per combination,
+            ordered by ``received_at`` descending.
+        """
+        latest_ids = (
+            select(func.max(CcmInboundRequest.id).label("max_id"))
+            .group_by(
+                CcmInboundRequest.consumer_bpn,
+                CcmInboundRequest.certified_bpn,
+                CcmInboundRequest.certificate_type,
+            )
+            .subquery()
+        )
+        stmt = select(CcmInboundRequest).where(
+            CcmInboundRequest.id.in_(select(latest_ids.c.max_id))
+        )
         if consumer_bpn:
             stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
         if certified_bpn:

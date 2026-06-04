@@ -615,7 +615,12 @@ class CcmConsumerService(CcmBaseService):
         limit: int = 100,
     ) -> List[OutboundRequestItem]:
         """
-        Return a paginated list of certificate requests sent by this node.
+        Return a deduplicated list of certificate requests — only the most
+        recent entry per ``(provider_bpn, certified_bpn, certificate_type)``
+        combination is returned.
+
+        This gives a "current state" overview.  For the full history of a
+        specific combination, use ``list_request_history()``.
 
         Args:
             provider_bpn: Optional filter by provider BPNL.
@@ -626,7 +631,7 @@ class CcmConsumerService(CcmBaseService):
             limit: Maximum number of records to return.
 
         Returns:
-            List of OutboundRequestItem DTOs.
+            List of OutboundRequestItem DTOs (latest per combination).
         """
         from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus as _S
 
@@ -638,11 +643,44 @@ class CcmConsumerService(CcmBaseService):
                 pass  # Unknown status → ignore filter; return all
 
         with RepositoryManagerFactory.create() as repo:
-            records = repo.ccm_outbound_request_repository.find_all_filtered(
+            records = repo.ccm_outbound_request_repository.find_latest_per_combo(
                 provider_bpn=provider_bpn,
                 certified_bpn=certified_bpn,
                 certificate_type=certificate_type,
                 status=status_enum,
+                offset=offset,
+                limit=limit,
+            )
+            return [self._to_request_item(r) for r in records]
+
+    def list_request_history(
+        self,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[OutboundRequestItem]:
+        """
+        Return the full history of outbound requests for a specific
+        ``(provider_bpn, certified_bpn, certificate_type)`` combination,
+        ordered newest first.
+
+        Args:
+            provider_bpn: BPNL of the remote provider.
+            certified_bpn: BPNL of the certified entity.
+            certificate_type: Certificate type identifier.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of OutboundRequestItem DTOs (all entries for the combo).
+        """
+        with RepositoryManagerFactory.create() as repo:
+            records = repo.ccm_outbound_request_repository.find_all_filtered(
+                provider_bpn=provider_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
                 offset=offset,
                 limit=limit,
             )

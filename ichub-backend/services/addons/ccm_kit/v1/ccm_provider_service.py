@@ -54,7 +54,10 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmSendResult,
     ShareItem,
 )
-from models.metadata_database.addons.ccm_kit.v1.models import InboundRequestStatus
+from models.metadata_database.addons.ccm_kit.v1.models import (
+    CcmInboundRequest,
+    InboundRequestStatus,
+)
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from tools.constants import (
@@ -668,12 +671,13 @@ class CcmProviderService(CcmBaseService):
         limit: int = 100,
     ) -> List[CcmInboundRequestItem]:
         """
-        Return all inbound certificate requests received by this provider node,
-        optionally filtered.
+        Return a deduplicated list of inbound certificate requests — only
+        the most recent entry per ``(consumer_bpn, certified_bpn,
+        certificate_type)`` combination is returned.
 
-        Includes requests where the certificate was not found (``NotFound``),
-        allowing the provider to see consumer demand for certificates they do
-        not yet have in their catalog.
+        This gives a "current state" overview of consumer demand.  For the
+        full history of a specific combination, use
+        ``list_inbound_request_history()``.
 
         Args:
             consumer_bpn: Filter by requesting consumer BPNL.
@@ -684,7 +688,7 @@ class CcmProviderService(CcmBaseService):
             limit: Maximum records to return.
 
         Returns:
-            List of CcmInboundRequestItem response objects.
+            List of CcmInboundRequestItem response objects (latest per combo).
         """
         status_enum: Optional[InboundRequestStatus] = None
         if status is not None:
@@ -694,7 +698,7 @@ class CcmProviderService(CcmBaseService):
                 logger.warning(f"Unknown inbound request status filter: {_s(status)}")
 
         with RepositoryManagerFactory.create() as repo:
-            records = repo.ccm_inbound_request_repository.find_all_filtered(
+            records = repo.ccm_inbound_request_repository.find_latest_per_combo(
                 consumer_bpn=consumer_bpn,
                 certified_bpn=certified_bpn,
                 certificate_type=certificate_type,
@@ -702,21 +706,60 @@ class CcmProviderService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-            return [
-                CcmInboundRequestItem(
-                    requestId=r.id,
-                    consumerBpn=r.consumer_bpn,
-                    certifiedBpn=r.certified_bpn,
-                    certificateType=r.certificate_type,
-                    locationBpns=r.location_bpns,
-                    certificateId=r.certificate_id,
-                    status=r.status.value,
-                    notificationId=r.notification_id,
-                    receivedAt=r.received_at.isoformat(),
-                    updatedAt=r.updated_at.isoformat(),
-                )
-                for r in records
-            ]
+            return [self._to_inbound_request_item(r) for r in records]
+
+    def list_inbound_request_history(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequestItem]:
+        """
+        Return the full history of inbound requests for a specific
+        ``(consumer_bpn, certified_bpn, certificate_type)`` combination,
+        ordered newest first.
+
+        Args:
+            consumer_bpn: BPNL of the requesting consumer.
+            certified_bpn: BPNL of the certified entity.
+            certificate_type: Certificate type identifier.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of CcmInboundRequestItem DTOs (all entries for the combo).
+        """
+        with RepositoryManagerFactory.create() as repo:
+            records = repo.ccm_inbound_request_repository.find_all_filtered(
+                consumer_bpn=consumer_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
+                offset=offset,
+                limit=limit,
+            )
+            return [self._to_inbound_request_item(r) for r in records]
+
+    # ------------------------------------------------------------------
+    # Private mapping helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _to_inbound_request_item(r: CcmInboundRequest) -> CcmInboundRequestItem:
+        """Map a CcmInboundRequest ORM instance to a response DTO."""
+        return CcmInboundRequestItem(
+            requestId=r.id,
+            consumerBpn=r.consumer_bpn,
+            certifiedBpn=r.certified_bpn,
+            certificateType=r.certificate_type,
+            locationBpns=r.location_bpns,
+            certificateId=r.certificate_id,
+            status=r.status.value,
+            notificationId=r.notification_id,
+            receivedAt=r.received_at.isoformat(),
+            updatedAt=r.updated_at.isoformat(),
+        )
 
 
 # Singleton instance consumed by the controller.

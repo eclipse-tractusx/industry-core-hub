@@ -288,7 +288,7 @@ async def list_shares(
 @router.get(
     "/inbound-requests",
     response_model=List[CcmInboundRequestItem],
-    summary="List certificate requests received by this provider node",
+    summary="List inbound certificate requests (latest per combination)",
 )
 async def list_inbound_requests(
     consumer_bpn: Optional[str] = Query(
@@ -314,14 +314,12 @@ async def list_inbound_requests(
     limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
 ) -> List[CcmInboundRequestItem]:
     """
-    Return all inbound certificate requests received by this provider node.
+    Return a deduplicated list of inbound certificate requests — only the
+    **most recent** entry per ``(consumerBpn, certifiedBpn, certificateType)``
+    combination.
 
-    Includes requests where the certificate did **not** exist at the time of
-    the request (``status = NotFound``), giving the provider visibility into
-    consumer demand.  The provider can use this information to:
-
-    - Decide to add a certificate to their catalog.
-    - Proactively push the certificate to the interested consumer once available.
+    Use ``GET /inbound-requests/history`` to see the full timeline for a
+    specific combination.
     """
     try:
         return ccm_provider_service.list_inbound_requests(
@@ -334,4 +332,46 @@ async def list_inbound_requests(
         )
     except Exception:
         logger.exception("Unhandled error in list_inbound_requests endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/inbound-requests/history",
+    response_model=List[CcmInboundRequestItem],
+    summary="Full history of inbound requests for a specific combination",
+)
+async def list_inbound_request_history(
+    consumer_bpn: str = Query(
+        alias="consumerBpn",
+        description="Consumer BPNL (required).",
+    ),
+    certified_bpn: str = Query(
+        alias="certifiedBpn",
+        description="Certified entity BPNL (required).",
+    ),
+    certificate_type: str = Query(
+        alias="certificateType",
+        description="Certificate type identifier (required).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[CcmInboundRequestItem]:
+    """
+    Return the full history of inbound certificate requests for a specific
+    ``(consumerBpn, certifiedBpn, certificateType)`` combination, ordered
+    newest first.
+
+    All three query parameters are **required** so the results are scoped
+    to a single consumer-certificate pair.
+    """
+    try:
+        return ccm_provider_service.list_inbound_request_history(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_inbound_request_history endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
