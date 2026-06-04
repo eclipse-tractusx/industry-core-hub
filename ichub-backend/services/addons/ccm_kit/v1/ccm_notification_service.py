@@ -269,6 +269,31 @@ class CcmNotificationService:
                 ccm = repo.ccm_repository.find_by_edc_asset_id(content.document_id)
 
             if ccm is None:
+                # Second fallback: resolve via the sender's share records.
+                # Handles the case where edc_asset_id was cleared (e.g. after
+                # unpublish) after the consumer already received the certificate
+                # and stored the old documentId.
+                shares_for_sender = (
+                    repo.certificate_share_repository
+                    .find_by_consumer_bpnl(sender_bpn)
+                )
+                active_shares = [
+                    s for s in shares_for_sender
+                    if s.status in (ShareStatus.Active, ShareStatus.Pending)
+                ]
+                if len(active_shares) == 1:
+                    ccm = repo.ccm_repository.find_by_id_with_relations(
+                        active_shares[0].certificate_id
+                    )
+                    if ccm is not None:
+                        logger.info(
+                            f"Resolved certificate {ccm.id} for consumer "
+                            f"{_s(sender_bpn)} via share fallback "
+                            f"(edc_asset_id lookup missed for documentId "
+                            f"{_s(content.document_id)})."
+                        )
+
+            if ccm is None:
                 return 404, {
                     "message": (
                         f"Certificate with documentId "

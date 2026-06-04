@@ -57,6 +57,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
 from models.metadata_database.addons.ccm_kit.v1.models import (
     CcmInboundRequest,
     InboundRequestStatus,
+    ShareStatus,
 )
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
@@ -246,7 +247,7 @@ class CcmProviderService(CcmBaseService):
             policies=request.governance,
         )
 
-        # --- 4. Track notification in inbound request records ---
+        # --- 4. Track notification + ensure share record exists ---
         if result.success:
             with RepositoryManagerFactory.create() as repo:
                 updated = repo.ccm_inbound_request_repository.advance_status_for_consumer(
@@ -257,11 +258,31 @@ class CcmProviderService(CcmBaseService):
                     new_status=InboundRequestStatus.Available,
                 )
                 if updated:
-                    repo.commit()
                     logger.info(
                         f"[CCM Provider] Marked {len(updated)} inbound request(s) as Available "
                         f"for consumer {_s(consumer_bpn)} / cert {cert_id}."
                     )
+
+                # Ensure a CertificateShare record exists so the consumer can
+                # send status feedback later (PULL flow skips process_certificate_request,
+                # which is where the share is normally created).
+                existing_share = (
+                    repo.certificate_share_repository
+                    .find_by_certificate_and_consumer(cert_id, consumer_bpn)
+                )
+                if existing_share is None:
+                    repo.certificate_share_repository.create_new(
+                        certificate_id=cert_id,
+                        consumer_bpnl=consumer_bpn,
+                        status=ShareStatus.Pending,
+                    )
+                    logger.info(
+                        f"[CCM Provider] Created CertificateShare (Pending) for "
+                        f"cert {cert_id} → consumer {_s(consumer_bpn)} "
+                        f"(available notification path)."
+                    )
+
+                repo.commit()
 
         return result
 
@@ -520,10 +541,6 @@ class CcmProviderService(CcmBaseService):
         for this consumer is marked ``Active`` and the ``last_shared_date``
         is refreshed.
         """
-        from models.metadata_database.addons.ccm_kit.v1.models import (
-            ShareStatus,
-        )
-
         with RepositoryManagerFactory.create() as repo:
             share = (
                 repo.certificate_share_repository

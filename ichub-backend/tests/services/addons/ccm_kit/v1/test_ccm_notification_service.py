@@ -448,6 +448,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = []
 
         notification = _make_notification(
             context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
@@ -466,6 +467,49 @@ class TestCcmNotificationService:
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
     )
+    def test_status_share_fallback_resolves_certificate(self, mock_factory, mock_repos):
+        """
+        GIVEN a status notification whose documentId no longer matches any
+        edc_asset_id (e.g. certificate was unpublished after the consumer
+        already received it)
+        AND the consumer has exactly one active CertificateShare
+        WHEN update_certificate_status is called
+        THEN the certificate is resolved via the share fallback and the
+        status update succeeds with HTTP 200.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=7)
+        share = _make_share(id=3, certificate_id=7)
+        # Primary lookups both miss
+        mock_repos.ccm_repository.find_by_edc_asset_id.return_value = None
+        # Fallback: one active share for this consumer
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = [share]
+        # Subsequent loads work
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "ichub:asset:ccm-cert:old-uuid",
+                "certificateStatus": "ACCEPTED",
+            },
+        )
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
+            share_id=3,
+            new_status=ShareStatus.Active,
+            rejection_reason=None,
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
     def test_status_invalid_document_id(self, mock_factory, mock_repos):
         """
         GIVEN a status notification with a non-numeric documentId that is
@@ -474,6 +518,7 @@ class TestCcmNotificationService:
         THEN the response is (404, ...) because the certificate cannot be found.
         """
         mock_repos.ccm_repository.find_by_edc_asset_id.return_value = None
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
