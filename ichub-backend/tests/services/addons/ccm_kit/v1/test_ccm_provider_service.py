@@ -191,6 +191,7 @@ class TestPushCertificate:
                 InboundRequestStatus.Available,
                 InboundRequestStatus.Pushed,
             ],
+            notification_id=None,
         )
 
     @patch(
@@ -335,6 +336,7 @@ class TestPushCertificate:
                 InboundRequestStatus.Available,
                 InboundRequestStatus.Pushed,
             ],
+            notification_id=None,
         )
 
 
@@ -393,6 +395,7 @@ class TestSendCertificateAvailable:
             certificate_type=ccm.certificate_type,
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Available,
+            notification_id=None,
         )
 
     @patch(
@@ -535,6 +538,7 @@ class TestSendCertificateAvailable:
             certificate_type=ccm.certificate_type,
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Available,
+            notification_id=None,
         )
 
 
@@ -1128,3 +1132,93 @@ class TestCX0135Compliance:
         sent_notification = call_args.kwargs.get("notification") or call_args.args[1]
         from uuid import UUID
         assert sent_notification.header.related_message_id == UUID("11111111-2222-3333-4444-555555555555")
+
+    # ------------------------------------------------------------------
+    # Phase 2.5 (Bug fix): explicit relatedMessageId restricts advance
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_push_with_explicit_related_message_id_restricts_advance(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN a push request with an explicit relatedMessageId
+        WHEN push_certificate is called
+        THEN advance_status_for_consumer is called with notification_id=<that id>
+        so only the targeted inbound request is advanced (not all matching ones).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "11111111-2222-3333-4444-555555555555"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 1
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        explicit_related_id = "11111111-2222-3333-4444-555555555555"
+        request = CcmPushRequest(
+            sender_bpn=SENDER_BPN,
+            certificate_id=CERT_ID,
+            consumer_bpn=CONSUMER_BPN,
+            related_message_id=explicit_related_id,
+        )
+        service.push_certificate(request, SENDER_BPN)
+
+        advance_call_kwargs = repos.ccm_inbound_request_repository.advance_status_for_consumer.call_args.kwargs
+        assert advance_call_kwargs.get("notification_id") == explicit_related_id
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_available_with_explicit_related_message_id_restricts_advance(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN an available request with an explicit relatedMessageId
+        WHEN send_certificate_available is called
+        THEN advance_status_for_consumer is called with notification_id=<that id>
+        so only the targeted inbound request is advanced (not all matching ones).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "22222222-3333-4444-5555-666666666666"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 2
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        explicit_related_id = "22222222-3333-4444-5555-666666666666"
+        request = CcmAvailableRequest(
+            sender_bpn=SENDER_BPN,
+            certificate_id=CERT_ID,
+            consumer_bpn=CONSUMER_BPN,
+            related_message_id=explicit_related_id,
+        )
+        service.send_certificate_available(request, SENDER_BPN)
+
+        advance_call_kwargs = repos.ccm_inbound_request_repository.advance_status_for_consumer.call_args.kwargs
+        assert advance_call_kwargs.get("notification_id") == explicit_related_id

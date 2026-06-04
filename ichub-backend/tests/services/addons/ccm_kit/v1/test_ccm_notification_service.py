@@ -58,6 +58,7 @@ def _make_notification(
     header.receiver_bpn = receiver_bpn
     header.context = context
     header.message_id = str(uuid4())
+    header.related_message_id = None  # explicit default; set per-test when needed
 
     content = Mock()
     extras = content_extras or {}
@@ -307,6 +308,7 @@ class TestCcmNotificationService:
             certified_bpn="BPNL000000000001",
             certificate_type="ISO9001",
             consumer_status="ACCEPTED",
+            notification_id=None,
         )
         mock_repos.commit.assert_called_once()
 
@@ -349,6 +351,7 @@ class TestCcmNotificationService:
             certified_bpn="BPNL000000000001",
             certificate_type="ISO9001",
             consumer_status="REJECTED",
+            notification_id=None,
         )
 
     @patch(
@@ -434,6 +437,7 @@ class TestCcmNotificationService:
             certified_bpn="BPNL000000000001",
             certificate_type="ISO9001",
             consumer_status="RECEIVED",
+            notification_id=None,
         )
 
     @patch(
@@ -1047,3 +1051,48 @@ class TestCcmNotificationService:
         assert status == 200
         call_kwargs = mock_repos.ccm_received_repository.create_new.call_args
         assert call_kwargs.kwargs.get("notification_message_id") == msg_id
+
+    # ==================================================================
+    # Status uses relatedMessageId to target correct inbound request (Bug fix)
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_uses_related_message_id_for_consumer_status_update(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a status notification whose header includes a relatedMessageId
+        WHEN update_certificate_status (process_certificate_status) is called
+        THEN update_consumer_status is called with notification_id=<relatedMessageId>
+        so only the targeted inbound request is stamped, not the most-recent one.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=42)
+        share = _make_share(certificate_id=42)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        related_id = "aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb"
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "ACCEPTED",
+            },
+        )
+        notification.header.related_message_id = related_id
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="ACCEPTED",
+            notification_id=related_id,
+        )

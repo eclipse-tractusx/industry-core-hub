@@ -1981,6 +1981,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         certificate_id: int,
         new_status: InboundRequestStatus,
         skip_statuses: Optional[List[InboundRequestStatus]] = None,
+        notification_id: Optional[str] = None,
     ) -> List[CcmInboundRequest]:
         """
         Bulk-update inbound request records for a given consumer + certificate
@@ -2007,6 +2008,9 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
                 ``[Pushed, Available]`` for the Push flow so that records already
                 delivered via the PULL (Available) path are not overridden by a
                 Push notification triggered by a *different* consumer request.
+            notification_id: When provided, restricts the update to the single
+                request whose ``notification_id`` matches this value.  When None,
+                the existing bulk-advance behaviour is preserved.
 
         Returns:
             List of updated records.
@@ -2020,6 +2024,8 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             .where(CcmInboundRequest.certificate_type == certificate_type)
             .where(CcmInboundRequest.status.not_in(skip_statuses))
         )
+        if notification_id is not None:
+            stmt = stmt.where(CcmInboundRequest.notification_id == notification_id)
         records = list(self._session.scalars(stmt).all())
         now = datetime.now(timezone.utc)
         for r in records:
@@ -2035,10 +2041,11 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         certified_bpn: str,
         certificate_type: str,
         consumer_status: str,
+        notification_id: Optional[str] = None,
     ) -> Optional[CcmInboundRequest]:
         """
-        Stamp ``consumer_status`` on the latest inbound request for a
-        given consumer + certificate natural key.
+        Stamp ``consumer_status`` on an inbound request for a given consumer +
+        certificate natural key.
 
         Called when the provider receives a status notification from the
         consumer (RECEIVED / ACCEPTED / REJECTED) so the provider's
@@ -2049,19 +2056,37 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             certified_bpn: BPNL of the certified entity.
             certificate_type: Certificate type identifier.
             consumer_status: Consumer feedback value (RECEIVED/ACCEPTED/REJECTED).
+            notification_id: When provided, targets the specific request whose
+                ``notification_id`` matches.  Falls back to the most-recent
+                heuristic if no row is found with that ID, ensuring robustness
+                when the chain is incomplete.
 
         Returns:
             The updated record, or None if no matching request exists.
         """
-        stmt = (
-            select(CcmInboundRequest)
-            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
-            .where(CcmInboundRequest.certified_bpn == certified_bpn)
-            .where(CcmInboundRequest.certificate_type == certificate_type)
-            .order_by(desc(CcmInboundRequest.received_at))
-            .limit(1)
-        )
-        record = self._session.scalars(stmt).first()
+        record: Optional[CcmInboundRequest] = None
+
+        if notification_id is not None:
+            targeted_stmt = (
+                select(CcmInboundRequest)
+                .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+                .where(CcmInboundRequest.certified_bpn == certified_bpn)
+                .where(CcmInboundRequest.certificate_type == certificate_type)
+                .where(CcmInboundRequest.notification_id == notification_id)
+            )
+            record = self._session.scalars(targeted_stmt).first()
+
+        if record is None:
+            fallback_stmt = (
+                select(CcmInboundRequest)
+                .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+                .where(CcmInboundRequest.certified_bpn == certified_bpn)
+                .where(CcmInboundRequest.certificate_type == certificate_type)
+                .order_by(desc(CcmInboundRequest.received_at))
+                .limit(1)
+            )
+            record = self._session.scalars(fallback_stmt).first()
+
         if record is None:
             return None
         record.consumer_status = consumer_status

@@ -194,6 +194,11 @@ class CcmProviderService(CcmBaseService):
                         InboundRequestStatus.Available,
                         InboundRequestStatus.Pushed,
                     ],
+                    # Restrict to the specific request when relatedMessageId was
+                    # explicitly provided by the caller; otherwise bulk-advance.
+                    notification_id=(
+                        request.related_message_id if request.related_message_id else None
+                    ),
                 )
                 if updated:
                     repo.commit()
@@ -310,6 +315,11 @@ class CcmProviderService(CcmBaseService):
                     certificate_type=certificate_type_val,
                     certificate_id=cert_id,
                     new_status=InboundRequestStatus.Available,
+                    # Restrict to the specific request when relatedMessageId was
+                    # explicitly provided by the caller; otherwise bulk-advance.
+                    notification_id=(
+                        request.related_message_id if request.related_message_id else None
+                    ),
                 )
                 if updated:
                     logger.info(

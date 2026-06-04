@@ -408,11 +408,19 @@ class CcmNotificationService:
 
             # Stamp consumer feedback on the latest matching inbound request
             # so the provider's inbound-request view reflects it.
+            # When relatedMessageId is present in the notification header, use it
+            # to target the specific request that triggered this status response.
+            inbound_notification_id: Optional[str] = None
+            raw_related = getattr(notification.header, "related_message_id", None)
+            if raw_related is not None:
+                inbound_notification_id = str(raw_related)
+
             repo.ccm_inbound_request_repository.update_consumer_status(
                 consumer_bpn=sender_bpn,
                 certified_bpn=certified_bpn,
                 certificate_type=certificate_type,
                 consumer_status=content.certificate_status.value,
+                notification_id=inbound_notification_id,
             )
 
             repo.commit()
