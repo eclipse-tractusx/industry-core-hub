@@ -567,5 +567,52 @@ class CcmProviderService(CcmBaseService):
 
         return result
 
+    def list_published_certificates(self) -> List[Dict]:
+        """
+        Return all certificates that are currently published as EDC assets
+        (i.e. have a non-NULL ``edc_asset_id`` in the database).
+
+        Returns:
+            List of dicts with ``certificate_id``, ``asset_id``, ``bpnl``,
+            and ``certificate_type``.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            certs = repo.ccm_repository.find_published()
+            return [
+                {
+                    "certificate_id": c.id,
+                    "asset_id": c.edc_asset_id,
+                    "bpnl": c.bpnl,
+                    "certificate_type": c.certificate_type,
+                }
+                for c in certs
+            ]
+
+    def force_unpublish_by_asset_id(self, asset_id: str) -> None:
+        """
+        Remove an EDC certificate asset directly by its EDC asset ID, even
+        when the database record has lost the ``edc_asset_id`` reference
+        (DB/EDC desync scenario).
+
+        Steps:
+        1. Delete the contract definition and asset from the EDC connector.
+        2. If the database has a ``Ccm`` record whose ``edc_asset_id`` matches,
+           clear that field so the DB reflects the current state.
+
+        Args:
+            asset_id: The EDC asset ID to remove from the connector.
+        """
+        connector_provider_manager.delete_ccm_certificate_offer(asset_id)
+        logger.info(f"[CCM PULL] Force-deleted EDC asset {_s(asset_id)}.")
+
+        with RepositoryManagerFactory.create() as repo:
+            ccm = repo.ccm_repository.find_by_edc_asset_id(asset_id)
+            if ccm is not None:
+                repo.ccm_repository.update_fields(ccm.id, {"edc_asset_id": None})
+                repo.commit()
+                logger.info(
+                    f"[CCM PULL] Cleared edc_asset_id on certificate {ccm.id}."
+                )
+
 # Singleton instance consumed by the controller.
 ccm_provider_service = CcmProviderService()

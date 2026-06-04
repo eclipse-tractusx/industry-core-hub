@@ -595,6 +595,26 @@ class CcmPublishResult(BaseModel):
         populate_by_name = True
 
 
+class CcmPublishedItem(BaseModel):
+    """Entry in the list of published certificates."""
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal DB ID of the certificate.",
+    )
+    asset_id: str = Field(
+        alias="assetId",
+        description="EDC asset ID under which the certificate is published.",
+    )
+    bpnl: str = Field(description="BPNL of the certificate holder.")
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type (e.g. ISO9001).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
 class CcmPullRequest(BaseModel):
     """Request body for pulling a certificate from a provider's catalog."""
     provider_bpn: str = Field(

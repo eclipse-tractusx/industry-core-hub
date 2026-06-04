@@ -1173,6 +1173,19 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    def find_published(self) -> List[Ccm]:
+        """
+        Return all certificates that have an EDC asset registered
+        (i.e. ``edc_asset_id IS NOT NULL``), ordered newest first.
+        Relations are not loaded to keep the list lightweight.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id.isnot(None))
+            .order_by(desc(Ccm.created_at))
+        )
+        return list(self._session.scalars(stmt).all())
+
     def find_by_bpnl_and_type(
         self, bpnl: str, certificate_type: str
     ) -> Optional[Ccm]:

@@ -46,6 +46,7 @@ from controllers.fastapi.routers.authentication.auth_api import (
 from managers.config.log_manager import LoggingManager
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
+    CcmPublishedItem,
     CcmPublishRequest,
     CcmPublishResult,
     CcmPushRequest,
@@ -197,6 +198,51 @@ async def unpublish_certificate(certificate_id: int) -> None:
         raise HTTPException(status_code=404, detail=str(ve))
     except Exception:
         logger.exception("Unhandled error in unpublish_certificate endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/published",
+    response_model=List[CcmPublishedItem],
+    summary="List certificates currently published as EDC assets",
+)
+async def list_published_certificates() -> List[CcmPublishedItem]:
+    """
+    Return all certificates that have an active EDC asset registered
+    (``edc_asset_id IS NOT NULL`` in the database).
+
+    Useful for auditing which certificates are currently discoverable
+    in the provider's EDC catalog and for diagnosing DB/EDC sync issues.
+    """
+    try:
+        items = ccm_provider_service.list_published_certificates()
+        return [CcmPublishedItem(**item) for item in items]
+    except Exception:
+        logger.exception("Unhandled error in list_published_certificates endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.delete(
+    "/publish/asset/{asset_id:path}",
+    status_code=204,
+    summary="Force-unpublish an EDC certificate asset by its asset ID",
+)
+async def force_unpublish_by_asset_id(asset_id: str) -> None:
+    """
+    Remove a certificate asset from the EDC connector directly using its
+    EDC asset ID, bypassing the database ``edc_asset_id`` check.
+
+    Use this endpoint when the database and the EDC connector are out of
+    sync — for example when the ``edc_asset_id`` column was accidentally
+    cleared (or the DB was reset) but the EDC still holds the asset.
+
+    If a matching database record is found, its ``edc_asset_id`` will be
+    cleared automatically.
+    """
+    try:
+        ccm_provider_service.force_unpublish_by_asset_id(asset_id)
+    except Exception:
+        logger.exception("Unhandled error in force_unpublish_by_asset_id endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
