@@ -184,7 +184,44 @@ class CcmConsumerService(CcmBaseService):
             policies=payload.governance,
         )
 
-        # Persist the outbound request regardless of success so the operator
+        # Inspect the provider response body for a CX-0135 REJECTED status.
+        # The SDK returns HTTP 200 for REJECTED (valid 2xx), so we must check
+        # the body ourselves — HTTP 200 alone does not mean the cert was found.
+        outbound_status = OutboundRequestStatus.Pending
+        if result.success:
+            provider_content = (
+                (result.provider_response or {}).get("content", {})
+            )
+            request_status = provider_content.get("requestStatus")
+
+            if request_status == "REJECTED":
+                errors = provider_content.get("requestErrors", [])
+                error_msg = (
+                    errors[0].get("message", "Provider rejected the request.")
+                    if errors
+                    else "Provider rejected the request."
+                )
+                logger.warning(
+                    f"[CCM Consumer] Provider REJECTED request for "
+                    f"certifiedBpn={_s(payload.certified_bpn)} "
+                    f"type={_s(payload.certificate_type)}: {_s(error_msg)}"
+                )
+                result = CcmSendResult(
+                    success=False,
+                    message_id=result.message_id,
+                    error=error_msg,
+                )
+                outbound_status = OutboundRequestStatus.NotFound
+
+            elif request_status == "COMPLETED":
+                outbound_status = OutboundRequestStatus.Found
+
+            # IN_PROGRESS → keep Pending (provider will push/notify later)
+
+        else:
+            outbound_status = OutboundRequestStatus.Failed
+
+        # Persist the outbound request regardless of outcome so the operator
         # can inspect failed deliveries as well.
         try:
             with RepositoryManagerFactory.create() as repo:
@@ -202,11 +239,7 @@ class CcmConsumerService(CcmBaseService):
                         if payload.governance else None
                     ),
                     notification_id=str(notification.header.message_id),
-                    status=(
-                        OutboundRequestStatus.Pending
-                        if result.success
-                        else OutboundRequestStatus.Failed
-                    ),
+                    status=outbound_status,
                 )
         except Exception as persist_err:
             # Persistence failure must not mask a successful notification send.

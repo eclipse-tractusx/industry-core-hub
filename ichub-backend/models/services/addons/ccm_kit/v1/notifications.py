@@ -213,6 +213,9 @@ class CcmSendResult(BaseModel):
     success: bool = Field(description="Whether the notification was sent successfully.")
     message_id: Optional[str] = Field(default=None, alias="messageId", description="UUID of the sent notification.")
     error: Optional[str] = Field(default=None, description="Error message if sending failed.")
+    # Internal only — carries the raw provider response body for post-send
+    # inspection (e.g. REJECTED status). Excluded from API serialisation.
+    provider_response: Optional[Dict[str, Any]] = Field(default=None, exclude=True)
 
     class Config:
         populate_by_name = True
