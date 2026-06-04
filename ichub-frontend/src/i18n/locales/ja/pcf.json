@@ -16,7 +16,11 @@
     "refresh": "更新",
     "kgCo2e": "kg CO2e",
     "published": "公開済み",
-    "draft": "下書き"
+    "draft": "下書き",
+    "close": "閉じる",
+    "yes": "はい",
+    "no": "いいえ",
+    "notAvailable": "N/A"
   },
   "loading": {
     "title": "カタログ部品を読み込み中",
@@ -43,7 +47,11 @@
     "failedToLoadRequests": "PCFリクエストの読み込みに失敗しました",
     "failedToRefreshRequests": "PCFリクエストの更新に失敗しました",
     "failedToAcceptRequest": "リクエストの承認に失敗しました",
-    "rejectNotImplemented": "拒否機能はバックエンドでまだ実装されていません"
+    "rejectNotImplemented": "拒否機能はバックエンドでまだ実装されていません",
+    "failedToLoadPcf": "PCFデータの読み込みに失敗しました",
+    "failedToSavePcf": "PCFの保存に失敗しました",
+    "schemaNotFound": "PCFスキーマ定義が見つかりません。アプリケーション設定を確認してください。",
+    "loadError": "PCFデータの読み込み中にエラーが発生しました"
   },
   "precalculation": {
     "title": "PCF事前計算",
@@ -88,7 +96,18 @@
       "rejectedNoReason": "リクエストはサプライヤーによって拒否されました。",
       "errorWithMessage": "リクエスト失敗: {{error}}",
       "errorNoMessage": "PCFリクエストの処理中にエラーが発生しました — 再試行ボタンを使用してください。"
-    }
+    },
+    "status": {
+      "delivered": "配信済み",
+      "received": "受信済み",
+      "updated": "更新済み",
+      "rejected": "拒否済み",
+      "error": "エラー",
+      "pending": "保留中"
+    },
+    "statusError": "サーバーからPCF収集ステータスを取得できませんでした。更新して再試行してください。",
+    "downloadError": "ダウンロードに失敗しました：{{message}}。バックエンドを確認して再試行してください。",
+    "unexpectedError": "予期しないエラー"
   },
   "addSubpartDialog": {
     "title": "サブパーツ関係を追加",
@@ -141,7 +160,27 @@
     "draftAlert": "このPCFは下書き状態です。アップロードすると顧客との共有が可能になります。",
     "viewDetails": "詳細を表示",
     "update": "更新",
-    "upload": "アップロード"
+    "upload": "アップロード",
+    "draftPart": "下書き部品",
+    "sectionTitle": "PCF管理",
+    "sectionSubtitle": "この部品の製品カーボンフットプリントデータを管理",
+    "noPcfData": "PCFデータがありません",
+    "noPcfDataHint": "顧客のリクエストに応じるためにPCFデータをアップロードしてください",
+    "uploadPcfData": "PCFデータをアップロード",
+    "publish": "公開",
+    "panes": {
+      "pcfExclBiogenic": "PCF（生物由来除く）",
+      "pcfInclBiogenic": "PCF（生物由来含む）",
+      "scope": "スコープ",
+      "referencePeriod": "参照期間",
+      "type": "タイプ",
+      "primaryDataShare": "プライマリデータ割合"
+    },
+    "quality": {
+      "high": "高品質 — 主に実測データ",
+      "medium": "中品質 — 一次データと二次データの混合",
+      "low": "低品質 — 主に推定/二次データ"
+    }
   },
   "requests": {
     "title": "PCFリクエスト",
@@ -191,7 +230,8 @@
     "validatedSuccess": "PCFデータが正常に検証されました！",
     "noSchemaValidation": "PCFデータが受け入れられました（スキーマ検証は利用できません）。",
     "formBuilderSuccess": "フォームビルダーでPCFデータが作成され、保存する準備ができました。",
-    "validationErrors": "{{count}}件のエラーで検証に失敗しました：{{errors}}"
+    "validationErrors": "{{count}}件のエラーで検証に失敗しました：{{errors}}",
+    "useAsPcfData": "PCFデータとして使用"
   },
   "notifications": {
     "statusAll": "すべて",
@@ -220,7 +260,17 @@
     "daysAgo": "{{count}}日前",
     "participantDialog": {
       "title": "参加者に通知",
-      "subtitle": "この PCF 更新について通知する参加者を選択してください"
+      "subtitle": "このPCF更新について通知する参加者を選択してください",
+      "partId": "部品ID",
+      "noParticipants": "この部品のPCFデータをリクエストした参加者はいません。更新は保存されますが、通知は送信されません。",
+      "interestedCount": "{{count}}人の参加者がこのPCFデータに関心あり",
+      "deselectAll": "すべて選除",
+      "selectAll": "すべて選択",
+      "selected": "{{count}}件選択中",
+      "skip": "スキップ",
+      "sending": "送信中...",
+      "sendUpdate": "PCF更新を送信",
+      "notifyError": "参加者への通知に失敗しました"
     }
   },
   "rejectDialog": {
@@ -248,6 +298,22 @@
     }
   },
   "exchange": {
+    "title": "PCF交換",
+    "subtitle": "PCFデータを管理し、受信リクエストに対応",
+    "manufacturerId": "メーカーID",
+    "manufacturerPartId": "メーカー部品ID",
+    "partName": "部品名",
+    "newSearch": "新しい検索",
+    "refresh": "更新",
+    "loadingTitle": "カタログ部品を読み込み中",
+    "backToSearch": "検索に戻る",
+    "searchPlaceholder": "メーカー部品IDを入力してください...",
+    "editDialog": {
+      "pcfExcludingBiogenic": "PCF(生物由来炭素を除外)",
+      "pcfIncludingBiogenic": "PCF(生物由来炭素を含む)",
+      "primaryDataShare": "一次データシェア",
+      "manufacturingCountry": "製造国(ISO 3166-1)"
+    },
     "loading": {
       "searching": "検索中",
       "searchingDesc": "レジストリでカタログパーツを検索中",
@@ -259,6 +325,54 @@
       "readyDesc": "データが正常に読み込まれました"
     },
     "pcfUpdateSent": "PCF 更新が {{count}} 人の参加者に正常に送信されました。"
+  },
+  "details": {
+    "title": "PCF詳細",
+    "dqrScale": "1=最良、5=最悪",
+    "sections": {
+      "carbonFootprint": "カーボンフットプリント値",
+      "productionStage": "生産段階の内訳",
+      "carbonContent": "炭素含有量",
+      "dataQuality": "データ品質",
+      "geography": "地理",
+      "timeValidity": "時間と有効性",
+      "distribution": "流通段階",
+      "productCompany": "製品と会社",
+      "metadata": "PCFメタデータ"
+    },
+    "fields": {
+      "pcfExclBiogenic": "PCF（生物由来除く）",
+      "pcfInclBiogenic": "PCF（生物由来含む）",
+      "fossilGhg": "化石燃料のGHG排出量（A）",
+      "bioCO2Uptake": "生物由来CO₂吸収（D）",
+      "landUseChange": "土地利用変化（E）",
+      "totalCarbon": "総炭素含有量",
+      "fossilCarbon": "化石燃料由来炭素",
+      "biogenicCarbon": "生物由来炭素",
+      "recycledCarbon": "リサイクル炭素",
+      "primaryDataShare": "一次データ割合",
+      "country": "国",
+      "region": "地域",
+      "subdivision": "小地域",
+      "referencePeriod": "参照期間",
+      "pcfCreated": "PCF作成日",
+      "validityEnd": "有効期間終了",
+      "distributionIncluded": "システム境界に含まれる",
+      "distributionPcf": "流通段階PCF（生物由来除く）",
+      "productName": "製品名",
+      "company": "会社",
+      "companyBpn": "会社BPN",
+      "productMass": "製品質量／宣言単位",
+      "description": "説明",
+      "specVersion": "仕様バージョン",
+      "pcfVersion": "PCFバージョン",
+      "type": "タイプ"
+    },
+    "dqr": {
+      "technological": "技術的",
+      "temporal": "時間的",
+      "geographical": "地理的"
+    }
   },
   "headerCards": {
     "company": {

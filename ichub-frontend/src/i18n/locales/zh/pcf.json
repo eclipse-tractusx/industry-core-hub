@@ -16,7 +16,11 @@
     "refresh": "刷新",
     "kgCo2e": "千克 CO2e",
     "published": "已发布",
-    "draft": "草稿"
+    "draft": "草稿",
+    "close": "关闭",
+    "yes": "是",
+    "no": "否",
+    "notAvailable": "不适用"
   },
   "loading": {
     "title": "正在加载目录零件",
@@ -43,7 +47,11 @@
     "failedToLoadRequests": "PCF请求加载失败",
     "failedToRefreshRequests": "PCF请求刷新失败",
     "failedToAcceptRequest": "接受请求失败",
-    "rejectNotImplemented": "拒绝功能尚未在后端实现"
+    "rejectNotImplemented": "拒绝功能尚未在后端实现",
+    "failedToLoadPcf": "加载 PCF 数据失败",
+    "failedToSavePcf": "保存 PCF 失败",
+    "schemaNotFound": "未找到 PCF 架构定义。请检查应用程序配置。",
+    "loadError": "加载 PCF 数据时发生错误"
   },
   "precalculation": {
     "title": "PCF预计算",
@@ -88,7 +96,18 @@
       "rejectedNoReason": "该请求已被供应商拒绝。",
       "errorWithMessage": "请求失败：{{error}}",
       "errorNoMessage": "处理PCF请求时出现错误 — 使用重试按钮。"
-    }
+    },
+    "status": {
+      "delivered": "已交付",
+      "received": "已收到",
+      "updated": "已更新",
+      "rejected": "已拒绝",
+      "error": "错误",
+      "pending": "待处理"
+    },
+    "statusError": "无法从服务器检索 PCF 收集状态。请刷新以重试。",
+    "downloadError": "下载失败：{{message}}。请检查后端并重试。",
+    "unexpectedError": "意外错误"
   },
   "addSubpartDialog": {
     "title": "添加子零件关系",
@@ -141,7 +160,27 @@
     "draftAlert": "此PCF处于草稿状态。上传后可供客户共享。",
     "viewDetails": "查看详情",
     "update": "更新",
-    "upload": "上传"
+    "upload": "上传",
+    "draftPart": "草稿零件",
+    "sectionTitle": "PCF 管理",
+    "sectionSubtitle": "管理此零件的产品碳足迹数据",
+    "noPcfData": "无可用 PCF 数据",
+    "noPcfDataHint": "上传 PCF 数据以响应客户请求",
+    "uploadPcfData": "上传 PCF 数据",
+    "publish": "发布",
+    "panes": {
+      "pcfExclBiogenic": "PCF（不含生物源）",
+      "pcfInclBiogenic": "PCF（含生物源）",
+      "scope": "范围",
+      "referencePeriod": "参考周期",
+      "type": "类型",
+      "primaryDataShare": "原始数据份额"
+    },
+    "quality": {
+      "high": "高质量 — 主要是测量数据",
+      "medium": "中等质量 — 原始数据和辅助数据的混合",
+      "low": "低质量 — 主要是估计/辅助数据"
+    }
   },
   "requests": {
     "title": "PCF请求",
@@ -191,7 +230,8 @@
     "validatedSuccess": "PCF 数据验证成功！",
     "noSchemaValidation": "PCF 数据已接受（无架构验证可用）。",
     "formBuilderSuccess": "PCF 数据已通过表单构建器创建，可以保存。",
-    "validationErrors": "验证失败，共 {{count}} 个错误：{{errors}}"
+    "validationErrors": "验证失败，共 {{count}} 个错误：{{errors}}",
+    "useAsPcfData": "用作 PCF 数据"
   },
   "notifications": {
     "statusAll": "全部",
@@ -220,7 +260,17 @@
     "daysAgo": "{{count}} 天前",
     "participantDialog": {
       "title": "通知参与者",
-      "subtitle": "选择要通知本 PCF 更新的参与者"
+      "subtitle": "选择要通知本 PCF 更新的参与者",
+      "partId": "零件 ID",
+      "noParticipants": "没有参与者请求此零件的 PCF 数据。更新将被保存，但不会发送通知。",
+      "interestedCount": "{{count}} 个参与者对此 PCF 数据感兴趣",
+      "deselectAll": "取消全选",
+      "selectAll": "全选",
+      "selected": "已选择 {{count}} 个",
+      "skip": "跳过",
+      "sending": "发送中...",
+      "sendUpdate": "发送 PCF 更新",
+      "notifyError": "通知参与者失败"
     }
   },
   "rejectDialog": {
@@ -248,6 +298,22 @@
     }
   },
   "exchange": {
+    "title": "PCF 交换",
+    "subtitle": "管理 PCF 数据并响应传入请求",
+    "manufacturerId": "制造商 ID",
+    "manufacturerPartId": "制造商零件 ID",
+    "partName": "零件名称",
+    "newSearch": "新搜索",
+    "refresh": "刷新",
+    "loadingTitle": "正在加载目录零件",
+    "backToSearch": "返回搜索",
+    "searchPlaceholder": "输入制造商零件 ID...",
+    "editDialog": {
+      "pcfExcludingBiogenic": "PCF（不含生物源）",
+      "pcfIncludingBiogenic": "PCF（含生物源）",
+      "primaryDataShare": "原始数据份额",
+      "manufacturingCountry": "制造国家 (ISO 3166-1)"
+    },
     "loading": {
       "searching": "搜索中",
       "searchingDesc": "在注册表中查找目录部件",
@@ -259,6 +325,54 @@
       "readyDesc": "数据加载成功"
     },
     "pcfUpdateSent": "PCF 更新已成功发送给 {{count}} 个参与者。"
+  },
+  "details": {
+    "title": "PCF 详情",
+    "dqrScale": "1=最好，5=最差",
+    "sections": {
+      "carbonFootprint": "碳足迹值",
+      "productionStage": "生产阶段明细",
+      "carbonContent": "碳含量",
+      "dataQuality": "数据质量",
+      "geography": "地理",
+      "timeValidity": "时间与有效期",
+      "distribution": "分销阶段",
+      "productCompany": "产品与公司",
+      "metadata": "PCF 元数据"
+    },
+    "fields": {
+      "pcfExclBiogenic": "PCF（不含生物源）",
+      "pcfInclBiogenic": "PCF（含生物源）",
+      "fossilGhg": "化石温室气体排放 (A)",
+      "bioCO2Uptake": "生物源 CO₂ 吸收 (D)",
+      "landUseChange": "土地利用变化 (E)",
+      "totalCarbon": "总碳含量",
+      "fossilCarbon": "化石碳",
+      "biogenicCarbon": "生物源碳",
+      "recycledCarbon": "回收碳",
+      "primaryDataShare": "原始数据份额",
+      "country": "国家",
+      "region": "地区",
+      "subdivision": "细分",
+      "referencePeriod": "参考周期",
+      "pcfCreated": "PCF 创建时间",
+      "validityEnd": "有效期结束",
+      "distributionIncluded": "包含在边界内",
+      "distributionPcf": "分销 PCF（不含生物源）",
+      "productName": "产品名称",
+      "company": "公司",
+      "companyBpn": "公司 BPN",
+      "productMass": "产品质量 / 声明单位",
+      "description": "描述",
+      "specVersion": "规范版本",
+      "pcfVersion": "PCF 版本",
+      "type": "类型"
+    },
+    "dqr": {
+      "technological": "技术",
+      "temporal": "时间",
+      "geographical": "地理"
+    }
   },
   "headerCards": {
     "company": {
