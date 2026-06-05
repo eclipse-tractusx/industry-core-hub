@@ -1749,22 +1749,30 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
 
         Returns:
             List of the newest CcmOutboundRequest per combination,
-            ordered by ``requested_at`` descending.
+            ordered by ``updated_at`` descending.
         """
-        # Subquery: max(id) per combo key — id is monotonically increasing,
-        # so max(id) equals the most recently inserted row per group.
+        # Subquery: DISTINCT ON (combo cols) ordered by updated_at DESC — picks
+        # the most recently *updated* row per combo, not the most recently created.
         latest_ids = (
-            select(func.max(CcmOutboundRequest.id).label("max_id"))
-            .group_by(
+            select(CcmOutboundRequest.id)
+            .distinct(
                 CcmOutboundRequest.provider_bpn,
                 CcmOutboundRequest.certified_bpn,
                 CcmOutboundRequest.certificate_type,
                 CcmOutboundRequest.location_bpns,
             )
+            .order_by(
+                CcmOutboundRequest.provider_bpn,
+                CcmOutboundRequest.certified_bpn,
+                CcmOutboundRequest.certificate_type,
+                CcmOutboundRequest.location_bpns,
+                desc(CcmOutboundRequest.updated_at),
+                desc(CcmOutboundRequest.id),
+            )
             .subquery()
         )
         stmt = select(CcmOutboundRequest).where(
-            CcmOutboundRequest.id.in_(select(latest_ids.c.max_id))
+            CcmOutboundRequest.id.in_(select(latest_ids.c.id))
         )
         if provider_bpn:
             stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
@@ -2000,20 +2008,30 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
 
         Returns:
             List of the newest CcmInboundRequest per combination,
-            ordered by ``received_at`` descending.
+            ordered by ``updated_at`` descending.
         """
+        # Subquery: DISTINCT ON (combo cols) ordered by updated_at DESC — picks
+        # the most recently *updated* row per combo, not the most recently created.
         latest_ids = (
-            select(func.max(CcmInboundRequest.id).label("max_id"))
-            .group_by(
+            select(CcmInboundRequest.id)
+            .distinct(
                 CcmInboundRequest.consumer_bpn,
                 CcmInboundRequest.certified_bpn,
                 CcmInboundRequest.certificate_type,
                 CcmInboundRequest.location_bpns,
             )
+            .order_by(
+                CcmInboundRequest.consumer_bpn,
+                CcmInboundRequest.certified_bpn,
+                CcmInboundRequest.certificate_type,
+                CcmInboundRequest.location_bpns,
+                desc(CcmInboundRequest.updated_at),
+                desc(CcmInboundRequest.id),
+            )
             .subquery()
         )
         stmt = select(CcmInboundRequest).where(
-            CcmInboundRequest.id.in_(select(latest_ids.c.max_id))
+            CcmInboundRequest.id.in_(select(latest_ids.c.id))
         )
         if consumer_bpn:
             stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
