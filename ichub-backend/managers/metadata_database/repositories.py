@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case, and_, or_, func
+from sqlalchemy import case, and_, or_, func, update
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -2093,3 +2093,26 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         record.updated_at = datetime.now(timezone.utc)
         self._session.add(record)
         return record
+
+    def nullify_certificate_id_by_certificate(self, certificate_id: int) -> int:
+        """
+        Set ``certificate_id = NULL`` on all inbound requests that reference
+        the given certificate PK.
+
+        Called as part of certificate deletion to release the FK constraint
+        while preserving the audit trail (consumer demand history).
+
+        Args:
+            certificate_id: PK of the certificate being deleted.
+
+        Returns:
+            Number of rows updated.
+        """
+        stmt = (
+            update(CcmInboundRequest)
+            .where(CcmInboundRequest.certificate_id == certificate_id)
+            .values(certificate_id=None, updated_at=datetime.now(timezone.utc))
+            .execution_options(synchronize_session="fetch")
+        )
+        result = self._session.execute(stmt)
+        return result.rowcount
