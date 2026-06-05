@@ -46,6 +46,8 @@ from controllers.fastapi.routers.authentication.auth_api import (
 from managers.config.log_manager import LoggingManager
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
+    CcmInboundRequestItem,
+    CcmPublishedItem,
     CcmPublishRequest,
     CcmPublishResult,
     CcmPushRequest,
@@ -201,6 +203,51 @@ async def unpublish_certificate(certificate_id: int) -> None:
 
 
 @router.get(
+    "/published",
+    response_model=List[CcmPublishedItem],
+    summary="List certificates currently published as EDC assets",
+)
+async def list_published_certificates() -> List[CcmPublishedItem]:
+    """
+    Return all certificates that have an active EDC asset registered
+    (``edc_asset_id IS NOT NULL`` in the database).
+
+    Useful for auditing which certificates are currently discoverable
+    in the provider's EDC catalog and for diagnosing DB/EDC sync issues.
+    """
+    try:
+        items = ccm_provider_service.list_published_certificates()
+        return [CcmPublishedItem(**item) for item in items]
+    except Exception:
+        logger.exception("Unhandled error in list_published_certificates endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.delete(
+    "/publish/asset/{asset_id:path}",
+    status_code=204,
+    summary="Force-unpublish an EDC certificate asset by its asset ID",
+)
+async def force_unpublish_by_asset_id(asset_id: str) -> None:
+    """
+    Remove a certificate asset from the EDC connector directly using its
+    EDC asset ID, bypassing the database ``edc_asset_id`` check.
+
+    Use this endpoint when the database and the EDC connector are out of
+    sync — for example when the ``edc_asset_id`` column was accidentally
+    cleared (or the DB was reset) but the EDC still holds the asset.
+
+    If a matching database record is found, its ``edc_asset_id`` will be
+    cleared automatically.
+    """
+    try:
+        ccm_provider_service.force_unpublish_by_asset_id(asset_id)
+    except Exception:
+        logger.exception("Unhandled error in force_unpublish_by_asset_id endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
     "/shares",
     response_model=List[ShareItem],
     summary="Cross-certificate view of all sharing events",
@@ -235,4 +282,96 @@ async def list_shares(
         )
     except Exception:
         logger.exception("Unhandled error in list_shares endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/inbound-requests",
+    response_model=List[CcmInboundRequestItem],
+    summary="List inbound certificate requests (latest per combination)",
+)
+async def list_inbound_requests(
+    consumer_bpn: Optional[str] = Query(
+        default=None,
+        alias="consumerBpn",
+        description="Filter by requesting consumer BPNL.",
+    ),
+    certified_bpn: Optional[str] = Query(
+        default=None,
+        alias="certifiedBpn",
+        description="Filter by certified entity BPNL.",
+    ),
+    certificate_type: Optional[str] = Query(
+        default=None,
+        alias="certificateType",
+        description="Filter by certificate type.",
+    ),
+    status: Optional[str] = Query(
+        default=None,
+        description="Filter by status (NotFound / Registered / Available / Pushed).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[CcmInboundRequestItem]:
+    """
+    Return a deduplicated list of inbound certificate requests — only the
+    **most recent** entry per ``(consumerBpn, certifiedBpn, certificateType)``
+    combination.
+
+    Use ``GET /inbound-requests/history`` to see the full timeline for a
+    specific combination.
+    """
+    try:
+        return ccm_provider_service.list_inbound_requests(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            status=status,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_inbound_requests endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/inbound-requests/history",
+    response_model=List[CcmInboundRequestItem],
+    summary="Full history of inbound requests for a specific combination",
+)
+async def list_inbound_request_history(
+    consumer_bpn: str = Query(
+        alias="consumerBpn",
+        description="Consumer BPNL (required).",
+    ),
+    certified_bpn: str = Query(
+        alias="certifiedBpn",
+        description="Certified entity BPNL (required).",
+    ),
+    certificate_type: str = Query(
+        alias="certificateType",
+        description="Certificate type identifier (required).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[CcmInboundRequestItem]:
+    """
+    Return the full history of inbound certificate requests for a specific
+    ``(consumerBpn, certifiedBpn, certificateType)`` combination, ordered
+    newest first.
+
+    All three query parameters are **required** so the results are scoped
+    to a single consumer-certificate pair.
+    """
+    try:
+        return ccm_provider_service.list_inbound_request_history(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_inbound_request_history endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)

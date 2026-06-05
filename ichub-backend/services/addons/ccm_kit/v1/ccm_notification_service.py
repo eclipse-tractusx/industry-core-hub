@@ -25,6 +25,8 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
 import binascii
+import json
+import uuid
 
 from tractusx_sdk.industry.models.notifications import Notification
 
@@ -32,7 +34,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
-from models.metadata_database.addons.ccm_kit.v1.models import ShareStatus
+from models.metadata_database.addons.ccm_kit.v1.models import InboundRequestStatus, OutboundRequestStatus, ShareStatus
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableContent,
     CcmPushContent,
@@ -43,6 +45,12 @@ from models.services.addons.ccm_kit.v1.notifications import (
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import (
     ccm_consumer_service,
+)
+from tools.constants import (
+    CCM_CONTEXT_AVAILABLE,
+    CCM_CONTEXT_PUSH,
+    CCM_CONTEXT_REQUEST,
+    CCM_CONTEXT_STATUS,
 )
 
 logger = LoggingManager.get_logger(__name__)
@@ -70,17 +78,52 @@ class CcmNotificationService:
     Handles the business logic for incoming CCM notification API calls.
     """
 
+    def _build_response_header(self, notification: Notification) -> Dict[str, Any]:
+        """Return a CX-0135-compliant response header dict."""
+        return {
+            "messageId": str(uuid.uuid4()),
+            "context": notification.header.context,
+            "sentDateTime": datetime.now(timezone.utc).isoformat(),
+            "senderBpn": notification.header.receiver_bpn,
+            "receiverBpn": notification.header.sender_bpn,
+            "relatedMessageId": str(notification.header.message_id),
+        }
+
+    @staticmethod
+    def _validate_context(
+        notification: Notification,
+        expected_context: str,
+    ) -> Optional[Tuple[int, Dict[str, Any]]]:
+        """Validate that the notification context matches the expected value.
+
+        Returns ``None`` when the context is correct, or a ``(400, body)``
+        tuple to return immediately when the context is wrong.
+        """
+        actual = notification.header.context
+        if actual != expected_context:
+            logger.warning(
+                f"Context mismatch: expected '{expected_context}', "
+                f"got '{_s(actual)}' (messageId={notification.header.message_id})"
+            )
+            return 400, {
+                "message": (
+                    f"Invalid notification context. Expected "
+                    f"'{expected_context}', received '{actual}'."
+                ),
+            }
+        return None
+
     def process_certificate_request(
         self, notification: Notification
     ) -> Tuple[int, Dict[str, Any]]:
         """
         Process a ``POST /companycertificate/request`` notification.
 
-        1. Parse the CCM-specific content (``certifiedBpn``, ``certificateType``).
-        2. Look up the certificate in the local database.
-        3. If not found → return ``(404, {...})``.
-        4. If found → register the consumer BPNL in ``certificate_shares``
-           with status ``Pending`` and return ``(200, {...})``.
+        CX-0135 response matrix:
+        * ``200 COMPLETED``  — certificate is already published; ``documentId`` is returned.
+        * ``200 REJECTED``   — certificate not found; ``requestErrors`` explains why.
+        * ``202 IN_PROGRESS`` — certificate found but not yet published;
+          consumer should poll again or wait for a PUSH notification.
 
         Args:
             notification: SDK Notification with header + content.
@@ -88,6 +131,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_REQUEST)
+        if ctx_error is not None:
+            return ctx_error
+
         # --- 1. Parse content ---
         content = self._parse_request_content(notification)
         sender_bpn = notification.header.sender_bpn
@@ -105,18 +153,36 @@ class CcmNotificationService:
                 certificate_type=content.certificate_type,
             )
 
-            # --- 3. Not found ---
+            # --- 3. Not found → 200 REJECTED (CX-0135 §3.4) ---
             if ccm is None:
                 logger.warning(
                     f"No certificate found for bpnl={_s(content.certified_bpn)} "
                     f"type={_s(content.certificate_type)} (requested by {_s(sender_bpn)})"
                 )
-                return 404, {
-                    "message": (
-                        f"No certificate found for BPNL "
-                        f"{content.certified_bpn} with type "
-                        f"{content.certificate_type}."
-                    ),
+                # Persist the consumer's demand so the provider can act on it later.
+                repo.ccm_inbound_request_repository.create_new(
+                    consumer_bpn=sender_bpn,
+                    certified_bpn=content.certified_bpn,
+                    certificate_type=content.certificate_type,
+                    status=InboundRequestStatus.NotFound,
+                    location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                    notification_id=str(notification.header.message_id),
+                )
+                repo.commit()
+                return 200, {
+                    "header": self._build_response_header(notification),
+                    "content": {
+                        "requestStatus": "REJECTED",
+                        "requestErrors": [
+                            {
+                                "message": (
+                                    f"No certificate found for BPNL "
+                                    f"{content.certified_bpn} with type "
+                                    f"{content.certificate_type}."
+                                )
+                            }
+                        ],
+                    },
                 }
 
             # --- 4. Register consumer in certificate_shares ---
@@ -143,24 +209,34 @@ class CcmNotificationService:
                     f"for consumer {_s(sender_bpn)}"
                 )
 
+            # Record the inbound request so the provider has full visibility.
+            repo.ccm_inbound_request_repository.create_new(
+                consumer_bpn=sender_bpn,
+                certified_bpn=content.certified_bpn,
+                certificate_type=content.certificate_type,
+                status=InboundRequestStatus.Registered,
+                certificate_id=ccm.id,
+                location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                notification_id=str(notification.header.message_id),
+            )
+
             repo.commit()
 
             ccm_id = ccm.id
             ccm_edc_asset_id = ccm.edc_asset_id
 
-        # --- 5. If certificate is already published as EDC asset, respond COMPLETED ---
+        # --- 5. Certificate already published → 200 COMPLETED (CX-0135 §3.4) ---
         if ccm_edc_asset_id:
             logger.info(
                 f"Certificate {ccm_id} is published (asset {_s(ccm_edc_asset_id)}). "
                 f"Responding COMPLETED with documentId."
             )
             return 200, {
-                "requestStatus": "COMPLETED",
-                "documentId": ccm_edc_asset_id,
-                "message": (
-                    f"Certificate available for PULL. "
-                    f"documentId={ccm_edc_asset_id}"
-                ),
+                "header": self._build_response_header(notification),
+                "content": {
+                    "requestStatus": "COMPLETED",
+                    "documentId": ccm_edc_asset_id,
+                },
             }
 
         # Auto-push if configured
@@ -180,12 +256,12 @@ class CcmNotificationService:
                 f"(auto-push disabled, manual push required)."
             )
 
-        return 200, {
-            "message": (
-                f"Certificate found for BPNL {content.certified_bpn} "
-                f"with type {content.certificate_type}. "
-                f"{'Push delivery initiated.' if auto_push else 'Consumer registered for sharing.'}"
-            ),
+        # --- 6. Certificate found but not yet published → 202 IN_PROGRESS (CX-0135 §3.4) ---
+        return 202, {
+            "header": self._build_response_header(notification),
+            "content": {
+                "requestStatus": "IN_PROGRESS",
+            },
         }
 
     def update_certificate_status(
@@ -205,6 +281,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_STATUS)
+        if ctx_error is not None:
+            return ctx_error
+
         # --- 1. Parse content ---
         content = self._parse_status_content(notification)
         sender_bpn = notification.header.sender_bpn
@@ -212,22 +293,47 @@ class CcmNotificationService:
         logger.info(
             f"CCM status from {_s(sender_bpn)}: "
             f"documentId={_s(content.document_id)} "
-            f"status={_s(content.certificate_status.value)}"
+            f"status={_s(content.certificate_status.value)} "
+            f"relatedMessageId={_s(getattr(notification.header, 'related_message_id', None))}"
         )
 
         # --- 2. Resolve certificate ID ---
+        # documentId may be an integer PK (old format) or an EDC asset ID string.
         certificate_id = self._resolve_document_id(content.document_id)
-        if certificate_id is None:
-            return 404, {
-                "message": (
-                    f"Invalid documentId '{content.document_id}': "
-                    f"could not be resolved to a certificate."
-                ),
-            }
 
         with RepositoryManagerFactory.create() as repo:
             # Verify the certificate still exists.
-            ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            if certificate_id is not None:
+                ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            else:
+                # Fall back to EDC asset ID lookup.
+                ccm = repo.ccm_repository.find_by_edc_asset_id(content.document_id)
+
+            if ccm is None:
+                # Second fallback: resolve via the sender's share records.
+                # Handles the case where edc_asset_id was cleared (e.g. after
+                # unpublish) after the consumer already received the certificate
+                # and stored the old documentId.
+                shares_for_sender = (
+                    repo.certificate_share_repository
+                    .find_by_consumer_bpnl(sender_bpn)
+                )
+                active_shares = [
+                    s for s in shares_for_sender
+                    if s.status in (ShareStatus.Active, ShareStatus.Pending)
+                ]
+                if len(active_shares) == 1:
+                    ccm = repo.ccm_repository.find_by_id_with_relations(
+                        active_shares[0].certificate_id
+                    )
+                    if ccm is not None:
+                        logger.info(
+                            f"Resolved certificate {ccm.id} for consumer "
+                            f"{_s(sender_bpn)} via share fallback "
+                            f"(edc_asset_id lookup missed for documentId "
+                            f"{_s(content.document_id)})."
+                        )
+
             if ccm is None:
                 return 404, {
                     "message": (
@@ -239,7 +345,7 @@ class CcmNotificationService:
             # --- 3. Find share record ---
             share = (
                 repo.certificate_share_repository
-                .find_by_certificate_and_consumer(certificate_id, sender_bpn)
+                .find_by_certificate_and_consumer(ccm.id, sender_bpn)
             )
             if share is None:
                 return 404, {
@@ -261,6 +367,29 @@ class CcmNotificationService:
 
             # Enforce valid state transitions.
             current_status = share.status
+            if new_status == current_status:
+                logger.info(
+                    f"Idempotent status re-send for share {share.id}: "
+                    f"{current_status.value} → {new_status.value} (share no-op)"
+                )
+                inbound_notification_id: Optional[str] = None
+                raw_related = getattr(notification.header, "related_message_id", None)
+                if raw_related is not None:
+                    inbound_notification_id = str(raw_related)
+                repo.ccm_inbound_request_repository.update_consumer_status(
+                    consumer_bpn=sender_bpn,
+                    certified_bpn=ccm.bpnl,
+                    certificate_type=ccm.certificate_type,
+                    consumer_status=content.certificate_status.value,
+                    notification_id=inbound_notification_id,
+                )
+                repo.commit()
+                return 200, {
+                    "message": (
+                        f"Status '{content.certificate_status.value}' already "
+                        f"recorded for certificate '{content.document_id}'."
+                    ),
+                }
             allowed = _VALID_TRANSITIONS.get(current_status, set())
             if new_status not in allowed:
                 logger.warning(
@@ -274,10 +403,49 @@ class CcmNotificationService:
                     ),
                 }
 
+            share_id = share.id
+            certified_bpn = ccm.bpnl
+            certificate_type = ccm.certificate_type
+
+            # Build rejection_reason JSON when consumer rejects.
+            rejection_reason: Optional[str] = None
+            if content.certificate_status == CertificateStatusValue.REJECTED:
+                rejection_payload: Dict[str, Any] = {}
+                if content.certificate_errors:
+                    rejection_payload["certificateErrors"] = [
+                        e.message for e in content.certificate_errors
+                    ]
+                if content.location_errors:
+                    rejection_payload["locationErrors"] = [
+                        {le.bpn: [e.message for e in le.location_errors]}
+                        for le in content.location_errors
+                    ]
+                if rejection_payload:
+                    rejection_reason = json.dumps(rejection_payload)
+
             repo.certificate_share_repository.update_status(
-                share_id=share.id,
+                share_id=share_id,
                 new_status=new_status,
+                rejection_reason=rejection_reason,
             )
+
+            # Stamp consumer feedback on the latest matching inbound request
+            # so the provider's inbound-request view reflects it.
+            # When relatedMessageId is present in the notification header, use it
+            # to target the specific request that triggered this status response.
+            inbound_notification_id: Optional[str] = None
+            raw_related = getattr(notification.header, "related_message_id", None)
+            if raw_related is not None:
+                inbound_notification_id = str(raw_related)
+
+            repo.ccm_inbound_request_repository.update_consumer_status(
+                consumer_bpn=sender_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
+                consumer_status=content.certificate_status.value,
+                notification_id=inbound_notification_id,
+            )
+
             repo.commit()
 
         # Log rejection details so providers can diagnose why a certificate
@@ -296,7 +464,7 @@ class CcmNotificationService:
                 )
 
         logger.info(
-            f"CertificateShare {share.id} updated to {new_status.value} "
+            f"CertificateShare {share_id} updated to {new_status.value} "
             f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"
         )
 
@@ -337,18 +505,22 @@ class CcmNotificationService:
     @staticmethod
     def _resolve_document_id(document_id: str) -> Optional[int]:
         """
-        Convert a ``documentId`` string to an integer certificate PK.
+        Try to interpret ``documentId`` as an integer certificate PK.
 
-        The provider sets ``documentId = str(ccm.id)`` when pushing
-        certificates.  This method reverses that mapping.
+        Per CX-0135, ``documentId`` is normally a UUID (the EDC asset ID).
+        Legacy providers may still send the integer primary key.  This
+        method returns the integer only when the value is clearly numeric;
+        otherwise the caller should fall back to
+        ``find_by_edc_asset_id()``.
 
         Returns:
-            The integer PK, or ``None`` if the string is not a valid integer.
+            The integer PK, or ``None`` if the string is a UUID or any
+            other non-integer value.
         """
         try:
             return int(document_id)
         except (ValueError, TypeError):
-            logger.warning(f"Cannot parse documentId '{_s(document_id)}' as integer.")
+            logger.debug(f"documentId '{_s(document_id)}' is not an integer PK — will try EDC asset ID lookup.")
             return None
 
     @staticmethod
@@ -384,6 +556,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_PUSH)
+        if ctx_error is not None:
+            return ctx_error
+
         content = self._parse_push_content(notification)
         sender_bpn = notification.header.sender_bpn
 
@@ -439,6 +616,16 @@ class CcmNotificationService:
                 )
                 existing.doc = doc_bytes
                 existing.received_at = datetime.now(timezone.utc)
+                existing.notification_message_id = str(notification.header.message_id)
+                _related_push = getattr(notification.header, "related_message_id", None)
+                self._correlate_outbound_requests(
+                    repo=repo,
+                    provider_bpn=sender_bpn,
+                    certified_bpn=content.business_partner_number,
+                    certificate_type=content.type.certificate_type,
+                    document_id=content.document.document_id,
+                    related_message_id=str(_related_push) if _related_push else None,
+                )
                 repo.commit()
                 return 200, {
                     "message": (
@@ -475,7 +662,17 @@ class CcmNotificationService:
                 certified_bpn=content.business_partner_number,
                 certificate_type=content.type.certificate_type,
                 doc=doc_bytes,
+                notification_message_id=str(notification.header.message_id),
                 **kwargs,
+            )
+            _related_push = getattr(notification.header, "related_message_id", None)
+            self._correlate_outbound_requests(
+                repo=repo,
+                provider_bpn=sender_bpn,
+                certified_bpn=content.business_partner_number,
+                certificate_type=content.type.certificate_type,
+                document_id=content.document.document_id,
+                related_message_id=str(_related_push) if _related_push else None,
             )
             repo.commit()
 
@@ -501,8 +698,9 @@ class CcmNotificationService:
         Process a ``POST /companycertificate/available`` notification.
 
         The provider informs us that a certificate is available for PULL
-        retrieval.  If a ``documentId`` is present, we attempt to pull the
-        certificate automatically via the consumer PULL flow.
+        retrieval.  We advance any Pending or NotFound outbound requests for
+        this provider + certificate type to ``Found`` (storing the documentId),
+        then attempt to pull the certificate automatically.
 
         Args:
             notification: SDK Notification with header + available content.
@@ -510,6 +708,11 @@ class CcmNotificationService:
         Returns:
             Tuple of ``(http_status_code, response_body_dict)``.
         """
+        # --- 0. Validate context ---
+        ctx_error = self._validate_context(notification, CCM_CONTEXT_AVAILABLE)
+        if ctx_error is not None:
+            return ctx_error
+
         content = self._parse_available_content(notification)
         sender_bpn = notification.header.sender_bpn
 
@@ -519,11 +722,23 @@ class CcmNotificationService:
             f"certificateType={_s(content.certificate_type)}"
         )
 
+        # Advance matching outbound requests to Found with the documentId.
+        # Pass relatedMessageId to restrict to the specific request when present.
+        _related_msg_id = getattr(notification.header, "related_message_id", None)
+        self._correlate_outbound_requests_available(
+            provider_bpn=sender_bpn,
+            certificate_type=content.certificate_type,
+            document_id=content.document_id,
+            related_message_id=str(_related_msg_id) if _related_msg_id else None,
+        )
+
         # If a documentId is provided, attempt auto-pull
         if content.document_id:
             self._auto_pull_certificate(
                 provider_bpn=sender_bpn,
                 document_id=content.document_id,
+                notification_message_id=str(notification.header.message_id),
+                related_message_id=str(_related_msg_id) if _related_msg_id else None,
             )
 
         return 200, {
@@ -581,7 +796,118 @@ class CcmNotificationService:
             )
 
     @staticmethod
-    def _auto_pull_certificate(provider_bpn: str, document_id: str) -> None:
+    def _correlate_outbound_requests(
+        repo,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        document_id: str,
+        related_message_id: Optional[str] = None,
+    ) -> None:
+        """
+        Advance all active outbound requests that match this incoming PUSH
+        to ``Found``, storing the ``document_id`` for later reference.
+
+        "Active" includes ``Pending``, ``NotFound``, and ``Found``-without-
+        ``document_id`` — mirroring the Available-notification correlator so
+        that a late PUSH also resolves requests that were previously marked
+        ``NotFound`` by the provider.
+
+        When ``related_message_id`` is provided it is matched against each
+        outbound request's ``notification_id`` (the messageId of the original
+        REQUEST sent by the consumer) so that only the targeted request is
+        advanced.  Falls back to the full active list if no exact match is
+        found.
+
+        Called inside the active repository session (before ``repo.commit()``) so
+        the CcmOutboundRequest rows are updated atomically with the new
+        CcmReceived row.
+        """
+        active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+            provider_bpn=provider_bpn,
+            certificate_type=certificate_type,
+            certified_bpn=certified_bpn,
+        )
+        if related_message_id is not None:
+            targeted = [r for r in active if r.notification_id == related_message_id]
+            if targeted:
+                active = targeted
+        for req in active:
+            repo.ccm_outbound_request_repository.update_status(
+                request_id=req.id,
+                new_status=OutboundRequestStatus.Found,
+                document_id=document_id,
+            )
+            logger.info(
+                f"[CCM] Outbound request {req.id} → Found "
+                f"(documentId={_s(document_id)})"
+            )
+
+    @staticmethod
+    def _correlate_outbound_requests_available(
+        provider_bpn: str,
+        certificate_type: str,
+        document_id: str,
+        related_message_id: Optional[str] = None,
+    ) -> None:
+        """
+        Advance all Pending and NotFound outbound requests from this provider
+        + certificate type to ``Found``, storing the ``document_id``.
+
+        Called when a Certificate Available (PULL) notification is received.
+        Unlike the PUSH correlator, this also covers ``NotFound`` requests
+        because the provider may have responded "not found" initially and only
+        later published the certificate and sent an Available notification.
+
+        When ``related_message_id`` is provided it is matched against each
+        outbound request's ``notification_id`` (the messageId of the original
+        REQUEST sent by the consumer) so that only the targeted request is
+        advanced.  Falls back to the full active list if no exact match is
+        found.
+
+        Args:
+            provider_bpn: BPNL of the provider sending the notification.
+            certificate_type: Certificate type from the notification content.
+            document_id: EDC asset ID of the published certificate.
+            related_message_id: Optional messageId of the original consumer
+                REQUEST this notification is responding to.
+        """
+        try:
+            with RepositoryManagerFactory.create() as repo:
+                active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                    provider_bpn=provider_bpn,
+                    certificate_type=certificate_type,
+                )
+                if related_message_id is not None:
+                    targeted = [r for r in active if r.notification_id == related_message_id]
+                    if targeted:
+                        active = targeted
+                for req in active:
+                    repo.ccm_outbound_request_repository.update_status(
+                        request_id=req.id,
+                        new_status=OutboundRequestStatus.Found,
+                        document_id=document_id,
+                    )
+                    logger.info(
+                        f"[CCM] Outbound request {req.id} ({req.status.value}) "
+                        f"→ Found via Available notification "
+                        f"(documentId={_s(document_id)})"
+                    )
+                if active:
+                    repo.commit()
+        except Exception:
+            logger.exception(
+                f"[CCM] Failed to correlate outbound requests for Available "
+                f"notification from {_s(provider_bpn)} / {_s(certificate_type)}"
+            )
+
+    @staticmethod
+    def _auto_pull_certificate(
+        provider_bpn: str,
+        document_id: str,
+        notification_message_id: Optional[str] = None,
+        related_message_id: Optional[str] = None,
+    ) -> None:
         """
         Trigger a PULL of the certificate from the provider.
 
@@ -592,13 +918,24 @@ class CcmNotificationService:
         Args:
             provider_bpn: BPNL of the provider that published the certificate.
             document_id: EDC asset ID of the certificate to pull.
+            notification_message_id: messageId from the available notification
+                header, stored on the received certificate for relatedMessageId
+                linking per CX-0135.
+            related_message_id: relatedMessageId from the available notification
+                header — the original REQUEST messageId — forwarded to the
+                outbound-request correlator so only the targeted request is
+                advanced to Found.
         """
         try:
             pull_request = CcmPullRequest(
                 provider_bpn=provider_bpn,
                 document_id=document_id,
             )
-            result = ccm_consumer_service.pull_certificate(pull_request)
+            result = ccm_consumer_service.pull_certificate(
+                pull_request,
+                notification_message_id=notification_message_id,
+                related_message_id=related_message_id,
+            )
             if not result.stored:
                 logger.warning(
                     f"Auto-pull for certificate {_s(document_id)} "

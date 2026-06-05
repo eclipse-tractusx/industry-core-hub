@@ -85,6 +85,11 @@ class CcmBaseService:
         """
         if not hasattr(consumer_connector_service, "connection_manager"):
             return
+        if not hasattr(
+            consumer_connector_service.connection_manager,
+            "clear_connections_by_party",
+        ):
+            return
         party_key = bpnl
         if hasattr(consumer_connector_service, "get_discovery_info"):
             try:
@@ -192,7 +197,7 @@ class CcmBaseService:
                 dct_type=CCM_DCT_TYPE,
             )
 
-            notification_service.send_notification_to_endpoint(
+            provider_body = notification_service.send_notification_to_endpoint(
                 endpoint_url=endpoint,
                 access_token=token,
                 notification=notification,
@@ -204,7 +209,11 @@ class CcmBaseService:
                 f"{self._log_prefix} Notification sent: message_id={_s(message_id)}, "
                 f"endpoint={_s(endpoint_path)}"
             )
-            return CcmSendResult(success=True, message_id=message_id)
+            return CcmSendResult(
+                success=True,
+                message_id=message_id,
+                provider_response=provider_body if isinstance(provider_body, dict) else None,
+            )
 
         except NotificationError as ne:
             logger.error(f"{self._log_prefix} NotificationError: {_s(ne)}")

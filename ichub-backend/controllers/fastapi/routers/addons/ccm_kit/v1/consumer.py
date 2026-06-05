@@ -31,7 +31,7 @@ Implements the consumer operations for the PULL flow:
 - ``POST /consumer/status``              — send a processing status to a provider
 - ``POST /consumer/pull``                — pull a certificate from a provider's catalog
 - ``GET  /consumer/received``            — list certificates received by this node
-- ``GET  /consumer/received/{id}``       — detail for one received certificate
+- ``GET  /consumer/received/{document_id}`` — detail for one received certificate
 - ``GET  /consumer/requests``            — list outbound certificate requests
 - ``GET  /consumer/requests/{id}``       — detail for one outbound request
 """
@@ -105,12 +105,17 @@ async def send_certificate_request(payload: CcmSendRequestPayload) -> CcmSendRes
     specific certificate identified by ``certifiedBpn`` and ``certificateType``.
     """
     try:
-        return ccm_consumer_service.send_certificate_request(
+        result = ccm_consumer_service.send_certificate_request(
             payload, payload.sender_bpn
         )
+        if not result.success:
+            raise HTTPException(status_code=502, detail=result.error)
+        return result
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Unhandled error in send_certificate_request endpoint")
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
 @router.post(
@@ -127,12 +132,17 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
     provider.
     """
     try:
-        return ccm_consumer_service.send_certificate_status(
+        result = ccm_consumer_service.send_certificate_status(
             payload, payload.sender_bpn
         )
+        if not result.success:
+            raise HTTPException(status_code=502, detail=result.error)
+        return result
+    except HTTPException:
+        raise
     except Exception:
         logger.exception("Unhandled error in send_certificate_status endpoint")
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
 @router.post(
@@ -195,17 +205,29 @@ async def list_received(
 
 
 @router.get(
-    "/received/{received_id}",
+    "/received/{document_id}",
     response_model=ReceivedCertificateDetail,
     summary="Get detail for a single received certificate",
 )
-async def get_received(received_id: int) -> ReceivedCertificateDetail:
+async def get_received(
+    document_id: str,
+    provider_bpn: str = Query(
+        ...,
+        alias="providerBpn",
+        description="BPNL of the provider that sent the certificate.",
+    ),
+) -> ReceivedCertificateDetail:
     """
     Return the full detail for a single received certificate, including the
     Base64-encoded PDF document when available.
+
+    The certificate is identified by the provider-assigned ``documentId``
+    together with the ``providerBpn`` (which form a unique pair).
     """
     try:
-        result = ccm_consumer_service.get_received(received_id)
+        result = ccm_consumer_service.get_received_by_document_id(
+            document_id, provider_bpn,
+        )
         if result is None:
             raise HTTPException(status_code=404, detail="Received certificate not found.")
         return result
@@ -219,7 +241,7 @@ async def get_received(received_id: int) -> ReceivedCertificateDetail:
 @router.get(
     "/requests",
     response_model=List[OutboundRequestItem],
-    summary="List outbound certificate requests sent by this node",
+    summary="List outbound certificate requests (latest per combination)",
 )
 async def list_requests(
     provider_bpn: Optional[str] = Query(
@@ -245,8 +267,12 @@ async def list_requests(
     limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
 ) -> List[OutboundRequestItem]:
     """
-    Return a paginated list of certificate requests sent by this node to
-    remote providers.  Allows tracking the status of pending requests.
+    Return a deduplicated list of certificate requests — only the **most
+    recent** entry per ``(providerBpn, certifiedBpn, certificateType)``
+    combination.
+
+    Use ``GET /requests/history`` to see the full timeline for a specific
+    combination.
     """
     try:
         return ccm_consumer_service.list_requests(
@@ -259,6 +285,48 @@ async def list_requests(
         )
     except Exception:
         logger.exception("Unhandled error in list_requests endpoint")
+        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+
+
+@router.get(
+    "/requests/history",
+    response_model=List[OutboundRequestItem],
+    summary="Full history of outbound requests for a specific combination",
+)
+async def list_request_history(
+    provider_bpn: str = Query(
+        alias="providerBpn",
+        description="Provider BPNL (required).",
+    ),
+    certified_bpn: str = Query(
+        alias="certifiedBpn",
+        description="Certified entity BPNL (required).",
+    ),
+    certificate_type: str = Query(
+        alias="certificateType",
+        description="Certificate type identifier (required).",
+    ),
+    offset: int = Query(default=0, ge=0, description="Pagination offset."),
+    limit: int = Query(default=100, ge=1, le=500, description="Maximum results per page."),
+) -> List[OutboundRequestItem]:
+    """
+    Return the full history of outbound certificate requests for a specific
+    ``(providerBpn, certifiedBpn, certificateType)`` combination, ordered
+    newest first.
+
+    All three query parameters are **required** so the results are scoped
+    to a single certificate of interest.
+    """
+    try:
+        return ccm_consumer_service.list_request_history(
+            provider_bpn=provider_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            offset=offset,
+            limit=limit,
+        )
+    except Exception:
+        logger.exception("Unhandled error in list_request_history endpoint")
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 

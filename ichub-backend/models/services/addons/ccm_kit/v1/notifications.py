@@ -213,6 +213,9 @@ class CcmSendResult(BaseModel):
     success: bool = Field(description="Whether the notification was sent successfully.")
     message_id: Optional[str] = Field(default=None, alias="messageId", description="UUID of the sent notification.")
     error: Optional[str] = Field(default=None, description="Error message if sending failed.")
+    # Internal only — carries the raw provider response body for post-send
+    # inspection (e.g. REJECTED status). Excluded from API serialisation.
+    provider_response: Optional[Dict[str, Any]] = Field(default=None, exclude=True)
 
     class Config:
         populate_by_name = True
@@ -494,6 +497,14 @@ class CcmPushRequest(BaseModel):
         default=None,
         description="Governance policies for contract negotiation.",
     )
+    related_message_id: Optional[str] = Field(
+        default=None,
+        alias="relatedMessageId",
+        description=(
+            "messageId of the inbound request notification this push responds to. "
+            "When provided, takes priority over the auto-resolved value."
+        ),
+    )
 
     class Config:
         populate_by_name = True
@@ -560,6 +571,14 @@ class CcmAvailableRequest(BaseModel):
         default=None,
         description="Governance policies for contract negotiation.",
     )
+    related_message_id: Optional[str] = Field(
+        default=None,
+        alias="relatedMessageId",
+        description=(
+            "messageId of the inbound request notification this available responds to. "
+            "When provided, takes priority over the auto-resolved value."
+        ),
+    )
 
     class Config:
         populate_by_name = True
@@ -589,6 +608,26 @@ class CcmPublishResult(BaseModel):
     certificate_id: int = Field(
         alias="certificateId",
         description="Internal DB ID of the published certificate.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmPublishedItem(BaseModel):
+    """Entry in the list of published certificates."""
+    certificate_id: int = Field(
+        alias="certificateId",
+        description="Internal DB ID of the certificate.",
+    )
+    asset_id: str = Field(
+        alias="assetId",
+        description="EDC asset ID under which the certificate is published.",
+    )
+    bpnl: str = Field(description="BPNL of the certificate holder.")
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type (e.g. ISO9001).",
     )
 
     class Config:
@@ -905,6 +944,14 @@ class ShareItem(BaseModel):
     status: str = Field(
         description="Share lifecycle status: Active / Pending / Revoked.",
     )
+    rejection_reason: Optional[str] = Field(
+        default=None,
+        alias="rejectionReason",
+        description=(
+            "JSON-serialised rejection details from the consumer. "
+            "Only present when status is Revoked."
+        ),
+    )
     last_shared_date: str = Field(
         alias="lastSharedDate",
         description="Timestamp of the most recent sharing event (ISO 8601).",
@@ -912,6 +959,69 @@ class ShareItem(BaseModel):
     created_at: str = Field(
         alias="createdAt",
         description="Timestamp when this share record was created (ISO 8601).",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
+class CcmInboundRequestItem(BaseModel):
+    """
+    Summary item for a single certificate request received by the provider.
+
+    Returned by ``GET /provider/inbound-requests`` — a full list of all
+    inbound requests, including those where no matching certificate existed
+    at the time of the request (status = ``NotFound``).
+    """
+    request_id: int = Field(
+        alias="requestId",
+        description="Internal primary key of the ccm_inbound_request record.",
+    )
+    consumer_bpn: str = Field(
+        alias="consumerBpn",
+        description="BPNL of the consumer who sent the request.",
+    )
+    certified_bpn: str = Field(
+        alias="certifiedBpn",
+        description="BPNL of the legal entity whose certificate was requested.",
+    )
+    certificate_type: str = Field(
+        alias="certificateType",
+        description="Certificate type identifier (e.g. ISO9001).",
+    )
+    location_bpns: Optional[str] = Field(
+        default=None,
+        alias="locationBpns",
+        description="JSON-serialised list of BPNS/BPNA scope (if provided).",
+    )
+    certificate_id: Optional[int] = Field(
+        default=None,
+        alias="certificateId",
+        description="FK to the matched certificate (NULL when NotFound).",
+    )
+    status: str = Field(
+        description="Inbound request status: NotFound / Registered / Available / Pushed.",
+    )
+    consumer_status: Optional[str] = Field(
+        default=None,
+        alias="consumerStatus",
+        description=(
+            "Consumer's acceptance feedback: RECEIVED / ACCEPTED / REJECTED. "
+            "NULL until the consumer sends a status notification."
+        ),
+    )
+    notification_id: Optional[str] = Field(
+        default=None,
+        alias="notificationId",
+        description="CX-0135 notification message_id for correlation.",
+    )
+    received_at: str = Field(
+        alias="receivedAt",
+        description="Timestamp when the request was received (ISO 8601).",
+    )
+    updated_at: str = Field(
+        alias="updatedAt",
+        description="Timestamp of the last status update (ISO 8601).",
     )
 
     class Config:

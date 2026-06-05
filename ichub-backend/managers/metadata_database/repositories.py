@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case
+from sqlalchemy import case, and_, or_, func
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -59,10 +59,12 @@ from models.metadata_database.pcf.models import (
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmInboundRequest,
     CcmOutboundRequest,
     CcmReceived,
     CcmSite,
     CertificateShare,
+    InboundRequestStatus,
     OutboundRequestStatus,
     ReceivedCertificateStatus,
     ShareStatus,
@@ -1155,6 +1157,59 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    _LEGACY_ASSET_PREFIX = "ichub:asset:ccm-cert:"
+
+    def find_by_edc_asset_id(self, edc_asset_id: str) -> Optional[Ccm]:
+        """
+        Fetch a single Ccm record by its EDC asset ID, with ``sites`` and
+        ``shares`` eagerly loaded.
+
+        Handles both the current UUID-only format and the legacy
+        ``ichub:asset:ccm-cert:<uuid>`` format transparently.  If an
+        exact match is not found and the input carries the legacy prefix,
+        a second lookup using the bare UUID is attempted (and vice-versa).
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id == edc_asset_id)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+        )
+        result = self._session.scalars(stmt).first()
+        if result is not None:
+            return result
+
+        # Legacy compatibility: try the alternate form.
+        if edc_asset_id.startswith(self._LEGACY_ASSET_PREFIX):
+            alt_id = edc_asset_id[len(self._LEGACY_ASSET_PREFIX):]
+        else:
+            alt_id = f"{self._LEGACY_ASSET_PREFIX}{edc_asset_id}"
+
+        stmt_alt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id == alt_id)
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+        )
+        return self._session.scalars(stmt_alt).first()
+
+    def find_published(self) -> List[Ccm]:
+        """
+        Return all certificates that have an EDC asset registered
+        (i.e. ``edc_asset_id IS NOT NULL``), ordered newest first.
+        Relations are not loaded to keep the list lightweight.
+        """
+        stmt = (
+            select(Ccm)
+            .where(Ccm.edc_asset_id.isnot(None))
+            .order_by(desc(Ccm.created_at))
+        )
+        return list(self._session.scalars(stmt).all())
+
     def find_by_bpnl_and_type(
         self, bpnl: str, certificate_type: str
     ) -> Optional[Ccm]:
@@ -1353,10 +1408,17 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
         return self._session.scalars(stmt).first()
 
     def update_status(
-        self, share_id: int, new_status: ShareStatus
+        self, share_id: int, new_status: ShareStatus,
+        rejection_reason: Optional[str] = None,
     ) -> Optional[CertificateShare]:
         """
         Update the lifecycle status of a sharing record.
+
+        Args:
+            share_id: Primary key of the sharing record.
+            new_status: New ShareStatus value.
+            rejection_reason: JSON-serialised rejection details (set on
+                REJECTED, cleared on ACCEPTED).
 
         Returns:
             The updated record, or None if not found.
@@ -1365,6 +1427,7 @@ class CertificateShareRepository(BaseRepository[CertificateShare]):
         if db_obj is None:
             return None
         db_obj.status = new_status
+        db_obj.rejection_reason = rejection_reason
         db_obj.last_shared_date = datetime.now(timezone.utc)
         self._session.add(db_obj)
         return db_obj
@@ -1586,7 +1649,61 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmOutboundRequest.status == status)
-        stmt = stmt.order_by(desc(CcmOutboundRequest.requested_at)).offset(offset).limit(limit)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.updated_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def find_latest_per_combo(
+        self,
+        provider_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[OutboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return only the most recent outbound request per unique
+        ``(provider_bpn, certified_bpn, certificate_type)`` combination.
+
+        This gives a deduplicated "current state" view — one row per
+        certificate of interest — while the full history is preserved in
+        the database and accessible via ``find_all_filtered()``.
+
+        Args:
+            provider_bpn: Optional filter by provider BPNL.
+            certified_bpn: Optional filter by certified entity BPNL.
+            certificate_type: Optional filter by certificate type.
+            status: Optional filter by OutboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of the newest CcmOutboundRequest per combination,
+            ordered by ``requested_at`` descending.
+        """
+        # Subquery: max(id) per combo key — id is monotonically increasing,
+        # so max(id) equals the most recently inserted row per group.
+        latest_ids = (
+            select(func.max(CcmOutboundRequest.id).label("max_id"))
+            .group_by(
+                CcmOutboundRequest.provider_bpn,
+                CcmOutboundRequest.certified_bpn,
+                CcmOutboundRequest.certificate_type,
+            )
+            .subquery()
+        )
+        stmt = select(CcmOutboundRequest).where(
+            CcmOutboundRequest.id.in_(select(latest_ids.c.max_id))
+        )
+        if provider_bpn:
+            stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmOutboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmOutboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmOutboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmOutboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     def update_status(
@@ -1613,5 +1730,366 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         record.updated_at = datetime.now(timezone.utc)
         if document_id is not None:
             record.document_id = document_id
+        self._session.add(record)
+        return record
+
+    def find_pending_by_match(
+        self,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return all Pending outbound requests for the given
+        (provider_bpn, certified_bpn, certificate_type) combination.
+
+        Used to correlate an incoming PUSH notification with the request(s)
+        that originally triggered it, so their status can be advanced to
+        Found atomically when the certificate is stored.
+        """
+        stmt = (
+            select(CcmOutboundRequest)
+            .where(CcmOutboundRequest.provider_bpn == provider_bpn)
+            .where(CcmOutboundRequest.certified_bpn == certified_bpn)
+            .where(CcmOutboundRequest.certificate_type == certificate_type)
+            .where(CcmOutboundRequest.status == OutboundRequestStatus.Pending)
+            .order_by(desc(CcmOutboundRequest.updated_at))
+        )
+        return list(self._session.scalars(stmt).all())
+
+    def find_active_by_provider_and_type(
+        self,
+        provider_bpn: str,
+        certificate_type: str,
+        certified_bpn: Optional[str] = None,
+    ) -> List[CcmOutboundRequest]:
+        """
+        Return all Pending and NotFound outbound requests for the given
+        (provider_bpn, certificate_type) combination.
+
+        Used when the provider sends a Certificate Available notification
+        (PULL mechanism) so the consumer can advance those requests to
+        Found and store the documentId.  Both statuses are included because
+        the provider may have initially responded with "NotFound" and only
+        later published the certificate.
+
+        Args:
+            provider_bpn: BPNL of the remote provider.
+            certificate_type: Certificate type identifier.
+            certified_bpn: Optional BPNL of the certified entity.  When
+                provided the query is narrowed to an exact match on all
+                three natural-key columns.
+
+        Returns:
+            List of matching CcmOutboundRequest records, newest first.
+        """
+        stmt = (
+            select(CcmOutboundRequest)
+            .where(CcmOutboundRequest.provider_bpn == provider_bpn)
+            .where(CcmOutboundRequest.certificate_type == certificate_type)
+        )
+        if certified_bpn is not None:
+            stmt = stmt.where(
+                CcmOutboundRequest.certified_bpn == certified_bpn
+            )
+        stmt = (
+            stmt
+            .where(
+                or_(
+                    CcmOutboundRequest.status.in_(
+                        [OutboundRequestStatus.Pending, OutboundRequestStatus.NotFound]
+                    ),
+                    # Also update Found records that are missing a documentId
+                    # (e.g. request was correlated via push response but no
+                    # documentId was recorded; the Available notification fills it in)
+                    and_(
+                        CcmOutboundRequest.status == OutboundRequestStatus.Found,
+                        CcmOutboundRequest.document_id.is_(None),
+                    ),
+                )
+            )
+            .order_by(desc(CcmOutboundRequest.updated_at))
+        )
+        return list(self._session.scalars(stmt).all())
+
+
+# ---------------------------------------------------------------------------
+# Inbound certificate request repository (provider-side)
+# ---------------------------------------------------------------------------
+
+class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
+    """
+    Repository for CcmInboundRequest entities — certificate requests received
+    by this node from external consumers.
+    """
+
+    def create_new(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        status: InboundRequestStatus,
+        **kwargs,
+    ) -> CcmInboundRequest:
+        """
+        Persist a new inbound-request record.
+
+        Args:
+            consumer_bpn: BPNL of the requesting consumer.
+            certified_bpn: BPNL of the legal entity whose certificate was requested.
+            certificate_type: Certificate type identifier.
+            status: Initial InboundRequestStatus.
+            **kwargs: Optional fields (location_bpns, certificate_id, notification_id).
+
+        Returns:
+            The staged CcmInboundRequest instance.
+        """
+        record = CcmInboundRequest(
+            consumer_bpn=consumer_bpn,
+            certified_bpn=certified_bpn,
+            certificate_type=certificate_type,
+            status=status,
+            **kwargs,
+        )
+        self.create(record)
+        return record
+
+    def find_by_id(self, request_id: int) -> Optional[CcmInboundRequest]:
+        """Return a single inbound request by primary key."""
+        return self._session.get(CcmInboundRequest, request_id)
+
+    def find_all_filtered(
+        self,
+        consumer_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[InboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequest]:
+        """
+        Return inbound requests with optional filters, newest first.
+
+        Args:
+            consumer_bpn: Filter by consumer BPNL.
+            certified_bpn: Filter by certified entity BPNL.
+            certificate_type: Filter by certificate type.
+            status: Filter by InboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum records to return.
+
+        Returns:
+            List of matching CcmInboundRequest records.
+        """
+        stmt = select(CcmInboundRequest)
+        if consumer_bpn:
+            stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmInboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmInboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmInboundRequest.updated_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def find_latest_per_combo(
+        self,
+        consumer_bpn: Optional[str] = None,
+        certified_bpn: Optional[str] = None,
+        certificate_type: Optional[str] = None,
+        status: Optional[InboundRequestStatus] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[CcmInboundRequest]:
+        """
+        Return only the most recent inbound request per unique
+        ``(consumer_bpn, certified_bpn, certificate_type)`` combination.
+
+        This gives a deduplicated "current state" view — one row per
+        consumer-certificate pair — while the full history is preserved
+        in the database and accessible via ``find_all_filtered()``.
+
+        Args:
+            consumer_bpn: Optional filter by consumer BPNL.
+            certified_bpn: Optional filter by certified entity BPNL.
+            certificate_type: Optional filter by certificate type.
+            status: Optional filter by InboundRequestStatus.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of the newest CcmInboundRequest per combination,
+            ordered by ``received_at`` descending.
+        """
+        latest_ids = (
+            select(func.max(CcmInboundRequest.id).label("max_id"))
+            .group_by(
+                CcmInboundRequest.consumer_bpn,
+                CcmInboundRequest.certified_bpn,
+                CcmInboundRequest.certificate_type,
+            )
+            .subquery()
+        )
+        stmt = select(CcmInboundRequest).where(
+            CcmInboundRequest.id.in_(select(latest_ids.c.max_id))
+        )
+        if consumer_bpn:
+            stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+        if certified_bpn:
+            stmt = stmt.where(CcmInboundRequest.certified_bpn == certified_bpn)
+        if certificate_type:
+            stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
+        if status:
+            stmt = stmt.where(CcmInboundRequest.status == status)
+        stmt = stmt.order_by(desc(CcmInboundRequest.updated_at)).offset(offset).limit(limit)
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(
+        self,
+        request_id: int,
+        new_status: InboundRequestStatus,
+        certificate_id: Optional[int] = None,
+    ) -> Optional[CcmInboundRequest]:
+        """
+        Update the status (and optionally resolve the certificate FK) on an
+        inbound request.
+
+        Args:
+            request_id: Primary key of the record to update.
+            new_status: New InboundRequestStatus value.
+            certificate_id: FK to the certificate, if now resolved.
+
+        Returns:
+            The updated record, or None if not found.
+        """
+        record = self._session.get(CcmInboundRequest, request_id)
+        if record is None:
+            return None
+        record.status = new_status
+        record.updated_at = datetime.now(timezone.utc)
+        if certificate_id is not None:
+            record.certificate_id = certificate_id
+        self._session.add(record)
+        return record
+
+    def advance_status_for_consumer(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        certificate_id: int,
+        new_status: InboundRequestStatus,
+        skip_statuses: Optional[List[InboundRequestStatus]] = None,
+        notification_id: Optional[str] = None,
+    ) -> List[CcmInboundRequest]:
+        """
+        Bulk-update inbound request records for a given consumer + certificate
+        to a new status.
+
+        Used when the provider sends a PUSH or Available notification to a
+        consumer so that all related inbound request records reflect the action
+        taken.
+
+        Matches on ``consumer_bpn + certified_bpn + certificate_type`` — the
+        natural certificate key — rather than ``certificate_id`` alone, because
+        "NotFound" inbound records have ``certificate_id = NULL`` until a cert
+        is actually created.  The ``certificate_id`` FK is stamped on every
+        matched record so it is always resolved after this call.
+
+        Args:
+            consumer_bpn: BPNL of the consumer.
+            certified_bpn: BPNL of the certified entity (cert holder).
+            certificate_type: Certificate type identifier.
+            certificate_id: FK of the certificate (set on all matched records).
+            new_status: New status to set (Available or Pushed).
+            skip_statuses: Records already in these statuses are left untouched.
+                Defaults to ``[Pushed]`` when not specified.  Pass
+                ``[Pushed, Available]`` for the Push flow so that records already
+                delivered via the PULL (Available) path are not overridden by a
+                Push notification triggered by a *different* consumer request.
+            notification_id: When provided, restricts the update to the single
+                request whose ``notification_id`` matches this value.  When None,
+                the existing bulk-advance behaviour is preserved.
+
+        Returns:
+            List of updated records.
+        """
+        if skip_statuses is None:
+            skip_statuses = [InboundRequestStatus.Pushed]
+        stmt = (
+            select(CcmInboundRequest)
+            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+            .where(CcmInboundRequest.certified_bpn == certified_bpn)
+            .where(CcmInboundRequest.certificate_type == certificate_type)
+            .where(CcmInboundRequest.status.not_in(skip_statuses))
+        )
+        if notification_id is not None:
+            stmt = stmt.where(CcmInboundRequest.notification_id == notification_id)
+        records = list(self._session.scalars(stmt).all())
+        now = datetime.now(timezone.utc)
+        for r in records:
+            r.status = new_status
+            r.certificate_id = certificate_id
+            r.updated_at = now
+            self._session.add(r)
+        return records
+
+    def update_consumer_status(
+        self,
+        consumer_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        consumer_status: str,
+        notification_id: Optional[str] = None,
+    ) -> Optional[CcmInboundRequest]:
+        """
+        Stamp ``consumer_status`` on an inbound request for a given consumer +
+        certificate natural key.
+
+        Called when the provider receives a status notification from the
+        consumer (RECEIVED / ACCEPTED / REJECTED) so the provider's
+        inbound-request view reflects the consumer's feedback.
+
+        Args:
+            consumer_bpn: BPNL of the consumer.
+            certified_bpn: BPNL of the certified entity.
+            certificate_type: Certificate type identifier.
+            consumer_status: Consumer feedback value (RECEIVED/ACCEPTED/REJECTED).
+            notification_id: When provided, targets the specific request whose
+                ``notification_id`` matches.  Falls back to the most-recent
+                heuristic if no row is found with that ID, ensuring robustness
+                when the chain is incomplete.
+
+        Returns:
+            The updated record, or None if no matching request exists.
+        """
+        record: Optional[CcmInboundRequest] = None
+
+        if notification_id is not None:
+            targeted_stmt = (
+                select(CcmInboundRequest)
+                .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+                .where(CcmInboundRequest.certified_bpn == certified_bpn)
+                .where(CcmInboundRequest.certificate_type == certificate_type)
+                .where(CcmInboundRequest.notification_id == notification_id)
+            )
+            record = self._session.scalars(targeted_stmt).first()
+
+        if record is None:
+            fallback_stmt = (
+                select(CcmInboundRequest)
+                .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+                .where(CcmInboundRequest.certified_bpn == certified_bpn)
+                .where(CcmInboundRequest.certificate_type == certificate_type)
+                .order_by(desc(CcmInboundRequest.updated_at))
+                .limit(1)
+            )
+            record = self._session.scalars(fallback_stmt).first()
+
+        if record is None:
+            return None
+        record.consumer_status = consumer_status
+        record.updated_at = datetime.now(timezone.utc)
         self._session.add(record)
         return record

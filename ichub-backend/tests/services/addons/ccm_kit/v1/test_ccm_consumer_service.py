@@ -315,6 +315,85 @@ class TestSendCertificateRequest:
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
 
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_request_provider_rejected(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """
+        Provider returns 200 REJECTED (certificate not found on provider side).
+        The consumer service must surface this as success=False so the caller
+        receives a meaningful error instead of a misleading success=True.
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public",
+            "token-reject",
+        )
+        # SDK returns the 200 REJECTED response body (CX-0135 §3.4)
+        mock_ncs.send_notification_to_endpoint.return_value = {
+            "header": {"messageId": "abc", "context": "CompanyCertificateManagement-CCMAPI-Request:1.0.0"},
+            "content": {
+                "requestStatus": "REJECTED",
+                "requestErrors": [
+                    {"message": "No certificate found for BPNL BPNL00000003XYZQ with type ISO50001."}
+                ],
+            },
+        }
+
+        payload = CcmSendRequestPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            certifiedBpn="BPNL00000003XYZQ",
+            certificateType="ISO50001",
+        )
+        result = service.send_certificate_request(payload, CONSUMER_BPN)
+
+        assert result.success is False
+        assert "No certificate found" in result.error
+        assert result.message_id is not None  # notification was sent, ID preserved
+
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_send_request_provider_completed(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+        """
+        Provider returns 200 COMPLETED (certificate already published).
+        The consumer service must return success=True.
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public",
+            "token-complete",
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {
+            "header": {"messageId": "def"},
+            "content": {
+                "requestStatus": "COMPLETED",
+                "documentId": "ichub:asset:ccm-cert:some-uuid",
+            },
+        }
+
+        payload = CcmSendRequestPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            certifiedBpn="BPNL000000000065",
+            certificateType="ISO9001",
+        )
+        result = service.send_certificate_request(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        assert result.error is None
+
 
 # ---------------------------------------------------------------------------
 # Send Certificate Status Tests
@@ -625,6 +704,10 @@ class TestPullCertificate:
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_consumer_service"
+        ".CcmConsumerService._correlate_outbound_after_pull"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service"
         ".CcmConsumerService._store_received_certificate"
     )
     @patch(
@@ -640,9 +723,10 @@ class TestPullCertificate:
         "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     def test_pull_success(
-        self, mock_cm, mock_config, mock_ccs, mock_http, mock_store, service
+        self, mock_cm, mock_config, mock_ccs, mock_http, mock_store,
+        mock_correlate, service,
     ):
-        """Full pull flow succeeds end-to-end."""
+        """Full pull flow succeeds end-to-end and correlates outbound requests."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = "1"
 
@@ -650,8 +734,12 @@ class TestPullCertificate:
         mock_ccs.do_dsp_with_bpnl.return_value = ("https://dp.example.com/data", "token-abc")
         mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
 
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+        }
         response_mock = Mock()
-        response_mock.json.return_value = {"businessPartnerNumber": "BPNL000000000001"}
+        response_mock.json.return_value = cert_data
         response_mock.raise_for_status.return_value = None
         mock_http.get.return_value = response_mock
 
@@ -660,9 +748,66 @@ class TestPullCertificate:
         request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
         result = service.pull_certificate(request)
 
-        assert result.certificate_data == {"businessPartnerNumber": "BPNL000000000001"}
+        assert result.certificate_data == cert_data
         assert result.stored is True
         mock_store.assert_called_once()
+        mock_correlate.assert_called_once_with(
+            provider_bpn=PROVIDER_BPN,
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            document_id="doc-001",
+            related_message_id=None,
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service"
+        ".CcmConsumerService._correlate_outbound_after_pull"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service"
+        ".CcmConsumerService._store_received_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.http_requests"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    def test_pull_correlation_failure_does_not_break_result(
+        self, mock_cm, mock_config, mock_ccs, mock_http, mock_store,
+        mock_correlate, service,
+    ):
+        """Correlation failure after pull is logged but doesn't affect the result."""
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = "1"
+
+        mock_ccs.get_filter_expression.return_value = {}
+        mock_ccs.do_dsp_with_bpnl.return_value = ("https://dp.example.com/data", "token-abc")
+        mock_ccs.get_data_plane_headers.return_value = {"Authorization": "token-abc"}
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+        }
+        response_mock = Mock()
+        response_mock.json.return_value = cert_data
+        response_mock.raise_for_status.return_value = None
+        mock_http.get.return_value = response_mock
+
+        mock_store.return_value = True
+        mock_correlate.side_effect = Exception("DB connection lost")
+
+        request = CcmPullRequest(providerBpn=PROVIDER_BPN, documentId="doc-001")
+        result = service.pull_certificate(request)
+
+        assert result.stored is True
+        assert result.certificate_data == cert_data
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"

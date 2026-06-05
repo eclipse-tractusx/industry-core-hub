@@ -36,6 +36,8 @@ from services.addons.ccm_kit.v1.ccm_notification_service import CcmNotificationS
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CertificateShare,
+    InboundRequestStatus,
+    OutboundRequestStatus,
     ShareStatus,
 )
 
@@ -56,6 +58,7 @@ def _make_notification(
     header.receiver_bpn = receiver_bpn
     header.context = context
     header.message_id = str(uuid4())
+    header.related_message_id = None  # explicit default; set per-test when needed
 
     content = Mock()
     extras = content_extras or {}
@@ -114,6 +117,7 @@ class TestCcmNotificationService:
         repos = Mock()
         repos.ccm_repository = Mock()
         repos.certificate_share_repository = Mock()
+        repos.ccm_inbound_request_repository = Mock()
         repos.commit = Mock()
         repos.refresh = Mock()
         return repos
@@ -128,11 +132,11 @@ class TestCcmNotificationService:
     )
     def test_request_certificate_found_new_share(self, mock_factory, mock_repos):
         """
-        GIVEN a request notification for an existing certificate
+        GIVEN a request notification for an existing certificate that is not yet published
         WHEN process_certificate_request is called
         AND the consumer has no prior share record
         THEN a new CertificateShare is created with status Pending
-        AND the response is (200, ...).
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -148,8 +152,8 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 200
-        assert "found" in body["message"].lower()
+        assert status == 202
+        assert body["content"]["requestStatus"] == "IN_PROGRESS"
         mock_repos.ccm_repository.find_by_bpnl_and_type.assert_called_once_with(
             bpnl="BPNL000000000001",
             certificate_type="ISO9001",
@@ -159,6 +163,10 @@ class TestCcmNotificationService:
             consumer_bpnl="BPNL000000000099",
             status=ShareStatus.Pending,
         )
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("status") == InboundRequestStatus.Registered or \
+               call_kwargs.args[3] == InboundRequestStatus.Registered
         mock_repos.commit.assert_called_once()
 
     @patch(
@@ -167,10 +175,10 @@ class TestCcmNotificationService:
     )
     def test_request_certificate_found_existing_share(self, mock_factory, mock_repos):
         """
-        GIVEN a request notification for an existing certificate
+        GIVEN a request notification for an existing certificate that is not yet published
         WHEN the consumer already has a share record
         THEN no new share is created, but the existing share's timestamp is updated
-        AND the response is (200, ...).
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -187,8 +195,10 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
+        assert body["content"]["requestStatus"] == "IN_PROGRESS"
         mock_repos.certificate_share_repository.create_new.assert_not_called()
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
         mock_repos.commit.assert_called_once()
 
     @patch(
@@ -199,7 +209,8 @@ class TestCcmNotificationService:
         """
         GIVEN a request notification for a certificate that does not exist
         WHEN process_certificate_request is called
-        THEN the response is (404, ...) and no share is created.
+        THEN the response is (200, REJECTED) per CX-0135 with requestErrors
+        AND no share is created.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = None
@@ -213,9 +224,17 @@ class TestCcmNotificationService:
 
         status, body = self.service.process_certificate_request(notification)
 
-        assert status == 404
-        assert "no certificate found" in body["message"].lower()
+        assert status == 200
+        assert body["content"]["requestStatus"] == "REJECTED"
+        assert len(body["content"]["requestErrors"]) == 1
+        assert "no certificate found" in body["content"]["requestErrors"][0]["message"].lower()
         mock_repos.certificate_share_repository.create_new.assert_not_called()
+        # Demand should be recorded even when cert not found.
+        mock_repos.ccm_inbound_request_repository.create_new.assert_called_once()
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("status") == InboundRequestStatus.NotFound or \
+               call_kwargs.args[3] == InboundRequestStatus.NotFound
+        mock_repos.commit.assert_called_once()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"
@@ -225,7 +244,8 @@ class TestCcmNotificationService:
         """
         GIVEN a request notification that includes locationBpns
         WHEN process_certificate_request is called
-        THEN the request is processed normally (locationBpns is optional, parsed but not yet filtered).
+        THEN the request is processed normally (locationBpns is optional, parsed but not yet filtered)
+        AND the response is (202, IN_PROGRESS) per CX-0135.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
@@ -242,7 +262,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
 
     # ==================================================================
     # process_certificate_status
@@ -256,7 +276,8 @@ class TestCcmNotificationService:
         """
         GIVEN a status notification with certificateStatus=ACCEPTED
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Active.
+        THEN the CertificateShare status is updated to Active (rejection_reason cleared)
+        AND consumer_status is stamped as ACCEPTED on the inbound request.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=42)
@@ -280,6 +301,14 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=share.id,
             new_status=ShareStatus.Active,
+            rejection_reason=None,
+        )
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="ACCEPTED",
+            notification_id=None,
         )
         mock_repos.commit.assert_called_once()
 
@@ -289,9 +318,10 @@ class TestCcmNotificationService:
     )
     def test_status_rejected(self, mock_factory, mock_repos):
         """
-        GIVEN a status notification with certificateStatus=REJECTED
+        GIVEN a status notification with certificateStatus=REJECTED (no error details)
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Revoked.
+        THEN the CertificateShare status is updated to Revoked (rejection_reason=None)
+        AND the inbound request consumer_status is stamped as REJECTED.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=10)
@@ -314,6 +344,14 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=3,
             new_status=ShareStatus.Revoked,
+            rejection_reason=None,
+        )
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="REJECTED",
+            notification_id=None,
         )
 
     @patch(
@@ -324,8 +362,9 @@ class TestCcmNotificationService:
         """
         GIVEN a REJECTED status with certificateErrors and locationErrors
         WHEN update_certificate_status is called
-        THEN rejection details are logged at INFO level.
+        THEN rejection details are logged AND stored as JSON on the share.
         """
+        import json
         import logging
 
         mock_factory.return_value.__enter__.return_value = mock_repos
@@ -353,6 +392,12 @@ class TestCcmNotificationService:
         assert status == 200
         assert "Certificate expired" in caplog.text
 
+        # Verify rejection_reason is passed as serialised JSON.
+        call_kwargs = mock_repos.certificate_share_repository.update_status.call_args.kwargs
+        reason = json.loads(call_kwargs["rejection_reason"])
+        assert reason["certificateErrors"] == ["Certificate expired"]
+        assert {"BPNS000000000001": ["Invalid site"]} in reason["locationErrors"]
+
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
@@ -360,12 +405,15 @@ class TestCcmNotificationService:
     def test_status_received(self, mock_factory, mock_repos):
         """
         GIVEN a status notification with certificateStatus=RECEIVED
+        AND the share is already Pending (RECEIVED maps to Pending)
         WHEN process_certificate_status is called
-        THEN the CertificateShare status is updated to Pending.
+        THEN the share is NOT written again (idempotent no-op for share status)
+        AND consumer_status IS still stamped on the inbound request
+        AND 200 is returned.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=5)
-        share = _make_share(id=2, certificate_id=5)
+        share = _make_share(id=2, certificate_id=5)  # default status=Pending
         mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
         mock_repos.certificate_share_repository.update_status.return_value = share
@@ -378,12 +426,19 @@ class TestCcmNotificationService:
             },
         )
 
-        status, _ = self.service.update_certificate_status(notification)
+        status, body = self.service.update_certificate_status(notification)
 
         assert status == 200
-        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
-            share_id=2,
-            new_status=ShareStatus.Pending,
+        assert "already" in body["message"].lower()
+        # Share must NOT be written (idempotent)
+        mock_repos.certificate_share_repository.update_status.assert_not_called()
+        # consumer_status must still be stamped
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="RECEIVED",
+            notification_id=None,
         )
 
     @patch(
@@ -398,6 +453,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = []
 
         notification = _make_notification(
             context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
@@ -412,12 +468,64 @@ class TestCcmNotificationService:
         assert status == 404
         assert "not found" in body["message"].lower()
 
-    def test_status_invalid_document_id(self):
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_share_fallback_resolves_certificate(self, mock_factory, mock_repos):
         """
-        GIVEN a status notification with a non-numeric documentId
+        GIVEN a status notification whose documentId no longer matches any
+        edc_asset_id (e.g. certificate was unpublished after the consumer
+        already received it)
+        AND the consumer has exactly one active CertificateShare
+        WHEN update_certificate_status is called
+        THEN the certificate is resolved via the share fallback and the
+        status update succeeds with HTTP 200.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=7)
+        share = _make_share(id=3, certificate_id=7)
+        # Primary lookups both miss
+        mock_repos.ccm_repository.find_by_edc_asset_id.return_value = None
+        # Fallback: one active share for this consumer
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = [share]
+        # Subsequent loads work
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "ichub:asset:ccm-cert:old-uuid",
+                "certificateStatus": "ACCEPTED",
+            },
+        )
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
+            share_id=3,
+            new_status=ShareStatus.Active,
+            rejection_reason=None,
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_invalid_document_id(self, mock_factory, mock_repos):
+        """
+        GIVEN a status notification with a non-numeric documentId that is
+        also not a known EDC asset ID
         WHEN process_certificate_status is called
-        THEN the response is (404, ...) because the ID cannot be resolved.
+        THEN the response is (404, ...) because the certificate cannot be found.
         """
+        mock_repos.ccm_repository.find_by_edc_asset_id.return_value = None
+        mock_repos.certificate_share_repository.find_by_consumer_bpnl.return_value = []
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
         notification = _make_notification(
             context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
             content_extras={
@@ -429,7 +537,7 @@ class TestCcmNotificationService:
         status, body = self.service.update_certificate_status(notification)
 
         assert status == 404
-        assert "could not be resolved" in body["message"].lower()
+        assert "not found" in body["message"].lower()
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"
@@ -476,6 +584,8 @@ class TestCcmNotificationService:
         """
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
@@ -548,6 +658,8 @@ class TestCcmNotificationService:
         existing.doc = b"old"
         mock_repos.ccm_received_repository = Mock()
         mock_repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
         mock_factory.return_value.__enter__.return_value = mock_repos
 
         notification = _make_notification(
@@ -570,6 +682,56 @@ class TestCcmNotificationService:
         assert "updated" in body["message"].lower()
         mock_repos.ccm_received_repository.create_new.assert_not_called()
         mock_repos.commit.assert_called()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_correlates_not_found_outbound_requests(
+        self, mock_factory, mock_repos,
+    ):
+        """
+        GIVEN a push notification AND an outbound request in NotFound status
+        WHEN process_certificate_push is called
+        THEN the NotFound request is advanced to Found with the document_id.
+        """
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+
+        outbound_req = Mock(id=42)
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = [
+            outbound_req
+        ]
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "DOC-099",
+                    "contentType": "application/pdf",
+                    "contentBase64": "JVBERi0xLjQgdGVzdA==",
+                },
+                "issuer": {"issuerName": "TÜV"},
+            },
+        )
+
+        status, body = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.assert_called_once_with(
+            provider_bpn="BPNL000000000099",
+            certificate_type="ISO9001",
+            certified_bpn="BPNL000000000001",
+        )
+        mock_repos.ccm_outbound_request_repository.update_status.assert_called_once_with(
+            request_id=42,
+            new_status=OutboundRequestStatus.Found,
+            document_id="DOC-099",
+        )
 
     # ==================================================================
     # process_certificate_available
@@ -634,7 +796,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
         mock_auto_push.assert_called_once_with(ccm.id, "BPNL000000000099", "BPNL000000000001")
 
     @patch(
@@ -672,7 +834,7 @@ class TestCcmNotificationService:
 
         status, _ = self.service.process_certificate_request(notification)
 
-        assert status == 200
+        assert status == 202
         mock_auto_push.assert_not_called()
 
     # ==================================================================
@@ -744,6 +906,7 @@ class TestCcmNotificationService:
         mock_repos.certificate_share_repository.update_status.assert_called_once_with(
             share_id=5,
             new_status=ShareStatus.Revoked,
+            rejection_reason=None,
         )
 
     @patch(
@@ -777,3 +940,160 @@ class TestCcmNotificationService:
         assert status == 409
         assert "cannot transition" in body["message"].lower()
         mock_repos.certificate_share_repository.update_status.assert_not_called()
+
+    # ==================================================================
+    # CX-0135 context validation (Phase 3)
+    # ==================================================================
+
+    def test_request_wrong_context_returns_400(self):
+        """GIVEN a notification with a wrong context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+            },
+        )
+        status, body = self.service.process_certificate_request(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_status_wrong_context_returns_400(self):
+        """GIVEN a status notification with Push context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "RECEIVED",
+            },
+        )
+        status, body = self.service.update_certificate_status(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_push_wrong_context_returns_400(self):
+        """GIVEN a push notification with Request context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+        )
+        status, body = self.service.process_certificate_push(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    def test_available_wrong_context_returns_400(self):
+        """GIVEN an available notification with Status context THEN return 400."""
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+        )
+        status, body = self.service.process_certificate_available(notification)
+        assert status == 400
+        assert "context" in body["message"].lower()
+
+    # ==================================================================
+    # _resolve_document_id — UUID-first behaviour (Phase 1.3)
+    # ==================================================================
+
+    def test_resolve_document_id_integer(self):
+        """Legacy integer document IDs still resolve."""
+        assert CcmNotificationService._resolve_document_id("42") == 42
+
+    def test_resolve_document_id_uuid_returns_none(self):
+        """UUID document IDs should return None (not integer)."""
+        result = CcmNotificationService._resolve_document_id(
+            "550e8400-e29b-41d4-a716-446655440000"
+        )
+        assert result is None
+
+    def test_resolve_document_id_none_returns_none(self):
+        """None input should return None safely."""
+        assert CcmNotificationService._resolve_document_id(None) is None
+
+    # ==================================================================
+    # Push stores notification_message_id (Phase 2.2)
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_stores_notification_message_id(self, mock_factory, mock_repos):
+        """
+        GIVEN a push notification with a valid certificate payload
+        WHEN process_certificate_push is called
+        THEN the stored CcmReceived record includes the notification's messageId.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_received_repository = Mock()
+        mock_repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+
+        msg_id = str(uuid4())
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras={
+                "businessPartnerNumber": "BPNL000000000001",
+                "type": {"certificateType": "ISO9001"},
+                "document": {
+                    "documentID": "doc-abc",
+                    "creationDate": "2024-06-01T00:00:00Z",
+                    "contentType": "application/pdf",
+                    "contentBase64": "JVBERi0xLjQgdGVzdA==",
+                },
+                "issuer": {
+                    "issuerName": "TÜV Rheinland",
+                },
+            },
+        )
+        notification.header.message_id = msg_id
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        call_kwargs = mock_repos.ccm_received_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("notification_message_id") == msg_id
+
+    # ==================================================================
+    # Status uses relatedMessageId to target correct inbound request (Bug fix)
+    # ==================================================================
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_status_uses_related_message_id_for_consumer_status_update(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a status notification whose header includes a relatedMessageId
+        WHEN update_certificate_status (process_certificate_status) is called
+        THEN update_consumer_status is called with notification_id=<relatedMessageId>
+        so only the targeted inbound request is stamped, not the most-recent one.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm(id=42)
+        share = _make_share(certificate_id=42)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        related_id = "aaaabbbb-cccc-dddd-eeee-ffffaaaabbbb"
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "ACCEPTED",
+            },
+        )
+        notification.header.related_message_id = related_id
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.ccm_inbound_request_repository.update_consumer_status.assert_called_once_with(
+            consumer_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000001",
+            certificate_type="ISO9001",
+            consumer_status="ACCEPTED",
+            notification_id=related_id,
+        )

@@ -36,7 +36,7 @@ import base64
 import binascii
 import json
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import requests as http_requests
 
@@ -184,7 +184,44 @@ class CcmConsumerService(CcmBaseService):
             policies=payload.governance,
         )
 
-        # Persist the outbound request regardless of success so the operator
+        # Inspect the provider response body for a CX-0135 REJECTED status.
+        # The SDK returns HTTP 200 for REJECTED (valid 2xx), so we must check
+        # the body ourselves — HTTP 200 alone does not mean the cert was found.
+        outbound_status = OutboundRequestStatus.Pending
+        if result.success:
+            provider_content = (
+                (result.provider_response or {}).get("content", {})
+            )
+            request_status = provider_content.get("requestStatus")
+
+            if request_status == "REJECTED":
+                errors = provider_content.get("requestErrors", [])
+                error_msg = (
+                    errors[0].get("message", "Provider rejected the request.")
+                    if errors
+                    else "Provider rejected the request."
+                )
+                logger.warning(
+                    f"[CCM Consumer] Provider REJECTED request for "
+                    f"certifiedBpn={_s(payload.certified_bpn)} "
+                    f"type={_s(payload.certificate_type)}: {_s(error_msg)}"
+                )
+                result = CcmSendResult(
+                    success=False,
+                    message_id=result.message_id,
+                    error=error_msg,
+                )
+                outbound_status = OutboundRequestStatus.NotFound
+
+            elif request_status == "COMPLETED":
+                outbound_status = OutboundRequestStatus.Found
+
+            # IN_PROGRESS → keep Pending (provider will push/notify later)
+
+        else:
+            outbound_status = OutboundRequestStatus.Failed
+
+        # Persist the outbound request regardless of outcome so the operator
         # can inspect failed deliveries as well.
         try:
             with RepositoryManagerFactory.create() as repo:
@@ -202,11 +239,7 @@ class CcmConsumerService(CcmBaseService):
                         if payload.governance else None
                     ),
                     notification_id=str(notification.header.message_id),
-                    status=(
-                        OutboundRequestStatus.Pending
-                        if result.success
-                        else OutboundRequestStatus.Failed
-                    ),
+                    status=outbound_status,
                 )
         except Exception as persist_err:
             # Persistence failure must not mask a successful notification send.
@@ -261,6 +294,23 @@ class CcmConsumerService(CcmBaseService):
                     f"[CCM Consumer] Invalid relatedMessageId: "
                     f"{_s(payload.related_message_id)}"
                 )
+        else:
+            # CX-0135: auto-populate from the stored push/available messageId.
+            try:
+                with RepositoryManagerFactory.create() as repo:
+                    received = repo.ccm_received_repository.find_by_document_id(
+                        payload.document_id, provider_bpn=provider_bpn,
+                    )
+                    if received and received.notification_message_id:
+                        related_msg_id = uuid.UUID(received.notification_message_id)
+                        logger.debug(
+                            f"[CCM Consumer] Auto-resolved relatedMessageId="
+                            f"{related_msg_id} from CcmReceived."
+                        )
+            except Exception as e:
+                logger.debug(
+                    f"[CCM Consumer] Could not auto-resolve relatedMessageId: {_s(e)}"
+                )
 
         notification = self._build_notification(
             context=CCM_CONTEXT_STATUS,
@@ -310,6 +360,8 @@ class CcmConsumerService(CcmBaseService):
     def pull_certificate(
         self,
         request: CcmPullRequest,
+        notification_message_id: Optional[str] = None,
+        related_message_id: Optional[str] = None,
     ) -> CcmPullResult:
         """
         Discover and pull a certificate from a provider's EDC catalog.
@@ -323,6 +375,13 @@ class CcmConsumerService(CcmBaseService):
 
         Args:
             request: Contains ``provider_bpn`` and ``document_id``.
+            notification_message_id: Optional messageId from the push or
+                available notification that triggered this pull.  Stored on
+                the ``CcmReceived`` record for ``relatedMessageId`` linking.
+            related_message_id: Optional relatedMessageId from the triggering
+                available notification — the original REQUEST messageId.
+                Forwarded to the outbound-request correlator so only the
+                targeted request is advanced to Found.
 
         Returns:
             CcmPullResult with the certificate payload and storage status.
@@ -404,7 +463,29 @@ class CcmConsumerService(CcmBaseService):
             certificate_data=certificate_data,
             provider_bpn=provider_bpn,
             document_id=document_id,
+            notification_message_id=notification_message_id,
         )
+
+        # --- 5. Correlate outbound requests ---
+        if stored:
+            cert_bpn = certificate_data.get("businessPartnerNumber", "")
+            cert_type = (
+                certificate_data.get("type", {}).get("certificateType", "")
+            )
+            if cert_bpn and cert_type:
+                try:
+                    self._correlate_outbound_after_pull(
+                        provider_bpn=provider_bpn,
+                        certified_bpn=cert_bpn,
+                        certificate_type=cert_type,
+                        document_id=document_id,
+                        related_message_id=related_message_id,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"[CCM Consumer] Outbound correlation failed after pull "
+                        f"for {_s(document_id)}: {_s(e)}"
+                    )
 
         logger.info(
             f"[CCM Consumer] Successfully pulled certificate {_s(document_id)} "
@@ -454,9 +535,17 @@ class CcmConsumerService(CcmBaseService):
         certificate_data: dict,
         provider_bpn: str,
         document_id: str,
+        notification_message_id: Optional[str] = None,
     ) -> bool:
         """
         Persist a pulled certificate in the ``ccm_received`` table.
+
+        Args:
+            certificate_data: The parsed certificate payload.
+            provider_bpn: BPNL of the provider.
+            document_id: EDC asset / document ID.
+            notification_message_id: Optional messageId from the notification
+                that triggered this storage (for relatedMessageId linking).
 
         Returns ``True`` on success, ``False`` on failure.
         """
@@ -480,6 +569,9 @@ class CcmConsumerService(CcmBaseService):
                     )
 
             with RepositoryManagerFactory.create() as repo:
+                extra_kwargs: Dict[str, Any] = {}
+                if notification_message_id:
+                    extra_kwargs["notification_message_id"] = notification_message_id
                 repo.ccm_received_repository.create_new(
                     document_id=document_id,
                     provider_bpn=provider_bpn,
@@ -494,12 +586,57 @@ class CcmConsumerService(CcmBaseService):
                     uploader_bpn=certificate_data.get("uploader"),
                     validator_name=validator_section.get("validatorName"),
                     doc=doc_bytes,
+                    **extra_kwargs,
                 )
 
             return True
         except Exception as e:
             logger.error(f"[CCM Consumer] Failed to store received certificate: {_s(e)}")
             return False
+
+    @staticmethod
+    def _correlate_outbound_after_pull(
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        document_id: str,
+        related_message_id: Optional[str] = None,
+    ) -> None:
+        """
+        Advance active outbound requests to ``Found`` after a manual pull.
+
+        Matches ``Pending``, ``NotFound``, and ``Found``-without-``document_id``
+        requests for the ``(provider_bpn, certificate_type, certified_bpn)``
+        combination and sets ``document_id`` on each.
+
+        When ``related_message_id`` is provided it restricts the update to
+        the single request whose ``notification_id`` matches (i.e. the
+        original REQUEST messageId referenced by the triggering AVAILABLE
+        notification), with a fallback to all active records if no exact
+        match is found.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                provider_bpn=provider_bpn,
+                certificate_type=certificate_type,
+                certified_bpn=certified_bpn,
+            )
+            if related_message_id is not None:
+                targeted = [r for r in active if r.notification_id == related_message_id]
+                if targeted:
+                    active = targeted
+            for req in active:
+                repo.ccm_outbound_request_repository.update_status(
+                    request_id=req.id,
+                    new_status=OutboundRequestStatus.Found,
+                    document_id=document_id,
+                )
+                logger.info(
+                    f"[CCM Consumer] Outbound request {req.id} → Found "
+                    f"(documentId={_s(document_id)}) after pull"
+                )
+            if active:
+                repo.commit()
 
     # ------------------------------------------------------------------
     # Visibility: received certificates
@@ -555,18 +692,48 @@ class CcmConsumerService(CcmBaseService):
             if record is None:
                 return None
 
-            item = self._to_received_item(record)
-            detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
-            detail.certificate_version = record.certificate_version
-            detail.issuer_name = record.issuer_name
-            detail.issuer_bpn = record.issuer_bpn
-            detail.validator_name = record.validator_name
-            detail.registration_number = record.registration_number
-            detail.area_of_application = record.area_of_application
-            detail.uploader_bpn = record.uploader_bpn
-            if record.doc:
-                detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
-            return detail
+            return self._to_received_detail(record)
+
+    def get_received_by_document_id(
+        self, document_id: str, provider_bpn: str,
+    ) -> Optional[ReceivedCertificateDetail]:
+        """
+        Return the full detail for a received certificate identified by the
+        provider-assigned ``document_id`` and ``provider_bpn``.
+
+        Args:
+            document_id: Provider-assigned document reference.
+            provider_bpn: BPNL of the provider that sent the certificate.
+
+        Returns:
+            ReceivedCertificateDetail, or None if not found.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            record = repo.ccm_received_repository.find_by_document_id(
+                document_id, provider_bpn=provider_bpn,
+            )
+
+            if record is None:
+                return None
+
+            return self._to_received_detail(record)
+
+    def _to_received_detail(
+        self, record: "CcmReceived",
+    ) -> ReceivedCertificateDetail:
+        """Map a CcmReceived ORM instance to a full ReceivedCertificateDetail DTO."""
+        item = self._to_received_item(record)
+        detail = ReceivedCertificateDetail(**item.model_dump(by_alias=False))
+        detail.certificate_version = record.certificate_version
+        detail.issuer_name = record.issuer_name
+        detail.issuer_bpn = record.issuer_bpn
+        detail.validator_name = record.validator_name
+        detail.registration_number = record.registration_number
+        detail.area_of_application = record.area_of_application
+        detail.uploader_bpn = record.uploader_bpn
+        if record.doc:
+            detail.document_base64 = base64.b64encode(record.doc).decode("ascii")
+        return detail
 
     # ------------------------------------------------------------------
     # Visibility: outbound requests
@@ -582,7 +749,12 @@ class CcmConsumerService(CcmBaseService):
         limit: int = 100,
     ) -> List[OutboundRequestItem]:
         """
-        Return a paginated list of certificate requests sent by this node.
+        Return a deduplicated list of certificate requests — only the most
+        recent entry per ``(provider_bpn, certified_bpn, certificate_type)``
+        combination is returned.
+
+        This gives a "current state" overview.  For the full history of a
+        specific combination, use ``list_request_history()``.
 
         Args:
             provider_bpn: Optional filter by provider BPNL.
@@ -593,7 +765,7 @@ class CcmConsumerService(CcmBaseService):
             limit: Maximum number of records to return.
 
         Returns:
-            List of OutboundRequestItem DTOs.
+            List of OutboundRequestItem DTOs (latest per combination).
         """
         from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus as _S
 
@@ -605,11 +777,44 @@ class CcmConsumerService(CcmBaseService):
                 pass  # Unknown status → ignore filter; return all
 
         with RepositoryManagerFactory.create() as repo:
-            records = repo.ccm_outbound_request_repository.find_all_filtered(
+            records = repo.ccm_outbound_request_repository.find_latest_per_combo(
                 provider_bpn=provider_bpn,
                 certified_bpn=certified_bpn,
                 certificate_type=certificate_type,
                 status=status_enum,
+                offset=offset,
+                limit=limit,
+            )
+            return [self._to_request_item(r) for r in records]
+
+    def list_request_history(
+        self,
+        provider_bpn: str,
+        certified_bpn: str,
+        certificate_type: str,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[OutboundRequestItem]:
+        """
+        Return the full history of outbound requests for a specific
+        ``(provider_bpn, certified_bpn, certificate_type)`` combination,
+        ordered newest first.
+
+        Args:
+            provider_bpn: BPNL of the remote provider.
+            certified_bpn: BPNL of the certified entity.
+            certificate_type: Certificate type identifier.
+            offset: Pagination offset.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of OutboundRequestItem DTOs (all entries for the combo).
+        """
+        with RepositoryManagerFactory.create() as repo:
+            records = repo.ccm_outbound_request_repository.find_all_filtered(
+                provider_bpn=provider_bpn,
+                certified_bpn=certified_bpn,
+                certificate_type=certificate_type,
                 offset=offset,
                 limit=limit,
             )

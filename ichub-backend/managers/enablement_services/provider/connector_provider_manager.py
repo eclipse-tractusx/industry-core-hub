@@ -554,6 +554,37 @@ class ConnectorProviderManager:
         """
         asset_id = existing_asset_id or self.generate_ccm_notification_asset_id(ccm_url)
 
+        # Clean up any stale CCM notification assets whose ID no longer matches
+        # the current URL hash (e.g. left over from a previous deploy where
+        # apiPath was misconfigured).  We do this by querying all assets whose
+        # @id starts with the CCM notification prefix and deleting every one
+        # that is not the current target ID.
+        CCM_ASSET_PREFIX = "ichub:asset:ccm-notification:"
+        try:
+            query_response = self.connector_service.assets.query(
+                obj=None, verify=self.connector_service.verify_ssl
+            )
+            if query_response.status_code == 200:
+                all_assets = query_response.json() if callable(query_response.json) else []
+                for a in all_assets:
+                    stale_id = a.get("@id", "")
+                    if stale_id.startswith(CCM_ASSET_PREFIX) and stale_id != asset_id:
+                        logger.warning(
+                            f"[CCM] Removing stale CCM notification asset {stale_id!r} "
+                            f"(current target is {asset_id!r})."
+                        )
+                        try:
+                            self.connector_service.assets.delete(
+                                oid=stale_id, verify=self.connector_service.verify_ssl
+                            )
+                        except Exception as del_exc:
+                            logger.warning(
+                                f"[CCM] Could not delete stale asset {stale_id!r}: {del_exc}"
+                            )
+        except Exception as query_exc:
+            # Non-fatal: stale cleanup is best-effort
+            logger.warning(f"[CCM] Stale asset cleanup query failed: {query_exc}")
+
         existing_asset = self.connector_service.assets.get_by_id(oid=asset_id)
         if existing_asset.status_code == 200:
             logger.debug(f"[CCM] Asset with ID {asset_id} already exists.")

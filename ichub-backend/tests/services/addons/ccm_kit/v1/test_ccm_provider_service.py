@@ -38,7 +38,11 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
+    CcmInboundRequest,
     CcmSite,
+    CertificateShare,
+    InboundRequestStatus,
+    ShareStatus,
     TrustLevel,
 )
 from models.services.addons.ccm_kit.v1.notifications import (
@@ -81,6 +85,7 @@ def _make_ccm(**kwargs) -> Mock:
     m.validator = kwargs.get("validator", "Validator GmbH")
     m.doc = kwargs.get("doc", b"%PDF-1.4 test content")
     m.created_at = kwargs.get("created_at", datetime(2024, 6, 1, tzinfo=timezone.utc))
+    m.edc_asset_id = kwargs.get("edc_asset_id", None)
 
     # Sites
     site_mocks = kwargs.get("sites", None)
@@ -155,6 +160,7 @@ class TestPushCertificate:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -174,6 +180,18 @@ class TestPushCertificate:
         mock_update_share.assert_called_once_with(
             certificate_id=CERT_ID,
             consumer_bpn=CONSUMER_BPN,
+        )
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Pushed,
+            skip_statuses=[
+                InboundRequestStatus.Available,
+                InboundRequestStatus.Pushed,
+            ],
+            notification_id=None,
         )
 
     @patch(
@@ -283,6 +301,7 @@ class TestPushCertificate:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -307,6 +326,18 @@ class TestPushCertificate:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Pushed,
+            skip_statuses=[
+                InboundRequestStatus.Available,
+                InboundRequestStatus.Pushed,
+            ],
+            notification_id=None,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -339,6 +370,7 @@ class TestSendCertificateAvailable:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -357,6 +389,14 @@ class TestSendCertificateAvailable:
         assert result.success is True
         assert result.message_id is not None
         mock_ncs.send_notification_to_endpoint.assert_called_once()
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Available,
+            notification_id=None,
+        )
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_provider_service"
@@ -467,6 +507,7 @@ class TestSendCertificateAvailable:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -491,6 +532,14 @@ class TestSendCertificateAvailable:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            certificate_id=CERT_ID,
+            new_status=InboundRequestStatus.Available,
+            notification_id=None,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -854,6 +903,7 @@ class TestPushShareStatusErrorHandling:
         ccm = _make_ccm()
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
         mock_factory.return_value.__enter__.return_value = repos
 
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
@@ -871,3 +921,304 @@ class TestPushShareStatusErrorHandling:
 
         assert result.success is True
         mock_update_share.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Mapper Tests (ShareItem / CcmInboundRequestItem)
+# ---------------------------------------------------------------------------
+
+
+class TestProviderServiceMappers:
+    """Tests for _to_inbound_request_item and ShareItem construction."""
+
+    def test_inbound_request_item_includes_consumer_status(self):
+        """
+        GIVEN a CcmInboundRequest with consumer_status set
+        WHEN _to_inbound_request_item is called
+        THEN the resulting DTO includes consumerStatus.
+        """
+        record = Mock(spec=CcmInboundRequest)
+        record.id = 1
+        record.consumer_bpn = "BPNL000000000099"
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.certificate_id = 42
+        record.status = InboundRequestStatus.Pushed
+        record.consumer_status = "ACCEPTED"
+        record.notification_id = "notif-123"
+        record.received_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2025, 1, 2, tzinfo=timezone.utc)
+
+        item = CcmProviderService._to_inbound_request_item(record)
+
+        assert item.consumer_status == "ACCEPTED"
+        assert item.status == "Pushed"
+
+    def test_inbound_request_item_consumer_status_none(self):
+        """
+        GIVEN a CcmInboundRequest with consumer_status = None
+        WHEN _to_inbound_request_item is called
+        THEN consumerStatus is None in the DTO.
+        """
+        record = Mock(spec=CcmInboundRequest)
+        record.id = 2
+        record.consumer_bpn = "BPNL000000000099"
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.certificate_id = None
+        record.status = InboundRequestStatus.NotFound
+        record.consumer_status = None
+        record.notification_id = None
+        record.received_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        item = CcmProviderService._to_inbound_request_item(record)
+
+        assert item.consumer_status is None
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_list_shares_includes_rejection_reason(self, mock_factory):
+        """
+        GIVEN a CertificateShare with rejection_reason set
+        WHEN list_shares is called
+        THEN the resulting ShareItem includes rejectionReason.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 7
+        share.certificate_id = 42
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = ShareStatus.Revoked
+        share.rejection_reason = '{"certificateErrors": ["Expired"]}'
+        share.last_shared_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        service = CcmProviderService()
+        items = service.list_shares()
+
+        assert len(items) == 1
+        assert items[0].rejection_reason == '{"certificateErrors": ["Expired"]}'
+        assert items[0].status == "Revoked"
+
+
+# =====================================================================
+# CX-0135 compliance tests
+# =====================================================================
+
+
+class TestCX0135Compliance:
+    """Tests for CX-0135 standard compliance changes."""
+
+    # ------------------------------------------------------------------
+    # Phase 1.1: Asset ID is now a plain UUID
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".ConfigManager"
+    )
+    def test_publish_generates_uuid_asset_id(
+        self, mock_config, mock_conn, mock_factory, service
+    ):
+        """
+        GIVEN a certificate without an edc_asset_id
+        WHEN publish_certificate is called
+        THEN the new asset_id is a plain UUID (no prefix).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id=None)
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_config.get_config.return_value = {"some": "policy"}
+        # register_ccm_certificate_offer returns (asset_id, policy_id, contract_id, _)
+        # It receives the generated asset_id — capture it.
+        mock_conn.register_ccm_certificate_offer.side_effect = (
+            lambda asset_id, **kw: (asset_id, "pol", "con", None)
+        )
+
+        from uuid import UUID
+
+        result = service.publish_certificate(CERT_ID)
+
+        # The returned asset_id should be a valid UUID (no prefix)
+        UUID(result["document_id"])  # raises ValueError if not a valid UUID
+        assert "ichub:asset:" not in result["document_id"]
+
+    # ------------------------------------------------------------------
+    # Phase 1.2: _build_push_content uses edc_asset_id
+    # ------------------------------------------------------------------
+
+    def test_build_push_content_uses_edc_asset_id(self, service):
+        """
+        GIVEN a Ccm with edc_asset_id set
+        WHEN _build_push_content is called
+        THEN documentID in the result equals the edc_asset_id (not the int PK).
+        """
+        ccm = _make_ccm(edc_asset_id="550e8400-e29b-41d4-a716-446655440000")
+        result = service._build_push_content(ccm)
+        assert result["document"]["documentID"] == "550e8400-e29b-41d4-a716-446655440000"
+
+    def test_build_push_content_falls_back_to_pk(self, service):
+        """
+        GIVEN a Ccm without edc_asset_id
+        WHEN _build_push_content is called
+        THEN documentID falls back to str(ccm.id).
+        """
+        ccm = _make_ccm(edc_asset_id=None)
+        result = service._build_push_content(ccm)
+        assert result["document"]["documentID"] == str(ccm.id)
+
+    # ------------------------------------------------------------------
+    # Phase 2.5: push_certificate sets relatedMessageId from inbound req
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_push_sets_related_message_id(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN an inbound request with a notification_id
+        WHEN push_certificate is called for the same consumer
+        THEN the outgoing notification includes relatedMessageId.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "11111111-2222-3333-4444-555555555555"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        # Post-success path mocks
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 1
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        service.push_certificate(_push_request(), SENDER_BPN)
+
+        # Verify _send_notification received a notification with relatedMessageId
+        call_args = mock_send.call_args
+        sent_notification = call_args.kwargs.get("notification") or call_args.args[1]
+        from uuid import UUID
+        assert sent_notification.header.related_message_id == UUID("11111111-2222-3333-4444-555555555555")
+
+    # ------------------------------------------------------------------
+    # Phase 2.5 (Bug fix): explicit relatedMessageId restricts advance
+    # ------------------------------------------------------------------
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_push_with_explicit_related_message_id_restricts_advance(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN a push request with an explicit relatedMessageId
+        WHEN push_certificate is called
+        THEN advance_status_for_consumer is called with notification_id=<that id>
+        so only the targeted inbound request is advanced (not all matching ones).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "11111111-2222-3333-4444-555555555555"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 1
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        explicit_related_id = "11111111-2222-3333-4444-555555555555"
+        request = CcmPushRequest(
+            sender_bpn=SENDER_BPN,
+            certificate_id=CERT_ID,
+            consumer_bpn=CONSUMER_BPN,
+            related_message_id=explicit_related_id,
+        )
+        service.push_certificate(request, SENDER_BPN)
+
+        advance_call_kwargs = repos.ccm_inbound_request_repository.advance_status_for_consumer.call_args.kwargs
+        assert advance_call_kwargs.get("notification_id") == explicit_related_id
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    @patch.object(CcmProviderService, "_send_notification")
+    def test_available_with_explicit_related_message_id_restricts_advance(
+        self, mock_send, mock_factory, service
+    ):
+        """
+        GIVEN an available request with an explicit relatedMessageId
+        WHEN send_certificate_available is called
+        THEN advance_status_for_consumer is called with notification_id=<that id>
+        so only the targeted inbound request is advanced (not all matching ones).
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+        ccm = _make_ccm(edc_asset_id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+
+        inbound_req = Mock()
+        inbound_req.notification_id = "22222222-3333-4444-5555-666666666666"
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [inbound_req]
+        share_mock = Mock(spec=CertificateShare)
+        share_mock.id = 2
+        share_mock.status = ShareStatus.Pending
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share_mock
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+
+        from models.services.addons.ccm_kit.v1.notifications import CcmSendResult
+        mock_send.return_value = CcmSendResult(success=True)
+
+        explicit_related_id = "22222222-3333-4444-5555-666666666666"
+        request = CcmAvailableRequest(
+            sender_bpn=SENDER_BPN,
+            certificate_id=CERT_ID,
+            consumer_bpn=CONSUMER_BPN,
+            related_message_id=explicit_related_id,
+        )
+        service.send_certificate_available(request, SENDER_BPN)
+
+        advance_call_kwargs = repos.ccm_inbound_request_repository.advance_status_for_consumer.call_args.kwargs
+        assert advance_call_kwargs.get("notification_id") == explicit_related_id
