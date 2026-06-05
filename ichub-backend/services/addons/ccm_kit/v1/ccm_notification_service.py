@@ -46,6 +46,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
 from services.addons.ccm_kit.v1.ccm_consumer_service import (
     ccm_consumer_service,
 )
+from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
     CCM_CONTEXT_PUSH,
@@ -148,9 +149,12 @@ class CcmNotificationService:
 
         # --- 2. Look up certificate ---
         with RepositoryManagerFactory.create() as repo:
-            ccm = repo.ccm_repository.find_by_bpnl_and_type(
+            ccm = repo.ccm_repository.find_by_bpnl_type_and_sites(
                 bpnl=content.certified_bpn,
                 certificate_type=content.certificate_type,
+                location_bpns=(
+                    content.location_bpns if hasattr(content, "location_bpns") else None
+                ),
             )
 
             # --- 3. Not found → 200 REJECTED (CX-0135 §3.4) ---
@@ -165,7 +169,9 @@ class CcmNotificationService:
                     certified_bpn=content.certified_bpn,
                     certificate_type=content.certificate_type,
                     status=InboundRequestStatus.NotFound,
-                    location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                    location_bpns=CcmBaseService._canonicalize_location_bpns(
+                        content.location_bpns if hasattr(content, "location_bpns") else None
+                    ),
                     notification_id=str(notification.header.message_id),
                 )
                 repo.commit()
@@ -216,7 +222,9 @@ class CcmNotificationService:
                 certificate_type=content.certificate_type,
                 status=InboundRequestStatus.Registered,
                 certificate_id=ccm.id,
-                location_bpns=content.location_bpns if hasattr(content, "location_bpns") else None,
+                location_bpns=CcmBaseService._canonicalize_location_bpns(
+                    content.location_bpns if hasattr(content, "location_bpns") else None
+                ),
                 notification_id=str(notification.header.message_id),
             )
 
@@ -618,6 +626,10 @@ class CcmNotificationService:
                 existing.received_at = datetime.now(timezone.utc)
                 existing.notification_message_id = str(notification.header.message_id)
                 _related_push = getattr(notification.header, "related_message_id", None)
+                _push_sites = (
+                    [s.enclosed_site_bpn for s in content.enclosed_sites]
+                    if content.enclosed_sites else None
+                )
                 self._correlate_outbound_requests(
                     repo=repo,
                     provider_bpn=sender_bpn,
@@ -625,6 +637,7 @@ class CcmNotificationService:
                     certificate_type=content.type.certificate_type,
                     document_id=content.document.document_id,
                     related_message_id=str(_related_push) if _related_push else None,
+                    location_bpns=CcmBaseService._canonicalize_location_bpns(_push_sites),
                 )
                 repo.commit()
                 return 200, {
@@ -666,6 +679,10 @@ class CcmNotificationService:
                 **kwargs,
             )
             _related_push = getattr(notification.header, "related_message_id", None)
+            _push_sites = (
+                [s.enclosed_site_bpn for s in content.enclosed_sites]
+                if content.enclosed_sites else None
+            )
             self._correlate_outbound_requests(
                 repo=repo,
                 provider_bpn=sender_bpn,
@@ -673,6 +690,7 @@ class CcmNotificationService:
                 certificate_type=content.type.certificate_type,
                 document_id=content.document.document_id,
                 related_message_id=str(_related_push) if _related_push else None,
+                location_bpns=CcmBaseService._canonicalize_location_bpns(_push_sites),
             )
             repo.commit()
 
@@ -725,11 +743,15 @@ class CcmNotificationService:
         # Advance matching outbound requests to Found with the documentId.
         # Pass relatedMessageId to restrict to the specific request when present.
         _related_msg_id = getattr(notification.header, "related_message_id", None)
+        _avail_sites = (
+            content.location_bpns if hasattr(content, "location_bpns") else None
+        )
         self._correlate_outbound_requests_available(
             provider_bpn=sender_bpn,
             certificate_type=content.certificate_type,
             document_id=content.document_id,
             related_message_id=str(_related_msg_id) if _related_msg_id else None,
+            location_bpns=CcmBaseService._canonicalize_location_bpns(_avail_sites),
         )
 
         # If a documentId is provided, attempt auto-pull
@@ -803,6 +825,7 @@ class CcmNotificationService:
         certificate_type: str,
         document_id: str,
         related_message_id: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> None:
         """
         Advance all active outbound requests that match this incoming PUSH
@@ -819,6 +842,10 @@ class CcmNotificationService:
         advanced.  Falls back to the full active list if no exact match is
         found.
 
+        When ``location_bpns`` is provided (canonical JSON), the initial lookup
+        is restricted to requests with the same site set.  Falls back to the
+        unfiltered active list when the site-filtered result is empty.
+
         Called inside the active repository session (before ``repo.commit()``) so
         the CcmOutboundRequest rows are updated atomically with the new
         CcmReceived row.
@@ -827,7 +854,15 @@ class CcmNotificationService:
             provider_bpn=provider_bpn,
             certificate_type=certificate_type,
             certified_bpn=certified_bpn,
+            location_bpns=location_bpns,
         )
+        if not active and location_bpns is not None:
+            # Fallback: no request was for these exact sites — correlate all
+            active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                provider_bpn=provider_bpn,
+                certificate_type=certificate_type,
+                certified_bpn=certified_bpn,
+            )
         if related_message_id is not None:
             targeted = [r for r in active if r.notification_id == related_message_id]
             if targeted:
@@ -849,6 +884,7 @@ class CcmNotificationService:
         certificate_type: str,
         document_id: str,
         related_message_id: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> None:
         """
         Advance all Pending and NotFound outbound requests from this provider
@@ -865,19 +901,32 @@ class CcmNotificationService:
         advanced.  Falls back to the full active list if no exact match is
         found.
 
+        When ``location_bpns`` is provided (canonical JSON), the initial lookup
+        is restricted to requests with the same site set.  Falls back to the
+        unfiltered active list when the site-filtered result is empty.
+
         Args:
             provider_bpn: BPNL of the provider sending the notification.
             certificate_type: Certificate type from the notification content.
             document_id: EDC asset ID of the published certificate.
             related_message_id: Optional messageId of the original consumer
                 REQUEST this notification is responding to.
+            location_bpns: Optional canonical JSON string of the site BPNs
+                covered by the certificate being made available.
         """
         try:
             with RepositoryManagerFactory.create() as repo:
                 active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
                     provider_bpn=provider_bpn,
                     certificate_type=certificate_type,
+                    location_bpns=location_bpns,
                 )
+                if not active and location_bpns is not None:
+                    # Fallback: correlate all active requests for this provider
+                    active = repo.ccm_outbound_request_repository.find_active_by_provider_and_type(
+                        provider_bpn=provider_bpn,
+                        certificate_type=certificate_type,
+                    )
                 if related_message_id is not None:
                     targeted = [r for r in active if r.notification_id == related_message_id]
                     if targeted:

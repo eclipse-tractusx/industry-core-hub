@@ -128,6 +128,9 @@ class CcmProviderService(CcmBaseService):
             content_fields = self._build_push_content(ccm)
             certified_bpn = ccm.bpnl
             certificate_type_val = ccm.certificate_type
+            cert_canonical_sites = self._canonicalize_location_bpns(
+                [s.site_bpn for s in ccm.sites] if ccm.sites else None
+            )
 
         # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
         related_msg_id: Optional[uuid.UUID] = None
@@ -199,6 +202,7 @@ class CcmProviderService(CcmBaseService):
                     notification_id=(
                         request.related_message_id if request.related_message_id else None
                     ),
+                    location_bpns=cert_canonical_sites,
                 )
                 if updated:
                     repo.commit()
@@ -254,6 +258,7 @@ class CcmProviderService(CcmBaseService):
             # published (PULL mechanism); fall back to the internal DB ID.
             document_id = ccm.edc_asset_id or str(ccm.id)
             location_bpns = [site.site_bpn for site in ccm.sites] if ccm.sites else None
+            cert_canonical_sites = self._canonicalize_location_bpns(location_bpns)
             content_fields: Dict = {
                 "documentId": document_id,
                 "certificateType": ccm.certificate_type,
@@ -320,6 +325,7 @@ class CcmProviderService(CcmBaseService):
                     notification_id=(
                         request.related_message_id if request.related_message_id else None
                     ),
+                    location_bpns=cert_canonical_sites,
                 )
                 if updated:
                     logger.info(

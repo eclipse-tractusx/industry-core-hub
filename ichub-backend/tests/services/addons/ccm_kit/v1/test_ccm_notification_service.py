@@ -140,7 +140,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
 
         notification = _make_notification(
@@ -154,9 +154,10 @@ class TestCcmNotificationService:
 
         assert status == 202
         assert body["content"]["requestStatus"] == "IN_PROGRESS"
-        mock_repos.ccm_repository.find_by_bpnl_and_type.assert_called_once_with(
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.assert_called_once_with(
             bpnl="BPNL000000000001",
             certificate_type="ISO9001",
+            location_bpns=None,
         )
         mock_repos.certificate_share_repository.create_new.assert_called_once_with(
             certificate_id=ccm.id,
@@ -183,7 +184,7 @@ class TestCcmNotificationService:
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
         existing_share = _make_share(consumer_bpnl="BPNL000000000099")
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = existing_share
 
         notification = _make_notification(
@@ -213,7 +214,7 @@ class TestCcmNotificationService:
         AND no share is created.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = None
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = None
 
         notification = _make_notification(
             content_extras={
@@ -249,7 +250,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
 
         notification = _make_notification(
@@ -726,6 +727,7 @@ class TestCcmNotificationService:
             provider_bpn="BPNL000000000099",
             certificate_type="ISO9001",
             certified_bpn="BPNL000000000001",
+            location_bpns=None,
         )
         mock_repos.ccm_outbound_request_repository.update_status.assert_called_once_with(
             request_id=42,
@@ -783,7 +785,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
         mock_config.return_value = True
 
@@ -821,7 +823,7 @@ class TestCcmNotificationService:
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm()
-        mock_repos.ccm_repository.find_by_bpnl_and_type.return_value = ccm
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
         mock_config.return_value = False
 
@@ -1097,3 +1099,148 @@ class TestCcmNotificationService:
             consumer_status="ACCEPTED",
             notification_id=related_id,
         )
+
+
+# ==============================================================================
+# Site-aware certificate matching tests
+# ==============================================================================
+
+class TestSiteAwareCertificateRequest:
+    """
+    Verify that ``process_certificate_request`` performs site-aware certificate
+    lookup and stores canonically sorted ``location_bpns``.
+    """
+
+    service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_repository = Mock()
+        repos.certificate_share_repository = Mock()
+        repos.ccm_inbound_request_repository = Mock()
+        repos.commit = Mock()
+        return repos
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_site_match_returns_in_progress(self, mock_factory, mock_repos):
+        """
+        GIVEN a request with locationBpns=["BPNS2", "BPNS1"] (unordered)
+        AND the cert covers those sites (find_by_bpnl_type_and_sites returns a match)
+        WHEN process_certificate_request is called
+        THEN the response is 202 IN_PROGRESS
+        AND find_by_bpnl_type_and_sites is called with location_bpns=["BPNS2", "BPNS1"].
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        ccm = _make_ccm()
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+
+        notification = _make_notification(
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+                "locationBpns": ["BPNS000000000002", "BPNS000000000001"],
+            }
+        )
+
+        status, body = self.service.process_certificate_request(notification)
+
+        assert status == 202
+        assert body["content"]["requestStatus"] == "IN_PROGRESS"
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.assert_called_once_with(
+            bpnl="BPNL000000000001",
+            certificate_type="ISO9001",
+            location_bpns=["BPNS000000000002", "BPNS000000000001"],
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_site_no_match_returns_rejected(self, mock_factory, mock_repos):
+        """
+        GIVEN a request with locationBpns that no certificate covers
+        AND find_by_bpnl_type_and_sites returns None
+        WHEN process_certificate_request is called
+        THEN the response is 200 REJECTED (hard not-found path)
+        AND the inbound request is stored with status NotFound.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = None
+
+        notification = _make_notification(
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+                "locationBpns": ["BPNS000000000999"],
+            }
+        )
+
+        status, body = self.service.process_certificate_request(notification)
+
+        assert status == 200
+        assert body["content"]["requestStatus"] == "REJECTED"
+        mock_repos.certificate_share_repository.create_new.assert_not_called()
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        assert call_kwargs.kwargs.get("status") == InboundRequestStatus.NotFound
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_location_bpns_canonicalized_on_write(self, mock_factory, mock_repos):
+        """
+        GIVEN a request with locationBpns=["BPNS2", "BPNS1"] (duplicates + unordered)
+        WHEN stored in the inbound request
+        THEN location_bpns is stored as the canonical sorted-deduped JSON string.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = None
+
+        notification = _make_notification(
+            content_extras={
+                "certifiedBpn": "BPNL000000000001",
+                "certificateType": "ISO9001",
+                # Intentionally out of order and with a duplicate
+                "locationBpns": ["BPNS000000000002", "BPNS000000000001", "BPNS000000000002"],
+            }
+        )
+
+        self.service.process_certificate_request(notification)
+
+        call_kwargs = mock_repos.ccm_inbound_request_repository.create_new.call_args
+        stored = call_kwargs.kwargs.get("location_bpns")
+        # Must be sorted + deduped JSON
+        assert stored == '["BPNS000000000001", "BPNS000000000002"]'
+
+
+class TestCanonicalizationHelper:
+    """Unit tests for CcmBaseService._canonicalize_location_bpns."""
+
+    from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService as _Base
+
+    def test_none_returns_none(self):
+        from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+        assert CcmBaseService._canonicalize_location_bpns(None) is None
+
+    def test_empty_list_returns_none(self):
+        from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+        assert CcmBaseService._canonicalize_location_bpns([]) is None
+
+    def test_sorted_deduped(self):
+        import json
+        from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+        result = CcmBaseService._canonicalize_location_bpns(
+            ["BPNS000000000003", "BPNS000000000001", "BPNS000000000002", "BPNS000000000001"]
+        )
+        assert result == json.dumps(["BPNS000000000001", "BPNS000000000002", "BPNS000000000003"])
+
+    def test_single_site(self):
+        import json
+        from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+        result = CcmBaseService._canonicalize_location_bpns(["BPNS000000000001"])
+        assert result == json.dumps(["BPNS000000000001"])

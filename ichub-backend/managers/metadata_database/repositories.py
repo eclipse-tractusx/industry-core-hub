@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case, and_, or_, func, update
+from sqlalchemy import case, and_, or_, func, update, literal
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -1238,6 +1238,76 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    def find_by_bpnl_type_and_sites(
+        self,
+        bpnl: str,
+        certificate_type: str,
+        location_bpns: Optional[List[str]] = None,
+    ) -> Optional[Ccm]:
+        """
+        Find the most recent certificate matching ``bpnl`` and
+        ``certificate_type`` that covers **all** requested sites (superset
+        match).
+
+        When ``location_bpns`` is empty or ``None``, delegates to
+        ``find_by_bpnl_and_type`` so existing callers that don't care about
+        sites are unaffected.
+
+        Among qualifying certificates the one with the fewest total sites is
+        preferred (tightest superset), with ``updated_at`` DESC as a tiebreaker.
+
+        Returns ``None`` when no qualifying certificate exists.
+
+        Args:
+            bpnl: Business Partner Number Legal of the certificate holder.
+            certificate_type: Certificate type identifier (e.g. ISO9001).
+            location_bpns: List of site BPNs that must all be covered by the
+                returned certificate.  Duplicates are ignored.
+        """
+        if not location_bpns:
+            return self.find_by_bpnl_and_type(bpnl, certificate_type)
+
+        requested = list(set(location_bpns))
+        n_requested = len(requested)
+
+        # Subquery A: for each certificate, count how many of the requested
+        # sites it covers.
+        covered_sq = (
+            select(
+                CcmSite.ccm_id.label("ccm_id"),
+                func.count(CcmSite.site_bpn).label("covered"),
+            )
+            .where(CcmSite.site_bpn.in_(requested))
+            .group_by(CcmSite.ccm_id)
+            .subquery()
+        )
+
+        # Subquery B: total site count per certificate.
+        total_sq = (
+            select(
+                CcmSite.ccm_id.label("ccm_id"),
+                func.count(CcmSite.site_bpn).label("total"),
+            )
+            .group_by(CcmSite.ccm_id)
+            .subquery()
+        )
+
+        stmt = (
+            select(Ccm)
+            .join(covered_sq, covered_sq.c.ccm_id == Ccm.id)
+            .join(total_sq, total_sq.c.ccm_id == Ccm.id)
+            .where(Ccm.bpnl == bpnl)
+            .where(Ccm.certificate_type == certificate_type)
+            .where(covered_sq.c.covered == literal(n_requested))
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+            .order_by(total_sq.c.total.asc(), desc(Ccm.updated_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()
+
     def find_all_filtered(
         self,
         bpnl: Optional[str] = None,
@@ -1689,6 +1759,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
                 CcmOutboundRequest.provider_bpn,
                 CcmOutboundRequest.certified_bpn,
                 CcmOutboundRequest.certificate_type,
+                CcmOutboundRequest.location_bpns,
             )
             .subquery()
         )
@@ -1762,6 +1833,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         provider_bpn: str,
         certificate_type: str,
         certified_bpn: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> List[CcmOutboundRequest]:
         """
         Return all Pending and NotFound outbound requests for the given
@@ -1779,6 +1851,10 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             certified_bpn: Optional BPNL of the certified entity.  When
                 provided the query is narrowed to an exact match on all
                 three natural-key columns.
+            location_bpns: Optional canonical JSON string (from
+                ``_canonicalize_location_bpns``).  When provided, restricts
+                the results to requests whose ``location_bpns`` equals this
+                value.
 
         Returns:
             List of matching CcmOutboundRequest records, newest first.
@@ -1791,6 +1867,10 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         if certified_bpn is not None:
             stmt = stmt.where(
                 CcmOutboundRequest.certified_bpn == certified_bpn
+            )
+        if location_bpns is not None:
+            stmt = stmt.where(
+                CcmOutboundRequest.location_bpns == location_bpns
             )
         stmt = (
             stmt
@@ -1928,6 +2008,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
                 CcmInboundRequest.consumer_bpn,
                 CcmInboundRequest.certified_bpn,
                 CcmInboundRequest.certificate_type,
+                CcmInboundRequest.location_bpns,
             )
             .subquery()
         )
@@ -1982,6 +2063,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         new_status: InboundRequestStatus,
         skip_statuses: Optional[List[InboundRequestStatus]] = None,
         notification_id: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> List[CcmInboundRequest]:
         """
         Bulk-update inbound request records for a given consumer + certificate
@@ -2011,6 +2093,11 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             notification_id: When provided, restricts the update to the single
                 request whose ``notification_id`` matches this value.  When None,
                 the existing bulk-advance behaviour is preserved.
+            location_bpns: When provided (canonical JSON string from
+                ``_canonicalize_location_bpns``), restricts the update to
+                requests whose ``location_bpns`` column equals this value.
+                Only applied when ``notification_id`` is not set (because
+                ``notification_id`` already provides exact row targeting).
 
         Returns:
             List of updated records.
@@ -2026,6 +2113,8 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         )
         if notification_id is not None:
             stmt = stmt.where(CcmInboundRequest.notification_id == notification_id)
+        elif location_bpns is not None:
+            stmt = stmt.where(CcmInboundRequest.location_bpns == location_bpns)
         records = list(self._session.scalars(stmt).all())
         now = datetime.now(timezone.utc)
         for r in records:

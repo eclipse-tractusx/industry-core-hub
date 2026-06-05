@@ -230,10 +230,7 @@ class CcmConsumerService(CcmBaseService):
                     provider_bpn=provider_bpn,
                     certified_bpn=payload.certified_bpn,
                     certificate_type=payload.certificate_type,
-                    location_bpns=(
-                        json.dumps(payload.location_bpns)
-                        if payload.location_bpns else None
-                    ),
+                    location_bpns=self._canonicalize_location_bpns(payload.location_bpns),
                     governance=(
                         json.dumps(payload.governance)
                         if payload.governance else None

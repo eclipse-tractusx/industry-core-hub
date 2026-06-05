@@ -192,6 +192,7 @@ class TestPushCertificate:
                 InboundRequestStatus.Pushed,
             ],
             notification_id=None,
+            location_bpns='["BPNS000000000001"]',
         )
 
     @patch(
@@ -337,6 +338,7 @@ class TestPushCertificate:
                 InboundRequestStatus.Pushed,
             ],
             notification_id=None,
+            location_bpns='["BPNS000000000001"]',
         )
 
 
@@ -396,6 +398,7 @@ class TestSendCertificateAvailable:
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Available,
             notification_id=None,
+            location_bpns='["BPNS000000000001"]',
         )
 
     @patch(
@@ -539,6 +542,7 @@ class TestSendCertificateAvailable:
             certificate_id=CERT_ID,
             new_status=InboundRequestStatus.Available,
             notification_id=None,
+            location_bpns='["BPNS000000000001"]',
         )
 
 
