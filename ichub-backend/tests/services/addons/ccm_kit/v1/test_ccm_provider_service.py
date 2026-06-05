@@ -365,11 +365,11 @@ class TestSendCertificateAvailable:
         self, mock_factory, mock_cm, mock_ncs_class, service
     ):
         """
-        GIVEN a valid certificate
+        GIVEN a valid published certificate
         WHEN send_certificate_available is called
         THEN the notification is sent successfully.
         """
-        ccm = _make_ccm()
+        ccm = _make_ccm(edc_asset_id="asset-42")
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
@@ -423,6 +423,28 @@ class TestSendCertificateAvailable:
         assert "not found" in result.error.lower()
 
     @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_certificate_not_published(self, mock_factory, service):
+        """
+        GIVEN a certificate that exists but has no edc_asset_id (not yet published)
+        WHEN send_certificate_available is called
+        THEN the result indicates failure with a "not published" message.
+        """
+        ccm = _make_ccm(edc_asset_id=None)
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        result = service.send_certificate_available(
+            _available_request(), SENDER_BPN
+        )
+
+        assert result.success is False
+        assert "not published" in result.error.lower()
+
+    @patch(
         "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
     )
     @patch(
@@ -435,7 +457,7 @@ class TestSendCertificateAvailable:
         WHEN send_certificate_available is called
         THEN the result indicates failure.
         """
-        ccm = _make_ccm()
+        ccm = _make_ccm(edc_asset_id="asset-42")
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_factory.return_value.__enter__.return_value = repos
@@ -468,7 +490,7 @@ class TestSendCertificateAvailable:
         WHEN notification sending raises an error
         THEN the result indicates failure.
         """
-        ccm = _make_ccm()
+        ccm = _make_ccm(edc_asset_id="asset-42")
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_factory.return_value.__enter__.return_value = repos
@@ -507,7 +529,7 @@ class TestSendCertificateAvailable:
         WHEN send_certificate_available is called
         THEN the governance policies are passed to the notification service.
         """
-        ccm = _make_ccm()
+        ccm = _make_ccm(edc_asset_id="asset-42")
         repos = Mock()
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []

@@ -253,10 +253,16 @@ class CcmProviderService(CcmBaseService):
                 logger.warning("[CCM Provider] %s", msg)
                 return CcmSendResult(success=False, error=msg)
 
+            if not ccm.edc_asset_id:
+                msg = (
+                    f"Certificate {request.certificate_id} is not published as an "
+                    f"EDC asset. Use publish_certificate() first."
+                )
+                logger.warning("[CCM Provider] %s", msg)
+                return CcmSendResult(success=False, error=msg)
+
             # --- 2. Build available content ---
-            # Use the EDC asset ID as documentId when the certificate is
-            # published (PULL mechanism); fall back to the internal DB ID.
-            document_id = ccm.edc_asset_id or str(ccm.id)
+            document_id = ccm.edc_asset_id
             location_bpns = [site.site_bpn for site in ccm.sites] if ccm.sites else None
             cert_canonical_sites = self._canonicalize_location_bpns(location_bpns)
             content_fields: Dict = {
