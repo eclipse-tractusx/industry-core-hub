@@ -70,7 +70,11 @@ _STATUS_MAP: Dict[CertificateStatusValue, ShareStatus] = {
 # Valid share-status transitions (current → set of allowed new statuses).
 _VALID_TRANSITIONS: Dict[ShareStatus, set] = {
     ShareStatus.Pending: {ShareStatus.Pending, ShareStatus.Active, ShareStatus.Revoked},
-    ShareStatus.Active: {ShareStatus.Revoked},
+    # RECEIVED (→ Pending) is valid after Active: the consumer acknowledged
+    # receipt of a direct push but has not yet accepted it.  Covers the
+    # direct-push flow where _update_share_status sets Active before the
+    # consumer sends back a RECEIVED status.
+    ShareStatus.Active: {ShareStatus.Pending, ShareStatus.Revoked},
     ShareStatus.Revoked: set(),  # terminal state — no further transitions
 }
 
@@ -631,7 +635,7 @@ class CcmNotificationService:
                     [s.enclosed_site_bpn for s in content.enclosed_sites]
                     if content.enclosed_sites else None
                 )
-                self._correlate_outbound_requests(
+                _advanced = self._correlate_outbound_requests(
                     repo=repo,
                     provider_bpn=sender_bpn,
                     certified_bpn=content.business_partner_number,
@@ -640,6 +644,22 @@ class CcmNotificationService:
                     related_message_id=str(_related_push) if _related_push else None,
                     location_bpns=CcmBaseService._canonicalize_location_bpns(_push_sites),
                 )
+                if not _advanced:
+                    # Direct push — no prior outbound REQUEST for this provider.
+                    repo.ccm_outbound_request_repository.create_new(
+                        sender_bpn=notification.header.receiver_bpn,
+                        provider_bpn=sender_bpn,
+                        certified_bpn=content.business_partner_number,
+                        certificate_type=content.type.certificate_type,
+                        status=OutboundRequestStatus.Found,
+                        notification_id=str(notification.header.message_id),
+                        document_id=content.document.document_id,
+                    )
+                    logger.info(
+                        "[CCM Consumer] Created direct-push tracking record "
+                        "(duplicate push, documentId=%s)",
+                        _s(content.document.document_id),
+                    )
                 repo.commit()
                 return 200, {
                     "message": (
@@ -684,7 +704,7 @@ class CcmNotificationService:
                 [s.enclosed_site_bpn for s in content.enclosed_sites]
                 if content.enclosed_sites else None
             )
-            self._correlate_outbound_requests(
+            _advanced = self._correlate_outbound_requests(
                 repo=repo,
                 provider_bpn=sender_bpn,
                 certified_bpn=content.business_partner_number,
@@ -693,6 +713,22 @@ class CcmNotificationService:
                 related_message_id=str(_related_push) if _related_push else None,
                 location_bpns=CcmBaseService._canonicalize_location_bpns(_push_sites),
             )
+            if not _advanced:
+                # Direct push — no prior outbound REQUEST for this provider.
+                repo.ccm_outbound_request_repository.create_new(
+                    sender_bpn=notification.header.receiver_bpn,
+                    provider_bpn=sender_bpn,
+                    certified_bpn=content.business_partner_number,
+                    certificate_type=content.type.certificate_type,
+                    status=OutboundRequestStatus.Found,
+                    notification_id=str(notification.header.message_id),
+                    document_id=content.document.document_id,
+                )
+                logger.info(
+                    "[CCM Consumer] Created direct-push tracking record "
+                    "(documentId=%s)",
+                    _s(content.document.document_id),
+                )
             repo.commit()
 
         # --- Auto-RECEIVED: acknowledge receipt to the push sender ---
@@ -706,6 +742,12 @@ class CcmNotificationService:
                     providerBpn=sender_bpn,
                     documentId=content.document.document_id,
                     certificateStatus=CertificateStatusValue.RECEIVED,
+                    # CX-0135: relatedMessageId links this STATUS back to the
+                    # specific push notification that triggered it.  Passing it
+                    # explicitly avoids a second DB round-trip in
+                    # send_certificate_status and prevents heuristic mismatch
+                    # when the consumer has received multiple pushes.
+                    relatedMessageId=str(notification.header.message_id),
                     governance=_governance_cfg,
                 )
                 ccm_consumer_service.send_certificate_status(_auto_payload, _own_bpn)
@@ -899,6 +941,7 @@ class CcmNotificationService:
                 f"[CCM] Outbound request {req.id} → Found "
                 f"(documentId={_s(document_id)})"
             )
+        return active
 
     @staticmethod
     def _correlate_outbound_requests_available(

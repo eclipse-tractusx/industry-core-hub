@@ -210,6 +210,26 @@ class CcmProviderService(CcmBaseService):
                         f"[CCM Provider] Marked {len(updated)} inbound request(s) as Pushed "
                         f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
                     )
+                else:
+                    # Direct push — no prior REQUEST exists for this consumer.
+                    # Create a synthetic CcmInboundRequest anchored to the push
+                    # notification's messageId so that when the consumer sends
+                    # STATUS with relatedMessageId, update_consumer_status can
+                    # resolve the exact row via notification_id lookup.
+                    repo.ccm_inbound_request_repository.create_new(
+                        consumer_bpn=consumer_bpn,
+                        certified_bpn=certified_bpn,
+                        certificate_type=certificate_type_val,
+                        status=InboundRequestStatus.Pushed,
+                        certificate_id=request.certificate_id,
+                        notification_id=result.message_id,
+                    )
+                    repo.commit()
+                    logger.info(
+                        f"[CCM Provider] Created direct-push tracking record "
+                        f"(notification_id={_s(result.message_id)}) "
+                        f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
+                    )
 
         return result
 

@@ -1363,3 +1363,114 @@ class TestToInboundRequestItem:
         assert item.request_id == 7
         assert item.consumer_bpn == CONSUMER_BPN
         assert item.status == InboundRequestStatus.NotFound.value
+
+
+# ---------------------------------------------------------------------------
+# Direct-push tracking tests (Bug 3 fix)
+# ---------------------------------------------------------------------------
+
+
+class TestDirectPushTracking:
+    """
+    When push_certificate succeeds but no prior CcmInboundRequest exists
+    (direct push — no prior consumer REQUEST), a synthetic tracking record
+    must be created with notification_id = the outgoing push messageId.
+    """
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".CcmProviderService._update_share_status"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_direct_push_creates_inbound_request_record(
+        self, mock_factory, mock_cm, mock_ncs_class, mock_update_share, service
+    ):
+        """
+        GIVEN push_certificate is called for a consumer with no prior REQUEST
+        WHEN advance_status_for_consumer returns [] (no rows to advance)
+        THEN create_new is called with status=Pushed and notification_id=result.message_id.
+        """
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        # Simulate no prior CcmInboundRequest for this consumer.
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token123",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        result = service.push_certificate(_push_request(), SENDER_BPN)
+
+        assert result.success is True
+        assert result.message_id is not None
+
+        create_call_kwargs = repos.ccm_inbound_request_repository.create_new.call_args.kwargs
+        assert create_call_kwargs["consumer_bpn"] == CONSUMER_BPN
+        assert create_call_kwargs["certified_bpn"] == ccm.bpnl
+        assert create_call_kwargs["certificate_type"] == ccm.certificate_type
+        assert create_call_kwargs["status"] == InboundRequestStatus.Pushed
+        assert create_call_kwargs["certificate_id"] == CERT_ID
+        # The notification_id must equal the push notification's messageId so
+        # that the incoming STATUS with relatedMessageId can be correlated.
+        assert create_call_kwargs["notification_id"] == result.message_id
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".CcmProviderService._update_share_status"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_triggered_push_does_not_create_extra_record(
+        self, mock_factory, mock_cm, mock_ncs_class, mock_update_share, service
+    ):
+        """
+        GIVEN push_certificate is called for a consumer with an existing REQUEST
+        WHEN advance_status_for_consumer returns updated rows
+        THEN create_new is NOT called (no duplicate synthetic record).
+        """
+        from unittest.mock import MagicMock
+        ccm = _make_ccm()
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        # Simulate existing CcmInboundRequest rows being advanced.
+        existing_row = MagicMock()
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = [existing_row]
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token123",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        result = service.push_certificate(_push_request(), SENDER_BPN)
+
+        assert result.success is True
+        repos.ccm_inbound_request_repository.create_new.assert_not_called()

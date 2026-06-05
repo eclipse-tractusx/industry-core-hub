@@ -915,19 +915,24 @@ class TestCcmNotificationService:
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
     )
-    def test_status_transition_active_to_pending_blocked(
+    def test_status_transition_active_to_pending_allowed(
         self, mock_factory, mock_repos
     ):
         """
         GIVEN a share in Active state
         WHEN a status RECEIVED (-> Pending) notification arrives
-        THEN the transition is blocked with 409.
+        THEN the transition is ALLOWED (returns 200, not 409).
+
+        This covers the direct-push flow: _update_share_status sets the share
+        to Active after a push; the consumer acknowledges with RECEIVED before
+        explicit ACCEPTED.  Blocking this transition was a bug.
         """
         mock_factory.return_value.__enter__.return_value = mock_repos
         ccm = _make_ccm(id=30)
         share = _make_share(id=8, certificate_id=30, status=ShareStatus.Active)
         mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
 
         notification = _make_notification(
             context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
@@ -939,9 +944,12 @@ class TestCcmNotificationService:
 
         status, body = self.service.update_certificate_status(notification)
 
-        assert status == 409
-        assert "cannot transition" in body["message"].lower()
-        mock_repos.certificate_share_repository.update_status.assert_not_called()
+        assert status == 200
+        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
+            share_id=share.id,
+            new_status=ShareStatus.Pending,
+            rejection_reason=None,
+        )
 
     # ==================================================================
     # CX-0135 context validation (Phase 3)
@@ -1321,6 +1329,8 @@ class TestAutoReceivedStatus:
         from models.services.addons.ccm_kit.v1.notifications import CertificateStatusValue
         assert payload.certificate_status == CertificateStatusValue.RECEIVED
         assert payload.governance is None
+        # CX-0135: STATUS must carry the push notification's messageId as relatedMessageId
+        assert payload.related_message_id == str(notification.header.message_id)
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service.ccm_consumer_service"
@@ -1392,3 +1402,224 @@ class TestAutoReceivedStatus:
         status, _ = self.service.process_certificate_push(notification)
 
         assert status == 200
+
+
+# ---------------------------------------------------------------------------
+# State-machine transition tests
+# ---------------------------------------------------------------------------
+
+
+class TestValidTransitions:
+    """Tests for _VALID_TRANSITIONS correctness."""
+
+    def test_active_to_pending_is_allowed(self):
+        """
+        GIVEN a share in Active state
+        WHEN the consumer sends RECEIVED (maps to Pending)
+        THEN the transition is allowed in _VALID_TRANSITIONS.
+        """
+        from services.addons.ccm_kit.v1.ccm_notification_service import _VALID_TRANSITIONS
+        assert ShareStatus.Pending in _VALID_TRANSITIONS[ShareStatus.Active]
+
+    def test_active_to_revoked_still_allowed(self):
+        from services.addons.ccm_kit.v1.ccm_notification_service import _VALID_TRANSITIONS
+        assert ShareStatus.Revoked in _VALID_TRANSITIONS[ShareStatus.Active]
+
+    def test_revoked_is_terminal(self):
+        from services.addons.ccm_kit.v1.ccm_notification_service import _VALID_TRANSITIONS
+        assert _VALID_TRANSITIONS[ShareStatus.Revoked] == set()
+
+
+class TestDirectPushStatusTransition:
+    """RECEIVED status after a direct push must not return 409."""
+
+    def setup_method(self):
+        self.service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_repository = Mock()
+        repos.certificate_share_repository = Mock()
+        repos.ccm_inbound_request_repository = Mock()
+        repos.commit = Mock()
+        repos.refresh = Mock()
+        return repos
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_received_after_active_share_returns_200(
+        self, mock_factory, mock_repos
+    ):
+        """
+        GIVEN a direct push set the CertificateShare to Active
+        WHEN the consumer sends a RECEIVED status notification
+        THEN the provider returns 200 and transitions the share to Pending.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        ccm = _make_ccm(id=42)
+        # Share was set to Active by _update_share_status after direct push.
+        share = _make_share(certificate_id=42, status=ShareStatus.Active)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "RECEIVED",
+            },
+        )
+
+        status, body = self.service.update_certificate_status(notification)
+
+        assert status == 200
+        mock_repos.certificate_share_repository.update_status.assert_called_once_with(
+            share_id=share.id,
+            new_status=ShareStatus.Pending,
+            rejection_reason=None,
+        )
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_received_after_active_share_regression_not_409(
+        self, mock_factory, mock_repos
+    ):
+        """
+        Regression guard: this scenario must NOT return 409.
+        Before the _VALID_TRANSITIONS fix, Active → Pending was rejected.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        ccm = _make_ccm(id=42)
+        share = _make_share(certificate_id=42, status=ShareStatus.Active)
+        mock_repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = share
+        mock_repos.certificate_share_repository.update_status.return_value = share
+
+        notification = _make_notification(
+            context="CompanyCertificateManagement-CCMAPI-Status:1.0.0",
+            content_extras={
+                "documentId": "42",
+                "certificateStatus": "RECEIVED",
+            },
+        )
+
+        status, _ = self.service.update_certificate_status(notification)
+
+        assert status != 409, "Active→Pending must be allowed (regression: was 409 before fix)"
+
+
+# ---------------------------------------------------------------------------
+# Consumer-side outbound tracking on direct push
+# ---------------------------------------------------------------------------
+
+
+class TestConsumerDirectPushOutboundTracking:
+    """
+    When a provider sends a PUSH without a prior REQUEST from this consumer,
+    _correlate_outbound_requests finds no active rows and returns [].
+    The service must then create a CcmOutboundRequest(status=Found) so the
+    consumer has an audit trail of unsolicited pushes.
+    """
+
+    def setup_method(self):
+        self.service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_received_repository = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        repos.ccm_outbound_request_repository = Mock()
+        repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+        repos.commit = Mock()
+        return repos
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_direct_push_creates_outbound_tracking_record(
+        self, mock_factory, mock_config, mock_repos
+    ):
+        """
+        GIVEN no prior outbound REQUEST for this provider+type
+        WHEN a direct push is received
+        THEN a CcmOutboundRequest(status=Found) is created with the push messageId.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: {
+            "ccm.auto_received.enabled": False,
+        }.get(key, kw.get("default"))
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_repos.ccm_outbound_request_repository.create_new.assert_called_once()
+        call_kwargs = mock_repos.ccm_outbound_request_repository.create_new.call_args.kwargs
+        assert call_kwargs["status"] == OutboundRequestStatus.Found
+        assert call_kwargs["notification_id"] == str(notification.header.message_id)
+        assert call_kwargs["document_id"] == "DOC-AUTO-001"
+        assert call_kwargs["provider_bpn"] == "BPNL000000000099"
+        assert call_kwargs["sender_bpn"] == "BPNL000000000001"
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_solicited_push_does_not_create_extra_outbound_record(
+        self, mock_factory, mock_config, mock_repos
+    ):
+        """
+        GIVEN a prior outbound REQUEST that gets correlated
+        WHEN the matching push is received
+        THEN no extra CcmOutboundRequest is created (the existing row is advanced).
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: {
+            "ccm.auto_received.enabled": False,
+        }.get(key, kw.get("default"))
+
+        existing_req = Mock()
+        existing_req.id = 77
+        existing_req.notification_id = None
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = [
+            existing_req
+        ]
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_repos.ccm_outbound_request_repository.create_new.assert_not_called()
+        mock_repos.ccm_outbound_request_repository.update_status.assert_called_once_with(
+            request_id=77,
+            new_status=OutboundRequestStatus.Found,
+            document_id="DOC-AUTO-001",
+        )
