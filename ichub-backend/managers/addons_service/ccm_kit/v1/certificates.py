@@ -22,8 +22,9 @@
 #################################################################################
 
 import base64
+import json
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from tools.constants import BPN_SITE_PATTERN as _BPN_SITE_PATTERN_STR
 
@@ -110,8 +111,8 @@ class CertificatesManager:
             metadata.bpnl,
         )
 
-        # Parse optional comma-separated BPNS/BPNA list.
-        site_bpns: List[str] = self._parse_sites(metadata.sites)
+        # Parse optional site list.
+        site_entries: List[Tuple[str, Optional[str]]] = self._parse_sites_with_areas(metadata.sites)
 
         with RepositoryManagerFactory.create() as repo:
             # Create the core certificate record.
@@ -125,7 +126,10 @@ class CertificatesManager:
                 registration_number=metadata.registration_number,
                 area_of_application=metadata.area_of_application,
                 valid_until=metadata.valid_until,
-                validator=metadata.validator,
+                certificate_version=metadata.certificate_version,
+                validator_name=metadata.validator_name,
+                validator_bpn=metadata.validator_bpn,
+                issuer_bpn=metadata.issuer_bpn,
                 description=metadata.description,
                 doc=file_content,
             )
@@ -135,10 +139,11 @@ class CertificatesManager:
             repo.refresh(ccm_record)
 
             # Create site associations (one row per BPNS/BPNA).
-            for site_bpn in site_bpns:
+            for site_bpn, site_aoa in site_entries:
                 repo.ccm_site_repository.create_new(
                     ccm_id=ccm_record.id,
                     site_bpn=site_bpn,
+                    area_of_application=site_aoa,
                 )
 
             # Single commit — certificate + sites are persisted atomically.
@@ -149,7 +154,10 @@ class CertificatesManager:
             certificate_id = str(ccm_record.id)
 
             # Build site read models for the response.
-            sites_read = [SiteRead(siteBpn=s) for s in site_bpns]
+            sites_read = [
+                SiteRead(siteBpn=bpn, areaOfApplication=aoa)
+                for bpn, aoa in site_entries
+            ]
 
             logger.info(
                 "Certificate %s persisted for BPNL %s (type: %s)",
@@ -177,7 +185,10 @@ class CertificatesManager:
             trustLevel=metadata.trust_level,
             registrationNumber=metadata.registration_number,
             areaOfApplication=metadata.area_of_application,
-            validator=metadata.validator,
+            certificateVersion=metadata.certificate_version,
+            validatorName=metadata.validator_name,
+            validatorBpn=metadata.validator_bpn,
+            issuerBpn=metadata.issuer_bpn,
             description=metadata.description,
             sites=sites_read,
             document=document,
@@ -214,7 +225,7 @@ class CertificatesManager:
                     f"Certificate with ID {certificate_id} not found."
                 )
 
-            sites_read = [SiteRead(siteBpn=s.site_bpn) for s in ccm.sites]
+            sites_read = [SiteRead(siteBpn=s.site_bpn, areaOfApplication=s.area_of_application) for s in ccm.sites]
             shares_read = [self._share_to_read(s) for s in ccm.shares]
             document = self._build_document(ccm)
             base_fields = self._ccm_to_base_fields(ccm, sites_read)
@@ -255,7 +266,7 @@ class CertificatesManager:
             for ccm in records:
                 # Load sites per record (list endpoint; no binary doc needed).
                 sites = repo.ccm_site_repository.find_by_ccm_id(ccm.id)
-                sites_read = [SiteRead(siteBpn=s.site_bpn) for s in sites]
+                sites_read = [SiteRead(siteBpn=s.site_bpn, areaOfApplication=s.area_of_application) for s in sites]
                 result.append(
                     CertificateListItem(**self._ccm_to_base_fields(ccm, sites_read))
                 )
@@ -312,9 +323,9 @@ class CertificatesManager:
             # Replace sites if the caller supplied a new value.
             if update_data.sites is not None:
                 repo.ccm_site_repository.delete_by_ccm_id(certificate_id)
-                for bpn in self._parse_sites(update_data.sites):
+                for bpn, aoa in self._parse_sites_with_areas(update_data.sites):
                     repo.ccm_site_repository.create_new(
-                        ccm_id=certificate_id, site_bpn=bpn
+                        ccm_id=certificate_id, site_bpn=bpn, area_of_application=aoa
                     )
 
             repo.commit()
@@ -322,7 +333,7 @@ class CertificatesManager:
             # Re-fetch to return the refreshed state.
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
 
-            sites_read = [SiteRead(siteBpn=s.site_bpn) for s in ccm.sites]
+            sites_read = [SiteRead(siteBpn=s.site_bpn, areaOfApplication=s.area_of_application) for s in ccm.sites]
             shares_read = [self._share_to_read(s) for s in ccm.shares]
             document = self._build_document(ccm)
             base_fields = self._ccm_to_base_fields(ccm, sites_read)
@@ -389,17 +400,61 @@ class CertificatesManager:
     def _parse_sites(sites_str: Optional[str]) -> List[str]:
         """
         Parse a comma-separated BPNS/BPNA string into a deduplicated list.
+        Delegates to _parse_sites_with_areas and returns only BPN values.
+        """
+        return [bpn for bpn, _ in CertificatesManager._parse_sites_with_areas(sites_str)]
 
-        Each value is validated against the ``BPN[SA]`` format.  Invalid
-        entries are silently dropped and a warning is logged.
+    @staticmethod
+    def _parse_sites_with_areas(
+        sites_str: Optional[str],
+    ) -> List[Tuple[str, Optional[str]]]:
+        """
+        Parse site identifiers with optional per-site areaOfApplication.
 
-        Example:
-            "BPNS000000000001, BPNA000000000002" -> ["BPNS000000000001", "BPNA000000000002"]
+        Accepts two formats:
+        1. Comma-separated BPN string:  "BPNS000000000001, BPNA000000000002"
+           → [("BPNS000000000001", None), ("BPNA000000000002", None)]
+        2. JSON array with optional areaOfApplication per entry::
+
+              [{"bpn": "BPNS000000000001", "areaOfApplication": "Scope A"},
+               {"bpn": "BPNA000000000002"}]
+
+           → [("BPNS000000000001", "Scope A"), ("BPNA000000000002", None)]
+
+        Invalid BPN values are silently dropped with a warning.
         """
         if not sites_str:
             return []
-        seen: set = set()
-        result: List[str] = []
+
+        # Try JSON-array format first.
+        stripped = sites_str.strip()
+        if stripped.startswith("["):
+            try:
+                entries = json.loads(stripped)
+                seen: set = set()
+                result: List[Tuple[str, Optional[str]]] = []
+                for entry in entries:
+                    if isinstance(entry, dict):
+                        bpn = entry.get("bpn", "").strip()
+                        aoa = entry.get("areaOfApplication") or None
+                    else:
+                        bpn = str(entry).strip()
+                        aoa = None
+                    if not bpn:
+                        continue
+                    if not CertificatesManager._SITE_BPN_RE.match(bpn):
+                        logger.warning("Ignoring invalid site BPN: %s", _s(bpn))
+                        continue
+                    if bpn not in seen:
+                        seen.add(bpn)
+                        result.append((bpn, aoa))
+                return result
+            except (json.JSONDecodeError, TypeError):
+                logger.warning("sites field looks like JSON but failed to parse — falling back to CSV")
+
+        # Fall back to comma-separated format.
+        seen_csv: set = set()
+        csv_result: List[Tuple[str, Optional[str]]] = []
         for raw in sites_str.split(","):
             bpn = raw.strip()
             if not bpn:
@@ -407,10 +462,10 @@ class CertificatesManager:
             if not CertificatesManager._SITE_BPN_RE.match(bpn):
                 logger.warning("Ignoring invalid site BPN: %s", _s(bpn))
                 continue
-            if bpn not in seen:
-                seen.add(bpn)
-                result.append(bpn)
-        return result
+            if bpn not in seen_csv:
+                seen_csv.add(bpn)
+                csv_result.append((bpn, None))
+        return csv_result
 
     @staticmethod
     def _share_to_read(share: CertificateShare) -> CertificateShareRead:
@@ -459,7 +514,10 @@ class CertificatesManager:
             trustLevel=TrustLevelEnum(ccm.trust_level.value),
             registrationNumber=ccm.registration_number,
             areaOfApplication=ccm.area_of_application,
-            validator=ccm.validator,
+            certificateVersion=ccm.certificate_version,
+            validatorName=ccm.validator_name,
+            validatorBpn=ccm.validator_bpn,
+            issuerBpn=ccm.issuer_bpn,
             uploaderBpnl=ccm.uploader_bpnl,
             description=ccm.description,
             sites=sites_read,

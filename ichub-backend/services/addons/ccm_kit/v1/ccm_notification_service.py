@@ -39,6 +39,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableContent,
     CcmPushContent,
     CcmRequestContent,
+    CcmSendStatusPayload,
     CcmStatusContent,
     CcmPullRequest,
     CertificateStatusValue,
@@ -693,6 +694,27 @@ class CcmNotificationService:
                 location_bpns=CcmBaseService._canonicalize_location_bpns(_push_sites),
             )
             repo.commit()
+
+        # --- Auto-RECEIVED: acknowledge receipt to the push sender ---
+        _auto_rcv = ConfigManager.get_config("ccm.auto_received.enabled", default=False)
+        if _auto_rcv:
+            _governance_cfg = ConfigManager.get_config("ccm.auto_received.governance", default=None)
+            try:
+                _own_bpn = notification.header.receiver_bpn
+                _auto_payload = CcmSendStatusPayload(
+                    senderBpn=_own_bpn,
+                    providerBpn=sender_bpn,
+                    documentId=content.document.document_id,
+                    certificateStatus=CertificateStatusValue.RECEIVED,
+                    governance=_governance_cfg,
+                )
+                ccm_consumer_service.send_certificate_status(_auto_payload, _own_bpn)
+                logger.info(
+                    "[CCM] Auto-RECEIVED status sent for documentId=%s",
+                    _s(content.document.document_id),
+                )
+            except Exception as _auto_err:
+                logger.warning("[CCM] Auto-RECEIVED send failed (non-fatal): %s", _auto_err)
 
         logger.info(
             f"Certificate '{_s(content.document.document_id)}' stored in ccm_received."

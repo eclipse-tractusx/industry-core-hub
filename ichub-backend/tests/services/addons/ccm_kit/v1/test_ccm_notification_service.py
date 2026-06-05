@@ -1244,3 +1244,151 @@ class TestCanonicalizationHelper:
         from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
         result = CcmBaseService._canonicalize_location_bpns(["BPNS000000000001"])
         assert result == json.dumps(["BPNS000000000001"])
+
+
+# ---------------------------------------------------------------------------
+# Auto-RECEIVED tests
+# ---------------------------------------------------------------------------
+
+_PUSH_NOTIFICATION_EXTRAS = {
+    "businessPartnerNumber": "BPNL000000000001",
+    "type": {"certificateType": "ISO9001"},
+    "document": {
+        "documentID": "DOC-AUTO-001",
+        "creationDate": "2024-06-01T00:00:00Z",
+        "contentType": "application/pdf",
+        "contentBase64": "JVBERi0xLjQgdGVzdA==",
+    },
+    "issuer": {"issuerName": "TÜV"},
+    "trustLevel": "none",
+}
+
+
+class TestAutoReceivedStatus:
+    """Tests for the auto-RECEIVED hook in process_certificate_push."""
+
+    def setup_method(self):
+        self.service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_received_repository = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        repos.ccm_outbound_request_repository = Mock()
+        repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+        repos.commit = Mock()
+        return repos
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ccm_consumer_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_auto_received_enabled_sends_status(
+        self, mock_factory, mock_config, mock_consumer_svc, mock_repos
+    ):
+        """
+        GIVEN auto_received is enabled
+        WHEN process_certificate_push succeeds
+        THEN ccm_consumer_service.send_certificate_status is called with RECEIVED.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: {
+            "ccm.auto_received.enabled": True,
+            "ccm.auto_received.governance": None,
+        }.get(key, kw.get("default"))
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_consumer_svc.send_certificate_status.assert_called_once()
+        call_args = mock_consumer_svc.send_certificate_status.call_args
+        payload = call_args[0][0]
+        assert payload.document_id == "DOC-AUTO-001"
+        from models.services.addons.ccm_kit.v1.notifications import CertificateStatusValue
+        assert payload.certificate_status == CertificateStatusValue.RECEIVED
+        assert payload.governance is None
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ccm_consumer_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_auto_received_disabled_does_not_send(
+        self, mock_factory, mock_config, mock_consumer_svc, mock_repos
+    ):
+        """
+        GIVEN auto_received is disabled
+        WHEN process_certificate_push succeeds
+        THEN ccm_consumer_service.send_certificate_status is NOT called.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: {
+            "ccm.auto_received.enabled": False,
+        }.get(key, kw.get("default"))
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_consumer_svc.send_certificate_status.assert_not_called()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ccm_consumer_service"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_auto_received_send_failure_is_non_fatal(
+        self, mock_factory, mock_config, mock_consumer_svc, mock_repos
+    ):
+        """
+        GIVEN auto_received is enabled but send_certificate_status raises
+        WHEN process_certificate_push is called
+        THEN the push still returns 200 (auto-RECEIVED failure is non-fatal).
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: {
+            "ccm.auto_received.enabled": True,
+            "ccm.auto_received.governance": None,
+        }.get(key, kw.get("default"))
+        mock_consumer_svc.send_certificate_status.side_effect = RuntimeError("send failed")
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200

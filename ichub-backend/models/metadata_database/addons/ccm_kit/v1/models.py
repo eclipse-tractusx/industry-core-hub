@@ -120,7 +120,7 @@ class Ccm(SQLModel, table=True):
     Mandatory SAMM fields: businessPartnerNumber (bpnl), type (certificate_type),
     issuer, validFrom, trustLevel.
     Optional SAMM fields: registrationNumber, areaOfApplication, validUntil,
-    validator, uploader.
+    validator, uploader, certificateVersion, issuerBpn, validatorBpn.
     """
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -178,9 +178,23 @@ class Ccm(SQLModel, table=True):
         index=True,
         description="Expiry date of the certificate's validity period (ISO 8601 date)."
     )
-    validator: Optional[str] = Field(
+    certificate_version: Optional[str] = Field(
         default=None,
-        description="BPN or URL of the third-party validator that verified this certificate."
+        description="Version of the certificate standard (e.g. '2015' for ISO 9001:2015)."
+    )
+    validator_name: Optional[str] = Field(
+        default=None,
+        description="Name of the third-party validator that verified this certificate."
+    )
+    validator_bpn: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="BPNL of the third-party validator."
+    )
+    issuer_bpn: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="BPNL of the certification authority that issued the certificate."
     )
     uploader_bpnl: Optional[str] = Field(
         default=None,
@@ -250,6 +264,10 @@ class CcmSite(SQLModel, table=True):
         index=True,
         description="Business Partner Number Site (BPNS) or Address (BPNA) "
                     "covered by the certificate."
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        description="Scope of the certificate specific to this site."
     )
 
     # --- Relationship ---

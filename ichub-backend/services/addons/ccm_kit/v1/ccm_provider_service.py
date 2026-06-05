@@ -569,24 +569,30 @@ class CcmProviderService(CcmBaseService):
         if ccm.doc:
             doc_b64 = base64.b64encode(ccm.doc).decode("ascii")
 
+        # --- type block (required + optional certificateVersion) ---
+        type_block: Dict = {"certificateType": ccm.certificate_type}
+        if ccm.certificate_version:
+            type_block["certificateVersion"] = ccm.certificate_version
+
+        # --- issuer block (required + optional issuerBpn) ---
+        issuer_block: Dict = {"issuerName": ccm.issuer}
+        if ccm.issuer_bpn:
+            issuer_block["issuerBpn"] = ccm.issuer_bpn
+
         content: Dict = {
             "businessPartnerNumber": ccm.bpnl,
-            "type": {
-                "certificateType": ccm.certificate_type,
-            },
+            "type": type_block,
             "document": {
                 "documentID": ccm.edc_asset_id or str(ccm.id),
                 "creationDate": ccm.created_at.isoformat(),
                 "contentType": "application/pdf",
                 "contentBase64": doc_b64,
             },
-            "issuer": {
-                "issuerName": ccm.issuer,
-            },
+            "issuer": issuer_block,
             "trustLevel": ccm.trust_level.value if ccm.trust_level else "none",
         }
 
-        # Optional fields
+        # Optional top-level fields
         if ccm.valid_from:
             content["validFrom"] = ccm.valid_from.isoformat()
         if ccm.valid_until:
@@ -597,13 +603,27 @@ class CcmProviderService(CcmBaseService):
             content["areaOfApplication"] = ccm.area_of_application
         if ccm.uploader_bpnl:
             content["uploader"] = ccm.uploader_bpnl
-        if ccm.validator:
-            content["validator"] = {"validatorName": ccm.validator}
 
-        # Enclosed sites
+        # --- validator block (optional name + optional BPN) ---
+        if ccm.validator_name or ccm.validator_bpn:
+            validator_block: Dict = {}
+            if ccm.validator_name:
+                validator_block["validatorName"] = ccm.validator_name
+            if ccm.validator_bpn:
+                validator_block["validatorBpn"] = ccm.validator_bpn
+            content["validator"] = validator_block
+
+        # --- enclosedSites (with optional per-site areaOfApplication) ---
         if ccm.sites:
             content["enclosedSites"] = [
-                {"enclosedSiteBpn": site.site_bpn}
+                {
+                    "enclosedSiteBpn": site.site_bpn,
+                    **(
+                        {"areaOfApplication": site.area_of_application}
+                        if site.area_of_application
+                        else {}
+                    ),
+                }
                 for site in ccm.sites
             ]
 

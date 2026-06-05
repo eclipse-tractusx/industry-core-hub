@@ -1098,7 +1098,10 @@ class CcmRepository(BaseRepository[Ccm]):
         registration_number: Optional[str] = None,
         area_of_application: Optional[str] = None,
         valid_until: Optional[date] = None,
-        validator: Optional[str] = None,
+        certificate_version: Optional[str] = None,
+        validator_name: Optional[str] = None,
+        validator_bpn: Optional[str] = None,
+        issuer_bpn: Optional[str] = None,
         uploader_bpnl: Optional[str] = None,
         description: Optional[str] = None,
         doc: Optional[bytes] = None,
@@ -1116,7 +1119,10 @@ class CcmRepository(BaseRepository[Ccm]):
             registration_number: Official certificate registration/serial number.
             area_of_application: Textual scope of the certificate.
             valid_until: Optional expiry date.
-            validator: BPN or URL of the third-party validator.
+            certificate_version: Optional version of the certificate standard (e.g. '2015').
+            validator_name: Name of the third-party validator.
+            validator_bpn: BPNL of the third-party validator.
+            issuer_bpn: BPNL of the certification authority.
             uploader_bpnl: BPNL of the participant who uploaded the certificate.
             description: Free-text notes.
             doc: Raw PDF bytes (BYTEA in PostgreSQL).
@@ -1134,7 +1140,10 @@ class CcmRepository(BaseRepository[Ccm]):
             registration_number=registration_number,
             area_of_application=area_of_application,
             valid_until=valid_until,
-            validator=validator,
+            certificate_version=certificate_version,
+            validator_name=validator_name,
+            validator_bpn=validator_bpn,
+            issuer_bpn=issuer_bpn,
             uploader_bpnl=uploader_bpnl,
             description=description,
             doc=doc,
@@ -1374,18 +1383,19 @@ class CcmSiteRepository(BaseRepository[CcmSite]):
     Repository for CcmSite entities (BPNS/BPNA sites linked to a certificate).
     """
 
-    def create_new(self, ccm_id: int, site_bpn: str) -> CcmSite:
+    def create_new(self, ccm_id: int, site_bpn: str, area_of_application: Optional[str] = None) -> CcmSite:
         """
         Create and stage a new CcmSite record.
 
         Args:
             ccm_id: FK of the parent certificate.
             site_bpn: BPNS or BPNA value.
+            area_of_application: Optional per-site scope description.
 
         Returns:
             The staged (unsaved) CcmSite instance.
         """
-        site = CcmSite(ccm_id=ccm_id, site_bpn=site_bpn)
+        site = CcmSite(ccm_id=ccm_id, site_bpn=site_bpn, area_of_application=area_of_application)
         self.create(site)
         return site
 

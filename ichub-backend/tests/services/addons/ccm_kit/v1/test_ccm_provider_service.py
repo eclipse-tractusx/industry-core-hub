@@ -82,7 +82,10 @@ def _make_ccm(**kwargs) -> Mock:
     m.registration_number = kwargs.get("registration_number", "REG-001")
     m.area_of_application = kwargs.get("area_of_application", "Manufacturing")
     m.uploader_bpnl = kwargs.get("uploader_bpnl", SENDER_BPN)
-    m.validator = kwargs.get("validator", "Validator GmbH")
+    m.certificate_version = kwargs.get("certificate_version", "2015")
+    m.validator_name = kwargs.get("validator_name", "Validator GmbH")
+    m.validator_bpn = kwargs.get("validator_bpn", "BPNL000000000VAL")
+    m.issuer_bpn = kwargs.get("issuer_bpn", "BPNL000000000ISS")
     m.doc = kwargs.get("doc", b"%PDF-1.4 test content")
     m.created_at = kwargs.get("created_at", datetime(2024, 6, 1, tzinfo=timezone.utc))
     m.edc_asset_id = kwargs.get("edc_asset_id", None)
@@ -92,6 +95,7 @@ def _make_ccm(**kwargs) -> Mock:
     if site_mocks is None:
         site1 = Mock(spec=CcmSite)
         site1.site_bpn = "BPNS000000000001"
+        site1.area_of_application = "Assembly"
         m.sites = [site1]
     else:
         m.sites = site_mocks
@@ -587,7 +591,9 @@ class TestBuildPushContent:
 
         assert content["businessPartnerNumber"] == "BPNL000000000001"
         assert content["type"]["certificateType"] == "ISO9001"
+        assert content["type"]["certificateVersion"] == "2015"
         assert content["issuer"]["issuerName"] == "TÜV Rheinland"
+        assert content["issuer"]["issuerBpn"] == "BPNL000000000ISS"
         assert content["trustLevel"] == "high"
         assert content["document"]["documentID"] == str(CERT_ID)
         assert content["document"]["contentType"] == "application/pdf"
@@ -599,12 +605,14 @@ class TestBuildPushContent:
         # Sites
         assert len(content["enclosedSites"]) == 1
         assert content["enclosedSites"][0]["enclosedSiteBpn"] == "BPNS000000000001"
+        assert content["enclosedSites"][0]["areaOfApplication"] == "Assembly"
 
         # Optional fields
         assert content["registrationNumber"] == "REG-001"
         assert content["areaOfApplication"] == "Manufacturing"
         assert content["uploader"] == SENDER_BPN
         assert content["validator"]["validatorName"] == "Validator GmbH"
+        assert content["validator"]["validatorBpn"] == "BPNL000000000VAL"
         assert content["validFrom"] == "2024-01-01"
         assert content["validUntil"] == "2027-12-31"
 
@@ -621,7 +629,10 @@ class TestBuildPushContent:
             registration_number=None,
             area_of_application=None,
             uploader_bpnl=None,
-            validator=None,
+            certificate_version=None,
+            validator_name=None,
+            validator_bpn=None,
+            issuer_bpn=None,
         )
         content = service._build_push_content(ccm)
 
@@ -631,6 +642,8 @@ class TestBuildPushContent:
         assert "areaOfApplication" not in content
         assert "uploader" not in content
         assert "validator" not in content
+        assert "certificateVersion" not in content["type"]
+        assert "issuerBpn" not in content["issuer"]
 
 
 # ---------------------------------------------------------------------------
