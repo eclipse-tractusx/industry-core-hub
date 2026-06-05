@@ -1623,3 +1623,212 @@ class TestConsumerDirectPushOutboundTracking:
             new_status=OutboundRequestStatus.Found,
             document_id="DOC-AUTO-001",
         )
+
+
+# ---------------------------------------------------------------------------
+# Auto-notification wiring tests
+# ---------------------------------------------------------------------------
+
+
+_NT_PATCH = (
+    "services.addons.ccm_kit.v1.ccm_notification_service.ccm_notification_manager"
+)
+
+
+class TestCcmAutoNotificationsWiring:
+    """
+    Verify that the ccm_notification_manager singleton is called at the
+    correct inbound entry points in CcmNotificationService.
+    """
+
+    def setup_method(self):
+        self.service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_received_repository = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        repos.ccm_outbound_request_repository = Mock()
+        repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+        repos.commit = Mock()
+        return repos
+
+    # ------------------------------------------------------------------
+    # process_certificate_push
+    # ------------------------------------------------------------------
+
+    @patch(_NT_PATCH)
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_push_received_notification_created(
+        self, mock_factory, mock_config, mock_nt_mgr, mock_repos
+    ):
+        """
+        GIVEN a valid push notification arrives
+        WHEN process_certificate_push succeeds
+        THEN ccm_notification_manager.create_ccm_notification is called with
+             notification_type=CCM_NT_PUSH_RECEIVED and correct fields.
+        """
+        from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_PUSH_RECEIVED
+
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: kw.get("default")
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Push:1.0.0",
+            content_extras=_PUSH_NOTIFICATION_EXTRAS,
+        )
+
+        status, _ = self.service.process_certificate_push(notification)
+
+        assert status == 200
+        mock_nt_mgr.create_ccm_notification.assert_called_once()
+        call_kwargs = mock_nt_mgr.create_ccm_notification.call_args.kwargs
+        assert call_kwargs["notification_type"] == CCM_NT_PUSH_RECEIVED
+        assert call_kwargs["sender_bpn"] == "BPNL000000000099"
+        assert call_kwargs["receiver_bpn"] == "BPNL000000000001"
+        assert call_kwargs["document_id"] == "DOC-AUTO-001"
+        assert call_kwargs["certificate_type"] == "ISO9001"
+
+    # ------------------------------------------------------------------
+    # process_certificate_request
+    # ------------------------------------------------------------------
+
+    @patch(_NT_PATCH)
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_not_found_notification_created(
+        self, mock_factory, mock_nt_mgr, mock_repos
+    ):
+        """
+        GIVEN the provider has no matching certificate (REJECTED path)
+        WHEN process_certificate_request returns 200 REJECTED
+        THEN ccm_notification_manager is called with CCM_NT_REQUEST_NOT_FOUND.
+        """
+        from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_REQUEST_NOT_FOUND
+
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_repository = Mock()
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = None
+        mock_repos.ccm_inbound_request_repository = Mock()
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+            content_extras={
+                "certifiedBpn": "BPNL000000000002",
+                "certificateType": "ISO9001",
+            },
+        )
+
+        status, _ = self.service.process_certificate_request(notification)
+
+        assert status == 200
+        mock_nt_mgr.create_ccm_notification.assert_called_once()
+        call_kwargs = mock_nt_mgr.create_ccm_notification.call_args.kwargs
+        assert call_kwargs["notification_type"] == CCM_NT_REQUEST_NOT_FOUND
+        assert call_kwargs["certificate_type"] == "ISO9001"
+        assert call_kwargs["certified_bpn"] == "BPNL000000000002"
+
+    @patch(_NT_PATCH)
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_request_in_progress_notification_created(
+        self, mock_factory, mock_config, mock_nt_mgr, mock_repos
+    ):
+        """
+        GIVEN the certificate exists but is not yet published (IN_PROGRESS path)
+        WHEN process_certificate_request returns 202
+        THEN ccm_notification_manager is called with CCM_NT_REQUEST_RECEIVED.
+        """
+        from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_REQUEST_RECEIVED
+
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_config.get_config.side_effect = lambda key, **kw: kw.get("default")
+
+        mock_repos.ccm_repository = Mock()
+        ccm_mock = Mock()
+        ccm_mock.id = 42
+        ccm_mock.edc_asset_id = None  # not yet published
+        mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = ccm_mock
+        mock_repos.certificate_share_repository = Mock()
+        mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+        mock_repos.ccm_inbound_request_repository = Mock()
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Request:1.0.0",
+            content_extras={
+                "certifiedBpn": "BPNL000000000002",
+                "certificateType": "ISO9001",
+            },
+        )
+
+        status, _ = self.service.process_certificate_request(notification)
+
+        assert status == 202
+        mock_nt_mgr.create_ccm_notification.assert_called_once()
+        call_kwargs = mock_nt_mgr.create_ccm_notification.call_args.kwargs
+        assert call_kwargs["notification_type"] == CCM_NT_REQUEST_RECEIVED
+
+    # ------------------------------------------------------------------
+    # process_certificate_available
+    # ------------------------------------------------------------------
+
+    @patch(_NT_PATCH)
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_notification_created(self, mock_factory, mock_nt_mgr, mock_repos):
+        """
+        GIVEN a valid available notification arrives
+        WHEN process_certificate_available succeeds
+        THEN ccm_notification_manager is called with CCM_NT_AVAILABLE_RECEIVED.
+        """
+        from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_AVAILABLE_RECEIVED
+
+        # _correlate_outbound_requests_available uses its own session
+        mock_factory.return_value.__enter__.return_value = mock_repos
+        mock_repos.ccm_outbound_request_repository = Mock()
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Available:1.0.0",
+            content_extras={
+                "documentId": "DOC-AVAIL-001",
+                "certificateType": "ISO9001",
+            },
+        )
+
+        with patch(
+            "services.addons.ccm_kit.v1.ccm_notification_service"
+            ".CcmNotificationService._auto_pull_certificate"
+        ):
+            status, _ = self.service.process_certificate_available(notification)
+
+        assert status == 200
+        mock_nt_mgr.create_ccm_notification.assert_called_once()
+        call_kwargs = mock_nt_mgr.create_ccm_notification.call_args.kwargs
+        assert call_kwargs["notification_type"] == CCM_NT_AVAILABLE_RECEIVED
+        assert call_kwargs["sender_bpn"] == "BPNL000000000099"
+        assert call_kwargs["document_id"] == "DOC-AVAIL-001"

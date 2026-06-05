@@ -48,6 +48,13 @@ from services.addons.ccm_kit.v1.ccm_consumer_service import (
     ccm_consumer_service,
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+from managers.addons_service.ccm_kit.v1.notifications import (
+    ccm_notification_manager,
+    CCM_NT_REQUEST_RECEIVED,
+    CCM_NT_REQUEST_NOT_FOUND,
+    CCM_NT_PUSH_RECEIVED,
+    CCM_NT_AVAILABLE_RECEIVED,
+)
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
     CCM_CONTEXT_PUSH,
@@ -180,6 +187,13 @@ class CcmNotificationService:
                     notification_id=str(notification.header.message_id),
                 )
                 repo.commit()
+                ccm_notification_manager.create_ccm_notification(
+                    sender_bpn=sender_bpn,
+                    receiver_bpn=notification.header.receiver_bpn,
+                    notification_type=CCM_NT_REQUEST_NOT_FOUND,
+                    certificate_type=content.certificate_type,
+                    certified_bpn=content.certified_bpn,
+                )
                 return 200, {
                     "header": self._build_response_header(notification),
                     "content": {
@@ -244,6 +258,14 @@ class CcmNotificationService:
                 f"Certificate {ccm_id} is published (asset {_s(ccm_edc_asset_id)}). "
                 f"Responding COMPLETED with documentId."
             )
+            ccm_notification_manager.create_ccm_notification(
+                sender_bpn=sender_bpn,
+                receiver_bpn=notification.header.receiver_bpn,
+                notification_type=CCM_NT_REQUEST_RECEIVED,
+                certificate_type=content.certificate_type,
+                certified_bpn=content.certified_bpn,
+                document_id=ccm_edc_asset_id,
+            )
             return 200, {
                 "header": self._build_response_header(notification),
                 "content": {
@@ -270,6 +292,13 @@ class CcmNotificationService:
             )
 
         # --- 6. Certificate found but not yet published → 202 IN_PROGRESS (CX-0135 §3.4) ---
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=notification.header.receiver_bpn,
+            notification_type=CCM_NT_REQUEST_RECEIVED,
+            certificate_type=content.certificate_type,
+            certified_bpn=content.certified_bpn,
+        )
         return 202, {
             "header": self._build_response_header(notification),
             "content": {
@@ -661,6 +690,14 @@ class CcmNotificationService:
                         _s(content.document.document_id),
                     )
                 repo.commit()
+                ccm_notification_manager.create_ccm_notification(
+                    sender_bpn=sender_bpn,
+                    receiver_bpn=notification.header.receiver_bpn,
+                    notification_type=CCM_NT_PUSH_RECEIVED,
+                    certificate_type=content.type.certificate_type,
+                    certified_bpn=content.business_partner_number,
+                    document_id=content.document.document_id,
+                )
                 return 200, {
                     "message": (
                         f"Certificate '{content.document.document_id}' "
@@ -730,6 +767,15 @@ class CcmNotificationService:
                     _s(content.document.document_id),
                 )
             repo.commit()
+
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=notification.header.receiver_bpn,
+            notification_type=CCM_NT_PUSH_RECEIVED,
+            certificate_type=content.type.certificate_type,
+            certified_bpn=content.business_partner_number,
+            document_id=content.document.document_id,
+        )
 
         # --- Auto-RECEIVED: acknowledge receipt to the push sender ---
         _auto_rcv = ConfigManager.get_config("ccm.auto_received.enabled", default=False)
@@ -826,6 +872,14 @@ class CcmNotificationService:
                 notification_message_id=str(notification.header.message_id),
                 related_message_id=str(_related_msg_id) if _related_msg_id else None,
             )
+
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=notification.header.receiver_bpn,
+            notification_type=CCM_NT_AVAILABLE_RECEIVED,
+            certificate_type=content.certificate_type,
+            document_id=content.document_id,
+        )
 
         return 200, {
             "message": (
