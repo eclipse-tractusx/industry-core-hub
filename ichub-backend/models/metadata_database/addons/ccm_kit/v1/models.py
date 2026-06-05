@@ -219,6 +219,7 @@ class Ccm(SQLModel, table=True):
     # --- Relationships ---
     sites: List["CcmSite"] = Relationship(back_populates="ccm")
     shares: List["CertificateShare"] = Relationship(back_populates="certificate")
+    inbound_requests: List["CcmInboundRequest"] = Relationship(back_populates="certificate")
 
     __tablename__ = "ccm"
     __table_args__ = (
@@ -654,6 +655,9 @@ class CcmInboundRequest(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp of the last status update.",
     )
+
+    # --- Relationships ---
+    certificate: Optional["Ccm"] = Relationship(back_populates="inbound_requests")
 
     __tablename__ = "ccm_inbound_request"
     __table_args__ = (

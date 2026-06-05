@@ -2032,7 +2032,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         )
         stmt = select(CcmInboundRequest).where(
             CcmInboundRequest.id.in_(select(latest_ids.c.id))
-        )
+        ).options(selectinload(CcmInboundRequest.certificate))
         if consumer_bpn:
             stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
         if certified_bpn:

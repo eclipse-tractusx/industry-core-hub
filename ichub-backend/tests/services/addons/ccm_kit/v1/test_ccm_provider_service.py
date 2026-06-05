@@ -970,6 +970,7 @@ class TestProviderServiceMappers:
         record.certificate_type = "ISO9001"
         record.location_bpns = None
         record.certificate_id = 42
+        record.certificate = None
         record.status = InboundRequestStatus.Pushed
         record.consumer_status = "ACCEPTED"
         record.notification_id = "notif-123"
@@ -994,6 +995,7 @@ class TestProviderServiceMappers:
         record.certificate_type = "ISO9001"
         record.location_bpns = None
         record.certificate_id = None
+        record.certificate = None
         record.status = InboundRequestStatus.NotFound
         record.consumer_status = None
         record.notification_id = None
@@ -1248,3 +1250,103 @@ class TestCX0135Compliance:
 
         advance_call_kwargs = repos.ccm_inbound_request_repository.advance_status_for_consumer.call_args.kwargs
         assert advance_call_kwargs.get("notification_id") == explicit_related_id
+
+
+# ---------------------------------------------------------------------------
+# _to_inbound_request_item — certificate fields surfaced in list response
+# ---------------------------------------------------------------------------
+
+
+def _make_inbound_req(**kwargs) -> Mock:
+    """Return a Mock resembling a CcmInboundRequest ORM record."""
+    m = Mock(spec=CcmInboundRequest)
+    m.id = kwargs.get("id", 1)
+    m.consumer_bpn = kwargs.get("consumer_bpn", CONSUMER_BPN)
+    m.certified_bpn = kwargs.get("certified_bpn", "BPNL000000000001")
+    m.certificate_type = kwargs.get("certificate_type", "ISO9001")
+    m.location_bpns = kwargs.get("location_bpns", None)
+    m.certificate_id = kwargs.get("certificate_id", None)
+    m.certificate = kwargs.get("certificate", None)
+    m.status = kwargs.get("status", InboundRequestStatus.NotFound)
+    m.consumer_status = kwargs.get("consumer_status", None)
+    m.notification_id = kwargs.get("notification_id", None)
+    m.received_at = kwargs.get("received_at", datetime(2025, 1, 1, tzinfo=timezone.utc))
+    m.updated_at = kwargs.get("updated_at", datetime(2025, 6, 1, tzinfo=timezone.utc))
+    return m
+
+
+class TestToInboundRequestItem:
+    """Tests for CcmProviderService._to_inbound_request_item."""
+
+    def test_certificate_fields_populated_when_linked(self):
+        """
+        GIVEN an inbound request with a resolved certificate FK
+        WHEN _to_inbound_request_item is called
+        THEN certificateName and registrationNumber are taken from the linked cert.
+        """
+        cert = Mock(spec=Ccm)
+        cert.certificate_name = "ISO 9001:2015 QMS"
+        cert.registration_number = "REG-42"
+
+        req = _make_inbound_req(
+            certificate_id=CERT_ID,
+            certificate=cert,
+            status=InboundRequestStatus.Registered,
+        )
+
+        item = CcmProviderService._to_inbound_request_item(req)
+
+        assert item.certificate_name == "ISO 9001:2015 QMS"
+        assert item.registration_number == "REG-42"
+
+    def test_certificate_fields_none_when_no_linked_cert(self):
+        """
+        GIVEN an inbound request with no matched certificate (NotFound)
+        WHEN _to_inbound_request_item is called
+        THEN certificateName and registrationNumber are None.
+        """
+        req = _make_inbound_req(certificate_id=None, certificate=None)
+
+        item = CcmProviderService._to_inbound_request_item(req)
+
+        assert item.certificate_name is None
+        assert item.registration_number is None
+
+    def test_certificate_name_none_when_cert_has_no_name(self):
+        """
+        GIVEN an inbound request linked to a cert that has no certificate_name set
+        WHEN _to_inbound_request_item is called
+        THEN certificateName is None (field is optional on the cert).
+        """
+        cert = Mock(spec=Ccm)
+        cert.certificate_name = None
+        cert.registration_number = "REG-99"
+
+        req = _make_inbound_req(
+            certificate_id=CERT_ID,
+            certificate=cert,
+            status=InboundRequestStatus.Registered,
+        )
+
+        item = CcmProviderService._to_inbound_request_item(req)
+
+        assert item.certificate_name is None
+        assert item.registration_number == "REG-99"
+
+    def test_standard_fields_still_mapped(self):
+        """
+        GIVEN any inbound request
+        WHEN _to_inbound_request_item is called
+        THEN all pre-existing fields (consumerBpn, status, etc.) are still mapped.
+        """
+        req = _make_inbound_req(
+            id=7,
+            consumer_bpn=CONSUMER_BPN,
+            status=InboundRequestStatus.NotFound,
+        )
+
+        item = CcmProviderService._to_inbound_request_item(req)
+
+        assert item.request_id == 7
+        assert item.consumer_bpn == CONSUMER_BPN
+        assert item.status == InboundRequestStatus.NotFound.value

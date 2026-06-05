@@ -1015,6 +1015,18 @@ class CcmInboundRequestItem(BaseModel):
         alias="notificationId",
         description="CX-0135 notification message_id for correlation.",
     )
+    certificate_name: Optional[str] = Field(
+        default=None,
+        alias="certificateName",
+        max_length=256,
+        description="Human-readable display name of the matched certificate (NULL when NotFound).",
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        alias="registrationNumber",
+        max_length=256,
+        description="Official registration number of the matched certificate (NULL when NotFound).",
+    )
     received_at: str = Field(
         alias="receivedAt",
         description="Timestamp when the request was received (ISO 8601).",

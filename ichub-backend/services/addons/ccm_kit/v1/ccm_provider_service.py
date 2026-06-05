@@ -843,6 +843,7 @@ class CcmProviderService(CcmBaseService):
     @staticmethod
     def _to_inbound_request_item(r: CcmInboundRequest) -> CcmInboundRequestItem:
         """Map a CcmInboundRequest ORM instance to a response DTO."""
+        cert = r.certificate
         return CcmInboundRequestItem(
             requestId=r.id,
             consumerBpn=r.consumer_bpn,
@@ -853,6 +854,8 @@ class CcmProviderService(CcmBaseService):
             status=r.status.value,
             consumerStatus=r.consumer_status,
             notificationId=r.notification_id,
+            certificateName=cert.certificate_name if cert else None,
+            registrationNumber=cert.registration_number if cert else None,
             receivedAt=r.received_at.isoformat(),
             updatedAt=r.updated_at.isoformat(),
         )
