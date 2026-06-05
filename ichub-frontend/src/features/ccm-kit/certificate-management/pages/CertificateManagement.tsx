@@ -35,15 +35,15 @@ import {
   CertificateFilter,
   CertificateStatus,
 } from '../types/types';
-import { fetchAllCertificates, createCertificate, deleteCertificate, shareCertificate, updateCertificateDocument } from '../api';
+import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, registerCertificateInDtr } from '../api';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { CertificateCardGrid } from '../components/certificate-list/CertificateCardGrid';
 import { SummaryStatsBar } from '../components/summary/SummaryStatsBar';
 import { SearchFilterBar } from '../components/filters/SearchFilterBar';
 import { UploadCertificateDialog } from '../components/dialogs/UploadCertificateDialog';
-import { ShareCertificateDialog } from '../components/dialogs/ShareCertificateDialog';
+import { PublishCertificateDialog } from '../components/dialogs/PublishCertificateDialog';
 import { DeleteCertificateDialog } from '../components/dialogs/DeleteCertificateDialog';
-import { UpdatePdfDialog } from '../components/dialogs/UpdatePdfDialog';
+import { UpdateCertificateDialog } from '../components/dialogs/UpdateCertificateDialog';
 import { CertificatePDFViewer } from '../components/dialogs/CertificatePDFViewer';
 import { CertificateInfoPanel } from '../components/dialogs/CertificateInfoPanel';
 import { DiscoverPartnerDialog } from '../components/dialogs/DiscoverPartnerDialog';
@@ -118,11 +118,11 @@ const CertificateManagement = () => {
 
   // Dialog states
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [discoverDialogOpen, setDiscoverDialogOpen] = useState(false);
-  const [updatePdfDialogOpen, setUpdatePdfDialogOpen] = useState(false);
+  const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [infoPanelOpen, setInfoPanelOpen] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [selectedInfoCertificate, setSelectedInfoCertificate] = useState<Certificate | null>(null);
@@ -217,15 +217,16 @@ const CertificateManagement = () => {
     }
   };
 
-  const handleShareCertificate = async (certificateId: string, partnerBpn: string, method: 'PULL' | 'PUSH') => {
+  const handlePublishCertificate = async (certificateId: string) => {
     try {
-      await shareCertificate(certificateId, partnerBpn, method);
-      setSnackbar({ open: true, message: t('messages.shareSuccess'), severity: 'success' });
-      setShareDialogOpen(false);
+      await registerCertificateInDtr(certificateId);
+      setSnackbar({ open: true, message: t('messages.publishSuccess'), severity: 'success' });
+      setPublishDialogOpen(false);
       loadData();
     } catch (err) {
-      console.error('Error sharing certificate:', err);
-      setSnackbar({ open: true, message: t('messages.shareFailed'), severity: 'error' });
+      console.error('Error publishing certificate:', err);
+      setSnackbar({ open: true, message: t('messages.publishFailed'), severity: 'error' });
+      setPublishDialogOpen(false);
     }
   };
 
@@ -252,9 +253,9 @@ const CertificateManagement = () => {
     setInfoPanelOpen(true);
   };
 
-  const handleShare = (certificate: Certificate) => {
+  const handlePublish = (certificate: Certificate) => {
     setSelectedCertificate(certificate);
-    setShareDialogOpen(true);
+    setPublishDialogOpen(true);
   };
 
   const handleDelete = (certificate: Certificate) => {
@@ -264,22 +265,18 @@ const CertificateManagement = () => {
 
   const handleUpdate = (certificate: Certificate) => {
     setSelectedCertificate(certificate);
-    setUpdatePdfDialogOpen(true);
+    setUpdateDialogOpen(true);
   };
 
-  const handleConfirmUpdate = async (certificateId: string, newDocument: File, notifyPartnerBpns: string[]) => {
+  const handleSaveUpdate = async (certificateId: string, formData: FormData) => {
     try {
-      await updateCertificateDocument(certificateId, newDocument);
-      if (notifyPartnerBpns.length > 0) {
-        await Promise.all(
-          notifyPartnerBpns.map((bpn) => shareCertificate(certificateId, bpn, 'PUSH'))
-        );
-      }
-      setSnackbar({ open: true, message: 'PDF updated successfully.', severity: 'success' });
-      void loadData();
+      await updateCertificate(certificateId, formData);
+      setSnackbar({ open: true, message: t('messages.updateSuccess'), severity: 'success' });
+      setUpdateDialogOpen(false);
+      loadData();
     } catch (err) {
-      console.error('Error updating PDF:', err);
-      setSnackbar({ open: true, message: 'Failed to update PDF.', severity: 'error' });
+      console.error('Error updating certificate:', err);
+      setSnackbar({ open: true, message: t('messages.updateFailed'), severity: 'error' });
       throw err;
     }
   };
@@ -370,7 +367,7 @@ const CertificateManagement = () => {
         <CertificateTable
           certificates={filteredCertificates}
           onView={handleView}
-          onShare={handleShare}
+          onPublish={handlePublish}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onInfo={handleInfo}
@@ -379,7 +376,7 @@ const CertificateManagement = () => {
         <CertificateCardGrid
           certificates={filteredCertificates}
           onView={handleView}
-          onShare={handleShare}
+          onPublish={handlePublish}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           onInfo={handleInfo}
@@ -397,7 +394,7 @@ const CertificateManagement = () => {
         open={pdfViewerOpen}
         certificate={selectedCertificate}
         onClose={() => setPdfViewerOpen(false)}
-        onShare={handleShare}
+        onPublish={handlePublish}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
         onInfo={handleInfo}
@@ -409,11 +406,11 @@ const CertificateManagement = () => {
         onClose={() => setInfoPanelOpen(false)}
       />
 
-      <ShareCertificateDialog
-        open={shareDialogOpen}
-        onClose={() => setShareDialogOpen(false)}
+      <PublishCertificateDialog
+        open={publishDialogOpen}
+        onClose={() => setPublishDialogOpen(false)}
         certificate={selectedCertificate}
-        onShare={handleShareCertificate}
+        onConfirm={handlePublishCertificate}
       />
 
       <DeleteCertificateDialog
@@ -429,11 +426,11 @@ const CertificateManagement = () => {
         certificates={certificates}
       />
 
-      <UpdatePdfDialog
-        open={updatePdfDialogOpen}
-        onClose={() => setUpdatePdfDialogOpen(false)}
+      <UpdateCertificateDialog
+        open={updateDialogOpen}
+        onClose={() => setUpdateDialogOpen(false)}
         certificate={selectedCertificate}
-        onUpdate={handleConfirmUpdate}
+        onSave={handleSaveUpdate}
       />
 
       {/* Global snackbar */}

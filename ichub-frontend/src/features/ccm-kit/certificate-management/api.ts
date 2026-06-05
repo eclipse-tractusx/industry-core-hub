@@ -228,6 +228,32 @@ export const createCertificate = async (certificateData: FormData): Promise<any>
 };
 
 /**
+ * Update certificate metadata (all fields optional, PDF is immutable).
+ * PUT /addons/ccm-kit/certificates/{certificate_id}
+ * Request is multipart/form-data — only provided fields are written.
+ */
+export const updateCertificate = async (certificateId: string, formData: FormData): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  const { 'Content-Type': _dropped, ...headersWithoutContentType } = {
+    ...getApiHeaders(),
+    ...authService.getAuthHeaders(),
+  };
+  const response = await axios.put<any>(
+    `${backendUrl}/addons/ccm-kit/certificates/${certificateId}`,
+    formData,
+    {
+      headers: {
+        ...headersWithoutContentType,
+        'Accept': 'application/json',
+      },
+    }
+  );
+  return response.data;
+};
+
+/**
  * Fetch full certificate detail including the base64-encoded PDF document.
  * GET /addons/ccm-kit/certificates/{certificate_id}
  * Response includes document.documentContent (base64 PDF), sharing history, and all metadata.

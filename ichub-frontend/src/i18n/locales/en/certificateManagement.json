@@ -64,6 +64,10 @@
     "deleteNotAvailable": "Delete functionality not yet available.",
     "deleteSuccess": "Certificate deleted successfully!",
     "deleteFailed": "Failed to delete certificate.",
+    "publishSuccess": "Certificate published successfully!",
+    "publishFailed": "Failed to publish certificate.",
+    "updateSuccess": "Certificate updated successfully!",
+    "updateFailed": "Failed to update certificate.",
     "registerDtrSuccess": "Certificate registered in DTR successfully!",
     "registerDtrFailed": "Failed to register certificate in DTR.",
     "loadFailed": "Failed to load certificates. Please try again."

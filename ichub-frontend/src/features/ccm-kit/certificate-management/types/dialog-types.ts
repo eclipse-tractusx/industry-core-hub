@@ -62,6 +62,37 @@ export interface ShareCertificateDialogProps {
   onShare: (certificateId: string, partnerBpn: string, method: 'PULL' | 'PUSH') => void;
 }
 
+export interface PublishCertificateDialogProps {
+  open: boolean;
+  onClose: () => void;
+  certificate: {
+    id: string;
+    name: string;
+    type?: string;
+  } | null;
+  onConfirm: (certificateId: string) => void;
+}
+
+export interface UpdateCertificateDialogProps {
+  open: boolean;
+  onClose: () => void;
+  certificate: {
+    id: string;
+    name?: string;
+    type?: string;
+    issuer?: string;
+    validFrom?: string;
+    validUntil?: string;
+    trustLevel?: string;
+    certificateIdentifier?: string;
+    areaOfApplication?: string;
+    validator?: string;
+    description?: string;
+    enclosedSitesBpn?: string[];
+  } | null;
+  onSave: (certificateId: string, formData: FormData) => Promise<void>;
+}
+
 export interface UpdatePdfDialogProps {
   open: boolean;
   onClose: () => void;

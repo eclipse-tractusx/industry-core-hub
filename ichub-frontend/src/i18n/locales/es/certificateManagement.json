@@ -64,6 +64,10 @@
     "deleteNotAvailable": "La función de eliminación aún no está disponible.",
     "deleteSuccess": "¡Certificado eliminado con éxito!",
     "deleteFailed": "No se pudo eliminar el certificado.",
+    "publishSuccess": "¡Certificado publicado con éxito!",
+    "publishFailed": "No se pudo publicar el certificado.",
+    "updateSuccess": "¡Certificado actualizado con éxito!",
+    "updateFailed": "No se pudo actualizar el certificado.",
     "registerDtrSuccess": "¡Certificado registrado en DTR con éxito!",
     "registerDtrFailed": "No se pudo registrar el certificado en DTR.",
     "loadFailed": "No se pudieron cargar los certificados. Por favor, inténtelo de nuevo."

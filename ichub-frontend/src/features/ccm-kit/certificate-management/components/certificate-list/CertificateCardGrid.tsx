@@ -31,7 +31,7 @@ import {
   CardContent,
   alpha,
 } from '@mui/material';
-import ShareIcon from '@mui/icons-material/Share';
+import PublishIcon from '@mui/icons-material/Publish';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -50,7 +50,7 @@ import { certificateManagementConfig } from '../../config';
 interface CertificateCardGridProps {
   certificates: Certificate[];
   onView: (certificate: Certificate) => void;
-  onShare: (certificate: Certificate) => void;
+  onPublish: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
   onInfo: (certificate: Certificate) => void;
@@ -86,7 +86,7 @@ const CCM_SECONDARY = '#9D6FD4';
 export const CertificateCardGrid = ({
   certificates,
   onView,
-  onShare,
+  onPublish,
   onUpdate,
   onDelete,
   onInfo,
@@ -300,9 +300,9 @@ export const CertificateCardGrid = ({
                 <Button
                   size="small"
                   variant="contained"
-                  startIcon={<ShareIcon sx={{ fontSize: 14 }} />}
+                  startIcon={<PublishIcon sx={{ fontSize: 14 }} />}
                   disabled={cert.status === 'expired'}
-                  onClick={(e) => { e.stopPropagation(); onShare(cert); }}
+                  onClick={(e) => { e.stopPropagation(); onPublish(cert); }}
                   sx={{
                     flex: 1,
                     py: 0.85,
@@ -315,7 +315,7 @@ export const CertificateCardGrid = ({
                     '&.Mui-disabled': { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' },
                   }}
                 >
-                  Share
+                  Publish
                 </Button>
                 <Button
                   size="small"

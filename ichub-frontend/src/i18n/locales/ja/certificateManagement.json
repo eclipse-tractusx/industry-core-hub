@@ -64,6 +64,10 @@
     "deleteNotAvailable": "削除機能はまだ利用できません。",
     "deleteSuccess": "証明書を正常に削除しました！",
     "deleteFailed": "証明書の削除に失敗しました。",
+    "publishSuccess": "証明書を正常に公開しました！",
+    "publishFailed": "証明書の公開に失敗しました。",
+    "updateSuccess": "証明書を正常に更新しました！",
+    "updateFailed": "証明書の更新に失敗しました。",
     "registerDtrSuccess": "証明書をDTRに正常に登録しました！",
     "registerDtrFailed": "証明書のDTR登録に失敗しました。",
     "loadFailed": "証明書の読み込みに失敗しました。もう一度お試しください。"

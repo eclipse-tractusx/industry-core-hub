@@ -64,6 +64,10 @@
     "deleteNotAvailable": "Löschfunktion noch nicht verfügbar.",
     "deleteSuccess": "Zertifikat erfolgreich gelöscht!",
     "deleteFailed": "Zertifikat konnte nicht gelöscht werden.",
+    "publishSuccess": "Zertifikat erfolgreich veröffentlicht!",
+    "publishFailed": "Zertifikat konnte nicht veröffentlicht werden.",
+    "updateSuccess": "Zertifikat erfolgreich aktualisiert!",
+    "updateFailed": "Zertifikat konnte nicht aktualisiert werden.",
     "registerDtrSuccess": "Zertifikat erfolgreich im DTR registriert!",
     "registerDtrFailed": "Zertifikat konnte nicht im DTR registriert werden.",
     "loadFailed": "Zertifikate konnten nicht geladen werden. Bitte versuchen Sie es erneut."

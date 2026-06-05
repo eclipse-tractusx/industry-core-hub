@@ -64,6 +64,10 @@
     "deleteNotAvailable": "Funcionalidade de exclusão ainda não disponível.",
     "deleteSuccess": "Certificado excluído com sucesso!",
     "deleteFailed": "Falha ao excluir o certificado.",
+    "publishSuccess": "Certificado publicado com sucesso!",
+    "publishFailed": "Falha ao publicar o certificado.",
+    "updateSuccess": "Certificado atualizado com sucesso!",
+    "updateFailed": "Falha ao atualizar o certificado.",
     "registerDtrSuccess": "Certificado registrado no DTR com sucesso!",
     "registerDtrFailed": "Falha ao registrar o certificado no DTR.",
     "loadFailed": "Falha ao carregar os certificados. Por favor, tente novamente."

@@ -36,7 +36,7 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import ShareIcon from '@mui/icons-material/Share';
+import PublishIcon from '@mui/icons-material/Publish';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -46,7 +46,7 @@ import { certificateManagementConfig } from '../../config';
 interface CertificateTableProps {
   certificates: Certificate[];
   onView: (certificate: Certificate) => void;
-  onShare: (certificate: Certificate) => void;
+  onPublish: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
   onInfo: (certificate: Certificate) => void;
@@ -56,7 +56,7 @@ interface CertificateTableProps {
 export const CertificateTable = ({
   certificates,
   onView,
-  onShare,
+  onPublish,
   onUpdate,
   onDelete,
   onInfo,
@@ -236,12 +236,12 @@ export const CertificateTable = ({
                       <Button
                         size="small"
                         variant="outlined"
-                        startIcon={<ShareIcon sx={{ fontSize: 13 }} />}
+                        startIcon={<PublishIcon sx={{ fontSize: 13 }} />}
                         disabled={certificate.status === 'expired'}
-                        onClick={(e) => { e.stopPropagation(); onShare(certificate); }}
+                        onClick={(e) => { e.stopPropagation(); onPublish(certificate); }}
                         sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
                       >
-                        Share
+                        Publish
                       </Button>
                       <Button
                         size="small"

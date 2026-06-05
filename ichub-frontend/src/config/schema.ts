@@ -77,6 +77,22 @@ export interface AgreementConfig {
  */
 export type DtrPolicyConfig = PolicyDefinition[];
 
+/**
+ * A single CCM ODRL policy entry (raw format sent to the EDC connector).
+ * Uses singular `permission` (object, not array) as required by the CCM API.
+ */
+export interface CcmOdrlPolicy {
+  permission: PolicyRule;
+  prohibition: PolicyRule[];
+  obligation: PolicyRule[];
+}
+
+/**
+ * CCM policy governance configuration — array of ODRL policies passed directly
+ * to the CCM API calls for contract negotiation in the dataspace.
+ */
+export type CcmPolicyConfig = CcmOdrlPolicy[];
+
 // ----- Backward-compatible aliases (deprecated) -----
 
 /** @deprecated Use PolicyConstraint */
@@ -160,6 +176,7 @@ export interface AppConfig {
   governance: {
     agreements: AgreementConfig[];
     dtrPolicy: DtrPolicyConfig;
+    ccmPolicy: CcmPolicyConfig;
   };
   
   // Feature flags
@@ -224,6 +241,7 @@ export interface RawEnvironmentConfig {
   // Governance and policies
   VITE_GOVERNANCE_CONFIG?: string;
   VITE_DTR_POLICIES_CONFIG?: string;
+  VITE_CCM_POLICY_GOVERNANCE?: string;
   
   // Feature flags
   VITE_ENABLE_ADVANCED_LOGGING?: string;

@@ -64,6 +64,10 @@
     "deleteNotAvailable": "删除功能暂不可用。",
     "deleteSuccess": "证书删除成功！",
     "deleteFailed": "证书删除失败。",
+    "publishSuccess": "证书发布成功！",
+    "publishFailed": "证书发布失败。",
+    "updateSuccess": "证书更新成功！",
+    "updateFailed": "证书更新失败。",
     "registerDtrSuccess": "证书已成功在 DTR 中注册！",
     "registerDtrFailed": "证书在 DTR 中注册失败。",
     "loadFailed": "证书加载失败，请重试。"

@@ -64,6 +64,10 @@
     "deleteNotAvailable": "La fonctionnalité de suppression n'est pas encore disponible.",
     "deleteSuccess": "Certificat supprimé avec succès !",
     "deleteFailed": "Échec de la suppression du certificat.",
+    "publishSuccess": "Certificat publié avec succès !",
+    "publishFailed": "Échec de la publication du certificat.",
+    "updateSuccess": "Certificat mis à jour avec succès !",
+    "updateFailed": "Échec de la mise à jour du certificat.",
     "registerDtrSuccess": "Certificat enregistré dans le DTR avec succès !",
     "registerDtrFailed": "Échec de l'enregistrement du certificat dans le DTR.",
     "loadFailed": "Échec du chargement des certificats. Veuillez réessayer."

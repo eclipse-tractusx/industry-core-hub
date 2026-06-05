@@ -33,7 +33,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import ShareIcon from '@mui/icons-material/Share';
+import PublishIcon from '@mui/icons-material/Publish';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -46,7 +46,7 @@ interface CertificatePDFViewerProps {
   open: boolean;
   certificate: Certificate | null;
   onClose: () => void;
-  onShare: (certificate: Certificate) => void;
+  onPublish: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
   onInfo: (certificate: Certificate) => void;
@@ -67,7 +67,7 @@ export const CertificatePDFViewer = ({
   open,
   certificate,
   onClose,
-  onShare,
+  onPublish,
   onUpdate,
   onDelete,
   onInfo,
@@ -192,9 +192,9 @@ export const CertificatePDFViewer = ({
           <Button
             size="small"
             variant="outlined"
-            startIcon={<ShareIcon fontSize="small" />}
+            startIcon={<PublishIcon fontSize="small" />}
             disabled={certificate.status === 'expired'}
-            onClick={() => onShare(certificate)}
+            onClick={() => onPublish(certificate)}
             sx={{
               borderColor: 'rgba(255,255,255,0.5)',
               color: '#fff',
@@ -205,7 +205,7 @@ export const CertificatePDFViewer = ({
               '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)' },
             }}
           >
-            Share
+            Publish
           </Button>
           <Button
             size="small"
