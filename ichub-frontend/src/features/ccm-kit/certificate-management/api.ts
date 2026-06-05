@@ -228,6 +228,21 @@ export const createCertificate = async (certificateData: FormData): Promise<any>
 };
 
 /**
+ * Fetch full certificate detail including the base64-encoded PDF document.
+ * GET /addons/ccm-kit/certificates/{certificate_id}
+ * Response includes document.documentContent (base64 PDF), sharing history, and all metadata.
+ */
+export const fetchCertificateDetail = async (certificateId: string): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  const response = await httpClient.get(
+    `${backendUrl}/addons/ccm-kit/certificates/${certificateId}`
+  );
+  return response.data;
+};
+
+/**
  * Delete a certificate from the CCM Addon Kit
  * DELETE /addons/ccm-kit/certificates/{certificate_id}
  * Returns 204 No Content on success.

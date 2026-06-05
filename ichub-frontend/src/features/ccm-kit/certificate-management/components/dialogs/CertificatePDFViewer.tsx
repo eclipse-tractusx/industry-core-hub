@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   Box,
@@ -28,14 +29,18 @@ import {
   Button,
   Chip,
   Divider,
+  CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ShareIcon from '@mui/icons-material/Share';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
+import { fetchCertificateDetail } from '../../api';
 
 interface CertificatePDFViewerProps {
   open: boolean;
@@ -44,6 +49,7 @@ interface CertificatePDFViewerProps {
   onShare: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
+  onInfo: (certificate: Certificate) => void;
 }
 
 const formatDate = (d: string) =>
@@ -64,7 +70,23 @@ export const CertificatePDFViewer = ({
   onShare,
   onUpdate,
   onDelete,
+  onInfo,
 }: CertificatePDFViewerProps) => {
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+
+  useEffect(() => {
+    if (!open || !certificate) return;
+    setIsLoadingPdf(true);
+    setPdfBase64(null);
+    fetchCertificateDetail(certificate.id)
+      .then((detail) => {
+        setPdfBase64(detail?.document?.documentContent ?? null);
+      })
+      .catch(() => setPdfBase64(null))
+      .finally(() => setIsLoadingPdf(false));
+  }, [open, certificate?.id]);
+
   if (!certificate) return null;
 
   const statusColor = getStatusColor(certificate.status);
@@ -72,9 +94,7 @@ export const CertificatePDFViewer = ({
     certificateManagementConfig.certificateTypes.find((t) => t.value === certificate.type)
       ?.label ?? certificate.type;
 
-  const pdfSrc = certificate.documentBase64
-    ? `data:application/pdf;base64,${certificate.documentBase64}`
-    : certificate.documentUrl ?? null;
+  const pdfSrc = pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null;
 
   return (
     <Dialog
@@ -101,6 +121,17 @@ export const CertificatePDFViewer = ({
           gap: 2,
         }}
       >
+        {/* Info button */}
+        <Tooltip title="Certificate details">
+          <IconButton
+            size="small"
+            onClick={() => onInfo(certificate)}
+            sx={{ color: 'rgba(255,255,255,0.7)', flexShrink: 0, '&:hover': { color: '#fff', backgroundColor: 'rgba(255,255,255,0.12)' } }}
+          >
+            <InfoOutlinedIcon />
+          </IconButton>
+        </Tooltip>
+
         {/* Certificate info */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -220,7 +251,11 @@ export const CertificatePDFViewer = ({
 
       {/* ── PDF body ─────────────────────────────────────────────────────── */}
       <Box sx={{ flex: 1, overflow: 'hidden', position: 'relative', backgroundColor: '#0f1624' }}>
-        {pdfSrc ? (
+        {isLoadingPdf ? (
+          <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CircularProgress size={48} sx={{ color: 'rgba(255,255,255,0.4)' }} />
+          </Box>
+        ) : pdfSrc ? (
           <Box
             component="iframe"
             src={pdfSrc}

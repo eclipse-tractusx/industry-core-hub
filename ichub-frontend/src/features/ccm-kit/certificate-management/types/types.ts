@@ -94,6 +94,10 @@ export interface Certificate {
   edcAssetId?: string;
   sharedCount: number;  // Number of active shares
   sharingRecords?: SharingRecord[];  // List of sharing records
+  trustLevel?: string;        // none | low | high | trusted
+  areaOfApplication?: string;
+  validator?: string;
+  uploaderBpnl?: string;
   documentBase64?: string;  // BASE64-encoded document (CX-0135)
   documentUrl?: string;  // Download link for PDF
   createdAt: string;

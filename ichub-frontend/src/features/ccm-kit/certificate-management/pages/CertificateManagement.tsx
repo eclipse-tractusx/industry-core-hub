@@ -45,6 +45,7 @@ import { ShareCertificateDialog } from '../components/dialogs/ShareCertificateDi
 import { DeleteCertificateDialog } from '../components/dialogs/DeleteCertificateDialog';
 import { UpdatePdfDialog } from '../components/dialogs/UpdatePdfDialog';
 import { CertificatePDFViewer } from '../components/dialogs/CertificatePDFViewer';
+import { CertificateInfoPanel } from '../components/dialogs/CertificateInfoPanel';
 import { DiscoverPartnerDialog } from '../components/dialogs/DiscoverPartnerDialog';
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import { kitThemes } from '@/theme/colors';
@@ -56,20 +57,30 @@ const mapBackendToFrontendCertificate = (backendCert: any): Certificate => {
   const validUntil = new Date(backendCert.validUntil);
   const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  // Backend does not send explicit status, calculated based on validUntil
-  let status: CertificateStatus = 'VALID';
-  if (validUntil <= today) status = 'EXPIRED';
-  else if (validUntil <= thirtyDaysFromNow) status = 'EXPIRING';
+  let status: CertificateStatus = 'valid';
+  if (validUntil <= today) status = 'expired';
+  else if (validUntil <= thirtyDaysFromNow) status = 'expiring';
 
   return {
     id: backendCert.certificateId,
-    name: backendCert.certificateName,
+    name: backendCert.certificateName ?? '',
     bpn: backendCert.bpnl,
     type: backendCert.certificateType,
     issuer: backendCert.issuer,
     validFrom: backendCert.validFrom,
-    validUntil: backendCert.validUntil,
-    status: status, // Campo calculado localmente
+    validUntil: backendCert.validUntil ?? '',
+    status,
+    certificateIdentifier: backendCert.registrationNumber ?? undefined,
+    enclosedSitesBpn: (backendCert.sites ?? []).map((s: any) => s.siteBpn),
+    description: backendCert.description ?? undefined,
+    trustLevel: backendCert.trustLevel ?? undefined,
+    areaOfApplication: backendCert.areaOfApplication ?? undefined,
+    validator: backendCert.validator ?? undefined,
+    uploaderBpnl: backendCert.uploaderBpnl ?? undefined,
+    createdAt: backendCert.createdAt ?? '',
+    updatedAt: backendCert.updatedAt ?? '',
+    dtrStatus: 'not_registered' as const,
+    sharedCount: 0,
   };
 };
 
@@ -109,14 +120,12 @@ const CertificateManagement = () => {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [discoverDialogOpen, setDiscoverDialogOpen] = useState(false);
   const [updatePdfDialogOpen, setUpdatePdfDialogOpen] = useState(false);
+  const [infoPanelOpen, setInfoPanelOpen] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
-
-  // suppress unused state warning — keep detailDialogOpen for legacy
-  void detailDialogOpen; void setDetailDialogOpen;
+  const [selectedInfoCertificate, setSelectedInfoCertificate] = useState<Certificate | null>(null);
 
   // Snackbar
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -236,6 +245,11 @@ const CertificateManagement = () => {
   const handleView = (certificate: Certificate) => {
     setSelectedCertificate(certificate);
     setPdfViewerOpen(true);
+  };
+
+  const handleInfo = (certificate: Certificate) => {
+    setSelectedInfoCertificate(certificate);
+    setInfoPanelOpen(true);
   };
 
   const handleShare = (certificate: Certificate) => {
@@ -359,6 +373,7 @@ const CertificateManagement = () => {
           onShare={handleShare}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onInfo={handleInfo}
         />
       ) : (
         <CertificateCardGrid
@@ -367,6 +382,7 @@ const CertificateManagement = () => {
           onShare={handleShare}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onInfo={handleInfo}
         />
       )}
 
@@ -384,6 +400,13 @@ const CertificateManagement = () => {
         onShare={handleShare}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
+        onInfo={handleInfo}
+      />
+
+      <CertificateInfoPanel
+        open={infoPanelOpen}
+        certificate={selectedInfoCertificate}
+        onClose={() => setInfoPanelOpen(false)}
       />
 
       <ShareCertificateDialog

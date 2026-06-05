@@ -25,6 +25,7 @@ import {
   Typography,
   Chip,
   Button,
+  IconButton,
   Tooltip,
   Card,
   CardContent,
@@ -33,6 +34,7 @@ import {
 import ShareIcon from '@mui/icons-material/Share';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import BusinessIcon from '@mui/icons-material/Business';
@@ -51,6 +53,7 @@ interface CertificateCardGridProps {
   onShare: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
+  onInfo: (certificate: Certificate) => void;
 }
 
 const formatDate = (d: string) =>
@@ -86,6 +89,7 @@ export const CertificateCardGrid = ({
   onShare,
   onUpdate,
   onDelete,
+  onInfo,
 }: CertificateCardGridProps) => {
 
   if (certificates.length === 0) {
@@ -280,9 +284,19 @@ export const CertificateCardGrid = ({
                   mt: 'auto',
                   pt: 2,
                   borderTop: '1px solid rgba(255,255,255,0.06)',
+                  alignItems: 'center',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
+                <Tooltip title="Certificate details">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); onInfo(cert); }}
+                    sx={{ color: 'rgba(255,255,255,0.35)', '&:hover': { color: '#90caf9', backgroundColor: 'rgba(144,202,249,0.1)' } }}
+                  >
+                    <InfoOutlinedIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Tooltip>
                 <Button
                   size="small"
                   variant="contained"

@@ -39,6 +39,7 @@ import {
 import ShareIcon from '@mui/icons-material/Share';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
 
@@ -48,6 +49,7 @@ interface CertificateTableProps {
   onShare: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
   onDelete: (certificate: Certificate) => void;
+  onInfo: (certificate: Certificate) => void;
   onRefresh?: () => void;
 }
 
@@ -57,6 +59,7 @@ export const CertificateTable = ({
   onShare,
   onUpdate,
   onDelete,
+  onInfo,
 }: CertificateTableProps) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -121,6 +124,7 @@ export const CertificateTable = ({
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+              <TableCell sx={{ width: 56, p: 0, borderBottom: '1px solid rgba(255,255,255,0.1)' }} />
               {(['Certificate', 'Type', 'Issuer', 'Valid Until', 'Status'] as const).map((label) => (
                 <TableCell key={label} sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{label}</TableCell>
               ))}
@@ -140,6 +144,22 @@ export const CertificateTable = ({
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
                   }}
                 >
+                  {/* Info button */}
+                  <TableCell
+                    sx={{ width: 56, pl: 2, pr: 0.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Tooltip title="Certificate details">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); onInfo(certificate); }}
+                        sx={{ color: 'rgba(255,255,255,0.35)', '&:hover': { color: '#90caf9', backgroundColor: 'rgba(144,202,249,0.1)' } }}
+                      >
+                        <InfoOutlinedIcon sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+
                   {/* Name + cert ID */}
                   <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     <Tooltip title={certificate.bpn} placement="top">
