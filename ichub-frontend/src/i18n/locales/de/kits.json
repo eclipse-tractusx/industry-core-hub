@@ -104,11 +104,15 @@
       "features": {
         "certificateManagement": {
           "name": "Zertifikatsverwaltung",
-          "description": "Compliance-Zertifikate in der Lieferkette hochladen, verwalten, teilen und abrufen."
+          "description": "Eigene Compliance-Zertifikate hochladen, verwalten und pflegen."
         },
-        "shareCertificates": {
-          "name": "Zertifikate teilen",
-          "description": "Ausgehende Zertifikatsfreigaben und eingehende Push-Benachrichtigungen von Catena-X-Partnern verwalten."
+        "provisionManagement": {
+          "name": "CCM Bereitstellungsverwaltung",
+          "description": "Eingehende Zertifikatsanfragen bearbeiten und Zertifikate an Verbraucher bereitstellen (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "CCM Bezug",
+          "description": "Compliance-Zertifikate von Partnern anfragen, verfolgen, herunterladen und prüfen."
         }
       }
     }

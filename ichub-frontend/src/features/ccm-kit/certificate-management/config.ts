@@ -23,6 +23,18 @@
 import { configUtils } from '@/config';
 
 /**
+ * Governance / ODRL policy attached to CCM contract negotiations
+ * (consumer request/status/pull and provider available/push payloads).
+ *
+ * Left `undefined` on purpose: when omitted, the backend applies its own
+ * server-side default (`provider.ccm.policy.usage`). Set this to an array of
+ * ODRL policy objects to force a specific policy from the frontend.
+ *
+ * NOTE: exact policy structure is still open with the backend team.
+ */
+export const CCM_POLICY_GOVERNANCE: Array<Record<string, unknown>> | undefined = undefined;
+
+/**
  * Certificate Management specific API endpoints
  */
 export const certificateManagementApiEndpoints = {

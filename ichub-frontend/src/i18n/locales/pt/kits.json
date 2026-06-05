@@ -104,7 +104,15 @@
       "features": {
         "certificateManagement": {
           "name": "Gestão de Certificados",
-          "description": "Envie, gerencie, compartilhe e consuma certificados de conformidade ao longo da cadeia de abastecimento."
+          "description": "Envie, gerencie e mantenha os seus próprios certificados de conformidade."
+        },
+        "provisionManagement": {
+          "name": "Gestão de Provisão CCM",
+          "description": "Trate as solicitações de certificados recebidas e forneça certificados aos consumidores (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "Consumo CCM",
+          "description": "Solicite, acompanhe, baixe e revise certificados de conformidade dos seus parceiros."
         }
       }
     }

@@ -112,11 +112,15 @@
       "features": {
         "certificateManagement": {
           "name": "Certificate Management",
-          "description": "Upload, manage, share and consume compliance certificates across the supply chain."
+          "description": "Upload, manage and maintain your own compliance certificates."
         },
-        "shareCertificates": {
-          "name": "Share Certificates",
-          "description": "Manage outgoing certificate shares and incoming push notifications from your Catena-X partners."
+        "provisionManagement": {
+          "name": "CCM Provision Management",
+          "description": "Handle incoming certificate requests and provide certificates to consumers (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "CCM Consumption",
+          "description": "Request, track, download and review compliance certificates from your partners."
         }
       }
     }

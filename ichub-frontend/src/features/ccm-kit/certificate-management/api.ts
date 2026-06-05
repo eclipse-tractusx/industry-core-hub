@@ -27,23 +27,19 @@ import axios from 'axios';
 
 import { getIchubBackendUrl, getApiHeaders } from '@/services/EnvironmentService';
 import authService from '@/services/AuthService';
-import { 
-  Certificate, 
+import {
+  Certificate,
   CertificateDetail,
-  SharedCertificate, 
   CertificateFilter,
   PaginationParams,
   SortParams,
   PaginatedResponse,
   PartnerCertificateSearchResult,
-  IncomingCertificateNotification,
   NegotiationStatus,
 } from './types/types';
 import {
   mockFetchCertificates,
   mockFetchCertificateDetail,
-  mockFetchSharingRecords,
-  mockFetchIncomingNotifications,
   mockSearchPartnerCertificates,
   mockInitiateNegotiation,
   mockCheckNegotiationStatus,
@@ -302,22 +298,6 @@ export const updateCertificateDocument = async (
 };
 
 /**
- * Share a certificate with a partner via EDC
- * POST /api/ccm/certificates/{id}/share
- */
-export const shareCertificate = async (
-  certificateId: string,
-  partnerBpn: string,
-  method: 'PULL' | 'PUSH'
-): Promise<SharedCertificate> => {
-  const response = await httpClient.post<SharedCertificate>(
-    `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/share`,
-    { partnerBpn, method }
-  );
-  return response.data;
-};
-
-/**
  * Revoke shared access to a certificate
  * DELETE /api/ccm/certificates/{id}/share/{shareId}
  */
@@ -325,28 +305,6 @@ export const revokeShare = async (certificateId: string, shareId: string): Promi
   await httpClient.delete(
     `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/share/${shareId}`
   );
-};
-
-// ─── Sharing Outbox ───────────────────────────────────────────────────────────
-
-/**
- * Fetch all sharing records (outbox) across all certificates.
- * GET /api/ccm/certificates/shares
- */
-export const fetchSharingRecords = async (): Promise<SharedCertificate[]> => {
-  try {
-    if (!backendUrl) {
-      console.warn('[CCM] Backend URL not configured — using mock sharing records');
-      return mockFetchSharingRecords();
-    }
-    const response = await httpClient.get<SharedCertificate[]>(
-      `${backendUrl}${CCM_BASE_PATH}/certificates/shares`
-    );
-    return response.data;
-  } catch (error) {
-    console.warn('[CCM] Sharing records API unavailable — using mock data', error);
-    return mockFetchSharingRecords();
-  }
 };
 
 // ─── DTR Registration ─────────────────────────────────────────────────────────
@@ -436,45 +394,3 @@ export const fetchTransferredCertificate = async (
   return response.data;
 };
 
-// ─── Incoming Notifications ───────────────────────────────────────────────────
-
-/**
- * Fetch all incoming certificate push notifications.
- */
-export const fetchIncomingNotifications = async (): Promise<IncomingCertificateNotification[]> => {
-  try {
-    if (!backendUrl) {
-      console.warn('[CCM] Backend URL not configured — using mock incoming notifications');
-      return mockFetchIncomingNotifications();
-    }
-    const response = await httpClient.get<IncomingCertificateNotification[]>(
-      `${backendUrl}${CCM_BASE_PATH}/notifications/incoming`
-    );
-    return response.data;
-  } catch (error) {
-    console.warn('[CCM] Notifications API unavailable — using mock data', error);
-    return mockFetchIncomingNotifications();
-  }
-};
-
-/**
- * Acknowledge an incoming certificate notification.
- */
-export const acknowledgeNotification = async (notificationId: string): Promise<void> => {
-  if (!backendUrl) {
-    console.warn('[CCM] Backend URL not configured — mock acknowledge');
-    return;
-  }
-  await httpClient.post(`${backendUrl}${CCM_BASE_PATH}/notifications/incoming/${notificationId}/acknowledge`);
-};
-
-/**
- * Reject an incoming certificate notification.
- */
-export const rejectNotification = async (notificationId: string): Promise<void> => {
-  if (!backendUrl) {
-    console.warn('[CCM] Backend URL not configured — mock reject');
-    return;
-  }
-  await httpClient.post(`${backendUrl}${CCM_BASE_PATH}/notifications/incoming/${notificationId}/reject`);
-};

@@ -104,7 +104,15 @@
       "features": {
         "certificateManagement": {
           "name": "证书管理",
-          "description": "在整个供应链中上传、管理、共享和使用合规证书。"
+          "description": "上传、管理和维护您自己的合规证书。"
+        },
+        "provisionManagement": {
+          "name": "CCM 供应管理",
+          "description": "处理传入的证书请求并向消费者提供证书（AVAILABLE / PUSH）。"
+        },
+        "consumption": {
+          "name": "CCM 消费",
+          "description": "从合作伙伴请求、跟踪、下载和查看合规证书。"
         }
       }
     }

@@ -20,20 +20,20 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import ShareCertificates from './pages/ShareCertificates';
+import CcmConsumption from './pages/CcmConsumption';
 import { FeatureConfig } from '@/types/routing';
 
-export const shareCertificatesFeature: FeatureConfig = {
-  name: 'shareCertificates',
-  navigationPath: '/share-certificates',
+export const ccmConsumptionFeature: FeatureConfig = {
+  name: 'ccmConsumption',
+  navigationPath: '/ccm-consumption',
   disabled: false,
   routes: [
     {
-      path: '/share-certificates',
-      element: <ShareCertificates />,
+      path: '/ccm-consumption',
+      element: <CcmConsumption />,
       meta: {
-        title: 'Share Certificates',
-        description: 'Manage outgoing certificate shares and incoming notifications',
+        title: 'CCM Consumption',
+        description: 'Request, track, download and review certificates from partners',
       },
     },
   ],

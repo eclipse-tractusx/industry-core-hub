@@ -104,11 +104,15 @@
       "features": {
         "certificateManagement": {
           "name": "証明書管理",
-          "description": "サプライチェーン全体でコンプライアンス証明書をアップロード、管理、共有、利用する。"
+          "description": "自社のコンプライアンス証明書をアップロード、管理、維持する。"
         },
-        "shareCertificates": {
-          "name": "証明書の共有",
-          "description": "Catena-Xパートナーへの証明書共有とプッシュ通知の受信を管理する。"
+        "provisionManagement": {
+          "name": "CCM提供管理",
+          "description": "受信した証明書リクエストを処理し、コンシューマーに証明書を提供する（AVAILABLE / PUSH）。"
+        },
+        "consumption": {
+          "name": "CCM消費",
+          "description": "パートナーからのコンプライアンス証明書を要求、追跡、ダウンロード、確認する。"
         }
       }
     }

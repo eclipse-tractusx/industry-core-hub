@@ -39,11 +39,11 @@ import {
   Badge,
   Policy,
   PostAdd,
-  MarkunreadMailbox,
   WorkspacePremium as WorkspacePremiumIcon,
   Calculate,
   CloudUpload,
-  Inbox
+  Inbox,
+  ShoppingCart
 } from '@mui/icons-material';
 import { KitFeature } from '@/features/kit-features/types';
 import { FeatureConfig } from '@/types/routing';
@@ -67,7 +67,8 @@ import { serializedPartsFeature } from '@/features/industry-core-kit/serialized-
 import { passportConsumptionFeature } from '@/features/eco-pass-kit/passport-consumption/routes';
 import { passportProvisionFeature } from '@/features/eco-pass-kit/passport-provision/routes';
 import { certificateManagementFeature } from '@/features/ccm-kit/certificate-management/routes';
-import { shareCertificatesFeature } from '@/features/ccm-kit/share-certificates/routes';
+import { provisionManagementFeature } from '@/features/ccm-kit/provision-management/routes';
+import { ccmConsumptionFeature } from '@/features/ccm-kit/consumption/routes';
 import { pcfRequestFeature } from '@/features/pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from '@/features/pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from '@/features/pcf-kit/pcf-management/routes';
@@ -228,6 +229,7 @@ export const useTranslatedKits = (): KitFeature[] => {
       icon: <WorkspacePremiumIcon />,
       image: CcmKitImage,
       features: [
+        // --- Provider role ---
         {
           module: certificateManagementFeature,
           id: 'certificate-management',
@@ -238,12 +240,22 @@ export const useTranslatedKits = (): KitFeature[] => {
           default: false
         },
         {
-          module: shareCertificatesFeature,
-          id: 'share-certificates',
-          name: t('items.ccm.features.shareCertificates.name'),
-          description: t('items.ccm.features.shareCertificates.description'),
-          icon: <MarkunreadMailbox />,
+          module: provisionManagementFeature,
+          id: 'ccm-provision-management',
+          name: t('items.ccm.features.provisionManagement.name'),
+          description: t('items.ccm.features.provisionManagement.description'),
+          icon: <Inbox />,
           enabled: true,
+          default: false
+        },
+        // --- Consumer role ---
+        {
+          module: ccmConsumptionFeature,
+          id: 'ccm-consumption',
+          name: t('items.ccm.features.consumption.name'),
+          description: t('items.ccm.features.consumption.description'),
+          icon: <ShoppingCart />,
+          enabled: false,
           default: false
         }
       ],
