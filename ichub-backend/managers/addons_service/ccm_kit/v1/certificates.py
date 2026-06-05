@@ -361,6 +361,11 @@ class CertificatesManager:
             repo.ccm_site_repository.delete_by_ccm_id(certificate_id)
             for share in ccm.shares:
                 repo.certificate_share_repository.delete(share.id)
+            # Nullify the FK on inbound requests — preserves the consumer
+            # demand audit trail while releasing the FK constraint.
+            repo.ccm_inbound_request_repository.nullify_certificate_id_by_certificate(
+                certificate_id
+            )
 
             repo.ccm_repository.delete_by_id(certificate_id)
             repo.commit()
