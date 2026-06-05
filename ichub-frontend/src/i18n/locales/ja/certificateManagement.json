@@ -62,6 +62,8 @@
     "shareSuccess": "証明書を正常に共有しました！",
     "shareFailed": "証明書の共有に失敗しました。",
     "deleteNotAvailable": "削除機能はまだ利用できません。",
+    "deleteSuccess": "証明書を正常に削除しました！",
+    "deleteFailed": "証明書の削除に失敗しました。",
     "registerDtrSuccess": "証明書をDTRに正常に登録しました！",
     "registerDtrFailed": "証明書のDTR登録に失敗しました。",
     "loadFailed": "証明書の読み込みに失敗しました。もう一度お試しください。"

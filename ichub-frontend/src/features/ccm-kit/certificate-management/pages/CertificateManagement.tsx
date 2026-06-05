@@ -21,6 +21,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { getParticipantId } from '@/services/EnvironmentService';
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Button, Alert, Snackbar } from '@mui/material';
@@ -33,8 +35,7 @@ import {
   CertificateFilter,
   CertificateStatus,
 } from '../types/types';
-import { CertificateFormData } from '../types/dialog-types';
-import { fetchAllCertificates, createCertificate, shareCertificate, updateCertificateDocument } from '../api';
+import { fetchAllCertificates, createCertificate, deleteCertificate, shareCertificate, updateCertificateDocument } from '../api';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { CertificateCardGrid } from '../components/certificate-list/CertificateCardGrid';
 import { SummaryStatsBar } from '../components/summary/SummaryStatsBar';
@@ -49,20 +50,13 @@ import PageSectionHeader from '@/components/common/PageSectionHeader';
 import { kitThemes } from '@/theme/colors';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 
-// ── Soporte TypeScript para la variable global de Vite/Index.html ───────────
-declare global {
-  interface Window {
-    PARTICIPANT_ID?: string;
-  }
-}
-
-// ── Mapeador del Modelo del Backend al Modelo del Frontend ──────────────────
+// Backend model to frontend model mapper
 const mapBackendToFrontendCertificate = (backendCert: any): Certificate => {
   const today = new Date();
   const validUntil = new Date(backendCert.validUntil);
   const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-  // El backend no envía un estado explícito, lo calculamos basándonos en validUntil
+  // Backend does not send explicit status, calculated based on validUntil
   let status: CertificateStatus = 'VALID';
   if (validUntil <= today) status = 'EXPIRED';
   else if (validUntil <= thirtyDaysFromNow) status = 'EXPIRING';
@@ -98,20 +92,20 @@ const calculateStats = (certs: Certificate[]): CertificateStats => {
 const CertificateManagement = () => {
   const { t } = useTranslation('certificateManagement');
 
-  // ── Data ──────────────────────────────────────────────────────────────────
+  // Data
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [stats, setStats] = useState<CertificateStats>({ total: 0, valid: 0, expiring: 0, expired: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Filters — text/type/status from SearchFilterBar + status from SummaryStatsBar ──
+  // Filters: text/type/status from SearchFilterBar + status from SummaryStatsBar
   const [filters, setFilters] = useState<CertificateFilter>({ search: '', type: '', status: '', shared: '' });
   const [statusQuickFilter, setStatusQuickFilter] = useState<CertificateStatus | ''>('');
 
-  // ── View mode ─────────────────────────────────────────────────────────────
+  // View mode
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
 
-  // ── Dialog states ─────────────────────────────────────────────────────────
+  // Dialog states
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
@@ -124,32 +118,32 @@ const CertificateManagement = () => {
   // suppress unused state warning — keep detailDialogOpen for legacy
   void detailDialogOpen; void setDetailDialogOpen;
 
-  // ── Snackbar ──────────────────────────────────────────────────────────────
+  // Snackbar
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false, message: '', severity: 'success',
   });
 
-  // ── Data loading desde API real ───────────────────────────────────────────
+  // Data loading from real API
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Intentamos recuperar el BPN del usuario logueado desde la variable global de index.html
-      // Si no existe, usamos el valor de pruebas que especificaste como fallback
-      const currentBpn = window.PARTICIPANT_ID || 'BPNL00000003CRHK';
 
-      // Hacemos uso del Backend pasando los Query Params requeridos
+      // Retrieve user's BPN from global variable in index.html
+      // If not available, use fallback test value
+      const currentBpn = getParticipantId() || 'BPNL00000003CRHK';
+
+      // Call backend with required query parameters
       const rawData = await fetchAllCertificates({
         bpnl: currentBpn,
-        certificateType: filters.type || null, // Se envía null si no hay filtro seleccionado
+        certificateType: filters.type || null,
         offset: 0,
         limit: 100,
       });
 
-      // Transformamos los datos mediante el mapeador antes de guardarlos en el estado
+      // Transform data through mapper before storing in state
       const mappedCertificates = rawData.map(mapBackendToFrontendCertificate);
-      
+
       setCertificates(mappedCertificates);
       setStats(calculateStats(mappedCertificates));
     } catch (err) {
@@ -158,7 +152,7 @@ const CertificateManagement = () => {
     } finally {
       setIsLoading(false);
     }
-    // Añadimos filters.type como dependencia para que vuelva a consultar a la API al cambiar de tipo
+    // Add filters.type as dependency to re-query API when type changes
   }, [t, filters.type]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -177,8 +171,7 @@ const CertificateManagement = () => {
           return false;
       }
       
-      // NOTA: El filtro por tipo (filters.type) ya fue removido de aquí porque 
-      // ahora se encarga de resolverlo la API en el backend directamente.
+      // NOTE: Type filter (filters.type) is now resolved directly by the backend API
 
       // 2. Filtro por Estado (Calculado localmente)
       const effectiveStatus = statusQuickFilter || filters.status;
@@ -201,7 +194,8 @@ const CertificateManagement = () => {
   };
 
   // ── Action handlers ───────────────────────────────────────────────────────
-  const handleUploadCertificate = async (data: CertificateFormData) => {
+
+  const handleUploadCertificate = async (data: FormData) => {
     try {
       await createCertificate(data);
       setSnackbar({ open: true, message: t('messages.uploadSuccess'), severity: 'success' });
@@ -210,6 +204,7 @@ const CertificateManagement = () => {
     } catch (err) {
       console.error('Error uploading certificate:', err);
       setSnackbar({ open: true, message: t('messages.uploadFailed'), severity: 'error' });
+      throw err;
     }
   };
 
@@ -225,10 +220,17 @@ const CertificateManagement = () => {
     }
   };
 
-  const handleDeleteCertificate = async (_certificateId: string) => {
-    // TODO: Implement when DELETE endpoint is available
-    setSnackbar({ open: true, message: t('messages.deleteNotAvailable'), severity: 'error' });
-    setDeleteDialogOpen(false);
+  const handleDeleteCertificate = async (certificateId: string) => {
+    try {
+      await deleteCertificate(certificateId);
+      setSnackbar({ open: true, message: t('messages.deleteSuccess'), severity: 'success' });
+      setDeleteDialogOpen(false);
+      loadData();
+    } catch (err) {
+      console.error('Error deleting certificate:', err);
+      setSnackbar({ open: true, message: t('messages.deleteFailed'), severity: 'error' });
+      setDeleteDialogOpen(false);
+    }
   };
 
   const handleView = (certificate: Certificate) => {

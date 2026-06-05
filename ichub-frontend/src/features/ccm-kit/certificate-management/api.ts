@@ -22,7 +22,11 @@
  ********************************************************************************/
 
 import httpClient from '@/services/HttpClient';
-import { getIchubBackendUrl } from '@/services/EnvironmentService';
+
+import axios from 'axios';
+
+import { getIchubBackendUrl, getApiHeaders } from '@/services/EnvironmentService';
+import authService from '@/services/AuthService';
 import { 
   Certificate, 
   CertificateDetail,
@@ -35,7 +39,6 @@ import {
   IncomingCertificateNotification,
   NegotiationStatus,
 } from './types/types';
-import { CertificateFormData } from './types/dialog-types';
 import {
   mockFetchCertificates,
   mockFetchCertificateDetail,
@@ -175,48 +178,65 @@ export const fetchCertificateById = async (certificateId: string): Promise<Certi
 };
 
 /**
- * Upload a new certificate
- * POST /api/ccm/certificates
+ * Upload a new certificate to the CCM Addon Kit
+ * POST /addons/ccm-kit/certificates/
+ *
+ * Payload (Multipart Form Data):
+ * - file *: PDF file (max 10MB)
+ * - bpnl *: Current user's BPNL
+ * - certificateType *: ISO9001, ISO14001, etc.
+ * - issuer *: Certification Body name
+ * - validFrom *: Start date (YYYY-MM-DD)
+ * - certificateName: Optional name
+ * - validUntil: Optional end date (YYYY-MM-DD)
+ * - trustLevel: e.g., 'none'
+ * - registrationNumber: Physical ID
+ * - areaOfApplication: Context/Department
+ * - validator: Verifying body
+ * - sites: JSON array string of sites
+ * - description: Optional text
  */
-export const createCertificate = async (certificateData: CertificateFormData): Promise<Certificate> => {
-  const formData = new FormData();
-  formData.append('name', certificateData.name);
-  formData.append('type', certificateData.type);
-  formData.append('bpn', certificateData.bpn);
-  formData.append('issuer', certificateData.issuer);
-  formData.append('validFrom', certificateData.validFrom);
-  formData.append('validUntil', certificateData.validUntil);
-  
-  if (certificateData.certificateIdentifier) {
-    formData.append('certificateIdentifier', certificateData.certificateIdentifier);
+/**
+ * Upload a new certificate to the CCM Addon Kit
+ * POST /addons/ccm-kit/certificates/
+ * * Envío forzado mediante Axios Nativo para garantizar formato Form Data (Multipart)
+ */
+export const createCertificate = async (certificateData: FormData): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
   }
 
-  if (certificateData.certificateScope) {
-    formData.append('certificateScope', certificateData.certificateScope);
-  }
+  // Merge API key + auth headers but drop Content-Type so the browser can set
+  // the correct multipart/form-data boundary automatically.
+  const { 'Content-Type': _dropped, ...headersWithoutContentType } = {
+    ...getApiHeaders(),
+    ...authService.getAuthHeaders(),
+  };
 
-  if (certificateData.enclosedSitesBpn?.length) {
-    formData.append('enclosedSitesBpn', JSON.stringify(certificateData.enclosedSitesBpn));
-  }
-
-  if (certificateData.description) {
-    formData.append('description', certificateData.description);
-  }
-  
-  if (certificateData.document) {
-    formData.append('document', certificateData.document);
-  }
-  
-  const response = await httpClient.post<Certificate>(
-    `${backendUrl}${CCM_BASE_PATH}/certificates`,
-    formData,
+  const response = await axios.post<any>(
+    `${backendUrl}/addons/ccm-kit/certificates/`,
+    certificateData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        ...headersWithoutContentType,
+        'Accept': 'application/json',
       },
     }
   );
+
   return response.data;
+};
+
+/**
+ * Delete a certificate from the CCM Addon Kit
+ * DELETE /addons/ccm-kit/certificates/{certificate_id}
+ * Returns 204 No Content on success.
+ */
+export const deleteCertificate = async (certificateId: string): Promise<void> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  await httpClient.delete(`${backendUrl}/addons/ccm-kit/certificates/${certificateId}`);
 };
 
 /**

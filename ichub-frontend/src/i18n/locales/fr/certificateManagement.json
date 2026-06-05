@@ -62,6 +62,8 @@
     "shareSuccess": "Certificat partagé avec succès !",
     "shareFailed": "Échec du partage du certificat.",
     "deleteNotAvailable": "La fonctionnalité de suppression n'est pas encore disponible.",
+    "deleteSuccess": "Certificat supprimé avec succès !",
+    "deleteFailed": "Échec de la suppression du certificat.",
     "registerDtrSuccess": "Certificat enregistré dans le DTR avec succès !",
     "registerDtrFailed": "Échec de l'enregistrement du certificat dans le DTR.",
     "loadFailed": "Échec du chargement des certificats. Veuillez réessayer."

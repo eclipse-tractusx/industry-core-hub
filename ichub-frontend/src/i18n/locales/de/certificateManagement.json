@@ -62,6 +62,8 @@
     "shareSuccess": "Zertifikat erfolgreich geteilt!",
     "shareFailed": "Zertifikat konnte nicht geteilt werden.",
     "deleteNotAvailable": "Löschfunktion noch nicht verfügbar.",
+    "deleteSuccess": "Zertifikat erfolgreich gelöscht!",
+    "deleteFailed": "Zertifikat konnte nicht gelöscht werden.",
     "registerDtrSuccess": "Zertifikat erfolgreich im DTR registriert!",
     "registerDtrFailed": "Zertifikat konnte nicht im DTR registriert werden.",
     "loadFailed": "Zertifikate konnten nicht geladen werden. Bitte versuchen Sie es erneut."

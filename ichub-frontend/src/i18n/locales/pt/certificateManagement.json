@@ -62,6 +62,8 @@
     "shareSuccess": "Certificado compartilhado com sucesso!",
     "shareFailed": "Falha ao compartilhar o certificado.",
     "deleteNotAvailable": "Funcionalidade de exclusão ainda não disponível.",
+    "deleteSuccess": "Certificado excluído com sucesso!",
+    "deleteFailed": "Falha ao excluir o certificado.",
     "registerDtrSuccess": "Certificado registrado no DTR com sucesso!",
     "registerDtrFailed": "Falha ao registrar o certificado no DTR.",
     "loadFailed": "Falha ao carregar os certificados. Por favor, tente novamente."

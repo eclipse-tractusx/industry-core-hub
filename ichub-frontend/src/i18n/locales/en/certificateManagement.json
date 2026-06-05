@@ -62,6 +62,8 @@
     "shareSuccess": "Certificate shared successfully!",
     "shareFailed": "Failed to share certificate.",
     "deleteNotAvailable": "Delete functionality not yet available.",
+    "deleteSuccess": "Certificate deleted successfully!",
+    "deleteFailed": "Failed to delete certificate.",
     "registerDtrSuccess": "Certificate registered in DTR successfully!",
     "registerDtrFailed": "Failed to register certificate in DTR.",
     "loadFailed": "Failed to load certificates. Please try again."

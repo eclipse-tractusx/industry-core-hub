@@ -62,6 +62,8 @@
     "shareSuccess": "证书共享成功！",
     "shareFailed": "证书共享失败。",
     "deleteNotAvailable": "删除功能暂不可用。",
+    "deleteSuccess": "证书删除成功！",
+    "deleteFailed": "证书删除失败。",
     "registerDtrSuccess": "证书已成功在 DTR 中注册！",
     "registerDtrFailed": "证书在 DTR 中注册失败。",
     "loadFailed": "证书加载失败，请重试。"
