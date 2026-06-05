@@ -454,6 +454,7 @@ backend:
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []
+            obligation: []
       ccm:
         # -- Set to false to disable the CCM add-on (no EDC asset sync, no API routes registered)
         enabled: true
@@ -572,6 +573,13 @@ backend:
         push:
           # -- Maximum allowed size (bytes) of Base64-encoded certificate documents (~10 MB decoded = 14 MB Base64)
           max_b64_size_bytes: 14745728
+        auto_received:
+          # -- Automatically send a RECEIVED status notification back to the push sender
+          # -- after a successful inbound push (CX-0135 §2.1.1 STATUS flow).
+          enabled: false
+          # -- Optional governance policies for the auto-RECEIVED status payload.
+          # -- Must be a list of ODRL policy objects; null means no governance block is sent.
+          governance: null
 
   podAnnotations: {}
 

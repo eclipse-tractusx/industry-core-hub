@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -19,9 +20,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
- 
+
 hostname: "http://localhost:9000"
 bpn: ""
+
 authorization:
   enabled: true
   api_key:
@@ -34,8 +36,8 @@ authorization:
     client_id: "industry-core-hub-api"
     client_secret: "ichub-client-secret-2024"
     retry:
-      max_retries: 5
-      retry_delay: 10
+      max_retries: 3
+      retry_delay: 2
       # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
       background_retry_interval: 60
 agreements:
@@ -225,7 +227,7 @@ cors:
     - "http://127.0.0.1:5173"     # Alternative localhost notation
     - "http://127.0.0.1:3000"
     - "http://127.0.0.1:8080"
-    - "http://localhost:4173"  # Deployed frontend
+    - "http://localhost:4173"
   allow_credentials: true
   allow_methods:
     - "GET"
@@ -251,7 +253,7 @@ server:
 consumer:
   discovery:
     discovery_finder:
-      url: "https://<discovery-finder-url>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+      url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
     connector_discovery:
       key: "bpn"
     oauth:
@@ -442,13 +444,13 @@ provider:
           - action: "use"
             constraint:
               and:
-                - leftOperand: "FrameworkAgreement"
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                   operator: "eq"
                   rightOperand: "DataExchangeGovernance:1.0"
-                - leftOperand: "Membership"
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                   operator: "eq"
                   rightOperand: "active"
-                - leftOperand: "UsagePurpose"
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                   operator: "isAnyOf"
                   rightOperand: "cx.ccm.base:1"
         prohibitions: []
@@ -461,7 +463,7 @@ provider:
         permissions:
           - action: "access"
             constraint:
-              leftOperand: "Membership"
+              leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
               operator: "eq"
               rightOperand: "active"
         prohibitions: []
@@ -480,13 +482,13 @@ provider:
             - action: "use"
               constraint:
                 and:
-                  - leftOperand: "FrameworkAgreement"
+                  - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
                     operator: "eq"
                     rightOperand: "DataExchangeGovernance:1.0"
-                  - leftOperand: "Membership"
+                  - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                     operator: "eq"
                     rightOperand: "active"
-                  - leftOperand: "UsagePurpose"
+                  - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
                     operator: "isAnyOf"
                     rightOperand: "cx.ccm.base:1"
           prohibitions: []
@@ -499,7 +501,7 @@ provider:
           permissions:
             - action: "access"
               constraint:
-                leftOperand: "Membership"
+                leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                 operator: "eq"
                 rightOperand: "active"
           prohibitions: []
@@ -509,7 +511,7 @@ provider:
     # -- Storage mode: "filesystem" (local storage) or "http" (external service)
     mode: "filesystem"
     # -- Local filesystem path for submodels (used when mode=filesystem)
-    path: "./data/submodels"
+    path: "industry-core-hub/data/submodels"
     apiPath: "/submodel-dispatcher"
     # -- External HTTP submodel service configuration (used when mode=http)
     http:
@@ -540,3 +542,10 @@ ccm:
   push:
     # -- Maximum allowed size (bytes) of Base64-encoded certificate documents (~10 MB decoded = 14 MB Base64)
     max_b64_size_bytes: 14745728
+  auto_received:
+    # -- Automatically send a RECEIVED status notification back to the push sender
+    # -- after a successful inbound push (CX-0135 §2.1.1 STATUS flow).
+    enabled: false
+    # -- Optional governance policies passed in the auto-RECEIVED status payload.
+    # -- Must be a list of ODRL policy objects; null means no governance block is sent.
+    governance: null
