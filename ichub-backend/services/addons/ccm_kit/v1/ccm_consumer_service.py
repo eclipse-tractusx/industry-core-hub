@@ -587,6 +587,14 @@ class CcmConsumerService(CcmBaseService):
                         f"[CCM Consumer] Failed to decode base64 document "
                         f"for {_s(document_id)}: {_s(b64_err)}"
                     )
+                else:
+                    if doc_bytes and not doc_bytes.startswith(b"%PDF-"):
+                        logger.warning(
+                            "[CCM Consumer] Pulled document %s is not a "
+                            "valid PDF (missing %%PDF- header) — discarding content.",
+                            _s(document_id),
+                        )
+                        doc_bytes = None
 
             with RepositoryManagerFactory.create() as repo:
                 extra_kwargs: Dict[str, Any] = {}
@@ -794,7 +802,10 @@ class CcmConsumerService(CcmBaseService):
             try:
                 status_enum = _S(status)
             except ValueError:
-                pass  # Unknown status → ignore filter; return all
+                logger.debug(
+                    "[CCM Consumer] Unknown outbound status filter %s — returning all.",
+                    _s(status),
+                )
 
         with RepositoryManagerFactory.create() as repo:
             records = repo.ccm_outbound_request_repository.find_latest_per_combo(
@@ -890,7 +901,11 @@ class CcmConsumerService(CcmBaseService):
             try:
                 location_bpns = json.loads(record.location_bpns)
             except (json.JSONDecodeError, TypeError):
-                pass
+                logger.debug(
+                    "[CCM Consumer] Could not parse location_bpns JSON for "
+                    "outbound request %s.",
+                    record.id,
+                )
 
         return OutboundRequestItem(
             id=record.id,

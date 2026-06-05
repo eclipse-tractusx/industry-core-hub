@@ -944,7 +944,7 @@ class CcmNotificationService:
         document_id: str,
         related_message_id: Optional[str] = None,
         location_bpns: Optional[str] = None,
-    ) -> None:
+    ) -> list:
         """
         Advance all active outbound requests that match this incoming PUSH
         to ``Found``, storing the ``document_id`` for later reference.

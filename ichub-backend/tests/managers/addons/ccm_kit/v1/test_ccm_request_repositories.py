@@ -35,9 +35,8 @@ Specifically, they confirm that:
   the previously incorrect max(id) / creation-order approach.
 """
 
-import pytest
 from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, MagicMock, patch, call
+from unittest.mock import Mock
 
 from managers.metadata_database.repositories import (
     CcmOutboundRequestRepository,

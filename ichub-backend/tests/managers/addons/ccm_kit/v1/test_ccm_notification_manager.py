@@ -24,8 +24,7 @@
 Unit tests for CcmNotificationManager.
 """
 
-import pytest
-from unittest.mock import Mock, call
+from unittest.mock import Mock
 
 from managers.addons_service.ccm_kit.v1.notifications import (
     CcmNotificationManager,
