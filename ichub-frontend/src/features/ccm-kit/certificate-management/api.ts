@@ -307,10 +307,30 @@ export const revokeShare = async (certificateId: string, shareId: string): Promi
   );
 };
 
-// ─── DTR Registration ─────────────────────────────────────────────────────────
+// ─── Publish to EDC ────────────────────────────────────────────────────────────
 
 /**
- * Trigger DTR registration for a certificate.
+ * Publish a certificate as an EDC asset via the CCM provider endpoint.
+ * POST /addons/ccm-kit/provider/publish
+ * Returns the documentId (EDC asset ID) assigned to the certificate.
+ */
+export const publishCertificateAsset = async (
+  certificateId: string,
+): Promise<{ documentId: string; assetId: string; certificateId: number }> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  const response = await httpClient.post<{ documentId: string; assetId: string; certificateId: number }>(
+    `${backendUrl}/addons/ccm-kit/provider/publish`,
+    { certificateId: Number(certificateId) },
+  );
+  return response.data;
+};
+
+// ─── DTR Registration (legacy — kept for backward compatibility) ───────────────
+
+/**
+ * @deprecated Use publishCertificateAsset instead.
  */
 export const registerCertificateInDtr = async (
   certificateId: string,

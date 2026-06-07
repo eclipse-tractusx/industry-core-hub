@@ -26,15 +26,13 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import PartnerAutocomplete from '@/features/business-partner-kit/partner-management/components/general/PartnerAutocomplete';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
@@ -136,15 +134,38 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Push Certificate</DialogTitle>
-      <DialogContent dividers>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="Push Certificate"
+      subtitle="Send a certificate directly to a partner without a prior request"
+      icon={<SendIcon />}
+      maxWidth="sm"
+      fullWidth
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Push Certificate
+          </Button>
+        </>
+      }
+    >
+      <Box sx={{ p: 3 }}>
         {loading ? (
           <Box sx={{ py: 5, textAlign: 'center' }}>
             <CircularProgress size={28} />
           </Box>
         ) : (
-          <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <Stack spacing={2.5}>
             <Typography variant="body2" color="text.secondary">
               Send one of your certificates directly to a partner, without a prior request.
             </Typography>
@@ -182,21 +203,8 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
             {error && <Alert severity="error">{error}</Alert>}
           </Stack>
         )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          Push Certificate
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };
 

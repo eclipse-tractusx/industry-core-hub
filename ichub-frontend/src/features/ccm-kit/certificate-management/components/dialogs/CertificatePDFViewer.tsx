@@ -201,7 +201,7 @@ export const CertificatePDFViewer = ({
               textTransform: 'none',
               fontWeight: 500,
               borderRadius: 1.5,
-              '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.12)' },
+              '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.12)', color: '#fff' },
               '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)' },
             }}
           >

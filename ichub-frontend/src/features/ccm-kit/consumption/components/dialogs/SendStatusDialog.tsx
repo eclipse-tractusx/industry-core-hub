@@ -26,10 +26,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   IconButton,
   MenuItem,
@@ -41,6 +37,8 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import RateReviewIcon from '@mui/icons-material/RateReview';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import { getParticipantId } from '@/services/EnvironmentService';
 import { sendStatus } from '../../api';
@@ -160,10 +158,34 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Certificate Feedback</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ mt: 1 }}>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="Certificate Feedback"
+      subtitle="Notify the provider of your evaluation outcome"
+      icon={<RateReviewIcon />}
+      maxWidth="sm"
+      fullWidth
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={isRejected ? 'error' : 'primary'}
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Send Feedback
+          </Button>
+        </>
+      }
+    >
+      <Box sx={{ p: 3 }}>
+        <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
             Notify the provider about the outcome of your evaluation for document{' '}
             <Box component="span" sx={{ fontFamily: 'monospace' }}>
@@ -275,22 +297,8 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
 
           {submitError && <Alert severity="error">{submitError}</Alert>}
         </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          color={isRejected ? 'error' : 'primary'}
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          Send Feedback
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };
 

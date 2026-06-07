@@ -21,18 +21,12 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box,
-} from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import PublishIcon from '@mui/icons-material/Publish';
 import { PublishCertificateDialogProps } from '../../types/dialog-types';
 import { certificateManagementConfig } from '../../config';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
+import { kitThemes } from '@/theme/colors';
 
 export const PublishCertificateDialog = ({
   open,
@@ -45,30 +39,35 @@ export const PublishCertificateDialog = ({
     : undefined;
 
   const handleConfirm = () => {
-    if (certificate) {
-      onConfirm(certificate.id);
-    }
+    if (certificate) onConfirm(certificate.id);
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle
-        sx={{
-          backgroundColor: 'primary.main',
-          color: 'primary.contrastText',
-          px: 3,
-          py: 2,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <PublishIcon sx={{ fontSize: 22, color: 'inherit' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600, color: 'inherit', lineHeight: 1.2 }}>
-            Publish Certificate
-          </Typography>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent sx={{ backgroundColor: 'background.paper', px: 3, pt: 3, pb: 2 }}>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="Publish Certificate"
+      subtitle="Make this certificate discoverable in the Catena-X dataspace"
+      icon={<PublishIcon />}
+      maxWidth="xs"
+      fullWidth
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            variant="contained"
+            startIcon={<PublishIcon />}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Publish
+          </Button>
+        </>
+      }
+    >
+      <Box sx={{ px: 3, pt: 3, pb: 2 }}>
         <Typography variant="body1" sx={{ mb: 2 }}>
           Are you sure you want to publish this certificate?
         </Typography>
@@ -79,12 +78,12 @@ export const PublishCertificateDialog = ({
               px: 2,
               py: 1.5,
               borderRadius: 2,
-              backgroundColor: 'rgba(25,118,210,0.08)',
-              border: '1px solid rgba(25,118,210,0.2)',
+              backgroundColor: `${kitThemes.ccm.gradientStart}14`,
+              border: `1px solid ${kitThemes.ccm.gradientStart}33`,
               mb: 2,
             }}
           >
-            <Typography variant="subtitle2" fontWeight={700} color="primary.main">
+            <Typography variant="subtitle2" fontWeight={700} sx={{ color: kitThemes.ccm.gradientEnd }}>
               {certificate.name}
             </Typography>
             {typeLabel && (
@@ -99,30 +98,7 @@ export const PublishCertificateDialog = ({
           Publishing will register this certificate in the network, making it
           discoverable by your partners through the Catena-X dataspace.
         </Typography>
-      </DialogContent>
-
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'grey.50',
-          gap: 1,
-        }}
-      >
-        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleConfirm}
-          variant="contained"
-          startIcon={<PublishIcon />}
-          sx={{ textTransform: 'none', fontWeight: 600 }}
-        >
-          Publish
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };

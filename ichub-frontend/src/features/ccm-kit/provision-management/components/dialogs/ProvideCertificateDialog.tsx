@@ -26,10 +26,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   MenuItem,
   Stack,
   TextField,
@@ -37,6 +33,8 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import { getParticipantId } from '@/services/EnvironmentService';
 import { fetchAllCertificates } from '../../../certificate-management/api';
@@ -184,15 +182,38 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Provide Certificate</DialogTitle>
-      <DialogContent dividers>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="Provide Certificate"
+      subtitle="Respond to a consumer request via availability notification or direct push"
+      icon={<TaskAltIcon />}
+      maxWidth="sm"
+      fullWidth
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            {mode === 'AVAILABLE' ? 'Send Availability' : 'Push Certificate'}
+          </Button>
+        </>
+      }
+    >
+      <Box sx={{ p: 3 }}>
         {loading ? (
           <Box sx={{ py: 5, textAlign: 'center' }}>
             <CircularProgress size={28} />
           </Box>
         ) : (
-          <Stack spacing={2.5} sx={{ mt: 1 }}>
+          <Stack spacing={2.5}>
             {request && (
               <Typography variant="body2" color="text.secondary">
                 Respond to {request.consumerBpn} requesting {typeLabel(request.certificateType)} for{' '}
@@ -271,21 +292,8 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
             {error && <Alert severity="error">{error}</Alert>}
           </Stack>
         )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          {mode === 'AVAILABLE' ? 'Send Availability' : 'Push Certificate'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };
 

@@ -331,7 +331,7 @@ export const CertificateCardGrid = ({
                     fontSize: '0.78rem',
                     borderColor: 'rgba(129,199,132,0.4)',
                     color: '#81c784',
-                    '&:hover': { borderColor: '#81c784', backgroundColor: alpha('#81c784', 0.08) },
+                    '&:hover': { borderColor: '#81c784', backgroundColor: alpha('#81c784', 0.08), color: '#81c784' },
                   }}
                 >
                   Update
@@ -350,7 +350,7 @@ export const CertificateCardGrid = ({
                     fontSize: '0.78rem',
                     borderColor: 'rgba(239,154,154,0.4)',
                     color: '#ef9a9a',
-                    '&:hover': { borderColor: '#ef9a9a', backgroundColor: alpha('#ef9a9a', 0.08) },
+                    '&:hover': { borderColor: '#ef9a9a', backgroundColor: alpha('#ef9a9a', 0.08), color: '#ef9a9a' },
                   }}
                 >
                   Delete

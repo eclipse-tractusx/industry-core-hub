@@ -35,7 +35,7 @@ import {
   CertificateFilter,
   CertificateStatus,
 } from '../types/types';
-import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, registerCertificateInDtr } from '../api';
+import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, publishCertificateAsset } from '../api';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { CertificateCardGrid } from '../components/certificate-list/CertificateCardGrid';
 import { SummaryStatsBar } from '../components/summary/SummaryStatsBar';
@@ -219,7 +219,7 @@ const CertificateManagement = () => {
 
   const handlePublishCertificate = async (certificateId: string) => {
     try {
-      await registerCertificateInDtr(certificateId);
+      await publishCertificateAsset(certificateId);
       setSnackbar({ open: true, message: t('messages.publishSuccess'), severity: 'success' });
       setPublishDialogOpen(false);
       loadData();

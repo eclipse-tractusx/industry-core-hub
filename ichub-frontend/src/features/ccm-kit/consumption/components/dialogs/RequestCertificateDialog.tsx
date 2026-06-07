@@ -27,10 +27,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   MenuItem,
   Stack,
@@ -41,6 +37,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import PartnerAutocomplete from '@/features/business-partner-kit/partner-management/components/general/PartnerAutocomplete';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
@@ -177,10 +175,33 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>New Certificate Request</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2.5} sx={{ mt: 1 }}>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="New Certificate Request"
+      subtitle="Ask a provider to share a compliance certificate with you"
+      icon={<AssignmentIcon />}
+      maxWidth="sm"
+      fullWidth
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            Send Request
+          </Button>
+        </>
+      }
+    >
+      <Box sx={{ p: 3 }}>
+        <Stack spacing={2.5}>
           {/* Provider selection + CCM support check */}
           <Box>
             <PartnerAutocomplete
@@ -294,21 +315,8 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
 
           {submitError && <Alert severity="error">{submitError}</Alert>}
         </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          Send Request
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };
 

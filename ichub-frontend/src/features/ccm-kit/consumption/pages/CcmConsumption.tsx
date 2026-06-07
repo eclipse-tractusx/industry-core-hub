@@ -41,8 +41,8 @@ import {
 } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import HistoryIcon from '@mui/icons-material/History';
+import { RefreshButton, PrimaryActionButton } from '@/features/ccm-kit/shared-components';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RateReviewIcon from '@mui/icons-material/RateReview';
@@ -202,16 +202,10 @@ const CcmConsumption = () => {
           kitTheme={kitThemes.ccm}
           actions={
             <>
-              <Tooltip title="Refresh">
-                <span>
-                  <Button variant="outlined" onClick={() => void loadData()} sx={{ minWidth: 0, px: 1.5 }}>
-                    <RefreshIcon />
-                  </Button>
-                </span>
-              </Tooltip>
-              <Button variant="contained" startIcon={<AddIcon />} onClick={() => setRequestDialogOpen(true)}>
+              <RefreshButton onClick={() => void loadData()} loading={isLoading} />
+              <PrimaryActionButton startIcon={<AddIcon />} onClick={() => setRequestDialogOpen(true)}>
                 New Request
-              </Button>
+              </PrimaryActionButton>
             </>
           }
         />

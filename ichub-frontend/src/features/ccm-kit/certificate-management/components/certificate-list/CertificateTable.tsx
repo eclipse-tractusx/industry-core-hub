@@ -239,7 +239,7 @@ export const CertificateTable = ({
                         startIcon={<PublishIcon sx={{ fontSize: 13 }} />}
                         disabled={certificate.status === 'expired'}
                         onClick={(e) => { e.stopPropagation(); onPublish(certificate); }}
-                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
+                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)', color: '#64b5f6' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
                       >
                         Publish
                       </Button>
@@ -248,7 +248,7 @@ export const CertificateTable = ({
                         variant="outlined"
                         startIcon={<RefreshIcon sx={{ fontSize: 13 }} />}
                         onClick={(e) => { e.stopPropagation(); onUpdate(certificate); }}
-                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(129,199,132,0.4)', color: '#81c784', '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.1)' } }}
+                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(129,199,132,0.4)', color: '#81c784', '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.1)', color: '#81c784' } }}
                       >
                         Update
                       </Button>
@@ -257,7 +257,7 @@ export const CertificateTable = ({
                         variant="outlined"
                         startIcon={<DeleteOutlineIcon sx={{ fontSize: 13 }} />}
                         onClick={(e) => { e.stopPropagation(); onDelete(certificate); }}
-                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(239,154,154,0.4)', color: '#ef9a9a', '&:hover': { borderColor: '#ef9a9a', backgroundColor: 'rgba(239,154,154,0.1)' } }}
+                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(239,154,154,0.4)', color: '#ef9a9a', '&:hover': { borderColor: '#ef9a9a', backgroundColor: 'rgba(239,154,154,0.1)', color: '#ef9a9a' } }}
                       >
                         Delete
                       </Button>

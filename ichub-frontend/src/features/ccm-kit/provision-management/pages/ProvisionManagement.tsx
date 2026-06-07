@@ -28,7 +28,6 @@ import {
   Chip,
   Paper,
   Snackbar,
-  Tab,
   Table,
   TableBody,
   TableCell,
@@ -36,17 +35,15 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  Tabs,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import InboxIcon from '@mui/icons-material/Inbox';
 import SendIcon from '@mui/icons-material/Send';
-import RefreshIcon from '@mui/icons-material/Refresh';
 
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 import { kitThemes } from '@/theme/colors';
+import { RefreshButton, PrimaryActionButton } from '@/features/ccm-kit/shared-components';
 
 import { fetchInboundRequests, fetchShares } from '../api';
 import { ccmSharedConfig } from '../config';
@@ -155,16 +152,10 @@ const ProvisionManagement = () => {
           kitTheme={kitThemes.ccm}
           actions={
             <>
-              <Tooltip title="Refresh">
-                <span>
-                  <Button variant="outlined" onClick={() => void loadData()} sx={{ minWidth: 0, px: 1.5 }}>
-                    <RefreshIcon />
-                  </Button>
-                </span>
-              </Tooltip>
-              <Button variant="contained" startIcon={<SendIcon />} onClick={() => setPushOpen(true)}>
+              <RefreshButton onClick={() => void loadData()} loading={isLoading} />
+              <PrimaryActionButton startIcon={<SendIcon />} onClick={() => setPushOpen(true)}>
                 Push Certificate
-              </Button>
+              </PrimaryActionButton>
             </>
           }
         />
@@ -176,10 +167,60 @@ const ProvisionManagement = () => {
         </Alert>
       )}
 
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-        <Tab label={`Inbound Requests (${inbound.length})`} />
-        <Tab label={`Shares (${shares.length})`} />
-      </Tabs>
+      {/* ── Section selector ─────────────────────────────────────────────── */}
+      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+        {[
+          { label: 'Inbound Requests', count: inbound.length },
+          { label: 'Shares', count: shares.length },
+        ].map(({ label, count }, idx) => {
+          const active = tab === idx;
+          return (
+            <Box
+              key={idx}
+              onClick={() => setTab(idx)}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2.5,
+                py: 1,
+                borderRadius: 2,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                backgroundColor: active ? 'primary.main' : 'rgba(255,255,255,0.05)',
+                border: active ? '1px solid transparent' : '1px solid rgba(255,255,255,0.1)',
+                '&:hover': {
+                  backgroundColor: active ? 'primary.main' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: active ? 700 : 500,
+                  color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                  transition: 'color 0.2s ease',
+                }}
+              >
+                {label}
+              </Typography>
+              <Chip
+                label={count}
+                size="small"
+                sx={{
+                  height: 20,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  fontFamily: 'monospace',
+                  backgroundColor: active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+                  color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                  border: 'none',
+                }}
+              />
+            </Box>
+          );
+        })}
+      </Box>
 
       {/* ── Inbound Requests ─────────────────────────────────────────────── */}
       {tab === 0 && (

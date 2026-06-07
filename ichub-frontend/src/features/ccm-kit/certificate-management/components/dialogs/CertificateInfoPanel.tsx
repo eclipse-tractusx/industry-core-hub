@@ -21,25 +21,16 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import {
-  Drawer,
-  Box,
-  Typography,
-  IconButton,
-  Chip,
-  Divider,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Chip, Divider, Typography } from '@mui/material';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
+import { InfoPanel } from '@/features/ccm-kit/shared-components';
 
 interface CertificateInfoPanelProps {
   open: boolean;
   certificate: Certificate | null;
   onClose: () => void;
 }
-
-const DRAWER_WIDTH = 420;
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
@@ -48,7 +39,10 @@ const formatDate = (d?: string) => {
 
 const formatDateTime = (d?: string) => {
   if (!d) return '—';
-  return new Date(d).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return new Date(d).toLocaleString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
 };
 
 interface FieldRowProps {
@@ -111,85 +105,38 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
       certificate.status as keyof typeof certificateManagementConfig.statusConfig
     ];
   const statusColor = statusConfig?.color ?? '#888';
-
   const trustColor = TRUST_LEVEL_COLORS[certificate.trustLevel ?? 'none'] ?? '#9e9e9e';
 
+  const headerChips = (
+    <>
+      <Chip
+        label={typeLabel}
+        size="small"
+        sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, fontSize: '0.68rem' }}
+      />
+      <Chip
+        label={certificate.status}
+        size="small"
+        sx={{
+          backgroundColor: `${statusColor}33`,
+          color: '#fff',
+          border: `1px solid ${statusColor}66`,
+          fontWeight: 600,
+          textTransform: 'capitalize',
+          fontSize: '0.68rem',
+        }}
+      />
+    </>
+  );
+
   return (
-    <Drawer
-      anchor="right"
+    <InfoPanel
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: DRAWER_WIDTH,
-          backgroundColor: '#121827',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          zIndex: 1400,
-        },
-      }}
+      title={certificate.name || '(No name)'}
+      headerChips={headerChips}
     >
-      {/* Header */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          backgroundColor: 'primary.main',
-          px: 2.5,
-          py: 2,
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 1.5,
-        }}
-      >
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: '#fff',
-              fontWeight: 700,
-              lineHeight: 1.3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-            }}
-          >
-            {certificate.name || '(No name)'}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 0.75, mt: 0.75, flexWrap: 'wrap' }}>
-            <Chip
-              label={typeLabel}
-              size="small"
-              sx={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, fontSize: '0.68rem' }}
-            />
-            <Chip
-              label={certificate.status}
-              size="small"
-              sx={{
-                backgroundColor: `${statusColor}33`,
-                color: '#fff',
-                border: `1px solid ${statusColor}66`,
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                fontSize: '0.68rem',
-              }}
-            />
-          </Box>
-        </Box>
-        <IconButton
-          size="small"
-          onClick={onClose}
-          sx={{ color: 'rgba(255,255,255,0.8)', mt: -0.5, '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' } }}
-        >
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
-
-      {/* Scrollable content */}
-      <Box sx={{ flex: 1, overflowY: 'auto', px: 2.5, pb: 3 }}>
-
+      <Box sx={{ px: 2.5, pb: 3 }}>
         <SectionLabel>Core Information</SectionLabel>
         <FieldRow label="Issuer" value={certificate.issuer} />
         <FieldRow label="BPN Holder" value={certificate.bpn} mono />
@@ -230,7 +177,6 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
         <FieldRow label="Area of Application" value={certificate.areaOfApplication} />
         <FieldRow label="Validator" value={certificate.validator} />
 
-        {/* Sites */}
         {(certificate.enclosedSitesBpn?.length ?? 0) > 0 && (
           <>
             <SectionLabel>Associated Sites</SectionLabel>
@@ -253,7 +199,6 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
           </>
         )}
 
-        {/* Description */}
         {certificate.description && (
           <>
             <SectionLabel>Description</SectionLabel>
@@ -271,6 +216,6 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
         <FieldRow label="Created" value={formatDateTime(certificate.createdAt)} />
         <FieldRow label="Updated" value={formatDateTime(certificate.updatedAt)} />
       </Box>
-    </Drawer>
+    </InfoPanel>
   );
 };
