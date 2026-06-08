@@ -806,38 +806,20 @@ class CcmProviderService(CcmBaseService):
                 for c in certs
             ]
 
-    def get_published_certificate(self, certificate_id: int) -> Dict:
+    def get_published_certificate(self, certificate_id: int) -> bool:
         """
-        Return the published status of a single certificate.
+        Check whether a single certificate is currently published as an EDC asset.
 
         Args:
             certificate_id: Primary key of the certificate in the local DB.
 
         Returns:
-            Dict with ``certificate_id``, ``asset_id``, ``bpnl``, and
-            ``certificate_type`` — same shape as entries from
-            ``list_published_certificates()``.
-
-        Raises:
-            NotFoundError: If the certificate does not exist or is not
-                currently published as an EDC asset.
+            ``True`` if the certificate exists and has an active EDC asset ID,
+            ``False`` otherwise.
         """
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
-            if ccm is None:
-                raise NotFoundError(
-                    f"Certificate with ID {certificate_id} not found."
-                )
-            if not ccm.edc_asset_id:
-                raise NotFoundError(
-                    f"Certificate {certificate_id} is not currently published."
-                )
-            return {
-                "certificate_id": ccm.id,
-                "asset_id": ccm.edc_asset_id,
-                "bpnl": ccm.bpnl,
-                "certificate_type": ccm.certificate_type,
-            }
+            return ccm is not None and bool(ccm.edc_asset_id)
 
     def force_unpublish_by_asset_id(self, asset_id: str) -> None:
         """

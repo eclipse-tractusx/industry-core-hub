@@ -35,7 +35,7 @@ to initiate outbound operations towards a consumer:
 - ``GET /provider/shares``                                 — cross-certificate view of all sharing events
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -196,19 +196,18 @@ async def unpublish_certificate(certificate_id: int) -> None:
 
 @router.get(
     "/published/{certificate_id}",
-    response_model=CcmPublishedItem,
-    summary="Get the published status of a single certificate",
+    response_model=Dict[str, bool],
+    summary="Check if a single certificate is published as an EDC asset",
 )
-async def get_published_certificate(certificate_id: int) -> CcmPublishedItem:
+async def get_published_certificate(certificate_id: int) -> Dict[str, bool]:
     """
-    Return the EDC asset details for a single published certificate.
-
-    Returns 404 if the certificate does not exist or is not currently
-    published as an EDC asset.
+    Return ``{"published": true}`` if the certificate has an active EDC asset,
+    or ``{"published": false}`` if it does not exist or is not published.
+    Always responds with HTTP 200.
     """
     try:
-        item = ccm_provider_service.get_published_certificate(certificate_id)
-        return CcmPublishedItem(**item)
+        published = ccm_provider_service.get_published_certificate(certificate_id)
+        return {"published": published}
     except Exception as e:
         logger.exception("Unhandled error in get_published_certificate endpoint")
         raise HTTPException(status_code=500, detail=str(e))
