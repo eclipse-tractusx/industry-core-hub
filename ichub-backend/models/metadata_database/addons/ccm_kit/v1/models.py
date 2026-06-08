@@ -80,11 +80,13 @@ class ReceivedCertificateStatus(str, Enum):
 
     Tracks how this node has processed the certificate after reception.
 
-    - Pending:  Received but not yet evaluated.
+    - Pending:  Received but not yet evaluated (no status sent yet).
+    - Received: Consumer sent RECEIVED acknowledgment to the provider.
     - Accepted: Consumer validated and accepted the certificate.
     - Rejected: Consumer validated and rejected the certificate.
     """
     Pending  = "Pending"
+    Received = "Received"
     Accepted = "Accepted"
     Rejected = "Rejected"
 

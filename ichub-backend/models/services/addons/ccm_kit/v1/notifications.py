@@ -952,6 +952,14 @@ class ShareItem(BaseModel):
             "Only present when status is Revoked."
         ),
     )
+    consumer_status: Optional[str] = Field(
+        default=None,
+        alias="consumerStatus",
+        description=(
+            "Latest consumer feedback: RECEIVED / ACCEPTED / REJECTED. "
+            "NULL until the consumer sends a status notification."
+        ),
+    )
     last_shared_date: str = Field(
         alias="lastSharedDate",
         description="Timestamp of the most recent sharing event (ISO 8601).",

@@ -340,12 +340,12 @@ class CcmConsumerService(CcmBaseService):
         )
 
         # Map CertificateStatusValue → ReceivedCertificateStatus and persist.
-        # The mapping is intentional: ACCEPTED → Accepted, REJECTED → Rejected,
-        # RECEIVED → Pending (still being reviewed by the consumer).
+        # RECEIVED → Received (acknowledged but not yet evaluated).
+        # ACCEPTED → Accepted, REJECTED → Rejected.
         _STATUS_LOCAL_MAP = {
+            "RECEIVED": ReceivedCertificateStatus.Received,
             "ACCEPTED": ReceivedCertificateStatus.Accepted,
             "REJECTED": ReceivedCertificateStatus.Rejected,
-            "RECEIVED": ReceivedCertificateStatus.Pending,
         }
         new_local_status = _STATUS_LOCAL_MAP.get(payload.certificate_status.value)
         if new_local_status is not None:

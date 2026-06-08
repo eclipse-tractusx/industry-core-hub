@@ -2233,3 +2233,34 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         )
         result = self._session.execute(stmt)
         return result.rowcount
+
+    def find_latest_consumer_status(
+        self,
+        certificate_id: int,
+        consumer_bpn: str,
+    ) -> Optional[str]:
+        """
+        Return the most recent ``consumer_status`` value for the given
+        ``(certificate_id, consumer_bpn)`` pair.
+
+        Used to enrich the provider's share view with the consumer's latest
+        feedback (RECEIVED / ACCEPTED / REJECTED) without storing it on the
+        ``CertificateShare`` model.
+
+        Args:
+            certificate_id: FK of the shared certificate (ccm.id).
+            consumer_bpn: BPNL of the consumer.
+
+        Returns:
+            The ``consumer_status`` string, or ``None`` if no record exists
+            or if the consumer has not yet sent a status notification.
+        """
+        stmt = (
+            select(CcmInboundRequest.consumer_status)
+            .where(CcmInboundRequest.certificate_id == certificate_id)
+            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+            .where(CcmInboundRequest.consumer_status.is_not(None))
+            .order_by(desc(CcmInboundRequest.updated_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()

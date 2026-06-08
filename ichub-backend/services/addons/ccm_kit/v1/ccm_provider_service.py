@@ -769,6 +769,12 @@ class CcmProviderService(CcmBaseService):
             result: List[ShareItem] = []
             for share in shares:
                 cert = repo.ccm_repository.find_by_id_with_relations(share.certificate_id)
+                consumer_status = (
+                    repo.ccm_inbound_request_repository.find_latest_consumer_status(
+                        certificate_id=share.certificate_id,
+                        consumer_bpn=share.consumer_bpnl,
+                    )
+                )
                 result.append(
                     ShareItem(
                         share_id=share.id,
@@ -778,6 +784,7 @@ class CcmProviderService(CcmBaseService):
                         consumer_bpnl=share.consumer_bpnl,
                         status=share.status.value,
                         rejection_reason=share.rejection_reason,
+                        consumer_status=consumer_status,
                         last_shared_date=share.last_shared_date.isoformat(),
                         created_at=share.created_at.isoformat(),
                     )

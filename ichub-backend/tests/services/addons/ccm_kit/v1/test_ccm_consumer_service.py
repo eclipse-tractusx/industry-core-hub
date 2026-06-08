@@ -43,6 +43,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmSendStatusPayload,
     CertificateStatusValue,
 )
+from models.metadata_database.addons.ccm_kit.v1.models import ReceivedCertificateStatus
 
 
 # ---------------------------------------------------------------------------
@@ -615,6 +616,92 @@ class TestSendCertificateStatus:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+
+
+class TestSendStatusLocalStatusMapping:
+    """Tests that send_certificate_status maps consumer feedback to the correct local_status."""
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_received_sets_local_status_received(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=RECEIVED
+        WHEN send_certificate_status is called
+        THEN local_status is updated to ReceivedCertificateStatus.Received (not Pending).
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-rcv"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-001",
+            certificateStatus=CertificateStatusValue.RECEIVED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        repos.ccm_received_repository.update_local_status.assert_called_once_with(
+            document_id="doc-001",
+            provider_bpn=PROVIDER_BPN,
+            new_status=ReceivedCertificateStatus.Received,
+        )
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_accepted_sets_local_status_accepted(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=ACCEPTED
+        WHEN send_certificate_status is called
+        THEN local_status is updated to ReceivedCertificateStatus.Accepted.
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-acc"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-002",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        repos.ccm_received_repository.update_local_status.assert_called_once_with(
+            document_id="doc-002",
+            provider_bpn=PROVIDER_BPN,
+            new_status=ReceivedCertificateStatus.Accepted,
+        )
 
 
 # ---------------------------------------------------------------------------

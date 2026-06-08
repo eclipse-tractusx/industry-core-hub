@@ -245,7 +245,7 @@ data:
 
     CREATE TYPE public.trust_level AS ENUM ('none', 'low', 'high', 'trusted');
     CREATE TYPE public.share_status AS ENUM ('Active', 'Pending', 'Revoked');
-    CREATE TYPE public.received_certificate_status AS ENUM ('Pending', 'Accepted', 'Rejected');
+    CREATE TYPE public.received_certificate_status AS ENUM ('Pending', 'Received', 'Accepted', 'Rejected');
     CREATE TYPE public.outbound_request_status AS ENUM ('Pending', 'Found', 'NotFound', 'Failed');
     CREATE TYPE public.inbound_request_status AS ENUM ('NotFound', 'Registered', 'Available', 'Pushed');
 

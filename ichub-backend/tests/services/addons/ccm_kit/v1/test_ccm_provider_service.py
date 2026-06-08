@@ -1144,6 +1144,7 @@ class TestProviderServiceMappers:
         share.created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
         repos.certificate_share_repository.find_all_paginated.return_value = [share]
+        repos.ccm_inbound_request_repository.find_latest_consumer_status.return_value = None
 
         cert = Mock(spec=Ccm)
         cert.certificate_type = "ISO9001"
@@ -1156,6 +1157,143 @@ class TestProviderServiceMappers:
         assert len(items) == 1
         assert items[0].rejection_reason == '{"certificateErrors": ["Expired"]}'
         assert items[0].status == "Revoked"
+
+
+class TestListSharesConsumerStatus:
+    """Tests for consumerStatus enrichment in list_shares."""
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def _make_share_item(self, mock_factory, share_status, consumer_status_value):
+        """Helper that builds a ShareItem via list_shares with given statuses."""
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 1
+        share.certificate_id = 10
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = share_status
+        share.rejection_reason = None
+        share.last_shared_date = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 6, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+        repos.ccm_inbound_request_repository.find_latest_consumer_status.return_value = consumer_status_value
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        return CcmProviderService().list_shares()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_consumer_status_none_when_no_feedback(self, mock_factory):
+        """
+        GIVEN a share where the consumer has not sent any status
+        WHEN list_shares is called
+        THEN consumerStatus is None.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 1
+        share.certificate_id = 10
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = ShareStatus.Pending
+        share.rejection_reason = None
+        share.last_shared_date = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 6, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+        repos.ccm_inbound_request_repository.find_latest_consumer_status.return_value = None
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        items = CcmProviderService().list_shares()
+
+        assert items[0].consumer_status is None
+        assert items[0].status == "Pending"
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_consumer_status_received(self, mock_factory):
+        """
+        GIVEN a share with consumerStatus RECEIVED
+        WHEN list_shares is called
+        THEN consumerStatus is 'RECEIVED' and status is still 'Pending'.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 2
+        share.certificate_id = 11
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = ShareStatus.Pending
+        share.rejection_reason = None
+        share.last_shared_date = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 6, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+        repos.ccm_inbound_request_repository.find_latest_consumer_status.return_value = "RECEIVED"
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        items = CcmProviderService().list_shares()
+
+        assert items[0].consumer_status == "RECEIVED"
+        assert items[0].status == "Pending"
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_consumer_status_accepted(self, mock_factory):
+        """
+        GIVEN a share with consumerStatus ACCEPTED
+        WHEN list_shares is called
+        THEN consumerStatus is 'ACCEPTED' and status is 'Active'.
+        """
+        repos = Mock()
+        mock_factory.return_value.__enter__.return_value = repos
+
+        share = Mock(spec=CertificateShare)
+        share.id = 3
+        share.certificate_id = 12
+        share.consumer_bpnl = "BPNL000000000099"
+        share.status = ShareStatus.Active
+        share.rejection_reason = None
+        share.last_shared_date = datetime(2025, 6, 1, tzinfo=timezone.utc)
+        share.created_at = datetime(2025, 6, 1, tzinfo=timezone.utc)
+
+        repos.certificate_share_repository.find_all_paginated.return_value = [share]
+        repos.ccm_inbound_request_repository.find_latest_consumer_status.return_value = "ACCEPTED"
+
+        cert = Mock(spec=Ccm)
+        cert.certificate_type = "ISO9001"
+        cert.bpnl = "BPNL000000000001"
+        repos.ccm_repository.find_by_id_with_relations.return_value = cert
+
+        items = CcmProviderService().list_shares()
+
+        assert items[0].consumer_status == "ACCEPTED"
+        assert items[0].status == "Active"
 
 
 # =====================================================================
