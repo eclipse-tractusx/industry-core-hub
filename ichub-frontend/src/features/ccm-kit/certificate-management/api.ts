@@ -321,6 +321,25 @@ export const publishCertificateAsset = async (
   return response.data;
 };
 
+/**
+ * GET /addons/ccm-kit/provider/published/{certificate_id}
+ * Returns whether the given certificate is already published as an EDC asset.
+ * On any error (network, 404, etc.) defaults to false so the Publish button stays enabled.
+ */
+export const fetchCertificatePublishedStatus = async (
+  certificateId: string,
+): Promise<boolean> => {
+  if (!backendUrl) return false;
+  try {
+    const response = await httpClient.get<{ published: boolean }>(
+      `${backendUrl}/addons/ccm-kit/provider/published/${certificateId}`,
+    );
+    return response.data.published ?? false;
+  } catch {
+    return false;
+  }
+};
+
 // ─── DTR Registration (legacy — kept for backward compatibility) ───────────────
 
 /**

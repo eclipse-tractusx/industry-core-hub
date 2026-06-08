@@ -28,17 +28,13 @@ import {
   Button,
   Chip,
   CircularProgress,
-  IconButton,
   Stack,
   TextField,
-  Typography,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import { CcmDialog } from '@/features/ccm-kit/shared-components';
+import { BpnsInput, CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import PartnerAutocomplete from '@/features/business-partner-kit/partner-management/components/general/PartnerAutocomplete';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
@@ -57,7 +53,6 @@ interface RequestCertificateDialogProps {
 type SupportState = 'unknown' | 'checking' | 'supported' | 'unsupported';
 
 const BPN_PATTERN = ccmSharedConfig.validation.bpn.pattern;
-const BPNS_PATTERN = ccmSharedConfig.validation.bpns.pattern;
 
 const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertificateDialogProps) => {
   const [providerBpn, setProviderBpn] = useState('');
@@ -65,7 +60,6 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
   const [certifiedBpn, setCertifiedBpn] = useState('');
   const [certificateType, setCertificateType] = useState('');
   const [locationBpns, setLocationBpns] = useState<string[]>([]);
-  const [locationInput, setLocationInput] = useState('');
 
   const [partners, setPartners] = useState<PartnerInstance[]>([]);
   const [isLoadingPartners, setIsLoadingPartners] = useState(false);
@@ -98,7 +92,6 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
       setCertifiedBpn('');
       setCertificateType('');
       setLocationBpns([]);
-      setLocationInput('');
       setSupport('unknown');
       setSupportError(null);
       setSubmitError(null);
@@ -114,8 +107,6 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
 
   const providerValid = BPN_PATTERN.test(providerBpn);
   const certifiedValid = BPN_PATTERN.test(certifiedBpn);
-  const locationInputValid = locationInput === '' || BPNS_PATTERN.test(locationInput);
-
   const verifySupport = useCallback(async () => {
     if (!providerValid) return;
     setSupport('checking');
@@ -133,16 +124,6 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
       setSupportError('Could not verify CCM support for this provider.');
     }
   }, [providerBpn, providerValid]);
-
-  const addLocation = () => {
-    const value = locationInput.trim();
-    if (!value || !BPNS_PATTERN.test(value) || locationBpns.includes(value)) return;
-    setLocationBpns((prev) => [...prev, value]);
-    setLocationInput('');
-  };
-
-  const removeLocation = (bpn: string) =>
-    setLocationBpns((prev) => prev.filter((b) => b !== bpn));
 
   const canSubmit = useMemo(
     () => providerValid && certifiedValid && !!certificateType && support === 'supported' && !submitting,
@@ -162,10 +143,8 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
         locationBpns: locationBpns.length ? locationBpns : undefined,
         governance: CCM_POLICY_GOVERNANCE,
       });
-      if (!result.success) {
-        setSubmitError(result.error ?? 'Failed to send the certificate request.');
-        return;
-      }
+      // HTTP 200 = request created successfully. Close the dialog regardless of
+      // the body's success flag (the status will be reflected in the table).
       onSuccess(result.messageId);
     } catch {
       setSubmitError('Failed to send the certificate request.');
@@ -287,51 +266,10 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
             )}
           />
 
-          {/* Dynamic location BPNS list */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-              Locations (BPNS) — optional
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <TextField
-                label="Add location BPNS"
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value.toUpperCase())}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addLocation();
-                  }
-                }}
-                error={!locationInputValid}
-                helperText={!locationInputValid ? ccmSharedConfig.validation.bpns.errorMessage : ' '}
-                size="small"
-                fullWidth
-              />
-              <IconButton
-                color="primary"
-                onClick={addLocation}
-                disabled={!locationInput.trim() || !BPNS_PATTERN.test(locationInput)}
-                aria-label="add location"
-                sx={{ height: 40 }}
-              >
-                <AddIcon />
-              </IconButton>
-            </Box>
-            {locationBpns.length > 0 && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {locationBpns.map((bpn) => (
-                  <Chip
-                    key={bpn}
-                    label={bpn}
-                    onDelete={() => removeLocation(bpn)}
-                    deleteIcon={<DeleteOutlineIcon />}
-                    sx={{ fontFamily: 'monospace' }}
-                  />
-                ))}
-              </Box>
-            )}
-          </Box>
+          <BpnsInput
+            value={locationBpns}
+            onChange={setLocationBpns}
+          />
 
           {submitError && <Alert severity="error">{submitError}</Alert>}
         </Stack>

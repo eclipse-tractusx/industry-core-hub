@@ -28,13 +28,14 @@ import { useTranslation } from 'react-i18next';
 import { Box, Button, Alert, Snackbar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import { RefreshButton } from '@/features/ccm-kit/shared-components';
 import {
   Certificate,
   CertificateStats,
   CertificateFilter,
   CertificateStatus,
 } from '../types/types';
-import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, publishCertificateAsset } from '../api';
+import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, publishCertificateAsset, fetchCertificatePublishedStatus } from '../api';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { CertificateCardGrid } from '../components/certificate-list/CertificateCardGrid';
 import { SummaryStatsBar } from '../components/summary/SummaryStatsBar';
@@ -118,6 +119,7 @@ const CertificateManagement = () => {
   // Data
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [stats, setStats] = useState<CertificateStats>({ total: 0, valid: 0, expiring: 0, expired: 0 });
+  const [publishedIds, setPublishedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,8 +166,24 @@ const CertificateManagement = () => {
       // Transform data through mapper before storing in state
       const mappedCertificates = rawData.map(mapBackendToFrontendCertificate);
 
+      // Fire published-status checks for all certs in parallel (started here,
+      // awaited below so the loading spinner covers both operations).
+      const statusChecks = Promise.allSettled(
+        mappedCertificates.map((cert) => fetchCertificatePublishedStatus(cert.id)),
+      );
+
       setCertificates(mappedCertificates);
       setStats(calculateStats(mappedCertificates));
+
+      // Resolve published-status results and build the id set
+      const statusResults = await statusChecks;
+      const published = new Set<string>();
+      statusResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled' && result.value) {
+          published.add(mappedCertificates[idx].id);
+        }
+      });
+      setPublishedIds(published);
     } catch (err) {
       console.error('Error loading certificates:', err);
       setError(t('messages.loadFailed'));
@@ -305,7 +323,8 @@ const CertificateManagement = () => {
           subtitle={t('page.subtitle')}
           kitTheme={kitThemes.ccm}
           actions={
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+              <RefreshButton onClick={() => void loadData()} loading={isLoading} />
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -358,6 +377,7 @@ const CertificateManagement = () => {
       {viewMode === 'list' ? (
         <CertificateTable
           certificates={filteredCertificates}
+          publishedIds={publishedIds}
           onView={handleView}
           onPublish={handlePublish}
           onUpdate={handleUpdate}
@@ -367,6 +387,7 @@ const CertificateManagement = () => {
       ) : (
         <CertificateCardGrid
           certificates={filteredCertificates}
+          publishedIds={publishedIds}
           onView={handleView}
           onPublish={handlePublish}
           onUpdate={handleUpdate}
@@ -386,6 +407,7 @@ const CertificateManagement = () => {
         open={pdfViewerOpen}
         certificate={selectedCertificate}
         onClose={() => setPdfViewerOpen(false)}
+        publishedIds={publishedIds}
         onPublish={handlePublish}
         onUpdate={handleUpdate}
         onDelete={handleDelete}

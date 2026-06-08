@@ -62,11 +62,15 @@ import {
   CertificateStatusValue,
   OutboundRequestItem,
   OutboundRequestStatus,
+  ReceivedCertificateDetail,
 } from '../types/types';
+import type { Certificate } from '../../certificate-management/types/types';
+import { CertificatePDFViewer } from '../../certificate-management/components/dialogs/CertificatePDFViewer';
+import { CertificateInfoPanel } from '../../certificate-management/components/dialogs/CertificateInfoPanel';
 import RequestCertificateDialog from '../components/dialogs/RequestCertificateDialog';
 import SendStatusDialog from '../components/dialogs/SendStatusDialog';
-import ReceivedCertificateViewerDialog from '../components/dialogs/ReceivedCertificateViewerDialog';
 import RequestHistoryDialog from '../components/dialogs/RequestHistoryDialog';
+import OutboundRequestDetailDialog from '../components/dialogs/OutboundRequestDetailDialog';
 
 const ROWS_PER_PAGE = 10;
 
@@ -99,17 +103,34 @@ const statusChipSx = (status: OutboundRequestStatus) => {
   }
 };
 
-/** Best-effort extraction of the base64 PDF from a pulled certificate payload. */
-const extractBase64 = (data: Record<string, unknown> | null | undefined): string | null => {
-  if (!data) return null;
-  const doc = (data as { document?: Record<string, unknown> }).document;
-  return (
-    (doc?.contentBase64 as string | undefined) ??
-    (doc?.documentContent as string | undefined) ??
-    ((data as { documentBase64?: string }).documentBase64) ??
-    null
-  );
+const computeCertStatus = (validUntil?: string | null): 'valid' | 'expiring' | 'expired' => {
+  if (!validUntil) return 'valid';
+  const d = new Date(validUntil);
+  if (isNaN(d.getTime())) return 'valid';
+  const now = Date.now();
+  if (d.getTime() <= now) return 'expired';
+  if (d.getTime() <= now + 30 * 24 * 60 * 60 * 1000) return 'expiring';
+  return 'valid';
 };
+
+const buildCertificate = (req: OutboundRequestItem, detail?: ReceivedCertificateDetail | null): Certificate => ({
+  id: req.documentId ?? String(req.id),
+  name: typeLabel(req.certificateType),
+  type: req.certificateType as Certificate['type'],
+  bpn: req.certifiedBpn,
+  issuer: detail?.issuerName ?? '—',
+  validFrom: detail?.validFrom ?? '',
+  validUntil: detail?.validUntil ?? '',
+  status: computeCertStatus(detail?.validUntil),
+  dtrStatus: 'registered',
+  sharedCount: 0,
+  trustLevel: detail?.trustLevel ?? undefined,
+  certificateIdentifier: detail?.registrationNumber ?? undefined,
+  areaOfApplication: detail?.areaOfApplication ?? undefined,
+  uploaderBpnl: detail?.uploaderBpn ?? undefined,
+  createdAt: req.requestedAt,
+  updatedAt: req.updatedAt,
+});
 
 const CcmConsumption = () => {
   const [requests, setRequests] = useState<OutboundRequestItem[]>([]);
@@ -122,11 +143,14 @@ const CcmConsumption = () => {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [statusDialogRequest, setStatusDialogRequest] = useState<OutboundRequestItem | null>(null);
   const [historyRequest, setHistoryRequest] = useState<OutboundRequestItem | null>(null);
-  const [viewer, setViewer] = useState<{ open: boolean; base64: string | null; req: OutboundRequestItem | null }>({
+  const [detailRequest, setDetailRequest] = useState<OutboundRequestItem | null>(null);
+  const [viewer, setViewer] = useState<{ open: boolean; base64: string | null; certificate: Certificate | null }>({
     open: false,
     base64: null,
-    req: null,
+    certificate: null,
   });
+  const [infoPanelOpen, setInfoPanelOpen] = useState(false);
+  const [infoCertificate, setInfoCertificate] = useState<Certificate | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -159,33 +183,34 @@ const CcmConsumption = () => {
     [requests, page],
   );
 
-  const openViewer = (req: OutboundRequestItem, base64: string | null) =>
-    setViewer({ open: true, base64, req });
-
   // PULL or VIEW depending on whether the document was already downloaded.
   const handlePullOrView = async (req: OutboundRequestItem) => {
     if (!req.documentId) return;
     setBusyRowId(req.id);
     try {
       const alreadyReceived = receivedDocIds.has(req.documentId);
-      if (alreadyReceived) {
-        const detail = await fetchReceivedDetail(req.documentId, req.providerBpn);
-        openViewer(req, detail?.documentBase64 ?? null);
-        return;
+      if (!alreadyReceived) {
+        await pullCertificate({
+          providerBpn: req.providerBpn,
+          documentId: req.documentId,
+          governance: CCM_POLICY_GOVERNANCE,
+        });
+        setReceivedDocIds((prev) => new Set(prev).add(req.documentId!));
+        notify('Certificate pulled successfully.');
       }
-      const pulled = await pullCertificate({
-        providerBpn: req.providerBpn,
-        documentId: req.documentId,
-        governance: CCM_POLICY_GOVERNANCE,
-      });
-      setReceivedDocIds((prev) => new Set(prev).add(req.documentId!));
-      openViewer(req, extractBase64(pulled.certificateData));
-      notify('Certificate pulled successfully.');
+      const detail = await fetchReceivedDetail(req.documentId, req.providerBpn);
+      const certificate = buildCertificate(req, detail);
+      setViewer({ open: true, base64: detail?.documentBase64 ?? null, certificate });
     } catch {
       notify('Failed to pull the certificate.', 'error');
     } finally {
       setBusyRowId(null);
     }
+  };
+
+  const handleViewerInfo = (certificate: Certificate) => {
+    setInfoCertificate(certificate);
+    setInfoPanelOpen(true);
   };
 
   const handleStatusSuccess = (status: CertificateStatusValue) => {
@@ -256,7 +281,11 @@ const CcmConsumption = () => {
                     const alreadyReceived = !!req.documentId && receivedDocIds.has(req.documentId);
                     const rowBusy = busyRowId === req.id;
                     return (
-                      <TableRow key={req.id} sx={{ '&:hover': { backgroundColor: 'rgba(255,255,255,0.04)' } }}>
+                      <TableRow
+                        key={req.id}
+                        onClick={() => setDetailRequest(req)}
+                        sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
+                      >
                         <TableCell>
                           <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
                             {req.providerBpn}
@@ -285,7 +314,7 @@ const CcmConsumption = () => {
                             {formatDate(req.updatedAt)}
                           </Typography>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="View history">
                               <span>
@@ -303,7 +332,7 @@ const CcmConsumption = () => {
                                   onClick={() => void handlePullOrView(req)}
                                 >
                                   {rowBusy ? (
-                                    <CircularProgress size={16} />
+                                    <CircularProgress size={16} sx={{ color: 'rgba(255,255,255,0.8)' }} />
                                   ) : alreadyReceived ? (
                                     <VisibilityIcon fontSize="small" />
                                   ) : (
@@ -364,11 +393,29 @@ const CcmConsumption = () => {
         onClose={() => setHistoryRequest(null)}
       />
 
-      <ReceivedCertificateViewerDialog
+      <OutboundRequestDetailDialog
+        open={!!detailRequest}
+        request={detailRequest}
+        onClose={() => setDetailRequest(null)}
+        alreadyReceived={!!detailRequest?.documentId && receivedDocIds.has(detailRequest.documentId)}
+        pullBusy={detailRequest !== null && busyRowId === detailRequest.id}
+        onPullOrView={(req) => void handlePullOrView(req)}
+        onHistory={(req) => setHistoryRequest(req)}
+        onFeedback={(req) => setStatusDialogRequest(req)}
+      />
+
+      <CertificatePDFViewer
         open={viewer.open}
-        request={viewer.req}
-        documentBase64={viewer.base64}
+        certificate={viewer.certificate}
+        pdfBase64Override={viewer.base64}
         onClose={() => setViewer((v) => ({ ...v, open: false }))}
+        onInfo={handleViewerInfo}
+      />
+
+      <CertificateInfoPanel
+        open={infoPanelOpen}
+        certificate={infoCertificate}
+        onClose={() => setInfoPanelOpen(false)}
       />
 
       <Snackbar

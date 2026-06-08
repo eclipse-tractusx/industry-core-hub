@@ -45,6 +45,8 @@ import { certificateManagementConfig } from '../../config';
 
 interface CertificateTableProps {
   certificates: Certificate[];
+  /** IDs of certificates already published as EDC assets. */
+  publishedIds?: Set<string>;
   onView: (certificate: Certificate) => void;
   onPublish: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
@@ -55,6 +57,7 @@ interface CertificateTableProps {
 
 export const CertificateTable = ({
   certificates,
+  publishedIds,
   onView,
   onPublish,
   onUpdate,
@@ -233,16 +236,29 @@ export const CertificateTable = ({
                   {/* Action buttons */}
                   <TableCell align="center" sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }} onClick={(e) => e.stopPropagation()}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<PublishIcon sx={{ fontSize: 13 }} />}
-                        disabled={certificate.status === 'expired'}
-                        onClick={(e) => { e.stopPropagation(); onPublish(certificate); }}
-                        sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)', color: '#64b5f6' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
+                      <Tooltip
+                        title={
+                          certificate.status === 'expired'
+                            ? 'Cannot publish expired certificates'
+                            : publishedIds?.has(certificate.id)
+                              ? 'Already published to the EDC network'
+                              : ''
+                        }
+                        placement="top"
                       >
-                        Publish
-                      </Button>
+                        <span>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<PublishIcon sx={{ fontSize: 13 }} />}
+                            disabled={certificate.status === 'expired' || (publishedIds?.has(certificate.id) ?? false)}
+                            onClick={(e) => { e.stopPropagation(); onPublish(certificate); }}
+                            sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)', color: '#64b5f6' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
+                          >
+                            Publish
+                          </Button>
+                        </span>
+                      </Tooltip>
                       <Button
                         size="small"
                         variant="outlined"

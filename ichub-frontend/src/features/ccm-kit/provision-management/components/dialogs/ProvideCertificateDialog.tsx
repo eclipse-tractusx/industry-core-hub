@@ -26,7 +26,9 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   MenuItem,
+  Paper,
   Stack,
   TextField,
   ToggleButton,
@@ -34,10 +36,13 @@ import {
   Typography,
 } from '@mui/material';
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import { getParticipantId } from '@/services/EnvironmentService';
-import { fetchAllCertificates } from '../../../certificate-management/api';
+import { fetchAllCertificates, createCertificate } from '../../../certificate-management/api';
+import { UploadCertificateDialog } from '../../../certificate-management/components/dialogs/UploadCertificateDialog';
 
 import {
   fetchInboundRequestsHistory,
@@ -80,6 +85,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!request) return;
@@ -132,7 +138,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
   const needsExplicitRelated = history.length >= 2;
 
   const canSubmit = useMemo(() => {
-    if (!certificateId || submitting) return false;
+    if (!certificateId || certificateId === '__upload__' || submitting) return false;
     // With ≥2 history records the user must pick which request to respond to.
     if (needsExplicitRelated && !relatedMessageId) return false;
     return true;
@@ -233,24 +239,63 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
               <ToggleButton value="PUSH">Push directly</ToggleButton>
             </ToggleButtonGroup>
 
-            <TextField
-              label="Certificate to provide"
-              value={certificateId}
-              onChange={(e) => setCertificateId(e.target.value)}
-              select
-              fullWidth
-              required
-              helperText={
-                certificates.length === 0 ? 'No matching certificates found for this request.' : ' '
-              }
-            >
-              {certificates.map((c) => (
-                <MenuItem key={c.certificateId} value={c.certificateId}>
-                  {(c.certificateName || typeLabel(c.certificateType))}
-                  {c.validUntil ? ` · until ${new Date(c.validUntil).toLocaleDateString('en-US')}` : ''}
+            {/* Certificate picker — empty state or dropdown */}
+            {certificates.length === 0 ? (
+              <Paper
+                variant="outlined"
+                sx={{ p: 2.5, borderColor: 'warning.light', backgroundColor: 'rgba(255,152,0,0.04)', borderRadius: 2 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, color: 'warning.dark' }}>
+                  <WarningAmberIcon fontSize="small" />
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    No matching certificates found
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  No <strong>{typeLabel(request?.certificateType ?? '')}</strong> certificate was found for{' '}
+                  <Box component="span" sx={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
+                    {request?.certifiedBpn}
+                  </Box>
+                  . Upload a new certificate to fulfill this request.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<FileUploadOutlinedIcon fontSize="small" />}
+                  onClick={() => setUploadOpen(true)}
+                  sx={{ textTransform: 'none' }}
+                >
+                  Upload Certificate
+                </Button>
+              </Paper>
+            ) : (
+              <TextField
+                label="Certificate to provide"
+                value={certificateId}
+                onChange={(e) => {
+                  if (e.target.value === '__upload__') {
+                    setUploadOpen(true);
+                  } else {
+                    setCertificateId(e.target.value);
+                  }
+                }}
+                select
+                fullWidth
+                required
+              >
+                {certificates.map((c) => (
+                  <MenuItem key={c.certificateId} value={c.certificateId}>
+                    {c.certificateName || typeLabel(c.certificateType)}
+                    {c.validUntil ? ` · until ${new Date(c.validUntil).toLocaleDateString('en-US')}` : ''}
+                  </MenuItem>
+                ))}
+                <Divider />
+                <MenuItem value="__upload__" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
+                  <FileUploadOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
+                  Upload other certificate…
                 </MenuItem>
-              ))}
-            </TextField>
+              </TextField>
+            )}
 
             {mode === 'AVAILABLE' && certificateId && !published.has(Number(certificateId)) && (
               <Alert severity="info">
@@ -292,6 +337,31 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
           </Stack>
         )}
       </Box>
+
+      {/* Upload Certificate dialog — pre-filled with known request fields */}
+      <UploadCertificateDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onSave={async (formData) => {
+          await createCertificate(formData);
+          setUploadOpen(false);
+          await loadData();
+        }}
+        certificateData={
+          request
+            ? {
+                type: request.certificateType,
+                bpn: request?.certifiedBpn ?? '',
+                name: '',
+                issuer: request?.certifiedBpn ?? '',
+                validFrom: '',
+                validUntil: '',
+                certificateScope: 'BPNL',
+                enclosedSitesBpn: [],
+              }
+            : undefined
+        }
+      />
     </CcmDialog>
   );
 };

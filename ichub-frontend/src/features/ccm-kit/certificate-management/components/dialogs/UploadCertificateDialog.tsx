@@ -50,6 +50,7 @@ import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import { UploadCertificateDialogProps } from '../../types/dialog-types';
 import { certificateManagementConfig } from '../../config';
+import { BpnsInput } from '@/features/ccm-kit/shared-components';
 
 // Shared certificate type list (full CX-0135 set) — reused across all CCM
 // type selectors so the options stay consistent.
@@ -91,8 +92,6 @@ export const UploadCertificateDialog = ({
   const [errors, setErrors] = useState<Partial<Record<keyof typeof initialFormData, string>>>({});
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bpnsInputValue, setBpnsInputValue] = useState('');
-  const [bpnsInputError, setBpnsInputError] = useState<string | null>(null);
   
   const isEditing = !!certificateData;
   const [activeStep, setActiveStep] = useState(0);
@@ -486,73 +485,11 @@ export const UploadCertificateDialog = ({
 
             {/* Site management (BPNS) */}
             <Grid2 size={12}>
-              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
-                <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                  Associated Sites Scope (Optional)
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                  Type a specific facility BPNS value and press Enter to link it.
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="e.g. BPNS0000000000XY"
-                  value={bpnsInputValue}
-                  onChange={(e) => {
-                    setBpnsInputValue(e.target.value);
-                    setBpnsInputError(null);
-                  }}
-                  error={!!bpnsInputError}
-                  helperText={bpnsInputError}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      const val = bpnsInputValue.trim().toUpperCase();
-                      if (!val) return;
-                      const bpnsPattern = /^BPNS[A-Z0-9]{12}$/;
-                      if (!bpnsPattern.test(val)) {
-                        setBpnsInputError('Invalid BPNS format. Expected: BPNS followed by 12 alphanumeric characters.');
-                        return;
-                      }
-                      if (formData.enclosedSitesBpn.includes(val)) {
-                        setBpnsInputError('This BPNS has already been added.');
-                        return;
-                      }
-                      setFormData(prev => ({
-                        ...prev,
-                        enclosedSitesBpn: [...prev.enclosedSitesBpn, val],
-                      }));
-                      setBpnsInputValue('');
-                    }
-                  }}
-                />
-                {formData.enclosedSitesBpn.length > 0 && (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                    {formData.enclosedSitesBpn.map((bpns) => (
-                      <Box
-                        key={bpns}
-                        sx={{
-                          display: 'inline-flex', alignItems: 'center', gap: 0.5,
-                          bgcolor: 'action.selected', border: '1px solid', borderColor: 'divider',
-                          borderRadius: 1, px: 1, py: 0.25, fontSize: '0.75rem', fontFamily: 'monospace',
-                        }}
-                      >
-                        {bpns}
-                        <Box
-                          component="span"
-                          sx={{ cursor: 'pointer', ml: 0.5, color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                          onClick={() => setFormData(prev => ({
-                            ...prev,
-                            enclosedSitesBpn: prev.enclosedSitesBpn.filter(b => b !== bpns),
-                          }))}
-                        >
-                          ×
-                        </Box>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </Box>
+              <BpnsInput
+                value={formData.enclosedSitesBpn}
+                onChange={(next) => setFormData((prev) => ({ ...prev, enclosedSitesBpn: next }))}
+                label="Associated Sites (BPNS)"
+              />
             </Grid2>
           </Grid2>
         )}

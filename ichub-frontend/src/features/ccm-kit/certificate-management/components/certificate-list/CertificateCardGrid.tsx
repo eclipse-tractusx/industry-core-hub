@@ -49,6 +49,8 @@ import { certificateManagementConfig } from '../../config';
 
 interface CertificateCardGridProps {
   certificates: Certificate[];
+  /** IDs of certificates already published as EDC assets. */
+  publishedIds?: Set<string>;
   onView: (certificate: Certificate) => void;
   onPublish: (certificate: Certificate) => void;
   onUpdate: (certificate: Certificate) => void;
@@ -85,6 +87,7 @@ const CCM_SECONDARY = '#9D6FD4';
 
 export const CertificateCardGrid = ({
   certificates,
+  publishedIds,
   onView,
   onPublish,
   onUpdate,
@@ -297,26 +300,39 @@ export const CertificateCardGrid = ({
                     <InfoOutlinedIcon sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Tooltip>
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<PublishIcon sx={{ fontSize: 14 }} />}
-                  disabled={cert.status === 'expired'}
-                  onClick={(e) => { e.stopPropagation(); onPublish(cert); }}
-                  sx={{
-                    flex: 1,
-                    py: 0.85,
-                    borderRadius: '8px',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: '0.78rem',
-                    background: `linear-gradient(135deg, ${CCM_PRIMARY} 0%, ${CCM_SECONDARY} 100%)`,
-                    '&:hover': { background: `linear-gradient(135deg, ${CCM_SECONDARY} 0%, ${CCM_PRIMARY} 100%)` },
-                    '&.Mui-disabled': { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' },
-                  }}
+                <Tooltip
+                  title={
+                    cert.status === 'expired'
+                      ? 'Cannot publish expired certificates'
+                      : publishedIds?.has(cert.id)
+                        ? 'Already published to the EDC network'
+                        : ''
+                  }
+                  placement="top"
                 >
-                  Publish
-                </Button>
+                  <span style={{ flex: 1, display: 'flex' }}>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<PublishIcon sx={{ fontSize: 14 }} />}
+                      disabled={cert.status === 'expired' || (publishedIds?.has(cert.id) ?? false)}
+                      onClick={(e) => { e.stopPropagation(); onPublish(cert); }}
+                      sx={{
+                        flex: 1,
+                        py: 0.85,
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.78rem',
+                        background: `linear-gradient(135deg, ${CCM_PRIMARY} 0%, ${CCM_SECONDARY} 100%)`,
+                        '&:hover': { background: `linear-gradient(135deg, ${CCM_SECONDARY} 0%, ${CCM_PRIMARY} 100%)` },
+                        '&.Mui-disabled': { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' },
+                      }}
+                    >
+                      Publish
+                    </Button>
+                  </span>
+                </Tooltip>
                 <Button
                   size="small"
                   variant="outlined"

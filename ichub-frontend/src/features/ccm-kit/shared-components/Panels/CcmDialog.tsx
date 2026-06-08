@@ -115,7 +115,7 @@ const CcmDialog = ({
           right: 12,
           top: 12,
           color: '#fff',
-          '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' },
+          '&:hover': { backgroundColor: 'rgba(244,67,54,0.18)', color: '#ef5350' },
         }}
       >
         <CloseIcon />

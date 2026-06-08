@@ -46,10 +46,17 @@ interface CertificatePDFViewerProps {
   open: boolean;
   certificate: Certificate | null;
   onClose: () => void;
-  onPublish: (certificate: Certificate) => void;
-  onUpdate: (certificate: Certificate) => void;
-  onDelete: (certificate: Certificate) => void;
+  /** When provided the PDF fetch is skipped and this value is used directly. */
+  pdfBase64Override?: string | null;
+  /** IDs of certificates already published as EDC assets — disables the Publish button. */
+  publishedIds?: Set<string>;
   onInfo: (certificate: Certificate) => void;
+  /** Optional — hide the Publish button when not provided. */
+  onPublish?: (certificate: Certificate) => void;
+  /** Optional — hide the Update PDF button when not provided. */
+  onUpdate?: (certificate: Certificate) => void;
+  /** Optional — hide the Delete button when not provided. */
+  onDelete?: (certificate: Certificate) => void;
 }
 
 const formatDate = (d: string) =>
@@ -67,6 +74,8 @@ export const CertificatePDFViewer = ({
   open,
   certificate,
   onClose,
+  pdfBase64Override,
+  publishedIds,
   onPublish,
   onUpdate,
   onDelete,
@@ -77,6 +86,12 @@ export const CertificatePDFViewer = ({
 
   useEffect(() => {
     if (!open || !certificate) return;
+    // When a base64 is already available (e.g. from a prior pull), skip the API call.
+    if (pdfBase64Override !== undefined) {
+      setIsLoadingPdf(false);
+      setPdfBase64(pdfBase64Override ?? null);
+      return;
+    }
     setIsLoadingPdf(true);
     setPdfBase64(null);
     fetchCertificateDetail(certificate.id)
@@ -85,7 +100,7 @@ export const CertificatePDFViewer = ({
       })
       .catch(() => setPdfBase64(null))
       .finally(() => setIsLoadingPdf(false));
-  }, [open, certificate?.id]);
+  }, [open, certificate?.id, pdfBase64Override]);
 
   if (!certificate) return null;
 
@@ -187,62 +202,81 @@ export const CertificatePDFViewer = ({
           </Box>
         </Box>
 
-        {/* Actions */}
+        {/* Actions — only rendered when the caller provides the handler */}
         <Box sx={{ display: 'flex', gap: 1.5, flexShrink: 0, alignItems: 'center' }}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<PublishIcon fontSize="small" />}
-            disabled={certificate.status === 'expired'}
-            onClick={() => onPublish(certificate)}
-            sx={{
-              borderColor: 'rgba(255,255,255,0.5)',
-              color: '#fff',
-              textTransform: 'none',
-              fontWeight: 500,
-              borderRadius: 1.5,
-              '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.12)', color: '#fff' },
-              '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)' },
-            }}
-          >
-            Publish
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<RefreshIcon fontSize="small" />}
-            onClick={() => onUpdate(certificate)}
-            sx={{
-              borderColor: 'rgba(129,199,132,0.5)',
-              color: '#81c784',
-              textTransform: 'none',
-              fontWeight: 500,
-              borderRadius: 1.5,
-              '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.12)', color: '#fff' },
-            }}
-          >
-            Update PDF
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<DeleteOutlineIcon fontSize="small" />}
-            onClick={() => onDelete(certificate)}
-            sx={{
-              borderColor: 'rgba(244,67,54,0.6)',
-              color: '#ef9a9a',
-              textTransform: 'none',
-              fontWeight: 500,
-              borderRadius: 1.5,
-              '&:hover': { borderColor: '#f44336', backgroundColor: 'rgba(244,67,54,0.12)', color: '#fff' },
-            }}
-          >
-            Delete
-          </Button>
+          {onPublish && (
+            <Tooltip
+              title={
+                certificate.status === 'expired'
+                  ? 'Cannot publish expired certificates'
+                  : publishedIds?.has(certificate.id)
+                    ? 'Already published to the EDC network'
+                    : ''
+              }
+              placement="bottom"
+            >
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<PublishIcon fontSize="small" />}
+                  disabled={certificate.status === 'expired' || (publishedIds?.has(certificate.id) ?? false)}
+                  onClick={() => onPublish(certificate)}
+                  sx={{
+                    borderColor: 'rgba(255,255,255,0.5)',
+                    color: '#fff',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    borderRadius: 1.5,
+                    '&:hover': { borderColor: '#fff', backgroundColor: 'rgba(255,255,255,0.12)', color: '#fff' },
+                    '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)' },
+                  }}
+                >
+                  Publish
+                </Button>
+              </span>
+            </Tooltip>
+          )}
+          {onUpdate && (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<RefreshIcon fontSize="small" />}
+              onClick={() => onUpdate(certificate)}
+              sx={{
+                borderColor: 'rgba(129,199,132,0.5)',
+                color: '#81c784',
+                textTransform: 'none',
+                fontWeight: 500,
+                borderRadius: 1.5,
+                '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.12)', color: '#fff' },
+              }}
+            >
+              Update PDF
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<DeleteOutlineIcon fontSize="small" />}
+              onClick={() => onDelete(certificate)}
+              sx={{
+                borderColor: 'rgba(244,67,54,0.6)',
+                color: '#ef9a9a',
+                textTransform: 'none',
+                fontWeight: 500,
+                borderRadius: 1.5,
+                '&:hover': { borderColor: '#f44336', backgroundColor: 'rgba(244,67,54,0.12)', color: '#fff' },
+              }}
+            >
+              Delete
+            </Button>
+          )}
           <IconButton
             size="small"
             onClick={onClose}
-            sx={{ ml: 0.5, color: '#fff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' } }}
+            sx={{ ml: 0.5, color: '#fff', '&:hover': { backgroundColor: 'rgba(244,67,54,0.18)', color: '#ef5350' } }}
           >
             <CloseIcon />
           </IconButton>
