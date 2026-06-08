@@ -925,6 +925,7 @@ class TestStoreReceivedCertificate:
     def test_store_success(self, mock_factory, service):
         """Certificate data is stored successfully."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         mock_factory.create.return_value.__enter__.return_value = repos
 
         cert_data = {
@@ -956,6 +957,7 @@ class TestStoreReceivedCertificate:
     def test_store_invalid_base64_still_stores(self, mock_factory, service):
         """Invalid base64 content is logged as warning but storage proceeds."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         mock_factory.create.return_value.__enter__.return_value = repos
 
         cert_data = {
@@ -981,6 +983,7 @@ class TestStoreReceivedCertificate:
     def test_store_db_error(self, mock_factory, service):
         """Database commit failure returns False."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         repos.ccm_received_repository.create_new.side_effect = Exception("DB connection lost")
         mock_factory.create.return_value.__enter__.return_value = repos
 
@@ -999,3 +1002,29 @@ class TestStoreReceivedCertificate:
         )
 
         assert stored is False
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
+    )
+    def test_store_duplicate_returns_true(self, mock_factory, service):
+        """Pulling an already-stored document is idempotent and returns True."""
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+            "document": {},
+            "issuer": {},
+            "validator": {},
+        }
+
+        stored = service._store_received_certificate(
+            certificate_data=cert_data,
+            provider_bpn=PROVIDER_BPN,
+            document_id="doc-already-stored",
+        )
+
+        assert stored is True
+        repos.ccm_received_repository.create_new.assert_not_called()

@@ -597,6 +597,18 @@ class CcmConsumerService(CcmBaseService):
                         doc_bytes = None
 
             with RepositoryManagerFactory.create() as repo:
+                existing = repo.ccm_received_repository.find_by_document_id(
+                    document_id, provider_bpn=provider_bpn
+                )
+                if existing is not None:
+                    logger.info(
+                        "[CCM Consumer] Certificate %s from %s already stored — "
+                        "skipping duplicate pull.",
+                        _s(document_id),
+                        _s(provider_bpn),
+                    )
+                    return True
+
                 extra_kwargs: Dict[str, Any] = {}
                 if notification_message_id:
                     extra_kwargs["notification_message_id"] = notification_message_id
