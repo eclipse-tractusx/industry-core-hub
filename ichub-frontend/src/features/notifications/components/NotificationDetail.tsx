@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -80,6 +81,8 @@ import { SingleTwinResult } from '@/features/industry-core-kit/part-discovery/co
  * Supports responsive design and hides technical details behind info icon
  */
 const NotificationDetail: React.FC = () => {
+  const navigate = useNavigate();
+
   const {
     panelSize,
     selectedNotification,
@@ -90,6 +93,7 @@ const NotificationDetail: React.FC = () => {
     refreshPartners,
     verifyDigitalTwin,
     verifyAllDigitalTwins,
+    closePanel,
   } = useNotifications();
 
   const { t } = useTranslation('notifications');
@@ -888,6 +892,7 @@ const NotificationDetail: React.FC = () => {
 
         {/* PCF content section — shown for PCF-type notifications */}
         {selectedNotification.type === 'pcf' && selectedNotification.pcfContent && (
+          <>
           <Box
             sx={{
               padding: isCompact ? '10px' : '14px',
@@ -966,10 +971,40 @@ const NotificationDetail: React.FC = () => {
               />
             )}
           </Box>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            size="small"
+            onClick={() => {
+              closePanel();
+              navigate('/pcf/requests');
+            }}
+            sx={{
+              mb: 2,
+              color: '#00bcd4',
+              borderColor: 'rgba(0, 188, 212, 0.4)',
+              fontSize: '0.8rem',
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              padding: '8px 16px',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                borderColor: '#00bcd4',
+                backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(0, 188, 212, 0.2)',
+              },
+            }}
+          >
+            {t('pcf.viewInRequests')}
+          </Button>
+          </>
         )}
 
-        {/* Generic non-DT content section — for CCM and other future use cases */}
-        {!isDtNotification && selectedNotification.type !== 'pcf' && content.information && (
+        {/* Generic non-DT content section — for non-PCF, non-CCM use cases */}
+        {!isDtNotification && selectedNotification.type !== 'pcf' && selectedNotification.type !== 'ccm' && content.information && (
           <Box
             sx={{
               padding: isCompact ? '10px' : '14px',
@@ -987,6 +1022,83 @@ const NotificationDetail: React.FC = () => {
             </Typography>
           </Box>
         )}
+
+        {/* CCM content section — shown for CCM-type notifications */}
+        {selectedNotification.type === 'ccm' && selectedNotification.ccmContent && (() => {
+          const ccm = selectedNotification.ccmContent;
+          const notifType = ccm.notificationType;
+          const isProviderAction = notifType === 'CCM_AVAILABLE_SENT' || notifType === 'CCM_PUSH_SENT';
+          const navTarget = isProviderAction ? '/ccm-provision?tab=shares' : '/ccm-consumption';
+          const navLabel = isProviderAction ? t('ccm.viewInProvision') : t('ccm.viewInConsumption');
+
+          return (
+            <>
+              <Box
+                sx={{
+                  padding: isCompact ? '10px' : '14px',
+                  backgroundColor: 'rgba(157, 111, 212, 0.08)',
+                  border: '1px solid rgba(157, 111, 212, 0.2)',
+                  borderRadius: '8px',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: '#9D6FD4',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 1.5,
+                  }}
+                >
+                  {t('ccm.details')}
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: isCompact ? '1fr' : '1fr 1fr', gap: 1, rowGap: 1.5 }}>
+                  <DetailRow label={t('ccm.notificationType')} value={notifType} compact={isCompact} t={t} />
+                  {ccm.certificateType && (
+                    <DetailRow label={t('ccm.certificateType')} value={ccm.certificateType} compact={isCompact} t={t} />
+                  )}
+                  {ccm.certifiedBpn && (
+                    <DetailRow label={t('ccm.certifiedBpn')} value={ccm.certifiedBpn} copyable compact={isCompact} t={t} />
+                  )}
+                  {ccm.documentId && (
+                    <DetailRow label={t('ccm.documentId')} value={ccm.documentId} copyable compact={isCompact} t={t} />
+                  )}
+                </Box>
+              </Box>
+
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                onClick={() => {
+                  closePanel();
+                  navigate(navTarget);
+                }}
+                sx={{
+                  mb: 2,
+                  color: '#9D6FD4',
+                  borderColor: 'rgba(157, 111, 212, 0.4)',
+                  fontSize: '0.8rem',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    borderColor: '#9D6FD4',
+                    backgroundColor: 'rgba(157, 111, 212, 0.1)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(157, 111, 212, 0.2)',
+                  },
+                }}
+              >
+                {navLabel}
+              </Button>
+            </>
+          );
+        })()}
 
         {/* Digital Twins Section — only for DT notification types */}
         {isDtNotification && (

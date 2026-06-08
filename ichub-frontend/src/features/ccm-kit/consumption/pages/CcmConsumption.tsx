@@ -42,7 +42,14 @@ import {
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AddIcon from '@mui/icons-material/Add';
 import HistoryIcon from '@mui/icons-material/History';
-import { RefreshButton, PrimaryActionButton } from '@/features/ccm-kit/shared-components';
+import {
+  RefreshButton,
+  PrimaryActionButton,
+  CcmFilterBar,
+  RelativeDate,
+  BpnlContactCell,
+} from '@/features/ccm-kit/shared-components';
+import type { FilterDef } from '@/features/ccm-kit/shared-components';
 import DownloadIcon from '@mui/icons-material/Download';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import RateReviewIcon from '@mui/icons-material/RateReview';
@@ -74,11 +81,24 @@ import OutboundRequestDetailDialog from '../components/dialogs/OutboundRequestDe
 
 const ROWS_PER_PAGE = 10;
 
-const formatDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-
 const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
+
+const certTypeOptions = ccmSharedConfig.certificateTypes.map((t) => ({ value: t.value, label: t.label }));
+
+const consumptionFilterDefs: FilterDef[] = [
+  {
+    key: 'status',
+    allLabel: 'All Statuses',
+    options: [
+      { value: 'Pending', label: 'Pending' },
+      { value: 'Found', label: 'Found' },
+      { value: 'NotFound', label: 'Not Found' },
+      { value: 'Failed', label: 'Failed' },
+    ],
+  },
+  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+];
 
 // Action icon buttons sit on the dark-blue table background — give them a light
 // foreground for contrast (the default primary color is too dark to read here).
@@ -140,6 +160,10 @@ const CcmConsumption = () => {
   const [page, setPage] = useState(0);
   const [busyRowId, setBusyRowId] = useState<number | null>(null);
 
+  // Search + filter state.
+  const [search, setSearch] = useState('');
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({ status: '', type: '' });
+
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [statusDialogRequest, setStatusDialogRequest] = useState<OutboundRequestItem | null>(null);
   const [historyRequest, setHistoryRequest] = useState<OutboundRequestItem | null>(null);
@@ -178,10 +202,38 @@ const CcmConsumption = () => {
     void loadData();
   }, [loadData]);
 
+  const filteredRequests = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    return requests.filter((r) => {
+      const matchesSearch =
+        !s ||
+        [r.providerBpn, r.certifiedBpn, typeLabel(r.certificateType), r.status].some((v) =>
+          v?.toLowerCase().includes(s),
+        );
+      const matchesStatus = !filterValues.status || r.status === filterValues.status;
+      const matchesType = !filterValues.type || r.certificateType === filterValues.type;
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [requests, search, filterValues]);
+
   const visibleRows = useMemo(
-    () => requests.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE),
-    [requests, page],
+    () => filteredRequests.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE),
+    [filteredRequests, page],
   );
+
+  const handleSearch = (v: string) => {
+    setSearch(v);
+    setPage(0);
+  };
+  const handleFilter = (key: string, value: string) => {
+    setFilterValues((prev) => ({ ...prev, [key]: value }));
+    setPage(0);
+  };
+  const handleClearFilters = () => {
+    setSearch('');
+    setFilterValues({ status: '', type: '' });
+    setPage(0);
+  };
 
   // PULL or VIEW depending on whether the document was already downloaded.
   const handlePullOrView = async (req: OutboundRequestItem) => {
@@ -252,11 +304,23 @@ const CcmConsumption = () => {
         </Alert>
       )}
 
+      <CcmFilterBar
+        search={search}
+        onSearchChange={handleSearch}
+        searchPlaceholder="Search by provider, type or status…"
+        filters={consumptionFilterDefs}
+        values={filterValues}
+        onFilterChange={handleFilter}
+        onClear={handleClearFilters}
+      />
+
       <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
-        {requests.length === 0 ? (
+        {filteredRequests.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-              No certificate requests yet. Use "New Request" to ask a provider for a certificate.
+              {requests.length === 0
+                ? 'No certificate requests yet. Use "New Request" to ask a provider for a certificate.'
+                : 'No requests match your filters.'}
             </Typography>
           </Box>
         ) : (
@@ -286,15 +350,11 @@ const CcmConsumption = () => {
                         onClick={() => setDetailRequest(req)}
                         sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
                       >
-                        <TableCell>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                            {req.providerBpn}
-                          </Typography>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <BpnlContactCell bpnl={req.providerBpn} mode="name" />
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                            {req.certifiedBpn}
-                          </Typography>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <BpnlContactCell bpnl={req.certifiedBpn} mode="bpn" />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
@@ -310,9 +370,7 @@ const CcmConsumption = () => {
                           <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...statusChipSx(req.status) }} />
                         </TableCell>
                         <TableCell>
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {formatDate(req.updatedAt)}
-                          </Typography>
+                          <RelativeDate value={req.updatedAt} />
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
@@ -364,7 +422,7 @@ const CcmConsumption = () => {
             <TablePagination
               rowsPerPageOptions={[]}
               component="div"
-              count={requests.length}
+              count={filteredRequests.length}
               rowsPerPage={ROWS_PER_PAGE}
               page={page}
               onPageChange={(_, p) => setPage(p)}

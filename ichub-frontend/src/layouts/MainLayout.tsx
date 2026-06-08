@@ -29,6 +29,7 @@ import AdditionalSidebar from '../components/general/AdditionalSidebar';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { SidebarProvider } from '../contexts/SidebarContext';
 import { AdditionalSidebarProvider } from '../contexts/AdditionalSidebarContext';
+import { PartnerProvider } from '../contexts/PartnerContext';
 import { NotificationProvider, NotificationsPanel } from '../features/notifications';
 import { features } from '../features/main';
 import { isAuthEnabled } from '../services/EnvironmentService';
@@ -68,9 +69,11 @@ function MainLayout() {
   return (
     <SidebarProvider>
       <AdditionalSidebarProvider>
-        <NotificationProvider>
-          <MainLayoutContent />
-        </NotificationProvider>
+        <PartnerProvider>
+          <NotificationProvider>
+            <MainLayoutContent />
+          </NotificationProvider>
+        </PartnerProvider>
       </AdditionalSidebarProvider>
     </SidebarProvider>
   );

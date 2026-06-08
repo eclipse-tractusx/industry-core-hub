@@ -150,6 +150,25 @@
     "expectedResponse": "Expected Response",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Certificate request sent for {{certificateType}} to {{receiverBpn}}",
+    "CCM_REQUEST_NOT_FOUND": "Certificate not found: {{certificateType}} could not be provided by {{senderBpn}}",
+    "CCM_AVAILABLE_RECEIVED": "Certificate available: {{certificateType}} is ready for download",
+    "CCM_AVAILABLE_SENT": "Certificate availability sent: {{certificateType}} for {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Certificate received: {{certificateType}} pushed by {{senderBpn}}",
+    "CCM_PUSH_SENT": "Certificate pushed: {{certificateType}} for {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Status update sent for document {{documentId}}",
+    "details": "CCM Details",
+    "notificationType": "Notification Type",
+    "certificateType": "Certificate Type",
+    "certifiedBpn": "Certified BPN",
+    "documentId": "Document ID",
+    "viewInConsumption": "View in CCM Consumption",
+    "viewInProvision": "View in Provision Management"
+  },
+  "pcf": {
+    "viewInRequests": "View in PCF Requests"
+  },
   "feedback": {
     "title": "Send Feedback",
     "composeFeedback": "Compose Feedback",

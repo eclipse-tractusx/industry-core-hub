@@ -758,7 +758,15 @@ const NotificationInbox: React.FC = () => {
               mb: 1,
             }}
           >
-            {notification.content.information || t('inbox.digitalTwinNotificationReceived')}
+            {notification.type === 'ccm' && notification.ccmContent
+              ? t(`ccm.${notification.ccmContent.notificationType}`, {
+                  certificateType: notification.ccmContent.certificateType ?? '—',
+                  certifiedBpn: notification.ccmContent.certifiedBpn ?? '—',
+                  documentId: notification.ccmContent.documentId ?? '—',
+                  senderBpn: notification.header.senderBpn,
+                  receiverBpn: notification.header.receiverBpn,
+                })
+              : notification.content.information || t('inbox.digitalTwinNotificationReceived')}
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -780,6 +788,18 @@ const NotificationInbox: React.FC = () => {
                   {notification.pcfContent?.notificationType && (
                     <Chip
                       label={notification.pcfContent.notificationType.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.6rem',
+                        height: '22px',
+                      }}
+                    />
+                  )}
+                  {notification.ccmContent?.notificationType && (
+                    <Chip
+                      label={notification.ccmContent.notificationType.replace(/_/g, ' ')}
                       size="small"
                       sx={{
                         backgroundColor: 'rgba(255, 255, 255, 0.08)',

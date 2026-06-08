@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -42,11 +43,20 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import InboxIcon from '@mui/icons-material/Inbox';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SendIcon from '@mui/icons-material/Send';
+import CallReceivedIcon from '@mui/icons-material/CallReceived';
+import IosShareIcon from '@mui/icons-material/IosShare';
 
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 import { kitThemes } from '@/theme/colors';
-import { RefreshButton, PrimaryActionButton } from '@/features/ccm-kit/shared-components';
+import {
+  RefreshButton,
+  PrimaryActionButton,
+  CcmFilterBar,
+  RelativeDate,
+  BpnlContactCell,
+} from '@/features/ccm-kit/shared-components';
+import type { FilterDef } from '@/features/ccm-kit/shared-components';
 
 import { fetchInboundRequests, fetchShares } from '../api';
 import { ccmSharedConfig } from '../config';
@@ -58,11 +68,47 @@ import ShareDetailDialog from '../components/dialogs/ShareDetailDialog';
 
 const ROWS_PER_PAGE = 10;
 
-const formatDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
-
 const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
+
+const certTypeOptions = ccmSharedConfig.certificateTypes.map((t) => ({ value: t.value, label: t.label }));
+
+const inboundFilterDefs: FilterDef[] = [
+  {
+    key: 'status',
+    allLabel: 'All Statuses',
+    options: [
+      { value: 'Registered', label: 'Registered' },
+      { value: 'Available', label: 'Available' },
+      { value: 'Pushed', label: 'Pushed' },
+      { value: 'NotFound', label: 'Not Found' },
+    ],
+  },
+  {
+    key: 'consumerStatus',
+    allLabel: 'All Consumer Statuses',
+    minWidth: 180,
+    options: [
+      { value: 'RECEIVED', label: 'Received' },
+      { value: 'ACCEPTED', label: 'Accepted' },
+      { value: 'REJECTED', label: 'Rejected' },
+    ],
+  },
+  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+];
+
+const sharesFilterDefs: FilterDef[] = [
+  {
+    key: 'status',
+    allLabel: 'All Statuses',
+    options: [
+      { value: 'Active', label: 'Active' },
+      { value: 'Pending', label: 'Pending' },
+      { value: 'Revoked', label: 'Revoked' },
+    ],
+  },
+  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+];
 
 const countLocations = (raw?: string | null): number => {
   if (!raw) return 0;
@@ -117,13 +163,28 @@ const provideButtonSx = {
 } as const;
 
 const ProvisionManagement = () => {
-  const [tab, setTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'shares' ? 1 : 0;
+  const [tab, setTab] = useState(initialTab);
   const [inbound, setInbound] = useState<InboundRequestItem[]>([]);
   const [shares, setShares] = useState<ShareItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inboundPage, setInboundPage] = useState(0);
   const [sharesPage, setSharesPage] = useState(0);
+
+  // Search + filter state (separate per table).
+  const [inboundSearch, setInboundSearch] = useState('');
+  const [inboundFilterValues, setInboundFilterValues] = useState<Record<string, string>>({
+    status: '',
+    consumerStatus: '',
+    type: '',
+  });
+  const [sharesSearch, setSharesSearch] = useState('');
+  const [sharesFilterValues, setSharesFilterValues] = useState<Record<string, string>>({
+    status: '',
+    type: '',
+  });
 
   const [provideRequest, setProvideRequest] = useState<InboundRequestItem | null>(null);
   const [pushOpen, setPushOpen] = useState(false);
@@ -156,14 +217,69 @@ const ProvisionManagement = () => {
     void loadData();
   }, [loadData]);
 
+  const filteredInbound = useMemo(() => {
+    const s = inboundSearch.trim().toLowerCase();
+    return inbound.filter((r) => {
+      const matchesSearch =
+        !s ||
+        [r.consumerBpn, r.certifiedBpn, typeLabel(r.certificateType), r.status, r.consumerStatus ?? '']
+          .some((v) => v?.toLowerCase().includes(s));
+      const matchesStatus = !inboundFilterValues.status || r.status === inboundFilterValues.status;
+      const matchesConsumerStatus =
+        !inboundFilterValues.consumerStatus || r.consumerStatus === inboundFilterValues.consumerStatus;
+      const matchesType = !inboundFilterValues.type || r.certificateType === inboundFilterValues.type;
+      return matchesSearch && matchesStatus && matchesConsumerStatus && matchesType;
+    });
+  }, [inbound, inboundSearch, inboundFilterValues]);
+
+  const filteredShares = useMemo(() => {
+    const s = sharesSearch.trim().toLowerCase();
+    return shares.filter((sh) => {
+      const matchesSearch =
+        !s ||
+        [sh.consumerBpnl, typeLabel(sh.certificateType), sh.status].some((v) => v?.toLowerCase().includes(s));
+      const matchesStatus = !sharesFilterValues.status || sh.status === sharesFilterValues.status;
+      const matchesType = !sharesFilterValues.type || sh.certificateType === sharesFilterValues.type;
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [shares, sharesSearch, sharesFilterValues]);
+
   const visibleInbound = useMemo(
-    () => inbound.slice(inboundPage * ROWS_PER_PAGE, (inboundPage + 1) * ROWS_PER_PAGE),
-    [inbound, inboundPage],
+    () => filteredInbound.slice(inboundPage * ROWS_PER_PAGE, (inboundPage + 1) * ROWS_PER_PAGE),
+    [filteredInbound, inboundPage],
   );
   const visibleShares = useMemo(
-    () => shares.slice(sharesPage * ROWS_PER_PAGE, (sharesPage + 1) * ROWS_PER_PAGE),
-    [shares, sharesPage],
+    () => filteredShares.slice(sharesPage * ROWS_PER_PAGE, (sharesPage + 1) * ROWS_PER_PAGE),
+    [filteredShares, sharesPage],
   );
+
+  // Handlers that reset pagination when the result set changes.
+  const handleInboundSearch = (v: string) => {
+    setInboundSearch(v);
+    setInboundPage(0);
+  };
+  const handleInboundFilter = (key: string, value: string) => {
+    setInboundFilterValues((prev) => ({ ...prev, [key]: value }));
+    setInboundPage(0);
+  };
+  const handleInboundClear = () => {
+    setInboundSearch('');
+    setInboundFilterValues({ status: '', consumerStatus: '', type: '' });
+    setInboundPage(0);
+  };
+  const handleSharesSearch = (v: string) => {
+    setSharesSearch(v);
+    setSharesPage(0);
+  };
+  const handleSharesFilter = (key: string, value: string) => {
+    setSharesFilterValues((prev) => ({ ...prev, [key]: value }));
+    setSharesPage(0);
+  };
+  const handleSharesClear = () => {
+    setSharesSearch('');
+    setSharesFilterValues({ status: '', type: '' });
+    setSharesPage(0);
+  };
 
   const handleProvideSuccess = (mode: ProvideMode) => {
     setProvideRequest(null);
@@ -205,38 +321,57 @@ const ProvisionManagement = () => {
       )}
 
       {/* ── Section selector ─────────────────────────────────────────────── */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+      <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5 }}>
         {[
-          { label: 'Inbound Requests', count: inbound.length },
-          { label: 'Shares', count: shares.length },
-        ].map(({ label, count }, idx) => {
+          { label: 'Inbound Requests', count: filteredInbound.length, icon: <CallReceivedIcon sx={{ fontSize: '1.1rem' }} /> },
+          { label: 'Shares', count: filteredShares.length, icon: <IosShareIcon sx={{ fontSize: '1.1rem' }} /> },
+        ].map(({ label, count, icon }, idx) => {
           const active = tab === idx;
           return (
             <Box
               key={idx}
               onClick={() => setTab(idx)}
               sx={{
+                flex: 1,
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: 1,
                 px: 2.5,
-                py: 1,
-                borderRadius: 2,
+                py: 1.25,
+                borderRadius: 2.5,
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                backgroundColor: active ? 'primary.main' : 'rgba(255,255,255,0.05)',
-                border: active ? '1px solid transparent' : '1px solid rgba(255,255,255,0.1)',
+                transition: 'all 0.25s ease',
+                background: active
+                  ? `linear-gradient(135deg, ${kitThemes.ccm.gradientStart} 0%, ${kitThemes.ccm.gradientEnd} 100%)`
+                  : 'rgba(255,255,255,0.04)',
+                border: active ? '1px solid transparent' : '1px solid rgba(255,255,255,0.08)',
+                boxShadow: active ? `0 6px 18px ${kitThemes.ccm.shadowColor}` : 'none',
+                transform: active ? 'translateY(-1px)' : 'none',
                 '&:hover': {
-                  backgroundColor: active ? 'primary.main' : 'rgba(255,255,255,0.1)',
+                  background: active
+                    ? `linear-gradient(135deg, ${kitThemes.ccm.gradientStart} 0%, ${kitThemes.ccm.gradientEnd} 100%)`
+                    : 'rgba(255,255,255,0.09)',
+                  borderColor: active ? 'transparent' : 'rgba(157,111,212,0.4)',
                 },
               }}
             >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: active ? '#fff' : 'rgba(255,255,255,0.5)',
+                  transition: 'color 0.25s ease',
+                }}
+              >
+                {icon}
+              </Box>
               <Typography
                 variant="body2"
                 sx={{
                   fontWeight: active ? 700 : 500,
                   color: active ? '#fff' : 'rgba(255,255,255,0.6)',
-                  transition: 'color 0.2s ease',
+                  transition: 'color 0.25s ease',
                 }}
               >
                 {label}
@@ -249,9 +384,10 @@ const ProvisionManagement = () => {
                   fontSize: '0.7rem',
                   fontWeight: 700,
                   fontFamily: 'monospace',
-                  backgroundColor: active ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+                  backgroundColor: active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.08)',
                   color: active ? '#fff' : 'rgba(255,255,255,0.5)',
                   border: 'none',
+                  transition: 'all 0.25s ease',
                 }}
               />
             </Box>
@@ -259,13 +395,36 @@ const ProvisionManagement = () => {
         })}
       </Box>
 
+      {/* ── Search + filters (per active section) ────────────────────────── */}
+      {tab === 0 ? (
+        <CcmFilterBar
+          search={inboundSearch}
+          onSearchChange={handleInboundSearch}
+          searchPlaceholder="Search by BPN, type or status…"
+          filters={inboundFilterDefs}
+          values={inboundFilterValues}
+          onFilterChange={handleInboundFilter}
+          onClear={handleInboundClear}
+        />
+      ) : (
+        <CcmFilterBar
+          search={sharesSearch}
+          onSearchChange={handleSharesSearch}
+          searchPlaceholder="Search by consumer, type or status…"
+          filters={sharesFilterDefs}
+          values={sharesFilterValues}
+          onFilterChange={handleSharesFilter}
+          onClear={handleSharesClear}
+        />
+      )}
+
       {/* ── Inbound Requests ─────────────────────────────────────────────── */}
       {tab === 0 && (
         <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
-          {inbound.length === 0 ? (
+          {filteredInbound.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-                No inbound certificate requests yet.
+                {inbound.length === 0 ? 'No inbound certificate requests yet.' : 'No requests match your filters.'}
               </Typography>
             </Box>
           ) : (
@@ -293,15 +452,11 @@ const ProvisionManagement = () => {
                             onClick={() => setDetailInbound(req)}
                             sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
                           >
-                            <TableCell>
-                              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                                {req.consumerBpn}
-                              </Typography>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <BpnlContactCell bpnl={req.consumerBpn} mode="name" />
                             </TableCell>
-                            <TableCell>
-                              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                                {req.certifiedBpn}
-                              </Typography>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <BpnlContactCell bpnl={req.certifiedBpn} mode="bpn" />
                             </TableCell>
                             <TableCell>
                               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
@@ -322,9 +477,7 @@ const ProvisionManagement = () => {
                               </Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                                {formatDate(req.updatedAt)}
-                              </Typography>
+                              <RelativeDate value={req.updatedAt} />
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <Button
@@ -347,7 +500,7 @@ const ProvisionManagement = () => {
               <TablePagination
                 rowsPerPageOptions={[]}
                 component="div"
-                count={inbound.length}
+                count={filteredInbound.length}
                 rowsPerPage={ROWS_PER_PAGE}
                 page={inboundPage}
                 onPageChange={(_, p) => setInboundPage(p)}
@@ -361,10 +514,12 @@ const ProvisionManagement = () => {
       {/* ── Shares (outbox) ──────────────────────────────────────────────── */}
       {tab === 1 && (
         <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
-          {shares.length === 0 ? (
+          {filteredShares.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-                No certificates shared yet. Use "Push Certificate" or respond to an inbound request.
+                {shares.length === 0
+                  ? 'No certificates shared yet. Use "Push Certificate" or respond to an inbound request.'
+                  : 'No shares match your filters.'}
               </Typography>
             </Box>
           ) : (
@@ -395,10 +550,8 @@ const ProvisionManagement = () => {
                               {typeLabel(share.certificateType)}
                             </Typography>
                           </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                              {share.consumerBpnl}
-                            </Typography>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <BpnlContactCell bpnl={share.consumerBpnl} mode="name" />
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -415,9 +568,7 @@ const ProvisionManagement = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                              {formatDate(share.lastSharedDate)}
-                            </Typography>
+                            <RelativeDate value={share.lastSharedDate} />
                           </TableCell>
                         </TableRow>
                       </Tooltip>
@@ -428,7 +579,7 @@ const ProvisionManagement = () => {
               <TablePagination
                 rowsPerPageOptions={[]}
                 component="div"
-                count={shares.length}
+                count={filteredShares.length}
                 rowsPerPage={ROWS_PER_PAGE}
                 page={sharesPage}
                 onPageChange={(_, p) => setSharesPage(p)}

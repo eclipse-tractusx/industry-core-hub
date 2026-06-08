@@ -28,18 +28,19 @@ import { useTranslation } from 'react-i18next';
 import { Box, Button, Alert, Snackbar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import { RefreshButton } from '@/features/ccm-kit/shared-components';
+import { RefreshButton, CcmFilterBar } from '@/features/ccm-kit/shared-components';
+import type { FilterDef } from '@/features/ccm-kit/shared-components';
 import {
   Certificate,
   CertificateStats,
   CertificateFilter,
   CertificateStatus,
 } from '../types/types';
+import { certificateManagementConfig } from '../config';
 import { fetchAllCertificates, createCertificate, deleteCertificate, updateCertificate, publishCertificateAsset, fetchCertificatePublishedStatus } from '../api';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { CertificateCardGrid } from '../components/certificate-list/CertificateCardGrid';
 import { SummaryStatsBar } from '../components/summary/SummaryStatsBar';
-import { SearchFilterBar } from '../components/filters/SearchFilterBar';
 import { UploadCertificateDialog } from '../components/dialogs/UploadCertificateDialog';
 import { PublishCertificateDialog } from '../components/dialogs/PublishCertificateDialog';
 import { DeleteCertificateDialog } from '../components/dialogs/DeleteCertificateDialog';
@@ -224,11 +225,26 @@ const CertificateManagement = () => {
     setFilters((prev) => ({ ...prev, status: status }));
   };
 
-  const handleFilterBarChange = (newFilters: CertificateFilter) => {
-    setFilters(newFilters);
-    if (newFilters.status !== statusQuickFilter) {
-      setStatusQuickFilter(newFilters.status as CertificateStatus | '');
-    }
+  // ── CcmFilterBar wiring (search + certificate type) ───────────────────────
+  const certTypeFilterDefs: FilterDef[] = [
+    {
+      key: 'type',
+      allLabel: 'All Types',
+      minWidth: 160,
+      options: certificateManagementConfig.certificateTypes.map((t) => ({ value: t.value, label: t.label })),
+    },
+  ];
+
+  const handleSearchChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, search: value }));
+  };
+
+  const handleTypeFilterChange = (_key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, type: value as CertificateFilter['type'] }));
+  };
+
+  const handleFilterBarClear = () => {
+    setFilters((prev) => ({ ...prev, search: '', type: '' }));
   };
 
   // ── Action handlers ───────────────────────────────────────────────────────
@@ -359,9 +375,14 @@ const CertificateManagement = () => {
       />
 
       {/* Search & filters */}
-      <SearchFilterBar
-        filters={filters}
-        onChange={handleFilterBarChange}
+      <CcmFilterBar
+        search={filters.search}
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search by name, issuer or BPN…"
+        filters={certTypeFilterDefs}
+        values={{ type: filters.type }}
+        onFilterChange={handleTypeFilterChange}
+        onClear={handleFilterBarClear}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
       />
