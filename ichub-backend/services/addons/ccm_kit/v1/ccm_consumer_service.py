@@ -77,6 +77,7 @@ from tools.constants import (
     CCM_ENDPOINT_REQUEST,
     CCM_ENDPOINT_STATUS,
 )
+from tools.exceptions import InvalidError
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -364,24 +365,36 @@ class CcmConsumerService(CcmBaseService):
             "ACCEPTED": ReceivedCertificateStatus.Accepted,
             "REJECTED": ReceivedCertificateStatus.Rejected,
         }
+        _TERMINAL = {ReceivedCertificateStatus.Accepted, ReceivedCertificateStatus.Rejected}
         new_local_status = _STATUS_LOCAL_MAP.get(payload.certificate_status.value)
         if new_local_status is not None:
-            # Build structured rejection payload when consumer rejects.
-            rejection_reason: Optional[str] = None
-            if payload.certificate_status.value == "REJECTED":
-                rejection_payload = RejectionReasonPayload(
-                    certificate_errors=payload.certificate_errors or None,
-                    location_errors=payload.location_errors or None,
-                )
-                rejection_reason = rejection_payload.model_dump_json(by_alias=True, exclude_none=True)
             try:
                 with RepositoryManagerFactory.create() as repo:
+                    existing = repo.ccm_received_repository.find_by_document_id(
+                        payload.document_id, provider_bpn=provider_bpn,
+                    )
+                    if existing and existing.local_status in _TERMINAL:
+                        raise InvalidError(
+                            f"Certificate document_id={_s(payload.document_id)} is already "
+                            f"in terminal state '{existing.local_status.value}' and cannot "
+                            f"be transitioned to '{new_local_status.value}'."
+                        )
+                    # Build structured rejection payload when consumer rejects.
+                    rejection_reason: Optional[str] = None
+                    if payload.certificate_status.value == "REJECTED":
+                        rejection_payload = RejectionReasonPayload(
+                            certificate_errors=payload.certificate_errors or None,
+                            location_errors=payload.location_errors or None,
+                        )
+                        rejection_reason = rejection_payload.model_dump_json(by_alias=True, exclude_none=True)
                     repo.ccm_received_repository.update_local_status(
                         document_id=payload.document_id,
                         provider_bpn=provider_bpn,
                         new_status=new_local_status,
                         rejection_reason=rejection_reason,
                     )
+            except InvalidError:
+                raise
             except Exception as update_err:
                 # A failed local update must not suppress a successful notification.
                 logger.warning(

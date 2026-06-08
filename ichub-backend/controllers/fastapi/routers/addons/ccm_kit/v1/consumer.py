@@ -58,6 +58,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import ccm_consumer_service
 from tools.constants import INTERNAL_SERVER_ERROR
+from tools.exceptions import InvalidError
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -134,6 +135,8 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
             payload, payload.sender_bpn
         )
         return result
+    except InvalidError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
