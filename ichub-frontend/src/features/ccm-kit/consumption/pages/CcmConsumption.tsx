@@ -76,6 +76,16 @@ const formatDate = (d?: string | null) =>
 const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
+// Action icon buttons sit on the dark-blue table background — give them a light
+// foreground for contrast (the default primary color is too dark to read here).
+const actionIconSx = {
+  minWidth: 0,
+  px: 1,
+  color: 'rgba(255,255,255,0.75)',
+  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)', color: '#fff' },
+  '&.Mui-disabled': { color: 'rgba(255,255,255,0.25)' },
+} as const;
+
 const statusChipSx = (status: OutboundRequestStatus) => {
   switch (status) {
     case 'Found':
@@ -112,10 +122,10 @@ const CcmConsumption = () => {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [statusDialogRequest, setStatusDialogRequest] = useState<OutboundRequestItem | null>(null);
   const [historyRequest, setHistoryRequest] = useState<OutboundRequestItem | null>(null);
-  const [viewer, setViewer] = useState<{ open: boolean; title: string; base64: string | null }>({
+  const [viewer, setViewer] = useState<{ open: boolean; base64: string | null; req: OutboundRequestItem | null }>({
     open: false,
-    title: '',
     base64: null,
+    req: null,
   });
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -149,8 +159,8 @@ const CcmConsumption = () => {
     [requests, page],
   );
 
-  const openViewer = (title: string, base64: string | null) =>
-    setViewer({ open: true, title, base64 });
+  const openViewer = (req: OutboundRequestItem, base64: string | null) =>
+    setViewer({ open: true, base64, req });
 
   // PULL or VIEW depending on whether the document was already downloaded.
   const handlePullOrView = async (req: OutboundRequestItem) => {
@@ -160,7 +170,7 @@ const CcmConsumption = () => {
       const alreadyReceived = receivedDocIds.has(req.documentId);
       if (alreadyReceived) {
         const detail = await fetchReceivedDetail(req.documentId, req.providerBpn);
-        openViewer(`${typeLabel(req.certificateType)} — ${req.certifiedBpn}`, detail?.documentBase64 ?? null);
+        openViewer(req, detail?.documentBase64 ?? null);
         return;
       }
       const pulled = await pullCertificate({
@@ -169,7 +179,7 @@ const CcmConsumption = () => {
         governance: CCM_POLICY_GOVERNANCE,
       });
       setReceivedDocIds((prev) => new Set(prev).add(req.documentId!));
-      openViewer(`${typeLabel(req.certificateType)} — ${req.certifiedBpn}`, extractBase64(pulled.certificateData));
+      openViewer(req, extractBase64(pulled.certificateData));
       notify('Certificate pulled successfully.');
     } catch {
       notify('Failed to pull the certificate.', 'error');
@@ -279,7 +289,7 @@ const CcmConsumption = () => {
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="View history">
                               <span>
-                                <Button size="small" sx={{ minWidth: 0, px: 1 }} onClick={() => setHistoryRequest(req)}>
+                                <Button size="small" sx={actionIconSx} onClick={() => setHistoryRequest(req)}>
                                   <HistoryIcon fontSize="small" />
                                 </Button>
                               </span>
@@ -288,7 +298,7 @@ const CcmConsumption = () => {
                               <span>
                                 <Button
                                   size="small"
-                                  sx={{ minWidth: 0, px: 1 }}
+                                  sx={actionIconSx}
                                   disabled={!isFound || rowBusy}
                                   onClick={() => void handlePullOrView(req)}
                                 >
@@ -306,7 +316,7 @@ const CcmConsumption = () => {
                               <span>
                                 <Button
                                   size="small"
-                                  sx={{ minWidth: 0, px: 1 }}
+                                  sx={actionIconSx}
                                   disabled={!isFound}
                                   onClick={() => setStatusDialogRequest(req)}
                                 >
@@ -356,7 +366,7 @@ const CcmConsumption = () => {
 
       <ReceivedCertificateViewerDialog
         open={viewer.open}
-        title={viewer.title}
+        request={viewer.req}
         documentBase64={viewer.base64}
         onClose={() => setViewer((v) => ({ ...v, open: false }))}
       />

@@ -20,48 +20,134 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { Box, Dialog, DialogContent, DialogTitle, IconButton, Typography } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Box, Button, Chip, Divider, Typography } from '@mui/material';
+import ArticleIcon from '@mui/icons-material/Article';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
+
+import { ccmSharedConfig } from '../../config';
+import { OutboundRequestItem, OutboundRequestStatus } from '../../types/types';
 
 interface ReceivedCertificateViewerDialogProps {
   open: boolean;
-  title: string;
+  onClose: () => void;
   /** Base64-encoded PDF content (without the data: prefix). */
   documentBase64: string | null;
-  onClose: () => void;
+  /** The outbound request that was fulfilled — provides metadata for the header. */
+  request: OutboundRequestItem | null;
 }
+
+const typeLabel = (value: string) =>
+  ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
+
+const statusColor = (status: OutboundRequestStatus): 'success' | 'warning' | 'error' | 'default' => {
+  if (status === 'Found') return 'success';
+  if (status === 'Pending') return 'warning';
+  if (status === 'Failed') return 'error';
+  return 'default';
+};
+
+const MetaField = ({ label, value }: { label: string; value: string }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+    <Typography
+      variant="caption"
+      sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600 }}
+    >
+      {label}
+    </Typography>
+    <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', wordBreak: 'break-all' }}>
+      {value}
+    </Typography>
+  </Box>
+);
 
 const ReceivedCertificateViewerDialog = ({
   open,
-  title,
-  documentBase64,
   onClose,
+  documentBase64,
+  request,
 }: ReceivedCertificateViewerDialogProps) => {
+  const certType = request ? typeLabel(request.certificateType) : 'Certificate';
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {title}
-        <IconButton onClick={onClose} aria-label="close">
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent dividers sx={{ height: '75vh', p: 0 }}>
-        {documentBase64 ? (
-          <Box
-            component="iframe"
-            title={title}
-            src={`data:application/pdf;base64,${documentBase64}`}
-            sx={{ width: '100%', height: '100%', border: 'none' }}
-          />
-        ) : (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              No document content available for this certificate.
-            </Typography>
-          </Box>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title={certType}
+      subtitle={request ? `Certified: ${request.certifiedBpn}` : undefined}
+      icon={<ArticleIcon />}
+      maxWidth="lg"
+      fullWidth
+      actions={
+        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
+          Close
+        </Button>
+      }
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        {/* ── Metadata strip ──────────────────────────────────────────── */}
+        {request && (
+          <>
+            <Box
+              sx={{
+                px: 3,
+                py: 2,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: 2.5,
+                backgroundColor: 'grey.50',
+                alignItems: 'start',
+              }}
+            >
+              <MetaField label="Provider BPN" value={request.providerBpn} />
+              <MetaField label="Certified BPN" value={request.certifiedBpn} />
+              {request.documentId && (
+                <MetaField label="Document ID" value={request.documentId} />
+              )}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600 }}
+                >
+                  Status
+                </Typography>
+                <Chip
+                  label={request.status}
+                  size="small"
+                  color={statusColor(request.status)}
+                  sx={{ fontWeight: 600, width: 'fit-content' }}
+                />
+              </Box>
+            </Box>
+            <Divider />
+          </>
         )}
-      </DialogContent>
-    </Dialog>
+
+        {/* ── PDF viewer ──────────────────────────────────────────────── */}
+        <Box sx={{ height: '70vh' }}>
+          {documentBase64 ? (
+            <Box
+              component="iframe"
+              title={certType}
+              src={`data:application/pdf;base64,${documentBase64}`}
+              sx={{ width: '100%', height: '100%', border: 'none' }}
+            />
+          ) : (
+            <Box
+              sx={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                No document content available for this certificate.
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </CcmDialog>
   );
 };
 

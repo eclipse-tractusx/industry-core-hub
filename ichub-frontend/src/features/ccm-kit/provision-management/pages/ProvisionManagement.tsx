@@ -35,9 +35,12 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import InboxIcon from '@mui/icons-material/Inbox';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import SendIcon from '@mui/icons-material/Send';
 
 import PageSectionHeader from '@/components/common/PageSectionHeader';
@@ -47,9 +50,11 @@ import { RefreshButton, PrimaryActionButton } from '@/features/ccm-kit/shared-co
 
 import { fetchInboundRequests, fetchShares } from '../api';
 import { ccmSharedConfig } from '../config';
-import { InboundRequestItem, InboundRequestStatus, ShareItem } from '../types/types';
+import { InboundRequestItem, InboundRequestStatus, ShareItem, ShareStatus } from '../types/types';
 import ProvideCertificateDialog, { ProvideMode } from '../components/dialogs/ProvideCertificateDialog';
 import PushCertificateDialog from '../components/dialogs/PushCertificateDialog';
+import InboundRequestDetailDialog from '../components/dialogs/InboundRequestDetailDialog';
+import ShareDetailDialog from '../components/dialogs/ShareDetailDialog';
 
 const ROWS_PER_PAGE = 10;
 
@@ -81,6 +86,36 @@ const inboundStatusSx = (status: InboundRequestStatus) => {
   }
 };
 
+const shareStatusSx = (status: ShareStatus) => {
+  switch (status) {
+    case 'Active':
+      return { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' };
+    case 'Pending':
+      return { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' };
+    case 'Revoked':
+      return { backgroundColor: 'rgba(244,67,54,0.15)', color: '#e57373', border: '1px solid rgba(244,67,54,0.3)' };
+    default:
+      return { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' };
+  }
+};
+
+// Outlined button style that reads well on the dark-blue table background.
+const provideButtonSx = {
+  color: 'rgba(255,255,255,0.8)',
+  borderColor: 'rgba(255,255,255,0.25)',
+  textTransform: 'none',
+  fontWeight: 600,
+  fontSize: '0.72rem',
+  borderRadius: 1.5,
+  py: 0.5,
+  px: 1.5,
+  '&:hover': {
+    borderColor: 'rgba(255,255,255,0.65)',
+    color: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+} as const;
+
 const ProvisionManagement = () => {
   const [tab, setTab] = useState(0);
   const [inbound, setInbound] = useState<InboundRequestItem[]>([]);
@@ -92,6 +127,8 @@ const ProvisionManagement = () => {
 
   const [provideRequest, setProvideRequest] = useState<InboundRequestItem | null>(null);
   const [pushOpen, setPushOpen] = useState(false);
+  const [detailInbound, setDetailInbound] = useState<InboundRequestItem | null>(null);
+  const [detailShare, setDetailShare] = useState<ShareItem | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -251,46 +288,57 @@ const ProvisionManagement = () => {
                     {visibleInbound.map((req) => {
                       const locCount = countLocations(req.locationBpns);
                       return (
-                        <TableRow key={req.requestId} sx={{ '&:hover': { backgroundColor: 'rgba(255,255,255,0.04)' } }}>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                              {req.consumerBpn}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                              {req.certifiedBpn}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
-                              {typeLabel(req.certificateType)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                              {locCount ? `${locCount} site(s)` : '—'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...inboundStatusSx(req.status) }} />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                              {req.consumerStatus ?? '—'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                              {formatDate(req.updatedAt)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Button size="small" variant="outlined" onClick={() => setProvideRequest(req)}>
-                              Provide
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                        <Tooltip key={req.requestId} title="Click to view full details" placement="left" arrow>
+                          <TableRow
+                            onClick={() => setDetailInbound(req)}
+                            sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
+                          >
+                            <TableCell>
+                              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
+                                {req.consumerBpn}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
+                                {req.certifiedBpn}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
+                                {typeLabel(req.certificateType)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                                {locCount ? `${locCount} site(s)` : '—'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...inboundStatusSx(req.status) }} />
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                                {req.consumerStatus ?? '—'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                                {formatDate(req.updatedAt)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => setProvideRequest(req)}
+                                startIcon={<OpenInNewIcon sx={{ fontSize: '0.85rem !important' }} />}
+                                sx={provideButtonSx}
+                              >
+                                Provide
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        </Tooltip>
                       );
                     })}
                   </TableBody>
@@ -337,36 +385,42 @@ const ProvisionManagement = () => {
                   </TableHead>
                   <TableBody>
                     {visibleShares.map((share) => (
-                      <TableRow key={share.shareId} sx={{ '&:hover': { backgroundColor: 'rgba(255,255,255,0.04)' } }}>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
-                            {typeLabel(share.certificateType)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
-                            {share.consumerBpnl}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={share.status}
-                            size="small"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: '0.7rem',
-                              ...(share.status === 'Active' && { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' }),
-                              ...(share.status === 'Pending' && { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' }),
-                              ...(share.status === 'Revoked' && { backgroundColor: 'rgba(244,67,54,0.15)', color: '#e57373', border: '1px solid rgba(244,67,54,0.3)' }),
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {formatDate(share.lastSharedDate)}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                      <Tooltip key={share.shareId} title="Click to view full details" placement="left" arrow>
+                        <TableRow
+                          onClick={() => setDetailShare(share)}
+                          sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
+                        >
+                          <TableCell>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
+                              {typeLabel(share.certificateType)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)' }}>
+                              {share.consumerBpnl}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={share.status}
+                                size="small"
+                                sx={{ fontWeight: 600, fontSize: '0.7rem', ...shareStatusSx(share.status) }}
+                              />
+                              {share.rejectionReason && (
+                                <Tooltip title="Has rejection reason — click row to view">
+                                  <ErrorOutlineIcon sx={{ fontSize: '0.9rem', color: '#e57373' }} />
+                                </Tooltip>
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                              {formatDate(share.lastSharedDate)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      </Tooltip>
                     ))}
                   </TableBody>
                 </Table>
@@ -393,6 +447,19 @@ const ProvisionManagement = () => {
       />
 
       <PushCertificateDialog open={pushOpen} onClose={() => setPushOpen(false)} onSuccess={handlePushSuccess} />
+
+      <InboundRequestDetailDialog
+        open={!!detailInbound}
+        request={detailInbound}
+        onClose={() => setDetailInbound(null)}
+        onProvide={(req) => setProvideRequest(req)}
+      />
+
+      <ShareDetailDialog
+        open={!!detailShare}
+        share={detailShare}
+        onClose={() => setDetailShare(null)}
+      />
 
       <Snackbar
         open={snackbar.open}

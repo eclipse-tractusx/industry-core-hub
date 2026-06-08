@@ -21,18 +21,26 @@
  ********************************************************************************/
 
 import { configUtils } from '@/config';
+import { getCcmPolicyGovernance } from '@/services/EnvironmentService';
 
 /**
  * Governance / ODRL policy attached to CCM contract negotiations
  * (consumer request/status/pull and provider available/push payloads).
  *
- * Left `undefined` on purpose: when omitted, the backend applies its own
- * server-side default (`provider.ccm.policy.usage`). Set this to an array of
- * ODRL policy objects to force a specific policy from the frontend.
+ * Read at runtime from the `CCM_POLICY_GOVERNANCE` variable injected in
+ * `index.html` (via `getCcmPolicyGovernance()`).
  *
- * NOTE: exact policy structure is still open with the backend team.
+ * Semantics: when no policy is configured (empty array) we export `undefined`
+ * so the field is omitted from the request body and the backend applies its
+ * own server-side default (`provider.ccm.policy.usage`). When a policy is
+ * configured, it is forwarded to all CCM consumer/provider endpoints that
+ * accept a `governance` field.
  */
-export const CCM_POLICY_GOVERNANCE: Array<Record<string, unknown>> | undefined = undefined;
+const ccmPolicy = getCcmPolicyGovernance();
+export const CCM_POLICY_GOVERNANCE: Array<Record<string, unknown>> | undefined =
+  Array.isArray(ccmPolicy) && ccmPolicy.length > 0
+    ? (ccmPolicy as unknown as Array<Record<string, unknown>>)
+    : undefined;
 
 /**
  * Certificate Management specific API endpoints
@@ -74,13 +82,19 @@ export const certificateManagementConfig = {
     },
   },
 
-  // Certificate types
+  // Certificate types — full set mirroring the backend CertificateType enum
+  // (CX-0135). The list is not exhaustive: the backend accepts free-text types,
+  // so the type selectors are searchable Autocompletes with free-text input.
   certificateTypes: [
     { value: 'ISO9001', label: 'ISO 9001 - Quality Management' },
     { value: 'ISO14001', label: 'ISO 14001 - Environmental Management' },
     { value: 'ISO45001', label: 'ISO 45001 - Occupational Health & Safety' },
     { value: 'IATF16949', label: 'IATF 16949 - Automotive Quality' },
     { value: 'ISO27001', label: 'ISO 27001 - Information Security' },
+    { value: 'ISO50001', label: 'ISO 50001 - Energy Management' },
+    { value: 'ISO22301', label: 'ISO 22301 - Business Continuity' },
+    { value: 'ISO20000', label: 'ISO 20000 - IT Service Management' },
+    { value: 'VDA6.4', label: 'VDA 6.4 - Production Equipment' },
     { value: 'OTHER', label: 'Other' },
   ],
 

@@ -140,7 +140,6 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
       title="Push Certificate"
       subtitle="Send a certificate directly to a partner without a prior request"
       icon={<SendIcon />}
-      maxWidth="sm"
       fullWidth
       actions={
         <>

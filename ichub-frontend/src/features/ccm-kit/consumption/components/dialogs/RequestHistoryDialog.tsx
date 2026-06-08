@@ -24,11 +24,8 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -36,7 +33,8 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import HistoryIcon from '@mui/icons-material/History';
+import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import { fetchRequestsHistory } from '../../api';
 import { OutboundRequestItem } from '../../types/types';
@@ -74,14 +72,21 @@ const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogPr
   }, [open, request]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        Request History
-        <IconButton onClick={onClose} aria-label="close">
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent dividers>
+    <CcmDialog
+      open={open}
+      onClose={onClose}
+      title="Request History"
+      subtitle="Full timeline of this certificate request"
+      icon={<HistoryIcon />}
+      maxWidth="md"
+      fullWidth
+      actions={
+        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
+          Close
+        </Button>
+      }
+    >
+      <Box sx={{ p: 3 }}>
         {request && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {request.certificateType} · provider{' '}
@@ -133,8 +138,8 @@ const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogPr
             </TableBody>
           </Table>
         )}
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </CcmDialog>
   );
 };
 

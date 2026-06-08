@@ -32,6 +32,7 @@ import {
   Button,
   TextField,
   MenuItem,
+  Autocomplete,
   Grid2,
   Typography,
   Box,
@@ -48,25 +49,18 @@ import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
 import { UploadCertificateDialogProps } from '../../types/dialog-types';
+import { certificateManagementConfig } from '../../config';
 
-const CERTIFICATE_TYPES = [
-  { value: 'ISO9001', label: 'ISO 9001' },
-  { value: 'ISO14001', label: 'ISO 14001' },
-  { value: 'ISO45001', label: 'ISO 45001' },
-  { value: 'IATF16949', label: 'IATF 16949' },
-  { value: 'ISO27001', label: 'ISO 27001' },
-  { value: 'ISO50001', label: 'ISO 50001' },
-  { value: 'ISO22301', label: 'ISO 22301' },
-  { value: 'ISO20000', label: 'ISO 20000' },
-  { value: 'VDA6.4', label: 'VDA 6.4' },
-  { value: 'OTHER', label: 'Other' },
-];
+// Shared certificate type list (full CX-0135 set) — reused across all CCM
+// type selectors so the options stay consistent.
+const CERTIFICATE_TYPES = certificateManagementConfig.certificateTypes;
 
+// Trust levels mirror the backend TrustLevelEnum (none/low/high/trusted).
 const TRUST_LEVELS = [
   { value: 'none', label: 'None' },
   { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
   { value: 'high', label: 'High' },
+  { value: 'trusted', label: 'Trusted' },
 ];
 
 const initialFormData = {
@@ -322,20 +316,45 @@ export const UploadCertificateDialog = ({
               </Box>
             </Grid2>
             <Grid2 size={12}>
-              <TextField
-                select
+              <Autocomplete
+                freeSolo
+                autoSelect
                 fullWidth
-                label="Certificate Type"
-                value={formData.certificateType}
-                onChange={(e) => handleSelectChange('certificateType')(e as SelectChangeEvent)}
-                error={!!errors.certificateType}
-                helperText={errors.certificateType}
-                required
-              >
-                {CERTIFICATE_TYPES.map(type => (
-                  <MenuItem key={type.value} value={type.value}>{type.label}</MenuItem>
-                ))}
-              </TextField>
+                options={CERTIFICATE_TYPES}
+                value={
+                  CERTIFICATE_TYPES.find((t) => t.value === formData.certificateType) ??
+                  (formData.certificateType || null)
+                }
+                getOptionLabel={(option) =>
+                  typeof option === 'string'
+                    ? CERTIFICATE_TYPES.find((t) => t.value === option)?.label ?? option
+                    : option.label
+                }
+                isOptionEqualToValue={(option, value) =>
+                  option.value === (typeof value === 'string' ? value : value.value)
+                }
+                onChange={(_, newValue) => {
+                  const v =
+                    newValue == null
+                      ? ''
+                      : typeof newValue === 'string'
+                        ? newValue.trim()
+                        : newValue.value;
+                  setFormData((prev) => ({ ...prev, certificateType: v }));
+                  if (errors.certificateType) {
+                    setErrors((prev) => ({ ...prev, certificateType: undefined }));
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Certificate Type"
+                    error={!!errors.certificateType}
+                    helperText={errors.certificateType ?? 'Search or type a certificate type'}
+                    required
+                  />
+                )}
+              />
             </Grid2>
             <Grid2 size={12}>
               <TextField

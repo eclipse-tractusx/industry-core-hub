@@ -34,16 +34,10 @@ import {
   PaginationParams,
   SortParams,
   PaginatedResponse,
-  PartnerCertificateSearchResult,
-  NegotiationStatus,
 } from './types/types';
 import {
   mockFetchCertificates,
   mockFetchCertificateDetail,
-  mockSearchPartnerCertificates,
-  mockInitiateNegotiation,
-  mockCheckNegotiationStatus,
-  mockFetchTransferredCertificate,
   mockRegisterInDtr,
 } from './mocks/mockData';
 
@@ -345,72 +339,4 @@ export const registerCertificateInDtr = async (
   return response.data;
 };
 
-// ─── Consumer / Discovery ─────────────────────────────────────────────────────
-
-/**
- * Search for a partner's certificates by BPN.
- */
-export const searchPartnerCertificates = async (
-  partnerBpn: string,
-): Promise<PartnerCertificateSearchResult> => {
-  if (!backendUrl) {
-    console.warn('[CCM] Backend URL not configured — using mock partner search');
-    return mockSearchPartnerCertificates(partnerBpn);
-  }
-  const response = await httpClient.post<PartnerCertificateSearchResult>(
-    `${backendUrl}${CCM_BASE_PATH}/consumer/search`,
-    { partnerBpn }
-  );
-  return response.data;
-};
-
-/**
- * Initiate EDC contract negotiation to access a partner certificate.
- */
-export const initiateNegotiation = async (
-  partnerBpn: string,
-  edcAssetId: string,
-): Promise<{ negotiationId: string }> => {
-  if (!backendUrl) {
-    console.warn('[CCM] Backend URL not configured — using mock negotiation');
-    return mockInitiateNegotiation(partnerBpn, edcAssetId);
-  }
-  const response = await httpClient.post<{ negotiationId: string }>(
-    `${backendUrl}${CCM_BASE_PATH}/consumer/negotiate`,
-    { partnerBpn, edcAssetId }
-  );
-  return response.data;
-};
-
-/**
- * Poll the status of an ongoing EDC contract negotiation.
- */
-export const checkNegotiationStatus = async (
-  negotiationId: string,
-  callCount: number = 0,
-): Promise<{ status: NegotiationStatus; transferId?: string }> => {
-  if (!backendUrl) {
-    return mockCheckNegotiationStatus(negotiationId, callCount);
-  }
-  const response = await httpClient.get<{ status: NegotiationStatus; transferId?: string }>(
-    `${backendUrl}${CCM_BASE_PATH}/consumer/negotiate/${negotiationId}/status`
-  );
-  return response.data;
-};
-
-/**
- * Fetch the certificate payload retrieved after a successful EDC transfer.
- */
-export const fetchTransferredCertificate = async (
-  transferId: string,
-): Promise<Record<string, unknown>> => {
-  if (!backendUrl) {
-    console.warn('[CCM] Backend URL not configured — using mock transferred certificate');
-    return mockFetchTransferredCertificate(transferId);
-  }
-  const response = await httpClient.get<Record<string, unknown>>(
-    `${backendUrl}${CCM_BASE_PATH}/consumer/transfer/${transferId}`
-  );
-  return response.data;
-};
 

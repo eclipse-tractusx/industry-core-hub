@@ -23,12 +23,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Chip,
   CircularProgress,
   IconButton,
-  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -181,7 +181,6 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
       title="New Certificate Request"
       subtitle="Ask a provider to share a compliance certificate with you"
       icon={<AssignmentIcon />}
-      maxWidth="sm"
       fullWidth
       actions={
         <>
@@ -252,20 +251,41 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
             required
           />
 
-          <TextField
-            label="Certificate Type"
-            value={certificateType}
-            onChange={(e) => setCertificateType(e.target.value)}
-            select
+          <Autocomplete
+            freeSolo
+            autoSelect
             fullWidth
-            required
-          >
-            {ccmSharedConfig.certificateTypes.map((type) => (
-              <MenuItem key={type.value} value={type.value}>
-                {type.label}
-              </MenuItem>
-            ))}
-          </TextField>
+            options={ccmSharedConfig.certificateTypes}
+            value={
+              ccmSharedConfig.certificateTypes.find((t) => t.value === certificateType) ??
+              (certificateType || null)
+            }
+            getOptionLabel={(option) =>
+              typeof option === 'string'
+                ? ccmSharedConfig.certificateTypes.find((t) => t.value === option)?.label ?? option
+                : option.label
+            }
+            isOptionEqualToValue={(option, value) =>
+              option.value === (typeof value === 'string' ? value : value.value)
+            }
+            onChange={(_, newValue) => {
+              setCertificateType(
+                newValue == null
+                  ? ''
+                  : typeof newValue === 'string'
+                    ? newValue.trim()
+                    : newValue.value,
+              );
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Certificate Type"
+                helperText="Search or type a certificate type"
+                required
+              />
+            )}
+          />
 
           {/* Dynamic location BPNS list */}
           <Box>

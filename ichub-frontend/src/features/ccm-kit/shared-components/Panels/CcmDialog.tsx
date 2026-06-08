@@ -67,7 +67,7 @@ const CcmDialog = ({
   title,
   subtitle,
   icon,
-  maxWidth = 'sm',
+  maxWidth = 'md',
   fullWidth = true,
   actions,
   children,

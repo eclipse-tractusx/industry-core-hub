@@ -27,7 +27,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Button, Alert, Snackbar } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import SearchIcon from '@mui/icons-material/Search';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 import {
   Certificate,
@@ -46,20 +45,35 @@ import { DeleteCertificateDialog } from '../components/dialogs/DeleteCertificate
 import { UpdateCertificateDialog } from '../components/dialogs/UpdateCertificateDialog';
 import { CertificatePDFViewer } from '../components/dialogs/CertificatePDFViewer';
 import { CertificateInfoPanel } from '../components/dialogs/CertificateInfoPanel';
-import { DiscoverPartnerDialog } from '../components/dialogs/DiscoverPartnerDialog';
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import { kitThemes } from '@/theme/colors';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 
+// Safe parse of a "valid until" date: returns null when the value is absent,
+// empty or unparseable. This avoids `new Date(null)` collapsing to the epoch
+// (1970-01-01), which would wrongly flag certificates without an expiry as
+// expired.
+const parseValidUntil = (raw?: string | null): Date | null => {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return isNaN(d.getTime()) ? null : d;
+};
+
+// Compute the display status from validUntil. When there is no valid expiry
+// date the certificate is never "expired" — it stays "valid".
+const computeStatus = (validUntilRaw?: string | null): CertificateStatus => {
+  const validUntil = parseValidUntil(validUntilRaw);
+  if (!validUntil) return 'valid';
+  const today = new Date();
+  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+  if (validUntil <= today) return 'expired';
+  if (validUntil <= thirtyDaysFromNow) return 'expiring';
+  return 'valid';
+};
+
 // Backend model to frontend model mapper
 const mapBackendToFrontendCertificate = (backendCert: any): Certificate => {
-  const today = new Date();
-  const validUntil = new Date(backendCert.validUntil);
-  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-  let status: CertificateStatus = 'valid';
-  if (validUntil <= today) status = 'expired';
-  else if (validUntil <= thirtyDaysFromNow) status = 'expiring';
+  const status: CertificateStatus = computeStatus(backendCert.validUntil);
 
   return {
     id: backendCert.certificateId,
@@ -85,14 +99,12 @@ const mapBackendToFrontendCertificate = (backendCert: any): Certificate => {
 };
 
 const calculateStats = (certs: Certificate[]): CertificateStats => {
-  const today = new Date();
-  const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
   return certs.reduce(
     (acc, cert) => {
-      const validUntil = new Date(cert.validUntil);
       acc.total++;
-      if (validUntil <= today) acc.expired++;
-      else if (validUntil <= thirtyDaysFromNow) acc.expiring++;
+      const status = computeStatus(cert.validUntil);
+      if (status === 'expired') acc.expired++;
+      else if (status === 'expiring') acc.expiring++;
       else acc.valid++;
       return acc;
     },
@@ -121,7 +133,6 @@ const CertificateManagement = () => {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [discoverDialogOpen, setDiscoverDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [infoPanelOpen, setInfoPanelOpen] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
@@ -296,25 +307,6 @@ const CertificateManagement = () => {
           actions={
             <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Button
-                variant="outlined"
-                startIcon={<SearchIcon />}
-                onClick={() => setDiscoverDialogOpen(true)}
-                sx={{
-                  borderColor: kitThemes.ccm.gradientEnd,
-                  color: kitThemes.ccm.gradientEnd,
-                  borderRadius: { xs: '10px', md: '12px' },
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  '&:hover': {
-                    borderColor: kitThemes.ccm.gradientEnd,
-                    color: kitThemes.ccm.gradientEnd,
-                    backgroundColor: 'rgba(245, 158, 11, 0.06)',
-                  },
-                }}
-              >
-                Discover Partners
-              </Button>
-              <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setUploadDialogOpen(true)}
@@ -418,12 +410,6 @@ const CertificateManagement = () => {
         onClose={() => setDeleteDialogOpen(false)}
         certificate={selectedCertificate}
         onConfirm={handleDeleteCertificate}
-      />
-
-      <DiscoverPartnerDialog
-        open={discoverDialogOpen}
-        onClose={() => setDiscoverDialogOpen(false)}
-        certificates={certificates}
       />
 
       <UpdateCertificateDialog

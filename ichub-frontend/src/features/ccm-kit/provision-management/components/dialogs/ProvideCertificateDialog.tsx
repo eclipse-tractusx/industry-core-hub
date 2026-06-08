@@ -188,7 +188,6 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
       title="Provide Certificate"
       subtitle="Respond to a consumer request via availability notification or direct push"
       icon={<TaskAltIcon />}
-      maxWidth="sm"
       fullWidth
       actions={
         <>

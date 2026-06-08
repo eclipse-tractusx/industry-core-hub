@@ -29,6 +29,7 @@ import {
   Divider,
   IconButton,
   MenuItem,
+  Paper,
   Stack,
   TextField,
   ToggleButton,
@@ -164,7 +165,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
       title="Certificate Feedback"
       subtitle="Notify the provider of your evaluation outcome"
       icon={<RateReviewIcon />}
-      maxWidth="sm"
+      maxWidth="md"
       fullWidth
       actions={
         <>
@@ -215,78 +216,95 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
             <>
               <Divider />
 
-              {/* Certificate-level errors */}
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle2">Certificate errors *</Typography>
-                  <Button size="small" startIcon={<AddIcon />} onClick={addCertError}>
-                    Add error
-                  </Button>
-                </Box>
-                <Stack spacing={1}>
-                  {certificateErrors.map((message, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        value={message}
-                        onChange={(e) => updateCertError(idx, e.target.value)}
-                        placeholder="e.g. Certificate expired"
-                        size="small"
-                        fullWidth
-                      />
-                      <IconButton
-                        onClick={() => removeCertError(idx)}
-                        disabled={certificateErrors.length === 1}
-                        aria-label="remove certificate error"
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, alignItems: 'start' }}>
+                {/* Certificate-level errors */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Certificate Errors</Typography>
+                      <Typography variant="caption" color="text.secondary">General certificate-level issues *</Typography>
                     </Box>
-                  ))}
-                </Stack>
-              </Box>
+                    <Button size="small" startIcon={<AddIcon />} onClick={addCertError} sx={{ textTransform: 'none', flexShrink: 0 }}>
+                      Add
+                    </Button>
+                  </Box>
+                  <Stack spacing={1}>
+                    {certificateErrors.map((message, idx) => (
+                      <Paper key={idx} variant="outlined" sx={{ p: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                        <TextField
+                          value={message}
+                          onChange={(e) => updateCertError(idx, e.target.value)}
+                          placeholder="e.g. Certificate expired"
+                          size="small"
+                          fullWidth
+                          multiline
+                          maxRows={3}
+                        />
+                        <IconButton
+                          size="small"
+                          onClick={() => removeCertError(idx)}
+                          disabled={certificateErrors.length === 1}
+                          aria-label="remove certificate error"
+                          sx={{ mt: 0.25 }}
+                        >
+                          <DeleteOutlineIcon fontSize="small" />
+                        </IconButton>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Box>
 
-              {/* Per-location errors */}
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle2">Location errors *</Typography>
-                  <Button size="small" startIcon={<AddIcon />} onClick={addLocError}>
-                    Add error
-                  </Button>
-                </Box>
-                <Stack spacing={1}>
-                  {locationErrors.map((row, idx) => (
-                    <Box key={idx} sx={{ display: 'flex', gap: 1 }}>
-                      <TextField
-                        label="BPN"
-                        value={row.bpn}
-                        onChange={(e) => updateLocError(idx, { bpn: e.target.value.toUpperCase() })}
-                        select={locationOptions.length > 0}
-                        size="small"
-                        sx={{ minWidth: 180 }}
-                      >
-                        {locationOptions.map((bpn) => (
-                          <MenuItem key={bpn} value={bpn}>
-                            {bpn}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                      <TextField
-                        label="Error message"
-                        value={row.message}
-                        onChange={(e) => updateLocError(idx, { message: e.target.value })}
-                        size="small"
-                        fullWidth
-                      />
-                      <IconButton
-                        onClick={() => removeLocError(idx)}
-                        disabled={locationErrors.length === 1}
-                        aria-label="remove location error"
-                      >
-                        <DeleteOutlineIcon />
-                      </IconButton>
+                {/* Per-location errors */}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Location Errors</Typography>
+                      <Typography variant="caption" color="text.secondary">Per-site issues (BPNS level) *</Typography>
                     </Box>
-                  ))}
-                </Stack>
+                    <Button size="small" startIcon={<AddIcon />} onClick={addLocError} sx={{ textTransform: 'none', flexShrink: 0 }}>
+                      Add
+                    </Button>
+                  </Box>
+                  <Stack spacing={1}>
+                    {locationErrors.map((row, idx) => (
+                      <Paper key={idx} variant="outlined" sx={{ p: 1.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                          <TextField
+                            label="Site BPN"
+                            value={row.bpn}
+                            onChange={(e) => updateLocError(idx, { bpn: e.target.value.toUpperCase() })}
+                            select={locationOptions.length > 0}
+                            size="small"
+                            fullWidth
+                          >
+                            {locationOptions.map((bpn) => (
+                              <MenuItem key={bpn} value={bpn}>
+                                {bpn}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <IconButton
+                            size="small"
+                            onClick={() => removeLocError(idx)}
+                            disabled={locationErrors.length === 1}
+                            aria-label="remove location error"
+                          >
+                            <DeleteOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        <TextField
+                          label="Error message"
+                          value={row.message}
+                          onChange={(e) => updateLocError(idx, { message: e.target.value })}
+                          size="small"
+                          fullWidth
+                          multiline
+                          maxRows={3}
+                        />
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Box>
               </Box>
 
               <Alert severity="info">
