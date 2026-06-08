@@ -47,6 +47,7 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
+from tools.exceptions import AlreadyExistsError, InvalidError, NotFoundError
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
     CcmInboundRequestItem,
@@ -437,7 +438,7 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
 
             # Reuse existing asset ID or generate a new one.
             # CX-0135 requires documentId to be a plain UUID.
@@ -453,19 +454,27 @@ class CcmProviderService(CcmBaseService):
                 "provider.ccm.certificate_asset.policy"
             )
             if policy_config is None:
-                raise ValueError(
+                raise InvalidError(
                     "Missing configuration 'provider.ccm.certificate_asset.policy'. "
                     "Cannot publish certificate without a policy definition."
                 )
 
             # Register asset + policies + contract via the connector manager
-            asset_id, _, _, _ = (
-                connector_provider_manager.register_ccm_certificate_offer(
-                    asset_id=asset_id,
-                    base_url=base_url,
-                    ccm_policy_config=policy_config,
+            try:
+                asset_id, _, _, _ = (
+                    connector_provider_manager.register_ccm_certificate_offer(
+                        asset_id=asset_id,
+                        base_url=base_url,
+                        ccm_policy_config=policy_config,
+                    )
                 )
-            )
+            except ValueError as e:
+                if "409" in str(e):
+                    raise AlreadyExistsError(
+                        f"Certificate {certificate_id} is already published as an "
+                        f"EDC asset (asset_id={asset_id}). Unpublish it first."
+                    ) from e
+                raise
 
             # Persist the EDC asset ID on the certificate record
             repo.ccm_repository.update_fields(ccm.id, {"edc_asset_id": asset_id})
@@ -495,9 +504,9 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             if not ccm.edc_asset_id:
-                raise ValueError(
+                raise InvalidError(
                     f"Certificate {certificate_id} is not published as an EDC asset."
                 )
 
@@ -536,9 +545,9 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             if not ccm.edc_asset_id:
-                raise ValueError(
+                raise NotFoundError(
                     f"Certificate {certificate_id} is not published — "
                     f"use publish_certificate() first."
                 )
@@ -594,7 +603,7 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             return self._build_push_content(ccm)
 
     # ------------------------------------------------------------------

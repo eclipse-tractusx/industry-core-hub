@@ -36,6 +36,7 @@ from unittest.mock import Mock, patch
 import pytest
 from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
 
+from tools.exceptions import AlreadyExistsError, InvalidError, NotFoundError
 from models.metadata_database.addons.ccm_kit.v1.models import (
     Ccm,
     CcmInboundRequest,
@@ -710,7 +711,7 @@ class TestPublishCertificate:
         repos.ccm_repository.find_by_id_with_relations.return_value = None
         mock_factory.return_value.__enter__.return_value = repos
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(NotFoundError, match="not found"):
             service.publish_certificate(999)
 
     @patch(
@@ -782,7 +783,43 @@ class TestPublishCertificate:
         )
         mock_config.get_config.return_value = None
 
-        with pytest.raises(ValueError, match="Missing configuration"):
+        with pytest.raises(InvalidError, match="Missing configuration"):
+            service.publish_certificate(CERT_ID)
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service.ConfigManager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".connector_provider_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_publish_edc_conflict_raises_already_exists(
+        self, mock_factory, mock_cpm, mock_config, service
+    ):
+        """
+        GIVEN the EDC returns 409 when registering the asset
+        WHEN publish_certificate is called
+        THEN an AlreadyExistsError is raised.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = None
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cpm.build_ccm_certificate_payload_url.return_value = (
+            "https://backend.example.com/provider/certificates/42/payload"
+        )
+        mock_config.get_config.return_value = {"permissions": [{"action": "use"}]}
+        mock_cpm.register_ccm_certificate_offer.side_effect = ValueError(
+            "Failed to create asset abc-123. Status code: 409"
+        )
+
+        with pytest.raises(AlreadyExistsError, match="already published"):
             service.publish_certificate(CERT_ID)
 
 
@@ -838,7 +875,7 @@ class TestUnpublishCertificate:
         repos.ccm_repository.find_by_id_with_relations.return_value = None
         mock_factory.return_value.__enter__.return_value = repos
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(NotFoundError, match="not found"):
             service.unpublish_certificate(999)
 
     @patch(
@@ -857,7 +894,7 @@ class TestUnpublishCertificate:
         repos.ccm_repository.find_by_id_with_relations.return_value = ccm
         mock_factory.return_value.__enter__.return_value = repos
 
-        with pytest.raises(ValueError, match="not published"):
+        with pytest.raises(InvalidError, match="not published"):
             service.unpublish_certificate(CERT_ID)
 
 
@@ -904,7 +941,7 @@ class TestGetCertificatePayload:
         repos.ccm_repository.find_by_id_with_relations.return_value = None
         mock_factory.return_value.__enter__.return_value = repos
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(NotFoundError, match="not found"):
             service.get_certificate_payload(999)
 
 
