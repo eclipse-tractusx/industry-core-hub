@@ -74,10 +74,10 @@ async def certificate_request(notification: CcmRequestNotification) -> JSONRespo
             notification
         )
         return JSONResponse(status_code=status_code, content=body)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in certificate_request endpoint")
         return JSONResponse(
-            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+            status_code=500, content={"detail": str(e)}
         )
 
 
@@ -94,10 +94,10 @@ async def update_certificate_status(notification: CcmStatusNotification) -> JSON
             notification
         )
         return JSONResponse(status_code=status_code, content=body)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in update_certificate_status endpoint")
         return JSONResponse(
-            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+            status_code=500, content={"detail": str(e)}
         )
 
 
@@ -114,10 +114,10 @@ async def certificate_push(notification: CcmPushNotification) -> JSONResponse:
             notification
         )
         return JSONResponse(status_code=status_code, content=body)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in certificate_push endpoint")
         return JSONResponse(
-            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+            status_code=500, content={"detail": str(e)}
         )
 
 
@@ -134,8 +134,8 @@ async def certificate_available(notification: CcmAvailableNotification) -> JSONR
             notification
         )
         return JSONResponse(status_code=status_code, content=body)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in certificate_available endpoint")
         return JSONResponse(
-            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+            status_code=500, content={"detail": str(e)}
         )

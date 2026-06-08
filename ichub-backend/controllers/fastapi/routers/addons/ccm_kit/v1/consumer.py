@@ -58,6 +58,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import ccm_consumer_service
 from tools.constants import INTERNAL_SERVER_ERROR
+from tools.exceptions import InvalidError
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -83,12 +84,12 @@ async def catalog_search(request: CcmCatalogSearchRequest) -> CcmCatalogSearchRe
     """
     try:
         return ccm_consumer_service.search_catalog(request)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in catalog_search endpoint")
         return CcmCatalogSearchResult(
             found=False,
             provider_bpn=request.provider_bpn,
-            error=INTERNAL_SERVER_ERROR,
+            error=str(e),
         )
 
 
@@ -108,14 +109,12 @@ async def send_certificate_request(payload: CcmSendRequestPayload) -> CcmSendRes
         result = ccm_consumer_service.send_certificate_request(
             payload, payload.sender_bpn
         )
-        if not result.success:
-            raise HTTPException(status_code=502, detail=result.error)
         return result
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in send_certificate_request endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
@@ -135,14 +134,14 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
         result = ccm_consumer_service.send_certificate_status(
             payload, payload.sender_bpn
         )
-        if not result.success:
-            raise HTTPException(status_code=502, detail=result.error)
         return result
+    except InvalidError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in send_certificate_status endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post(
@@ -160,9 +159,9 @@ async def pull_certificate(request: CcmPullRequest) -> CcmPullResult:
     """
     try:
         return ccm_consumer_service.pull_certificate(request)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in pull_certificate endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -199,9 +198,9 @@ async def list_received(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_received endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -233,9 +232,9 @@ async def get_received(
         return result
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in get_received endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -283,9 +282,9 @@ async def list_requests(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_requests endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -325,9 +324,9 @@ async def list_request_history(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_request_history endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -346,6 +345,6 @@ async def get_request(request_id: int) -> OutboundRequestItem:
         return result
     except HTTPException:
         raise
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in get_request endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))

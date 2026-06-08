@@ -36,6 +36,7 @@ from tractusx_sdk.industry.services.notifications.exceptions import Notification
 
 from services.addons.ccm_kit.v1.ccm_consumer_service import CcmConsumerService
 from tools.constants import CCM_DCT_TYPE
+from tools.exceptions import InvalidError
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmCatalogSearchRequest,
     CcmPullRequest,
@@ -43,6 +44,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmSendStatusPayload,
     CertificateStatusValue,
 )
+from models.metadata_database.addons.ccm_kit.v1.models import ReceivedCertificateStatus
 
 
 # ---------------------------------------------------------------------------
@@ -402,11 +404,12 @@ class TestSendCertificateRequest:
 class TestSendCertificateStatus:
     """Tests for CcmConsumerService.send_certificate_status"""
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_accepted(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_accepted(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """Successfully sends ACCEPTED status."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = None
@@ -418,6 +421,10 @@ class TestSendCertificateStatus:
             "token456",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         payload = CcmSendStatusPayload(
             senderBpn=CONSUMER_BPN,
@@ -434,11 +441,12 @@ class TestSendCertificateStatus:
         call_kwargs = mock_ncs.send_notification_to_endpoint.call_args[1]
         assert call_kwargs["endpoint_path"] == "/companycertificate/status"
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_rejected_with_errors(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_rejected_with_errors(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """REJECTED status includes error details."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = None
@@ -450,6 +458,10 @@ class TestSendCertificateStatus:
             "token789",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         payload = CcmSendStatusPayload(
             senderBpn=CONSUMER_BPN,
@@ -487,11 +499,12 @@ class TestSendCertificateStatus:
         assert result.success is False
         assert "Discovery failed" in result.error
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_with_policies(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_with_policies(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """CCM usage policy is resolved from config and passed to DSP."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         ccm_policy = {"permissions": [{"action": "use"}]}
@@ -504,6 +517,10 @@ class TestSendCertificateStatus:
             "token999",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         payload = CcmSendStatusPayload(
             senderBpn=CONSUMER_BPN,
@@ -519,11 +536,12 @@ class TestSendCertificateStatus:
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == [ccm_policy]
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_with_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_with_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """Status notification sets relatedMessageId when provided."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = None
@@ -535,6 +553,10 @@ class TestSendCertificateStatus:
             "token-rel",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         original_msg_id = "d9452f24-3bf3-4134-b3de-123456789abc"
         payload = CcmSendStatusPayload(
@@ -553,11 +575,12 @@ class TestSendCertificateStatus:
         notification = call_args[1]["notification"]
         assert str(notification.header.related_message_id) == original_msg_id
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_without_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_without_related_message_id(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """Status notification omits relatedMessageId when not provided."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         mock_config.get_config.return_value = None
@@ -569,6 +592,10 @@ class TestSendCertificateStatus:
             "token-no-rel",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         payload = CcmSendStatusPayload(
             senderBpn=CONSUMER_BPN,
@@ -584,11 +611,12 @@ class TestSendCertificateStatus:
         notification = call_args[1]["notification"]
         assert notification.header.related_message_id is None
 
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
     @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
-    def test_send_status_governance_overrides_config(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, service):
+    def test_send_status_governance_overrides_config(self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service):
         """API governance takes priority over config-based policies."""
         mock_cm.consumer.get_connectors.return_value = [DSP_URL]
         config_policy = {"permissions": [{"action": "use"}]}
@@ -601,6 +629,10 @@ class TestSendCertificateStatus:
             "token-override",
         )
         mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
 
         api_governance = [{"permission": [{"action": "read"}]}]
         payload = CcmSendStatusPayload(
@@ -615,6 +647,210 @@ class TestSendCertificateStatus:
         assert result.success is True
         call_kwargs = mock_ncs.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == api_governance
+
+
+class TestSendStatusLocalStatusMapping:
+    """Tests that send_certificate_status maps consumer feedback to the correct local_status."""
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_received_sets_local_status_received(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=RECEIVED
+        WHEN send_certificate_status is called
+        THEN local_status is updated to ReceivedCertificateStatus.Received (not Pending).
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-rcv"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None  # no prior terminal state
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-001",
+            certificateStatus=CertificateStatusValue.RECEIVED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        repos.ccm_received_repository.update_local_status.assert_called_once_with(
+            document_id="doc-001",
+            provider_bpn=PROVIDER_BPN,
+            new_status=ReceivedCertificateStatus.Received,
+            rejection_reason=None,
+        )
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_accepted_sets_local_status_accepted(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=ACCEPTED
+        WHEN send_certificate_status is called
+        THEN local_status is updated to ReceivedCertificateStatus.Accepted.
+        """
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-acc"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None  # no prior terminal state
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-002",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        repos.ccm_received_repository.update_local_status.assert_called_once_with(
+            document_id="doc-002",
+            provider_bpn=PROVIDER_BPN,
+            new_status=ReceivedCertificateStatus.Accepted,
+            rejection_reason=None,
+        )
+
+
+# ---------------------------------------------------------------------------
+# State machine transition tests
+# ---------------------------------------------------------------------------
+
+class TestStatusStateMachine:
+    """Tests that Accepted and Rejected are terminal — no further transitions allowed."""
+
+    def _make_notification_mocks(self, mock_cm, mock_config, mock_ncs_class):
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-sm"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+        return mock_ncs
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_accepted_to_rejected_raises_invalid_error(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN a certificate already in Accepted state
+        WHEN send_certificate_status is called with REJECTED
+        THEN InvalidError is raised.
+        """
+        self._make_notification_mocks(mock_cm, mock_config, mock_ncs_class)
+
+        existing = Mock()
+        existing.local_status = ReceivedCertificateStatus.Accepted
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-term",
+            certificateStatus=CertificateStatusValue.REJECTED,
+        )
+
+        with pytest.raises(InvalidError, match="terminal state 'Accepted'"):
+            service.send_certificate_status(payload, CONSUMER_BPN)
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_rejected_to_accepted_raises_invalid_error(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN a certificate already in Rejected state
+        WHEN send_certificate_status is called with ACCEPTED
+        THEN InvalidError is raised.
+        """
+        self._make_notification_mocks(mock_cm, mock_config, mock_ncs_class)
+
+        existing = Mock()
+        existing.local_status = ReceivedCertificateStatus.Rejected
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-term",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+        )
+
+        with pytest.raises(InvalidError, match="terminal state 'Rejected'"):
+            service.send_certificate_status(payload, CONSUMER_BPN)
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_received_to_accepted_allowed(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN a certificate in Received state
+        WHEN send_certificate_status is called with ACCEPTED
+        THEN the transition succeeds (Received is not terminal).
+        """
+        self._make_notification_mocks(mock_cm, mock_config, mock_ncs_class)
+
+        existing = Mock()
+        existing.local_status = ReceivedCertificateStatus.Received
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = existing
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-rcv",
+            certificateStatus=CertificateStatusValue.ACCEPTED,
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+        assert result.success is True
 
 
 # ---------------------------------------------------------------------------
@@ -925,6 +1161,7 @@ class TestStoreReceivedCertificate:
     def test_store_success(self, mock_factory, service):
         """Certificate data is stored successfully."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         mock_factory.create.return_value.__enter__.return_value = repos
 
         cert_data = {
@@ -956,6 +1193,7 @@ class TestStoreReceivedCertificate:
     def test_store_invalid_base64_still_stores(self, mock_factory, service):
         """Invalid base64 content is logged as warning but storage proceeds."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         mock_factory.create.return_value.__enter__.return_value = repos
 
         cert_data = {
@@ -981,6 +1219,7 @@ class TestStoreReceivedCertificate:
     def test_store_db_error(self, mock_factory, service):
         """Database commit failure returns False."""
         repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None
         repos.ccm_received_repository.create_new.side_effect = Exception("DB connection lost")
         mock_factory.create.return_value.__enter__.return_value = repos
 
@@ -999,3 +1238,239 @@ class TestStoreReceivedCertificate:
         )
 
         assert stored is False
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory"
+    )
+    def test_store_duplicate_returns_true(self, mock_factory, service):
+        """Pulling an already-stored document is idempotent and returns True."""
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        cert_data = {
+            "businessPartnerNumber": "BPNL000000000001",
+            "type": {"certificateType": "ISO9001"},
+            "document": {},
+            "issuer": {},
+            "validator": {},
+        }
+
+        stored = service._store_received_certificate(
+            certificate_data=cert_data,
+            provider_bpn=PROVIDER_BPN,
+            document_id="doc-already-stored",
+        )
+
+        assert stored is True
+        repos.ccm_received_repository.create_new.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# OutboundRequest localStatus enrichment tests
+# ---------------------------------------------------------------------------
+
+class TestOutboundRequestLocalStatus:
+    """Tests that list_requests / get_request expose localStatus from CcmReceived."""
+
+    def _make_outbound_record(self, document_id=None):
+        """Create a minimal CcmOutboundRequest-like mock."""
+        from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus
+        from datetime import datetime, timezone
+        record = Mock()
+        record.id = 1
+        record.sender_bpn = CONSUMER_BPN
+        record.provider_bpn = PROVIDER_BPN
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.status = OutboundRequestStatus.Found
+        record.notification_id = "notif-001"
+        record.document_id = document_id
+        record.requested_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        return record
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_none_when_no_document_id(self, mock_factory, service):
+        """
+        GIVEN an outbound request with document_id=None
+        WHEN get_request is called
+        THEN localStatus and rejectionReason are null (no CcmReceived lookup).
+        """
+        record = self._make_outbound_record(document_id=None)
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status is None
+        assert result.rejection_reason is None
+        repos.ccm_received_repository.find_by_document_id.assert_not_called()
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_from_received_record(self, mock_factory, service):
+        """
+        GIVEN document_id is set and CcmReceived.local_status = Received
+        WHEN get_request is called
+        THEN localStatus = "Received" and rejectionReason = None.
+        """
+        record = self._make_outbound_record(document_id="doc-abc")
+
+        received_mock = Mock()
+        received_mock.local_status = ReceivedCertificateStatus.Received
+        received_mock.rejection_reason = None
+
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = received_mock
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status == "Received"
+        assert result.rejection_reason is None
+        repos.ccm_received_repository.find_by_document_id.assert_called_once_with(
+            "doc-abc", provider_bpn=PROVIDER_BPN
+        )
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_none_when_no_received_record(self, mock_factory, service):
+        """
+        GIVEN document_id is set but find_by_document_id returns None
+        WHEN get_request is called
+        THEN localStatus and rejectionReason are null.
+        """
+        record = self._make_outbound_record(document_id="doc-missing")
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status is None
+        assert result.rejection_reason is None
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_rejected_with_reason(self, mock_factory, service):
+        """
+        GIVEN CcmReceived.local_status = Rejected with rejection_reason JSON
+        WHEN get_request is called
+        THEN localStatus = "Rejected" and rejectionReason is a typed RejectionReasonPayload.
+        """
+        import json
+        from models.services.addons.ccm_kit.v1.notifications import RejectionReasonPayload
+
+        record = self._make_outbound_record(document_id="doc-rej")
+
+        # Store a properly structured JSON string in the DB (what the service writes).
+        rejection_json = json.dumps({
+            "certificateErrors": [{"message": "Certificate has expired"}]
+        })
+        received_mock = Mock()
+        received_mock.local_status = ReceivedCertificateStatus.Rejected
+        received_mock.rejection_reason = rejection_json
+
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = received_mock
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status == "Rejected"
+        # rejection_reason is now a typed object, not a raw string
+        assert isinstance(result.rejection_reason, RejectionReasonPayload)
+        assert result.rejection_reason.certificate_errors is not None
+        assert result.rejection_reason.certificate_errors[0].message == "Certificate has expired"
+
+
+# ---------------------------------------------------------------------------
+# send_certificate_status REJECTED saves rejection_reason
+# ---------------------------------------------------------------------------
+
+class TestSendStatusRejectionReason:
+    """Tests that send_certificate_status persists rejection_reason when REJECTED."""
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_rejected_saves_rejection_reason(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=REJECTED with certificateErrors and locationErrors
+        WHEN send_certificate_status is called
+        THEN update_local_status is called with a structured JSON rejection_reason
+             containing certificateErrors (list of {message}) and locationErrors
+             (list of {bpn, locationErrors: [{message}]}).
+        """
+        import json
+        from models.services.addons.ccm_kit.v1.notifications import (
+            CcmSendStatusPayload,
+            CertificateErrorDetail,
+            LocationErrorDetail,
+        )
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-rej"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        repos.ccm_received_repository.find_by_document_id.return_value = None  # no prior terminal state
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-rej-001",
+            certificateStatus=CertificateStatusValue.REJECTED,
+            certificateErrors=[CertificateErrorDetail(message="Certificate has expired")],
+            locationErrors=[
+                LocationErrorDetail(
+                    bpn="BPNS000000000001",
+                    locationErrors=[
+                        CertificateErrorDetail(message="Area of application mismatch"),
+                    ],
+                )
+            ],
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        call_kwargs = repos.ccm_received_repository.update_local_status.call_args
+        assert call_kwargs is not None
+        kwargs = call_kwargs.kwargs if call_kwargs.kwargs else {}
+
+        # Must be called with Rejected status
+        assert kwargs.get("new_status") == ReceivedCertificateStatus.Rejected
+
+        # rejection_reason must be a structured JSON string
+        rejection_reason = kwargs.get("rejection_reason")
+        assert rejection_reason is not None
+        parsed = json.loads(rejection_reason)
+
+        # Certificate-level errors: list of {"message": "..."}
+        assert "certificateErrors" in parsed
+        assert parsed["certificateErrors"] == [{"message": "Certificate has expired"}]
+
+        # Site-level errors: list of {"bpn": "...", "locationErrors": [{"message": "..."}]}
+        assert "locationErrors" in parsed
+        assert len(parsed["locationErrors"]) == 1
+        loc = parsed["locationErrors"][0]
+        assert loc["bpn"] == "BPNS000000000001"
+        assert loc["locationErrors"] == [{"message": "Area of application mismatch"}]

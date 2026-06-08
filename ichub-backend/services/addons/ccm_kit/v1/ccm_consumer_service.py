@@ -61,8 +61,15 @@ from models.services.addons.ccm_kit.v1.notifications import (
     OutboundRequestItem,
     ReceivedCertificateDetail,
     ReceivedCertificateItem,
+    RejectionReasonPayload,
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+from managers.addons_service.ccm_kit.v1.notifications import (
+    ccm_notification_manager,
+    CCM_NT_REQUEST_SENT,
+    CCM_NT_STATUS_SENT,
+)
+from models.metadata_database.notification.models import NotificationDirection
 from tools.constants import (
     CCM_CONTEXT_REQUEST,
     CCM_CONTEXT_STATUS,
@@ -70,8 +77,25 @@ from tools.constants import (
     CCM_ENDPOINT_REQUEST,
     CCM_ENDPOINT_STATUS,
 )
+from tools.exceptions import InvalidError
 
 logger = LoggingManager.get_logger(__name__)
+
+
+def _parse_rejection_reason(raw: Optional[str]) -> Optional[RejectionReasonPayload]:
+    """
+    Deserialise a JSON string stored in the DB into a typed RejectionReasonPayload.
+
+    Returns None when the value is absent or cannot be parsed, so callers
+    never receive a corrupt or partially-typed object.
+    """
+    if not raw:
+        return None
+    try:
+        return RejectionReasonPayload.model_validate_json(raw)
+    except Exception:
+        logger.debug("[CCM Consumer] Could not parse rejection_reason JSON: %s", raw)
+        return None
 
 
 class CcmConsumerService(CcmBaseService):
@@ -230,10 +254,7 @@ class CcmConsumerService(CcmBaseService):
                     provider_bpn=provider_bpn,
                     certified_bpn=payload.certified_bpn,
                     certificate_type=payload.certificate_type,
-                    location_bpns=(
-                        json.dumps(payload.location_bpns)
-                        if payload.location_bpns else None
-                    ),
+                    location_bpns=self._canonicalize_location_bpns(payload.location_bpns),
                     governance=(
                         json.dumps(payload.governance)
                         if payload.governance else None
@@ -247,6 +268,15 @@ class CcmConsumerService(CcmBaseService):
                 f"[CCM Consumer] Failed to persist outbound request record: "
                 f"{_s(persist_err)}"
             )
+
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=provider_bpn,
+            notification_type=CCM_NT_REQUEST_SENT,
+            certificate_type=payload.certificate_type,
+            certified_bpn=payload.certified_bpn,
+            direction=NotificationDirection.OUTGOING,
+        )
 
         return result
 
@@ -328,28 +358,57 @@ class CcmConsumerService(CcmBaseService):
         )
 
         # Map CertificateStatusValue → ReceivedCertificateStatus and persist.
-        # The mapping is intentional: ACCEPTED → Accepted, REJECTED → Rejected,
-        # RECEIVED → Pending (still being reviewed by the consumer).
+        # RECEIVED → Received (acknowledged but not yet evaluated).
+        # ACCEPTED → Accepted, REJECTED → Rejected.
         _STATUS_LOCAL_MAP = {
+            "RECEIVED": ReceivedCertificateStatus.Received,
             "ACCEPTED": ReceivedCertificateStatus.Accepted,
             "REJECTED": ReceivedCertificateStatus.Rejected,
-            "RECEIVED": ReceivedCertificateStatus.Pending,
         }
+        _TERMINAL = {ReceivedCertificateStatus.Accepted, ReceivedCertificateStatus.Rejected}
         new_local_status = _STATUS_LOCAL_MAP.get(payload.certificate_status.value)
         if new_local_status is not None:
             try:
                 with RepositoryManagerFactory.create() as repo:
+                    existing = repo.ccm_received_repository.find_by_document_id(
+                        payload.document_id, provider_bpn=provider_bpn,
+                    )
+                    if existing and existing.local_status in _TERMINAL:
+                        raise InvalidError(
+                            f"Certificate document_id={_s(payload.document_id)} is already "
+                            f"in terminal state '{existing.local_status.value}' and cannot "
+                            f"be transitioned to '{new_local_status.value}'."
+                        )
+                    # Build structured rejection payload when consumer rejects.
+                    rejection_reason: Optional[str] = None
+                    if payload.certificate_status.value == "REJECTED":
+                        rejection_payload = RejectionReasonPayload(
+                            certificate_errors=payload.certificate_errors or None,
+                            location_errors=payload.location_errors or None,
+                        )
+                        rejection_reason = rejection_payload.model_dump_json(by_alias=True, exclude_none=True)
                     repo.ccm_received_repository.update_local_status(
                         document_id=payload.document_id,
                         provider_bpn=provider_bpn,
                         new_status=new_local_status,
+                        rejection_reason=rejection_reason,
                     )
+            except InvalidError:
+                raise
             except Exception as update_err:
                 # A failed local update must not suppress a successful notification.
                 logger.warning(
                     f"[CCM Consumer] Failed to update local_status for "
                     f"document_id={_s(payload.document_id)}: {_s(update_err)}"
                 )
+
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=provider_bpn,
+            notification_type=CCM_NT_STATUS_SENT,
+            document_id=payload.document_id,
+            direction=NotificationDirection.OUTGOING,
+        )
 
         return result
 
@@ -567,8 +626,28 @@ class CcmConsumerService(CcmBaseService):
                         f"[CCM Consumer] Failed to decode base64 document "
                         f"for {_s(document_id)}: {_s(b64_err)}"
                     )
+                else:
+                    if doc_bytes and not doc_bytes.startswith(b"%PDF-"):
+                        logger.warning(
+                            "[CCM Consumer] Pulled document %s is not a "
+                            "valid PDF (missing %%PDF- header) — discarding content.",
+                            _s(document_id),
+                        )
+                        doc_bytes = None
 
             with RepositoryManagerFactory.create() as repo:
+                existing = repo.ccm_received_repository.find_by_document_id(
+                    document_id, provider_bpn=provider_bpn
+                )
+                if existing is not None:
+                    logger.info(
+                        "[CCM Consumer] Certificate %s from %s already stored — "
+                        "skipping duplicate pull.",
+                        _s(document_id),
+                        _s(provider_bpn),
+                    )
+                    return True
+
                 extra_kwargs: Dict[str, Any] = {}
                 if notification_message_id:
                     extra_kwargs["notification_message_id"] = notification_message_id
@@ -774,7 +853,10 @@ class CcmConsumerService(CcmBaseService):
             try:
                 status_enum = _S(status)
             except ValueError:
-                pass  # Unknown status → ignore filter; return all
+                logger.debug(
+                    "[CCM Consumer] Unknown outbound status filter %s — returning all.",
+                    _s(status),
+                )
 
         with RepositoryManagerFactory.create() as repo:
             records = repo.ccm_outbound_request_repository.find_latest_per_combo(
@@ -785,7 +867,20 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-            return [self._to_request_item(r) for r in records]
+            items = []
+            for r in records:
+                received = (
+                    repo.ccm_received_repository.find_by_document_id(
+                        r.document_id, provider_bpn=r.provider_bpn
+                    )
+                    if r.document_id else None
+                )
+                items.append(self._to_request_item(
+                    r,
+                    local_status=received.local_status.value if received else None,
+                    rejection_reason=received.rejection_reason if received else None,
+                ))
+            return items
 
     def list_request_history(
         self,
@@ -818,7 +913,20 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-            return [self._to_request_item(r) for r in records]
+            items = []
+            for r in records:
+                received = (
+                    repo.ccm_received_repository.find_by_document_id(
+                        r.document_id, provider_bpn=r.provider_bpn
+                    )
+                    if r.document_id else None
+                )
+                items.append(self._to_request_item(
+                    r,
+                    local_status=received.local_status.value if received else None,
+                    rejection_reason=received.rejection_reason if received else None,
+                ))
+            return items
 
     def get_request(self, request_id: int) -> Optional[OutboundRequestItem]:
         """
@@ -836,7 +944,17 @@ class CcmConsumerService(CcmBaseService):
             if record is None:
                 return None
 
-            return self._to_request_item(record)
+            received = (
+                repo.ccm_received_repository.find_by_document_id(
+                    record.document_id, provider_bpn=record.provider_bpn
+                )
+                if record.document_id else None
+            )
+            return self._to_request_item(
+                record,
+                local_status=received.local_status.value if received else None,
+                rejection_reason=received.rejection_reason if received else None,
+            )
 
     # ------------------------------------------------------------------
     # Private mapping helpers
@@ -859,18 +977,27 @@ class CcmConsumerService(CcmBaseService):
                 record.status_updated_at.isoformat()
                 if record.status_updated_at else None
             ),
+            rejection_reason=_parse_rejection_reason(record.rejection_reason),
             received_at=record.received_at.isoformat(),
         )
 
     @staticmethod
-    def _to_request_item(record) -> OutboundRequestItem:
+    def _to_request_item(
+        record,
+        local_status: Optional[str] = None,
+        rejection_reason: Optional[str] = None,
+    ) -> OutboundRequestItem:
         """Map a CcmOutboundRequest ORM instance to an OutboundRequestItem DTO."""
         location_bpns: Optional[List[str]] = None
         if record.location_bpns:
             try:
                 location_bpns = json.loads(record.location_bpns)
             except (json.JSONDecodeError, TypeError):
-                pass
+                logger.debug(
+                    "[CCM Consumer] Could not parse location_bpns JSON for "
+                    "outbound request %s.",
+                    record.id,
+                )
 
         return OutboundRequestItem(
             id=record.id,
@@ -884,6 +1011,8 @@ class CcmConsumerService(CcmBaseService):
             document_id=record.document_id,
             requested_at=record.requested_at.isoformat(),
             updated_at=record.updated_at.isoformat(),
+            local_status=local_status,
+            rejection_reason=_parse_rejection_reason(rejection_reason),
         )
 
 

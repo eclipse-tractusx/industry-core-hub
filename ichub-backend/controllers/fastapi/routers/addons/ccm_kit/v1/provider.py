@@ -35,7 +35,7 @@ to initiate outbound operations towards a consumer:
 - ``GET /provider/shares``                                 — cross-certificate view of all sharing events
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -55,7 +55,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     ShareItem,
 )
 from services.addons.ccm_kit.v1.ccm_provider_service import ccm_provider_service
-from tools.constants import INTERNAL_SERVER_ERROR
+from tools.constants import INTERNAL_SERVER_ERROR  # noqa: F401 kept for unused-import silence
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -83,9 +83,9 @@ async def push_certificate(request: CcmPushRequest) -> CcmSendResult:
         return ccm_provider_service.push_certificate(
             request, request.sender_bpn
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in push_certificate endpoint")
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        return CcmSendResult(success=False, error=str(e))
 
 
 @router.post(
@@ -106,11 +106,11 @@ async def send_certificate_available(
         return ccm_provider_service.send_certificate_available(
             request, request.sender_bpn
         )
-    except Exception:
+    except Exception as e:
         logger.exception(
             "Unhandled error in send_certificate_available endpoint"
         )
-        return CcmSendResult(success=False, error=INTERNAL_SERVER_ERROR)
+        return CcmSendResult(success=False, error=str(e))
 
 
 @router.post(
@@ -133,11 +133,9 @@ async def publish_certificate(request: CcmPublishRequest) -> CcmPublishResult:
             request.certificate_id
         )
         return CcmPublishResult(**result)
-    except ValueError as ve:
-        raise HTTPException(status_code=404, detail=str(ve))
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in publish_certificate endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -154,11 +152,9 @@ async def get_certificate_payload(certificate_id: int) -> JSONResponse:
     try:
         payload = ccm_provider_service.get_certificate_payload(certificate_id)
         return JSONResponse(content=payload)
-    except ValueError as ve:
-        raise HTTPException(status_code=404, detail=str(ve))
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in get_certificate_payload endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put(
@@ -175,11 +171,9 @@ async def republish_certificate(certificate_id: int) -> CcmPublishResult:
     try:
         result = ccm_provider_service.republish_certificate(certificate_id)
         return CcmPublishResult(**result)
-    except ValueError as ve:
-        raise HTTPException(status_code=404, detail=str(ve))
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in republish_certificate endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete(
@@ -195,11 +189,28 @@ async def unpublish_certificate(certificate_id: int) -> None:
     """
     try:
         ccm_provider_service.unpublish_certificate(certificate_id)
-    except ValueError as ve:
-        raise HTTPException(status_code=404, detail=str(ve))
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in unpublish_certificate endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
+    "/published/{certificate_id}",
+    response_model=Dict[str, bool],
+    summary="Check if a single certificate is published as an EDC asset",
+)
+async def get_published_certificate(certificate_id: int) -> Dict[str, bool]:
+    """
+    Return ``{"published": true}`` if the certificate has an active EDC asset,
+    or ``{"published": false}`` if it does not exist or is not published.
+    Always responds with HTTP 200.
+    """
+    try:
+        published = ccm_provider_service.get_published_certificate(certificate_id)
+        return {"published": published}
+    except Exception as e:
+        logger.exception("Unhandled error in get_published_certificate endpoint")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -218,9 +229,9 @@ async def list_published_certificates() -> List[CcmPublishedItem]:
     try:
         items = ccm_provider_service.list_published_certificates()
         return [CcmPublishedItem(**item) for item in items]
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_published_certificates endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete(
@@ -242,9 +253,9 @@ async def force_unpublish_by_asset_id(asset_id: str) -> None:
     """
     try:
         ccm_provider_service.force_unpublish_by_asset_id(asset_id)
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in force_unpublish_by_asset_id endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -280,9 +291,9 @@ async def list_shares(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_shares endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -330,9 +341,9 @@ async def list_inbound_requests(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_inbound_requests endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -372,6 +383,6 @@ async def list_inbound_request_history(
             offset=offset,
             limit=limit,
         )
-    except Exception:
+    except Exception as e:
         logger.exception("Unhandled error in list_inbound_request_history endpoint")
-        raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=500, detail=str(e))

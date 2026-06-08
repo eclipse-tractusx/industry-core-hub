@@ -23,7 +23,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from sqlalchemy import case, and_, or_, func, update
+from sqlalchemy import case, and_, or_, func, update, literal
 from sqlmodel import SQLModel, Session, select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.attributes import flag_modified
@@ -1098,7 +1098,10 @@ class CcmRepository(BaseRepository[Ccm]):
         registration_number: Optional[str] = None,
         area_of_application: Optional[str] = None,
         valid_until: Optional[date] = None,
-        validator: Optional[str] = None,
+        certificate_version: Optional[str] = None,
+        validator_name: Optional[str] = None,
+        validator_bpn: Optional[str] = None,
+        issuer_bpn: Optional[str] = None,
         uploader_bpnl: Optional[str] = None,
         description: Optional[str] = None,
         doc: Optional[bytes] = None,
@@ -1116,7 +1119,10 @@ class CcmRepository(BaseRepository[Ccm]):
             registration_number: Official certificate registration/serial number.
             area_of_application: Textual scope of the certificate.
             valid_until: Optional expiry date.
-            validator: BPN or URL of the third-party validator.
+            certificate_version: Optional version of the certificate standard (e.g. '2015').
+            validator_name: Name of the third-party validator.
+            validator_bpn: BPNL of the third-party validator.
+            issuer_bpn: BPNL of the certification authority.
             uploader_bpnl: BPNL of the participant who uploaded the certificate.
             description: Free-text notes.
             doc: Raw PDF bytes (BYTEA in PostgreSQL).
@@ -1134,7 +1140,10 @@ class CcmRepository(BaseRepository[Ccm]):
             registration_number=registration_number,
             area_of_application=area_of_application,
             valid_until=valid_until,
-            validator=validator,
+            certificate_version=certificate_version,
+            validator_name=validator_name,
+            validator_bpn=validator_bpn,
+            issuer_bpn=issuer_bpn,
             uploader_bpnl=uploader_bpnl,
             description=description,
             doc=doc,
@@ -1238,6 +1247,76 @@ class CcmRepository(BaseRepository[Ccm]):
         )
         return self._session.scalars(stmt).first()
 
+    def find_by_bpnl_type_and_sites(
+        self,
+        bpnl: str,
+        certificate_type: str,
+        location_bpns: Optional[List[str]] = None,
+    ) -> Optional[Ccm]:
+        """
+        Find the most recent certificate matching ``bpnl`` and
+        ``certificate_type`` that covers **all** requested sites (superset
+        match).
+
+        When ``location_bpns`` is empty or ``None``, delegates to
+        ``find_by_bpnl_and_type`` so existing callers that don't care about
+        sites are unaffected.
+
+        Among qualifying certificates the one with the fewest total sites is
+        preferred (tightest superset), with ``updated_at`` DESC as a tiebreaker.
+
+        Returns ``None`` when no qualifying certificate exists.
+
+        Args:
+            bpnl: Business Partner Number Legal of the certificate holder.
+            certificate_type: Certificate type identifier (e.g. ISO9001).
+            location_bpns: List of site BPNs that must all be covered by the
+                returned certificate.  Duplicates are ignored.
+        """
+        if not location_bpns:
+            return self.find_by_bpnl_and_type(bpnl, certificate_type)
+
+        requested = list(set(location_bpns))
+        n_requested = len(requested)
+
+        # Subquery A: for each certificate, count how many of the requested
+        # sites it covers.
+        covered_sq = (
+            select(
+                CcmSite.ccm_id.label("ccm_id"),
+                func.count(CcmSite.site_bpn).label("covered"),
+            )
+            .where(CcmSite.site_bpn.in_(requested))
+            .group_by(CcmSite.ccm_id)
+            .subquery()
+        )
+
+        # Subquery B: total site count per certificate.
+        total_sq = (
+            select(
+                CcmSite.ccm_id.label("ccm_id"),
+                func.count(CcmSite.site_bpn).label("total"),
+            )
+            .group_by(CcmSite.ccm_id)
+            .subquery()
+        )
+
+        stmt = (
+            select(Ccm)
+            .join(covered_sq, covered_sq.c.ccm_id == Ccm.id)
+            .join(total_sq, total_sq.c.ccm_id == Ccm.id)
+            .where(Ccm.bpnl == bpnl)
+            .where(Ccm.certificate_type == certificate_type)
+            .where(covered_sq.c.covered == literal(n_requested))
+            .options(
+                selectinload(Ccm.sites),
+                selectinload(Ccm.shares),
+            )
+            .order_by(total_sq.c.total.asc(), desc(Ccm.updated_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()
+
     def find_all_filtered(
         self,
         bpnl: Optional[str] = None,
@@ -1304,18 +1383,19 @@ class CcmSiteRepository(BaseRepository[CcmSite]):
     Repository for CcmSite entities (BPNS/BPNA sites linked to a certificate).
     """
 
-    def create_new(self, ccm_id: int, site_bpn: str) -> CcmSite:
+    def create_new(self, ccm_id: int, site_bpn: str, area_of_application: Optional[str] = None) -> CcmSite:
         """
         Create and stage a new CcmSite record.
 
         Args:
             ccm_id: FK of the parent certificate.
             site_bpn: BPNS or BPNA value.
+            area_of_application: Optional per-site scope description.
 
         Returns:
             The staged (unsaved) CcmSite instance.
         """
-        site = CcmSite(ccm_id=ccm_id, site_bpn=site_bpn)
+        site = CcmSite(ccm_id=ccm_id, site_bpn=site_bpn, area_of_application=area_of_application)
         self.create(site)
         return site
 
@@ -1543,6 +1623,7 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
         document_id: str,
         provider_bpn: str,
         new_status: ReceivedCertificateStatus,
+        rejection_reason: Optional[str] = None,
     ) -> Optional[CcmReceived]:
         """
         Update the consumer-local processing status of a received certificate.
@@ -1554,6 +1635,8 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
             document_id: Provider-assigned document reference ID.
             provider_bpn: BPNL of the originating provider.
             new_status: New ReceivedCertificateStatus value to apply.
+            rejection_reason: Optional JSON-serialised rejection details.
+                Only set when new_status is Rejected.
 
         Returns:
             The updated CcmReceived record, or None if not found.
@@ -1563,6 +1646,8 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
             return None
         record.local_status = new_status
         record.status_updated_at = datetime.now(timezone.utc)
+        if rejection_reason is not None:
+            record.rejection_reason = rejection_reason
         self._session.add(record)
         return record
 
@@ -1679,21 +1764,30 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
 
         Returns:
             List of the newest CcmOutboundRequest per combination,
-            ordered by ``requested_at`` descending.
+            ordered by ``updated_at`` descending.
         """
-        # Subquery: max(id) per combo key — id is monotonically increasing,
-        # so max(id) equals the most recently inserted row per group.
+        # Subquery: DISTINCT ON (combo cols) ordered by updated_at DESC — picks
+        # the most recently *updated* row per combo, not the most recently created.
         latest_ids = (
-            select(func.max(CcmOutboundRequest.id).label("max_id"))
-            .group_by(
+            select(CcmOutboundRequest.id)
+            .distinct(
                 CcmOutboundRequest.provider_bpn,
                 CcmOutboundRequest.certified_bpn,
                 CcmOutboundRequest.certificate_type,
+                CcmOutboundRequest.location_bpns,
+            )
+            .order_by(
+                CcmOutboundRequest.provider_bpn,
+                CcmOutboundRequest.certified_bpn,
+                CcmOutboundRequest.certificate_type,
+                CcmOutboundRequest.location_bpns,
+                desc(CcmOutboundRequest.updated_at),
+                desc(CcmOutboundRequest.id),
             )
             .subquery()
         )
         stmt = select(CcmOutboundRequest).where(
-            CcmOutboundRequest.id.in_(select(latest_ids.c.max_id))
+            CcmOutboundRequest.id.in_(select(latest_ids.c.id))
         )
         if provider_bpn:
             stmt = stmt.where(CcmOutboundRequest.provider_bpn == provider_bpn)
@@ -1762,6 +1856,7 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         provider_bpn: str,
         certificate_type: str,
         certified_bpn: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> List[CcmOutboundRequest]:
         """
         Return all Pending and NotFound outbound requests for the given
@@ -1779,6 +1874,10 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
             certified_bpn: Optional BPNL of the certified entity.  When
                 provided the query is narrowed to an exact match on all
                 three natural-key columns.
+            location_bpns: Optional canonical JSON string (from
+                ``_canonicalize_location_bpns``).  When provided, restricts
+                the results to requests whose ``location_bpns`` equals this
+                value.
 
         Returns:
             List of matching CcmOutboundRequest records, newest first.
@@ -1791,6 +1890,10 @@ class CcmOutboundRequestRepository(BaseRepository[CcmOutboundRequest]):
         if certified_bpn is not None:
             stmt = stmt.where(
                 CcmOutboundRequest.certified_bpn == certified_bpn
+            )
+        if location_bpns is not None:
+            stmt = stmt.where(
+                CcmOutboundRequest.location_bpns == location_bpns
             )
         stmt = (
             stmt
@@ -1920,20 +2023,31 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
 
         Returns:
             List of the newest CcmInboundRequest per combination,
-            ordered by ``received_at`` descending.
+            ordered by ``updated_at`` descending.
         """
+        # Subquery: DISTINCT ON (combo cols) ordered by updated_at DESC — picks
+        # the most recently *updated* row per combo, not the most recently created.
         latest_ids = (
-            select(func.max(CcmInboundRequest.id).label("max_id"))
-            .group_by(
+            select(CcmInboundRequest.id)
+            .distinct(
                 CcmInboundRequest.consumer_bpn,
                 CcmInboundRequest.certified_bpn,
                 CcmInboundRequest.certificate_type,
+                CcmInboundRequest.location_bpns,
+            )
+            .order_by(
+                CcmInboundRequest.consumer_bpn,
+                CcmInboundRequest.certified_bpn,
+                CcmInboundRequest.certificate_type,
+                CcmInboundRequest.location_bpns,
+                desc(CcmInboundRequest.updated_at),
+                desc(CcmInboundRequest.id),
             )
             .subquery()
         )
         stmt = select(CcmInboundRequest).where(
-            CcmInboundRequest.id.in_(select(latest_ids.c.max_id))
-        )
+            CcmInboundRequest.id.in_(select(latest_ids.c.id))
+        ).options(selectinload(CcmInboundRequest.certificate))
         if consumer_bpn:
             stmt = stmt.where(CcmInboundRequest.consumer_bpn == consumer_bpn)
         if certified_bpn:
@@ -1982,6 +2096,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         new_status: InboundRequestStatus,
         skip_statuses: Optional[List[InboundRequestStatus]] = None,
         notification_id: Optional[str] = None,
+        location_bpns: Optional[str] = None,
     ) -> List[CcmInboundRequest]:
         """
         Bulk-update inbound request records for a given consumer + certificate
@@ -2011,6 +2126,11 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             notification_id: When provided, restricts the update to the single
                 request whose ``notification_id`` matches this value.  When None,
                 the existing bulk-advance behaviour is preserved.
+            location_bpns: When provided (canonical JSON string from
+                ``_canonicalize_location_bpns``), restricts the update to
+                requests whose ``location_bpns`` column equals this value.
+                Only applied when ``notification_id`` is not set (because
+                ``notification_id`` already provides exact row targeting).
 
         Returns:
             List of updated records.
@@ -2026,6 +2146,8 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         )
         if notification_id is not None:
             stmt = stmt.where(CcmInboundRequest.notification_id == notification_id)
+        elif location_bpns is not None:
+            stmt = stmt.where(CcmInboundRequest.location_bpns == location_bpns)
         records = list(self._session.scalars(stmt).all())
         now = datetime.now(timezone.utc)
         for r in records:
@@ -2116,3 +2238,34 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         )
         result = self._session.execute(stmt)
         return result.rowcount
+
+    def find_latest_consumer_status(
+        self,
+        certificate_id: int,
+        consumer_bpn: str,
+    ) -> Optional[str]:
+        """
+        Return the most recent ``consumer_status`` value for the given
+        ``(certificate_id, consumer_bpn)`` pair.
+
+        Used to enrich the provider's share view with the consumer's latest
+        feedback (RECEIVED / ACCEPTED / REJECTED) without storing it on the
+        ``CertificateShare`` model.
+
+        Args:
+            certificate_id: FK of the shared certificate (ccm.id).
+            consumer_bpn: BPNL of the consumer.
+
+        Returns:
+            The ``consumer_status`` string, or ``None`` if no record exists
+            or if the consumer has not yet sent a status notification.
+        """
+        stmt = (
+            select(CcmInboundRequest.consumer_status)
+            .where(CcmInboundRequest.certificate_id == certificate_id)
+            .where(CcmInboundRequest.consumer_bpn == consumer_bpn)
+            .where(CcmInboundRequest.consumer_status.is_not(None))
+            .order_by(desc(CcmInboundRequest.updated_at))
+            .limit(1)
+        )
+        return self._session.scalars(stmt).first()

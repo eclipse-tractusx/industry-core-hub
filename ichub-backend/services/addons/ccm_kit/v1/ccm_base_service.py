@@ -28,6 +28,7 @@ Contains shared infrastructure used by both ``CcmConsumerService`` and
 building, and EDC-based notification sending.
 """
 
+import json
 import uuid
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
@@ -60,6 +61,21 @@ class CcmBaseService:
     """
 
     _log_prefix: str = "[CCM]"
+
+    @staticmethod
+    def _canonicalize_location_bpns(bpns: Optional[List[str]]) -> Optional[str]:
+        """
+        Return a canonical JSON string for a list of location BPNs.
+
+        The list is deduplicated and sorted so that two requests covering the
+        same set of sites always produce the same string, enabling reliable
+        equality comparisons in database queries.
+
+        Returns ``None`` when ``bpns`` is ``None`` or empty.
+        """
+        if not bpns:
+            return None
+        return json.dumps(sorted(set(bpns)))
 
     def _resolve_dsp_url(self, target_bpn: str) -> str:
         """Resolve a partner's DSP URL from connector discovery."""

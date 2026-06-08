@@ -26,6 +26,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.addons_service.ccm_kit.v1.certificates import certificates_manager
@@ -115,7 +116,10 @@ async def upload_certificate(
     trustLevel: Annotated[str, Form()] = "none",
     registrationNumber: Annotated[Optional[str], Form()] = None,
     areaOfApplication: Annotated[Optional[str], Form()] = None,
-    validator: Annotated[Optional[str], Form()] = None,
+    certificateVersion: Annotated[Optional[str], Form()] = None,
+    validatorName: Annotated[Optional[str], Form()] = None,
+    validatorBpn: Annotated[Optional[str], Form()] = None,
+    issuerBpn: Annotated[Optional[str], Form()] = None,
     sites: Annotated[Optional[str], Form()] = None,
     description: Annotated[Optional[str], Form()] = None,
 ) -> UploadCertificateResponse:
@@ -138,21 +142,32 @@ async def upload_certificate(
             detail=f"File exceeds the {max_size // (1024 * 1024)} MB size limit.",
         )
 
-    # Reconstruct the metadata model from individual form fields
-    metadata = UploadCertificateRequest(
-        bpnl=bpnl,
-        certificateType=certificateType,
-        issuer=issuer,
-        validFrom=validFrom,
-        certificateName=certificateName,
-        validUntil=validUntil,
-        trustLevel=trustLevel,
-        registrationNumber=registrationNumber,
-        areaOfApplication=areaOfApplication,
-        validator=validator,
-        sites=sites,
-        description=description,
-    )
+    # Reconstruct the metadata model from individual form fields.
+    try:
+        metadata = UploadCertificateRequest(
+            bpnl=bpnl,
+            certificateType=certificateType,
+            issuer=issuer,
+            validFrom=validFrom,
+            certificateName=certificateName,
+            validUntil=validUntil,
+            trustLevel=trustLevel,
+            registrationNumber=registrationNumber,
+            areaOfApplication=areaOfApplication,
+            certificateVersion=certificateVersion,
+            validatorName=validatorName,
+            validatorBpn=validatorBpn,
+            issuerBpn=issuerBpn,
+            sites=sites,
+            description=description,
+        )
+    except ValidationError as exc:
+        errors = exc.errors()
+        detail = "; ".join(
+            f"{' -> '.join(str(loc) for loc in e['loc'])}: {e['msg']}"
+            for e in errors
+        )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
 
     return certificates_manager.upload_certificate(
         file_content=file_content,
@@ -182,7 +197,10 @@ async def update_certificate(
     trustLevel: Annotated[Optional[str], Form()] = None,
     registrationNumber: Annotated[Optional[str], Form()] = None,
     areaOfApplication: Annotated[Optional[str], Form()] = None,
-    validator: Annotated[Optional[str], Form()] = None,
+    certificateVersion: Annotated[Optional[str], Form()] = None,
+    validatorName: Annotated[Optional[str], Form()] = None,
+    validatorBpn: Annotated[Optional[str], Form()] = None,
+    issuerBpn: Annotated[Optional[str], Form()] = None,
     sites: Annotated[Optional[str], Form()] = None,
     description: Annotated[Optional[str], Form()] = None,
 ) -> CertificateDetail:
@@ -196,7 +214,10 @@ async def update_certificate(
         trustLevel=trustLevel,
         registrationNumber=registrationNumber,
         areaOfApplication=areaOfApplication,
-        validator=validator,
+        certificateVersion=certificateVersion,
+        validatorName=validatorName,
+        validatorBpn=validatorBpn,
+        issuerBpn=issuerBpn,
         sites=sites,
         description=description,
     )

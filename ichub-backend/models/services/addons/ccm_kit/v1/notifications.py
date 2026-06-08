@@ -237,6 +237,33 @@ class LocationErrorDetail(BaseModel):
         populate_by_name = True
 
 
+class RejectionReasonPayload(BaseModel):
+    """
+    Structured rejection details stored when a consumer rejects a certificate.
+
+    Contains an optional list of certificate-level errors (e.g. expired
+    issuer) and an optional list of site-specific error groups, each
+    targeting a BPNS/BPNA and its corresponding error messages.
+
+    This model is used both as the type of the ``rejectionReason`` field
+    exposed in the API response DTOs and for deserialising the JSON text
+    stored in the database.
+    """
+    certificate_errors: Optional[List[CertificateErrorDetail]] = Field(
+        default=None,
+        alias="certificateErrors",
+        description="Certificate-level errors (e.g. expired, invalid issuer).",
+    )
+    location_errors: Optional[List[LocationErrorDetail]] = Field(
+        default=None,
+        alias="locationErrors",
+        description="Per-site errors, each targeting a specific BPN site.",
+    )
+
+    class Config:
+        populate_by_name = True
+
+
 # Resolve forward references used in CcmSendStatusPayload
 CcmSendStatusPayload.model_rebuild()
 
@@ -799,6 +826,14 @@ class ReceivedCertificateItem(BaseModel):
         alias="statusUpdatedAt",
         description="Timestamp of the most recent local_status change (ISO 8601).",
     )
+    rejection_reason: Optional[RejectionReasonPayload] = Field(
+        default=None,
+        alias="rejectionReason",
+        description=(
+            "Structured rejection details sent by this consumer. "
+            "Only present when localStatus is Rejected."
+        ),
+    )
     received_at: str = Field(
         alias="receivedAt",
         description="Timestamp when this certificate was received (ISO 8601).",
@@ -909,6 +944,23 @@ class OutboundRequestItem(BaseModel):
         alias="updatedAt",
         description="Timestamp of the last status update (ISO 8601).",
     )
+    local_status: Optional[str] = Field(
+        default=None,
+        alias="localStatus",
+        description=(
+            "Consumer-local status of the received certificate: "
+            "Pending / Received / Accepted / Rejected. "
+            "NULL until the certificate is received via PUSH or PULL."
+        ),
+    )
+    rejection_reason: Optional[RejectionReasonPayload] = Field(
+        default=None,
+        alias="rejectionReason",
+        description=(
+            "Structured rejection details sent by this consumer. "
+            "Only present when localStatus is Rejected."
+        ),
+    )
 
     class Config:
         populate_by_name = True
@@ -944,12 +996,20 @@ class ShareItem(BaseModel):
     status: str = Field(
         description="Share lifecycle status: Active / Pending / Revoked.",
     )
-    rejection_reason: Optional[str] = Field(
+    rejection_reason: Optional[RejectionReasonPayload] = Field(
         default=None,
         alias="rejectionReason",
         description=(
-            "JSON-serialised rejection details from the consumer. "
+            "Structured rejection details from the consumer. "
             "Only present when status is Revoked."
+        ),
+    )
+    consumer_status: Optional[str] = Field(
+        default=None,
+        alias="consumerStatus",
+        description=(
+            "Latest consumer feedback: RECEIVED / ACCEPTED / REJECTED. "
+            "NULL until the consumer sends a status notification."
         ),
     )
     last_shared_date: str = Field(
@@ -1014,6 +1074,18 @@ class CcmInboundRequestItem(BaseModel):
         default=None,
         alias="notificationId",
         description="CX-0135 notification message_id for correlation.",
+    )
+    certificate_name: Optional[str] = Field(
+        default=None,
+        alias="certificateName",
+        max_length=256,
+        description="Human-readable display name of the matched certificate (NULL when NotFound).",
+    )
+    registration_number: Optional[str] = Field(
+        default=None,
+        alias="registrationNumber",
+        max_length=256,
+        description="Official registration number of the matched certificate (NULL when NotFound).",
     )
     received_at: str = Field(
         alias="receivedAt",

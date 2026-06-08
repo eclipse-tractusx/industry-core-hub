@@ -47,11 +47,13 @@ from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from managers.metadata_database.manager import RepositoryManagerFactory
 from utils.log_utils import sanitize_log_value as _s
+from tools.exceptions import AlreadyExistsError, InvalidError, NotFoundError
 from models.services.addons.ccm_kit.v1.notifications import (
     CcmAvailableRequest,
     CcmInboundRequestItem,
     CcmPushRequest,
     CcmSendResult,
+    RejectionReasonPayload,
     ShareItem,
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
@@ -61,6 +63,12 @@ from models.metadata_database.addons.ccm_kit.v1.models import (
 )
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
+from managers.addons_service.ccm_kit.v1.notifications import (
+    ccm_notification_manager,
+    CCM_NT_PUSH_SENT,
+    CCM_NT_AVAILABLE_SENT,
+)
+from models.metadata_database.notification.models import NotificationDirection
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
     CCM_CONTEXT_PUSH,
@@ -128,6 +136,9 @@ class CcmProviderService(CcmBaseService):
             content_fields = self._build_push_content(ccm)
             certified_bpn = ccm.bpnl
             certificate_type_val = ccm.certificate_type
+            cert_canonical_sites = self._canonicalize_location_bpns(
+                [s.site_bpn for s in ccm.sites] if ccm.sites else None
+            )
 
         # --- 3. Resolve relatedMessageId from inbound request (CX-0135) ---
         related_msg_id: Optional[uuid.UUID] = None
@@ -199,6 +210,7 @@ class CcmProviderService(CcmBaseService):
                     notification_id=(
                         request.related_message_id if request.related_message_id else None
                     ),
+                    location_bpns=cert_canonical_sites,
                 )
                 if updated:
                     repo.commit()
@@ -206,6 +218,36 @@ class CcmProviderService(CcmBaseService):
                         f"[CCM Provider] Marked {len(updated)} inbound request(s) as Pushed "
                         f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
                     )
+                else:
+                    # Direct push — no prior REQUEST exists for this consumer.
+                    # Create a synthetic CcmInboundRequest anchored to the push
+                    # notification's messageId so that when the consumer sends
+                    # STATUS with relatedMessageId, update_consumer_status can
+                    # resolve the exact row via notification_id lookup.
+                    repo.ccm_inbound_request_repository.create_new(
+                        consumer_bpn=consumer_bpn,
+                        certified_bpn=certified_bpn,
+                        certificate_type=certificate_type_val,
+                        status=InboundRequestStatus.Pushed,
+                        certificate_id=request.certificate_id,
+                        notification_id=result.message_id,
+                    )
+                    repo.commit()
+                    logger.info(
+                        f"[CCM Provider] Created direct-push tracking record "
+                        f"(notification_id={_s(result.message_id)}) "
+                        f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
+                    )
+
+        if result.success:
+            ccm_notification_manager.create_ccm_notification(
+                sender_bpn=sender_bpn,
+                receiver_bpn=consumer_bpn,
+                notification_type=CCM_NT_PUSH_SENT,
+                certificate_type=certificate_type_val,
+                certified_bpn=certified_bpn,
+                direction=NotificationDirection.OUTGOING,
+            )
 
         return result
 
@@ -249,11 +291,18 @@ class CcmProviderService(CcmBaseService):
                 logger.warning("[CCM Provider] %s", msg)
                 return CcmSendResult(success=False, error=msg)
 
+            if not ccm.edc_asset_id:
+                msg = (
+                    f"Certificate {request.certificate_id} is not published as an "
+                    f"EDC asset. Use publish_certificate() first."
+                )
+                logger.warning("[CCM Provider] %s", msg)
+                return CcmSendResult(success=False, error=msg)
+
             # --- 2. Build available content ---
-            # Use the EDC asset ID as documentId when the certificate is
-            # published (PULL mechanism); fall back to the internal DB ID.
-            document_id = ccm.edc_asset_id or str(ccm.id)
+            document_id = ccm.edc_asset_id
             location_bpns = [site.site_bpn for site in ccm.sites] if ccm.sites else None
+            cert_canonical_sites = self._canonicalize_location_bpns(location_bpns)
             content_fields: Dict = {
                 "documentId": document_id,
                 "certificateType": ccm.certificate_type,
@@ -320,6 +369,7 @@ class CcmProviderService(CcmBaseService):
                     notification_id=(
                         request.related_message_id if request.related_message_id else None
                     ),
+                    location_bpns=cert_canonical_sites,
                 )
                 if updated:
                     logger.info(
@@ -347,6 +397,17 @@ class CcmProviderService(CcmBaseService):
                     )
 
                 repo.commit()
+
+        if result.success:
+            ccm_notification_manager.create_ccm_notification(
+                sender_bpn=sender_bpn,
+                receiver_bpn=consumer_bpn,
+                notification_type=CCM_NT_AVAILABLE_SENT,
+                certificate_type=certificate_type_val,
+                certified_bpn=certified_bpn,
+                document_id=document_id,
+                direction=NotificationDirection.OUTGOING,
+            )
 
         return result
 
@@ -378,7 +439,7 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
 
             # Reuse existing asset ID or generate a new one.
             # CX-0135 requires documentId to be a plain UUID.
@@ -394,19 +455,27 @@ class CcmProviderService(CcmBaseService):
                 "provider.ccm.certificate_asset.policy"
             )
             if policy_config is None:
-                raise ValueError(
+                raise InvalidError(
                     "Missing configuration 'provider.ccm.certificate_asset.policy'. "
                     "Cannot publish certificate without a policy definition."
                 )
 
             # Register asset + policies + contract via the connector manager
-            asset_id, _, _, _ = (
-                connector_provider_manager.register_ccm_certificate_offer(
-                    asset_id=asset_id,
-                    base_url=base_url,
-                    ccm_policy_config=policy_config,
+            try:
+                asset_id, _, _, _ = (
+                    connector_provider_manager.register_ccm_certificate_offer(
+                        asset_id=asset_id,
+                        base_url=base_url,
+                        ccm_policy_config=policy_config,
+                    )
                 )
-            )
+            except ValueError as e:
+                if "409" in str(e):
+                    raise AlreadyExistsError(
+                        f"Certificate {certificate_id} is already published as an "
+                        f"EDC asset (asset_id={asset_id}). Unpublish it first."
+                    ) from e
+                raise
 
             # Persist the EDC asset ID on the certificate record
             repo.ccm_repository.update_fields(ccm.id, {"edc_asset_id": asset_id})
@@ -436,9 +505,9 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             if not ccm.edc_asset_id:
-                raise ValueError(
+                raise InvalidError(
                     f"Certificate {certificate_id} is not published as an EDC asset."
                 )
 
@@ -477,9 +546,9 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             if not ccm.edc_asset_id:
-                raise ValueError(
+                raise NotFoundError(
                     f"Certificate {certificate_id} is not published — "
                     f"use publish_certificate() first."
                 )
@@ -535,7 +604,7 @@ class CcmProviderService(CcmBaseService):
         with RepositoryManagerFactory.create() as repo:
             ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
             if ccm is None:
-                raise ValueError(f"Certificate with ID {certificate_id} not found.")
+                raise NotFoundError(f"Certificate with ID {certificate_id} not found.")
             return self._build_push_content(ccm)
 
     # ------------------------------------------------------------------
@@ -557,24 +626,30 @@ class CcmProviderService(CcmBaseService):
         if ccm.doc:
             doc_b64 = base64.b64encode(ccm.doc).decode("ascii")
 
+        # --- type block (required + optional certificateVersion) ---
+        type_block: Dict = {"certificateType": ccm.certificate_type}
+        if ccm.certificate_version:
+            type_block["certificateVersion"] = ccm.certificate_version
+
+        # --- issuer block (required + optional issuerBpn) ---
+        issuer_block: Dict = {"issuerName": ccm.issuer}
+        if ccm.issuer_bpn:
+            issuer_block["issuerBpn"] = ccm.issuer_bpn
+
         content: Dict = {
             "businessPartnerNumber": ccm.bpnl,
-            "type": {
-                "certificateType": ccm.certificate_type,
-            },
+            "type": type_block,
             "document": {
                 "documentID": ccm.edc_asset_id or str(ccm.id),
                 "creationDate": ccm.created_at.isoformat(),
                 "contentType": "application/pdf",
                 "contentBase64": doc_b64,
             },
-            "issuer": {
-                "issuerName": ccm.issuer,
-            },
+            "issuer": issuer_block,
             "trustLevel": ccm.trust_level.value if ccm.trust_level else "none",
         }
 
-        # Optional fields
+        # Optional top-level fields
         if ccm.valid_from:
             content["validFrom"] = ccm.valid_from.isoformat()
         if ccm.valid_until:
@@ -585,13 +660,27 @@ class CcmProviderService(CcmBaseService):
             content["areaOfApplication"] = ccm.area_of_application
         if ccm.uploader_bpnl:
             content["uploader"] = ccm.uploader_bpnl
-        if ccm.validator:
-            content["validator"] = {"validatorName": ccm.validator}
 
-        # Enclosed sites
+        # --- validator block (optional name + optional BPN) ---
+        if ccm.validator_name or ccm.validator_bpn:
+            validator_block: Dict = {}
+            if ccm.validator_name:
+                validator_block["validatorName"] = ccm.validator_name
+            if ccm.validator_bpn:
+                validator_block["validatorBpn"] = ccm.validator_bpn
+            content["validator"] = validator_block
+
+        # --- enclosedSites (with optional per-site areaOfApplication) ---
         if ccm.sites:
             content["enclosedSites"] = [
-                {"enclosedSiteBpn": site.site_bpn}
+                {
+                    "enclosedSiteBpn": site.site_bpn,
+                    **(
+                        {"areaOfApplication": site.area_of_application}
+                        if site.area_of_application
+                        else {}
+                    ),
+                }
                 for site in ccm.sites
             ]
 
@@ -681,6 +770,12 @@ class CcmProviderService(CcmBaseService):
             result: List[ShareItem] = []
             for share in shares:
                 cert = repo.ccm_repository.find_by_id_with_relations(share.certificate_id)
+                consumer_status = (
+                    repo.ccm_inbound_request_repository.find_latest_consumer_status(
+                        certificate_id=share.certificate_id,
+                        consumer_bpn=share.consumer_bpnl,
+                    )
+                )
                 result.append(
                     ShareItem(
                         share_id=share.id,
@@ -689,7 +784,11 @@ class CcmProviderService(CcmBaseService):
                         provider_bpnl=cert.bpnl if cert else "",
                         consumer_bpnl=share.consumer_bpnl,
                         status=share.status.value,
-                        rejection_reason=share.rejection_reason,
+                        rejection_reason=(
+                            RejectionReasonPayload.model_validate_json(share.rejection_reason)
+                            if share.rejection_reason else None
+                        ),
+                        consumer_status=consumer_status,
                         last_shared_date=share.last_shared_date.isoformat(),
                         created_at=share.created_at.isoformat(),
                     )
@@ -717,6 +816,21 @@ class CcmProviderService(CcmBaseService):
                 }
                 for c in certs
             ]
+
+    def get_published_certificate(self, certificate_id: int) -> bool:
+        """
+        Check whether a single certificate is currently published as an EDC asset.
+
+        Args:
+            certificate_id: Primary key of the certificate in the local DB.
+
+        Returns:
+            ``True`` if the certificate exists and has an active EDC asset ID,
+            ``False`` otherwise.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            return ccm is not None and bool(ccm.edc_asset_id)
 
     def force_unpublish_by_asset_id(self, asset_id: str) -> None:
         """
@@ -831,6 +945,7 @@ class CcmProviderService(CcmBaseService):
     @staticmethod
     def _to_inbound_request_item(r: CcmInboundRequest) -> CcmInboundRequestItem:
         """Map a CcmInboundRequest ORM instance to a response DTO."""
+        cert = r.certificate
         return CcmInboundRequestItem(
             requestId=r.id,
             consumerBpn=r.consumer_bpn,
@@ -841,6 +956,8 @@ class CcmProviderService(CcmBaseService):
             status=r.status.value,
             consumerStatus=r.consumer_status,
             notificationId=r.notification_id,
+            certificateName=cert.certificate_name if cert else None,
+            registrationNumber=cert.registration_number if cert else None,
             receivedAt=r.received_at.isoformat(),
             updatedAt=r.updated_at.isoformat(),
         )

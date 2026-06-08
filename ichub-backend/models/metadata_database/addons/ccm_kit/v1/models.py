@@ -80,11 +80,13 @@ class ReceivedCertificateStatus(str, Enum):
 
     Tracks how this node has processed the certificate after reception.
 
-    - Pending:  Received but not yet evaluated.
+    - Pending:  Received but not yet evaluated (no status sent yet).
+    - Received: Consumer sent RECEIVED acknowledgment to the provider.
     - Accepted: Consumer validated and accepted the certificate.
     - Rejected: Consumer validated and rejected the certificate.
     """
     Pending  = "Pending"
+    Received = "Received"
     Accepted = "Accepted"
     Rejected = "Rejected"
 
@@ -120,7 +122,7 @@ class Ccm(SQLModel, table=True):
     Mandatory SAMM fields: businessPartnerNumber (bpnl), type (certificate_type),
     issuer, validFrom, trustLevel.
     Optional SAMM fields: registrationNumber, areaOfApplication, validUntil,
-    validator, uploader.
+    validator, uploader, certificateVersion, issuerBpn, validatorBpn.
     """
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -178,9 +180,23 @@ class Ccm(SQLModel, table=True):
         index=True,
         description="Expiry date of the certificate's validity period (ISO 8601 date)."
     )
-    validator: Optional[str] = Field(
+    certificate_version: Optional[str] = Field(
         default=None,
-        description="BPN or URL of the third-party validator that verified this certificate."
+        description="Version of the certificate standard (e.g. '2015' for ISO 9001:2015)."
+    )
+    validator_name: Optional[str] = Field(
+        default=None,
+        description="Name of the third-party validator that verified this certificate."
+    )
+    validator_bpn: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="BPNL of the third-party validator."
+    )
+    issuer_bpn: Optional[str] = Field(
+        default=None,
+        index=True,
+        description="BPNL of the certification authority that issued the certificate."
     )
     uploader_bpnl: Optional[str] = Field(
         default=None,
@@ -219,6 +235,7 @@ class Ccm(SQLModel, table=True):
     # --- Relationships ---
     sites: List["CcmSite"] = Relationship(back_populates="ccm")
     shares: List["CertificateShare"] = Relationship(back_populates="certificate")
+    inbound_requests: List["CcmInboundRequest"] = Relationship(back_populates="certificate")
 
     __tablename__ = "ccm"
     __table_args__ = (
@@ -249,6 +266,10 @@ class CcmSite(SQLModel, table=True):
         index=True,
         description="Business Partner Number Site (BPNS) or Address (BPNA) "
                     "covered by the certificate."
+    )
+    area_of_application: Optional[str] = Field(
+        default=None,
+        description="Scope of the certificate specific to this site."
     )
 
     # --- Relationship ---
@@ -431,6 +452,14 @@ class CcmReceived(SQLModel, table=True):
     status_updated_at: Optional[datetime] = Field(
         default=None,
         description="Timestamp of the most recent local_status change.",
+    )
+    rejection_reason: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description=(
+            "JSON-serialised rejection details sent by this consumer "
+            "(certificateErrors + locationErrors). NULL when not rejected."
+        ),
     )
 
     # --- Notification linking (CX-0135 §header) ---
@@ -654,6 +683,9 @@ class CcmInboundRequest(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         description="Timestamp of the last status update.",
     )
+
+    # --- Relationships ---
+    certificate: Optional["Ccm"] = Relationship(back_populates="inbound_requests")
 
     __tablename__ = "ccm_inbound_request"
     __table_args__ = (
