@@ -1139,7 +1139,7 @@ class TestProviderServiceMappers:
         share.certificate_id = 42
         share.consumer_bpnl = "BPNL000000000099"
         share.status = ShareStatus.Revoked
-        share.rejection_reason = '{"certificateErrors": ["Expired"]}'
+        share.rejection_reason = '{"certificateErrors": [{"message": "Expired"}]}'
         share.last_shared_date = datetime(2025, 1, 1, tzinfo=timezone.utc)
         share.created_at = datetime(2025, 1, 1, tzinfo=timezone.utc)
 
@@ -1155,8 +1155,11 @@ class TestProviderServiceMappers:
         items = service.list_shares()
 
         assert len(items) == 1
-        assert items[0].rejection_reason == '{"certificateErrors": ["Expired"]}'
         assert items[0].status == "Revoked"
+        # rejection_reason is now a typed RejectionReasonPayload, not a raw string
+        from models.services.addons.ccm_kit.v1.notifications import RejectionReasonPayload
+        assert isinstance(items[0].rejection_reason, RejectionReasonPayload)
+        assert items[0].rejection_reason.certificate_errors[0].message == "Expired"
 
 
 class TestListSharesConsumerStatus:

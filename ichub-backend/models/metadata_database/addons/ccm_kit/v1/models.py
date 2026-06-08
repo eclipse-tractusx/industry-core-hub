@@ -453,6 +453,14 @@ class CcmReceived(SQLModel, table=True):
         default=None,
         description="Timestamp of the most recent local_status change.",
     )
+    rejection_reason: Optional[str] = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description=(
+            "JSON-serialised rejection details sent by this consumer "
+            "(certificateErrors + locationErrors). NULL when not rejected."
+        ),
+    )
 
     # --- Notification linking (CX-0135 §header) ---
     notification_message_id: Optional[str] = Field(

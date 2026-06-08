@@ -1623,6 +1623,7 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
         document_id: str,
         provider_bpn: str,
         new_status: ReceivedCertificateStatus,
+        rejection_reason: Optional[str] = None,
     ) -> Optional[CcmReceived]:
         """
         Update the consumer-local processing status of a received certificate.
@@ -1634,6 +1635,8 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
             document_id: Provider-assigned document reference ID.
             provider_bpn: BPNL of the originating provider.
             new_status: New ReceivedCertificateStatus value to apply.
+            rejection_reason: Optional JSON-serialised rejection details.
+                Only set when new_status is Rejected.
 
         Returns:
             The updated CcmReceived record, or None if not found.
@@ -1643,6 +1646,8 @@ class CcmReceivedRepository(BaseRepository[CcmReceived]):
             return None
         record.local_status = new_status
         record.status_updated_at = datetime.now(timezone.utc)
+        if rejection_reason is not None:
+            record.rejection_reason = rejection_reason
         self._session.add(record)
         return record
 

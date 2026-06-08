@@ -308,6 +308,7 @@ data:
         doc bytea,
         local_status public.received_certificate_status DEFAULT 'Pending'::public.received_certificate_status NOT NULL,
         status_updated_at timestamp without time zone,
+        rejection_reason text,
         notification_message_id character varying,
         received_at timestamp without time zone DEFAULT (now() AT TIME ZONE 'utc'::text) NOT NULL
     );

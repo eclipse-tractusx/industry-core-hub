@@ -61,6 +61,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     OutboundRequestItem,
     ReceivedCertificateDetail,
     ReceivedCertificateItem,
+    RejectionReasonPayload,
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from managers.addons_service.ccm_kit.v1.notifications import (
@@ -78,6 +79,22 @@ from tools.constants import (
 )
 
 logger = LoggingManager.get_logger(__name__)
+
+
+def _parse_rejection_reason(raw: Optional[str]) -> Optional[RejectionReasonPayload]:
+    """
+    Deserialise a JSON string stored in the DB into a typed RejectionReasonPayload.
+
+    Returns None when the value is absent or cannot be parsed, so callers
+    never receive a corrupt or partially-typed object.
+    """
+    if not raw:
+        return None
+    try:
+        return RejectionReasonPayload.model_validate_json(raw)
+    except Exception:
+        logger.debug("[CCM Consumer] Could not parse rejection_reason JSON: %s", raw)
+        return None
 
 
 class CcmConsumerService(CcmBaseService):
@@ -349,12 +366,21 @@ class CcmConsumerService(CcmBaseService):
         }
         new_local_status = _STATUS_LOCAL_MAP.get(payload.certificate_status.value)
         if new_local_status is not None:
+            # Build structured rejection payload when consumer rejects.
+            rejection_reason: Optional[str] = None
+            if payload.certificate_status.value == "REJECTED":
+                rejection_payload = RejectionReasonPayload(
+                    certificate_errors=payload.certificate_errors or None,
+                    location_errors=payload.location_errors or None,
+                )
+                rejection_reason = rejection_payload.model_dump_json(by_alias=True, exclude_none=True)
             try:
                 with RepositoryManagerFactory.create() as repo:
                     repo.ccm_received_repository.update_local_status(
                         document_id=payload.document_id,
                         provider_bpn=provider_bpn,
                         new_status=new_local_status,
+                        rejection_reason=rejection_reason,
                     )
             except Exception as update_err:
                 # A failed local update must not suppress a successful notification.
@@ -828,7 +854,20 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-            return [self._to_request_item(r) for r in records]
+            items = []
+            for r in records:
+                received = (
+                    repo.ccm_received_repository.find_by_document_id(
+                        r.document_id, provider_bpn=r.provider_bpn
+                    )
+                    if r.document_id else None
+                )
+                items.append(self._to_request_item(
+                    r,
+                    local_status=received.local_status.value if received else None,
+                    rejection_reason=received.rejection_reason if received else None,
+                ))
+            return items
 
     def list_request_history(
         self,
@@ -861,7 +900,20 @@ class CcmConsumerService(CcmBaseService):
                 offset=offset,
                 limit=limit,
             )
-            return [self._to_request_item(r) for r in records]
+            items = []
+            for r in records:
+                received = (
+                    repo.ccm_received_repository.find_by_document_id(
+                        r.document_id, provider_bpn=r.provider_bpn
+                    )
+                    if r.document_id else None
+                )
+                items.append(self._to_request_item(
+                    r,
+                    local_status=received.local_status.value if received else None,
+                    rejection_reason=received.rejection_reason if received else None,
+                ))
+            return items
 
     def get_request(self, request_id: int) -> Optional[OutboundRequestItem]:
         """
@@ -879,7 +931,17 @@ class CcmConsumerService(CcmBaseService):
             if record is None:
                 return None
 
-            return self._to_request_item(record)
+            received = (
+                repo.ccm_received_repository.find_by_document_id(
+                    record.document_id, provider_bpn=record.provider_bpn
+                )
+                if record.document_id else None
+            )
+            return self._to_request_item(
+                record,
+                local_status=received.local_status.value if received else None,
+                rejection_reason=received.rejection_reason if received else None,
+            )
 
     # ------------------------------------------------------------------
     # Private mapping helpers
@@ -902,11 +964,16 @@ class CcmConsumerService(CcmBaseService):
                 record.status_updated_at.isoformat()
                 if record.status_updated_at else None
             ),
+            rejection_reason=_parse_rejection_reason(record.rejection_reason),
             received_at=record.received_at.isoformat(),
         )
 
     @staticmethod
-    def _to_request_item(record) -> OutboundRequestItem:
+    def _to_request_item(
+        record,
+        local_status: Optional[str] = None,
+        rejection_reason: Optional[str] = None,
+    ) -> OutboundRequestItem:
         """Map a CcmOutboundRequest ORM instance to an OutboundRequestItem DTO."""
         location_bpns: Optional[List[str]] = None
         if record.location_bpns:
@@ -931,6 +998,8 @@ class CcmConsumerService(CcmBaseService):
             document_id=record.document_id,
             requested_at=record.requested_at.isoformat(),
             updated_at=record.updated_at.isoformat(),
+            local_status=local_status,
+            rejection_reason=_parse_rejection_reason(rejection_reason),
         )
 
 

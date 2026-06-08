@@ -53,6 +53,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmInboundRequestItem,
     CcmPushRequest,
     CcmSendResult,
+    RejectionReasonPayload,
     ShareItem,
 )
 from models.metadata_database.addons.ccm_kit.v1.models import (
@@ -783,7 +784,10 @@ class CcmProviderService(CcmBaseService):
                         provider_bpnl=cert.bpnl if cert else "",
                         consumer_bpnl=share.consumer_bpnl,
                         status=share.status.value,
-                        rejection_reason=share.rejection_reason,
+                        rejection_reason=(
+                            RejectionReasonPayload.model_validate_json(share.rejection_reason)
+                            if share.rejection_reason else None
+                        ),
                         consumer_status=consumer_status,
                         last_shared_date=share.last_shared_date.isoformat(),
                         created_at=share.created_at.isoformat(),

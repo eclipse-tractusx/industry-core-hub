@@ -332,6 +332,7 @@ CREATE TABLE public.ccm_received (
     doc bytea,
     local_status character varying NOT NULL,
     status_updated_at timestamp without time zone,
+    rejection_reason text,
     notification_message_id character varying,
     received_at timestamp without time zone NOT NULL
 );

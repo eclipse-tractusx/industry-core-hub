@@ -660,6 +660,7 @@ class TestSendStatusLocalStatusMapping:
             document_id="doc-001",
             provider_bpn=PROVIDER_BPN,
             new_status=ReceivedCertificateStatus.Received,
+            rejection_reason=None,
         )
 
     @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
@@ -701,6 +702,7 @@ class TestSendStatusLocalStatusMapping:
             document_id="doc-002",
             provider_bpn=PROVIDER_BPN,
             new_status=ReceivedCertificateStatus.Accepted,
+            rejection_reason=None,
         )
 
 
@@ -1115,3 +1117,212 @@ class TestStoreReceivedCertificate:
 
         assert stored is True
         repos.ccm_received_repository.create_new.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# OutboundRequest localStatus enrichment tests
+# ---------------------------------------------------------------------------
+
+class TestOutboundRequestLocalStatus:
+    """Tests that list_requests / get_request expose localStatus from CcmReceived."""
+
+    def _make_outbound_record(self, document_id=None):
+        """Create a minimal CcmOutboundRequest-like mock."""
+        from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus
+        from datetime import datetime, timezone
+        record = Mock()
+        record.id = 1
+        record.sender_bpn = CONSUMER_BPN
+        record.provider_bpn = PROVIDER_BPN
+        record.certified_bpn = "BPNL000000000001"
+        record.certificate_type = "ISO9001"
+        record.location_bpns = None
+        record.status = OutboundRequestStatus.Found
+        record.notification_id = "notif-001"
+        record.document_id = document_id
+        record.requested_at = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        record.updated_at = datetime(2024, 1, 2, tzinfo=timezone.utc)
+        return record
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_none_when_no_document_id(self, mock_factory, service):
+        """
+        GIVEN an outbound request with document_id=None
+        WHEN get_request is called
+        THEN localStatus and rejectionReason are null (no CcmReceived lookup).
+        """
+        record = self._make_outbound_record(document_id=None)
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status is None
+        assert result.rejection_reason is None
+        repos.ccm_received_repository.find_by_document_id.assert_not_called()
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_from_received_record(self, mock_factory, service):
+        """
+        GIVEN document_id is set and CcmReceived.local_status = Received
+        WHEN get_request is called
+        THEN localStatus = "Received" and rejectionReason = None.
+        """
+        record = self._make_outbound_record(document_id="doc-abc")
+
+        received_mock = Mock()
+        received_mock.local_status = ReceivedCertificateStatus.Received
+        received_mock.rejection_reason = None
+
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = received_mock
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status == "Received"
+        assert result.rejection_reason is None
+        repos.ccm_received_repository.find_by_document_id.assert_called_once_with(
+            "doc-abc", provider_bpn=PROVIDER_BPN
+        )
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_none_when_no_received_record(self, mock_factory, service):
+        """
+        GIVEN document_id is set but find_by_document_id returns None
+        WHEN get_request is called
+        THEN localStatus and rejectionReason are null.
+        """
+        record = self._make_outbound_record(document_id="doc-missing")
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = None
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status is None
+        assert result.rejection_reason is None
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    def test_local_status_rejected_with_reason(self, mock_factory, service):
+        """
+        GIVEN CcmReceived.local_status = Rejected with rejection_reason JSON
+        WHEN get_request is called
+        THEN localStatus = "Rejected" and rejectionReason is a typed RejectionReasonPayload.
+        """
+        import json
+        from models.services.addons.ccm_kit.v1.notifications import RejectionReasonPayload
+
+        record = self._make_outbound_record(document_id="doc-rej")
+
+        # Store a properly structured JSON string in the DB (what the service writes).
+        rejection_json = json.dumps({
+            "certificateErrors": [{"message": "Certificate has expired"}]
+        })
+        received_mock = Mock()
+        received_mock.local_status = ReceivedCertificateStatus.Rejected
+        received_mock.rejection_reason = rejection_json
+
+        repos = Mock()
+        repos.ccm_outbound_request_repository.find_by_id.return_value = record
+        repos.ccm_received_repository.find_by_document_id.return_value = received_mock
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        result = service.get_request(1)
+
+        assert result is not None
+        assert result.local_status == "Rejected"
+        # rejection_reason is now a typed object, not a raw string
+        assert isinstance(result.rejection_reason, RejectionReasonPayload)
+        assert result.rejection_reason.certificate_errors is not None
+        assert result.rejection_reason.certificate_errors[0].message == "Certificate has expired"
+
+
+# ---------------------------------------------------------------------------
+# send_certificate_status REJECTED saves rejection_reason
+# ---------------------------------------------------------------------------
+
+class TestSendStatusRejectionReason:
+    """Tests that send_certificate_status persists rejection_reason when REJECTED."""
+
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.RepositoryManagerFactory")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.NotificationConsumerService")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.ConfigManager")
+    @patch("services.addons.ccm_kit.v1.ccm_base_service.connector_manager")
+    @patch("services.addons.ccm_kit.v1.ccm_consumer_service.consumer_connector_service")
+    def test_rejected_saves_rejection_reason(
+        self, mock_ccs, mock_cm, mock_config, mock_ncs_class, mock_factory, service
+    ):
+        """
+        GIVEN certificateStatus=REJECTED with certificateErrors and locationErrors
+        WHEN send_certificate_status is called
+        THEN update_local_status is called with a structured JSON rejection_reason
+             containing certificateErrors (list of {message}) and locationErrors
+             (list of {bpn, locationErrors: [{message}]}).
+        """
+        import json
+        from models.services.addons.ccm_kit.v1.notifications import (
+            CcmSendStatusPayload,
+            CertificateErrorDetail,
+            LocationErrorDetail,
+        )
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_config.get_config.return_value = None
+
+        mock_ncs = Mock()
+        mock_ncs_class.return_value = mock_ncs
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://dataplane.example.com/public", "token-rej"
+        )
+        mock_ncs.send_notification_to_endpoint.return_value = {"status": "sent"}
+
+        repos = Mock()
+        mock_factory.create.return_value.__enter__.return_value = repos
+
+        payload = CcmSendStatusPayload(
+            senderBpn=CONSUMER_BPN,
+            providerBpn=PROVIDER_BPN,
+            documentId="doc-rej-001",
+            certificateStatus=CertificateStatusValue.REJECTED,
+            certificateErrors=[CertificateErrorDetail(message="Certificate has expired")],
+            locationErrors=[
+                LocationErrorDetail(
+                    bpn="BPNS000000000001",
+                    locationErrors=[
+                        CertificateErrorDetail(message="Area of application mismatch"),
+                    ],
+                )
+            ],
+        )
+        result = service.send_certificate_status(payload, CONSUMER_BPN)
+
+        assert result.success is True
+        call_kwargs = repos.ccm_received_repository.update_local_status.call_args
+        assert call_kwargs is not None
+        kwargs = call_kwargs.kwargs if call_kwargs.kwargs else {}
+
+        # Must be called with Rejected status
+        assert kwargs.get("new_status") == ReceivedCertificateStatus.Rejected
+
+        # rejection_reason must be a structured JSON string
+        rejection_reason = kwargs.get("rejection_reason")
+        assert rejection_reason is not None
+        parsed = json.loads(rejection_reason)
+
+        # Certificate-level errors: list of {"message": "..."}
+        assert "certificateErrors" in parsed
+        assert parsed["certificateErrors"] == [{"message": "Certificate has expired"}]
+
+        # Site-level errors: list of {"bpn": "...", "locationErrors": [{"message": "..."}]}
+        assert "locationErrors" in parsed
+        assert len(parsed["locationErrors"]) == 1
+        loc = parsed["locationErrors"][0]
+        assert loc["bpn"] == "BPNS000000000001"
+        assert loc["locationErrors"] == [{"message": "Area of application mismatch"}]
