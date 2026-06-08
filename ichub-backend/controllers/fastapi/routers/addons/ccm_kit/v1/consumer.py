@@ -108,8 +108,6 @@ async def send_certificate_request(payload: CcmSendRequestPayload) -> CcmSendRes
         result = ccm_consumer_service.send_certificate_request(
             payload, payload.sender_bpn
         )
-        if not result.success:
-            raise HTTPException(status_code=502, detail=result.error)
         return result
     except HTTPException:
         raise
@@ -135,8 +133,6 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
         result = ccm_consumer_service.send_certificate_status(
             payload, payload.sender_bpn
         )
-        if not result.success:
-            raise HTTPException(status_code=502, detail=result.error)
         return result
     except HTTPException:
         raise
