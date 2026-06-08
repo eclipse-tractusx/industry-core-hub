@@ -70,7 +70,9 @@ import {
   OutboundRequestItem,
   OutboundRequestStatus,
   ReceivedCertificateDetail,
+  ReceivedLocalStatus,
 } from '../types/types';
+import { usePartners } from '@/contexts/PartnerContext';
 import type { Certificate } from '../../certificate-management/types/types';
 import { CertificatePDFViewer } from '../../certificate-management/components/dialogs/CertificatePDFViewer';
 import { CertificateInfoPanel } from '../../certificate-management/components/dialogs/CertificateInfoPanel';
@@ -153,8 +155,9 @@ const buildCertificate = (req: OutboundRequestItem, detail?: ReceivedCertificate
 });
 
 const CcmConsumption = () => {
+  const { getContactName } = usePartners();
   const [requests, setRequests] = useState<OutboundRequestItem[]>([]);
-  const [receivedDocIds, setReceivedDocIds] = useState<Set<string>>(new Set());
+  const [receivedMap, setReceivedMap] = useState<Map<string, ReceivedLocalStatus>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
@@ -190,7 +193,7 @@ const CcmConsumption = () => {
     try {
       const [reqs, received] = await Promise.all([fetchRequests(), fetchReceived()]);
       setRequests(reqs);
-      setReceivedDocIds(new Set(received.map((r) => r.documentId)));
+      setReceivedMap(new Map(received.map((r) => [r.documentId, r.localStatus])));
     } catch {
       setError('Failed to load certificate requests.');
     } finally {
@@ -207,14 +210,14 @@ const CcmConsumption = () => {
     return requests.filter((r) => {
       const matchesSearch =
         !s ||
-        [r.providerBpn, r.certifiedBpn, typeLabel(r.certificateType), r.status].some((v) =>
+        [r.providerBpn, getContactName(r.providerBpn), r.certifiedBpn, typeLabel(r.certificateType), r.status].some((v) =>
           v?.toLowerCase().includes(s),
         );
       const matchesStatus = !filterValues.status || r.status === filterValues.status;
       const matchesType = !filterValues.type || r.certificateType === filterValues.type;
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [requests, search, filterValues]);
+  }, [requests, search, filterValues, getContactName]);
 
   const visibleRows = useMemo(
     () => filteredRequests.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE),
@@ -240,14 +243,14 @@ const CcmConsumption = () => {
     if (!req.documentId) return;
     setBusyRowId(req.id);
     try {
-      const alreadyReceived = receivedDocIds.has(req.documentId);
+      const alreadyReceived = receivedMap.has(req.documentId);
       if (!alreadyReceived) {
         await pullCertificate({
           providerBpn: req.providerBpn,
           documentId: req.documentId,
           governance: CCM_POLICY_GOVERNANCE,
         });
-        setReceivedDocIds((prev) => new Set(prev).add(req.documentId!));
+        setReceivedMap((prev) => new Map(prev).set(req.documentId!, 'Pending'));
         notify('Certificate pulled successfully.');
       }
       const detail = await fetchReceivedDetail(req.documentId, req.providerBpn);
@@ -342,7 +345,9 @@ const CcmConsumption = () => {
                 <TableBody>
                   {visibleRows.map((req) => {
                     const isFound = req.status === 'Found' && !!req.documentId;
-                    const alreadyReceived = !!req.documentId && receivedDocIds.has(req.documentId);
+                    const alreadyReceived = !!req.documentId && receivedMap.has(req.documentId);
+                    const receivedStatus = req.documentId ? receivedMap.get(req.documentId) : undefined;
+                    const feedbackAllowed = isFound && receivedStatus !== 'Accepted' && receivedStatus !== 'Rejected';
                     const rowBusy = busyRowId === req.id;
                     return (
                       <TableRow
@@ -404,7 +409,7 @@ const CcmConsumption = () => {
                                 <Button
                                   size="small"
                                   sx={actionIconSx}
-                                  disabled={!isFound}
+                                  disabled={!feedbackAllowed}
                                   onClick={() => setStatusDialogRequest(req)}
                                 >
                                   <RateReviewIcon fontSize="small" />
@@ -455,7 +460,8 @@ const CcmConsumption = () => {
         open={!!detailRequest}
         request={detailRequest}
         onClose={() => setDetailRequest(null)}
-        alreadyReceived={!!detailRequest?.documentId && receivedDocIds.has(detailRequest.documentId)}
+        alreadyReceived={!!detailRequest?.documentId && receivedMap.has(detailRequest.documentId)}
+        localStatus={detailRequest?.documentId ? receivedMap.get(detailRequest.documentId) : undefined}
         pullBusy={detailRequest !== null && busyRowId === detailRequest.id}
         onPullOrView={(req) => void handlePullOrView(req)}
         onHistory={(req) => setHistoryRequest(req)}

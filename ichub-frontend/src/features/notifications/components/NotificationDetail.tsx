@@ -991,6 +991,7 @@ const NotificationDetail: React.FC = () => {
               padding: '8px 16px',
               transition: 'all 0.2s ease',
               '&:hover': {
+                color: '#00bcd4',
                 borderColor: '#00bcd4',
                 backgroundColor: 'rgba(0, 188, 212, 0.1)',
                 transform: 'translateY(-1px)',
@@ -1087,6 +1088,7 @@ const NotificationDetail: React.FC = () => {
                   padding: '8px 16px',
                   transition: 'all 0.2s ease',
                   '&:hover': {
+                    color: '#9D6FD4',
                     borderColor: '#9D6FD4',
                     backgroundColor: 'rgba(157, 111, 212, 0.1)',
                     transform: 'translateY(-1px)',

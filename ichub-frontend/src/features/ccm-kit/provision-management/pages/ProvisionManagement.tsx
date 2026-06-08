@@ -61,6 +61,7 @@ import type { FilterDef } from '@/features/ccm-kit/shared-components';
 import { fetchInboundRequests, fetchShares } from '../api';
 import { ccmSharedConfig } from '../config';
 import { InboundRequestItem, InboundRequestStatus, ShareItem, ShareStatus } from '../types/types';
+import { usePartners } from '@/contexts/PartnerContext';
 import ProvideCertificateDialog, { ProvideMode } from '../components/dialogs/ProvideCertificateDialog';
 import PushCertificateDialog from '../components/dialogs/PushCertificateDialog';
 import InboundRequestDetailDialog from '../components/dialogs/InboundRequestDetailDialog';
@@ -163,6 +164,7 @@ const provideButtonSx = {
 } as const;
 
 const ProvisionManagement = () => {
+  const { getContactName } = usePartners();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'shares' ? 1 : 0;
   const [tab, setTab] = useState(initialTab);
@@ -222,7 +224,7 @@ const ProvisionManagement = () => {
     return inbound.filter((r) => {
       const matchesSearch =
         !s ||
-        [r.consumerBpn, r.certifiedBpn, typeLabel(r.certificateType), r.status, r.consumerStatus ?? '']
+        [r.consumerBpn, getContactName(r.consumerBpn), r.certifiedBpn, typeLabel(r.certificateType), r.status, r.consumerStatus ?? '']
           .some((v) => v?.toLowerCase().includes(s));
       const matchesStatus = !inboundFilterValues.status || r.status === inboundFilterValues.status;
       const matchesConsumerStatus =
@@ -230,19 +232,19 @@ const ProvisionManagement = () => {
       const matchesType = !inboundFilterValues.type || r.certificateType === inboundFilterValues.type;
       return matchesSearch && matchesStatus && matchesConsumerStatus && matchesType;
     });
-  }, [inbound, inboundSearch, inboundFilterValues]);
+  }, [inbound, inboundSearch, inboundFilterValues, getContactName]);
 
   const filteredShares = useMemo(() => {
     const s = sharesSearch.trim().toLowerCase();
     return shares.filter((sh) => {
       const matchesSearch =
         !s ||
-        [sh.consumerBpnl, typeLabel(sh.certificateType), sh.status].some((v) => v?.toLowerCase().includes(s));
+        [sh.consumerBpnl, getContactName(sh.consumerBpnl), typeLabel(sh.certificateType), sh.status].some((v) => v?.toLowerCase().includes(s));
       const matchesStatus = !sharesFilterValues.status || sh.status === sharesFilterValues.status;
       const matchesType = !sharesFilterValues.type || sh.certificateType === sharesFilterValues.type;
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [shares, sharesSearch, sharesFilterValues]);
+  }, [shares, sharesSearch, sharesFilterValues, getContactName]);
 
   const visibleInbound = useMemo(
     () => filteredInbound.slice(inboundPage * ROWS_PER_PAGE, (inboundPage + 1) * ROWS_PER_PAGE),

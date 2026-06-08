@@ -29,13 +29,14 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import { CcmDialog } from '@/features/ccm-kit/shared-components';
 
 import { ccmSharedConfig } from '../../config';
-import { OutboundRequestItem, OutboundRequestStatus } from '../../types/types';
+import { OutboundRequestItem, OutboundRequestStatus, ReceivedLocalStatus } from '../../types/types';
 
 interface OutboundRequestDetailDialogProps {
   open: boolean;
   request: OutboundRequestItem | null;
   onClose: () => void;
   alreadyReceived?: boolean;
+  localStatus?: ReceivedLocalStatus;
   pullBusy?: boolean;
   onPullOrView: (req: OutboundRequestItem) => void;
   onHistory: (req: OutboundRequestItem) => void;
@@ -80,6 +81,7 @@ const OutboundRequestDetailDialog = ({
   request,
   onClose,
   alreadyReceived,
+  localStatus,
   pullBusy,
   onPullOrView,
   onHistory,
@@ -88,6 +90,7 @@ const OutboundRequestDetailDialog = ({
   if (!request) return null;
 
   const isFound = request.status === 'Found' && !!request.documentId;
+  const feedbackAllowed = isFound && localStatus !== 'Accepted' && localStatus !== 'Rejected';
 
   const handlePullOrView = () => {
     onClose();
@@ -130,7 +133,7 @@ const OutboundRequestDetailDialog = ({
             color="primary"
             size="small"
             startIcon={<RateReviewIcon fontSize="small" />}
-            disabled={!isFound}
+            disabled={!feedbackAllowed}
             onClick={handleFeedback}
             sx={{ textTransform: 'none', flex: 1 }}
           >
@@ -174,6 +177,7 @@ const OutboundRequestDetailDialog = ({
           <InfoField label="Document ID" value={request.documentId} mono />
           <InfoField label="Requested" value={formatDate(request.requestedAt)} />
           <InfoField label="Updated" value={formatDate(request.updatedAt)} />
+          {localStatus && <InfoField label="Local Status" value={localStatus} />}
         </Box>
 
         {/* Location BPNs */}
