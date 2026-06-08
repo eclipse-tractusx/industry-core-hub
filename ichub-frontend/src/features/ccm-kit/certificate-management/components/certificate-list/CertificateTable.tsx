@@ -21,14 +21,12 @@
  ********************************************************************************/
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
-  TableRow,
-  TablePagination,
   Box,
   Typography,
   Tooltip,
@@ -40,6 +38,14 @@ import PublishIcon from '@mui/icons-material/Publish';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import {
+  CcmTablePaper,
+  CcmHeaderRow,
+  CcmHeaderCell,
+  CcmBodyRow,
+  CcmBodyCell,
+  CcmTablePagination,
+} from '@/features/ccm-kit/shared-components';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
 
@@ -64,6 +70,7 @@ export const CertificateTable = ({
   onDelete,
   onInfo,
 }: CertificateTableProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -98,12 +105,19 @@ export const CertificateTable = ({
     return map[type] ?? type;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const formatDate = (dateString?: string | null): string => {
+    if (!dateString) return '—';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '—';
+    const now = new Date();
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (isToday) {
+      return t('certTable.dateToday', { time: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) });
+    }
+    return d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const getStatusColor = (status: string) => {
@@ -115,44 +129,39 @@ export const CertificateTable = ({
     return (
       <Box sx={{ py: 6, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)' }}>
-          No certificates found. Upload a certificate to get started.
+          {t('certTable.empty')}
         </Typography>
       </Box>
     );
   }
 
   return (
-    <>
-      <TableContainer sx={{ borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)', background: 'linear-gradient(135deg, rgba(30,30,30,0.95) 0%, rgba(20,20,20,0.95) 100%)' }}>
+    <CcmTablePaper sx={{ flex: 1, minHeight: 0 }}>
+      <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-              <TableCell sx={{ width: 56, p: 0, borderBottom: '1px solid rgba(255,255,255,0.1)' }} />
-              {(['Certificate', 'Type', 'Issuer', 'Valid Until', 'Status'] as const).map((label) => (
-                <TableCell key={label} sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.07em', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>{label}</TableCell>
+            <CcmHeaderRow>
+              <CcmHeaderCell sx={{ width: 56, p: 0 }} />
+              {([
+                t('certTable.columns.certificate'),
+                t('certTable.columns.type'),
+                t('certTable.columns.issuer'),
+                t('certTable.columns.validUntil'),
+                t('certTable.columns.status'),
+              ]).map((label) => (
+                <CcmHeaderCell key={label}>{label}</CcmHeaderCell>
               ))}
-              <TableCell align="center" sx={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.07em', width: 220, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>Actions</TableCell>
-            </TableRow>
+              <CcmHeaderCell align="center" sx={{ width: 220 }}>{t('certTable.columns.actions')}</CcmHeaderCell>
+            </CcmHeaderRow>
           </TableHead>
           <TableBody>
             {visibleRows.map((certificate) => {
               const statusColor = getStatusColor(certificate.status);
               return (
-                <TableRow
-                  key={certificate.id}
-                  onClick={() => onView(certificate)}
-                  sx={{
-                    cursor: 'pointer',
-                    '&:last-child td': { border: 0 },
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' },
-                  }}
-                >
+                <CcmBodyRow key={certificate.id} onClick={() => onView(certificate)}>
                   {/* Info button */}
-                  <TableCell
-                    sx={{ width: 56, pl: 2, pr: 0.5, borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Tooltip title="Certificate details">
+                  <CcmBodyCell sx={{ width: 56, pl: 2, pr: 0.5 }} onClick={(e) => e.stopPropagation()}>
+                    <Tooltip title={t('certTable.tooltips.certDetails')}>
                       <IconButton
                         size="small"
                         onClick={(e) => { e.stopPropagation(); onInfo(certificate); }}
@@ -161,10 +170,10 @@ export const CertificateTable = ({
                         <InfoOutlinedIcon sx={{ fontSize: 18 }} />
                       </IconButton>
                     </Tooltip>
-                  </TableCell>
+                  </CcmBodyCell>
 
                   {/* Name + cert ID */}
-                  <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <CcmBodyCell>
                     <Tooltip title={certificate.bpn} placement="top">
                       <Typography variant="body2" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.87)' }}>
                         {certificate.name}
@@ -175,10 +184,10 @@ export const CertificateTable = ({
                         {certificate.certificateIdentifier}
                       </Typography>
                     )}
-                  </TableCell>
+                  </CcmBodyCell>
 
                   {/* Type chip */}
-                  <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <CcmBodyCell>
                     <Tooltip title={getCertificateTypeLabel(certificate.type)}>
                       <Chip
                         label={getCertificateTypeShort(certificate.type)}
@@ -194,19 +203,21 @@ export const CertificateTable = ({
                         }}
                       />
                     </Tooltip>
-                  </TableCell>
+                  </CcmBodyCell>
 
                   {/* Issuer */}
-                  <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <CcmBodyCell>
                     <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>{certificate.issuer}</Typography>
-                  </TableCell>
+                  </CcmBodyCell>
 
-                  {/* Valid Until — colored when near expiry */}
-                  <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  {/* Valid Until — colored when near expiry, dash when empty */}
+                  <CcmBodyCell>
                     <Typography
                       variant="body2"
                       sx={{
-                        color: certificate.status === 'expired'
+                        color: !certificate.validUntil
+                          ? 'rgba(255,255,255,0.3)'
+                          : certificate.status === 'expired'
                           ? '#f44336'
                           : certificate.status === 'expiring'
                           ? '#ed8936'
@@ -216,10 +227,10 @@ export const CertificateTable = ({
                     >
                       {formatDate(certificate.validUntil)}
                     </Typography>
-                  </TableCell>
+                  </CcmBodyCell>
 
                   {/* Status chip */}
-                  <TableCell sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <CcmBodyCell>
                     <Chip
                       label={certificate.status}
                       size="small"
@@ -231,17 +242,17 @@ export const CertificateTable = ({
                         border: `1px solid ${statusColor}44`,
                       }}
                     />
-                  </TableCell>
+                  </CcmBodyCell>
 
                   {/* Action buttons */}
-                  <TableCell align="center" sx={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }} onClick={(e) => e.stopPropagation()}>
+                  <CcmBodyCell align="center" onClick={(e) => e.stopPropagation()}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 }}>
                       <Tooltip
                         title={
                           certificate.status === 'expired'
-                            ? 'Cannot publish expired certificates'
+                            ? t('certTable.tooltips.cannotPublishExpired')
                             : publishedIds?.has(certificate.id)
-                              ? 'Already published to the EDC network'
+                              ? t('certTable.tooltips.alreadyPublished')
                               : ''
                         }
                         placement="top"
@@ -255,7 +266,7 @@ export const CertificateTable = ({
                             onClick={(e) => { e.stopPropagation(); onPublish(certificate); }}
                             sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(100,181,246,0.4)', color: '#64b5f6', '&:hover': { borderColor: '#64b5f6', backgroundColor: 'rgba(100,181,246,0.1)', color: '#64b5f6' }, '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.3)' } }}
                           >
-                            Publish
+                            {t('certTable.buttons.publish')}
                           </Button>
                         </span>
                       </Tooltip>
@@ -266,7 +277,7 @@ export const CertificateTable = ({
                         onClick={(e) => { e.stopPropagation(); onUpdate(certificate); }}
                         sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(129,199,132,0.4)', color: '#81c784', '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.1)', color: '#81c784' } }}
                       >
-                        Update
+                        {t('certTable.buttons.update')}
                       </Button>
                       <Button
                         size="small"
@@ -275,34 +286,25 @@ export const CertificateTable = ({
                         onClick={(e) => { e.stopPropagation(); onDelete(certificate); }}
                         sx={{ textTransform: 'none', fontSize: '0.7rem', py: '2px', px: '8px', minWidth: 0, borderColor: 'rgba(239,154,154,0.4)', color: '#ef9a9a', '&:hover': { borderColor: '#ef9a9a', backgroundColor: 'rgba(239,154,154,0.1)', color: '#ef9a9a' } }}
                       >
-                        Delete
+                        {t('certTable.buttons.delete')}
                       </Button>
                     </Box>
-                  </TableCell>
-                </TableRow>
+                  </CcmBodyCell>
+                </CcmBodyRow>
               );
             })}
           </TableBody>
         </Table>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={certificates.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{
-            color: 'rgba(255,255,255,0.6)',
-            borderTop: '1px solid rgba(255,255,255,0.08)',
-            '& .MuiTablePagination-selectIcon': { color: 'rgba(255,255,255,0.5)' },
-            '& .MuiTablePagination-select': { color: 'rgba(255,255,255,0.8)' },
-            '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.6)' },
-            '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' },
-          }}
-        />
       </TableContainer>
-
-    </>
+      <CcmTablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={certificates.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </CcmTablePaper>
   );
 };

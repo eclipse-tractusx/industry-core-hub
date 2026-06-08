@@ -21,6 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import { Box, Chip, Divider, Typography } from '@mui/material';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
@@ -34,12 +35,12 @@ interface CertificateInfoPanelProps {
 
 const formatDate = (d?: string) => {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  return new Date(d).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
 const formatDateTime = (d?: string) => {
   if (!d) return '—';
-  return new Date(d).toLocaleString('en-US', {
+  return new Date(d).toLocaleString([], {
     year: 'numeric', month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -94,6 +95,7 @@ const TRUST_LEVEL_COLORS: Record<string, string> = {
 };
 
 export const CertificateInfoPanel = ({ open, certificate, onClose }: CertificateInfoPanelProps) => {
+  const { t } = useTranslation('certificateManagement');
   if (!certificate) return null;
 
   const typeLabel =
@@ -133,26 +135,26 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
     <InfoPanel
       open={open}
       onClose={onClose}
-      title={certificate.name || '(No name)'}
+      title={certificate.name || t('infoPanel.noName')}
       headerChips={headerChips}
     >
       <Box sx={{ px: 2.5, pb: 3 }}>
-        <SectionLabel>Core Information</SectionLabel>
-        <FieldRow label="Issuer" value={certificate.issuer} />
-        <FieldRow label="BPN Holder" value={certificate.bpn} mono />
+        <SectionLabel>{t('infoPanel.coreInfo')}</SectionLabel>
+        <FieldRow label={t('infoPanel.issuer')} value={certificate.issuer} />
+        <FieldRow label={t('infoPanel.bpnHolder')} value={certificate.bpn} mono />
         {certificate.uploaderBpnl && (
-          <FieldRow label="Uploader BPN" value={certificate.uploaderBpnl} mono />
+          <FieldRow label={t('infoPanel.uploaderBpn')} value={certificate.uploaderBpnl} mono />
         )}
 
-        <SectionLabel>Validity</SectionLabel>
-        <FieldRow label="Valid From" value={formatDate(certificate.validFrom)} />
-        <FieldRow label="Valid Until" value={formatDate(certificate.validUntil)} />
+        <SectionLabel>{t('infoPanel.validity')}</SectionLabel>
+        <FieldRow label={t('infoPanel.validFrom')} value={formatDate(certificate.validFrom)} />
+        <FieldRow label={t('infoPanel.validUntil')} value={formatDate(certificate.validUntil)} />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.75 }}>
           <Typography
             variant="caption"
             sx={{ color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}
           >
-            Trust Level
+            {t('infoPanel.trustLevel')}
           </Typography>
           {certificate.trustLevel ? (
             <Chip
@@ -172,14 +174,14 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
           )}
         </Box>
 
-        <SectionLabel>Scope & Application</SectionLabel>
-        <FieldRow label="Reg. Number" value={certificate.certificateIdentifier} mono />
-        <FieldRow label="Area of Application" value={certificate.areaOfApplication} />
-        <FieldRow label="Validator" value={certificate.validator} />
+        <SectionLabel>{t('infoPanel.scopeApp')}</SectionLabel>
+        <FieldRow label={t('infoPanel.regNumber')} value={certificate.certificateIdentifier} mono />
+        <FieldRow label={t('infoPanel.areaOfApplication')} value={certificate.areaOfApplication} />
+        <FieldRow label={t('infoPanel.validator')} value={certificate.validator} />
 
         {(certificate.enclosedSitesBpn?.length ?? 0) > 0 && (
           <>
-            <SectionLabel>Associated Sites</SectionLabel>
+            <SectionLabel>{t('infoPanel.associatedSites')}</SectionLabel>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
               {certificate.enclosedSitesBpn!.map((bpn) => (
                 <Chip
@@ -201,7 +203,7 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
 
         {certificate.description && (
           <>
-            <SectionLabel>Description</SectionLabel>
+            <SectionLabel>{t('infoPanel.descriptionLabel')}</SectionLabel>
             <Typography
               variant="body2"
               sx={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, mt: 0.5, whiteSpace: 'pre-wrap' }}
@@ -211,10 +213,10 @@ export const CertificateInfoPanel = ({ open, certificate, onClose }: Certificate
           </>
         )}
 
-        <SectionLabel>Metadata</SectionLabel>
-        <FieldRow label="Certificate ID" value={certificate.id} mono />
-        <FieldRow label="Created" value={formatDateTime(certificate.createdAt)} />
-        <FieldRow label="Updated" value={formatDateTime(certificate.updatedAt)} />
+        <SectionLabel>{t('infoPanel.metadata')}</SectionLabel>
+        <FieldRow label={t('infoPanel.certificateId')} value={certificate.id} mono />
+        <FieldRow label={t('infoPanel.created')} value={formatDateTime(certificate.createdAt)} />
+        <FieldRow label={t('infoPanel.updated')} value={formatDateTime(certificate.updatedAt)} />
       </Box>
     </InfoPanel>
   );

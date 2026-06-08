@@ -24,6 +24,7 @@
 import { getParticipantId } from '@/services/EnvironmentService';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -56,13 +57,6 @@ import { BpnsInput } from '@/features/ccm-kit/shared-components';
 // type selectors so the options stay consistent.
 const CERTIFICATE_TYPES = certificateManagementConfig.certificateTypes;
 
-// Trust levels mirror the backend TrustLevelEnum (none/low/high/trusted).
-const TRUST_LEVELS = [
-  { value: 'none', label: 'None' },
-  { value: 'low', label: 'Low' },
-  { value: 'high', label: 'High' },
-  { value: 'trusted', label: 'Trusted' },
-];
 
 const initialFormData = {
   certificateType: '',
@@ -88,14 +82,19 @@ export const UploadCertificateDialog = ({
   onSave,
   certificateData
 }: UploadCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof initialFormData, string>>>({});
   const [fileError, setFileError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const isEditing = !!certificateData;
   const [activeStep, setActiveStep] = useState(0);
-  const STEPS = ['Certificate Details', 'Validity & Scope', 'Certificate File'];
+  const STEPS = [
+    t('uploadDialog.steps.certDetails'),
+    t('uploadDialog.steps.validityScope'),
+    t('uploadDialog.steps.certFile'),
+  ];
 
   const userBpn = getParticipantId() || 'BPNL00000003CRHK';
 
@@ -158,12 +157,12 @@ export const UploadCertificateDialog = ({
     if (!file) return;
 
     if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      setFileError('Invalid file type. Only PDF certificates are allowed.');
+      setFileError(t('uploadDialog.errors.invalidFileType'));
       return;
     }
-    
+
     if (file.size > MAX_FILE_SIZE) {
-      setFileError('File size exceeds the maximum 10MB limit.');
+      setFileError(t('uploadDialog.errors.fileTooLarge'));
       return;
     }
     
@@ -192,17 +191,17 @@ export const UploadCertificateDialog = ({
     const newErrors: Partial<Record<keyof typeof initialFormData, string>> = {};
     
     if (step === 0) {
-      if (!formData.certificateType) newErrors.certificateType = 'Certificate type is required';
-      if (!formData.issuer.trim()) newErrors.issuer = 'Issuer is required';
+      if (!formData.certificateType) newErrors.certificateType = t('uploadDialog.errors.certTypeRequired');
+      if (!formData.issuer.trim()) newErrors.issuer = t('uploadDialog.errors.issuerRequired');
     }
     if (step === 1) {
-      if (!formData.validFrom) newErrors.validFrom = 'Valid from date is required';
+      if (!formData.validFrom) newErrors.validFrom = t('uploadDialog.errors.validFromRequired');
       if (formData.validFrom && formData.validUntil && new Date(formData.validFrom) >= new Date(formData.validUntil)) {
-        newErrors.validUntil = 'Valid until must be after valid from';
+        newErrors.validUntil = t('uploadDialog.errors.validUntilAfterFrom');
       }
     }
     if (step === 2) {
-      if (!formData.file && !isEditing) newErrors.file = 'Certificate file is required';
+      if (!formData.file && !isEditing) newErrors.file = t('uploadDialog.errors.fileRequired');
     }
     
     setErrors(prev => ({ ...prev, ...newErrors }));
@@ -279,7 +278,7 @@ export const UploadCertificateDialog = ({
           <VerifiedUserOutlinedIcon sx={{ fontSize: 24, color: 'white' }} />
           <Box>
             <Typography variant="h6" component="span" fontWeight={600} sx={{ color: 'white', lineHeight: 1.2 }}>
-              {isEditing ? 'Edit Certificate' : 'Upload Certificate'}
+              {isEditing ? t('uploadDialog.editTitle') : t('uploadDialog.title')}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.75)', display: 'block' }}>
               {STEPS[activeStep]}
@@ -310,7 +309,7 @@ export const UploadCertificateDialog = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <DescriptionOutlinedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
                 <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                  Certificate Core Details
+                  {t('uploadDialog.sections.coreDetails')}
                 </Typography>
               </Box>
             </Grid2>
@@ -347,9 +346,9 @@ export const UploadCertificateDialog = ({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Certificate Type"
+                    label={t('uploadDialog.fields.certType')}
                     error={!!errors.certificateType}
-                    helperText={errors.certificateType ?? 'Search or type a certificate type'}
+                    helperText={errors.certificateType ?? t('uploadDialog.fields.certTypeHelper')}
                     required
                   />
                 )}
@@ -358,33 +357,33 @@ export const UploadCertificateDialog = ({
             <Grid2 size={12}>
               <TextField
                 fullWidth
-                label="Certificate Name"
+                label={t('uploadDialog.fields.certName')}
                 value={formData.certificateName}
                 onChange={handleChange('certificateName')}
-                placeholder="e.g. Quality Management System Certificate"
+                placeholder={t('uploadDialog.fields.certNamePlaceholder')}
               />
             </Grid2>
             <Grid2 size={12}>
               <TextField
                 fullWidth
-                label="Issuer / Certification Body"
+                label={t('uploadDialog.fields.issuer')}
                 value={formData.issuer}
                 onChange={handleChange('issuer')}
                 error={!!errors.issuer}
                 helperText={errors.issuer}
                 required
-                placeholder="e.g. DEKRA, TÜV SÜD"
+                placeholder={t('uploadDialog.fields.issuerPlaceholder')}
               />
             </Grid2>
             <Grid2 size={12}>
               <TextField
                 fullWidth
-                label="Description"
+                label={t('uploadDialog.fields.description')}
                 value={formData.description}
                 onChange={handleChange('description')}
                 multiline
                 rows={2}
-                placeholder="Optional description or notes about the scope"
+                placeholder={t('uploadDialog.fields.descriptionPlaceholder')}
               />
             </Grid2>
           </Grid2>
@@ -397,7 +396,7 @@ export const UploadCertificateDialog = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <BusinessOutlinedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
                 <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                  Validity, Trust & Application Context
+                  {t('uploadDialog.sections.validityContext')}
                 </Typography>
               </Box>
             </Grid2>
@@ -406,10 +405,10 @@ export const UploadCertificateDialog = ({
             <Grid2 size={12}>
               <TextField
                 fullWidth
-                label="Organization BPNL (Holder)"
+                label={t('uploadDialog.fields.orgBpnl')}
                 value={userBpn}
                 disabled
-                helperText="This certificate will be registered under your organization ID"
+                helperText={t('uploadDialog.fields.orgBpnlHelper')}
               />
             </Grid2>
 
@@ -417,7 +416,7 @@ export const UploadCertificateDialog = ({
               <TextField
                 fullWidth
                 type="date"
-                label="Valid From"
+                label={t('uploadDialog.fields.validFrom')}
                 value={formData.validFrom}
                 onChange={handleChange('validFrom')}
                 error={!!errors.validFrom}
@@ -430,7 +429,7 @@ export const UploadCertificateDialog = ({
               <TextField
                 fullWidth
                 type="date"
-                label="Valid Until"
+                label={t('uploadDialog.fields.validUntil')}
                 value={formData.validUntil}
                 onChange={handleChange('validUntil')}
                 error={!!errors.validUntil}
@@ -443,20 +442,22 @@ export const UploadCertificateDialog = ({
               <TextField
                 select
                 fullWidth
-                label="Trust Level"
+                label={t('uploadDialog.fields.trustLevel')}
                 value={formData.trustLevel}
                 onChange={(e) => handleSelectChange('trustLevel')(e as SelectChangeEvent)}
               >
-                {TRUST_LEVELS.map(level => (
-                  <MenuItem key={level.value} value={level.value}>{level.label}</MenuItem>
+                {(['none', 'low', 'high', 'trusted'] as const).map((value) => (
+                  <MenuItem key={value} value={value}>
+                    {t(`uploadDialog.fields.trust${value.charAt(0).toUpperCase()}${value.slice(1)}`)}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid2>
             <Grid2 size={6}>
               <TextField
                 fullWidth
-                label="Registration Number"
-                placeholder="e.g. REG-123456-XYZ"
+                label={t('uploadDialog.fields.regNumber')}
+                placeholder={t('uploadDialog.fields.regNumberPlaceholder')}
                 value={formData.registrationNumber}
                 onChange={handleChange('registrationNumber')}
               />
@@ -465,21 +466,21 @@ export const UploadCertificateDialog = ({
             <Grid2 size={6}>
               <TextField
                 fullWidth
-                label="Area of Application"
-                placeholder="e.g. Powertrain Plant, Procurement Dept"
+                label={t('uploadDialog.fields.areaOfApplication')}
+                placeholder={t('uploadDialog.fields.areaOfApplicationPlaceholder')}
                 value={formData.areaOfApplication}
                 onChange={handleChange('areaOfApplication')}
-                helperText="Target department, context or facility"
+                helperText={t('uploadDialog.fields.areaOfApplicationHelper')}
               />
             </Grid2>
             <Grid2 size={6}>
               <TextField
                 fullWidth
-                label="Validator Name"
-                placeholder="e.g. Lead Auditor John Doe"
+                label={t('uploadDialog.fields.validatorName')}
+                placeholder={t('uploadDialog.fields.validatorPlaceholder')}
                 value={formData.validator}
                 onChange={handleChange('validator')}
-                helperText="Auditor or verifying entity officer"
+                helperText={t('uploadDialog.fields.validatorHelper')}
               />
             </Grid2>
 
@@ -488,7 +489,7 @@ export const UploadCertificateDialog = ({
               <BpnsInput
                 value={formData.enclosedSitesBpn}
                 onChange={(next) => setFormData((prev) => ({ ...prev, enclosedSitesBpn: next }))}
-                label="Associated Sites (BPNS)"
+                label={t('uploadDialog.fields.associatedSites')}
               />
             </Grid2>
           </Grid2>
@@ -500,7 +501,7 @@ export const UploadCertificateDialog = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <FileUploadOutlinedIcon sx={{ color: 'primary.main', fontSize: 20 }} />
               <Typography variant="subtitle2" fontWeight={600} color="text.secondary">
-                Certificate Document {!isEditing && <span style={{ color: '#d32f2f' }}>*</span>}
+                {t('uploadDialog.steps.certFile')} {!isEditing && <span style={{ color: '#d32f2f' }}>*</span>}
               </Typography>
             </Box>
             <Box
@@ -525,10 +526,10 @@ export const UploadCertificateDialog = ({
                 <FileUploadOutlinedIcon sx={{ fontSize: 28, color: (fileError || errors.file) ? '#d32f2f' : '#1976d2' }} />
               </Box>
               <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }} align="center">
-                {formData.file ? formData.file.name : 'Drag & drop or click to browse'}
+                {formData.file ? formData.file.name : t('uploadDialog.fileZone.dragDrop')}
               </Typography>
               <Typography variant="caption" color="text.secondary" align="center">
-                Supported format: PDF only (max 10MB)
+                {t('uploadDialog.fileZone.format')}
               </Typography>
               {(fileError || errors.file) && (
                 <Typography variant="caption" color="error" display="block" sx={{ mt: 1, fontWeight: 500 }} align="center">
@@ -542,7 +543,7 @@ export const UploadCertificateDialog = ({
 
       <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'grey.50', gap: 1 }}>
         <Button onClick={activeStep === 0 ? handleClose : handleBack} variant="outlined" disabled={isSubmitting} sx={{ textTransform: 'none', minWidth: 100 }}>
-          {activeStep === 0 ? 'Cancel' : 'Back'}
+          {activeStep === 0 ? t('common.cancel') : t('common.back')}
         </Button>
         <Box sx={{ flex: 1 }} />
         {activeStep < STEPS.length - 1 ? (
@@ -552,7 +553,7 @@ export const UploadCertificateDialog = ({
             disabled={!isStepComplete(activeStep)}
             sx={{ textTransform: 'none', minWidth: 100, fontWeight: 600 }}
           >
-            Next
+            {t('common.next')}
           </Button>
         ) : (
           <Button
@@ -561,7 +562,7 @@ export const UploadCertificateDialog = ({
             disabled={!isFormValid || isSubmitting}
             sx={{ textTransform: 'none', minWidth: 120, fontWeight: 600 }}
           >
-            {isSubmitting ? <CircularProgress size={20} color="inherit" /> : (isEditing ? 'Save Changes' : 'Upload')}
+            {isSubmitting ? <CircularProgress size={20} color="inherit" /> : (isEditing ? t('common.saveChanges') : t('common.upload'))}
           </Button>
         )}
       </DialogActions>

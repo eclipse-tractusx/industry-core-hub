@@ -21,21 +21,18 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
   Button,
   Chip,
   CircularProgress,
-  Paper,
   Snackbar,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
-  TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -48,6 +45,12 @@ import {
   CcmFilterBar,
   RelativeDate,
   BpnlContactCell,
+  CcmTablePaper,
+  CcmHeaderRow,
+  CcmHeaderCell,
+  CcmBodyRow,
+  CcmBodyCell,
+  CcmTablePagination,
 } from '@/features/ccm-kit/shared-components';
 import type { FilterDef } from '@/features/ccm-kit/shared-components';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -81,25 +84,25 @@ import SendStatusDialog from '../components/dialogs/SendStatusDialog';
 import RequestHistoryDialog from '../components/dialogs/RequestHistoryDialog';
 import OutboundRequestDetailDialog from '../components/dialogs/OutboundRequestDetailDialog';
 
-const ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
 const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
 const certTypeOptions = ccmSharedConfig.certificateTypes.map((t) => ({ value: t.value, label: t.label }));
 
-const consumptionFilterDefs: FilterDef[] = [
+const buildConsumptionFilterDefs = (t: (key: string) => string): FilterDef[] => [
   {
     key: 'status',
-    allLabel: 'All Statuses',
+    allLabel: t('consumptionPage.filterAllStatuses'),
     options: [
-      { value: 'Pending', label: 'Pending' },
-      { value: 'Found', label: 'Found' },
-      { value: 'NotFound', label: 'Not Found' },
-      { value: 'Failed', label: 'Failed' },
+      { value: 'Pending', label: t('consumptionPage.statusValues.Pending') },
+      { value: 'Found', label: t('consumptionPage.statusValues.Found') },
+      { value: 'NotFound', label: t('consumptionPage.statusValues.NotFound') },
+      { value: 'Failed', label: t('consumptionPage.statusValues.Failed') },
     ],
   },
-  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+  { key: 'type', allLabel: t('consumptionPage.filterAllTypes'), options: certTypeOptions, minWidth: 160 },
 ];
 
 // Action icon buttons sit on the dark-blue table background — give them a light
@@ -122,6 +125,17 @@ const statusChipSx = (status: OutboundRequestStatus) => {
       return { backgroundColor: 'rgba(244,67,54,0.15)', color: '#e57373', border: '1px solid rgba(244,67,54,0.3)' };
     default:
       return { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' };
+  }
+};
+
+const localStatusChipSx = (status: 'Pending' | 'Accepted' | 'Rejected') => {
+  switch (status) {
+    case 'Accepted':
+      return { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' };
+    case 'Rejected':
+      return { backgroundColor: 'rgba(244,67,54,0.15)', color: '#e57373', border: '1px solid rgba(244,67,54,0.3)' };
+    default:
+      return { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' };
   }
 };
 
@@ -155,12 +169,15 @@ const buildCertificate = (req: OutboundRequestItem, detail?: ReceivedCertificate
 });
 
 const CcmConsumption = () => {
+  const { t } = useTranslation('certificateManagement');
+  const consumptionFilterDefs = buildConsumptionFilterDefs(t);
   const { getContactName } = usePartners();
   const [requests, setRequests] = useState<OutboundRequestItem[]>([]);
   const [receivedMap, setReceivedMap] = useState<Map<string, ReceivedLocalStatus>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [busyRowId, setBusyRowId] = useState<number | null>(null);
 
   // Search + filter state.
@@ -195,7 +212,7 @@ const CcmConsumption = () => {
       setRequests(reqs);
       setReceivedMap(new Map(received.map((r) => [r.documentId, r.localStatus])));
     } catch {
-      setError('Failed to load certificate requests.');
+      setError(t('consumptionPage.messages.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -220,8 +237,8 @@ const CcmConsumption = () => {
   }, [requests, search, filterValues, getContactName]);
 
   const visibleRows = useMemo(
-    () => filteredRequests.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE),
-    [filteredRequests, page],
+    () => filteredRequests.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
+    [filteredRequests, page, rowsPerPage],
   );
 
   const handleSearch = (v: string) => {
@@ -251,13 +268,13 @@ const CcmConsumption = () => {
           governance: CCM_POLICY_GOVERNANCE,
         });
         setReceivedMap((prev) => new Map(prev).set(req.documentId!, 'Pending'));
-        notify('Certificate pulled successfully.');
+        notify(t('consumptionPage.messages.pullSuccess'));
       }
       const detail = await fetchReceivedDetail(req.documentId, req.providerBpn);
       const certificate = buildCertificate(req, detail);
       setViewer({ open: true, base64: detail?.documentBase64 ?? null, certificate });
     } catch {
-      notify('Failed to pull the certificate.', 'error');
+      notify(t('consumptionPage.messages.pullFailed'), 'error');
     } finally {
       setBusyRowId(null);
     }
@@ -270,13 +287,13 @@ const CcmConsumption = () => {
 
   const handleStatusSuccess = (status: CertificateStatusValue) => {
     setStatusDialogRequest(null);
-    notify(`Feedback "${status}" sent to the provider.`);
+    notify(t('consumptionPage.messages.feedbackSent', { status }));
     void loadData();
   };
 
   const handleRequestSuccess = (messageId?: string | null) => {
     setRequestDialogOpen(false);
-    notify(messageId ? `Request sent (messageId: ${messageId}).` : 'Request sent.');
+    notify(messageId ? t('consumptionPage.messages.requestSent', { messageId }) : t('consumptionPage.messages.requestSentSimple'));
     void loadData();
   };
 
@@ -287,14 +304,14 @@ const CcmConsumption = () => {
       <Box sx={{ mb: 4 }}>
         <PageSectionHeader
           icon={<ShoppingCartIcon />}
-          title="CCM Consumption"
-          subtitle="Request, track, download and review compliance certificates from your Catena-X partners."
+          title={t('consumptionPage.title')}
+          subtitle={t('consumptionPage.subtitle')}
           kitTheme={kitThemes.ccm}
           actions={
             <>
               <RefreshButton onClick={() => void loadData()} loading={isLoading} />
               <PrimaryActionButton startIcon={<AddIcon />} onClick={() => setRequestDialogOpen(true)}>
-                New Request
+                {t('consumptionPage.newRequest')}
               </PrimaryActionButton>
             </>
           }
@@ -310,37 +327,41 @@ const CcmConsumption = () => {
       <CcmFilterBar
         search={search}
         onSearchChange={handleSearch}
-        searchPlaceholder="Search by provider, type or status…"
+        searchPlaceholder={t('consumptionPage.searchPlaceholder')}
         filters={consumptionFilterDefs}
         values={filterValues}
         onFilterChange={handleFilter}
         onClear={handleClearFilters}
       />
 
-      <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
+      <CcmTablePaper sx={{ flex: 1, minHeight: 0 }}>
         {filteredRequests.length === 0 ? (
           <Box sx={{ py: 6, textAlign: 'center' }}>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
               {requests.length === 0
-                ? 'No certificate requests yet. Use "New Request" to ask a provider for a certificate.'
-                : 'No requests match your filters.'}
+                ? t('consumptionPage.empty.noRequests')
+                : t('consumptionPage.empty.noMatch')}
             </Typography>
           </Box>
         ) : (
           <>
-            <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.08)' } }}>
+            <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+              <Table size="small">
                 <TableHead>
-                  <TableRow>
-                    {['Provider', 'Certified BPN', 'Type', 'Locations', 'Status', 'Updated', 'Actions'].map((h) => (
-                      <TableCell
-                        key={h}
-                        sx={{ fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)', backgroundColor: '#1e2d3d' }}
-                      >
-                        {h}
-                      </TableCell>
+                  <CcmHeaderRow>
+                    {([
+                      t('consumptionPage.columns.provider'),
+                      t('consumptionPage.columns.certifiedBpn'),
+                      t('consumptionPage.columns.type'),
+                      t('consumptionPage.columns.locations'),
+                      t('consumptionPage.columns.status'),
+                      t('consumptionPage.columns.response'),
+                      t('consumptionPage.columns.updated'),
+                      t('consumptionPage.columns.actions'),
+                    ]).map((h) => (
+                      <CcmHeaderCell key={h}>{h}</CcmHeaderCell>
                     ))}
-                  </TableRow>
+                  </CcmHeaderRow>
                 </TableHead>
                 <TableBody>
                   {visibleRows.map((req) => {
@@ -350,43 +371,50 @@ const CcmConsumption = () => {
                     const feedbackAllowed = isFound && receivedStatus !== 'Accepted' && receivedStatus !== 'Rejected';
                     const rowBusy = busyRowId === req.id;
                     return (
-                      <TableRow
-                        key={req.id}
-                        onClick={() => setDetailRequest(req)}
-                        sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                      <CcmBodyRow key={req.id} onClick={() => setDetailRequest(req)}>
+                        <CcmBodyCell onClick={(e) => e.stopPropagation()}>
                           <BpnlContactCell bpnl={req.providerBpn} mode="name" />
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                        </CcmBodyCell>
+                        <CcmBodyCell onClick={(e) => e.stopPropagation()}>
                           <BpnlContactCell bpnl={req.certifiedBpn} mode="bpn" />
-                        </TableCell>
-                        <TableCell>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
                           <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
                             {typeLabel(req.certificateType)}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
                           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                            {req.locationBpns?.length ? `${req.locationBpns.length} site(s)` : '—'}
+                            {req.locationBpns?.length ? t('consumptionPage.locations', { count: req.locationBpns.length }) : '—'}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
                           <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...statusChipSx(req.status) }} />
-                        </TableCell>
-                        <TableCell>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
+                          {receivedStatus ? (
+                            <Chip
+                              label={receivedStatus}
+                              size="small"
+                              sx={{ fontWeight: 600, fontSize: '0.7rem', ...localStatusChipSx(receivedStatus) }}
+                            />
+                          ) : (
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.3)' }}>—</Typography>
+                          )}
+                        </CcmBodyCell>
+                        <CcmBodyCell>
                           <RelativeDate value={req.updatedAt} />
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
+                        </CcmBodyCell>
+                        <CcmBodyCell onClick={(e) => e.stopPropagation()}>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Tooltip title="View history">
+                            <Tooltip title={t('consumptionPage.tooltips.viewHistory')}>
                               <span>
                                 <Button size="small" sx={actionIconSx} onClick={() => setHistoryRequest(req)}>
                                   <HistoryIcon fontSize="small" />
                                 </Button>
                               </span>
                             </Tooltip>
-                            <Tooltip title={alreadyReceived ? 'View certificate' : 'Pull certificate'}>
+                            <Tooltip title={alreadyReceived ? t('consumptionPage.tooltips.viewCertificate') : t('consumptionPage.tooltips.pullCertificate')}>
                               <span>
                                 <Button
                                   size="small"
@@ -404,7 +432,7 @@ const CcmConsumption = () => {
                                 </Button>
                               </span>
                             </Tooltip>
-                            <Tooltip title="Send feedback">
+                            <Tooltip title={t('consumptionPage.tooltips.sendFeedback')}>
                               <span>
                                 <Button
                                   size="small"
@@ -417,25 +445,25 @@ const CcmConsumption = () => {
                               </span>
                             </Tooltip>
                           </Box>
-                        </TableCell>
-                      </TableRow>
+                        </CcmBodyCell>
+                      </CcmBodyRow>
                     );
                   })}
                 </TableBody>
               </Table>
             </TableContainer>
-            <TablePagination
-              rowsPerPageOptions={[]}
+            <CcmTablePagination
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
               component="div"
               count={filteredRequests.length}
-              rowsPerPage={ROWS_PER_PAGE}
+              rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={(_, p) => setPage(p)}
-              sx={{ color: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiTablePagination-displayedRows': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
+              onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
             />
           </>
         )}
-      </Paper>
+      </CcmTablePaper>
 
       <RequestCertificateDialog
         open={requestDialogOpen}

@@ -22,6 +22,7 @@
 
 import { CircularProgress, IconButton, Tooltip } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { useTranslation } from 'react-i18next';
 
 const CCM_PRIMARY = '#9D6FD4';
 
@@ -40,9 +41,11 @@ const RefreshButton = ({
   onClick,
   disabled = false,
   loading = false,
-  tooltip = 'Refresh',
-}: RefreshButtonProps) => (
-  <Tooltip title={tooltip}>
+  tooltip,
+}: RefreshButtonProps) => {
+  const { t } = useTranslation('certificateManagement');
+  return (
+  <Tooltip title={tooltip ?? t('common.refresh')}>
     <span>
       <IconButton
         onClick={onClick}
@@ -70,6 +73,7 @@ const RefreshButton = ({
       </IconButton>
     </span>
   </Tooltip>
-);
+  );
+};
 
 export default RefreshButton;

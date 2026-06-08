@@ -44,6 +44,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CancelIcon from '@mui/icons-material/Cancel';
 import GroupIcon from '@mui/icons-material/Group';
 import TagIcon from '@mui/icons-material/Tag';
+import { useTranslation } from 'react-i18next';
 import { Certificate } from '../../types/types';
 import { certificateManagementConfig } from '../../config';
 
@@ -59,7 +60,7 @@ interface CertificateCardGridProps {
 }
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  new Date(d).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
 
 const getStatusConfig = (status: string) => {
   const config =
@@ -94,12 +95,13 @@ export const CertificateCardGrid = ({
   onDelete,
   onInfo,
 }: CertificateCardGridProps) => {
+  const { t } = useTranslation('certificateManagement');
 
   if (certificates.length === 0) {
     return (
       <Box sx={{ py: 6, textAlign: 'center' }}>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.45)' }}>
-          No certificates found. Upload a certificate to get started.
+          {t('cardGrid.empty')}
         </Typography>
       </Box>
     );
@@ -217,7 +219,7 @@ export const CertificateCardGrid = ({
                   <BusinessIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography sx={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1 }}>
-                      Issued by
+                      {t('cardGrid.issuedBy')}
                     </Typography>
                     <Typography sx={{ fontSize: '0.78rem', color: '#fff', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {cert.issuer}
@@ -230,7 +232,7 @@ export const CertificateCardGrid = ({
                   <EventIcon sx={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} />
                   <Box>
                     <Typography sx={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', lineHeight: 1 }}>
-                      Valid until
+                      {t('cardGrid.validUntil')}
                     </Typography>
                     <Typography
                       sx={{
@@ -263,16 +265,16 @@ export const CertificateCardGrid = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <GroupIcon sx={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }} />
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.72rem' }}>
-                      Shared with {cert.sharedCount} partner{cert.sharedCount > 1 ? 's' : ''}
+                      {t('cardGrid.sharedWith', { count: cert.sharedCount })}
                     </Typography>
                   </Box>
                 )}
                 {hasPdf && (
-                  <Tooltip title="PDF document attached">
+                  <Tooltip title={t('cardGrid.pdfDocumentAttached')}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <PictureAsPdfIcon sx={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }} />
                       <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem' }}>
-                        PDF attached
+                        {t('cardGrid.pdfAttached')}
                       </Typography>
                     </Box>
                   </Tooltip>
@@ -291,7 +293,7 @@ export const CertificateCardGrid = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <Tooltip title="Certificate details">
+                <Tooltip title={t('cardGrid.buttons.info')}>
                   <IconButton
                     size="small"
                     onClick={(e) => { e.stopPropagation(); onInfo(cert); }}
@@ -303,9 +305,9 @@ export const CertificateCardGrid = ({
                 <Tooltip
                   title={
                     cert.status === 'expired'
-                      ? 'Cannot publish expired certificates'
+                      ? t('cardGrid.tooltips.cannotPublishExpired')
                       : publishedIds?.has(cert.id)
-                        ? 'Already published to the EDC network'
+                        ? t('cardGrid.tooltips.alreadyPublished')
                         : ''
                   }
                   placement="top"
@@ -329,7 +331,7 @@ export const CertificateCardGrid = ({
                         '&.Mui-disabled': { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' },
                       }}
                     >
-                      Publish
+                      {t('cardGrid.buttons.publish')}
                     </Button>
                   </span>
                 </Tooltip>
@@ -350,7 +352,7 @@ export const CertificateCardGrid = ({
                     '&:hover': { borderColor: '#81c784', backgroundColor: alpha('#81c784', 0.08), color: '#81c784' },
                   }}
                 >
-                  Update
+                  {t('cardGrid.buttons.update')}
                 </Button>
                 <Button
                   size="small"
@@ -369,7 +371,7 @@ export const CertificateCardGrid = ({
                     '&:hover': { borderColor: '#ef9a9a', backgroundColor: alpha('#ef9a9a', 0.08), color: '#ef9a9a' },
                   }}
                 >
-                  Delete
+                  {t('cardGrid.buttons.delete')}
                 </Button>
               </Box>
             </CardContent>

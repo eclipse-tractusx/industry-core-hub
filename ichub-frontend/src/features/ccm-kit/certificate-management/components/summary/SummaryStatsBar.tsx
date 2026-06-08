@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { Box, Paper, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { CertificateStats, CertificateStatus } from '../../types/types';
 
 interface SummaryStatsBarProps {
@@ -31,19 +32,20 @@ interface SummaryStatsBarProps {
 
 interface StatItem {
   key: CertificateStatus | '';
-  label: string;
+  labelKey: string;
   color: string;
   getValue: (s: CertificateStats) => number;
 }
 
 const STAT_ITEMS: StatItem[] = [
-  { key: '', label: 'Total', color: '#9D6FD4', getValue: (s) => s.total },
-  { key: 'valid', label: 'Valid', color: '#4caf50', getValue: (s) => s.valid },
-  { key: 'expiring', label: 'Expiring', color: '#ed8936', getValue: (s) => s.expiring },
-  { key: 'expired', label: 'Expired', color: '#f44336', getValue: (s) => s.expired },
+  { key: '', labelKey: 'statsBar.total', color: '#9D6FD4', getValue: (s) => s.total },
+  { key: 'valid', labelKey: 'statsBar.valid', color: '#4caf50', getValue: (s) => s.valid },
+  { key: 'expiring', labelKey: 'statsBar.expiring', color: '#ed8936', getValue: (s) => s.expiring },
+  { key: 'expired', labelKey: 'statsBar.expired', color: '#f44336', getValue: (s) => s.expired },
 ];
 
 export const SummaryStatsBar = ({ stats, activeStatusFilter, onFilterByStatus }: SummaryStatsBarProps) => {
+  const { t } = useTranslation('certificateManagement');
   const handleClick = (key: CertificateStatus | '') => {
     if (key === '') {
       onFilterByStatus('');
@@ -54,7 +56,7 @@ export const SummaryStatsBar = ({ stats, activeStatusFilter, onFilterByStatus }:
 
   return (
     <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-      {STAT_ITEMS.map(({ key, label, color, getValue }) => {
+      {STAT_ITEMS.map(({ key, labelKey, color, getValue }) => {
         const isActive = key === '' ? activeStatusFilter === '' : activeStatusFilter === key;
         return (
           <Paper
@@ -98,7 +100,7 @@ export const SummaryStatsBar = ({ stats, activeStatusFilter, onFilterByStatus }:
                 fontWeight: 500,
               }}
             >
-              {label}
+              {t(labelKey)}
             </Typography>
           </Paper>
         );

@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   TextField,
@@ -141,6 +142,7 @@ const CcmFilterBar = ({
   viewMode,
   onViewModeChange,
 }: CcmFilterBarProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [searchDraft, setSearchDraft] = useState(search);
 
   // Keep local draft in sync when the parent clears the search externally.
@@ -231,7 +233,7 @@ const CcmFilterBar = ({
             '&:hover': { color: 'rgba(255,255,255,0.7)' },
           }}
         >
-          Clear
+          {t('filterBar.clear')}
         </Button>
       )}
 
@@ -247,12 +249,12 @@ const CcmFilterBar = ({
             gap: '2px',
           }}
         >
-          <Tooltip title="List view" arrow>
+          <Tooltip title={t('filterBar.listView')} arrow>
             <IconButton size="small" onClick={() => onViewModeChange('list')} sx={toggleBtnSx(viewMode === 'list')}>
               <TableRowsIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Card view" arrow>
+          <Tooltip title={t('filterBar.cardView')} arrow>
             <IconButton size="small" onClick={() => onViewModeChange('card')} sx={toggleBtnSx(viewMode === 'card')}>
               <ViewModuleIcon sx={{ fontSize: 18 }} />
             </IconButton>

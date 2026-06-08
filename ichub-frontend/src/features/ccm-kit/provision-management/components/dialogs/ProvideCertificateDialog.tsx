@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -75,6 +76,7 @@ const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
 const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: ProvideCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [mode, setMode] = useState<ProvideMode>('AVAILABLE');
   const [certificates, setCertificates] = useState<OwnCertificate[]>([]);
   const [certificateId, setCertificateId] = useState<string>('');
@@ -122,7 +124,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
         setRelatedMessageId('');
       }
     } catch {
-      setError('Failed to load provisioning data.');
+      setError(t('provideDialog.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -148,7 +150,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
     if (!canSubmit || !request) return;
     const certId = Number(certificateId);
     if (!Number.isFinite(certId)) {
-      setError('Invalid certificate selected.');
+      setError(t('provideDialog.invalidCert'));
       return;
     }
     setSubmitting(true);
@@ -169,19 +171,19 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
         }
         const result = await sendAvailable(payload);
         if (!result.success) {
-          setError(result.error ?? 'Failed to send the availability notification.');
+          setError(result.error ?? t('provideDialog.errors.sendAvailFailed'));
           return;
         }
       } else {
         const result = await pushCertificate(payload);
         if (!result.success) {
-          setError(result.error ?? 'Failed to push the certificate.');
+          setError(result.error ?? t('provideDialog.errors.pushFailed'));
           return;
         }
       }
       onSuccess(mode);
     } catch {
-      setError(mode === 'AVAILABLE' ? 'Failed to make the certificate available.' : 'Failed to push the certificate.');
+      setError(mode === 'AVAILABLE' ? t('provideDialog.errors.availFailed') : t('provideDialog.errors.pushFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -191,14 +193,14 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Provide Certificate"
-      subtitle="Respond to a consumer request via availability notification or direct push"
+      title={t('provideDialog.title')}
+      subtitle={t('provideDialog.subtitle')}
       icon={<TaskAltIcon />}
       fullWidth
       actions={
         <>
           <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -207,7 +209,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
             startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
-            {mode === 'AVAILABLE' ? 'Send Availability' : 'Push Certificate'}
+            {mode === 'AVAILABLE' ? t('provideDialog.sendAvailability') : t('pushDialog.pushCertificate')}
           </Button>
         </>
       }
@@ -221,7 +223,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
           <Stack spacing={2.5}>
             {request && (
               <Typography variant="body2" color="text.secondary">
-                Respond to {request.consumerBpn} requesting {typeLabel(request.certificateType)} for{' '}
+                {t('provideDialog.description', { consumer: request.consumerBpn, type: typeLabel(request.certificateType) })}{' '}
                 <Box component="span" sx={{ fontFamily: 'monospace' }}>
                   {request.certifiedBpn}
                 </Box>
@@ -235,8 +237,8 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
               onChange={(_, value) => value && setMode(value as ProvideMode)}
               fullWidth
             >
-              <ToggleButton value="AVAILABLE">Make available (PULL)</ToggleButton>
-              <ToggleButton value="PUSH">Push directly</ToggleButton>
+              <ToggleButton value="AVAILABLE">{t('provideDialog.modeAvailable')}</ToggleButton>
+              <ToggleButton value="PUSH">{t('provideDialog.modePush')}</ToggleButton>
             </ToggleButtonGroup>
 
             {/* Certificate picker — empty state or dropdown */}
@@ -248,15 +250,15 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, color: 'warning.dark' }}>
                   <WarningAmberIcon fontSize="small" />
                   <Typography variant="subtitle2" fontWeight={700}>
-                    No matching certificates found
+                    {t('provideDialog.noCertsTitle')}
                   </Typography>
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  No <strong>{typeLabel(request?.certificateType ?? '')}</strong> certificate was found for{' '}
+                  {t('provideDialog.noCertsDescription', { type: typeLabel(request?.certificateType ?? '') })}{' '}
                   <Box component="span" sx={{ fontFamily: 'monospace', fontSize: '0.85em' }}>
                     {request?.certifiedBpn}
                   </Box>
-                  . Upload a new certificate to fulfill this request.
+                  .
                 </Typography>
                 <Button
                   variant="outlined"
@@ -265,12 +267,12 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
                   onClick={() => setUploadOpen(true)}
                   sx={{ textTransform: 'none' }}
                 >
-                  Upload Certificate
+                  {t('provideDialog.noCertsUpload')}
                 </Button>
               </Paper>
             ) : (
               <TextField
-                label="Certificate to provide"
+                label={t('provideDialog.certSelect')}
                 value={certificateId}
                 onChange={(e) => {
                   if (e.target.value === '__upload__') {
@@ -292,28 +294,27 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
                 <Divider />
                 <MenuItem value="__upload__" sx={{ color: 'primary.main', fontStyle: 'italic' }}>
                   <FileUploadOutlinedIcon fontSize="small" sx={{ mr: 1 }} />
-                  Upload other certificate…
+                  {t('provideDialog.uploadOther')}
                 </MenuItem>
               </TextField>
             )}
 
             {mode === 'AVAILABLE' && certificateId && !published.has(Number(certificateId)) && (
               <Alert severity="info">
-                This certificate is not published yet — it will be published automatically before
-                the availability notification is sent.
+                {t('provideDialog.notPublishedAlert')}
               </Alert>
             )}
 
             {/* relatedMessageId resolution */}
             {needsExplicitRelated ? (
               <TextField
-                label="Respond to request"
+                label={t('provideDialog.respondTo')}
                 value={relatedMessageId}
                 onChange={(e) => setRelatedMessageId(e.target.value)}
                 select
                 fullWidth
                 required
-                helperText="Multiple requests found — choose which one to respond to."
+                helperText={t('provideDialog.respondToHelper')}
               >
                 {history.map((h) => (
                   <MenuItem key={h.requestId} value={h.notificationId ?? ''} disabled={!h.notificationId}>
@@ -325,7 +326,7 @@ const ProvideCertificateDialog = ({ open, request, onClose, onSuccess }: Provide
             ) : (
               relatedMessageId && (
                 <Typography variant="caption" color="text.secondary">
-                  Responding to notification{' '}
+                  {t('provideDialog.respondingTo')}{' '}
                   <Box component="span" sx={{ fontFamily: 'monospace' }}>
                     {relatedMessageId}
                   </Box>

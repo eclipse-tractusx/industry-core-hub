@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   Box,
@@ -60,7 +61,7 @@ interface CertificatePDFViewerProps {
 }
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  new Date(d).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
 
 const getStatusColor = (status: string) => {
   const config =
@@ -81,6 +82,7 @@ export const CertificatePDFViewer = ({
   onDelete,
   onInfo,
 }: CertificatePDFViewerProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
 
@@ -137,7 +139,7 @@ export const CertificatePDFViewer = ({
         }}
       >
         {/* Info button */}
-        <Tooltip title="Certificate details">
+        <Tooltip title={t('pdfViewer.buttons.info')}>
           <IconButton
             size="small"
             onClick={() => onInfo(certificate)}
@@ -208,9 +210,9 @@ export const CertificatePDFViewer = ({
             <Tooltip
               title={
                 certificate.status === 'expired'
-                  ? 'Cannot publish expired certificates'
+                  ? t('pdfViewer.tooltips.cannotPublishExpired')
                   : publishedIds?.has(certificate.id)
-                    ? 'Already published to the EDC network'
+                    ? t('pdfViewer.tooltips.alreadyPublished')
                     : ''
               }
               placement="bottom"
@@ -232,7 +234,7 @@ export const CertificatePDFViewer = ({
                     '&.Mui-disabled': { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.3)' },
                   }}
                 >
-                  Publish
+                  {t('pdfViewer.buttons.publish')}
                 </Button>
               </span>
             </Tooltip>
@@ -252,7 +254,7 @@ export const CertificatePDFViewer = ({
                 '&:hover': { borderColor: '#81c784', backgroundColor: 'rgba(129,199,132,0.12)', color: '#fff' },
               }}
             >
-              Update PDF
+              {t('pdfViewer.buttons.updatePdf')}
             </Button>
           )}
           {onDelete && (
@@ -270,7 +272,7 @@ export const CertificatePDFViewer = ({
                 '&:hover': { borderColor: '#f44336', backgroundColor: 'rgba(244,67,54,0.12)', color: '#fff' },
               }}
             >
-              Delete
+              {t('pdfViewer.buttons.delete')}
             </Button>
           )}
           <IconButton

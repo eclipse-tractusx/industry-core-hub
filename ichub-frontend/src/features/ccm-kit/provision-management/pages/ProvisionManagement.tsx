@@ -21,21 +21,18 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Box,
   Button,
   Chip,
-  Paper,
   Snackbar,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
-  TableRow,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -55,6 +52,12 @@ import {
   CcmFilterBar,
   RelativeDate,
   BpnlContactCell,
+  CcmTablePaper,
+  CcmHeaderRow,
+  CcmHeaderCell,
+  CcmBodyRow,
+  CcmBodyCell,
+  CcmTablePagination,
 } from '@/features/ccm-kit/shared-components';
 import type { FilterDef } from '@/features/ccm-kit/shared-components';
 
@@ -67,48 +70,48 @@ import PushCertificateDialog from '../components/dialogs/PushCertificateDialog';
 import InboundRequestDetailDialog from '../components/dialogs/InboundRequestDetailDialog';
 import ShareDetailDialog from '../components/dialogs/ShareDetailDialog';
 
-const ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
 const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
 const certTypeOptions = ccmSharedConfig.certificateTypes.map((t) => ({ value: t.value, label: t.label }));
 
-const inboundFilterDefs: FilterDef[] = [
+const buildInboundFilterDefs = (t: (key: string) => string): FilterDef[] => [
   {
     key: 'status',
-    allLabel: 'All Statuses',
+    allLabel: t('provisionPage.filterAllStatuses'),
     options: [
-      { value: 'Registered', label: 'Registered' },
-      { value: 'Available', label: 'Available' },
-      { value: 'Pushed', label: 'Pushed' },
-      { value: 'NotFound', label: 'Not Found' },
+      { value: 'Registered', label: t('provisionPage.inboundStatusValues.Registered') },
+      { value: 'Available', label: t('provisionPage.inboundStatusValues.Available') },
+      { value: 'Pushed', label: t('provisionPage.inboundStatusValues.Pushed') },
+      { value: 'NotFound', label: t('provisionPage.inboundStatusValues.NotFound') },
     ],
   },
   {
     key: 'consumerStatus',
-    allLabel: 'All Consumer Statuses',
+    allLabel: t('provisionPage.filterAllConsumerStatuses'),
     minWidth: 180,
     options: [
-      { value: 'RECEIVED', label: 'Received' },
-      { value: 'ACCEPTED', label: 'Accepted' },
-      { value: 'REJECTED', label: 'Rejected' },
+      { value: 'RECEIVED', label: t('provisionPage.consumerStatusValues.RECEIVED') },
+      { value: 'ACCEPTED', label: t('provisionPage.consumerStatusValues.ACCEPTED') },
+      { value: 'REJECTED', label: t('provisionPage.consumerStatusValues.REJECTED') },
     ],
   },
-  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+  { key: 'type', allLabel: t('provisionPage.filterAllTypes'), options: certTypeOptions, minWidth: 160 },
 ];
 
-const sharesFilterDefs: FilterDef[] = [
+const buildSharesFilterDefs = (t: (key: string) => string): FilterDef[] => [
   {
     key: 'status',
-    allLabel: 'All Statuses',
+    allLabel: t('provisionPage.filterAllStatuses'),
     options: [
-      { value: 'Active', label: 'Active' },
-      { value: 'Pending', label: 'Pending' },
-      { value: 'Revoked', label: 'Revoked' },
+      { value: 'Active', label: t('provisionPage.sharesStatusValues.Active') },
+      { value: 'Pending', label: t('provisionPage.sharesStatusValues.Pending') },
+      { value: 'Revoked', label: t('provisionPage.sharesStatusValues.Revoked') },
     ],
   },
-  { key: 'type', allLabel: 'All Types', options: certTypeOptions, minWidth: 160 },
+  { key: 'type', allLabel: t('provisionPage.filterAllTypes'), options: certTypeOptions, minWidth: 160 },
 ];
 
 const countLocations = (raw?: string | null): number => {
@@ -164,6 +167,9 @@ const provideButtonSx = {
 } as const;
 
 const ProvisionManagement = () => {
+  const { t } = useTranslation('certificateManagement');
+  const inboundFilterDefs = buildInboundFilterDefs(t);
+  const sharesFilterDefs = buildSharesFilterDefs(t);
   const { getContactName } = usePartners();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'shares' ? 1 : 0;
@@ -173,7 +179,9 @@ const ProvisionManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [inboundPage, setInboundPage] = useState(0);
+  const [inboundRowsPerPage, setInboundRowsPerPage] = useState(10);
   const [sharesPage, setSharesPage] = useState(0);
+  const [sharesRowsPerPage, setSharesRowsPerPage] = useState(10);
 
   // Search + filter state (separate per table).
   const [inboundSearch, setInboundSearch] = useState('');
@@ -209,7 +217,7 @@ const ProvisionManagement = () => {
       setInbound(reqs);
       setShares(shareList);
     } catch {
-      setError('Failed to load provisioning data.');
+      setError(t('provisionPage.messages.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -247,12 +255,12 @@ const ProvisionManagement = () => {
   }, [shares, sharesSearch, sharesFilterValues, getContactName]);
 
   const visibleInbound = useMemo(
-    () => filteredInbound.slice(inboundPage * ROWS_PER_PAGE, (inboundPage + 1) * ROWS_PER_PAGE),
-    [filteredInbound, inboundPage],
+    () => filteredInbound.slice(inboundPage * inboundRowsPerPage, (inboundPage + 1) * inboundRowsPerPage),
+    [filteredInbound, inboundPage, inboundRowsPerPage],
   );
   const visibleShares = useMemo(
-    () => filteredShares.slice(sharesPage * ROWS_PER_PAGE, (sharesPage + 1) * ROWS_PER_PAGE),
-    [filteredShares, sharesPage],
+    () => filteredShares.slice(sharesPage * sharesRowsPerPage, (sharesPage + 1) * sharesRowsPerPage),
+    [filteredShares, sharesPage, sharesRowsPerPage],
   );
 
   // Handlers that reset pagination when the result set changes.
@@ -285,13 +293,13 @@ const ProvisionManagement = () => {
 
   const handleProvideSuccess = (mode: ProvideMode) => {
     setProvideRequest(null);
-    notify(mode === 'AVAILABLE' ? 'Availability notification sent.' : 'Certificate pushed to consumer.');
+    notify(mode === 'AVAILABLE' ? t('provisionPage.messages.availabilitySent') : t('provisionPage.messages.certificatePushed'));
     void loadData();
   };
 
   const handlePushSuccess = () => {
     setPushOpen(false);
-    notify('Certificate pushed to consumer.');
+    notify(t('provisionPage.messages.certificatePushed'));
     void loadData();
   };
 
@@ -302,14 +310,14 @@ const ProvisionManagement = () => {
       <Box sx={{ mb: 4 }}>
         <PageSectionHeader
           icon={<InboxIcon />}
-          title="CCM Provision Management"
-          subtitle="Handle incoming certificate requests and provide certificates to your Catena-X partners."
+          title={t('provisionPage.title')}
+          subtitle={t('provisionPage.subtitle')}
           kitTheme={kitThemes.ccm}
           actions={
             <>
               <RefreshButton onClick={() => void loadData()} loading={isLoading} />
               <PrimaryActionButton startIcon={<SendIcon />} onClick={() => setPushOpen(true)}>
-                Push Certificate
+                {t('provisionPage.pushCertificate')}
               </PrimaryActionButton>
             </>
           }
@@ -325,8 +333,8 @@ const ProvisionManagement = () => {
       {/* ── Section selector ─────────────────────────────────────────────── */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5 }}>
         {[
-          { label: 'Inbound Requests', count: filteredInbound.length, icon: <CallReceivedIcon sx={{ fontSize: '1.1rem' }} /> },
-          { label: 'Shares', count: filteredShares.length, icon: <IosShareIcon sx={{ fontSize: '1.1rem' }} /> },
+          { label: t('provisionPage.tabs.inboundRequests'), count: filteredInbound.length, icon: <CallReceivedIcon sx={{ fontSize: '1.1rem' }} /> },
+          { label: t('provisionPage.tabs.shares'), count: filteredShares.length, icon: <IosShareIcon sx={{ fontSize: '1.1rem' }} /> },
         ].map(({ label, count, icon }, idx) => {
           const active = tab === idx;
           return (
@@ -402,7 +410,7 @@ const ProvisionManagement = () => {
         <CcmFilterBar
           search={inboundSearch}
           onSearchChange={handleInboundSearch}
-          searchPlaceholder="Search by BPN, type or status…"
+          searchPlaceholder={t('provisionPage.inboundSearch')}
           filters={inboundFilterDefs}
           values={inboundFilterValues}
           onFilterChange={handleInboundFilter}
@@ -412,7 +420,7 @@ const ProvisionManagement = () => {
         <CcmFilterBar
           search={sharesSearch}
           onSearchChange={handleSharesSearch}
-          searchPlaceholder="Search by consumer, type or status…"
+          searchPlaceholder={t('provisionPage.sharesSearch')}
           filters={sharesFilterDefs}
           values={sharesFilterValues}
           onFilterChange={handleSharesFilter}
@@ -422,174 +430,168 @@ const ProvisionManagement = () => {
 
       {/* ── Inbound Requests ─────────────────────────────────────────────── */}
       {tab === 0 && (
-        <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
+        <CcmTablePaper sx={{ flex: 1, minHeight: 0 }}>
           {filteredInbound.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
-                {inbound.length === 0 ? 'No inbound certificate requests yet.' : 'No requests match your filters.'}
+                {inbound.length === 0 ? t('provisionPage.inbound.empty') : t('provisionPage.inbound.noMatch')}
               </Typography>
             </Box>
           ) : (
             <>
-              <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-                <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.08)' } }}>
+              <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      {['Consumer', 'Certified BPN', 'Type', 'Locations', 'Status', 'Consumer Status', 'Updated', 'Actions'].map((h) => (
-                        <TableCell
-                          key={h}
-                          sx={{ fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)', backgroundColor: '#1e2d3d' }}
-                        >
-                          {h}
-                        </TableCell>
+                    <CcmHeaderRow>
+                      {([
+                        t('provisionPage.inboundColumns.consumer'),
+                        t('provisionPage.inboundColumns.certifiedBpn'),
+                        t('provisionPage.inboundColumns.type'),
+                        t('provisionPage.inboundColumns.locations'),
+                        t('provisionPage.inboundColumns.status'),
+                        t('provisionPage.inboundColumns.consumerStatus'),
+                        t('provisionPage.inboundColumns.updated'),
+                        t('provisionPage.inboundColumns.actions'),
+                      ]).map((h) => (
+                        <CcmHeaderCell key={h}>{h}</CcmHeaderCell>
                       ))}
-                    </TableRow>
+                    </CcmHeaderRow>
                   </TableHead>
                   <TableBody>
                     {visibleInbound.map((req) => {
                       const locCount = countLocations(req.locationBpns);
                       return (
-                        <Tooltip key={req.requestId} title="Click to view full details" placement="left" arrow>
-                          <TableRow
-                            onClick={() => setDetailInbound(req)}
-                            sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
-                          >
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <BpnlContactCell bpnl={req.consumerBpn} mode="name" />
-                            </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <BpnlContactCell bpnl={req.certifiedBpn} mode="bpn" />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
-                                {typeLabel(req.certificateType)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                                {locCount ? `${locCount} site(s)` : '—'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...inboundStatusSx(req.status) }} />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                                {req.consumerStatus ?? '—'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <RelativeDate value={req.updatedAt} />
-                            </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => setProvideRequest(req)}
-                                startIcon={<OpenInNewIcon sx={{ fontSize: '0.85rem !important' }} />}
-                                sx={provideButtonSx}
-                              >
-                                Provide
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        </Tooltip>
+                        <CcmBodyRow key={req.requestId} onClick={() => setDetailInbound(req)}>
+                          <CcmBodyCell onClick={(e) => e.stopPropagation()}>
+                            <BpnlContactCell bpnl={req.consumerBpn} mode="name" />
+                          </CcmBodyCell>
+                          <CcmBodyCell onClick={(e) => e.stopPropagation()}>
+                            <BpnlContactCell bpnl={req.certifiedBpn} mode="bpn" />
+                          </CcmBodyCell>
+                          <CcmBodyCell>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
+                              {typeLabel(req.certificateType)}
+                            </Typography>
+                          </CcmBodyCell>
+                          <CcmBodyCell>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                              {locCount ? t('provisionPage.locations', { count: locCount }) : '—'}
+                            </Typography>
+                          </CcmBodyCell>
+                          <CcmBodyCell>
+                            <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...inboundStatusSx(req.status) }} />
+                          </CcmBodyCell>
+                          <CcmBodyCell>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                              {req.consumerStatus ?? '—'}
+                            </Typography>
+                          </CcmBodyCell>
+                          <CcmBodyCell>
+                            <RelativeDate value={req.updatedAt} />
+                          </CcmBodyCell>
+                          <CcmBodyCell onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => setProvideRequest(req)}
+                              startIcon={<OpenInNewIcon sx={{ fontSize: '0.85rem !important' }} />}
+                              sx={provideButtonSx}
+                            >
+                              {t('provisionPage.provide')}
+                            </Button>
+                          </CcmBodyCell>
+                        </CcmBodyRow>
                       );
                     })}
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[]}
+              <CcmTablePagination
+                rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
                 count={filteredInbound.length}
-                rowsPerPage={ROWS_PER_PAGE}
+                rowsPerPage={inboundRowsPerPage}
                 page={inboundPage}
                 onPageChange={(_, p) => setInboundPage(p)}
-                sx={{ color: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiTablePagination-displayedRows': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
+                onRowsPerPageChange={(e) => { setInboundRowsPerPage(parseInt(e.target.value, 10)); setInboundPage(0); }}
               />
             </>
           )}
-        </Paper>
+        </CcmTablePaper>
       )}
 
       {/* ── Shares (outbox) ──────────────────────────────────────────────── */}
       {tab === 1 && (
-        <Paper sx={{ display: 'flex', flexDirection: 'column', backgroundColor: '#1a2332', borderRadius: 3, overflow: 'hidden', flex: 1 }}>
+        <CcmTablePaper sx={{ flex: 1, minHeight: 0 }}>
           {filteredShares.length === 0 ? (
             <Box sx={{ py: 6, textAlign: 'center' }}>
               <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)' }}>
                 {shares.length === 0
-                  ? 'No certificates shared yet. Use "Push Certificate" or respond to an inbound request.'
-                  : 'No shares match your filters.'}
+                  ? t('provisionPage.shares.empty')
+                  : t('provisionPage.shares.noMatch')}
               </Typography>
             </Box>
           ) : (
             <>
-              <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-                <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { borderColor: 'rgba(255,255,255,0.08)' } }}>
+              <TableContainer sx={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+                <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      {['Type', 'Consumer', 'Status', 'Last Shared'].map((h) => (
-                        <TableCell
-                          key={h}
-                          sx={{ fontWeight: 600, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.5)', backgroundColor: '#1e2d3d' }}
-                        >
-                          {h}
-                        </TableCell>
+                    <CcmHeaderRow>
+                      {([
+                        t('provisionPage.sharesColumns.type'),
+                        t('provisionPage.sharesColumns.consumer'),
+                        t('provisionPage.sharesColumns.status'),
+                        t('provisionPage.sharesColumns.lastShared'),
+                      ]).map((h) => (
+                        <CcmHeaderCell key={h}>{h}</CcmHeaderCell>
                       ))}
-                    </TableRow>
+                    </CcmHeaderRow>
                   </TableHead>
                   <TableBody>
                     {visibleShares.map((share) => (
-                      <Tooltip key={share.shareId} title="Click to view full details" placement="left" arrow>
-                        <TableRow
-                          onClick={() => setDetailShare(share)}
-                          sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' } }}
-                        >
-                          <TableCell>
-                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
-                              {typeLabel(share.certificateType)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}>
-                            <BpnlContactCell bpnl={share.consumerBpnl} mode="name" />
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={share.status}
-                                size="small"
-                                sx={{ fontWeight: 600, fontSize: '0.7rem', ...shareStatusSx(share.status) }}
-                              />
-                              {share.rejectionReason && (
-                                <Tooltip title="Has rejection reason — click row to view">
-                                  <ErrorOutlineIcon sx={{ fontSize: '0.9rem', color: '#e57373' }} />
-                                </Tooltip>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <RelativeDate value={share.lastSharedDate} />
-                          </TableCell>
-                        </TableRow>
-                      </Tooltip>
+                      <CcmBodyRow key={share.shareId} onClick={() => setDetailShare(share)}>
+                        <CcmBodyCell>
+                          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.87)' }}>
+                            {typeLabel(share.certificateType)}
+                          </Typography>
+                        </CcmBodyCell>
+                        <CcmBodyCell onClick={(e) => e.stopPropagation()}>
+                          <BpnlContactCell bpnl={share.consumerBpnl} mode="name" />
+                        </CcmBodyCell>
+                        <CcmBodyCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={share.status}
+                              size="small"
+                              sx={{ fontWeight: 600, fontSize: '0.7rem', ...shareStatusSx(share.status) }}
+                            />
+                            {share.rejectionReason && (
+                              <Tooltip title={t('provisionPage.shares.rejectionIcon')}>
+                                <ErrorOutlineIcon sx={{ fontSize: '0.9rem', color: '#e57373' }} />
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
+                          <RelativeDate value={share.lastSharedDate} />
+                        </CcmBodyCell>
+                      </CcmBodyRow>
                     ))}
                   </TableBody>
                 </Table>
               </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[]}
+              <CcmTablePagination
+                rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
                 component="div"
                 count={filteredShares.length}
-                rowsPerPage={ROWS_PER_PAGE}
+                rowsPerPage={sharesRowsPerPage}
                 page={sharesPage}
                 onPageChange={(_, p) => setSharesPage(p)}
-                sx={{ color: 'rgba(255,255,255,0.9)', borderTop: '1px solid rgba(255,255,255,0.08)', '& .MuiTablePagination-displayedRows': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root': { color: 'rgba(255,255,255,0.9)' }, '& .MuiIconButton-root.Mui-disabled': { color: 'rgba(255,255,255,0.2)' } }}
+                onRowsPerPageChange={(e) => { setSharesRowsPerPage(parseInt(e.target.value, 10)); setSharesPage(0); }}
               />
             </>
           )}
-        </Paper>
+        </CcmTablePaper>
       )}
 
       <ProvideCertificateDialog

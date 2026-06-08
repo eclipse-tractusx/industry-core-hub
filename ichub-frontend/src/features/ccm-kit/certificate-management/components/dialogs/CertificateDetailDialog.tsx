@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -62,7 +63,7 @@ interface CertificateDetailDialogProps {
 }
 
 const formatDate = (dateString: string) =>
-  new Date(dateString).toLocaleDateString('en-US', {
+  new Date(dateString).toLocaleDateString([], {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -93,6 +94,7 @@ export const CertificateDetailDialog = ({
   onUpdate,
   onRefresh,
 }: CertificateDetailDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [revokingIds, setRevokingIds] = useState<Set<string>>(new Set());
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -108,10 +110,10 @@ export const CertificateDetailDialog = ({
     setRevokingIds((prev) => new Set(prev).add(record.id));
     try {
       await revokeShare(certificate.id, record.id);
-      setSnackbar({ open: true, message: `Access revoked for ${record.partnerName ?? record.partnerBpn}.`, severity: 'success' });
+      setSnackbar({ open: true, message: t('detailDialog.revokeSuccess', { partner: record.partnerName ?? record.partnerBpn }), severity: 'success' });
       onRefresh();
     } catch {
-      setSnackbar({ open: true, message: 'Failed to revoke access.', severity: 'error' });
+      setSnackbar({ open: true, message: t('detailDialog.revokeFailed'), severity: 'error' });
     } finally {
       setRevokingIds((prev) => {
         const next = new Set(prev);
@@ -157,43 +159,43 @@ export const CertificateDetailDialog = ({
             variant="caption"
             sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', fontWeight: 600 }}
           >
-            Certificate Information
+            {t('detailDialog.certInfo')}
           </Typography>
 
           <Grid2 container spacing={2} sx={{ mt: 1, mb: 3 }}>
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <InfoRow label="Type" value={getCertTypeLabel(certificate.type)} />
+              <InfoRow label={t('detailDialog.type')} value={getCertTypeLabel(certificate.type)} />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <InfoRow label="Issuer" value={certificate.issuer} />
+              <InfoRow label={t('detailDialog.issuer')} value={certificate.issuer} />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <InfoRow label="Valid From" value={formatDate(certificate.validFrom)} />
+              <InfoRow label={t('detailDialog.validFrom')} value={formatDate(certificate.validFrom)} />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
               <InfoRow
-                label="Valid Until"
+                label={t('detailDialog.validUntil')}
                 value={formatDate(certificate.validUntil)}
                 valueColor={certificate.status === 'expired' ? '#f44336' : certificate.status === 'expiring' ? '#ed8936' : undefined}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <InfoRow label="Business Partner" value={certificate.bpn} mono />
+              <InfoRow label={t('detailDialog.businessPartner')} value={certificate.bpn} mono />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
               <InfoRow
-                label="Certificate ID"
+                label={t('detailDialog.certificateId')}
                 value={certificate.certificateIdentifier ?? '—'}
                 mono={!!certificate.certificateIdentifier}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, sm: 6 }}>
-              <InfoRow label="Scope" value={certificate.enclosedSitesBpn?.length ? 'Site-level (BPNS)' : 'Legal entity (BPNL)'} />
+              <InfoRow label={t('detailDialog.scope')} value={certificate.enclosedSitesBpn?.length ? t('detailDialog.scopeSite') : t('detailDialog.scopeEntity')} />
             </Grid2>
             {certificate.enclosedSitesBpn && certificate.enclosedSitesBpn.length > 0 && (
               <Grid2 size={12}>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                  Enclosed Sites
+                  {t('detailDialog.enclosedSites')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                   {certificate.enclosedSitesBpn.map((bpns) => (
@@ -204,7 +206,7 @@ export const CertificateDetailDialog = ({
             )}
             {certificate.description && (
               <Grid2 size={12}>
-                <InfoRow label="Description" value={certificate.description} />
+                <InfoRow label={t('detailDialog.description')} value={certificate.description} />
               </Grid2>
             )}
           </Grid2>
@@ -216,7 +218,7 @@ export const CertificateDetailDialog = ({
             variant="caption"
             sx={{ textTransform: 'uppercase', letterSpacing: '0.08em', color: 'text.secondary', fontWeight: 600, display: 'block', mb: 1.5 }}
           >
-            Sharing History ({sharingRecords.length})
+            {t('detailDialog.sharingHistory', { count: sharingRecords.length })}
           </Typography>
 
           {sharingRecords.length === 0 ? (
@@ -231,7 +233,7 @@ export const CertificateDetailDialog = ({
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                No sharing records yet. Use the Share button to share this certificate with a partner.
+                {t('detailDialog.noSharingRecords')}
               </Typography>
             </Box>
           ) : (
@@ -239,12 +241,12 @@ export const CertificateDetailDialog = ({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Partner</TableCell>
-                    <TableCell>Method</TableCell>
-                    <TableCell>Shared On</TableCell>
-                    <TableCell>EDC Contract</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Action</TableCell>
+                    <TableCell>{t('detailDialog.columns.partner')}</TableCell>
+                    <TableCell>{t('detailDialog.columns.method')}</TableCell>
+                    <TableCell>{t('detailDialog.columns.sharedOn')}</TableCell>
+                    <TableCell>{t('detailDialog.columns.edcContract')}</TableCell>
+                    <TableCell>{t('detailDialog.columns.status')}</TableCell>
+                    <TableCell>{t('detailDialog.columns.action')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -291,7 +293,7 @@ export const CertificateDetailDialog = ({
                           onClick={() => handleRevoke(record)}
                           sx={{ textTransform: 'none' }}
                         >
-                          Revoke
+                          {t('common.revoke')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -305,7 +307,7 @@ export const CertificateDetailDialog = ({
         {/* ── Footer ─────────────────────────────────────────────────────── */}
         <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
           <Button onClick={onClose} sx={{ textTransform: 'none' }}>
-            Close
+            {t('common.close')}
           </Button>
           <Button
             variant="outlined"
@@ -316,7 +318,7 @@ export const CertificateDetailDialog = ({
             }}
             sx={{ textTransform: 'none' }}
           >
-            Update PDF
+            {t('detailDialog.updatePdf')}
           </Button>
           <Button
             variant="contained"
@@ -328,7 +330,7 @@ export const CertificateDetailDialog = ({
             }}
             sx={{ textTransform: 'none' }}
           >
-            Share Certificate
+            {t('detailDialog.shareCertificate')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -43,12 +44,13 @@ export const ShareCertificateDialog = ({
   certificate,
   onShare,
 }: ShareCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [partnerBpn, setPartnerBpn] = useState('');
   const [error, setError] = useState('');
 
   const handleShare = () => {
     if (!partnerBpn.trim()) {
-      setError('Partner BPN is required');
+      setError(t('shareDialog.errors.partnerBpnRequired'));
       return;
     }
     if (!certificateManagementConfig.validation.bpn.pattern.test(partnerBpn)) {
@@ -85,7 +87,7 @@ export const ShareCertificateDialog = ({
               variant="h6"
               sx={{ fontWeight: 600, color: 'inherit', lineHeight: 1.2 }}
             >
-              Share Certificate
+              {t('shareDialog.title')}
             </Typography>
             {certificate && (
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.75)' }}>
@@ -113,13 +115,12 @@ export const ShareCertificateDialog = ({
 
       <DialogContent sx={{ backgroundColor: 'background.paper', px: 3, pt: 4, pb: 3 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Enter the Business Partner Number of the partner you want to share this
-          certificate with. They will receive it via EDC notification.
+          {t('shareDialog.description')}
         </Typography>
 
         <TextField
           fullWidth
-          label="Partner BPN"
+          label={t('shareDialog.partnerBpn')}
           value={partnerBpn}
           onChange={(e) => {
             setPartnerBpn(e.target.value);
@@ -148,14 +149,14 @@ export const ShareCertificateDialog = ({
           variant="outlined"
           sx={{ textTransform: 'none' }}
         >
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={handleShare}
           variant="contained"
           sx={{ textTransform: 'none', fontWeight: 600 }}
         >
-          Share
+          {t('common.share')}
         </Button>
       </DialogActions>
     </Dialog>

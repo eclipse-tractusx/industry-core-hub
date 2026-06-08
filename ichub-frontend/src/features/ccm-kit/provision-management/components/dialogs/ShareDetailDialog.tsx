@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import { Box, Button, Chip, Divider, Paper, Stack, Typography } from '@mui/material';
 import ShareIcon from '@mui/icons-material/Share';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -66,7 +67,7 @@ const statusChipSx = (status: ShareStatus) => {
 };
 
 const formatDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+  d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 const InfoField = ({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) => (
   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
@@ -83,6 +84,7 @@ const InfoField = ({ label, value, mono = false }: { label: string; value: strin
 );
 
 const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   if (!share) return null;
 
   const rejection = parseRejectionReason(share.rejectionReason);
@@ -93,14 +95,14 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Share Details"
+      title={t('shareDetailDialog.title')}
       subtitle={`Share #${share.shareId} · ${typeLabel(share.certificateType)}`}
       icon={<ShareIcon />}
       maxWidth="md"
       fullWidth
       actions={
         <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-          Close
+          {t('common.close')}
         </Button>
       }
     >
@@ -112,12 +114,12 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
 
         {/* Main info grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5, mb: 3 }}>
-          <InfoField label="Provider BPN" value={share.providerBpnl} mono />
-          <InfoField label="Consumer BPN" value={share.consumerBpnl} mono />
-          <InfoField label="Certificate Type" value={typeLabel(share.certificateType)} />
-          <InfoField label="Certificate ID" value={String(share.certificateId)} />
-          <InfoField label="Last Shared" value={formatDate(share.lastSharedDate)} />
-          <InfoField label="Created" value={formatDate(share.createdAt)} />
+          <InfoField label={t('shareDetailDialog.providerBpn')} value={share.providerBpnl} mono />
+          <InfoField label={t('shareDetailDialog.consumerBpn')} value={share.consumerBpnl} mono />
+          <InfoField label={t('shareDetailDialog.certType')} value={typeLabel(share.certificateType)} />
+          <InfoField label={t('shareDetailDialog.certificateId')} value={String(share.certificateId)} />
+          <InfoField label={t('shareDetailDialog.lastShared')} value={formatDate(share.lastSharedDate)} />
+          <InfoField label={t('shareDetailDialog.created')} value={formatDate(share.createdAt)} />
         </Box>
 
         {/* Rejection reason — shown when present */}
@@ -128,7 +130,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 2.5, color: 'error.main' }}>
               <ErrorOutlineIcon fontSize="small" />
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                Rejection Reason
+                {t('shareDetailDialog.rejectionReason')}
               </Typography>
             </Box>
 
@@ -138,7 +140,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                   variant="caption"
                   sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600, display: 'block', mb: 1 }}
                 >
-                  Certificate Errors
+                  {t('shareDetailDialog.certErrors')}
                 </Typography>
                 <Paper variant="outlined" sx={{ borderColor: 'error.light', overflow: 'hidden' }}>
                   {rejection!.certificateErrors!.map((err, idx) => (
@@ -167,7 +169,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                     variant="caption"
                     sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600 }}
                   >
-                    Location Errors
+                    {t('shareDetailDialog.locErrors')}
                   </Typography>
                 </Box>
                 <Stack spacing={1}>
@@ -215,7 +217,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
             {share.rejectionReason && !rejection && (
               <Box>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                  Raw payload
+                  {t('shareDetailDialog.rawPayload')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.78rem' }}>
                   {share.rejectionReason}

@@ -21,6 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import { Box, Button, Typography } from '@mui/material';
 import PublishIcon from '@mui/icons-material/Publish';
 import { PublishCertificateDialogProps } from '../../types/dialog-types';
@@ -34,6 +35,7 @@ export const PublishCertificateDialog = ({
   certificate,
   onConfirm,
 }: PublishCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const typeLabel = certificate?.type
     ? (certificateManagementConfig.certificateTypes.find((t) => t.value === certificate.type)?.label ?? certificate.type)
     : undefined;
@@ -46,15 +48,15 @@ export const PublishCertificateDialog = ({
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Publish Certificate"
-      subtitle="Make this certificate discoverable in the Catena-X dataspace"
+      title={t('publishDialog.title')}
+      subtitle={t('publishDialog.subtitle')}
       icon={<PublishIcon />}
       maxWidth="xs"
       fullWidth
       actions={
         <>
           <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={handleConfirm}
@@ -62,14 +64,14 @@ export const PublishCertificateDialog = ({
             startIcon={<PublishIcon />}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
-            Publish
+            {t('common.publish')}
           </Button>
         </>
       }
     >
       <Box sx={{ px: 3, pt: 3, pb: 2 }}>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          Are you sure you want to publish this certificate?
+          {t('publishDialog.confirmation')}
         </Typography>
 
         {certificate && (
@@ -95,8 +97,7 @@ export const PublishCertificateDialog = ({
         )}
 
         <Typography variant="body2" color="text.secondary">
-          Publishing will register this certificate in the network, making it
-          discoverable by your partners through the Catena-X dataspace.
+          {t('publishDialog.explanation')}
         </Typography>
       </Box>
     </CcmDialog>

@@ -4,3 +4,4 @@ export * from './Panels';
 export * from './Filters';
 export * from './Contacts';
 export * from './utils';
+export * from './Table/CcmTableComponents';

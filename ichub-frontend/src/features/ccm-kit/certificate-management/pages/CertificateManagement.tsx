@@ -330,7 +330,7 @@ const CertificateManagement = () => {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', p: { xs: 2, sm: 3, md: 4 } }}>
       {/* Page header */}
       <Box sx={{ mb: 4 }}>
         <PageSectionHeader
@@ -378,7 +378,7 @@ const CertificateManagement = () => {
       <CcmFilterBar
         search={filters.search}
         onSearchChange={handleSearchChange}
-        searchPlaceholder="Search by name, issuer or BPN…"
+        searchPlaceholder={t('filters.searchPlaceholder')}
         filters={certTypeFilterDefs}
         values={{ type: filters.type }}
         onFilterChange={handleTypeFilterChange}

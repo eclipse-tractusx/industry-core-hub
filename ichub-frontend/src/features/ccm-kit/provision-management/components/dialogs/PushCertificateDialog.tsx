@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -62,6 +63,7 @@ const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
 const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [certificateId, setCertificateId] = useState('');
   const [certificates, setCertificates] = useState<OwnCertificate[]>([]);
   const [consumerBpn, setConsumerBpn] = useState('');
@@ -86,7 +88,7 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
       setCertificates(certs as OwnCertificate[]);
       setPartners(p);
     } catch {
-      setError('Failed to load certificates.');
+      setError(t('pushDialog.errors.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -122,12 +124,12 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
         // Proactive push: no related request, relatedMessageId omitted.
       });
       if (!result.success) {
-        setError(result.error ?? 'Failed to push the certificate.');
+        setError(result.error ?? t('pushDialog.errors.pushFailed'));
         return;
       }
       onSuccess();
     } catch {
-      setError('Failed to push the certificate.');
+      setError(t('pushDialog.errors.pushFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -137,14 +139,14 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Push Certificate"
-      subtitle="Send a certificate directly to a partner without a prior request"
+      title={t('pushDialog.title')}
+      subtitle={t('pushDialog.subtitle')}
       icon={<SendIcon />}
       fullWidth
       actions={
         <>
           <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -153,7 +155,7 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
             startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
-            Push Certificate
+            {t('pushDialog.pushCertificate')}
           </Button>
         </>
       }
@@ -166,17 +168,17 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
         ) : (
           <Stack spacing={2.5}>
             <Typography variant="body2" color="text.secondary">
-              Send one of your certificates directly to a partner, without a prior request.
+              {t('pushDialog.description')}
             </Typography>
 
             <TextField
-              label="Certificate to push"
+              label={t('pushDialog.certSelect')}
               value={certificateId}
               onChange={(e) => setCertificateId(e.target.value)}
               select
               fullWidth
               required
-              helperText={certificates.length === 0 ? 'No certificates available.' : ' '}
+              helperText={certificates.length === 0 ? t('pushDialog.noCerts') : ' '}
             >
               {certificates.map((c) => (
                 <MenuItem key={c.certificateId} value={c.certificateId}>
@@ -195,8 +197,8 @@ const PushCertificateDialog = ({ open, onClose, onSuccess }: PushCertificateDial
               onBpnlChange={setConsumerBpn}
               onPartnerChange={setSelectedPartner}
               onRetryLoadPartners={loadData}
-              label="Recipient (Consumer BPN)"
-              placeholder="Select or type the recipient's BPNL"
+              label={t('pushDialog.recipientBpn')}
+              placeholder={t('pushDialog.recipientPlaceholder')}
             />
 
             {error && <Alert severity="error">{error}</Alert>}

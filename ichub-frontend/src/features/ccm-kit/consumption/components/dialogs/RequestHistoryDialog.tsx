@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -46,9 +47,10 @@ interface RequestHistoryDialogProps {
 }
 
 const formatDateTime = (d?: string | null) =>
-  d ? new Date(d).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+  d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [history, setHistory] = useState<OutboundRequestItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +66,7 @@ const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogPr
       certificateType: request.certificateType,
     })
       .then((items) => active && setHistory(items))
-      .catch(() => active && setError('Failed to load request history.'))
+      .catch(() => active && setError(t('historyDialog.loadFailed')))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -75,25 +77,25 @@ const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogPr
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Request History"
-      subtitle="Full timeline of this certificate request"
+      title={t('historyDialog.title')}
+      subtitle={t('historyDialog.subtitle')}
       icon={<HistoryIcon />}
       maxWidth="md"
       fullWidth
       actions={
         <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-          Close
+          {t('common.close')}
         </Button>
       }
     >
       <Box sx={{ p: 3 }}>
         {request && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {request.certificateType} · provider{' '}
+            {request.certificateType} · {t('historyDialog.provider')}{' '}
             <Box component="span" sx={{ fontFamily: 'monospace' }}>
               {request.providerBpn}
             </Box>{' '}
-            · certified{' '}
+            · {t('historyDialog.certified')}{' '}
             <Box component="span" sx={{ fontFamily: 'monospace' }}>
               {request.certifiedBpn}
             </Box>
@@ -108,13 +110,19 @@ const RequestHistoryDialog = ({ open, request, onClose }: RequestHistoryDialogPr
           <Alert severity="error">{error}</Alert>
         ) : history.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-            No history records found.
+            {t('historyDialog.noHistory')}
           </Typography>
         ) : (
           <Table size="small">
             <TableHead>
               <TableRow>
-                {['Status', 'Notification ID', 'Document ID', 'Requested', 'Updated'].map((h) => (
+                {([
+                  t('historyDialog.columns.status'),
+                  t('historyDialog.columns.notificationId'),
+                  t('historyDialog.columns.documentId'),
+                  t('historyDialog.columns.requested'),
+                  t('historyDialog.columns.updated'),
+                ]).map((h) => (
                   <TableCell key={h} sx={{ fontWeight: 600 }}>
                     {h}
                   </TableCell>

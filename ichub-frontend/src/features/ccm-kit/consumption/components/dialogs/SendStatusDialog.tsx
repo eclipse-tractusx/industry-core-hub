@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Box,
@@ -63,6 +64,7 @@ interface LocationErrorRow {
 }
 
 const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [status, setStatus] = useState<CertificateStatusValue | null>(null);
   const [certificateErrors, setCertificateErrors] = useState<string[]>(['']);
   const [locationErrors, setLocationErrors] = useState<LocationErrorRow[]>([{ bpn: '', message: '' }]);
@@ -147,12 +149,12 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
         governance: CCM_POLICY_GOVERNANCE,
       });
       if (!result.success) {
-        setSubmitError(result.error ?? 'Failed to send the status feedback.');
+        setSubmitError(result.error ?? t('feedbackDialog.submitError'));
         return;
       }
       onSuccess(status);
     } catch {
-      setSubmitError('Failed to send the status feedback.');
+      setSubmitError(t('feedbackDialog.submitError'));
     } finally {
       setSubmitting(false);
     }
@@ -162,15 +164,15 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Certificate Feedback"
-      subtitle="Notify the provider of your evaluation outcome"
+      title={t('feedbackDialog.title')}
+      subtitle={t('feedbackDialog.subtitle')}
       icon={<RateReviewIcon />}
       maxWidth="md"
       fullWidth
       actions={
         <>
           <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -180,7 +182,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
             startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
-            Send Feedback
+            {t('feedbackDialog.sendFeedback')}
           </Button>
         </>
       }
@@ -188,7 +190,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
       <Box sx={{ p: 3 }}>
         <Stack spacing={2.5}>
           <Typography variant="body2" color="text.secondary">
-            Notify the provider about the outcome of your evaluation for document{' '}
+            {t('feedbackDialog.description')}{' '}
             <Box component="span" sx={{ fontFamily: 'monospace' }}>
               {request?.documentId ?? '—'}
             </Box>
@@ -202,13 +204,13 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
             fullWidth
           >
             <ToggleButton value="RECEIVED" color="primary">
-              Received
+              {t('feedbackDialog.statusReceived')}
             </ToggleButton>
             <ToggleButton value="ACCEPTED" color="success">
-              Accepted
+              {t('feedbackDialog.statusAccepted')}
             </ToggleButton>
             <ToggleButton value="REJECTED" color="error">
-              Rejected
+              {t('feedbackDialog.statusRejected')}
             </ToggleButton>
           </ToggleButtonGroup>
 
@@ -221,11 +223,11 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Certificate Errors</Typography>
-                      <Typography variant="caption" color="text.secondary">General certificate-level issues *</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t('feedbackDialog.certErrors.title')}</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('feedbackDialog.certErrors.helper')}</Typography>
                     </Box>
                     <Button size="small" startIcon={<AddIcon />} onClick={addCertError} sx={{ textTransform: 'none', flexShrink: 0 }}>
-                      Add
+                      {t('common.add')}
                     </Button>
                   </Box>
                   <Stack spacing={1}>
@@ -234,7 +236,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
                         <TextField
                           value={message}
                           onChange={(e) => updateCertError(idx, e.target.value)}
-                          placeholder="e.g. Certificate expired"
+                          placeholder={t('feedbackDialog.certErrors.placeholder')}
                           size="small"
                           fullWidth
                           multiline
@@ -258,11 +260,11 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                     <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Location Errors</Typography>
-                      <Typography variant="caption" color="text.secondary">Per-site issues (BPNS level) *</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t('feedbackDialog.locErrors.title')}</Typography>
+                      <Typography variant="caption" color="text.secondary">{t('feedbackDialog.locErrors.helper')}</Typography>
                     </Box>
                     <Button size="small" startIcon={<AddIcon />} onClick={addLocError} sx={{ textTransform: 'none', flexShrink: 0 }}>
-                      Add
+                      {t('common.add')}
                     </Button>
                   </Box>
                   <Stack spacing={1}>
@@ -270,7 +272,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
                       <Paper key={idx} variant="outlined" sx={{ p: 1.5 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                           <TextField
-                            label="Site BPN"
+                            label={t('feedbackDialog.locErrors.siteBpn')}
                             value={row.bpn}
                             onChange={(e) => updateLocError(idx, { bpn: e.target.value.toUpperCase() })}
                             select={locationOptions.length > 0}
@@ -293,7 +295,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
                           </IconButton>
                         </Box>
                         <TextField
-                          label="Error message"
+                          label={t('feedbackDialog.locErrors.errorMessage')}
                           value={row.message}
                           onChange={(e) => updateLocError(idx, { message: e.target.value })}
                           size="small"
@@ -308,7 +310,7 @@ const SendStatusDialog = ({ open, request, onClose, onSuccess }: SendStatusDialo
               </Box>
 
               <Alert severity="info">
-                A rejection requires at least one certificate error and one location error.
+                {t('feedbackDialog.rejectionAlert')}
               </Alert>
             </>
           )}

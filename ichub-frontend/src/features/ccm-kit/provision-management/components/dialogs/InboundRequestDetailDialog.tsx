@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import { Box, Button, Chip, Divider, Typography } from '@mui/material';
 import InboxIcon from '@mui/icons-material/Inbox';
 import { CcmDialog } from '@/features/ccm-kit/shared-components';
@@ -50,7 +51,7 @@ const statusChipSx = (status: InboundRequestStatus) => {
 };
 
 const formatDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+  d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 const parseLocationBpns = (raw?: string | null): string[] => {
   if (!raw) return [];
@@ -82,6 +83,7 @@ const InboundRequestDetailDialog = ({
   onClose,
   onProvide,
 }: InboundRequestDetailDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   if (!request) return null;
 
   const locationBpns = parseLocationBpns(request.locationBpns);
@@ -91,7 +93,7 @@ const InboundRequestDetailDialog = ({
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Inbound Request Details"
+      title={t('inboundDetailDialog.title')}
       subtitle={`#${request.requestId} · ${typeLabel(request.certificateType)}`}
       icon={<InboxIcon />}
       maxWidth="md"
@@ -99,7 +101,7 @@ const InboundRequestDetailDialog = ({
       actions={
         <>
           <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-            Close
+            {t('common.close')}
           </Button>
           {canProvide && (
             <Button
@@ -110,7 +112,7 @@ const InboundRequestDetailDialog = ({
               }}
               sx={{ textTransform: 'none', fontWeight: 600 }}
             >
-              Provide Certificate
+              {t('inboundDetailDialog.provideCertificate')}
             </Button>
           )}
         </>
@@ -122,7 +124,7 @@ const InboundRequestDetailDialog = ({
           <Chip label={request.status} size="small" sx={{ fontWeight: 600, ...statusChipSx(request.status) }} />
           {request.consumerStatus && (
             <Chip
-              label={`Consumer: ${request.consumerStatus}`}
+              label={`${t('inboundDetailDialog.consumerPrefix')}${request.consumerStatus}`}
               size="small"
               variant="outlined"
               sx={{ fontSize: '0.72rem' }}
@@ -132,18 +134,18 @@ const InboundRequestDetailDialog = ({
 
         {/* Main info grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5, mb: 3 }}>
-          <InfoField label="Consumer BPN" value={request.consumerBpn} mono />
-          <InfoField label="Certified BPN" value={request.certifiedBpn} mono />
-          <InfoField label="Certificate Type" value={typeLabel(request.certificateType)} />
-          <InfoField label="Certificate ID" value={request.certificateId != null ? String(request.certificateId) : '—'} />
-          <InfoField label="Received" value={formatDate(request.receivedAt)} />
-          <InfoField label="Updated" value={formatDate(request.updatedAt)} />
+          <InfoField label={t('inboundDetailDialog.consumerBpn')} value={request.consumerBpn} mono />
+          <InfoField label={t('inboundDetailDialog.certifiedBpn')} value={request.certifiedBpn} mono />
+          <InfoField label={t('inboundDetailDialog.certType')} value={typeLabel(request.certificateType)} />
+          <InfoField label={t('inboundDetailDialog.certificateId')} value={request.certificateId != null ? String(request.certificateId) : '—'} />
+          <InfoField label={t('inboundDetailDialog.received')} value={formatDate(request.receivedAt)} />
+          <InfoField label={t('inboundDetailDialog.updated')} value={formatDate(request.updatedAt)} />
         </Box>
 
         {request.notificationId && (
           <>
             <Divider sx={{ mb: 2.5 }} />
-            <InfoField label="Notification ID" value={request.notificationId} mono />
+            <InfoField label={t('inboundDetailDialog.notificationId')} value={request.notificationId} mono />
           </>
         )}
 
@@ -155,7 +157,7 @@ const InboundRequestDetailDialog = ({
                 variant="caption"
                 sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600, display: 'block', mb: 1 }}
               >
-                Requested Sites ({locationBpns.length})
+                {t('inboundDetailDialog.requestedSites', { count: locationBpns.length })}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {locationBpns.map((bpn) => (

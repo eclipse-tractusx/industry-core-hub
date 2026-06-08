@@ -40,7 +40,7 @@ export const formatRelativeDate = (value?: string | null): string => {
     date.getDate() === now.getDate();
 
   if (sameDay) {
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `Today, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
   }
   if (date.getFullYear() === now.getFullYear()) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

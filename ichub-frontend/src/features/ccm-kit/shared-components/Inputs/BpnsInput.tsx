@@ -24,6 +24,7 @@ import { useState } from 'react';
 import { Box, Chip, IconButton, InputAdornment, TextField, Tooltip, Typography } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { useTranslation } from 'react-i18next';
 
 const BPNS_REGEX = /^BPNS[A-Z0-9]{12}$/;
 
@@ -43,9 +44,11 @@ interface BpnsInputProps {
 export const BpnsInput = ({
   value,
   onChange,
-  label = 'Sites / Locations (BPNS)',
+  label,
   disabled = false,
 }: BpnsInputProps) => {
+  const { t } = useTranslation('certificateManagement');
+  const resolvedLabel = label ?? t('bpnsInput.label');
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -53,11 +56,11 @@ export const BpnsInput = ({
     const val = input.trim().toUpperCase();
     if (!val) return;
     if (!BPNS_REGEX.test(val)) {
-      setError('Must be "BPNS" followed by 12 alphanumeric characters');
+      setError(t('bpnsInput.errorFormat'));
       return;
     }
     if (value.includes(val)) {
-      setError('Already in the list');
+      setError(t('bpnsInput.errorDuplicate'));
       return;
     }
     onChange([...value, val]);
@@ -73,9 +76,9 @@ export const BpnsInput = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
         <LocationOnIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
         <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
-          {label}
+          {resolvedLabel}
           <Typography component="span" variant="caption" color="text.disabled" sx={{ ml: 0.75 }}>
-            — optional
+            {t('bpnsInput.optional')}
           </Typography>
         </Typography>
       </Box>
@@ -93,17 +96,17 @@ export const BpnsInput = ({
             commit();
           }
         }}
-        placeholder="e.g. BPNS0000000000XY"
+        placeholder={t('bpnsInput.placeholder')}
         size="small"
         fullWidth
         disabled={disabled}
         error={!!error}
-        helperText={error ?? 'Type a BPNS and press Enter to add'}
+        helperText={error ?? t('bpnsInput.helper')}
         inputProps={{ style: { fontFamily: 'monospace', letterSpacing: '0.03em' } }}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title="Add site">
+              <Tooltip title={t('bpnsInput.addTooltip')}>
                 <span>
                   <IconButton
                     size="small"

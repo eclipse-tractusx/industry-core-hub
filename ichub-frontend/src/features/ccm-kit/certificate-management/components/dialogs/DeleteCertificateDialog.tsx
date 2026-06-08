@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
@@ -40,6 +41,7 @@ export const DeleteCertificateDialog = ({
   certificate,
   onConfirm
 }: DeleteCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const handleConfirm = () => {
     if (certificate) {
       onConfirm(certificate.id);
@@ -69,7 +71,7 @@ export const DeleteCertificateDialog = ({
       >
         <WarningAmberIcon sx={{ color: '#9D6FD4', fontSize: 22 }} />
         <Typography variant="h6" sx={{ fontWeight: 600, color: 'inherit', lineHeight: 1 }}>
-          Delete Certificate
+          {t('deleteDialog.title')}
         </Typography>
         <IconButton
           size="medium"
@@ -89,7 +91,7 @@ export const DeleteCertificateDialog = ({
 
       <DialogContent sx={{ backgroundColor: 'background.paper', px: 3, pt: 3, pb: 3 }}>
         <Typography variant="body1" sx={{ mb: certificate ? 2 : 0, mt: 3 }}>
-          Are you sure you want to delete this certificate?
+          {t('deleteDialog.confirmation')}
         </Typography>
         {certificate && (
           <Box
@@ -108,7 +110,7 @@ export const DeleteCertificateDialog = ({
           </Box>
         )}
         <Typography variant="body2" color="text.secondary">
-          This action cannot be undone. All shared references will also be removed.
+          {t('deleteDialog.warning')}
         </Typography>
       </DialogContent>
 
@@ -123,7 +125,7 @@ export const DeleteCertificateDialog = ({
         }}
       >
         <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={handleConfirm}
@@ -131,7 +133,7 @@ export const DeleteCertificateDialog = ({
           color="error"
           sx={{ textTransform: 'none', fontWeight: 600 }}
         >
-          Delete
+          {t('common.delete')}
         </Button>
       </DialogActions>
     </Dialog>

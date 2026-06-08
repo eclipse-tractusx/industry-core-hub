@@ -20,6 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import { Box, Button, Chip, CircularProgress, Divider, Typography } from '@mui/material';
 import HistoryIcon from '@mui/icons-material/History';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -47,7 +48,7 @@ const typeLabel = (value: string) =>
   ccmSharedConfig.certificateTypes.find((t) => t.value === value)?.label ?? value;
 
 const formatDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+  d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 const statusChipSx = (status: OutboundRequestStatus) => {
   switch (status) {
@@ -87,6 +88,7 @@ const OutboundRequestDetailDialog = ({
   onHistory,
   onFeedback,
 }: OutboundRequestDetailDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   if (!request) return null;
 
   const isFound = request.status === 'Found' && !!request.documentId;
@@ -111,7 +113,7 @@ const OutboundRequestDetailDialog = ({
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="Request Details"
+      title={t('requestDetailDialog.title')}
       subtitle={`${typeLabel(request.certificateType)} · #${request.id}`}
       icon={<AssignmentIcon />}
       maxWidth="md"
@@ -126,7 +128,7 @@ const OutboundRequestDetailDialog = ({
             onClick={handleHistory}
             sx={{ textTransform: 'none', flex: 1 }}
           >
-            History
+            {t('requestDetailDialog.history')}
           </Button>
           <Button
             variant="outlined"
@@ -137,7 +139,7 @@ const OutboundRequestDetailDialog = ({
             onClick={handleFeedback}
             sx={{ textTransform: 'none', flex: 1 }}
           >
-            Send Feedback
+            {t('requestDetailDialog.sendFeedback')}
           </Button>
           <Button
             variant="outlined"
@@ -154,7 +156,7 @@ const OutboundRequestDetailDialog = ({
             onClick={handlePullOrView}
             sx={{ textTransform: 'none', fontWeight: 600, flex: 1 }}
           >
-            {alreadyReceived ? 'View Certificate' : 'Pull Certificate'}
+            {alreadyReceived ? t('requestDetailDialog.viewCertificate') : t('requestDetailDialog.pullCertificate')}
           </Button>
         </Box>
       }
@@ -171,13 +173,13 @@ const OutboundRequestDetailDialog = ({
 
         {/* Main info grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2.5, mb: 3 }}>
-          <InfoField label="Provider BPN" value={request.providerBpn} mono />
-          <InfoField label="Certified BPN" value={request.certifiedBpn} mono />
-          <InfoField label="Certificate Type" value={typeLabel(request.certificateType)} />
-          <InfoField label="Document ID" value={request.documentId} mono />
-          <InfoField label="Requested" value={formatDate(request.requestedAt)} />
-          <InfoField label="Updated" value={formatDate(request.updatedAt)} />
-          {localStatus && <InfoField label="Local Status" value={localStatus} />}
+          <InfoField label={t('requestDetailDialog.providerBpn')} value={request.providerBpn} mono />
+          <InfoField label={t('requestDetailDialog.certifiedBpn')} value={request.certifiedBpn} mono />
+          <InfoField label={t('requestDetailDialog.certType')} value={typeLabel(request.certificateType)} />
+          <InfoField label={t('requestDetailDialog.documentId')} value={request.documentId} mono />
+          <InfoField label={t('requestDetailDialog.requested')} value={formatDate(request.requestedAt)} />
+          <InfoField label={t('requestDetailDialog.updated')} value={formatDate(request.updatedAt)} />
+          {localStatus && <InfoField label={t('requestDetailDialog.localStatus')} value={localStatus} />}
         </Box>
 
         {/* Location BPNs */}
@@ -189,7 +191,7 @@ const OutboundRequestDetailDialog = ({
                 variant="caption"
                 sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', fontWeight: 600, display: 'block', mb: 1 }}
               >
-                Requested Sites ({request.locationBpns.length})
+                {t('requestDetailDialog.requestedSites', { count: request.locationBpns.length })}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {request.locationBpns.map((bpn) => (
@@ -204,7 +206,7 @@ const OutboundRequestDetailDialog = ({
         {request.notificationId && (
           <>
             <Divider sx={{ my: 2.5 }} />
-            <InfoField label="Notification ID" value={request.notificationId} mono />
+            <InfoField label={t('requestDetailDialog.notificationId')} value={request.notificationId} mono />
           </>
         )}
       </Box>

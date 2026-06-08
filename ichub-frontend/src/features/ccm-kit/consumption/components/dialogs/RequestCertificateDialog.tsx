@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Alert,
   Autocomplete,
@@ -55,6 +56,7 @@ type SupportState = 'unknown' | 'checking' | 'supported' | 'unsupported';
 const BPN_PATTERN = ccmSharedConfig.validation.bpn.pattern;
 
 const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const [providerBpn, setProviderBpn] = useState('');
   const [selectedPartner, setSelectedPartner] = useState<PartnerInstance | null>(null);
   const [certifiedBpn, setCertifiedBpn] = useState('');
@@ -117,11 +119,11 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
         setSupport('supported');
       } else {
         setSupport('unsupported');
-        setSupportError(result.error ?? 'This provider does not support CCM.');
+        setSupportError(result.error ?? t('requestDialog.errors.notSupported'));
       }
     } catch {
       setSupport('unsupported');
-      setSupportError('Could not verify CCM support for this provider.');
+      setSupportError(t('requestDialog.errors.verifyFailed'));
     }
   }, [providerBpn, providerValid]);
 
@@ -147,7 +149,7 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
       // the body's success flag (the status will be reflected in the table).
       onSuccess(result.messageId);
     } catch {
-      setSubmitError('Failed to send the certificate request.');
+      setSubmitError(t('requestDialog.errors.submitFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -157,14 +159,14 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
     <CcmDialog
       open={open}
       onClose={onClose}
-      title="New Certificate Request"
-      subtitle="Ask a provider to share a compliance certificate with you"
+      title={t('requestDialog.title')}
+      subtitle={t('requestDialog.subtitle')}
       icon={<AssignmentIcon />}
       fullWidth
       actions={
         <>
           <Button onClick={onClose} variant="outlined" disabled={submitting} sx={{ textTransform: 'none' }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
@@ -173,7 +175,7 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
             startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
             sx={{ textTransform: 'none', fontWeight: 600 }}
           >
-            Send Request
+            {t('requestDialog.sendRequest')}
           </Button>
         </>
       }
@@ -191,8 +193,8 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
               onBpnlChange={handleProviderChange}
               onPartnerChange={setSelectedPartner}
               onRetryLoadPartners={loadPartners}
-              label="Provider BPN"
-              placeholder="Select or type the provider's BPNL"
+              label={t('requestDialog.providerBpn')}
+              placeholder={t('requestDialog.providerPlaceholder')}
             />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
               <Button
@@ -202,14 +204,14 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
                 disabled={!providerValid || support === 'checking'}
                 onClick={verifySupport}
               >
-                Verify CCM support
+                {t('requestDialog.verifyCcm')}
               </Button>
               {support === 'supported' && (
                 <Chip
                   size="small"
                   color="success"
                   icon={<CheckCircleIcon />}
-                  label="CCM supported"
+                  label={t('requestDialog.ccmSupported')}
                 />
               )}
             </Box>
@@ -221,11 +223,11 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
           </Box>
 
           <TextField
-            label="Certified BPN"
+            label={t('requestDialog.certifiedBpn')}
             value={certifiedBpn}
             onChange={(e) => setCertifiedBpn(e.target.value.toUpperCase())}
             error={!!certifiedBpn && !certifiedValid}
-            helperText={!!certifiedBpn && !certifiedValid ? ccmSharedConfig.validation.bpn.errorMessage : 'BPNL of the certified legal entity'}
+            helperText={!!certifiedBpn && !certifiedValid ? ccmSharedConfig.validation.bpn.errorMessage : t('requestDialog.certifiedBpnHelper')}
             fullWidth
             required
           />
@@ -259,8 +261,8 @@ const RequestCertificateDialog = ({ open, onClose, onSuccess }: RequestCertifica
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Certificate Type"
-                helperText="Search or type a certificate type"
+                label={t('requestDialog.certType')}
+                helperText={t('requestDialog.certTypeHelper')}
                 required
               />
             )}
