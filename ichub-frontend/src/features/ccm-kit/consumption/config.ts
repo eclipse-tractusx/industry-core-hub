@@ -2,6 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
