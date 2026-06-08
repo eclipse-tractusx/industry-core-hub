@@ -195,6 +195,26 @@ async def unpublish_certificate(certificate_id: int) -> None:
 
 
 @router.get(
+    "/published/{certificate_id}",
+    response_model=CcmPublishedItem,
+    summary="Get the published status of a single certificate",
+)
+async def get_published_certificate(certificate_id: int) -> CcmPublishedItem:
+    """
+    Return the EDC asset details for a single published certificate.
+
+    Returns 404 if the certificate does not exist or is not currently
+    published as an EDC asset.
+    """
+    try:
+        item = ccm_provider_service.get_published_certificate(certificate_id)
+        return CcmPublishedItem(**item)
+    except Exception as e:
+        logger.exception("Unhandled error in get_published_certificate endpoint")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get(
     "/published",
     response_model=List[CcmPublishedItem],
     summary="List certificates currently published as EDC assets",

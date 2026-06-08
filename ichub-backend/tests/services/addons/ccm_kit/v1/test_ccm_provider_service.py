@@ -946,6 +946,78 @@ class TestGetCertificatePayload:
 
 
 # ---------------------------------------------------------------------------
+# Get Published Certificate Tests
+# ---------------------------------------------------------------------------
+
+
+class TestGetPublishedCertificate:
+    """Tests for CcmProviderService.get_published_certificate"""
+
+    @pytest.fixture
+    def service(self):
+        return CcmProviderService()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_get_published_certificate_success(self, mock_factory, service):
+        """
+        GIVEN a certificate that exists and is published as an EDC asset
+        WHEN get_published_certificate is called
+        THEN a dict with certificate_id, asset_id, bpnl and certificate_type is returned.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = "asset-abc-123"
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        result = service.get_published_certificate(CERT_ID)
+
+        assert result["certificate_id"] == ccm.id
+        assert result["asset_id"] == "asset-abc-123"
+        assert result["bpnl"] == ccm.bpnl
+        assert result["certificate_type"] == ccm.certificate_type
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_get_published_certificate_not_found(self, mock_factory, service):
+        """
+        GIVEN a non-existent certificate ID
+        WHEN get_published_certificate is called
+        THEN a NotFoundError is raised.
+        """
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(NotFoundError, match="not found"):
+            service.get_published_certificate(999)
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_get_published_certificate_not_published(self, mock_factory, service):
+        """
+        GIVEN a certificate that exists but has no edc_asset_id
+        WHEN get_published_certificate is called
+        THEN a NotFoundError is raised indicating it is not currently published.
+        """
+        ccm = _make_ccm()
+        ccm.edc_asset_id = None
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        mock_factory.return_value.__enter__.return_value = repos
+
+        with pytest.raises(NotFoundError, match="not currently published"):
+            service.get_published_certificate(CERT_ID)
+
+
+# ---------------------------------------------------------------------------
 # Push Share Status Error Handling Tests
 # ---------------------------------------------------------------------------
 

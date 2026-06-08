@@ -806,6 +806,39 @@ class CcmProviderService(CcmBaseService):
                 for c in certs
             ]
 
+    def get_published_certificate(self, certificate_id: int) -> Dict:
+        """
+        Return the published status of a single certificate.
+
+        Args:
+            certificate_id: Primary key of the certificate in the local DB.
+
+        Returns:
+            Dict with ``certificate_id``, ``asset_id``, ``bpnl``, and
+            ``certificate_type`` — same shape as entries from
+            ``list_published_certificates()``.
+
+        Raises:
+            NotFoundError: If the certificate does not exist or is not
+                currently published as an EDC asset.
+        """
+        with RepositoryManagerFactory.create() as repo:
+            ccm = repo.ccm_repository.find_by_id_with_relations(certificate_id)
+            if ccm is None:
+                raise NotFoundError(
+                    f"Certificate with ID {certificate_id} not found."
+                )
+            if not ccm.edc_asset_id:
+                raise NotFoundError(
+                    f"Certificate {certificate_id} is not currently published."
+                )
+            return {
+                "certificate_id": ccm.id,
+                "asset_id": ccm.edc_asset_id,
+                "bpnl": ccm.bpnl,
+                "certificate_type": ccm.certificate_type,
+            }
+
     def force_unpublish_by_asset_id(self, asset_id: str) -> None:
         """
         Remove an EDC certificate asset directly by its EDC asset ID, even
