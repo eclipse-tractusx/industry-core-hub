@@ -22,7 +22,7 @@
 ********************************************************************************/
 
 import i18n from '@/i18n';
-import { 
+import {
   Assignment,
   Hub,
   Recycling,
@@ -38,10 +38,11 @@ import {
   Badge,
   Policy,
   PostAdd,
-  ReceiptLong,
+  WorkspacePremium,
   Calculate,
   CloudUpload,
-  Inbox
+  Inbox,
+  ShoppingCart
 } from '@mui/icons-material';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
@@ -69,6 +70,8 @@ import { certificateManagementFeature } from './ccm-kit/certificate-management/r
 import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
+import { provisionManagementFeature } from './ccm-kit/provision-management/routes';
+import { ccmConsumptionFeature } from './ccm-kit/consumption/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -265,17 +268,37 @@ export const kits: KitFeature[] = [
     name: 'CCM KIT',
     description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
     status: 'available',
-    icon: <ReceiptLong />,
+    icon: <WorkspacePremium />,
     image: CcmKitImage,
     features: [
+      // --- Provider role ---
       {
         module: certificateManagementFeature,
         id: 'certificate-management',
         name: 'Certificate Management',
-        description: 'Upload, manage, share and consume compliance certificates across the supply chain.',
-        icon: <ReceiptLong />,
+        description: 'Upload, manage and maintain your own compliance certificates.',
+        icon: <WorkspacePremium />,
         enabled: true,
-        default: true
+        default: false
+      },
+      {
+        module: provisionManagementFeature,
+        id: 'ccm-provision-management',
+        name: 'CCM Provision Management',
+        description: 'Handle incoming certificate requests and provide certificates to consumers (AVAILABLE / PUSH).',
+        icon: <Inbox />,
+        enabled: true,
+        default: false
+      },
+      // --- Consumer role ---
+      {
+        module: ccmConsumptionFeature,
+        id: 'ccm-consumption',
+        name: 'CCM Consumption',
+        description: 'Request, track, download and review compliance certificates from your partners.',
+        icon: <ShoppingCart />,
+        enabled: false,
+        default: false
       }
     ],
     version: '1.0.0',

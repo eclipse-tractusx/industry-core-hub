@@ -1,0 +1,609 @@
+{
+  "page": {
+    "title": "Zertifikatsverwaltung",
+    "subtitle": "Verwalten, teilen und nutzen Sie Compliance-Zertifikate im Catena-X-Datenraum",
+    "uploadCertificate": "Zertifikat hochladen"
+  },
+  "tabs": {
+    "myCertificates": "Meine Zertifikate",
+    "shareOutbox": "Freigabe & Postausgang",
+    "discoverConsume": "Entdecken & Abrufen"
+  },
+  "compliance": {
+    "title": "Compliance-Übersicht",
+    "score": "Compliance-Score",
+    "validOf": "{{valid}} von {{total}} Zertifikaten gültig",
+    "valid": "Gültig",
+    "expiringSoon": "Läuft bald ab",
+    "expired": "Abgelaufen",
+    "sharedWith": "{{count}} von {{total}} mit Partnern geteilt",
+    "registeredInDtr": "{{count}} von {{total}} in DTR registriert",
+    "allValid": "Alle Zertifikate sind gültig",
+    "collapse": "Einklappen",
+    "expand": "Ausklappen"
+  },
+  "table": {
+    "subtitle": "Verwalten Sie Ihre Compliance-Zertifikate ({{count}} gesamt)",
+    "columns": {
+      "name": "Zertifikat",
+      "type": "Typ",
+      "issuer": "Aussteller",
+      "validFrom": "Gültig ab",
+      "validUntil": "Gültig bis",
+      "status": "Status",
+      "shared": "Geteilt",
+      "certId": "Zert.-ID",
+      "dtr": "DTR"
+    },
+    "status": {
+      "valid": "Gültig",
+      "expiring": "Läuft ab",
+      "expired": "Abgelaufen"
+    },
+    "dtr": {
+      "registered": "In DTR registriert",
+      "pending": "DTR-Registrierung ausstehend",
+      "notRegistered": "Nicht in DTR registriert",
+      "registerAction": "In DTR registrieren"
+    },
+    "actions": {
+      "view": "Anzeigen",
+      "share": "Teilen",
+      "delete": "Löschen"
+    },
+    "empty": {
+      "title": "Keine Zertifikate gefunden",
+      "subtitle": "Laden Sie Ihr erstes Compliance-Zertifikat hoch, um zu beginnen."
+    }
+  },
+  "messages": {
+    "uploadSuccess": "Zertifikat erfolgreich hochgeladen!",
+    "uploadFailed": "Zertifikat konnte nicht hochgeladen werden.",
+    "shareSuccess": "Zertifikat erfolgreich geteilt!",
+    "shareFailed": "Zertifikat konnte nicht geteilt werden.",
+    "deleteNotAvailable": "Löschfunktion noch nicht verfügbar.",
+    "deleteSuccess": "Zertifikat erfolgreich gelöscht!",
+    "deleteFailed": "Zertifikat konnte nicht gelöscht werden.",
+    "publishSuccess": "Zertifikat erfolgreich veröffentlicht!",
+    "publishFailed": "Zertifikat konnte nicht veröffentlicht werden.",
+    "updateSuccess": "Zertifikat erfolgreich aktualisiert!",
+    "updateFailed": "Zertifikat konnte nicht aktualisiert werden.",
+    "registerDtrSuccess": "Zertifikat erfolgreich in DTR registriert!",
+    "registerDtrFailed": "Zertifikat konnte nicht in DTR registriert werden.",
+    "loadFailed": "Zertifikate konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+  },
+  "filters": {
+    "searchPlaceholder": "Nach Name, BPN oder Aussteller suchen...",
+    "allTypes": "Alle Typen",
+    "allStatuses": "Alle Status",
+    "type": "Typ",
+    "status": "Status"
+  },
+  "dialogs": {
+    "upload": {
+      "title": "Zertifikat hochladen",
+      "editTitle": "Zertifikat bearbeiten"
+    },
+    "share": {
+      "title": "Zertifikat teilen"
+    },
+    "view": {
+      "title": "Zertifikatsdetails"
+    },
+    "delete": {
+      "title": "Zertifikat löschen",
+      "confirmation": "Sind Sie sicher, dass Sie dieses Zertifikat löschen möchten?",
+      "warning": "Diese Aktion kann nicht rückgängig gemacht werden."
+    }
+  },
+  "shareOutbox": {
+    "title": "Freigabe-Postausgang",
+    "pushSection": "Push-Benachrichtigung an Partner senden",
+    "columns": {
+      "certificate": "Zertifikat",
+      "partner": "Partner",
+      "method": "Methode",
+      "sharedOn": "Geteilt am",
+      "edcContract": "EDC-Vertrag",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Aktiv",
+      "pending": "Ausstehend",
+      "revoked": "Widerrufen"
+    },
+    "revoke": "Widerrufen",
+    "sendPush": "Push-Benachrichtigung senden",
+    "targetBpn": "BPN des Zielpartners",
+    "selectCertificate": "Zertifikat auswählen",
+    "empty": "Noch keine Freigabedaten vorhanden."
+  },
+  "consumer": {
+    "discoveryTitle": "Partner-Zertifikatssuche",
+    "inboxTitle": "Eingehende Zertifikatsbenachrichtigungen",
+    "searchBpn": "Nach BPN suchen",
+    "search": "Suchen",
+    "stepper": {
+      "bpnLookup": "BPN-Suche",
+      "dtrResolution": "DTR-Auflösung",
+      "assetDiscovery": "Asset-Erkennung"
+    },
+    "negotiation": {
+      "requestAccess": "Zugang anfragen",
+      "viewCertificate": "Zertifikat anzeigen",
+      "retry": "Erneut versuchen"
+    },
+    "inbox": {
+      "columns": {
+        "sender": "Absender",
+        "type": "Zertifikatstyp",
+        "issuer": "Aussteller",
+        "received": "Empfangen",
+        "status": "Status"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "acknowledged": "Bestätigt",
+        "rejected": "Abgelehnt"
+      },
+      "acknowledge": "Bestätigen",
+      "reject": "Ablehnen",
+      "empty": "Keine eingehenden Zertifikatsbenachrichtigungen."
+    }
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "add": "Hinzufügen",
+    "delete": "Löschen",
+    "publish": "Veröffentlichen",
+    "update": "Aktualisieren",
+    "revoke": "Widerrufen",
+    "share": "Teilen",
+    "saveChanges": "Änderungen speichern",
+    "upload": "Hochladen",
+    "provide": "Bereitstellen",
+    "refresh": "Aktualisieren"
+  },
+  "filterBar": {
+    "clear": "Zurücksetzen",
+    "listView": "Listenansicht",
+    "cardView": "Kartenansicht"
+  },
+  "certTable": {
+    "columns": {
+      "certificate": "Zertifikat",
+      "type": "Typ",
+      "issuer": "Aussteller",
+      "validUntil": "Gültig bis",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "tooltips": {
+      "certDetails": "Zertifikatsdetails",
+      "cannotPublishExpired": "Abgelaufene Zertifikate können nicht veröffentlicht werden",
+      "alreadyPublished": "Bereits im EDC-Netzwerk veröffentlicht"
+    },
+    "buttons": {
+      "publish": "Veröffentlichen",
+      "update": "Aktualisieren",
+      "delete": "Löschen"
+    },
+    "dateToday": "Heute, {{time}}",
+    "empty": "Keine Zertifikate gefunden. Laden Sie ein Zertifikat hoch, um zu beginnen."
+  },
+  "cardGrid": {
+    "empty": "Keine Zertifikate gefunden. Laden Sie ein Zertifikat hoch, um zu beginnen.",
+    "issuedBy": "Ausgestellt von",
+    "validUntil": "Gültig bis",
+    "sharedWith": "Mit {{count}} Partner{{count, plural, one {} other {n}}} geteilt",
+    "pdfAttached": "PDF beigefügt",
+    "pdfDocumentAttached": "PDF-Dokument beigefügt",
+    "buttons": {
+      "info": "Zertifikatdetails",
+      "publish": "Veröffentlichen",
+      "update": "Aktualisieren",
+      "delete": "Löschen"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "Abgelaufene Zertifikate können nicht veröffentlicht werden",
+      "alreadyPublished": "Bereits im EDC-Netzwerk veröffentlicht"
+    }
+  },
+  "pdfViewer": {
+    "buttons": {
+      "info": "Zertifikatdetails",
+      "publish": "Veröffentlichen",
+      "updatePdf": "PDF aktualisieren",
+      "delete": "Löschen"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "Abgelaufene Zertifikate können nicht veröffentlicht werden",
+      "alreadyPublished": "Bereits im EDC-Netzwerk veröffentlicht"
+    }
+  },
+  "shareDialog": {
+    "title": "Zertifikat teilen",
+    "description": "Geben Sie die Business Partner Number des Partners ein, mit dem Sie dieses Zertifikat teilen möchten. Er erhält es per EDC-Benachrichtigung.",
+    "partnerBpn": "Partner-BPN",
+    "errors": {
+      "partnerBpnRequired": "Partner-BPN ist erforderlich"
+    }
+  },
+  "statsBar": {
+    "total": "Gesamt",
+    "valid": "Gültig",
+    "expiring": "Läuft ab",
+    "expired": "Abgelaufen"
+  },
+  "deleteDialog": {
+    "title": "Zertifikat löschen",
+    "confirmation": "Sind Sie sicher, dass Sie dieses Zertifikat löschen möchten?",
+    "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle geteilten Referenzen werden ebenfalls entfernt."
+  },
+  "publishDialog": {
+    "title": "Zertifikat veröffentlichen",
+    "subtitle": "Machen Sie dieses Zertifikat im Catena-X-Datenraum auffindbar",
+    "confirmation": "Sind Sie sicher, dass Sie dieses Zertifikat veröffentlichen möchten?",
+    "explanation": "Durch die Veröffentlichung wird dieses Zertifikat im Netzwerk registriert und für Ihre Partner über den Catena-X-Datenraum auffindbar gemacht."
+  },
+  "detailDialog": {
+    "certInfo": "Zertifikatsinformationen",
+    "type": "Typ",
+    "issuer": "Aussteller",
+    "validFrom": "Gültig ab",
+    "validUntil": "Gültig bis",
+    "businessPartner": "Geschäftspartner",
+    "certificateId": "Zertifikats-ID",
+    "scope": "Geltungsbereich",
+    "scopeSite": "Standortebene (BPNS)",
+    "scopeEntity": "Rechtliche Einheit (BPNL)",
+    "enclosedSites": "Enthaltene Standorte",
+    "description": "Beschreibung",
+    "sharingHistory": "Freigabeverlauf ({{count}})",
+    "noSharingRecords": "Noch keine Freigabedaten vorhanden. Verwenden Sie die Schaltfläche \"Teilen\", um dieses Zertifikat mit einem Partner zu teilen.",
+    "columns": {
+      "partner": "Partner",
+      "method": "Methode",
+      "sharedOn": "Geteilt am",
+      "edcContract": "EDC-Vertrag",
+      "status": "Status",
+      "action": "Aktion"
+    },
+    "revokeSuccess": "Zugang für {{partner}} widerrufen.",
+    "revokeFailed": "Zugang konnte nicht widerrufen werden.",
+    "updatePdf": "PDF aktualisieren",
+    "shareCertificate": "Zertifikat teilen"
+  },
+  "infoPanel": {
+    "noName": "(Kein Name)",
+    "coreInfo": "Kerninformationen",
+    "issuer": "Aussteller",
+    "bpnHolder": "BPN-Inhaber",
+    "uploaderBpn": "BPN des Hochladenden",
+    "validity": "Gültigkeit",
+    "validFrom": "Gültig ab",
+    "validUntil": "Gültig bis",
+    "trustLevel": "Vertrauensniveau",
+    "scopeApp": "Geltungsbereich & Anwendung",
+    "regNumber": "Reg.-Nummer",
+    "areaOfApplication": "Anwendungsbereich",
+    "validator": "Prüfer",
+    "associatedSites": "Zugehörige Standorte",
+    "descriptionLabel": "Beschreibung",
+    "metadata": "Metadaten",
+    "certificateId": "Zertifikats-ID",
+    "created": "Erstellt",
+    "updated": "Aktualisiert"
+  },
+  "uploadDialog": {
+    "title": "Zertifikat hochladen",
+    "editTitle": "Zertifikat bearbeiten",
+    "steps": {
+      "certDetails": "Zertifikatsdetails",
+      "validityScope": "Gültigkeit & Geltungsbereich",
+      "certFile": "Zertifikatsdatei"
+    },
+    "sections": {
+      "coreDetails": "Zertifikats-Kerndetails",
+      "validityContext": "Gültigkeit, Vertrauen & Anwendungskontext"
+    },
+    "fields": {
+      "certType": "Zertifikatstyp",
+      "certTypeHelper": "Zertifikatstyp suchen oder eingeben",
+      "certName": "Zertifikatsname",
+      "certNamePlaceholder": "z. B. Zertifikat Qualitätsmanagementsystem",
+      "issuer": "Aussteller / Zertifizierungsstelle",
+      "issuerPlaceholder": "z. B. DEKRA, TÜV SÜD",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Optionale Beschreibung oder Hinweise zum Geltungsbereich",
+      "orgBpnl": "Organisations-BPNL (Inhaber)",
+      "orgBpnlHelper": "Dieses Zertifikat wird unter Ihrer Organisations-ID registriert",
+      "validFrom": "Gültig ab",
+      "validUntil": "Gültig bis",
+      "trustLevel": "Vertrauensniveau",
+      "trustNone": "Keines",
+      "trustLow": "Niedrig",
+      "trustHigh": "Hoch",
+      "trustTrusted": "Vertrauenswürdig",
+      "regNumber": "Registrierungsnummer",
+      "regNumberPlaceholder": "z. B. REG-123456-XYZ",
+      "areaOfApplication": "Anwendungsbereich",
+      "areaOfApplicationPlaceholder": "z. B. Antriebsstrangwerk, Einkaufsabteilung",
+      "areaOfApplicationHelper": "Zielabteilung, Kontext oder Einrichtung",
+      "validatorName": "Name des Prüfers",
+      "validatorPlaceholder": "z. B. Leitender Auditor Max Mustermann",
+      "validatorHelper": "Auditor oder verantwortliche Prüfinstanz",
+      "associatedSites": "Zugehörige Standorte (BPNS)"
+    },
+    "fileZone": {
+      "dragDrop": "Ziehen & ablegen oder klicken zum Durchsuchen",
+      "format": "Unterstütztes Format: Nur PDF (max. 10 MB)"
+    },
+    "errors": {
+      "invalidFileType": "Ungültiger Dateityp. Es sind nur PDF-Zertifikate zulässig.",
+      "fileTooLarge": "Die Dateigröße überschreitet das Maximum von 10 MB.",
+      "certTypeRequired": "Zertifikatstyp ist erforderlich",
+      "issuerRequired": "Aussteller ist erforderlich",
+      "validFromRequired": "Gültig-ab-Datum ist erforderlich",
+      "validUntilAfterFrom": "Gültig-bis muss nach Gültig-ab liegen",
+      "fileRequired": "Zertifikatsdatei ist erforderlich"
+    }
+  },
+  "bpnsInput": {
+    "label": "Standorte / Niederlassungen (BPNS)",
+    "optional": "— optional",
+    "placeholder": "z. B. BPNS0000000000XY",
+    "helper": "BPNS eingeben und Enter drücken, um hinzuzufügen",
+    "addTooltip": "Standort hinzufügen",
+    "errorFormat": "Muss mit \"BPNS\" beginnen, gefolgt von 12 alphanumerischen Zeichen",
+    "errorDuplicate": "Bereits in der Liste vorhanden"
+  },
+  "consumptionPage": {
+    "title": "CCM-Abruf",
+    "subtitle": "Fordern Sie Compliance-Zertifikate Ihrer Catena-X-Partner an, verfolgen Sie diese, laden Sie sie herunter und prüfen Sie sie.",
+    "newRequest": "Neue Anfrage",
+    "searchPlaceholder": "Nach Anbieter, Typ oder Status suchen…",
+    "filterAllStatuses": "Alle Status",
+    "filterAllTypes": "Alle Typen",
+    "columns": {
+      "provider": "Anbieter",
+      "certifiedBpn": "Zertifiziertes BPN",
+      "type": "Typ",
+      "locations": "Standorte",
+      "status": "Status",
+      "response": "Antwort",
+      "updated": "Aktualisiert",
+      "actions": "Aktionen"
+    },
+    "statusValues": {
+      "Pending": "Ausstehend",
+      "Found": "Gefunden",
+      "NotFound": "Nicht gefunden",
+      "Failed": "Fehlgeschlagen"
+    },
+    "localStatusValues": {
+      "Pending": "Ausstehend",
+      "Accepted": "Akzeptiert",
+      "Rejected": "Abgelehnt"
+    },
+    "locations": "{{count}} Standort(e)",
+    "empty": {
+      "noRequests": "Noch keine Zertifikatsanfragen vorhanden. Verwenden Sie \"Neue Anfrage\", um einen Anbieter um ein Zertifikat zu bitten.",
+      "noMatch": "Keine Anfragen entsprechen Ihren Filtern."
+    },
+    "tooltips": {
+      "viewHistory": "Verlauf anzeigen",
+      "pullCertificate": "Zertifikat abrufen",
+      "viewCertificate": "Zertifikat anzeigen",
+      "sendFeedback": "Feedback senden"
+    },
+    "messages": {
+      "loadFailed": "Zertifikatsanfragen konnten nicht geladen werden.",
+      "pullSuccess": "Zertifikat erfolgreich abgerufen.",
+      "pullFailed": "Zertifikat konnte nicht abgerufen werden.",
+      "feedbackSent": "Feedback \"{{status}}\" an den Anbieter gesendet.",
+      "requestSent": "Anfrage gesendet (messageId: {{messageId}}).",
+      "requestSentSimple": "Anfrage gesendet."
+    }
+  },
+  "requestDialog": {
+    "title": "Neue Zertifikatsanfrage",
+    "subtitle": "Bitten Sie einen Anbieter, ein Compliance-Zertifikat mit Ihnen zu teilen",
+    "providerBpn": "Anbieter-BPN",
+    "providerPlaceholder": "BPNL des Anbieters auswählen oder eingeben",
+    "verifyCcm": "CCM-Unterstützung prüfen",
+    "ccmSupported": "CCM unterstützt",
+    "certifiedBpn": "Zertifiziertes BPN",
+    "certifiedBpnHelper": "BPNL der zertifizierten Rechtsperson",
+    "certType": "Zertifikatstyp",
+    "certTypeHelper": "Zertifikatstyp suchen oder eingeben",
+    "sendRequest": "Anfrage senden",
+    "errors": {
+      "notSupported": "Dieser Anbieter unterstützt CCM nicht.",
+      "verifyFailed": "CCM-Unterstützung für diesen Anbieter konnte nicht geprüft werden.",
+      "submitFailed": "Zertifikatsanfrage konnte nicht gesendet werden."
+    }
+  },
+  "feedbackDialog": {
+    "title": "Zertifikats-Feedback",
+    "subtitle": "Benachrichtigen Sie den Anbieter über das Ergebnis Ihrer Bewertung",
+    "description": "Benachrichtigen Sie den Anbieter über das Ergebnis Ihrer Bewertung für Dokument",
+    "statusReceived": "Empfangen",
+    "statusAccepted": "Akzeptiert",
+    "statusRejected": "Abgelehnt",
+    "certErrors": {
+      "title": "Zertifikatsfehler",
+      "helper": "Allgemeine Probleme auf Zertifikatsebene *",
+      "placeholder": "z. B. Zertifikat abgelaufen"
+    },
+    "locErrors": {
+      "title": "Standortfehler",
+      "helper": "Standortbezogene Probleme (BPNS-Ebene) *",
+      "siteBpn": "Standort-BPN",
+      "errorMessage": "Fehlermeldung"
+    },
+    "rejectionAlert": "Eine Ablehnung erfordert mindestens einen Zertifikatsfehler und einen Standortfehler.",
+    "submitError": "Status-Feedback konnte nicht gesendet werden.",
+    "sendFeedback": "Feedback senden"
+  },
+  "historyDialog": {
+    "title": "Anfrageverlauf",
+    "subtitle": "Vollständiger Zeitverlauf dieser Zertifikatsanfrage",
+    "provider": "Anbieter",
+    "certified": "zertifiziert",
+    "noHistory": "Keine Verlaufsdaten gefunden.",
+    "loadFailed": "Anfrageverlauf konnte nicht geladen werden.",
+    "columns": {
+      "status": "Status",
+      "notificationId": "Benachrichtigungs-ID",
+      "documentId": "Dokument-ID",
+      "requested": "Angefragt",
+      "updated": "Aktualisiert"
+    }
+  },
+  "requestDetailDialog": {
+    "title": "Anfragedetails",
+    "providerBpn": "Anbieter-BPN",
+    "certifiedBpn": "Zertifiziertes BPN",
+    "certType": "Zertifikatstyp",
+    "documentId": "Dokument-ID",
+    "requested": "Angefragt",
+    "updated": "Aktualisiert",
+    "localStatus": "Lokaler Status",
+    "requestedSites": "Angeforderte Standorte ({{count}})",
+    "notificationId": "Benachrichtigungs-ID",
+    "history": "Verlauf",
+    "sendFeedback": "Feedback senden",
+    "pullCertificate": "Zertifikat abrufen",
+    "viewCertificate": "Zertifikat anzeigen"
+  },
+  "provisionPage": {
+    "title": "CCM-Bereitstellungsverwaltung",
+    "subtitle": "Bearbeiten Sie eingehende Zertifikatsanfragen und stellen Sie Ihren Catena-X-Partnern Zertifikate bereit.",
+    "pushCertificate": "Zertifikat pushen",
+    "tabs": {
+      "inboundRequests": "Eingehende Anfragen",
+      "shares": "Freigaben"
+    },
+    "inboundSearch": "Nach BPN, Typ oder Status suchen…",
+    "sharesSearch": "Nach Verbraucher, Typ oder Status suchen…",
+    "filterAllStatuses": "Alle Status",
+    "filterAllConsumerStatuses": "Alle Verbraucherstatus",
+    "filterAllTypes": "Alle Typen",
+    "inboundStatusValues": {
+      "Registered": "Registriert",
+      "Available": "Verfügbar",
+      "Pushed": "Gepusht",
+      "NotFound": "Nicht gefunden"
+    },
+    "consumerStatusValues": {
+      "RECEIVED": "Empfangen",
+      "ACCEPTED": "Akzeptiert",
+      "REJECTED": "Abgelehnt"
+    },
+    "sharesStatusValues": {
+      "Active": "Aktiv",
+      "Pending": "Ausstehend",
+      "Revoked": "Widerrufen"
+    },
+    "inboundColumns": {
+      "consumer": "Verbraucher",
+      "certifiedBpn": "Zertifiziertes BPN",
+      "type": "Typ",
+      "locations": "Standorte",
+      "status": "Status",
+      "consumerStatus": "Verbraucherstatus",
+      "updated": "Aktualisiert",
+      "actions": "Aktionen"
+    },
+    "sharesColumns": {
+      "type": "Typ",
+      "consumer": "Verbraucher",
+      "status": "Status",
+      "lastShared": "Zuletzt geteilt"
+    },
+    "locations": "{{count}} Standort(e)",
+    "inbound": {
+      "empty": "Noch keine eingehenden Zertifikatsanfragen vorhanden.",
+      "noMatch": "Keine Anfragen entsprechen Ihren Filtern."
+    },
+    "shares": {
+      "empty": "Noch keine Zertifikate geteilt. Verwenden Sie \"Zertifikat pushen\" oder antworten Sie auf eine eingehende Anfrage.",
+      "noMatch": "Keine Freigaben entsprechen Ihren Filtern.",
+      "rejectionIcon": "Ablehnungsgrund vorhanden — Zeile anklicken zum Anzeigen"
+    },
+    "provide": "Bereitstellen",
+    "messages": {
+      "loadFailed": "Bereitstellungsdaten konnten nicht geladen werden.",
+      "availabilitySent": "Verfügbarkeitsbenachrichtigung gesendet.",
+      "certificatePushed": "Zertifikat an Verbraucher gepusht."
+    }
+  },
+  "inboundDetailDialog": {
+    "title": "Details zur eingehenden Anfrage",
+    "consumerBpn": "Verbraucher-BPN",
+    "certifiedBpn": "Zertifiziertes BPN",
+    "certType": "Zertifikatstyp",
+    "certificateId": "Zertifikats-ID",
+    "received": "Empfangen",
+    "updated": "Aktualisiert",
+    "notificationId": "Benachrichtigungs-ID",
+    "requestedSites": "Angeforderte Standorte ({{count}})",
+    "consumerPrefix": "Verbraucher: ",
+    "provideCertificate": "Zertifikat bereitstellen"
+  },
+  "shareDetailDialog": {
+    "title": "Freigabedetails",
+    "providerBpn": "Anbieter-BPN",
+    "consumerBpn": "Verbraucher-BPN",
+    "certType": "Zertifikatstyp",
+    "certificateId": "Zertifikats-ID",
+    "lastShared": "Zuletzt geteilt",
+    "created": "Erstellt",
+    "rejectionReason": "Ablehnungsgrund",
+    "certErrors": "Zertifikatsfehler",
+    "locErrors": "Standortfehler",
+    "rawPayload": "Rohdaten-Payload"
+  },
+  "provideDialog": {
+    "title": "Zertifikat bereitstellen",
+    "subtitle": "Auf eine Verbraucheranfrage per Verfügbarkeitsbenachrichtigung oder direktem Push reagieren",
+    "description": "Auf {{consumer}}-Anfrage für {{type}} antworten für",
+    "modeAvailable": "Verfügbar machen (PULL)",
+    "modePush": "Direkt pushen",
+    "certSelect": "Bereitzustellendes Zertifikat",
+    "noCertsTitle": "Keine passenden Zertifikate gefunden",
+    "noCertsDescription": "Kein {{type}}-Zertifikat gefunden für",
+    "noCertsUpload": "Zertifikat hochladen",
+    "uploadOther": "Anderes Zertifikat hochladen…",
+    "notPublishedAlert": "Dieses Zertifikat wurde noch nicht veröffentlicht — es wird automatisch veröffentlicht, bevor die Verfügbarkeitsbenachrichtigung gesendet wird.",
+    "respondTo": "Auf Anfrage antworten",
+    "respondToHelper": "Mehrere Anfragen gefunden — wählen Sie aus, auf welche Sie antworten möchten.",
+    "respondingTo": "Antwort auf Benachrichtigung",
+    "invalidCert": "Ungültiges Zertifikat ausgewählt.",
+    "sendAvailability": "Verfügbarkeit senden",
+    "errors": {
+      "sendAvailFailed": "Verfügbarkeitsbenachrichtigung konnte nicht gesendet werden.",
+      "pushFailed": "Zertifikat konnte nicht gepusht werden.",
+      "availFailed": "Zertifikat konnte nicht verfügbar gemacht werden.",
+      "loadFailed": "Bereitstellungsdaten konnten nicht geladen werden."
+    }
+  },
+  "pushDialog": {
+    "title": "Zertifikat pushen",
+    "subtitle": "Senden Sie ein Zertifikat direkt an einen Partner ohne vorherige Anfrage",
+    "description": "Senden Sie eines Ihrer Zertifikate direkt an einen Partner, ohne eine vorherige Anfrage.",
+    "certSelect": "Zu pushendes Zertifikat",
+    "noCerts": "Keine Zertifikate verfügbar.",
+    "recipientBpn": "Empfänger (Verbraucher-BPN)",
+    "recipientPlaceholder": "BPNL des Empfängers auswählen oder eingeben",
+    "pushCertificate": "Zertifikat pushen",
+    "errors": {
+      "loadFailed": "Zertifikate konnten nicht geladen werden.",
+      "pushFailed": "Zertifikat konnte nicht gepusht werden."
+    }
+  }
+}

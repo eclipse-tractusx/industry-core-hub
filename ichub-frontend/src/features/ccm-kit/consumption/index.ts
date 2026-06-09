@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -14,29 +15,23 @@
  * distributed under the License is distributed on an "AS IS" BASIS
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
  * either express or implied. See the
- * License for the specific language govern in permissions and limitations
+ * License for the specific language governing permissions and limitations
  * under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { Box, Typography } from '@mui/material';
+// Export pages
+export * from './pages';
 
-interface StatsCardProps {
-  label: string;
-  value: number;
-  color: string;
-}
+// Export routes
+export * from './routes';
 
-export const StatsCard = ({ label, value, color }: StatsCardProps) => {
-  return (
-    <Box className="stats-card">
-      <Typography className="stats-card__value" style={{ color }}>
-        {value}
-      </Typography>
-      <Typography className="stats-card__label">
-        {label}
-      </Typography>
-    </Box>
-  );
-};
+// Export API
+export * from './api';
+
+// Export configuration
+export * from './config';
+
+// Export types
+export * from './types/types';

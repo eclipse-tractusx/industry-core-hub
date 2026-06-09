@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,15 +21,19 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  Typography
+  Typography,
+  Box,
+  IconButton,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CloseIcon from '@mui/icons-material/Close';
 import { DeleteCertificateDialogProps } from '../../types/dialog-types';
 
 export const DeleteCertificateDialog = ({
@@ -37,6 +42,7 @@ export const DeleteCertificateDialog = ({
   certificate,
   onConfirm
 }: DeleteCertificateDialogProps) => {
+  const { t } = useTranslation('certificateManagement');
   const handleConfirm = () => {
     if (certificate) {
       onConfirm(certificate.id);
@@ -44,28 +50,91 @@ export const DeleteCertificateDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <WarningAmberIcon color="error" />
-        Delete Certificate
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 4 } }}
+    >
+      <DialogTitle
+        sx={{
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          pr: 6,
+          position: 'relative',
+        }}
+      >
+        <WarningAmberIcon sx={{ color: '#9D6FD4', fontSize: 22 }} />
+        <Typography variant="h6" sx={{ fontWeight: 600, color: 'inherit', lineHeight: 1 }}>
+          {t('deleteDialog.title')}
+        </Typography>
+        <IconButton
+          size="medium"
+          onClick={onClose}
+          aria-label="close"
+          sx={{
+            position: 'absolute',
+            right: 12,
+            top: 9,
+            color: 'primary.contrastText',
+            '&:hover': { backgroundColor: 'rgba(255,255,255,0.15)' },
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-      <DialogContent>
-        <Typography variant="body1">
-          Are you sure you want to delete this certificate?
+
+      <DialogContent sx={{ backgroundColor: 'background.paper', px: 3, pt: 3, pb: 3 }}>
+        <Typography variant="body1" sx={{ mb: certificate ? 2 : 0, mt: 3 }}>
+          {t('deleteDialog.confirmation')}
         </Typography>
         {certificate && (
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mt: 2 }}>
-            {certificate.name}
-          </Typography>
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderRadius: 2,
+              backgroundColor: 'rgba(211,47,47,0.08)',
+              border: '1px solid rgba(211,47,47,0.3)',
+              mb: 2,
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight={700} color="error.dark">
+              {certificate.name}
+            </Typography>
+          </Box>
         )}
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-          This action cannot be undone. All shared references will also be removed.
+        <Typography variant="body2" color="text.secondary">
+          {t('deleteDialog.warning')}
         </Typography>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleConfirm} variant="contained" color="error">
-          Delete
+
+      <DialogActions
+        sx={{
+          px: 3,
+          py: 2,
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'grey.50',
+          gap: 1,
+        }}
+      >
+        <Button onClick={onClose} variant="outlined" sx={{ textTransform: 'none' }}>
+          {t('common.cancel')}
+        </Button>
+        <Button
+          onClick={handleConfirm}
+          variant="contained"
+          color="error"
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
+          {t('common.delete')}
         </Button>
       </DialogActions>
     </Dialog>

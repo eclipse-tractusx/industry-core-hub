@@ -1,0 +1,609 @@
+{
+  "page": {
+    "title": "証明書管理",
+    "subtitle": "Catena-Xデータスペース全体でコンプライアンス証明書を管理・共有・利用します",
+    "uploadCertificate": "証明書をアップロード"
+  },
+  "tabs": {
+    "myCertificates": "マイ証明書",
+    "shareOutbox": "共有＆送信トレイ",
+    "discoverConsume": "検索＆利用"
+  },
+  "compliance": {
+    "title": "コンプライアンス概要",
+    "score": "コンプライアンススコア",
+    "validOf": "{{total}}件中{{valid}}件の証明書が有効です",
+    "valid": "有効",
+    "expiringSoon": "まもなく期限切れ",
+    "expired": "期限切れ",
+    "sharedWith": "{{total}}件中{{count}}件をパートナーと共有済み",
+    "registeredInDtr": "{{total}}件中{{count}}件がDTRに登録済み",
+    "allValid": "すべての証明書が有効です",
+    "collapse": "折りたたむ",
+    "expand": "展開する"
+  },
+  "table": {
+    "subtitle": "コンプライアンス証明書を管理します（合計{{count}}件）",
+    "columns": {
+      "name": "証明書",
+      "type": "種別",
+      "issuer": "発行者",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限",
+      "status": "ステータス",
+      "shared": "共有済み",
+      "certId": "証明書ID",
+      "dtr": "DTR"
+    },
+    "status": {
+      "valid": "有効",
+      "expiring": "期限切れ間近",
+      "expired": "期限切れ"
+    },
+    "dtr": {
+      "registered": "DTRに登録済み",
+      "pending": "DTR登録処理中",
+      "notRegistered": "DTRに未登録",
+      "registerAction": "DTRに登録する"
+    },
+    "actions": {
+      "view": "表示",
+      "share": "共有",
+      "delete": "削除"
+    },
+    "empty": {
+      "title": "証明書が見つかりません",
+      "subtitle": "最初のコンプライアンス証明書をアップロードして開始してください。"
+    }
+  },
+  "messages": {
+    "uploadSuccess": "証明書のアップロードが完了しました。",
+    "uploadFailed": "証明書のアップロードに失敗しました。",
+    "shareSuccess": "証明書の共有が完了しました。",
+    "shareFailed": "証明書の共有に失敗しました。",
+    "deleteNotAvailable": "削除機能はまだご利用いただけません。",
+    "deleteSuccess": "証明書の削除が完了しました。",
+    "deleteFailed": "証明書の削除に失敗しました。",
+    "publishSuccess": "証明書の公開が完了しました。",
+    "publishFailed": "証明書の公開に失敗しました。",
+    "updateSuccess": "証明書の更新が完了しました。",
+    "updateFailed": "証明書の更新に失敗しました。",
+    "registerDtrSuccess": "証明書のDTR登録が完了しました。",
+    "registerDtrFailed": "証明書のDTR登録に失敗しました。",
+    "loadFailed": "証明書の読み込みに失敗しました。もう一度お試しください。"
+  },
+  "filters": {
+    "searchPlaceholder": "名前、BPNまたは発行者で検索...",
+    "allTypes": "すべての種別",
+    "allStatuses": "すべてのステータス",
+    "type": "種別",
+    "status": "ステータス"
+  },
+  "dialogs": {
+    "upload": {
+      "title": "証明書をアップロード",
+      "editTitle": "証明書を編集"
+    },
+    "share": {
+      "title": "証明書を共有"
+    },
+    "view": {
+      "title": "証明書の詳細"
+    },
+    "delete": {
+      "title": "証明書を削除",
+      "confirmation": "この証明書を削除してよろしいですか？",
+      "warning": "この操作は元に戻すことができません。"
+    }
+  },
+  "shareOutbox": {
+    "title": "共有送信トレイ",
+    "pushSection": "パートナーへのプッシュ通知",
+    "columns": {
+      "certificate": "証明書",
+      "partner": "パートナー",
+      "method": "方法",
+      "sharedOn": "共有日",
+      "edcContract": "EDCコントラクト",
+      "status": "ステータス"
+    },
+    "status": {
+      "active": "有効",
+      "pending": "処理中",
+      "revoked": "失効"
+    },
+    "revoke": "失効させる",
+    "sendPush": "プッシュ通知を送信",
+    "targetBpn": "対象パートナーBPN",
+    "selectCertificate": "証明書を選択",
+    "empty": "共有記録はまだありません。"
+  },
+  "consumer": {
+    "discoveryTitle": "パートナー証明書の検索",
+    "inboxTitle": "受信証明書通知",
+    "searchBpn": "BPNで検索",
+    "search": "検索",
+    "stepper": {
+      "bpnLookup": "BPN検索",
+      "dtrResolution": "DTR解決",
+      "assetDiscovery": "アセット検索"
+    },
+    "negotiation": {
+      "requestAccess": "アクセスをリクエスト",
+      "viewCertificate": "証明書を表示",
+      "retry": "再試行"
+    },
+    "inbox": {
+      "columns": {
+        "sender": "送信者",
+        "type": "証明書種別",
+        "issuer": "発行者",
+        "received": "受信日",
+        "status": "ステータス"
+      },
+      "status": {
+        "pending": "処理中",
+        "acknowledged": "確認済み",
+        "rejected": "却下済み"
+      },
+      "acknowledge": "確認する",
+      "reject": "却下する",
+      "empty": "受信した証明書通知はありません。"
+    }
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "add": "追加",
+    "delete": "削除",
+    "publish": "公開",
+    "update": "更新",
+    "revoke": "失効させる",
+    "share": "共有",
+    "saveChanges": "変更を保存",
+    "upload": "アップロード",
+    "provide": "提供",
+    "refresh": "更新"
+  },
+  "filterBar": {
+    "clear": "クリア",
+    "listView": "リスト表示",
+    "cardView": "カード表示"
+  },
+  "certTable": {
+    "columns": {
+      "certificate": "証明書",
+      "type": "種別",
+      "issuer": "発行者",
+      "validUntil": "有効期限",
+      "status": "ステータス",
+      "actions": "操作"
+    },
+    "tooltips": {
+      "certDetails": "証明書の詳細",
+      "cannotPublishExpired": "期限切れの証明書は公開できません",
+      "alreadyPublished": "EDCネットワークにすでに公開済みです"
+    },
+    "buttons": {
+      "publish": "公開",
+      "update": "更新",
+      "delete": "削除"
+    },
+    "dateToday": "今日 {{time}}",
+    "empty": "証明書が見つかりません。証明書をアップロードして開始してください。"
+  },
+  "cardGrid": {
+    "empty": "証明書が見つかりません。証明書をアップロードして開始してください。",
+    "issuedBy": "発行者",
+    "validUntil": "有効期限",
+    "sharedWith": "{{count}} 件のパートナーと共有",
+    "pdfAttached": "PDF 添付",
+    "pdfDocumentAttached": "PDF ドキュメント添付",
+    "buttons": {
+      "info": "証明書の詳細",
+      "publish": "公開",
+      "update": "更新",
+      "delete": "削除"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "期限切れの証明書は公開できません",
+      "alreadyPublished": "EDC ネットワークに既に公開されています"
+    }
+  },
+  "pdfViewer": {
+    "buttons": {
+      "info": "証明書の詳細",
+      "publish": "公開",
+      "updatePdf": "PDF を更新",
+      "delete": "削除"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "期限切れの証明書は公開できません",
+      "alreadyPublished": "EDC ネットワークに既に公開されています"
+    }
+  },
+  "shareDialog": {
+    "title": "証明書を共有",
+    "description": "この証明書を共有するパートナーのビジネス パートナー番号を入力してください。EDC 通知を介して受け取ります。",
+    "partnerBpn": "パートナー BPN",
+    "errors": {
+      "partnerBpnRequired": "パートナー BPN は必須です"
+    }
+  },
+  "statsBar": {
+    "total": "合計",
+    "valid": "有効",
+    "expiring": "期限切れ間近",
+    "expired": "期限切れ"
+  },
+  "deleteDialog": {
+    "title": "証明書を削除",
+    "confirmation": "この証明書を削除してよろしいですか？",
+    "warning": "この操作は元に戻すことができません。共有されているすべての参照も削除されます。"
+  },
+  "publishDialog": {
+    "title": "証明書を公開",
+    "subtitle": "この証明書をCatena-Xデータスペースで検索可能にします",
+    "confirmation": "この証明書を公開してよろしいですか？",
+    "explanation": "公開することで、この証明書がネットワークに登録され、Catena-Xデータスペースを通じてパートナーが検索できるようになります。"
+  },
+  "detailDialog": {
+    "certInfo": "証明書情報",
+    "type": "種別",
+    "issuer": "発行者",
+    "validFrom": "有効開始日",
+    "validUntil": "有効期限",
+    "businessPartner": "ビジネスパートナー",
+    "certificateId": "証明書ID",
+    "scope": "スコープ",
+    "scopeSite": "サイトレベル（BPNS）",
+    "scopeEntity": "法人（BPNL）",
+    "enclosedSites": "関連サイト",
+    "description": "説明",
+    "sharingHistory": "共有履歴（{{count}}件）",
+    "noSharingRecords": "共有記録はまだありません。「共有」ボタンを使用して、パートナーにこの証明書を共有してください。",
+    "columns": {
+      "partner": "パートナー",
+      "method": "方法",
+      "sharedOn": "共有日",
+      "edcContract": "EDCコントラクト",
+      "status": "ステータス",
+      "action": "操作"
+    },
+    "revokeSuccess": "{{partner}}のアクセスを失効しました。",
+    "revokeFailed": "アクセスの失効に失敗しました。",
+    "updatePdf": "PDFを更新",
+    "shareCertificate": "証明書を共有"
+  },
+  "infoPanel": {
+    "noName": "（名前なし）",
+    "coreInfo": "基本情報",
+    "issuer": "発行者",
+    "bpnHolder": "BPN保有者",
+    "uploaderBpn": "アップローダーBPN",
+    "validity": "有効性",
+    "validFrom": "有効開始日",
+    "validUntil": "有効期限",
+    "trustLevel": "信頼レベル",
+    "scopeApp": "スコープ＆適用範囲",
+    "regNumber": "登録番号",
+    "areaOfApplication": "適用領域",
+    "validator": "バリデーター",
+    "associatedSites": "関連サイト",
+    "descriptionLabel": "説明",
+    "metadata": "メタデータ",
+    "certificateId": "証明書ID",
+    "created": "作成日",
+    "updated": "更新日"
+  },
+  "uploadDialog": {
+    "title": "証明書をアップロード",
+    "editTitle": "証明書を編集",
+    "steps": {
+      "certDetails": "証明書の詳細",
+      "validityScope": "有効性とスコープ",
+      "certFile": "証明書ファイル"
+    },
+    "sections": {
+      "coreDetails": "証明書の基本詳細",
+      "validityContext": "有効性・信頼・適用コンテキスト"
+    },
+    "fields": {
+      "certType": "証明書種別",
+      "certTypeHelper": "証明書の種別を検索または入力してください",
+      "certName": "証明書名",
+      "certNamePlaceholder": "例: 品質マネジメントシステム証明書",
+      "issuer": "発行者 / 認証機関",
+      "issuerPlaceholder": "例: DEKRA、TÜV SÜD",
+      "description": "説明",
+      "descriptionPlaceholder": "スコープに関する任意の説明やメモ",
+      "orgBpnl": "組織BPNL（保有者）",
+      "orgBpnlHelper": "この証明書はお客様の組織IDで登録されます",
+      "validFrom": "有効開始日",
+      "validUntil": "有効期限",
+      "trustLevel": "信頼レベル",
+      "trustNone": "なし",
+      "trustLow": "低",
+      "trustHigh": "高",
+      "trustTrusted": "信頼済み",
+      "regNumber": "登録番号",
+      "regNumberPlaceholder": "例: REG-123456-XYZ",
+      "areaOfApplication": "適用領域",
+      "areaOfApplicationPlaceholder": "例: パワートレイン工場、調達部門",
+      "areaOfApplicationHelper": "対象の部門、コンテキストまたは施設",
+      "validatorName": "バリデーター名",
+      "validatorPlaceholder": "例: 主任監査員 山田太郎",
+      "validatorHelper": "監査員または検証担当者",
+      "associatedSites": "関連サイト（BPNS）"
+    },
+    "fileZone": {
+      "dragDrop": "ドラッグ＆ドロップまたはクリックして参照",
+      "format": "対応形式：PDFのみ（最大10MB）"
+    },
+    "errors": {
+      "invalidFileType": "ファイル形式が無効です。PDF証明書のみ使用できます。",
+      "fileTooLarge": "ファイルサイズが最大10MBの制限を超えています。",
+      "certTypeRequired": "証明書種別は必須です",
+      "issuerRequired": "発行者は必須です",
+      "validFromRequired": "有効開始日は必須です",
+      "validUntilAfterFrom": "有効期限は有効開始日より後の日付を指定してください",
+      "fileRequired": "証明書ファイルは必須です"
+    }
+  },
+  "bpnsInput": {
+    "label": "サイト / 拠点（BPNS）",
+    "optional": "— 任意",
+    "placeholder": "例: BPNS0000000000XY",
+    "helper": "BPNSを入力してEnterキーを押して追加してください",
+    "addTooltip": "サイトを追加",
+    "errorFormat": "「BPNS」に続いて12桁の英数字を指定してください",
+    "errorDuplicate": "すでにリストに存在します"
+  },
+  "consumptionPage": {
+    "title": "CCM利用",
+    "subtitle": "Catena-Xパートナーからのコンプライアンス証明書をリクエスト・追跡・ダウンロード・確認します。",
+    "newRequest": "新規リクエスト",
+    "searchPlaceholder": "プロバイダー、種別またはステータスで検索...",
+    "filterAllStatuses": "すべてのステータス",
+    "filterAllTypes": "すべての種別",
+    "columns": {
+      "provider": "プロバイダー",
+      "certifiedBpn": "認定BPN",
+      "type": "種別",
+      "locations": "拠点",
+      "status": "ステータス",
+      "response": "応答",
+      "updated": "更新日",
+      "actions": "操作"
+    },
+    "statusValues": {
+      "Pending": "処理中",
+      "Found": "見つかりました",
+      "NotFound": "見つかりません",
+      "Failed": "失敗"
+    },
+    "localStatusValues": {
+      "Pending": "処理中",
+      "Accepted": "承認済み",
+      "Rejected": "却下済み"
+    },
+    "locations": "{{count}}サイト",
+    "empty": {
+      "noRequests": "証明書リクエストはまだありません。「新規リクエスト」を使用してプロバイダーに証明書を依頼してください。",
+      "noMatch": "フィルター条件に一致するリクエストはありません。"
+    },
+    "tooltips": {
+      "viewHistory": "履歴を表示",
+      "pullCertificate": "証明書を取得",
+      "viewCertificate": "証明書を表示",
+      "sendFeedback": "フィードバックを送信"
+    },
+    "messages": {
+      "loadFailed": "証明書リクエストの読み込みに失敗しました。",
+      "pullSuccess": "証明書の取得が完了しました。",
+      "pullFailed": "証明書の取得に失敗しました。",
+      "feedbackSent": "フィードバック「{{status}}」をプロバイダーに送信しました。",
+      "requestSent": "リクエストを送信しました（messageId: {{messageId}}）。",
+      "requestSentSimple": "リクエストを送信しました。"
+    }
+  },
+  "requestDialog": {
+    "title": "新規証明書リクエスト",
+    "subtitle": "プロバイダーにコンプライアンス証明書の共有を依頼します",
+    "providerBpn": "プロバイダーBPN",
+    "providerPlaceholder": "プロバイダーのBPNLを選択または入力してください",
+    "verifyCcm": "CCMサポートを確認",
+    "ccmSupported": "CCMサポート済み",
+    "certifiedBpn": "認定BPN",
+    "certifiedBpnHelper": "認定法人のBPNL",
+    "certType": "証明書種別",
+    "certTypeHelper": "証明書の種別を検索または入力してください",
+    "sendRequest": "リクエストを送信",
+    "errors": {
+      "notSupported": "このプロバイダーはCCMをサポートしていません。",
+      "verifyFailed": "このプロバイダーのCCMサポートを確認できませんでした。",
+      "submitFailed": "証明書リクエストの送信に失敗しました。"
+    }
+  },
+  "feedbackDialog": {
+    "title": "証明書フィードバック",
+    "subtitle": "評価結果をプロバイダーに通知します",
+    "description": "ドキュメントに対する評価結果をプロバイダーに通知します",
+    "statusReceived": "受信済み",
+    "statusAccepted": "承認済み",
+    "statusRejected": "却下済み",
+    "certErrors": {
+      "title": "証明書エラー",
+      "helper": "証明書レベルの一般的な問題 *",
+      "placeholder": "例: 証明書の期限切れ"
+    },
+    "locErrors": {
+      "title": "拠点エラー",
+      "helper": "サイトごとの問題（BPNSレベル）*",
+      "siteBpn": "サイトBPN",
+      "errorMessage": "エラーメッセージ"
+    },
+    "rejectionAlert": "却下するには、少なくとも1件の証明書エラーと1件の拠点エラーが必要です。",
+    "submitError": "ステータスフィードバックの送信に失敗しました。",
+    "sendFeedback": "フィードバックを送信"
+  },
+  "historyDialog": {
+    "title": "リクエスト履歴",
+    "subtitle": "この証明書リクエストの完全なタイムライン",
+    "provider": "プロバイダー",
+    "certified": "認定済み",
+    "noHistory": "履歴記録が見つかりません。",
+    "loadFailed": "リクエスト履歴の読み込みに失敗しました。",
+    "columns": {
+      "status": "ステータス",
+      "notificationId": "通知ID",
+      "documentId": "ドキュメントID",
+      "requested": "リクエスト日",
+      "updated": "更新日"
+    }
+  },
+  "requestDetailDialog": {
+    "title": "リクエストの詳細",
+    "providerBpn": "プロバイダーBPN",
+    "certifiedBpn": "認定BPN",
+    "certType": "証明書種別",
+    "documentId": "ドキュメントID",
+    "requested": "リクエスト日",
+    "updated": "更新日",
+    "localStatus": "ローカルステータス",
+    "requestedSites": "リクエストされたサイト（{{count}}件）",
+    "notificationId": "通知ID",
+    "history": "履歴",
+    "sendFeedback": "フィードバックを送信",
+    "pullCertificate": "証明書を取得",
+    "viewCertificate": "証明書を表示"
+  },
+  "provisionPage": {
+    "title": "CCMプロビジョン管理",
+    "subtitle": "受信した証明書リクエストを処理し、Catena-Xパートナーに証明書を提供します。",
+    "pushCertificate": "証明書をプッシュ",
+    "tabs": {
+      "inboundRequests": "受信リクエスト",
+      "shares": "共有"
+    },
+    "inboundSearch": "BPN、種別またはステータスで検索...",
+    "sharesSearch": "コンシューマー、種別またはステータスで検索...",
+    "filterAllStatuses": "すべてのステータス",
+    "filterAllConsumerStatuses": "すべてのコンシューマーステータス",
+    "filterAllTypes": "すべての種別",
+    "inboundStatusValues": {
+      "Registered": "登録済み",
+      "Available": "利用可能",
+      "Pushed": "プッシュ済み",
+      "NotFound": "見つかりません"
+    },
+    "consumerStatusValues": {
+      "RECEIVED": "受信済み",
+      "ACCEPTED": "承認済み",
+      "REJECTED": "却下済み"
+    },
+    "sharesStatusValues": {
+      "Active": "有効",
+      "Pending": "処理中",
+      "Revoked": "失効"
+    },
+    "inboundColumns": {
+      "consumer": "コンシューマー",
+      "certifiedBpn": "認定BPN",
+      "type": "種別",
+      "locations": "拠点",
+      "status": "ステータス",
+      "consumerStatus": "コンシューマーステータス",
+      "updated": "更新日",
+      "actions": "操作"
+    },
+    "sharesColumns": {
+      "type": "種別",
+      "consumer": "コンシューマー",
+      "status": "ステータス",
+      "lastShared": "最終共有日"
+    },
+    "locations": "{{count}}サイト",
+    "inbound": {
+      "empty": "受信した証明書リクエストはまだありません。",
+      "noMatch": "フィルター条件に一致するリクエストはありません。"
+    },
+    "shares": {
+      "empty": "共有された証明書はまだありません。「証明書をプッシュ」を使用するか、受信リクエストに返答してください。",
+      "noMatch": "フィルター条件に一致する共有はありません。",
+      "rejectionIcon": "却下理由があります — 行をクリックして確認してください"
+    },
+    "provide": "提供",
+    "messages": {
+      "loadFailed": "プロビジョニングデータの読み込みに失敗しました。",
+      "availabilitySent": "利用可能通知を送信しました。",
+      "certificatePushed": "コンシューマーに証明書をプッシュしました。"
+    }
+  },
+  "inboundDetailDialog": {
+    "title": "受信リクエストの詳細",
+    "consumerBpn": "コンシューマーBPN",
+    "certifiedBpn": "認定BPN",
+    "certType": "証明書種別",
+    "certificateId": "証明書ID",
+    "received": "受信日",
+    "updated": "更新日",
+    "notificationId": "通知ID",
+    "requestedSites": "リクエストされたサイト（{{count}}件）",
+    "consumerPrefix": "コンシューマー: ",
+    "provideCertificate": "証明書を提供"
+  },
+  "shareDetailDialog": {
+    "title": "共有の詳細",
+    "providerBpn": "プロバイダーBPN",
+    "consumerBpn": "コンシューマーBPN",
+    "certType": "証明書種別",
+    "certificateId": "証明書ID",
+    "lastShared": "最終共有日",
+    "created": "作成日",
+    "rejectionReason": "却下理由",
+    "certErrors": "証明書エラー",
+    "locErrors": "拠点エラー",
+    "rawPayload": "RAWペイロード"
+  },
+  "provideDialog": {
+    "title": "証明書を提供",
+    "subtitle": "利用可能通知または直接プッシュを通じてコンシューマーのリクエストに返答します",
+    "description": "{{type}}を求める{{consumer}}のリクエストに返答します",
+    "modeAvailable": "利用可能にする（PULL）",
+    "modePush": "直接プッシュ",
+    "certSelect": "提供する証明書",
+    "noCertsTitle": "一致する証明書が見つかりません",
+    "noCertsDescription": "以下に対する{{type}}証明書が見つかりませんでした",
+    "noCertsUpload": "証明書をアップロード",
+    "uploadOther": "別の証明書をアップロード...",
+    "notPublishedAlert": "この証明書はまだ公開されていません — 利用可能通知の送信前に自動的に公開されます。",
+    "respondTo": "リクエストに返答する",
+    "respondToHelper": "複数のリクエストが見つかりました — 返答するリクエストを選択してください。",
+    "respondingTo": "通知への返答",
+    "invalidCert": "選択された証明書が無効です。",
+    "sendAvailability": "利用可能通知を送信",
+    "errors": {
+      "sendAvailFailed": "利用可能通知の送信に失敗しました。",
+      "pushFailed": "証明書のプッシュに失敗しました。",
+      "availFailed": "証明書を利用可能にする処理に失敗しました。",
+      "loadFailed": "プロビジョニングデータの読み込みに失敗しました。"
+    }
+  },
+  "pushDialog": {
+    "title": "証明書をプッシュ",
+    "subtitle": "事前のリクエストなしにパートナーへ直接証明書を送信します",
+    "description": "事前のリクエストなしに、お客様の証明書の1つをパートナーへ直接送信します。",
+    "certSelect": "プッシュする証明書",
+    "noCerts": "利用可能な証明書がありません。",
+    "recipientBpn": "受信者（コンシューマーBPN）",
+    "recipientPlaceholder": "受信者のBPNLを選択または入力してください",
+    "pushCertificate": "証明書をプッシュ",
+    "errors": {
+      "loadFailed": "証明書の読み込みに失敗しました。",
+      "pushFailed": "証明書のプッシュに失敗しました。"
+    }
+  }
+}

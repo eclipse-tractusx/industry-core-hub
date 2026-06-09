@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -23,7 +24,7 @@
 export interface UploadCertificateDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (certificate: CertificateFormData) => void | Promise<void>;
+  onSave: (certificate: FormData) => void | Promise<void>;
   certificateData?: CertificateFormData;
 }
 
@@ -38,6 +39,16 @@ export interface CertificateFormData {
   issuer: string;  // Issuer / Certification Body
   validFrom: string;  // Valid From date
   validUntil: string;  // Valid Until date
+  /** Physical certificate number / registration ID per CX-0135 */
+  certificateIdentifier?: string;
+  /**
+   * Certificate scope selector:
+   * - 'BPNL': Certificate applies to the whole legal entity (default)
+   * - 'BPNS': Certificate applies to specific sites only
+   */
+  certificateScope: 'BPNL' | 'BPNS';
+  /** List of BPNS values — only relevant when certificateScope is 'BPNS' */
+  enclosedSitesBpn: string[];
   description?: string;  // Optional description
   document?: File;  // PDF file (will be converted to BASE64)
 }
@@ -50,6 +61,53 @@ export interface ShareCertificateDialogProps {
     name: string;
   } | null;
   onShare: (certificateId: string, partnerBpn: string, method: 'PULL' | 'PUSH') => void;
+}
+
+export interface PublishCertificateDialogProps {
+  open: boolean;
+  onClose: () => void;
+  certificate: {
+    id: string;
+    name: string;
+    type?: string;
+  } | null;
+  onConfirm: (certificateId: string) => void;
+}
+
+export interface UpdateCertificateDialogProps {
+  open: boolean;
+  onClose: () => void;
+  certificate: {
+    id: string;
+    name?: string;
+    type?: string;
+    issuer?: string;
+    validFrom?: string;
+    validUntil?: string;
+    trustLevel?: string;
+    certificateIdentifier?: string;
+    areaOfApplication?: string;
+    validator?: string;
+    description?: string;
+    enclosedSitesBpn?: string[];
+  } | null;
+  onSave: (certificateId: string, formData: FormData) => Promise<void>;
+}
+
+export interface UpdatePdfDialogProps {
+  open: boolean;
+  onClose: () => void;
+  certificate: {
+    id: string;
+    name: string;
+    sharingRecords?: Array<{
+      id: string;
+      partnerBpn: string;
+      partnerName?: string;
+      status: string;
+    }>;
+  } | null;
+  onUpdate: (certificateId: string, newDocument: File, notifyPartnerBpns: string[]) => Promise<void>;
 }
 
 export interface ViewCertificateDialogProps {

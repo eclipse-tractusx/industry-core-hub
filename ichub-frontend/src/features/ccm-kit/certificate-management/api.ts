@@ -1,7 +1,9 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
+ * Copyright (c) 2026 LKS
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -21,17 +23,24 @@
  ********************************************************************************/
 
 import httpClient from '@/services/HttpClient';
-import { getIchubBackendUrl } from '@/services/EnvironmentService';
-import { 
-  Certificate, 
+
+import axios from 'axios';
+
+import { getIchubBackendUrl, getApiHeaders } from '@/services/EnvironmentService';
+import authService from '@/services/AuthService';
+import {
+  Certificate,
   CertificateDetail,
-  SharedCertificate, 
   CertificateFilter,
   PaginationParams,
   SortParams,
-  PaginatedResponse
+  PaginatedResponse,
 } from './types/types';
-import { CertificateFormData } from './types/dialog-types';
+import {
+  mockFetchCertificates,
+  mockFetchCertificateDetail,
+  mockRegisterInDtr,
+} from './mocks/mockData';
 
 /**
  * CCM API base path following CX-0135 standard
@@ -75,15 +84,6 @@ const buildQueryString = (
 /**
  * Fetch paginated list of certificates
  * GET /api/ccm/certificates
- * 
- * Query parameters for filtering:
- * - type: filter by certificate type
- * - status: filter by validity status (valid/expiring/expired)
- * - shared: filter by shared or not shared
- * - search: text search across name, issuer, BPN
- * 
- * Pagination: page, page_size
- * Sorting: sort_by (name, type, valid_until, shared_date), sort_order (asc, desc)
  */
 export const fetchCertificates = async (
   filter?: Partial<CertificateFilter>,
@@ -108,39 +108,54 @@ export const fetchCertificates = async (
 };
 
 /**
- * Fetch all certificates (non-paginated, for backward compatibility)
+ * Fetch certificates from CCM Addon Kit Endpoint
+ * GET /addons/ccm-kit/certificates/
+ * * Query parameters mapping:
+ * - bpnl: Business Partner Number of the context user (Mandatory)
+ * - certificateType: Type filtering parameter (Optional)
+ * - offset: Pagination offset parameter
+ * - limit: Pagination limitation size
  */
-export const fetchAllCertificates = async (): Promise<Certificate[]> => {
+export const fetchAllCertificates = async (params: {
+  bpnl: string;
+  certificateType: string | null;
+  offset: number;
+  limit: number;
+}): Promise<any[]> => {
   try {
     if (!backendUrl) {
-      console.warn('Backend URL not configured, returning empty certificates list');
-      return [];
+      console.warn('[CCM] Backend URL not configured — using mock certificates fallback');
+      return mockFetchCertificates();
     }
     
-    const response = await httpClient.get<PaginatedResponse<Certificate>>(
-      `${backendUrl}${CCM_BASE_PATH}/certificates?page_size=1000`
+    const response = await httpClient.get<any[]>(
+      `${backendUrl}/addons/ccm-kit/certificates/`,
+      {
+        params: {
+          bpnl: params.bpnl,
+          certificateType: params.certificateType,
+          offset: params.offset,
+          limit: params.limit,
+        },
+      }
     );
-    return response.data.data || [];
+    return response.data || [];
   } catch (error) {
-    console.error('Failed to fetch certificates:', error);
-    return [];
+    console.error('[CCM] Error fetching certificates from backend endpoint:', error);
+    // Propagamos el error al componente padre para evitar fallos de renderizado silenciosos
+    throw error; 
   }
 };
 
 /**
  * Fetch certificate detail by ID
  * GET /api/ccm/certificates/{id}
- * 
- * Returns full certificate detail including:
- * - All metadata fields
- * - Sharing history (all partners shared with, dates, statuses, methods)
- * - BASE64 content (or download link for the PDF file)
  */
 export const fetchCertificateById = async (certificateId: string): Promise<CertificateDetail | null> => {
   try {
     if (!backendUrl) {
-      console.warn('Backend URL not configured');
-      return null;
+      console.warn('[CCM] Backend URL not configured — using mock certificate detail');
+      return mockFetchCertificateDetail(certificateId);
     }
     
     const response = await httpClient.get<CertificateDetail>(
@@ -154,49 +169,75 @@ export const fetchCertificateById = async (certificateId: string): Promise<Certi
 };
 
 /**
- * Upload a new certificate
- * POST /api/ccm/certificates
- * 
- * Accepts multipart request with PDF file + metadata
- * PDF file is converted to BASE64 encoded string
- * 
- * Metadata fields mapped to BusinessPartnerCertificate v3.1.0:
- * - Certificate Type (e.g., ISO 9001, IATF 16949, ISO 14001)
- * - Certificate Name
- * - Issuer / Certification Body
- * - Valid From / Valid Until
- * - BPN-L of the certificate holder
- * - Description (optional)
- * 
- * Validation:
- * - File type validation (PDF only or PDF/PNG/JPG)
- * - File size limit (max 10MB)
- * - Required fields validation (type, name, issuer, dates)
- * - Date consistency (Valid From < Valid Until)
+ * Upload a new certificate to the CCM Addon Kit
+ * POST /addons/ccm-kit/certificates/
+ *
+ * Payload (Multipart Form Data):
+ * - file *: PDF file (max 10MB)
+ * - bpnl *: Current user's BPNL
+ * - certificateType *: ISO9001, ISO14001, etc.
+ * - issuer *: Certification Body name
+ * - validFrom *: Start date (YYYY-MM-DD)
+ * - certificateName: Optional name
+ * - validUntil: Optional end date (YYYY-MM-DD)
+ * - trustLevel: e.g., 'none'
+ * - registrationNumber: Physical ID
+ * - areaOfApplication: Context/Department
+ * - validator: Verifying body
+ * - sites: JSON array string of sites
+ * - description: Optional text
  */
-export const createCertificate = async (certificateData: CertificateFormData): Promise<Certificate> => {
-  const formData = new FormData();
-  formData.append('name', certificateData.name);
-  formData.append('type', certificateData.type);
-  formData.append('bpn', certificateData.bpn);
-  formData.append('issuer', certificateData.issuer);
-  formData.append('validFrom', certificateData.validFrom);
-  formData.append('validUntil', certificateData.validUntil);
-  
-  if (certificateData.description) {
-    formData.append('description', certificateData.description);
+/**
+ * Upload a new certificate to the CCM Addon Kit
+ * POST /addons/ccm-kit/certificates/
+ * * Envío forzado mediante Axios Nativo para garantizar formato Form Data (Multipart)
+ */
+export const createCertificate = async (certificateData: FormData): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
   }
-  
-  if (certificateData.document) {
-    formData.append('document', certificateData.document);
+
+  // Merge API key + auth headers but drop Content-Type so the browser can set
+  // the correct multipart/form-data boundary automatically.
+  const { 'Content-Type': _dropped, ...headersWithoutContentType } = {
+    ...getApiHeaders(),
+    ...authService.getAuthHeaders(),
+  };
+
+  const response = await axios.post<any>(
+    `${backendUrl}/addons/ccm-kit/certificates/`,
+    certificateData,
+    {
+      headers: {
+        ...headersWithoutContentType,
+        'Accept': 'application/json',
+      },
+    }
+  );
+
+  return response.data;
+};
+
+/**
+ * Update certificate metadata (all fields optional, PDF is immutable).
+ * PUT /addons/ccm-kit/certificates/{certificate_id}
+ * Request is multipart/form-data — only provided fields are written.
+ */
+export const updateCertificate = async (certificateId: string, formData: FormData): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
   }
-  
-  const response = await httpClient.post<Certificate>(
-    `${backendUrl}${CCM_BASE_PATH}/certificates`,
+  const { 'Content-Type': _dropped, ...headersWithoutContentType } = {
+    ...getApiHeaders(),
+    ...authService.getAuthHeaders(),
+  };
+  const response = await axios.put<any>(
+    `${backendUrl}/addons/ccm-kit/certificates/${certificateId}`,
     formData,
     {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        ...headersWithoutContentType,
+        'Accept': 'application/json',
       },
     }
   );
@@ -204,44 +245,118 @@ export const createCertificate = async (certificateData: CertificateFormData): P
 };
 
 /**
- * Share a certificate with a partner via EDC
- * POST /api/ccm/certificates/{id}/share
- * 
- * Triggers EDC sharing workflow:
- * - Creates an EDC Data Asset for the certificate using CX-0135 data model
- * - Configures Access Policy and Usage Policy as specified in CX-0135
- * - Registers the asset with the EDC connector for the target partner's BPN
- * 
- * Stores sharing record in database:
- * - Target Partner BPN
- * - Shared Date
- * - EDC Contract ID
- * - Status (Active/Pending/Revoked)
- * 
- * @param certificateId - ID of the certificate to share
- * @param partnerBpn - BPN of the target partner
- * @param method - Sharing method: 'PULL' (EDC data offer) or 'PUSH' (notification)
+ * Fetch full certificate detail including the base64-encoded PDF document.
+ * GET /addons/ccm-kit/certificates/{certificate_id}
+ * Response includes document.documentContent (base64 PDF), sharing history, and all metadata.
  */
-export const shareCertificate = async (
-  certificateId: string,
-  partnerBpn: string,
-  method: 'PULL' | 'PUSH'
-): Promise<SharedCertificate> => {
-  const response = await httpClient.post<SharedCertificate>(
-    `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/share`,
-    { partnerBpn, method }
+export const fetchCertificateDetail = async (certificateId: string): Promise<any> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  const response = await httpClient.get(
+    `${backendUrl}/addons/ccm-kit/certificates/${certificateId}`
   );
   return response.data;
 };
 
 /**
+ * Delete a certificate from the CCM Addon Kit
+ * DELETE /addons/ccm-kit/certificates/{certificate_id}
+ * Returns 204 No Content on success.
+ */
+export const deleteCertificate = async (certificateId: string): Promise<void> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  await httpClient.delete(`${backendUrl}/addons/ccm-kit/certificates/${certificateId}`);
+};
+
+/**
+ * Replace the PDF document of an existing certificate.
+ * PUT /api/ccm/certificates/{id}/document
+ */
+export const updateCertificateDocument = async (
+  certificateId: string,
+  document: File,
+): Promise<void> => {
+  if (!backendUrl) {
+    console.warn('[CCM] Backend URL not configured — mock update document');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('document', document);
+  await httpClient.put(
+    `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/document`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  );
+};
+
+/**
  * Revoke shared access to a certificate
  * DELETE /api/ccm/certificates/{id}/share/{shareId}
- * 
- * Revokes the EDC contract and updates sharing record status to 'Revoked'
  */
 export const revokeShare = async (certificateId: string, shareId: string): Promise<void> => {
   await httpClient.delete(
     `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/share/${shareId}`
   );
 };
+
+// ─── Publish to EDC ────────────────────────────────────────────────────────────
+
+/**
+ * Publish a certificate as an EDC asset via the CCM provider endpoint.
+ * POST /addons/ccm-kit/provider/publish
+ * Returns the documentId (EDC asset ID) assigned to the certificate.
+ */
+export const publishCertificateAsset = async (
+  certificateId: string,
+): Promise<{ documentId: string; assetId: string; certificateId: number }> => {
+  if (!backendUrl) {
+    throw new Error('[CCM] Backend URL not configured');
+  }
+  const response = await httpClient.post<{ documentId: string; assetId: string; certificateId: number }>(
+    `${backendUrl}/addons/ccm-kit/provider/publish`,
+    { certificateId: Number(certificateId) },
+  );
+  return response.data;
+};
+
+/**
+ * GET /addons/ccm-kit/provider/published/{certificate_id}
+ * Returns whether the given certificate is already published as an EDC asset.
+ * On any error (network, 404, etc.) defaults to false so the Publish button stays enabled.
+ */
+export const fetchCertificatePublishedStatus = async (
+  certificateId: string,
+): Promise<boolean> => {
+  if (!backendUrl) return false;
+  try {
+    const response = await httpClient.get<{ published: boolean }>(
+      `${backendUrl}/addons/ccm-kit/provider/published/${certificateId}`,
+    );
+    return response.data.published ?? false;
+  } catch {
+    return false;
+  }
+};
+
+// ─── DTR Registration (legacy — kept for backward compatibility) ───────────────
+
+/**
+ * @deprecated Use publishCertificateAsset instead.
+ */
+export const registerCertificateInDtr = async (
+  certificateId: string,
+): Promise<{ dtrStatus: 'registered'; edcAssetId: string }> => {
+  if (!backendUrl) {
+    console.warn('[CCM] Backend URL not configured — using mock DTR registration');
+    return mockRegisterInDtr(certificateId);
+  }
+  const response = await httpClient.post<{ dtrStatus: 'registered'; edcAssetId: string }>(
+    `${backendUrl}${CCM_BASE_PATH}/certificates/${certificateId}/register-dtr`
+  );
+  return response.data;
+};
+
+

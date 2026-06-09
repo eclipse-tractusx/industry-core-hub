@@ -1,0 +1,609 @@
+{
+  "page": {
+    "title": "Certificate Management",
+    "subtitle": "Manage, share and consume compliance certificates across the Catena-X dataspace",
+    "uploadCertificate": "Upload Certificate"
+  },
+  "tabs": {
+    "myCertificates": "My Certificates",
+    "shareOutbox": "Share & Outbox",
+    "discoverConsume": "Discover & Consume"
+  },
+  "compliance": {
+    "title": "Compliance Overview",
+    "score": "Compliance Score",
+    "validOf": "{{valid}} of {{total}} certificates valid",
+    "valid": "Valid",
+    "expiringSoon": "Expiring Soon",
+    "expired": "Expired",
+    "sharedWith": "{{count}} of {{total}} shared with partners",
+    "registeredInDtr": "{{count}} of {{total}} registered in DTR",
+    "allValid": "All certificates are valid",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
+  "table": {
+    "subtitle": "Manage your compliance certificates ({{count}} total)",
+    "columns": {
+      "name": "Certificate",
+      "type": "Type",
+      "issuer": "Issuer",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "status": "Status",
+      "shared": "Shared",
+      "certId": "Cert. ID",
+      "dtr": "DTR"
+    },
+    "status": {
+      "valid": "Valid",
+      "expiring": "Expiring",
+      "expired": "Expired"
+    },
+    "dtr": {
+      "registered": "Registered in DTR",
+      "pending": "DTR registration pending",
+      "notRegistered": "Not registered in DTR",
+      "registerAction": "Register in DTR"
+    },
+    "actions": {
+      "view": "View",
+      "share": "Share",
+      "delete": "Delete"
+    },
+    "empty": {
+      "title": "No certificates found",
+      "subtitle": "Upload your first compliance certificate to get started."
+    }
+  },
+  "messages": {
+    "uploadSuccess": "Certificate uploaded successfully!",
+    "uploadFailed": "Failed to upload certificate.",
+    "shareSuccess": "Certificate shared successfully!",
+    "shareFailed": "Failed to share certificate.",
+    "deleteNotAvailable": "Delete functionality not yet available.",
+    "deleteSuccess": "Certificate deleted successfully!",
+    "deleteFailed": "Failed to delete certificate.",
+    "publishSuccess": "Certificate published successfully!",
+    "publishFailed": "Failed to publish certificate.",
+    "updateSuccess": "Certificate updated successfully!",
+    "updateFailed": "Failed to update certificate.",
+    "registerDtrSuccess": "Certificate registered in DTR successfully!",
+    "registerDtrFailed": "Failed to register certificate in DTR.",
+    "loadFailed": "Failed to load certificates. Please try again."
+  },
+  "filters": {
+    "searchPlaceholder": "Search by name, BPN or issuer...",
+    "allTypes": "All Types",
+    "allStatuses": "All Statuses",
+    "type": "Type",
+    "status": "Status"
+  },
+  "dialogs": {
+    "upload": {
+      "title": "Upload Certificate",
+      "editTitle": "Edit Certificate"
+    },
+    "share": {
+      "title": "Share Certificate"
+    },
+    "view": {
+      "title": "Certificate Details"
+    },
+    "delete": {
+      "title": "Delete Certificate",
+      "confirmation": "Are you sure you want to delete this certificate?",
+      "warning": "This action cannot be undone."
+    }
+  },
+  "shareOutbox": {
+    "title": "Sharing Outbox",
+    "pushSection": "Push Notification to Partner",
+    "columns": {
+      "certificate": "Certificate",
+      "partner": "Partner",
+      "method": "Method",
+      "sharedOn": "Shared On",
+      "edcContract": "EDC Contract",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "pending": "Pending",
+      "revoked": "Revoked"
+    },
+    "revoke": "Revoke",
+    "sendPush": "Send Push Notification",
+    "targetBpn": "Target Partner BPN",
+    "selectCertificate": "Select Certificate",
+    "empty": "No sharing records yet."
+  },
+  "consumer": {
+    "discoveryTitle": "Partner Certificate Discovery",
+    "inboxTitle": "Incoming Certificate Notifications",
+    "searchBpn": "Search by BPN",
+    "search": "Search",
+    "stepper": {
+      "bpnLookup": "BPN Lookup",
+      "dtrResolution": "DTR Resolution",
+      "assetDiscovery": "Asset Discovery"
+    },
+    "negotiation": {
+      "requestAccess": "Request Access",
+      "viewCertificate": "View Certificate",
+      "retry": "Retry"
+    },
+    "inbox": {
+      "columns": {
+        "sender": "Sender",
+        "type": "Certificate Type",
+        "issuer": "Issuer",
+        "received": "Received",
+        "status": "Status"
+      },
+      "status": {
+        "pending": "Pending",
+        "acknowledged": "Acknowledged",
+        "rejected": "Rejected"
+      },
+      "acknowledge": "Acknowledge",
+      "reject": "Reject",
+      "empty": "No incoming certificate notifications."
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "add": "Add",
+    "delete": "Delete",
+    "publish": "Publish",
+    "update": "Update",
+    "revoke": "Revoke",
+    "share": "Share",
+    "saveChanges": "Save Changes",
+    "upload": "Upload",
+    "provide": "Provide",
+    "refresh": "Refresh"
+  },
+  "filterBar": {
+    "clear": "Clear",
+    "listView": "List view",
+    "cardView": "Card view"
+  },
+  "certTable": {
+    "columns": {
+      "certificate": "Certificate",
+      "type": "Type",
+      "issuer": "Issuer",
+      "validUntil": "Valid Until",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "tooltips": {
+      "certDetails": "Certificate details",
+      "cannotPublishExpired": "Cannot publish expired certificates",
+      "alreadyPublished": "Already published to the EDC network"
+    },
+    "buttons": {
+      "publish": "Publish",
+      "update": "Update",
+      "delete": "Delete"
+    },
+    "dateToday": "Today, {{time}}",
+    "empty": "No certificates found. Upload a certificate to get started."
+  },
+  "cardGrid": {
+    "empty": "No certificates found. Upload a certificate to get started.",
+    "issuedBy": "Issued by",
+    "validUntil": "Valid until",
+    "sharedWith": "Shared with {{count}} partner{{count, plural, one {} other {s}}}",
+    "pdfAttached": "PDF attached",
+    "pdfDocumentAttached": "PDF document attached",
+    "buttons": {
+      "info": "Certificate details",
+      "publish": "Publish",
+      "update": "Update",
+      "delete": "Delete"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "Cannot publish expired certificates",
+      "alreadyPublished": "Already published to the EDC network"
+    }
+  },
+  "pdfViewer": {
+    "buttons": {
+      "info": "Certificate details",
+      "publish": "Publish",
+      "updatePdf": "Update PDF",
+      "delete": "Delete"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "Cannot publish expired certificates",
+      "alreadyPublished": "Already published to the EDC network"
+    }
+  },
+  "shareDialog": {
+    "title": "Share Certificate",
+    "description": "Enter the Business Partner Number of the partner you want to share this certificate with. They will receive it via EDC notification.",
+    "partnerBpn": "Partner BPN",
+    "errors": {
+      "partnerBpnRequired": "Partner BPN is required"
+    }
+  },
+  "statsBar": {
+    "total": "Total",
+    "valid": "Valid",
+    "expiring": "Expiring",
+    "expired": "Expired"
+  },
+  "deleteDialog": {
+    "title": "Delete Certificate",
+    "confirmation": "Are you sure you want to delete this certificate?",
+    "warning": "This action cannot be undone. All shared references will also be removed."
+  },
+  "publishDialog": {
+    "title": "Publish Certificate",
+    "subtitle": "Make this certificate discoverable in the Catena-X dataspace",
+    "confirmation": "Are you sure you want to publish this certificate?",
+    "explanation": "Publishing will register this certificate in the network, making it discoverable by your partners through the Catena-X dataspace."
+  },
+  "detailDialog": {
+    "certInfo": "Certificate Information",
+    "type": "Type",
+    "issuer": "Issuer",
+    "validFrom": "Valid From",
+    "validUntil": "Valid Until",
+    "businessPartner": "Business Partner",
+    "certificateId": "Certificate ID",
+    "scope": "Scope",
+    "scopeSite": "Site-level (BPNS)",
+    "scopeEntity": "Legal entity (BPNL)",
+    "enclosedSites": "Enclosed Sites",
+    "description": "Description",
+    "sharingHistory": "Sharing History ({{count}})",
+    "noSharingRecords": "No sharing records yet. Use the Share button to share this certificate with a partner.",
+    "columns": {
+      "partner": "Partner",
+      "method": "Method",
+      "sharedOn": "Shared On",
+      "edcContract": "EDC Contract",
+      "status": "Status",
+      "action": "Action"
+    },
+    "revokeSuccess": "Access revoked for {{partner}}.",
+    "revokeFailed": "Failed to revoke access.",
+    "updatePdf": "Update PDF",
+    "shareCertificate": "Share Certificate"
+  },
+  "infoPanel": {
+    "noName": "(No name)",
+    "coreInfo": "Core Information",
+    "issuer": "Issuer",
+    "bpnHolder": "BPN Holder",
+    "uploaderBpn": "Uploader BPN",
+    "validity": "Validity",
+    "validFrom": "Valid From",
+    "validUntil": "Valid Until",
+    "trustLevel": "Trust Level",
+    "scopeApp": "Scope & Application",
+    "regNumber": "Reg. Number",
+    "areaOfApplication": "Area of Application",
+    "validator": "Validator",
+    "associatedSites": "Associated Sites",
+    "descriptionLabel": "Description",
+    "metadata": "Metadata",
+    "certificateId": "Certificate ID",
+    "created": "Created",
+    "updated": "Updated"
+  },
+  "uploadDialog": {
+    "title": "Upload Certificate",
+    "editTitle": "Edit Certificate",
+    "steps": {
+      "certDetails": "Certificate Details",
+      "validityScope": "Validity & Scope",
+      "certFile": "Certificate File"
+    },
+    "sections": {
+      "coreDetails": "Certificate Core Details",
+      "validityContext": "Validity, Trust & Application Context"
+    },
+    "fields": {
+      "certType": "Certificate Type",
+      "certTypeHelper": "Search or type a certificate type",
+      "certName": "Certificate Name",
+      "certNamePlaceholder": "e.g. Quality Management System Certificate",
+      "issuer": "Issuer / Certification Body",
+      "issuerPlaceholder": "e.g. DEKRA, TÜV SÜD",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description or notes about the scope",
+      "orgBpnl": "Organization BPNL (Holder)",
+      "orgBpnlHelper": "This certificate will be registered under your organization ID",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "trustLevel": "Trust Level",
+      "trustNone": "None",
+      "trustLow": "Low",
+      "trustHigh": "High",
+      "trustTrusted": "Trusted",
+      "regNumber": "Registration Number",
+      "regNumberPlaceholder": "e.g. REG-123456-XYZ",
+      "areaOfApplication": "Area of Application",
+      "areaOfApplicationPlaceholder": "e.g. Powertrain Plant, Procurement Dept",
+      "areaOfApplicationHelper": "Target department, context or facility",
+      "validatorName": "Validator Name",
+      "validatorPlaceholder": "e.g. Lead Auditor John Doe",
+      "validatorHelper": "Auditor or verifying entity officer",
+      "associatedSites": "Associated Sites (BPNS)"
+    },
+    "fileZone": {
+      "dragDrop": "Drag & drop or click to browse",
+      "format": "Supported format: PDF only (max 10MB)"
+    },
+    "errors": {
+      "invalidFileType": "Invalid file type. Only PDF certificates are allowed.",
+      "fileTooLarge": "File size exceeds the maximum 10MB limit.",
+      "certTypeRequired": "Certificate type is required",
+      "issuerRequired": "Issuer is required",
+      "validFromRequired": "Valid from date is required",
+      "validUntilAfterFrom": "Valid until must be after valid from",
+      "fileRequired": "Certificate file is required"
+    }
+  },
+  "bpnsInput": {
+    "label": "Sites / Locations (BPNS)",
+    "optional": "— optional",
+    "placeholder": "e.g. BPNS0000000000XY",
+    "helper": "Type a BPNS and press Enter to add",
+    "addTooltip": "Add site",
+    "errorFormat": "Must be \"BPNS\" followed by 12 alphanumeric characters",
+    "errorDuplicate": "Already in the list"
+  },
+  "consumptionPage": {
+    "title": "CCM Consumption",
+    "subtitle": "Request, track, download and review compliance certificates from your Catena-X partners.",
+    "newRequest": "New Request",
+    "searchPlaceholder": "Search by provider, type or status…",
+    "filterAllStatuses": "All Statuses",
+    "filterAllTypes": "All Types",
+    "columns": {
+      "provider": "Provider",
+      "certifiedBpn": "Certified BPN",
+      "type": "Type",
+      "locations": "Locations",
+      "status": "Status",
+      "response": "Response",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "statusValues": {
+      "Pending": "Pending",
+      "Found": "Found",
+      "NotFound": "Not Found",
+      "Failed": "Failed"
+    },
+    "localStatusValues": {
+      "Pending": "Pending",
+      "Accepted": "Accepted",
+      "Rejected": "Rejected"
+    },
+    "locations": "{{count}} site(s)",
+    "empty": {
+      "noRequests": "No certificate requests yet. Use \"New Request\" to ask a provider for a certificate.",
+      "noMatch": "No requests match your filters."
+    },
+    "tooltips": {
+      "viewHistory": "View history",
+      "pullCertificate": "Pull certificate",
+      "viewCertificate": "View certificate",
+      "sendFeedback": "Send feedback"
+    },
+    "messages": {
+      "loadFailed": "Failed to load certificate requests.",
+      "pullSuccess": "Certificate pulled successfully.",
+      "pullFailed": "Failed to pull the certificate.",
+      "feedbackSent": "Feedback \"{{status}}\" sent to the provider.",
+      "requestSent": "Request sent (messageId: {{messageId}}).",
+      "requestSentSimple": "Request sent."
+    }
+  },
+  "requestDialog": {
+    "title": "New Certificate Request",
+    "subtitle": "Ask a provider to share a compliance certificate with you",
+    "providerBpn": "Provider BPN",
+    "providerPlaceholder": "Select or type the provider's BPNL",
+    "verifyCcm": "Verify CCM support",
+    "ccmSupported": "CCM supported",
+    "certifiedBpn": "Certified BPN",
+    "certifiedBpnHelper": "BPNL of the certified legal entity",
+    "certType": "Certificate Type",
+    "certTypeHelper": "Search or type a certificate type",
+    "sendRequest": "Send Request",
+    "errors": {
+      "notSupported": "This provider does not support CCM.",
+      "verifyFailed": "Could not verify CCM support for this provider.",
+      "submitFailed": "Failed to send the certificate request."
+    }
+  },
+  "feedbackDialog": {
+    "title": "Certificate Feedback",
+    "subtitle": "Notify the provider of your evaluation outcome",
+    "description": "Notify the provider about the outcome of your evaluation for document",
+    "statusReceived": "Received",
+    "statusAccepted": "Accepted",
+    "statusRejected": "Rejected",
+    "certErrors": {
+      "title": "Certificate Errors",
+      "helper": "General certificate-level issues *",
+      "placeholder": "e.g. Certificate expired"
+    },
+    "locErrors": {
+      "title": "Location Errors",
+      "helper": "Per-site issues (BPNS level) *",
+      "siteBpn": "Site BPN",
+      "errorMessage": "Error message"
+    },
+    "rejectionAlert": "A rejection requires at least one certificate error and one location error.",
+    "submitError": "Failed to send the status feedback.",
+    "sendFeedback": "Send Feedback"
+  },
+  "historyDialog": {
+    "title": "Request History",
+    "subtitle": "Full timeline of this certificate request",
+    "provider": "provider",
+    "certified": "certified",
+    "noHistory": "No history records found.",
+    "loadFailed": "Failed to load request history.",
+    "columns": {
+      "status": "Status",
+      "notificationId": "Notification ID",
+      "documentId": "Document ID",
+      "requested": "Requested",
+      "updated": "Updated"
+    }
+  },
+  "requestDetailDialog": {
+    "title": "Request Details",
+    "providerBpn": "Provider BPN",
+    "certifiedBpn": "Certified BPN",
+    "certType": "Certificate Type",
+    "documentId": "Document ID",
+    "requested": "Requested",
+    "updated": "Updated",
+    "localStatus": "Local Status",
+    "requestedSites": "Requested Sites ({{count}})",
+    "notificationId": "Notification ID",
+    "history": "History",
+    "sendFeedback": "Send Feedback",
+    "pullCertificate": "Pull Certificate",
+    "viewCertificate": "View Certificate"
+  },
+  "provisionPage": {
+    "title": "CCM Provision Management",
+    "subtitle": "Handle incoming certificate requests and provide certificates to your Catena-X partners.",
+    "pushCertificate": "Push Certificate",
+    "tabs": {
+      "inboundRequests": "Inbound Requests",
+      "shares": "Shares"
+    },
+    "inboundSearch": "Search by BPN, type or status…",
+    "sharesSearch": "Search by consumer, type or status…",
+    "filterAllStatuses": "All Statuses",
+    "filterAllConsumerStatuses": "All Consumer Statuses",
+    "filterAllTypes": "All Types",
+    "inboundStatusValues": {
+      "Registered": "Registered",
+      "Available": "Available",
+      "Pushed": "Pushed",
+      "NotFound": "Not Found"
+    },
+    "consumerStatusValues": {
+      "RECEIVED": "Received",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected"
+    },
+    "sharesStatusValues": {
+      "Active": "Active",
+      "Pending": "Pending",
+      "Revoked": "Revoked"
+    },
+    "inboundColumns": {
+      "consumer": "Consumer",
+      "certifiedBpn": "Certified BPN",
+      "type": "Type",
+      "locations": "Locations",
+      "status": "Status",
+      "consumerStatus": "Consumer Status",
+      "updated": "Updated",
+      "actions": "Actions"
+    },
+    "sharesColumns": {
+      "type": "Type",
+      "consumer": "Consumer",
+      "status": "Status",
+      "lastShared": "Last Shared"
+    },
+    "locations": "{{count}} site(s)",
+    "inbound": {
+      "empty": "No inbound certificate requests yet.",
+      "noMatch": "No requests match your filters."
+    },
+    "shares": {
+      "empty": "No certificates shared yet. Use \"Push Certificate\" or respond to an inbound request.",
+      "noMatch": "No shares match your filters.",
+      "rejectionIcon": "Has rejection reason — click row to view"
+    },
+    "provide": "Provide",
+    "messages": {
+      "loadFailed": "Failed to load provisioning data.",
+      "availabilitySent": "Availability notification sent.",
+      "certificatePushed": "Certificate pushed to consumer."
+    }
+  },
+  "inboundDetailDialog": {
+    "title": "Inbound Request Details",
+    "consumerBpn": "Consumer BPN",
+    "certifiedBpn": "Certified BPN",
+    "certType": "Certificate Type",
+    "certificateId": "Certificate ID",
+    "received": "Received",
+    "updated": "Updated",
+    "notificationId": "Notification ID",
+    "requestedSites": "Requested Sites ({{count}})",
+    "consumerPrefix": "Consumer: ",
+    "provideCertificate": "Provide Certificate"
+  },
+  "shareDetailDialog": {
+    "title": "Share Details",
+    "providerBpn": "Provider BPN",
+    "consumerBpn": "Consumer BPN",
+    "certType": "Certificate Type",
+    "certificateId": "Certificate ID",
+    "lastShared": "Last Shared",
+    "created": "Created",
+    "rejectionReason": "Rejection Reason",
+    "certErrors": "Certificate Errors",
+    "locErrors": "Location Errors",
+    "rawPayload": "Raw payload"
+  },
+  "provideDialog": {
+    "title": "Provide Certificate",
+    "subtitle": "Respond to a consumer request via availability notification or direct push",
+    "description": "Respond to {{consumer}} requesting {{type}} for",
+    "modeAvailable": "Make available (PULL)",
+    "modePush": "Push directly",
+    "certSelect": "Certificate to provide",
+    "noCertsTitle": "No matching certificates found",
+    "noCertsDescription": "No {{type}} certificate was found for",
+    "noCertsUpload": "Upload Certificate",
+    "uploadOther": "Upload other certificate…",
+    "notPublishedAlert": "This certificate is not published yet — it will be published automatically before the availability notification is sent.",
+    "respondTo": "Respond to request",
+    "respondToHelper": "Multiple requests found — choose which one to respond to.",
+    "respondingTo": "Responding to notification",
+    "invalidCert": "Invalid certificate selected.",
+    "sendAvailability": "Send Availability",
+    "errors": {
+      "sendAvailFailed": "Failed to send the availability notification.",
+      "pushFailed": "Failed to push the certificate.",
+      "availFailed": "Failed to make the certificate available.",
+      "loadFailed": "Failed to load provisioning data."
+    }
+  },
+  "pushDialog": {
+    "title": "Push Certificate",
+    "subtitle": "Send a certificate directly to a partner without a prior request",
+    "description": "Send one of your certificates directly to a partner, without a prior request.",
+    "certSelect": "Certificate to push",
+    "noCerts": "No certificates available.",
+    "recipientBpn": "Recipient (Consumer BPN)",
+    "recipientPlaceholder": "Select or type the recipient's BPNL",
+    "pushCertificate": "Push Certificate",
+    "errors": {
+      "loadFailed": "Failed to load certificates.",
+      "pushFailed": "Failed to push the certificate."
+    }
+  }
+}

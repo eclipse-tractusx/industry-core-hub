@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -59,6 +60,19 @@ export interface SharingRecord {
 }
 
 /**
+ * DTR (Digital Twin Registry) registration status for a certificate.
+ * - registered: Submodel descriptor successfully created in the DTR
+ * - not_registered: Certificate has not been registered yet
+ * - pending: Registration triggered but not yet confirmed
+ */
+export type DtrStatus = 'registered' | 'not_registered' | 'pending';
+
+/**
+ * Status of an EDC contract negotiation (Consumer side).
+ */
+export type NegotiationStatus = 'idle' | 'discovering' | 'negotiating' | 'transferring' | 'completed' | 'failed';
+
+/**
  * Certificate entity following CX-0135 BusinessPartnerCertificate v3.1.0 model
  */
 export interface Certificate {
@@ -69,14 +83,78 @@ export interface Certificate {
   issuer: string;  // Certification Body
   validFrom: string;
   validUntil: string;
+  /** Physical certificate number / registration ID (e.g. "TÜV-2024-9001-12345") */
+  certificateIdentifier?: string;
+  /** Optional list of BPNS (site-specific scope) per CX-0135 enclosedSites */
+  enclosedSitesBpn?: string[];
   description?: string;  // Optional description
   status: CertificateStatus;  // Computed from dates
+  /** DTR registration status — drives the DTR column in the table */
+  dtrStatus: DtrStatus;
+  /** EDC Asset ID assigned after DTR registration */
+  edcAssetId?: string;
   sharedCount: number;  // Number of active shares
   sharingRecords?: SharingRecord[];  // List of sharing records
+  trustLevel?: string;        // none | low | high | trusted
+  areaOfApplication?: string;
+  validator?: string;
+  uploaderBpnl?: string;
   documentBase64?: string;  // BASE64-encoded document (CX-0135)
   documentUrl?: string;  // Download link for PDF
   createdAt: string;
   updatedAt: string;
+}
+
+// ─── Consumer / Partner Discovery types ─────────────────────────────────────
+
+/**
+ * A single certificate discovered from a partner via their DTR.
+ * All data comes from the partner's Submodel descriptor.
+ */
+export interface PartnerCertificate {
+  id: string;
+  type: CertificateType;
+  issuer: string;
+  validFrom: string;
+  validUntil: string;
+  certificateIdentifier?: string;
+  status: CertificateStatus;
+  /** Semantic ID as per CX-0135 — urn:samm:io.catenax.business_partner_certificate:3.1.0 */
+  semanticId: string;
+  edcAssetId: string;
+  negotiationStatus: NegotiationStatus;
+  /** Full JSON payload retrieved after a successful EDC transfer */
+  retrievedData?: Record<string, unknown>;
+}
+
+/**
+ * Result of searching for a partner's certificates by BPN.
+ * Contains the resolved partner info and their list of certificates.
+ */
+export interface PartnerCertificateSearchResult {
+  partnerBpn: string;
+  partnerName?: string;
+  dtrEndpoint?: string;
+  certificates: PartnerCertificate[];
+}
+
+// ─── Incoming Push Notifications ─────────────────────────────────────────────
+
+export type NotificationStatus = 'pending' | 'acknowledged' | 'rejected';
+
+/**
+ * An incoming certificate push notification sent by a partner via the EDC.
+ */
+export interface IncomingCertificateNotification {
+  id: string;
+  senderBpn: string;
+  senderName?: string;
+  certificateType: CertificateType;
+  certificateIssuer: string;
+  receivedAt: string;
+  status: NotificationStatus;
+  /** Raw CX-0135 JSON payload attached to the notification */
+  payload?: Record<string, unknown>;
 }
 
 /**

@@ -62,4 +62,10 @@ export const kitThemes = {
     gradientEnd: '#4CAF50',
     shadowColor: 'rgba(27, 94, 32, 0.3)',
   },
+  /** CCM KIT — company certificate management (purple = quality & exclusivity) */
+  ccm: {
+    gradientStart: '#6B3FA0',
+    gradientEnd: '#9D6FD4',
+    shadowColor: 'rgba(157, 111, 212, 0.35)',
+  },
 } as const satisfies Record<string, KitTheme>

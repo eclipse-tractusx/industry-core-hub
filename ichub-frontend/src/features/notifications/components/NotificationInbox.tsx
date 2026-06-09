@@ -133,7 +133,7 @@ const NotificationInbox: React.FC = () => {
   const getUseCaseChipStyle = (useCase: string) => {
     switch (useCase.toUpperCase()) {
       case 'PCF': return { bg: 'rgba(0, 188, 212, 0.2)', color: '#00bcd4' };
-      case 'CCM': return { bg: 'rgba(255, 152, 0, 0.2)', color: '#ffa726' };
+      case 'CCM': return { bg: 'rgba(157, 111, 212, 0.2)', color: '#9D6FD4' };
       default:    return { bg: 'rgba(158, 158, 158, 0.15)', color: '#bdbdbd' };
     }
   };
@@ -758,7 +758,15 @@ const NotificationInbox: React.FC = () => {
               mb: 1,
             }}
           >
-            {notification.content.information || t('inbox.digitalTwinNotificationReceived')}
+            {notification.type === 'ccm' && notification.ccmContent
+              ? t(`ccm.${notification.ccmContent.notificationType}`, {
+                  certificateType: notification.ccmContent.certificateType ?? '—',
+                  certifiedBpn: notification.ccmContent.certifiedBpn ?? '—',
+                  documentId: notification.ccmContent.documentId ?? '—',
+                  senderBpn: notification.header.senderBpn,
+                  receiverBpn: notification.header.receiverBpn,
+                })
+              : notification.content.information || t('inbox.digitalTwinNotificationReceived')}
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -780,6 +788,18 @@ const NotificationInbox: React.FC = () => {
                   {notification.pcfContent?.notificationType && (
                     <Chip
                       label={notification.pcfContent.notificationType.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontSize: '0.6rem',
+                        height: '22px',
+                      }}
+                    />
+                  )}
+                  {notification.ccmContent?.notificationType && (
+                    <Chip
+                      label={notification.ccmContent.notificationType.replace(/_/g, ' ')}
                       size="small"
                       sx={{
                         backgroundColor: 'rgba(255, 255, 255, 0.08)',

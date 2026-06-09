@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -24,3 +25,4 @@ export { UploadCertificateDialog } from './UploadCertificateDialog';
 export { ShareCertificateDialog } from './ShareCertificateDialog';
 export { ViewCertificateDialog } from './ViewCertificateDialog';
 export { DeleteCertificateDialog } from './DeleteCertificateDialog';
+export { UpdatePdfDialog } from './UpdatePdfDialog';
