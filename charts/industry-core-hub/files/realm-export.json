@@ -248,6 +248,5 @@
   "social": false,
   "updateProfileOnInitialSocialLogin": false,
   "socialProviders": {},
-  "users": [
-  ]
+  "users": []
 }
