@@ -249,31 +249,5 @@
   "updateProfileOnInitialSocialLogin": false,
   "socialProviders": {},
   "users": [
-    {
-      "username": "ichub-admin",
-      "email": "ichub-admin@example.com",
-      "firstName": "Industry",
-      "lastName": "Admin",
-      "emailVerified": true,
-      "enabled": true,
-      "credentials": [
-        {
-          "type": "password",
-          "value": "changeme",
-          "temporary": false
-        }
-      ],
-      "disableableCredentialTypes": [],
-      "requiredActions": [],
-      "notBefore": 0,
-      "realmRoles": [
-        "default-roles-ichub",
-        "offline_access",
-        "uma_authorization"
-      ],
-      "attributes": {
-        "BPN": ["BPNL000000000000"]
-      }
-    }
   ]
 }
