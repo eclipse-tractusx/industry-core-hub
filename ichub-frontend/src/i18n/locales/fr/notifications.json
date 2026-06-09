@@ -149,6 +149,33 @@
     "expectedResponse": "Réponse attendue",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Demande de certificat envoyée pour {{certificateType}} à {{receiverBpn}}",
+    "CCM_REQUEST_RECEIVED": "Demande de certificat reçue pour {{certificateType}} de {{senderBpn}}",
+    "CCM_REQUEST_NOT_FOUND": "Certificat introuvable : {{certificateType}} n'a pas pu être fourni par {{senderBpn}}",
+    "CCM_AVAILABLE_RECEIVED": "Certificat disponible : {{certificateType}} prêt à être téléchargé",
+    "CCM_AVAILABLE_SENT": "Disponibilité du certificat envoyée : {{certificateType}} pour {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Certificat reçu : {{certificateType}} envoyé par {{senderBpn}}",
+    "CCM_PUSH_SENT": "Certificat envoyé : {{certificateType}} pour {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Mise à jour du statut envoyée pour le document {{documentId}}",
+    "CCM_STATUS_RECEIVED": "Statut reçu pour le document {{documentId}} de {{senderBpn}}",
+    "details": "Détails CCM",
+    "notificationType": "Type de notification",
+    "certificateType": "Type de certificat",
+    "certifiedBpn": "BPN certifié",
+    "documentId": "ID du document",
+    "viewInConsumption": "Voir dans CCM Consumption",
+    "viewInProvision": "Voir dans Provision Management",
+    "viewInboundRequests": "Voir les demandes entrantes",
+    "descriptionTitle": "Ce qui s'est passé",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}} a demandé un certificat {{certificateType}} existant pour son entreprise. Examinez et gérez la demande dans CCM Provision Management dans le tableau des Demandes entrantes.",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}} a demandé un certificat {{certificateType}} qui n'a pas pu être trouvé pour son entreprise. Examinez et gérez la demande dans CCM Provision Management dans le tableau des Demandes entrantes.",
+      "CCM_STATUS_RECEIVED": "{{senderName}} a répondu à votre envoi de certificat. Consultez son retour dans CCM Provision Management dans le tableau des Partages.",
+      "CCM_PUSH_RECEIVED": "Le fournisseur {{senderName}} vous a directement envoyé un certificat {{certificateType}} susceptible de vous intéresser. Accédez à CCM Consumption pour le consulter et envoyer votre retour.",
+      "CCM_AVAILABLE_RECEIVED": "Le fournisseur {{senderName}} a mis à disposition le certificat {{certificateType}} que vous avez demandé. Accédez à CCM Consumption pour le consulter."
+    }
+  },
   "feedback": {
     "title": "Envoyer feedback",
     "composeFeedback": "Rédiger un retour",

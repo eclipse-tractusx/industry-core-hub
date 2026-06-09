@@ -150,6 +150,33 @@
     "expectedResponse": "Erwartete Antwort",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Zertifikatsanfrage für {{certificateType}} an {{receiverBpn}} gesendet",
+    "CCM_REQUEST_RECEIVED": "Zertifikatsanfrage für {{certificateType}} von {{senderBpn}} empfangen",
+    "CCM_REQUEST_NOT_FOUND": "Zertifikat nicht gefunden: {{certificateType}} konnte von {{senderBpn}} nicht bereitgestellt werden",
+    "CCM_AVAILABLE_RECEIVED": "Zertifikat verfügbar: {{certificateType}} kann heruntergeladen werden",
+    "CCM_AVAILABLE_SENT": "Zertifikatsverfügbarkeit gesendet: {{certificateType}} für {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Zertifikat empfangen: {{certificateType}} von {{senderBpn}} gesendet",
+    "CCM_PUSH_SENT": "Zertifikat gesendet: {{certificateType}} für {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Statusaktualisierung für Dokument {{documentId}} gesendet",
+    "CCM_STATUS_RECEIVED": "Status für Dokument {{documentId}} von {{senderBpn}} empfangen",
+    "details": "CCM-Details",
+    "notificationType": "Benachrichtigungstyp",
+    "certificateType": "Zertifikatstyp",
+    "certifiedBpn": "Zertifizierter BPN",
+    "documentId": "Dokument-ID",
+    "viewInConsumption": "In CCM Consumption anzeigen",
+    "viewInProvision": "In Provision Management anzeigen",
+    "viewInboundRequests": "Eingehende Anfragen anzeigen",
+    "descriptionTitle": "Was ist passiert",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}} hat ein vorhandenes {{certificateType}}-Zertifikat für das Unternehmen angefordert. Überprüfen und verwalten Sie die Anfrage im CCM Provision Management in der Tabelle 'Eingehende Anfragen'.",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}} hat ein {{certificateType}}-Zertifikat angefordert, das für das Unternehmen nicht gefunden werden konnte. Überprüfen und verwalten Sie die Anfrage im CCM Provision Management in der Tabelle 'Eingehende Anfragen'.",
+      "CCM_STATUS_RECEIVED": "{{senderName}} hat auf Ihren Zertifikatsversand geantwortet. Überprüfen Sie das Feedback im CCM Provision Management in der Tabelle 'Freigaben'.",
+      "CCM_PUSH_RECEIVED": "Anbieter {{senderName}} hat Ihnen direkt ein {{certificateType}}-Zertifikat gesendet, das Sie interessieren könnte. Öffnen Sie CCM Consumption, um es anzuzeigen und Ihr Feedback zu senden.",
+      "CCM_AVAILABLE_RECEIVED": "Anbieter {{senderName}} hat das von Ihnen angeforderte {{certificateType}}-Zertifikat bereitgestellt. Öffnen Sie CCM Consumption, um es anzuzeigen."
+    }
+  },
   "feedback": {
     "title": "Feedback senden",
     "composeFeedback": "Feedback verfassen",

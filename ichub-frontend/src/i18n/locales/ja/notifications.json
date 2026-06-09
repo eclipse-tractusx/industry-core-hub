@@ -149,6 +149,33 @@
     "expectedResponse": "期待される応答",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "{{receiverBpn}}への{{certificateType}}の証明書リクエストを送信しました",
+    "CCM_REQUEST_RECEIVED": "{{senderBpn}}から{{certificateType}}の証明書リクエストを受信しました",
+    "CCM_REQUEST_NOT_FOUND": "証明書が見つかりません：{{senderBpn}}は{{certificateType}}を提供できませんでした",
+    "CCM_AVAILABLE_RECEIVED": "証明書が利用可能です：{{certificateType}}のダウンロードが可能です",
+    "CCM_AVAILABLE_SENT": "証明書の提供通知を送信しました：{{certifiedBpn}}への{{certificateType}}",
+    "CCM_PUSH_RECEIVED": "証明書を受信しました：{{senderBpn}}から{{certificateType}}が送信されました",
+    "CCM_PUSH_SENT": "証明書を送信しました：{{certifiedBpn}}への{{certificateType}}",
+    "CCM_STATUS_SENT": "ドキュメント{{documentId}}のステータス更新を送信しました",
+    "CCM_STATUS_RECEIVED": "{{senderBpn}}からドキュメント{{documentId}}のステータスを受信しました",
+    "details": "CCM詳細",
+    "notificationType": "通知タイプ",
+    "certificateType": "証明書タイプ",
+    "certifiedBpn": "認定BPN",
+    "documentId": "ドキュメントID",
+    "viewInConsumption": "CCM Consumptionで表示",
+    "viewInProvision": "Provision Managementで表示",
+    "viewInboundRequests": "受信リクエストを表示",
+    "descriptionTitle": "何が起きたか",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}}が会社の既存の{{certificateType}}証明書をリクエストしました。CCM Provision Managementの受信リクエストテーブルでリクエストを確認・管理してください。",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}}が会社の{{certificateType}}証明書をリクエストしましたが、見つかりませんでした。CCM Provision Managementの受信リクエストテーブルでリクエストを確認・管理してください。",
+      "CCM_STATUS_RECEIVED": "{{senderName}}が証明書の送信に返答しました。CCM Provision Managementの共有テーブルでフィードバックを確認してください。",
+      "CCM_PUSH_RECEIVED": "プロバイダー{{senderName}}が{{certificateType}}証明書を直接送信しました。CCM Consumptionにアクセスして確認し、フィードバックを送信してください。",
+      "CCM_AVAILABLE_RECEIVED": "プロバイダー{{senderName}}がリクエストした{{certificateType}}証明書を公開しました。CCM Consumptionにアクセスして確認してください。"
+    }
+  },
   "feedback": {
     "title": "フィードバックを送信",
     "composeFeedback": "フィードバックを作成",

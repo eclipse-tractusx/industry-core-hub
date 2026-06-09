@@ -94,6 +94,7 @@ const NotificationDetail: React.FC = () => {
     verifyDigitalTwin,
     verifyAllDigitalTwins,
     closePanel,
+    triggerCcmRefresh,
   } = useNotifications();
 
   const { t } = useTranslation('notifications');
@@ -1028,12 +1029,56 @@ const NotificationDetail: React.FC = () => {
         {selectedNotification.type === 'ccm' && selectedNotification.ccmContent && (() => {
           const ccm = selectedNotification.ccmContent;
           const notifType = ccm.notificationType;
-          const isProviderAction = notifType === 'CCM_AVAILABLE_SENT' || notifType === 'CCM_PUSH_SENT';
-          const navTarget = isProviderAction ? '/ccm-provision?tab=shares' : '/ccm-consumption';
-          const navLabel = isProviderAction ? t('ccm.viewInProvision') : t('ccm.viewInConsumption');
+
+          const navMap: Record<string, { target: string; label: string }> = {
+            CCM_REQUEST_RECEIVED:  { target: '/ccm-provision?tab=inbound', label: t('ccm.viewInboundRequests') },
+            CCM_REQUEST_NOT_FOUND: { target: '/ccm-provision?tab=inbound', label: t('ccm.viewInboundRequests') },
+            CCM_STATUS_RECEIVED:   { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+            CCM_PUSH_RECEIVED:     { target: '/ccm-consumption',            label: t('ccm.viewInConsumption') },
+            CCM_AVAILABLE_RECEIVED:{ target: '/ccm-consumption',            label: t('ccm.viewInConsumption') },
+            CCM_AVAILABLE_SENT:    { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+            CCM_PUSH_SENT:         { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+          };
+          const nav = navMap[notifType] ?? { target: '/ccm-consumption', label: t('ccm.viewInConsumption') };
+
+          const descriptionKey = `ccm.description.${notifType}`;
+          const descriptionText = t(descriptionKey, {
+            senderName: getContactName(selectedNotification.header.senderBpn),
+            certificateType: ccm.certificateType ?? '—',
+            documentId: ccm.documentId ?? '—',
+          });
+          const hasDescription = descriptionText !== descriptionKey;
 
           return (
             <>
+              {hasDescription && (
+                <Box
+                  sx={{
+                    padding: isCompact ? '10px' : '14px',
+                    backgroundColor: 'rgba(157, 111, 212, 0.05)',
+                    border: '1px solid rgba(157, 111, 212, 0.15)',
+                    borderRadius: '8px',
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: '#9D6FD4',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      mb: 1,
+                    }}
+                  >
+                    {t('ccm.descriptionTitle')}
+                  </Typography>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                    {descriptionText}
+                  </Typography>
+                </Box>
+              )}
+
               <Box
                 sx={{
                   padding: isCompact ? '10px' : '14px',
@@ -1074,8 +1119,9 @@ const NotificationDetail: React.FC = () => {
                 fullWidth
                 size="small"
                 onClick={() => {
+                  triggerCcmRefresh();
                   closePanel();
-                  navigate(navTarget);
+                  navigate(nav.target);
                 }}
                 sx={{
                   mb: 2,
@@ -1096,7 +1142,7 @@ const NotificationDetail: React.FC = () => {
                   },
                 }}
               >
-                {navLabel}
+                {nav.label}
               </Button>
             </>
           );

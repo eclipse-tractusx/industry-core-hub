@@ -149,6 +149,33 @@
     "expectedResponse": "预期响应",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "已发送{{certificateType}}证书请求至{{receiverBpn}}",
+    "CCM_REQUEST_RECEIVED": "已收到来自{{senderBpn}}的{{certificateType}}证书请求",
+    "CCM_REQUEST_NOT_FOUND": "证书未找到：{{senderBpn}}无法提供{{certificateType}}",
+    "CCM_AVAILABLE_RECEIVED": "证书可用：{{certificateType}}已准备好下载",
+    "CCM_AVAILABLE_SENT": "已发送证书可用通知：{{certifiedBpn}}的{{certificateType}}",
+    "CCM_PUSH_RECEIVED": "已收到证书：{{senderBpn}}推送了{{certificateType}}",
+    "CCM_PUSH_SENT": "已推送证书：{{certifiedBpn}}的{{certificateType}}",
+    "CCM_STATUS_SENT": "已发送文档{{documentId}}的状态更新",
+    "CCM_STATUS_RECEIVED": "已收到来自{{senderBpn}}的文档{{documentId}}状态",
+    "details": "CCM详情",
+    "notificationType": "通知类型",
+    "certificateType": "证书类型",
+    "certifiedBpn": "已认证BPN",
+    "documentId": "文档ID",
+    "viewInConsumption": "在CCM Consumption中查看",
+    "viewInProvision": "在Provision Management中查看",
+    "viewInboundRequests": "查看入站请求",
+    "descriptionTitle": "发生了什么",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}}已为其公司请求现有的{{certificateType}}证书。请在CCM Provision Management的入站请求表中审查并处理该请求。",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}}为其公司请求的{{certificateType}}证书未能找到。请在CCM Provision Management的入站请求表中审查并处理该请求。",
+      "CCM_STATUS_RECEIVED": "{{senderName}}已回复您的证书提交。请在CCM Provision Management的共享表中查看反馈。",
+      "CCM_PUSH_RECEIVED": "供应商{{senderName}}直接向您发送了一个可能感兴趣的{{certificateType}}证书。请访问CCM Consumption查看并发送您的反馈。",
+      "CCM_AVAILABLE_RECEIVED": "供应商{{senderName}}已提供您请求的{{certificateType}}证书。请访问CCM Consumption查看。"
+    }
+  },
   "feedback": {
     "title": "发送反馈",
     "composeFeedback": "撰写反馈",

@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -66,6 +66,7 @@ import { fetchInboundRequests, fetchShares } from '../api';
 import { ccmSharedConfig } from '../config';
 import { InboundRequestItem, InboundRequestStatus, ShareItem, ShareStatus } from '../types/types';
 import { usePartners } from '@/contexts/PartnerContext';
+import { useNotifications } from '@/features/notifications/contexts/NotificationContext';
 import ProvideCertificateDialog, { ProvideMode } from '../components/dialogs/ProvideCertificateDialog';
 import PushCertificateDialog from '../components/dialogs/PushCertificateDialog';
 import InboundRequestDetailDialog from '../components/dialogs/InboundRequestDetailDialog';
@@ -172,6 +173,7 @@ const ProvisionManagement = () => {
   const inboundFilterDefs = buildInboundFilterDefs(t);
   const sharesFilterDefs = buildSharesFilterDefs(t);
   const { getContactName } = usePartners();
+  const { ccmRefreshToken } = useNotifications();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'shares' ? 1 : 0;
   const [tab, setTab] = useState(initialTab);
@@ -227,6 +229,21 @@ const ProvisionManagement = () => {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Sync active tab when URL searchParams change (e.g. navigating from notification panel)
+  useEffect(() => {
+    setTab(searchParams.get('tab') === 'shares' ? 1 : 0);
+  }, [searchParams]);
+
+  // Reload data when a new CCM notification arrives or user navigates here from the notification panel
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    void loadData();
+  }, [ccmRefreshToken, loadData]);
 
   const filteredInbound = useMemo(() => {
     const s = inboundSearch.trim().toLowerCase();
