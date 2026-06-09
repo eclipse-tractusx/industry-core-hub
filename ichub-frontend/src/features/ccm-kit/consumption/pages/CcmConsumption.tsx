@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -77,6 +77,7 @@ import {
   ReceivedLocalStatus,
 } from '../types/types';
 import { usePartners } from '@/contexts/PartnerContext';
+import { useNotifications } from '@/features/notifications/contexts/NotificationContext';
 import type { Certificate } from '../../certificate-management/types/types';
 import { CertificatePDFViewer } from '../../certificate-management/components/dialogs/CertificatePDFViewer';
 import { CertificateInfoPanel } from '../../certificate-management/components/dialogs/CertificateInfoPanel';
@@ -173,6 +174,7 @@ const CcmConsumption = () => {
   const { t } = useTranslation('certificateManagement');
   const consumptionFilterDefs = buildConsumptionFilterDefs(t);
   const { getContactName } = usePartners();
+  const { ccmRefreshToken } = useNotifications();
   const [requests, setRequests] = useState<OutboundRequestItem[]>([]);
   const [receivedMap, setReceivedMap] = useState<Map<string, ReceivedLocalStatus>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
@@ -222,6 +224,16 @@ const CcmConsumption = () => {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Reload when a new CCM notification arrives or user navigates here from the notification panel
+  const isFirstRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    void loadData();
+  }, [ccmRefreshToken, loadData]);
 
   const filteredRequests = useMemo(() => {
     const s = search.trim().toLowerCase();
