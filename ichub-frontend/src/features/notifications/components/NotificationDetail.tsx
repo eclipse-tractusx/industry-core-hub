@@ -119,8 +119,6 @@ const NotificationDetail: React.FC = () => {
   // Determine layout mode
   const isCompact = panelSize === 'normal';
 
-  const navigate = useNavigate();
-
   // Maps PCF notification type to navigation target
   const getPcfNavigationTarget = (notificationType: string): { path: string; labelKey: string } | null => {
     const requestId = selectedNotification?.pcfContent?.requestId;
