@@ -69,6 +69,7 @@ export interface PcfExchangeModel {
   message?: string;
   pcfLocation?: string;
   pcfData?: Record<string, unknown>;
+  createdAt?: string;
 }
 
 /**

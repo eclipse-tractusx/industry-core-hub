@@ -16,7 +16,11 @@
     "refresh": "Refresh",
     "kgCo2e": "kg CO2e",
     "published": "Published",
-    "draft": "Draft"
+    "draft": "Draft",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "notAvailable": "N/A"
   },
   "loading": {
     "title": "Loading Catalog Part",
@@ -43,7 +47,11 @@
     "failedToLoadRequests": "Failed to load PCF requests",
     "failedToRefreshRequests": "Failed to refresh PCF requests",
     "failedToAcceptRequest": "Failed to accept request",
-    "rejectNotImplemented": "Reject functionality not yet implemented in backend"
+    "rejectNotImplemented": "Reject functionality not yet implemented in backend",
+    "failedToLoadPcf": "Failed to load PCF data",
+    "failedToSavePcf": "Failed to save PCF",
+    "schemaNotFound": "PCF schema definition not found. Please check the application configuration.",
+    "loadError": "Error loading PCF data"
   },
   "precalculation": {
     "title": "PCF Precalculation",
@@ -88,7 +96,18 @@
       "rejectedNoReason": "Request was rejected by the supplier.",
       "errorWithMessage": "Request failed: {{error}}",
       "errorNoMessage": "An error occurred while processing the PCF request — use the retry button."
-    }
+    },
+    "status": {
+      "delivered": "Delivered",
+      "received": "Received",
+      "updated": "Updated",
+      "rejected": "Rejected",
+      "error": "Error",
+      "pending": "Pending"
+    },
+    "statusError": "Could not retrieve PCF collection status from the server. Refresh to retry.",
+    "downloadError": "Download failed: {{message}}. Please check the backend and try again.",
+    "unexpectedError": "Unexpected error"
   },
   "addSubpartDialog": {
     "title": "Add Subpart Relation",
@@ -141,7 +160,27 @@
     "draftAlert": "This PCF is in draft status. Upload it to make it available for sharing with customers.",
     "viewDetails": "View Details",
     "update": "Update",
-    "upload": "Upload"
+    "upload": "Upload",
+    "draftPart": "Draft Part",
+    "sectionTitle": "PCF Management",
+    "sectionSubtitle": "Manage Product Carbon Footprint data for this part",
+    "noPcfData": "No PCF data available",
+    "noPcfDataHint": "Upload PCF data to respond to customer requests",
+    "uploadPcfData": "Upload PCF Data",
+    "publish": "Publish",
+    "panes": {
+      "pcfExclBiogenic": "PCF excl. biogenic",
+      "pcfInclBiogenic": "PCF incl. biogenic",
+      "scope": "Scope",
+      "referencePeriod": "Reference Period",
+      "type": "Type",
+      "primaryDataShare": "Primary Data Share"
+    },
+    "quality": {
+      "high": "High quality — primarily measured data",
+      "medium": "Medium quality — mix of primary and secondary data",
+      "low": "Low quality — mostly estimated/secondary data"
+    }
   },
   "requests": {
     "title": "PCF Requests",
@@ -191,7 +230,8 @@
     "validatedSuccess": "PCF data validated successfully!",
     "noSchemaValidation": "PCF data accepted (no schema validation available).",
     "formBuilderSuccess": "PCF data created with Form Builder and ready to save.",
-    "validationErrors": "Validation failed with {{count}} error(s): {{errors}}"
+    "validationErrors": "Validation failed with {{count}} error(s): {{errors}}",
+    "useAsPcfData": "Use as PCF Data"
   },
   "notifications": {
     "statusAll": "All",
@@ -220,7 +260,17 @@
     "daysAgo": "{{count}} days ago",
     "participantDialog": {
       "title": "Notify Participants",
-      "subtitle": "Select participants to notify about this PCF update"
+      "subtitle": "Select participants to notify about this PCF update",
+      "partId": "Part ID",
+      "noParticipants": "No participants have requested PCF data for this part. The update will be saved but no notifications will be sent.",
+      "interestedCount": "{{count}} participant(s) interested in this PCF data",
+      "deselectAll": "Deselect All",
+      "selectAll": "Select All",
+      "selected": "{{count}} selected",
+      "skip": "Skip",
+      "sending": "Sending...",
+      "sendUpdate": "Send PCF Update",
+      "notifyError": "Failed to notify participants"
     }
   },
   "rejectDialog": {
@@ -248,6 +298,22 @@
     }
   },
   "exchange": {
+    "title": "PCF Exchange",
+    "subtitle": "Manage PCF data and respond to incoming requests",
+    "manufacturerId": "Manufacturer ID",
+    "manufacturerPartId": "Manufacturer Part ID",
+    "partName": "Part Name",
+    "newSearch": "New Search",
+    "refresh": "Refresh",
+    "loadingTitle": "Loading Catalog Part",
+    "backToSearch": "Back to Search",
+    "searchPlaceholder": "Enter Manufacturer Part ID...",
+    "editDialog": {
+      "pcfExcludingBiogenic": "PCF (excluding biogenic)",
+      "pcfIncludingBiogenic": "PCF (including biogenic)",
+      "primaryDataShare": "Primary Data Share",
+      "manufacturingCountry": "Manufacturing Country (ISO 3166-1)"
+    },
     "loading": {
       "searching": "Searching",
       "searchingDesc": "Locating catalog part in registry",
@@ -259,6 +325,54 @@
       "readyDesc": "Data loaded successfully"
     },
     "pcfUpdateSent": "PCF update sent to {{count}} participant(s) successfully."
+  },
+  "details": {
+    "title": "PCF Details",
+    "dqrScale": "1=best, 5=worst",
+    "sections": {
+      "carbonFootprint": "Carbon Footprint Values",
+      "productionStage": "Production Stage Breakdown",
+      "carbonContent": "Carbon Content",
+      "dataQuality": "Data Quality",
+      "geography": "Geography",
+      "timeValidity": "Time & Validity",
+      "distribution": "Distribution Stage",
+      "productCompany": "Product & Company",
+      "metadata": "PCF Metadata"
+    },
+    "fields": {
+      "pcfExclBiogenic": "PCF excl. biogenic",
+      "pcfInclBiogenic": "PCF incl. biogenic",
+      "fossilGhg": "Fossil GHG Emissions (A)",
+      "bioCO2Uptake": "Biogenic CO\u2082 Uptake (D)",
+      "landUseChange": "Land Use Change (E)",
+      "totalCarbon": "Total Carbon Content",
+      "fossilCarbon": "Fossil Carbon",
+      "biogenicCarbon": "Biogenic Carbon",
+      "recycledCarbon": "Recycled Carbon",
+      "primaryDataShare": "Primary Data Share",
+      "country": "Country",
+      "region": "Region",
+      "subdivision": "Subdivision",
+      "referencePeriod": "Reference Period",
+      "pcfCreated": "PCF Created",
+      "validityEnd": "Validity Period End",
+      "distributionIncluded": "Included in boundary",
+      "distributionPcf": "Distribution PCF excl. biogenic",
+      "productName": "Product Name",
+      "company": "Company",
+      "companyBpn": "Company BPN",
+      "productMass": "Product Mass / Declared Unit",
+      "description": "Description",
+      "specVersion": "Spec Version",
+      "pcfVersion": "PCF Version",
+      "type": "Type"
+    },
+    "dqr": {
+      "technological": "Technological",
+      "temporal": "Temporal",
+      "geographical": "Geographical"
+    }
   },
   "headerCards": {
     "company": {

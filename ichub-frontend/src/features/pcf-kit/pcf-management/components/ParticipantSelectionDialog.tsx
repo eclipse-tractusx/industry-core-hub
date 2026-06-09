@@ -113,7 +113,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
       await onConfirm(selectedParticipants);
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to notify participants';
+      const message = err instanceof Error ? err.message : t('notifications.participantDialog.notifyError');
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -187,7 +187,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
             }}
           >
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.4)', mb: 0.5, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              Part ID
+              {t('notifications.participantDialog.partId')}
             </Typography>
             <Typography
               variant="body1"
@@ -230,8 +230,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
                 '& .MuiAlert-icon': { color: '#60a5fa' },
               }}
             >
-              No participants have requested PCF data for this part. The update
-              will be saved but no notifications will be sent.
+              {t('notifications.participantDialog.noParticipants')}
             </Alert>
           ) : (
             <>
@@ -244,8 +243,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
                 }}
               >
                 <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.55)' }}>
-                  {participants.length} participant{participants.length !== 1 ? 's' : ''}{' '}
-                  interested in this PCF data
+                  {t('notifications.participantDialog.interestedCount', { count: participants.length })}
                 </Typography>
                 <Button
                   size="small"
@@ -254,8 +252,8 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
                   sx={{ color: PCF_PRIMARY }}
                 >
                   {selectedParticipants.length === participants.length
-                    ? 'Deselect All'
-                    : 'Select All'}
+                    ? t('notifications.participantDialog.deselectAll')
+                    : t('notifications.participantDialog.selectAll')}
                 </Button>
               </Box>
 
@@ -324,7 +322,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
               <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                 <Chip
                   size="small"
-                  label={`${selectedParticipants.length} selected`}
+                  label={t('notifications.participantDialog.selected', { count: selectedParticipants.length })}
                   sx={{
                     bgcolor: alpha(PCF_PRIMARY, 0.15),
                     color: PCF_PRIMARY,
@@ -343,7 +341,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
           disabled={isLoading}
           sx={{ color: 'rgba(255,255,255,0.55)', '&:hover': { color: 'rgba(255,255,255,0.85)', bgcolor: 'rgba(255,255,255,0.06)' } }}
         >
-          {participants.length === 0 ? 'Close' : 'Skip'}
+          {participants.length === 0 ? t('common.close') : t('notifications.participantDialog.skip')}
         </Button>
         {participants.length > 0 && (
           <Button
@@ -364,7 +362,7 @@ const ParticipantSelectionDialog: React.FC<ParticipantSelectionDialogProps> = ({
               },
             }}
           >
-            {isLoading ? 'Sending...' : 'Send PCF Update'}
+            {isLoading ? t('notifications.participantDialog.sending') : t('notifications.participantDialog.sendUpdate')}
           </Button>
         )}
       </DialogActions>

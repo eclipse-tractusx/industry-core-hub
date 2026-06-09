@@ -268,7 +268,7 @@ function convertToSubpartResponse(exchange: PcfExchangeModel): SubpartPcfRespons
     pcfStatus,
     pcfValue: exchange.pcfData?.pcfValue as number | undefined,
     pcfUnit: (exchange.pcfData?.pcfUnit as string) || 'kg CO2e',
-    requestedAt: new Date().toISOString(), // API should provide this
+    requestedAt: exchange.createdAt,
     deliveredAt: exchange.pcfData?.deliveredAt as string | undefined,
     errorMessage: exchange.status.toLowerCase() === 'error' ? exchange.message : undefined,
     rejectReason: exchange.status.toLowerCase() === 'rejected' ? exchange.message : undefined,
@@ -349,7 +349,6 @@ export async function addSubpartRelation(
       manufacturerPartId: formData.manufacturerPartId,
       partName: `Part ${formData.manufacturerPartId}`,
       pcfStatus: 'pending',
-      requestedAt: new Date().toISOString(),
     };
   } catch (error) {
     console.error('Error adding subpart relation:', error);
@@ -390,7 +389,6 @@ export async function requestSubpartPcf(
       manufacturerPartId: '',
       partName: 'Unknown',
       pcfStatus: 'pending',
-      requestedAt: new Date().toISOString(),
     };
   } catch (error) {
     console.error('Error requesting subpart PCF:', error);
