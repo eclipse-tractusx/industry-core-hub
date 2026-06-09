@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -43,11 +43,17 @@ export const ShareCertificateDialog = ({
   open,
   onClose,
   certificate,
-  onShare
+  onShare,
+  defaultMethod = 'PULL'
 }: ShareCertificateDialogProps) => {
   const [partnerBpn, setPartnerBpn] = useState('');
-  const [method, setMethod] = useState<'PULL' | 'PUSH'>('PULL');
+  const [method, setMethod] = useState<'PULL' | 'PUSH'>(defaultMethod);
   const [error, setError] = useState('');
+
+  // Update method when defaultMethod changes
+  useEffect(() => {
+    setMethod(defaultMethod);
+  }, [defaultMethod, open]);
 
   const handleShare = () => {
     if (!partnerBpn.trim()) {

@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -47,7 +48,6 @@ import { StatsCard } from '../components/certificate-list/StatsCard';
 import { CertificateTable } from '../components/certificate-list/CertificateTable';
 import { UploadCertificateDialog } from '../components/dialogs/UploadCertificateDialog';
 import { ShareCertificateDialog } from '../components/dialogs/ShareCertificateDialog';
-import { ViewCertificateDialog } from '../components/dialogs/ViewCertificateDialog';
 import { DeleteCertificateDialog } from '../components/dialogs/DeleteCertificateDialog';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 
@@ -73,6 +73,8 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const CertificateManagement = () => {
+  const navigate = useNavigate();
+  
   // State
   const [activeTab, setActiveTab] = useState(0);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
@@ -91,7 +93,6 @@ const CertificateManagement = () => {
   // Dialog states
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
 
@@ -212,8 +213,7 @@ const CertificateManagement = () => {
   };
 
   const handleView = (certificate: Certificate) => {
-    setSelectedCertificate(certificate);
-    setViewDialogOpen(true);
+    navigate(`/certificates/${certificate.id}`);
   };
 
   const handleShare = (certificate: Certificate) => {
@@ -378,12 +378,6 @@ const CertificateManagement = () => {
         onClose={() => setShareDialogOpen(false)}
         certificate={selectedCertificate}
         onShare={handleShareCertificate}
-      />
-
-      <ViewCertificateDialog
-        open={viewDialogOpen}
-        onClose={() => setViewDialogOpen(false)}
-        certificate={selectedCertificate}
       />
 
       <DeleteCertificateDialog

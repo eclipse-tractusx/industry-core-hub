@@ -50,6 +50,7 @@ export interface ShareCertificateDialogProps {
     name: string;
   } | null;
   onShare: (certificateId: string, partnerBpn: string, method: 'PULL' | 'PUSH') => void;
+  defaultMethod?: 'PULL' | 'PUSH';
 }
 
 export interface ViewCertificateDialogProps {
