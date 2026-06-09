@@ -2,7 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -61,6 +61,7 @@ import {
   PriorityHigh,
   Search,
   HourglassEmpty,
+  Launch,
 } from '@mui/icons-material';
 import { useNotifications } from '../contexts/NotificationContext';
 import {
@@ -117,6 +118,35 @@ const NotificationDetail: React.FC = () => {
 
   // Determine layout mode
   const isCompact = panelSize === 'normal';
+
+  const navigate = useNavigate();
+
+  // Maps PCF notification type to navigation target
+  const getPcfNavigationTarget = (notificationType: string): { path: string; labelKey: string } | null => {
+    const requestId = selectedNotification?.pcfContent?.requestId;
+    switch (notificationType) {
+      case 'PCF_REQUEST_RECEIVED':
+        return { 
+          path: '/pcf/requests', 
+          labelKey: 'detail.viewIncomingPcfRequests' };
+      case 'PCF_RESPONSE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
+        return {
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.goPcfPrecalculation',
+        };
+      case 'PCF_DATA_UPDATE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
+        return {
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.viewUpdatedPcfData',
+        };
+      default:
+        return null;
+    }
+  };
 
   // Ref for scrollable content container (auto-scroll on expand)
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -970,6 +1000,33 @@ const NotificationDetail: React.FC = () => {
                 }}
               />
             )}
+            {(() => {
+              const navTarget = getPcfNavigationTarget(selectedNotification.pcfContent.notificationType);
+              return navTarget ? (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Launch sx={{ fontSize: '0.9rem !important' }} />}
+                  onClick={() => {
+                    closePanel();
+                    navigate(navTarget.path);
+                  }}
+                  sx={{
+                    mt: 1.5,
+                    borderColor: 'rgba(0, 188, 212, 0.5)',
+                    color: '#00bcd4',
+                    fontSize: '0.72rem',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: '#00bcd4',
+                      backgroundColor: 'rgba(0, 188, 212, 0.08)',
+                    },
+                  }}
+                >
+                  {t(navTarget.labelKey, { defaultValue: navTarget.defaultLabel })}
+                </Button>
+              ) : null;
+            })()}
           </Box>
 
           <Button

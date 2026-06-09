@@ -76,6 +76,11 @@ class PcfExchangeModel(BaseModel):
         default=None,
         description="The actual PCF data payload, if included in the response."
     )
+    created_at: Optional[str] = Field(
+        alias="createdAt",
+        default=None,
+        description="Timestamp when the PCF exchange was initiated (ISO 8601 UTC)."
+    )
 
     @staticmethod
     def from_entity(entity: PcfExchangeEntity) -> "PcfExchangeModel":
@@ -89,7 +94,8 @@ class PcfExchangeModel(BaseModel):
             status=entity.status.value,
             type=entity.type.value,
             message=entity.message,
-            pcfLocation=entity.pcf_location
+            pcfLocation=entity.pcf_location,
+            createdAt=entity.created_at.isoformat() if entity.created_at else None
         )
 
 class PcfRelationshipModel(BaseModel):

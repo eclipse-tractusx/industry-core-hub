@@ -80,6 +80,9 @@
   "detail": {
     "viewTwin": "View Twin",
     "viewDigitalTwin": "View Digital Twin",
+    "viewIncomingPcfRequests": "View Incoming PCF Requests",
+    "goPcfPrecalculation": "Go to PCF Precalculation",
+    "viewUpdatedPcfData": "View Updated PCF Data",
     "overdue": "Overdue",
     "verifyAll": "Verify All",
     "verifyAccess": "Verify Access",
@@ -111,7 +114,6 @@
     "discoveryFailed": "Discovery Failed",
     "retry": "Retry",
     "feedbackSent": "Feedback Sent",
-    "sent": "Sent",
     "message": "Message",
     "items": "items",
     "statusItems": "Status: {{status}} • {{count}} items",

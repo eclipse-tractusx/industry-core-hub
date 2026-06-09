@@ -108,7 +108,7 @@ async def send_pcf_request_to_participant(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests/{requestId}/response")
+@router.get("/requests/{requestId}/response", response_model=PcfExchangeModel, response_model_by_alias=True)
 async def consult_pcf_response(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
     try:
         result = consumption_manager.consult_pcf_response(request_id=request_id)

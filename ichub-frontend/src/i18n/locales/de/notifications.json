@@ -80,6 +80,9 @@
   "detail": {
     "viewTwin": "Twin ansehen",
     "viewDigitalTwin": "Digital Twin ansehen",
+    "viewIncomingPcfRequests": "Eingehende PCF-Anfragen anzeigen",
+    "goPcfPrecalculation": "Zur PCF-Vorkalkulation gehen",
+    "viewUpdatedPcfData": "Aktualisierte PCF-Daten anzeigen",
     "overdue": "Überfällig",
     "verifyAll": "Alle verifizieren",
     "verifyAccess": "Zugriff verifizieren",
@@ -111,7 +114,6 @@
     "discoveryFailed": "Entdeckung fehlgeschlagen",
     "retry": "Wiederholen",
     "feedbackSent": "Feedback gesendet",
-    "sent": "Gesendet",
     "message": "Nachricht",
     "items": "Elemente",
     "statusItems": "Status: {{status}} • {{count}} Elemente",

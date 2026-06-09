@@ -21,6 +21,10 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+// NOTE: All translations have been generated via Artificial Intelligence.
+// We kindly ask you to review and report any feedback regarding text accuracy
+// and contextual correctness throughout the application interface.
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
