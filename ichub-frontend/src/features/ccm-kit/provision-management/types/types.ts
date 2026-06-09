@@ -73,7 +73,8 @@ export interface ShareItem {
   providerBpnl: string;
   consumerBpnl: string;
   status: ShareStatus;
-  rejectionReason?: string | null;
+  rejectionReason?: string | object | null;
+  consumerStatus?: ConsumerStatusValue | null;
   lastSharedDate: string;
   createdAt: string;
 }

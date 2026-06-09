@@ -37,15 +37,26 @@ interface ShareDetailDialogProps {
   onClose: () => void;
 }
 
-interface ParsedRejectionReason {
-  certificateErrors?: string[];
-  locationErrors?: Array<Record<string, string[]>>;
+interface CertificateError {
+  message: string;
 }
 
-const parseRejectionReason = (raw?: string | null): ParsedRejectionReason | null => {
+interface LocationError {
+  bpn: string;
+  locationErrors?: Array<{ message: string }>;
+}
+
+interface ParsedRejectionReason {
+  certificateErrors?: CertificateError[];
+  locationErrors?: LocationError[];
+}
+
+const parseRejectionReason = (raw?: string | null | object): ParsedRejectionReason | null => {
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as ParsedRejectionReason;
+    // Handle both string JSON and direct objects
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return parsed as ParsedRejectionReason;
   } catch {
     return null;
   }
@@ -154,7 +165,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                       }}
                     >
                       <Typography variant="body2" color="error.dark">
-                        {err}
+                        {err.message || String(err)}
                       </Typography>
                     </Box>
                   ))}
@@ -175,8 +186,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                 </Box>
                 <Stack spacing={1}>
                   {rejection!.locationErrors!.map((locEntry, idx) => {
-                    const entries = Object.entries(locEntry);
-                    const [bpn, errors] = entries[0] ?? ['', []];
+                    const nestedErrors = locEntry.locationErrors ?? [];
                     return (
                       <Paper key={idx} variant="outlined" sx={{ borderColor: 'warning.light', overflow: 'hidden' }}>
                         <Box
@@ -184,7 +194,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                             px: 2,
                             py: 1,
                             backgroundColor: 'rgba(255,152,0,0.06)',
-                            borderBottom: '1px solid',
+                            borderBottom: nestedErrors.length > 0 ? '1px solid' : undefined,
                             borderColor: 'warning.light',
                           }}
                         >
@@ -192,10 +202,10 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                             variant="caption"
                             sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'warning.dark' }}
                           >
-                            {bpn || '—'}
+                            {locEntry.bpn || '—'}
                           </Typography>
                         </Box>
-                        {(errors ?? []).map((err: string, eIdx: number) => (
+                        {nestedErrors.map((err, eIdx) => (
                           <Box
                             key={eIdx}
                             sx={{
@@ -204,7 +214,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                               '&:not(:last-child)': { borderBottom: '1px solid', borderColor: 'divider' },
                             }}
                           >
-                            <Typography variant="body2">{err}</Typography>
+                            <Typography variant="body2">{err.message || String(err)}</Typography>
                           </Box>
                         ))}
                       </Paper>
@@ -221,7 +231,7 @@ const ShareDetailDialog = ({ open, share, onClose }: ShareDetailDialogProps) => 
                   {t('shareDetailDialog.rawPayload')}
                 </Typography>
                 <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.78rem' }}>
-                  {share.rejectionReason}
+                  {typeof share.rejectionReason === 'string' ? share.rejectionReason : JSON.stringify(share.rejectionReason, null, 2)}
                 </Typography>
               </Box>
             )}
