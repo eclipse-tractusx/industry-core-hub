@@ -396,8 +396,8 @@ class TestCcmNotificationService:
         # Verify rejection_reason is passed as serialised JSON.
         call_kwargs = mock_repos.certificate_share_repository.update_status.call_args.kwargs
         reason = json.loads(call_kwargs["rejection_reason"])
-        assert reason["certificateErrors"] == ["Certificate expired"]
-        assert {"BPNS000000000001": ["Invalid site"]} in reason["locationErrors"]
+        assert reason["certificateErrors"] == [{"message": "Certificate expired"}]
+        assert {"bpn": "BPNS000000000001", "locationErrors": [{"message": "Invalid site"}]} in reason["locationErrors"]
 
     @patch(
         "services.addons.ccm_kit.v1.ccm_notification_service"

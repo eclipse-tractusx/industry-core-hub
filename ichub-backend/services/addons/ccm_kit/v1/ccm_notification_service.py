@@ -43,6 +43,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
     CcmStatusContent,
     CcmPullRequest,
     CertificateStatusValue,
+    RejectionReasonPayload,
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import (
     ccm_consumer_service,
@@ -452,18 +453,14 @@ class CcmNotificationService:
             # Build rejection_reason JSON when consumer rejects.
             rejection_reason: Optional[str] = None
             if content.certificate_status == CertificateStatusValue.REJECTED:
-                rejection_payload: Dict[str, Any] = {}
-                if content.certificate_errors:
-                    rejection_payload["certificateErrors"] = [
-                        e.message for e in content.certificate_errors
-                    ]
-                if content.location_errors:
-                    rejection_payload["locationErrors"] = [
-                        {le.bpn: [e.message for e in le.location_errors]}
-                        for le in content.location_errors
-                    ]
-                if rejection_payload:
-                    rejection_reason = json.dumps(rejection_payload)
+                if content.certificate_errors or content.location_errors:
+                    rejection_payload = RejectionReasonPayload(
+                        certificate_errors=content.certificate_errors or None,
+                        location_errors=content.location_errors or None,
+                    )
+                    rejection_reason = rejection_payload.model_dump_json(
+                        by_alias=True, exclude_none=True
+                    )
 
             repo.certificate_share_repository.update_status(
                 share_id=share_id,

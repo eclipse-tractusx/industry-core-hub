@@ -79,6 +79,23 @@ from tools.constants import (
 logger = LoggingManager.get_logger(__name__)
 
 
+def _safe_parse_rejection_reason(raw: Optional[str]) -> Optional[RejectionReasonPayload]:
+    """
+    Deserialise a JSON string stored in the DB into a typed RejectionReasonPayload.
+
+    Returns None when the value is absent or cannot be parsed (e.g. old
+    records stored with a legacy flat format), so callers never receive a
+    corrupt or partially-typed object.
+    """
+    if not raw:
+        return None
+    try:
+        return RejectionReasonPayload.model_validate_json(raw)
+    except Exception:
+        logger.debug("[CCM Provider] Could not parse rejection_reason JSON: %s", raw)
+        return None
+
+
 class CcmProviderService(CcmBaseService):
     """
     Provider-side operations for CX-0135 Company Certificate Management.
@@ -785,7 +802,7 @@ class CcmProviderService(CcmBaseService):
                         consumer_bpnl=share.consumer_bpnl,
                         status=share.status.value,
                         rejection_reason=(
-                            RejectionReasonPayload.model_validate_json(share.rejection_reason)
+                            _safe_parse_rejection_reason(share.rejection_reason)
                             if share.rejection_reason else None
                         ),
                         consumer_status=consumer_status,
