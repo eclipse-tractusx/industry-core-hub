@@ -44,20 +44,20 @@
         APP_VERSION: "1.0.0",
         
         // API configuration
-        ICHUB_BACKEND_URL: "https://lks-ichub-backend.esauto-x.com/v1", // LKS: "https://lks-ichub-backend.esauto-x.com/v1" ADMIN: "https://admin-ichub-backend.esauto-x.com/v1"
+        ICHUB_BACKEND_URL: "http://localhost:9000/v1", 
         API_TIMEOUT: "300000",
         API_RETRY_ATTEMPTS: "3",
         REQUIRE_HTTPS_URL_PATTERN: "true",
         
         // API key configuration
-        API_KEY: "HACKATHON1-HACKATHON1-HACKATHON1",
+        API_KEY: "apiKey-placeholder",
         API_KEY_HEADER: "X-Api-Key",
         ENABLE_API_KEY_ROTATION: "false",
         API_KEY_EXPIRY_WARNING_DAYS: "7",
         
         // Authentication configuration
-        AUTH_ENABLED: "false",
-        AUTH_PROVIDER: "none",
+        AUTH_ENABLED: "true",
+        AUTH_PROVIDER: "keycloak",
         
         // Keycloak configuration
         KEYCLOAK_URL: "http://localhost:8080",
@@ -78,7 +78,7 @@
         AUTH_LOGOUT_REDIRECT_URI: "",
         
         // Participant configuration
-        PARTICIPANT_ID: "BPNL000000000065", // LKS: "BPNL000000000065"  ADMIN: "BPNL00000003CRHK"
+        PARTICIPANT_ID: "BPNL**********",
         BPN_VALIDATION_PATTERN: "",
         
         // Governance and policies - must be configured via GOVERNANCE_CONFIG, DTR_POLICIES_CONFIG, PCF_EXCHANGE_POLICIES_CONFIG and CCM_POLICY_GOVERNANCE env vars
