@@ -66,6 +66,9 @@ data:
             operator: {{ .Values.backend.configuration.consumer.discovery.digitalTwinRegistry.dct_type_filter.operator | quote }}
             operandRight: {{ .Values.backend.configuration.consumer.discovery.digitalTwinRegistry.dct_type_filter.operandRight | quote }}
       connector: {{ .Values.backend.configuration.consumer.connector | toYaml | nindent 8 }}
+      {{- if .Values.backend.configuration.consumer.ccm }}
+      ccm: {{ .Values.backend.configuration.consumer.ccm | toYaml | nindent 8 }}
+      {{- end }}
     provider: {{ .Values.backend.configuration.provider | toYaml | nindent 6 }}
       submodel_dispatcher:
       {{- if eq .Values.backend.configuration.provider.submodel_dispatcher.mode "http" }}
@@ -90,6 +93,9 @@ data:
       {{- /* Filesystem mode - use standard toYaml */}}
       {{ .Values.backend.configuration.provider.submodel_dispatcher | toYaml | nindent 6 }}
       {{- end }}
+    {{- if .Values.backend.configuration.ccm_settings }}
+    ccm: {{ .Values.backend.configuration.ccm_settings | toYaml | nindent 6 }}
+    {{- end }}
   logging.yml: |-
     version: 1
     disable_existing_loggers: False

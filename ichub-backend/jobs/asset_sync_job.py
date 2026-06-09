@@ -74,6 +74,10 @@ class AssetSyncJob:
             # Step 4: Sync PCF Exchange asset if enabled
             if self._pcf_kit_enablement_check():
                 self._sync_pcf_exchange_asset()
+
+            # Step 5: Sync Company Certificate Management notification asset if enabled
+            if self._ccm_kit_enablement_check():
+                self._sync_ccm_asset()
             
             logger.info("[AssetSyncJob] Asset synchronization completed successfully.")
             
@@ -144,6 +148,47 @@ class AssetSyncJob:
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error synchronizing DTE asset: {e}", exc_info=True)
     
+    def _sync_ccm_asset(self) -> None:
+        """
+        Synchronize the Company Certificate Management (CX-0135) notification
+        asset with the connector.
+
+        Reads the ``provider.ccm`` configuration block. If the block is absent
+        the step is skipped with a warning so that deployments that do not use
+        the CCM add-on are not affected.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing CCM notification asset...")
+
+            ccm_config = ConfigManager.get_config("provider.ccm")
+            if not ccm_config:
+                logger.warning(
+                    "[AssetSyncJob] No 'provider.ccm' configuration found. "
+                    "Skipping CCM asset sync."
+                )
+                return
+
+            asset_config = ccm_config.get("asset_config", {})
+
+            # Build the full notification endpoint URL from hostname + apiPath
+            hostname = ccm_config.get("hostname", "").rstrip("/")
+            api_path = ccm_config.get("apiPath", "").rstrip("/")
+            ccm_notification_url = hostname + api_path
+
+            ccm_asset_id, _, _, _ = self.connector_provider_manager.register_ccm_notification_offer(
+                ccm_notification_url=ccm_notification_url,
+                ccm_policy_config=ccm_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id"),
+            )
+
+            if ccm_asset_id:
+                logger.info(f"[AssetSyncJob] CCM notification asset synchronized: {ccm_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize CCM notification asset.")
+
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing CCM asset: {e}", exc_info=True)
+
     def _sync_semantic_assets(self) -> None:
         """
         Synchronize all semantic assets (PartTypeInformation, SerialPart, etc.) from agreements configuration.
@@ -232,3 +277,17 @@ class AssetSyncJob:
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error checking PCF Kit enablement: {e}", exc_info=True)
             return False
+
+    def _ccm_kit_enablement_check(self) -> bool:
+        """
+        Check if the CCM Kit enablement is active in the configuration.
+
+        Returns:
+            bool: True if CCM Kit is enabled (default), False otherwise.
+        """
+        try:
+            ccm_config = ConfigManager.get_config("provider.ccm", {})
+            return ccm_config.get("enabled", True)
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error checking CCM Kit enablement: {e}", exc_info=True)
+            return True
