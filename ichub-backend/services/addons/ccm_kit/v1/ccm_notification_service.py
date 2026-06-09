@@ -55,6 +55,7 @@ from managers.addons_service.ccm_kit.v1.notifications import (
     CCM_NT_REQUEST_NOT_FOUND,
     CCM_NT_PUSH_RECEIVED,
     CCM_NT_AVAILABLE_RECEIVED,
+    CCM_NT_STATUS_RECEIVED,
 )
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
@@ -505,6 +506,15 @@ class CcmNotificationService:
         logger.info(
             f"CertificateShare {share_id} updated to {new_status.value} "
             f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"
+        )
+
+        ccm_notification_manager.create_ccm_notification(
+            sender_bpn=sender_bpn,
+            receiver_bpn=notification.header.receiver_bpn,
+            notification_type=CCM_NT_STATUS_RECEIVED,
+            certificate_type=certificate_type,
+            certified_bpn=certified_bpn,
+            document_id=content.document_id,
         )
 
         return 200, {

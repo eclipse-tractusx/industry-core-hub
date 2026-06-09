@@ -66,10 +66,7 @@ from models.services.addons.ccm_kit.v1.notifications import (
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from managers.addons_service.ccm_kit.v1.notifications import (
     ccm_notification_manager,
-    CCM_NT_REQUEST_SENT,
-    CCM_NT_STATUS_SENT,
 )
-from models.metadata_database.notification.models import NotificationDirection
 from tools.constants import (
     CCM_CONTEXT_REQUEST,
     CCM_CONTEXT_STATUS,
@@ -269,15 +266,6 @@ class CcmConsumerService(CcmBaseService):
                 f"{_s(persist_err)}"
             )
 
-        ccm_notification_manager.create_ccm_notification(
-            sender_bpn=sender_bpn,
-            receiver_bpn=provider_bpn,
-            notification_type=CCM_NT_REQUEST_SENT,
-            certificate_type=payload.certificate_type,
-            certified_bpn=payload.certified_bpn,
-            direction=NotificationDirection.OUTGOING,
-        )
-
         return result
 
     # ------------------------------------------------------------------
@@ -401,14 +389,6 @@ class CcmConsumerService(CcmBaseService):
                     f"[CCM Consumer] Failed to update local_status for "
                     f"document_id={_s(payload.document_id)}: {_s(update_err)}"
                 )
-
-        ccm_notification_manager.create_ccm_notification(
-            sender_bpn=sender_bpn,
-            receiver_bpn=provider_bpn,
-            notification_type=CCM_NT_STATUS_SENT,
-            document_id=payload.document_id,
-            direction=NotificationDirection.OUTGOING,
-        )
 
         return result
 

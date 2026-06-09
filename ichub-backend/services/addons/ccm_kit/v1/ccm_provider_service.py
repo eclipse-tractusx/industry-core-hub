@@ -65,10 +65,7 @@ from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from managers.addons_service.ccm_kit.v1.notifications import (
     ccm_notification_manager,
-    CCM_NT_PUSH_SENT,
-    CCM_NT_AVAILABLE_SENT,
 )
-from models.metadata_database.notification.models import NotificationDirection
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
     CCM_CONTEXT_PUSH,
@@ -256,16 +253,6 @@ class CcmProviderService(CcmBaseService):
                         f"for consumer {_s(consumer_bpn)} / cert {request.certificate_id}."
                     )
 
-        if result.success:
-            ccm_notification_manager.create_ccm_notification(
-                sender_bpn=sender_bpn,
-                receiver_bpn=consumer_bpn,
-                notification_type=CCM_NT_PUSH_SENT,
-                certificate_type=certificate_type_val,
-                certified_bpn=certified_bpn,
-                direction=NotificationDirection.OUTGOING,
-            )
-
         return result
 
     # ------------------------------------------------------------------
@@ -414,17 +401,6 @@ class CcmProviderService(CcmBaseService):
                     )
 
                 repo.commit()
-
-        if result.success:
-            ccm_notification_manager.create_ccm_notification(
-                sender_bpn=sender_bpn,
-                receiver_bpn=consumer_bpn,
-                notification_type=CCM_NT_AVAILABLE_SENT,
-                certificate_type=certificate_type_val,
-                certified_bpn=certified_bpn,
-                document_id=document_id,
-                direction=NotificationDirection.OUTGOING,
-            )
 
         return result
 
