@@ -984,6 +984,30 @@ frontend:
                     rightOperand: "cx.pcf.base:1"
           prohibition: []
           obligation: []
+    # -- CCM governance policies for consumer/provider operations (raw ODRL format)
+    # Forwarded as the `governance` field in CCM push/request/status payloads.
+    # Leave empty ([]) to let the backend use its server-side default policy.
+    ccm:
+      policies:
+        - context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.ccm.base:1"
+          prohibition: []
+          obligation: []
 
   healthChecks:
     startup:
