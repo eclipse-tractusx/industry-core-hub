@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import CertificateManagement from './pages/CertificateManagement';
+import CertificateDetail from './pages/CertificateDetail';
 import { FeatureConfig } from '@/types/routing';
 
 export const certificateManagementFeature: FeatureConfig = {
@@ -34,6 +35,14 @@ export const certificateManagementFeature: FeatureConfig = {
       meta: {
         title: 'Certificate Management',
         description: 'Manage, share and consume compliance certificates'
+      }
+    },
+    {
+      path: '/certificates/:id',
+      element: <CertificateDetail />,
+      meta: {
+        title: 'Certificate Detail',
+        description: 'View certificate details and sharing history'
       }
     }
   ]
