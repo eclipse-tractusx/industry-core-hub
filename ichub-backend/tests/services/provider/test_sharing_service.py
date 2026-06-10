@@ -148,7 +148,11 @@ class TestSharingService:
     @patch.object(SharingService, '_create_and_get_twin')
     @patch.object(SharingService, '_ensure_twin_exchange')
     @patch.object(SharingService, '_create_part_type_information_aspect_doc')
+    @patch.object(SharingService, '_create_single_level_bom_aspect_doc')
+    @patch.object(SharingService, '_create_single_level_usage_aspect_doc')
     def test_share_catalog_part_success(self, 
+                                        mock_create_single_level_usage,
+                                        mock_create_single_level_bom,
                                         mock_create_part_type_info,
                                         mock_ensure_twin_exchange,
                                         mock_create_and_get_twin,
@@ -174,6 +178,8 @@ class TestSharingService:
         }
         mock_create_and_get_twin.return_value = sample_twin_db
         mock_create_part_type_info.return_value = {"test": "document"}
+        mock_create_single_level_bom.return_value = {"test": "bom_document"}
+        mock_create_single_level_usage.return_value = {"test": "usage_document"}
         
         # Mock twin management service methods
         self.service.twin_management_service.get_or_create_enablement_stack = Mock()
@@ -212,6 +218,8 @@ class TestSharingService:
         mock_create_and_get_twin.assert_called_once()
         mock_ensure_twin_exchange.assert_called_once()
         mock_create_part_type_info.assert_called_once()
+        mock_create_single_level_bom.assert_called_once()
+        mock_create_single_level_usage.assert_called_once()
 
     @patch('managers.metadata_database.manager.RepositoryManagerFactory.create')
     def test_get_catalog_part_success(self, mock_repo_factory, mock_repo, sample_share_catalog_part, sample_catalog_part_db):
@@ -461,6 +469,40 @@ class TestSharingService:
             bpns="BPNS123456789012"
         )
 
+    def test_create_single_level_bom_aspect_doc(self):
+        """Test single level BOM as planned aspect document creation."""
+        # Arrange
+        global_id = uuid.uuid4()
+        self.service.submodel_document_generator.generate_single_level_bom_as_planned_v3 = Mock(
+            return_value={"catenaXId": str(global_id), "childItems": []}
+        )
+
+        # Act
+        result = self.service._create_single_level_bom_aspect_doc(global_id=global_id)
+
+        # Assert
+        assert result == {"catenaXId": str(global_id), "childItems": []}
+        self.service.submodel_document_generator.generate_single_level_bom_as_planned_v3.assert_called_once_with(
+            global_id=global_id
+        )
+
+    def test_create_single_level_usage_aspect_doc(self):
+        """Test single level usage as planned aspect document creation."""
+        # Arrange
+        global_id = uuid.uuid4()
+        self.service.submodel_document_generator.generate_single_level_usage_as_planned_v3 = Mock(
+            return_value={"catenaXId": str(global_id), "parentItems": [], "customers": []}
+        )
+
+        # Act
+        result = self.service._create_single_level_usage_aspect_doc(global_id=global_id)
+
+        # Assert
+        assert result == {"catenaXId": str(global_id), "parentItems": [], "customers": []}
+        self.service.submodel_document_generator.generate_single_level_usage_as_planned_v3.assert_called_once_with(
+            global_id=global_id
+        )
+
     @patch('managers.metadata_database.manager.RepositoryManagerFactory.create')
     def test_share_catalog_part_datetime_handling(self, mock_repo_factory, mock_repo):
         """Test that share_catalog_part correctly handles datetime."""
@@ -473,7 +515,9 @@ class TestSharingService:
              patch.object(self.service, '_get_or_create_partner_catalog_parts') as mock_get_partner_parts, \
              patch.object(self.service, '_create_and_get_twin') as mock_create_and_get_twin, \
              patch.object(self.service, '_ensure_twin_exchange'), \
-             patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info:
+             patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info, \
+             patch.object(self.service, '_create_single_level_bom_aspect_doc'), \
+             patch.object(self.service, '_create_single_level_usage_aspect_doc'):
             
             # Mock catalog part
             mock_catalog_part = Mock(spec=CatalogPart)
@@ -542,7 +586,9 @@ class TestSharingService:
              patch.object(self.service, '_get_or_create_partner_catalog_parts') as mock_get_partner_parts, \
              patch.object(self.service, '_create_and_get_twin') as mock_create_and_get_twin, \
              patch.object(self.service, '_ensure_twin_exchange'), \
-             patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info:
+             patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info, \
+             patch.object(self.service, '_create_single_level_bom_aspect_doc'), \
+             patch.object(self.service, '_create_single_level_usage_aspect_doc'):
 
             mock_catalog_part = Mock(spec=CatalogPart)
             mock_catalog_part.name = "Test Part"

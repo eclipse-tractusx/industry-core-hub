@@ -30,7 +30,13 @@ from datetime import datetime, timezone
 from connector import connector_manager
 from dtr import dtr_provider_manager
 
-from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1, SEM_ID_SERIAL_PART_V3
+from managers.submodels.submodel_document_generator import (
+    SubmodelDocumentGenerator,
+    SEM_ID_PART_TYPE_INFORMATION_V1,
+    SEM_ID_SERIAL_PART_V3,
+    SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+    SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+)
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
@@ -198,6 +204,30 @@ class TwinManagementService:
                         semanticId= SEM_ID_PART_TYPE_INFORMATION_V1,
                         payload= part_type_info_doc
                     )                    
+                )
+
+                ## Create SingleLevelBomAsPlanned submodel (default empty)
+                bom_doc = self.submodel_document_generator.generate_single_level_bom_as_planned_v3(
+                    global_id=db_twin.global_id,
+                )
+                self.create_twin_aspect(
+                    TwinAspectCreate(
+                        globalId=db_twin.global_id,
+                        semanticId=SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+                        payload=bom_doc
+                    )
+                )
+
+                ## Create SingleLevelUsageAsPlanned submodel (default empty)
+                usage_doc = self.submodel_document_generator.generate_single_level_usage_as_planned_v3(
+                    global_id=db_twin.global_id,
+                )
+                self.create_twin_aspect(
+                    TwinAspectCreate(
+                        globalId=db_twin.global_id,
+                        semanticId=SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+                        payload=usage_doc
+                    )
                 )
             
             return TwinRead(

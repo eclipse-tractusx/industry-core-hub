@@ -147,7 +147,9 @@ export function createSchemaKey(semanticId: string): string {
             'digital-product-passport': 'dpp',
             'serial-part': 'sp',
             'batch': 'batch',
-            'part-type-information': 'pti'
+            'part-type-information': 'pti',
+            'single-level-bom-as-planned': 'slbap',
+            'single-level-usage-as-planned': 'sluap'
         };
         
         const key = abbreviations[kebabName] || kebabName;
