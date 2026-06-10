@@ -55,6 +55,7 @@ interface SubmodelsGridDialogProps {
     twinDetails: CatalogPartTwinDetailsRead | null;
     partName?: string;
     onCreateSubmodel?: () => void;
+    onEditSubmodel?: (semanticId: string, submodelId: string) => void;
 }
 
 // Dark theme for the dialog - matching application patterns
@@ -102,7 +103,8 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
     onClose,
     twinDetails,
     partName,
-    onCreateSubmodel
+    onCreateSubmodel,
+    onEditSubmodel
 }) => {
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
@@ -310,6 +312,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                             aspect={aspect}
                                             assetId={twinDetails.globalId}
                                             onViewDetails={handleViewSubmodelDetails}
+                                            onEdit={onEditSubmodel}
                                         />
                                     </Grid2>
                                 ))}

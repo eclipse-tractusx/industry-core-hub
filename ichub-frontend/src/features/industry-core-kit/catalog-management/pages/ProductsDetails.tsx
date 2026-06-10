@@ -45,7 +45,7 @@ import ShareDialog from "@/features/industry-core-kit/catalog-management/compone
 import {ErrorNotFound} from '@/components/general/ErrorNotFound';
 import LoadingSpinner from '@/components/general/LoadingSpinner';
 import { SchemaSelector, SubmodelCreator } from '@/components/submodel-creation';
-import { SchemaDefinition } from '@/schemas';
+import { SchemaDefinition, getSchemaBySemanticId } from '@/schemas';
 
 import { PartType } from "@/features/industry-core-kit/catalog-management/types/types";
 import { PRODUCT_STATUS } from "@/features/industry-core-kit/catalog-management/types/shared";
@@ -53,7 +53,7 @@ import { CatalogPartTwinDetailsRead } from "@/features/industry-core-kit/catalog
 
 import { SharedPartner } from "@/features/industry-core-kit/catalog-management/types/types"
 
-import { fetchCatalogPart, fetchCatalogPartTwinDetails, createTwinAspect } from "@/features/industry-core-kit/catalog-management/api";
+import { fetchCatalogPart, fetchCatalogPartTwinDetails, createTwinAspect, fetchSubmodelContent } from "@/features/industry-core-kit/catalog-management/api";
 import { mapApiPartDataToPartType, mapSharePartCustomerPartIds} from "../utils/utils";
 import { useEscapeNavigation } from '@/hooks/useEscapeKey';
 
@@ -80,6 +80,8 @@ const ProductsDetails = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [sharedPartners, setSharedPartners] = useState<SharedPartner[]>([]);
   const [twinDetails, setTwinDetails] = useState<CatalogPartTwinDetailsRead | null>(null);
+  const [editingSubmodelId, setEditingSubmodelId] = useState<string | null>(null);
+  const [editInitialData, setEditInitialData] = useState<Record<string, unknown> | null>(null);
 
   useEscapeNavigation(() => navigate('/catalog'), !jsonDialogOpen && !shareDialogOpen && !addSerializedPartDialogOpen && !submodelsGridDialogOpen);
 
@@ -209,6 +211,40 @@ const ProductsDetails = () => {
     setSubmodelCreatorOpen(false);
     setSelectedSchema(null);
     setSelectedSchemaKey('');
+    setEditingSubmodelId(null);
+    setEditInitialData(null);
+  };
+
+  const handleEditSubmodel = async (semanticId: string, submodelId: string) => {
+    try {
+      // Find the matching schema for the semantic ID
+      const schema = getSchemaBySemanticId(semanticId);
+      if (!schema) {
+        setNotification({
+          open: true,
+          severity: 'error',
+          title: t('messages.noSchemaForEdit')
+        });
+        return;
+      }
+
+      // Fetch existing submodel content
+      const content = await fetchSubmodelContent(semanticId, submodelId);
+
+      // Open SubmodelCreator in edit mode with fetched data
+      setSelectedSchema(schema);
+      setSelectedSchemaKey('');
+      setEditingSubmodelId(submodelId);
+      setEditInitialData(content);
+      setSubmodelCreatorOpen(true);
+    } catch (error) {
+      console.error('Error loading submodel for editing:', error);
+      setNotification({
+        open: true,
+        severity: 'error',
+        title: t('messages.submodelLoadError')
+      });
+    }
   };
 
   const handleCreateSubmodelSubmit = async (submodelData: Record<string, unknown>) => {
@@ -221,18 +257,20 @@ const ProductsDetails = () => {
         throw new Error('Twin must be created before adding submodels. Please create a twin first.');
       }
 
-      // Call the API to create the twin aspect
+      // Call the API to create or update the twin aspect
       const result = await createTwinAspect(
         twinDetails.globalId,
         selectedSchema.metadata.semanticId,
-        submodelData
+        submodelData,
+        editingSubmodelId || undefined
       );
 
       if (result.success) {
+        const messageKey = editingSubmodelId ? 'messages.submodelUpdatedSuccess' : 'messages.submodelCreatedSuccess';
         setNotification({ 
           open: true, 
           severity: 'success', 
-          title: t('messages.submodelCreatedSuccess', { schemaName: selectedSchema.metadata.name })
+          title: t(messageKey, { schemaName: selectedSchema.metadata.name })
         });
         
         handleCloseSubmodelCreator();
@@ -336,6 +374,7 @@ const ProductsDetails = () => {
           twinDetails={twinDetails}
           partName={partType?.name}
           onCreateSubmodel={handleCreateSubmodel}
+          onEditSubmodel={handleEditSubmodel}
         />
 
         {/* Schema Selector Dialog */}
@@ -351,12 +390,14 @@ const ProductsDetails = () => {
           <SubmodelCreator
             open={submodelCreatorOpen}
             onClose={handleCloseSubmodelCreator}
-            onBack={handleBackToSchemaSelector}
+            onBack={editingSubmodelId ? handleCloseSubmodelCreator : handleBackToSchemaSelector}
             onCreateSubmodel={handleCreateSubmodelSubmit}
             selectedSchema={selectedSchema}
             schemaKey={selectedSchemaKey}
             manufacturerPartId={partType?.manufacturerPartId}
             twinId={twinDetails?.globalId}
+            initialData={editInitialData || undefined}
+            saveButtonLabel={editingSubmodelId ? t('productDetail.submodelsGrid.updateSubmodel') : undefined}
           />
         )}
       </Grid2>

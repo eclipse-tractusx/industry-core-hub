@@ -13,7 +13,10 @@
     "registerSuccess": "部品ツインが正常に登録されました！",
     "registerError": "部品ツインの登録に失敗しました！",
     "submodelCreatedSuccess": "{{schemaName}}スキーマでサブモデルが正常に作成されました！",
-    "submodelCreatedError": "サブモデルの作成に失敗しました"
+    "submodelCreatedError": "サブモデルの作成に失敗しました",
+    "submodelUpdatedSuccess": "{{schemaName}}スキーマでサブモデルが正常に更新されました！",
+    "noSchemaForEdit": "このサブモデルに一致するスキーマが見つかりません。フォームエディタで編集できません。",
+    "submodelLoadError": "編集用のサブモデルデータの読み込みに失敗しました"
   },
   "createDialog": {
     "title": "新しいカタログ部品を作成",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "新しいサブモデルアスペクトを作成",
       "noSubmodels": "サブモデルがありません",
       "noSubmodelsDescription": "このデジタルツインには表示可能なサブモデルアスペクトがありません。",
-      "submodelsDisplayed": "{{count}}個のデジタルツインサブモデルを表示"
+      "submodelsDisplayed": "{{count}}個のデジタルツインサブモデルを表示",
+      "updateSubmodel": "サブモデルを更新"
     },
     "jsonViewer": {
       "title": "JSONビューア",

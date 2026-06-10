@@ -33,7 +33,8 @@ import {
 } from '@mui/material';
 import {
     Visibility as VisibilityIcon,
-    DataObject as DataObjectIcon
+    DataObject as DataObjectIcon,
+    Edit as EditIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 
@@ -55,12 +56,14 @@ interface SubmodelCardProps {
             }>;
         };
     }, submodelId: string, semanticId: string) => void;
+    onEdit?: (semanticId: string, submodelId: string) => void;
 }
 
 const SubmodelCard: React.FC<SubmodelCardProps> = ({
     semanticId,
     aspect,
-    onViewDetails
+    onViewDetails,
+    onEdit
 }) => {
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
@@ -219,7 +222,7 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
                 </Box>
             </CardContent>
 
-            <CardActions sx={{ p: 1.5, pt: 0 }}>
+            <CardActions sx={{ p: 1.5, pt: 0, gap: 1 }}>
                 <Button
                     fullWidth
                     variant="contained"
@@ -241,6 +244,30 @@ const SubmodelCard: React.FC<SubmodelCardProps> = ({
                 >
                     {tCommon('actions.viewDetails')}
                 </Button>
+                {onEdit && (
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={() => onEdit(semanticId, aspect.submodelId)}
+                        sx={{
+                            color: '#60a5fa',
+                            borderColor: 'rgba(96, 165, 250, 0.5)',
+                            fontSize: '11px',
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            py: 0.5,
+                            minWidth: 'auto',
+                            '&:hover': {
+                                borderColor: 'rgba(96, 165, 250, 0.9)',
+                                backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                            },
+                            borderRadius: 1
+                        }}
+                    >
+                        {tCommon('actions.edit')}
+                    </Button>
+                )}
             </CardActions>
         </Card>
     );
