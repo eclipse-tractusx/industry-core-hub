@@ -629,11 +629,11 @@ class TwinManagementService:
                 else:
                     # Update existing twin aspect
                     self._handle_submodel_service_update(
-                        repo, db_twin_aspect.registrations[0], db_enablement_service_stack, db_twin_aspect, twin_aspect_create
+                        repo, db_twin_aspect.twin_aspect_registrations[0], db_enablement_service_stack, db_twin_aspect, twin_aspect_create
                     )
                     repo.commit()
                     repo.refresh(db_twin_aspect)
-                    return self._create_twin_aspect_read_response(db_twin_aspect, db_enablement_service_stack, db_twin_aspect.registrations[0])
+                    return self._create_twin_aspect_read_response(db_twin_aspect, db_enablement_service_stack, db_twin_aspect.twin_aspect_registrations[0])
             
 
             # Step 4: Check if there is already a registration for the given enablement service stack and create it if not
