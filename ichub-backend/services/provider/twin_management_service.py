@@ -715,7 +715,7 @@ class TwinManagementService:
         """
         Handle the update of the twin aspect payload to the submodel service.
         """
-        if db_twin_aspect_registration.status == TwinAspectRegistrationStatus.STORED.value:
+        if db_twin_aspect_registration.status >= TwinAspectRegistrationStatus.STORED.value:
             submodel_service_manager = _create_submodel_service_manager(db_enablement_service_stack.connection_settings)
             
             # Update the payload to the submodel service
