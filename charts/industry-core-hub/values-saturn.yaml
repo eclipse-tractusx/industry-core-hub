@@ -823,7 +823,7 @@ frontend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
-      - semanticid: "urn:samm:io.catenax.part_type_information:3.0.0#SingleLevelBomAsPlanned"
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
         policies:
           - context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
@@ -844,7 +844,7 @@ frontend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
-      - semanticid: "urn:samm:io.catenax.part_type_information:3.0.0#SingleLevelUsageAsPlanned"
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
         policies:
           - context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
