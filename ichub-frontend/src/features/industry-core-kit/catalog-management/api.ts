@@ -151,8 +151,12 @@ export const createTwinAspect = async (
       requestBody.submodelId = submodelId;
     }
 
+    const url = submodelId
+      ? `${backendUrl}/twin-management/twin-aspect?default=false`
+      : `${backendUrl}/twin-management/twin-aspect`;
+
     const response = await httpClient.post(
-      `${backendUrl}/twin-management/twin-aspect`,
+      url,
       requestBody
     );
     
