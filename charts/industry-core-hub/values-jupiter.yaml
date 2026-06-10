@@ -793,6 +793,64 @@ frontend:
                       "odrl:rightOperand": "cx.core.industrycore:1"
             "odrl:prohibition": []
             "odrl:obligation": []
+      - semanticid: "urn:samm:io.catenax.part_type_information:3.0.0#SingleLevelBomAsPlanned"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
+      - semanticid: "urn:samm:io.catenax.part_type_information:3.0.0#SingleLevelUsageAsPlanned"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
       - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
         policies:
           - "@context":
