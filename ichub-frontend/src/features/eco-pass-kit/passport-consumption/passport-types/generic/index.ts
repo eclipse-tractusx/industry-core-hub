@@ -22,7 +22,7 @@
 
 import { PassportTypeRegistry } from '../types';
 import { GenericPassportVisualization } from './GenericPassportVisualization';
-import schema from '../../../../../schemas/DigitalProductPassport-schema.json';
+import schema from '../../../../../schemas/catena-x/DigitalProductPassport-schema.json';
 
 // Register generic passport type
 PassportTypeRegistry.register({

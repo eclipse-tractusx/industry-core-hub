@@ -23,7 +23,7 @@
 import React from 'react';
 import { SchemaDefinition, getSchemaBySemanticId } from '@/schemas';
 import { EnergySavingsLeaf } from '@mui/icons-material';
-import digitalProductPassportSchema from '@/schemas/DigitalProductPassport-schema.json';
+import digitalProductPassportSchema from '@/schemas/catena-x/DigitalProductPassport-schema.json';
 import { JsonSchema } from '@/features/eco-pass-kit/passport-consumption/types';
 
 /**

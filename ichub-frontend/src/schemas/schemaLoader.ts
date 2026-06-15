@@ -111,6 +111,7 @@ export function loadSchema(
         color: '#1976d2',
         tags: [],
         namespace,
+        group: '',
         ...customMetadata
     };
     

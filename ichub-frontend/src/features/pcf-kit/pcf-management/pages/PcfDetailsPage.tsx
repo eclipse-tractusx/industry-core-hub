@@ -34,7 +34,7 @@ import { PcfSummaryCard } from '../components/header-cards/PcfSummaryCard';
 import { PcfCompanyCard } from '../components/header-cards/PcfCompanyCard';
 import { PcfPeriodCard } from '../components/header-cards/PcfPeriodCard';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-import PcfSchema from '@/schemas/Pcf-schema.json';
+import PcfSchema from '@/schemas/catena-x/Pcf-schema-v9.0.0.json';
 import './PcfDetailsPage.scss';
 
 /**
