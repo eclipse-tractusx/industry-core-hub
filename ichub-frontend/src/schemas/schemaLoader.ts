@@ -123,7 +123,8 @@ export function loadSchema(
         formFields: interpreted.formFields,
         properties: jsonSchema.properties, // Store schema properties for dynamic section detection
         createDefault: interpreted.createDefault,
-        validate: interpreted.validate
+        validate: interpreted.validate,
+        rawSchema: jsonSchema as unknown as Record<string, unknown>,
     };
 }
 

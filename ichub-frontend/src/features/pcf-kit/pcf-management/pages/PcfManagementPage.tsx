@@ -63,6 +63,7 @@ import {
 import { CatalogPartSearch, CatalogPartSearchResult, PartInfoHeader, PcfDataEditor } from '../../shared/components';
 import { ManagedPart } from '../../pcf-exchange/api/pcfExchangeApi';
 import type { PcfNestedData } from '../types/pcfNestedData';
+import { normalizePcfData } from '../utils/pcfNormalizer';
 import {
   getPcfExcludingBiogenic,
   getPcfIncludingBiogenic,
@@ -276,7 +277,7 @@ const PcfManagementPage: React.FC = () => {
 
       setPartReadiness('has-pcf');
       setManagedPart(part);
-      setRawPcfData((pcfDataRecord as PcfNestedData) || null);
+      setRawPcfData(pcfDataRecord ? normalizePcfData(pcfDataRecord) : null);
       setPageState('visualization');
     } catch (err) {
       const message = err instanceof Error ? err.message : t('error.failedToLoadPart');
@@ -357,7 +358,7 @@ const PcfManagementPage: React.FC = () => {
         managedPart.manufacturerPartId,
         data
       );
-      setRawPcfData(data as PcfNestedData);
+      setRawPcfData(normalizePcfData(data));
       setPcfEditDialogOpen(false);
       // Always open the notify dialog so the user sees who will be notified
       // (or learns that no one has requested this PCF yet).

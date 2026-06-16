@@ -26,17 +26,17 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Snackbar } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
-import { getSchemaByNamespaceAndVersion } from '@/schemas';
+import { getSchemaByNamespaceAndVersion, SchemaDefinition } from '@/schemas';
 import { createSchemaKey } from '@/schemas/schemaLoader';
 import SubmodelCreator from '@/components/submodel-creation/SubmodelCreator';
 import { getPcfByManufacturerPartId, updatePcfAndGetParticipants, notifyParticipants, DEFAULT_PCF_POLICIES } from '../../services/pcfApi';
+import { detectPcfVersion } from '../utils/pcfVersionDetector';
 import { ParticipantSelectionDialog } from '../components';
 import { getPcfExchangePoliciesConfig } from '@/services/EnvironmentService';
 import { generatePoliciesFromDefinition } from '@/features/industry-core-kit/part-discovery/utils/governancePolicyUtils';
 import './PcfEditPage.scss';
 
 const PCF_NAMESPACE = 'io.catenax.pcf';
-const PCF_VERSION = '9.0.0';
 
 /**
  * PCF edit page — opens the shared SubmodelCreator (full-screen dialog) pre-populated
@@ -50,8 +50,8 @@ const PcfEditPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('pcf');
 
-  // PCF schema — resolved once at render time (auto-registered at app startup)
-  const pcfSchema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_VERSION);
+  // PCF schema — resolved after data loads, matching the actual version of the stored PCF
+  const [pcfSchema, setPcfSchema] = useState<SchemaDefinition | undefined>(undefined);
 
   // --------------- Data loading ---------------
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +77,10 @@ const PcfEditPage: React.FC = () => {
           setLoadError(t('error.pcfNotFound', 'PCF data not found for this part.'));
           return;
         }
+        // Detect the actual schema version and use it — no conversion, edit in native format
+        const version = detectPcfVersion(raw);
+        const schema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, version);
+        setPcfSchema(schema);
         setInitialData(raw as Record<string, unknown>);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : t('error.failedToLoadPcf'));

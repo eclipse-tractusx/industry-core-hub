@@ -60,6 +60,8 @@ export interface SchemaDefinition<T = any> {
   createDefault: (params?: any) => Partial<T>;
   validate?: (data: Partial<T>) => { isValid: boolean; errors: string[] };
   properties?: Record<string, any>;
+  /** The original raw JSON Schema object, as parsed from the .json file. */
+  rawSchema?: Record<string, unknown>;
 }
 
 /**

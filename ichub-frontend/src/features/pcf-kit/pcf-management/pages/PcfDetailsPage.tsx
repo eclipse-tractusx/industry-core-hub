@@ -33,9 +33,13 @@ import { PcfNestedData } from '../types/pcfNestedData';
 import { PcfSummaryCard } from '../components/header-cards/PcfSummaryCard';
 import { PcfCompanyCard } from '../components/header-cards/PcfCompanyCard';
 import { PcfPeriodCard } from '../components/header-cards/PcfPeriodCard';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import PcfSchema from '@/schemas/catena-x/Pcf-schema-v9.0.0.json';
+import { normalizePcfData } from '../utils/pcfNormalizer';
+import { detectPcfVersion } from '../utils/pcfVersionDetector';
+import { getSchemaByNamespaceAndVersion } from '@/schemas';
+import type { SchemaDefinition } from '@/schemas';
 import './PcfDetailsPage.scss';
+
+const PCF_NAMESPACE = 'io.catenax.pcf';
 
 /**
  * Full-screen details view for a PCF (Product Carbon Footprint).
@@ -53,6 +57,7 @@ const PcfDetailsPage: React.FC = () => {
   const { t } = useTranslation('pcf');
 
   const [pcfData, setPcfData] = useState<PcfNestedData | null>(null);
+  const [pcfSchema, setPcfSchema] = useState<SchemaDefinition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +73,12 @@ const PcfDetailsPage: React.FC = () => {
           setError(t('error.pcfNotFound', 'PCF data not found for this part.'));
           return;
         }
-        setPcfData(raw as unknown as PcfNestedData);
+        const version = detectPcfVersion(raw);
+        const normalized = normalizePcfData(raw);
+        const schema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, version)
+          ?? getSchemaByNamespaceAndVersion(PCF_NAMESPACE, '9.0.0');
+        setPcfData(normalized);
+        setPcfSchema(schema ?? null);
       } catch (err) {
         const message = err instanceof Error ? err.message : t('error.failedToLoadPcf');
         setError(message);
@@ -88,7 +98,7 @@ const PcfDetailsPage: React.FC = () => {
     );
   }
 
-  if (error || !pcfData) {
+  if (error || !pcfData || !pcfSchema) {
     return (
       <Box className="pcf-details-page__error">
         <Alert severity="error" sx={{ maxWidth: 520 }}>
@@ -110,7 +120,7 @@ const PcfDetailsPage: React.FC = () => {
     // Relative container so the FAB can be positioned fixed without layout issues
     <Box className="pcf-details-page">
       <BasePassportVisualization
-        schema={PcfSchema as unknown as JsonSchema}
+        schema={pcfSchema.rawSchema as unknown as JsonSchema}
         data={pcfData as unknown as Record<string, unknown>}
         passportId={manufacturerPartId ?? ''}
         onBack={() => navigate(-1)}
