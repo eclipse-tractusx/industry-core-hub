@@ -541,7 +541,7 @@ const PcfManagementPage: React.FC = () => {
     // Derive display values from nested Catena-X 9.0.0 structure using extractor helpers
   
 
-    const rawStatus   = getPcfStatus(rawPcfData);
+    const rawStatus = rawPcfData ? getPcfStatus(rawPcfData) : null;
     const isPublished = mapPcfStatus(rawStatus) === 'PUBLISHED';
 
     return (
@@ -959,7 +959,7 @@ const PcfManagementPage: React.FC = () => {
               right: 0,
               bottom: 0,
               zIndex: 1300,
-              bgcolor: 'rgba(0, 0, 0, 0.75)',
+              bgcolor: 'rgba(0, 0, 0, 0.88)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
