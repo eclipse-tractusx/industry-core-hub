@@ -83,7 +83,75 @@ agreements:
             rightOperand: "active"
       prohibitions: []
       obligations: []
-
+  - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: urn:samm:io.catenax.single_level_bom_as_built:4.0.0#SingleLevelBomAsBuilt
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
@@ -148,7 +216,7 @@ provider:
       hostname: "https://mondragon-unibertsitatea-connector-dataplane.esauto-x.com"
       publicPath: "/api/public"
   digitalTwinRegistry:
-    hostname: "http://mondragon-unibertsitatea-connector-dataprovider-dtr:8080"
+    hostname: "https://mondragon-unibertsitatea-connector-dtr.esauto-x.com/semantics/registry"
     apiPath: "/api/v3"
     uri: ""
     asset_config:
@@ -190,7 +258,7 @@ provider:
         prohibitions: []
         obligations: []
   digitalTwinEventAPI:
-    hostname: "http://mondragon-unibertsitatea-connector-dataprovider-dtr:8080"
+    hostname: "https://mondragon-unibertsitatea-connector-dtr.esauto-x.com/semantics/registry"
     apiPath: /api/v3
     uri: ""
     asset_config:
@@ -270,17 +338,56 @@ provider:
               rightOperand: "active"
         prohibitions: []
         obligations: []
+  traceabilityExchange:
+    enabled: false
+    hostname: "https://traceability-exchange.example.com"
+    asset_config:
+      dct_type: "cx-taxo:TraceabilityExchange"
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permission:
+          - action: use
+            constraint:
+              and:
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                  operator: "eq"
+                  rightOperand: "DataExchangeGovernance:1.0"
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+                - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                  operator: "isAnyOf"
+                  rightOperand: "cx.core.industrycore:1"
+        prohibition: []
+        obligation: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permission:
+          - action: "access"
+            constraint:
+              leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
   submodel_dispatcher:
-    mode: "filesystem"
+    mode: "http"
     path: "industry-core-hub/data/submodels"
-    apiPath: "/submodel-dispatcher"
+    apiPath: "/v1/submodel-dispatcher"
     http:
-      base_url: "https://external-ichub.example.com"
-      api_path: ""
+      base_url: "https://mondragon-unibertsitatea-ichub-backend.esauto-x.com"
+      api_path: "/v1/submodel-dispatcher"
       auth:
-        enabled: false
+        enabled: true
         type: "apikey"
-        token: ""
+        token: "HACKATHON1-HACKATHON1-HACKATHON1"
         key_name: "X-Api-Key"
       timeout: 30
       verify_ssl: true

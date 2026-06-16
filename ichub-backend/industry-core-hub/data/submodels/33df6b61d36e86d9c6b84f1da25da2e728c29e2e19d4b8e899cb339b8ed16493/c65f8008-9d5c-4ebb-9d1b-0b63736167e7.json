@@ -1,0 +1,13 @@
+{
+  "catenaXId": "2ba4836c-87c1-4af5-b984-ff2fd2e10524",
+  "partTypeInformation": {
+    "manufacturerPartId": "Froga_MU_1234",
+    "nameAtManufacturer": "Froga_MU"
+  },
+  "partSitesInformationAsPlanned": [
+    {
+      "catenaXsiteId": "BPNL0000000080L",
+      "function": "production"
+    }
+  ]
+}

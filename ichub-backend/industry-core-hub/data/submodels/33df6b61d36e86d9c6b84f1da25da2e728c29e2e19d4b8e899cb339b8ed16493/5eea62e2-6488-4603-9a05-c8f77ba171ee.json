@@ -1,0 +1,13 @@
+{
+  "catenaXId": "a089afab-a242-4abb-a1af-5ee52cb9e4ab",
+  "partTypeInformation": {
+    "manufacturerPartId": "PruebaLKS-MGEP1234",
+    "nameAtManufacturer": "LKS_Next_Prueba_Catalog"
+  },
+  "partSitesInformationAsPlanned": [
+    {
+      "catenaXsiteId": "BPNS123456789101",
+      "function": "production"
+    }
+  ]
+}
