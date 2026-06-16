@@ -60,7 +60,7 @@ import {
   PlaylistAdd,
   OpenInNew
 } from '@mui/icons-material';
-import { CatalogPartSearch, CatalogPartSearchResult, PartInfoHeader, PcfDataEditor } from '../../shared/components';
+import { CatalogPartSearch, CatalogPartSearchResult, PartInfoHeader, DualPcfCreationWizard } from '../../shared/components';
 import { ManagedPart } from '../../pcf-exchange/api/pcfExchangeApi';
 import type { PcfNestedData } from '../types/pcfNestedData';
 import { normalizePcfData } from '../utils/pcfNormalizer';
@@ -324,24 +324,38 @@ const PcfManagementPage: React.FC = () => {
     setPcfCreateDialogOpen(true);
   };
 
-  // Handle PCF created from PcfDataEditor
-  const handlePcfCreated = async (pcfDataJson: Record<string, unknown>) => {
+  // Handle both PCF versions produced by the DualPcfCreationWizard.
+  // v9 is the canonical model that gets normalized and persisted. v7 is the
+  // backward-compatibility companion: the current backend exposes a single
+  // canonical PCF per part (no versioned endpoint), so v7 is normalized into
+  // v9 form and only persisted once a versioned endpoint becomes available.
+  const handleDualPcfCreated = async (
+    v9Data: Record<string, unknown>,
+    v7Data: Record<string, unknown>,
+  ) => {
     if (!managedPart) return;
 
     setIsUploading(true);
     try {
-      // Upload the new PCF data
-      await uploadPcf(managedPart.manufacturerPartId, pcfDataJson);
-      
+      // Ensure the v9 payload is in canonical nested form before upload.
+      const normalizedV9 = normalizePcfData(v9Data) as unknown as Record<string, unknown>;
+      await uploadPcf(managedPart.manufacturerPartId, normalizedV9);
+
+      // The backend currently stores a single canonical PCF per part. Posting
+      // the v7 payload to the same endpoint would overwrite the canonical v9,
+      // so it is intentionally not uploaded here. When a versioned/secondary
+      // submodel endpoint is added, POST `v7Data` to it at this point.
+      void v7Data;
+
       // Refresh the page data to show the new PCF
       if (manufacturerId) {
         await loadPartData(manufacturerId, managedPart.manufacturerPartId);
       }
-      
+
       setPcfCreateDialogOpen(false);
     } catch (err) {
       console.error('Failed to upload PCF:', err);
-      throw err; // Re-throw to let PcfDataEditor handle the error
+      throw err; // Re-throw to let the wizard surface the error
     } finally {
       setIsUploading(false);
     }
@@ -949,38 +963,14 @@ const PcfManagementPage: React.FC = () => {
           isLoading={isUpdating}
         />
 
-        {/* Create PCF Dialog - for parts without PCF data */}
-        {pcfCreateDialogOpen && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 1300,
-              bgcolor: 'rgba(0, 0, 0, 0.88)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              p: 3,
-            }}
-            onClick={() => !isUploading && setPcfCreateDialogOpen(false)}
-          >
-            <Box
-              sx={{ maxWidth: 800, width: '100%' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <PcfDataEditor
-                onSave={handlePcfCreated}
-                onCancel={() => setPcfCreateDialogOpen(false)}
-                mode="create"
-                manufacturerPartId={managedPart?.manufacturerPartId || ''}
-                isSaving={isUploading}
-              />
-            </Box>
-          </Box>
-        )}
+        {/* Create PCF Dialog — dual (v9 + v7) creation wizard for parts without PCF data */}
+        <DualPcfCreationWizard
+          open={pcfCreateDialogOpen}
+          onClose={() => !isUploading && setPcfCreateDialogOpen(false)}
+          onSaveBoth={handleDualPcfCreated}
+          manufacturerPartId={managedPart?.manufacturerPartId || ''}
+          isSaving={isUploading}
+        />
       </Box>
     );
   };

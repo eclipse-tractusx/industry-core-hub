@@ -167,6 +167,11 @@ export interface AppConfig {
     enableAdvancedLogging: boolean;
     enablePerformanceMonitoring: boolean;
     enableDevTools: boolean;
+    /**
+     * When enabled, PCF creation requires producing both v9 and v7 submodels
+     * (dual creation flow) instead of selecting a single PCF schema version.
+     */
+    backwardCompatibility: boolean;
   };
   
   // UI and theming
@@ -229,6 +234,7 @@ export interface RawEnvironmentConfig {
   VITE_ENABLE_ADVANCED_LOGGING?: string;
   VITE_ENABLE_PERFORMANCE_MONITORING?: string;
   VITE_ENABLE_DEV_TOOLS?: string;
+  VITE_PCF_BACKWARD_COMPATIBILITY_SATURN?: string;
   
   // UI configuration
   VITE_UI_THEME?: string;

@@ -61,12 +61,26 @@ import {
     ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { SchemaDefinition, SchemaFamily, SchemaVersion, getAllGroups, getGroupedSchemaFamilies } from '../../schemas';
+import environmentService from '../../services/EnvironmentService';
+import { DualPcfCreationWizard } from '../../features/pcf-kit/shared/components/DualPcfCreationWizard';
+
+// PCF namespace + dual-creation theme color
+const PCF_NAMESPACE = 'io.catenax.pcf';
+const PCF_PRIMARY = '#10b981';
 
 interface SchemaSelectorProps {
     open: boolean;
     onClose: () => void;
     onSchemaSelect: (schemaKey: string, schema: SchemaDefinition) => void;
     manufacturerPartId?: string;
+    /**
+     * Called when the dual PCF creation flow (PCF_BACKWARD_COMPATIBILITY_SATURN=true)
+     * completes with both validated and reconciled versions.
+     */
+    onDualSchemaComplete?: (
+        v9Data: Record<string, unknown>,
+        v7Data: Record<string, unknown>,
+    ) => void;
 }
 
 // Dark theme matching the application style
@@ -136,8 +150,12 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     open,
     onClose,
     onSchemaSelect,
-    manufacturerPartId
+    manufacturerPartId,
+    onDualSchemaComplete
 }) => {
+    // Feature flag: when enabled, PCF requires dual (v9 + v7) creation
+    const backwardCompatibility = environmentService.getFeatureFlags().backwardCompatibility;
+    const [dualWizardOpen, setDualWizardOpen] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
@@ -452,6 +470,8 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                             const isMultiVersion = family.versions.length > 1;
                                             // Newest version first for display
                                             const versionsNewestFirst = [...family.versions].reverse();
+                                            // Dual PCF creation: only for the PCF namespace when backward compatibility is on
+                                            const isPcfDual = backwardCompatibility && family.namespace === PCF_NAMESPACE;
 
                                             return (
                                                 <Grid2
@@ -476,7 +496,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                     ref={(el: HTMLElement | null) => { cardRefs.current[family.namespace] = el; }}
                                                     >
                                                         <CardActionArea
-                                                            onClick={() => onSchemaSelect(activeKey, activeSchema)}
+                                                            onClick={() => isPcfDual ? setDualWizardOpen(true) : onSchemaSelect(activeKey, activeSchema)}
                                                             sx={{ height: '100%', p: 0, display: 'flex', alignItems: 'stretch' }}
                                                         >
                                                             <CardContent sx={{ p: 3, width: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -495,11 +515,35 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                                                                     {family.name}
                                                                 </Typography>
 
-                                                                {/* Version chip(s) — newest first */}
-                                                                <Box 
+                                                                {/* Version chip(s) — newest first; dual badge next to version chip */}
+                                                                <Box
                                                                     ref={(el: HTMLElement | null) => { versionRefs.current[family.namespace] = el; }}
-                                                                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5 }}>
-                                                                    {isMultiVersion ? (
+                                                                    sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1.5, alignItems: 'center' }}>
+                                                                    {isPcfDual ? (
+                                                                        <>
+                                                                            <Chip
+                                                                                label="v9.0.0 + v7.0.0"
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    backgroundColor: PCF_PRIMARY,
+                                                                                    color: 'white',
+                                                                                    fontWeight: 700,
+                                                                                    fontSize: '10px',
+                                                                                }}
+                                                                            />
+                                                                            <Chip
+                                                                                label="Dual PCF Creation Required"
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    backgroundColor: alpha('#f59e0b', 0.15),
+                                                                                    color: '#f59e0b',
+                                                                                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                                                                                    fontWeight: 600,
+                                                                                    fontSize: '0.7rem',
+                                                                                }}
+                                                                            />
+                                                                        </>
+                                                                    ) : isMultiVersion ? (
                                                                         versionsNewestFirst.map((v: SchemaVersion) => {
                                                                             const isActive = v.key === activeKey;
                                                                             return (
@@ -718,6 +762,20 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                     Copied to clipboard: {copiedValue}
                 </Alert>
             </Snackbar>
+
+            {/* Dual PCF creation wizard — shown when PCF_BACKWARD_COMPATIBILITY_SATURN is enabled */}
+            {backwardCompatibility && (
+                <DualPcfCreationWizard
+                    open={dualWizardOpen}
+                    onClose={() => setDualWizardOpen(false)}
+                    manufacturerPartId={manufacturerPartId}
+                    onSaveBoth={async (v9Data, v7Data) => {
+                        onDualSchemaComplete?.(v9Data, v7Data);
+                        setDualWizardOpen(false);
+                        onClose();
+                    }}
+                />
+            )}
         </ThemeProvider>
     );
 };
