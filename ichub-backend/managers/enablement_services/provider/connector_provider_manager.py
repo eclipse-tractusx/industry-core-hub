@@ -31,7 +31,7 @@ from tools.constants import (
     ODRL_CONTEXT, CX_POLICY_CONTEXT, TYPE,
     SATURN_ODRL_CONTEXT_URL, SATURN_CX_CONTEXT_URL, EDC_VOCAB_NS,
     DATASPACE_VERSION_JUPITER, DATASPACE_VERSION_SATURN,
-    CCM_DCT_TYPE, CCM_CERTIFICATE_DCT_TYPE, CCM_CERTIFICATE_SEMANTIC_ID,
+    CCM_DCT_TYPE, CCM_DCT_SUBJECT, CCM_CERTIFICATE_DCT_TYPE, CCM_CERTIFICATE_SEMANTIC_ID,
 )
 import json
 
@@ -522,6 +522,7 @@ class ConnectorProviderManager:
             asset_id=asset_id,
             base_url=notification_endpoint_url,
             dct_type=CCM_DCT_TYPE,
+            dct_subject=CCM_DCT_SUBJECT,
             version=version,
             headers=headers,
             proxy_params={
