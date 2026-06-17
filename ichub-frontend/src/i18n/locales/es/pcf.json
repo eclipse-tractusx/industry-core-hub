@@ -417,6 +417,9 @@
     "openV7Editor": "Abrir Editor de Formulario v7.0.0",
     "editV7": "Editar Datos v7.0.0",
     "nextCreateV7": "Siguiente: Crear v7.0.0",
+    "validate": "Validar",
+    "continueBtn": "Continuar",
+    "save": "Guardar",
     "fillFromV9": "Actualizar desde v9.0.0",
     "backToV9": "Volver a v9.0.0",
     "backToV7": "Volver a v7.0.0",
@@ -468,6 +471,13 @@
     "tooltipRefreshV9": "Sobrescribir los campos compartidos en v7.0.0 con los valores actuales de v9.0.0.",
     "tooltipNextV7": "Validar datos v9.0.0 contra el esquema y pasar al paso siguiente",
     "tooltipValidateContinue": "Validar datos v7.0.0 contra el esquema y proceder a la revisión de diferencias",
+    "tooltipValidate": "Validar datos contra el esquema",
+    "tooltipRevalidate": "Revalidar datos contra el esquema",
+    "tooltipValidateBoth": "Validar ambas versiones de PCF contra sus esquemas",
+    "tooltipContinue": "Continuar al siguiente paso",
+    "tooltipContinueDisabled": "Valida los datos primero para continuar",
+    "tooltipSave": "Guardar ambas versiones de PCF en el catálogo",
+    "tooltipSaveDisabled": "Valida ambas versiones de PCF primero",
     "tooltipSaveBoth": "Guardar ambas versiones de PCF. Todas las diferencias deben estar resueltas.",
     "tooltipV9Column": "Haz clic para seleccionar el valor de v9.0.0",
     "tooltipV7Column": "Haz clic para seleccionar el valor de v7.0.0",
@@ -479,6 +489,10 @@
     "validationErrorsTitle": "Errores de validación",
     "manualErrorNumeric": "Debe ser un valor numérico",
     "manualErrorUrn": "Se espera formato URN (urn:...)",
-    "manualErrorRange": "El valor está fuera del rango permitido"
+    "manualErrorRange": "El valor está fuera del rango permitido",
+    "fixErrors": "Gestionar Errores",
+    "tooltipFixErrors": "Abrir editor para corregir los errores de validación",
+    "showResolved": "Mostrar {{count}} resueltos",
+    "hideResolved": "Ocultar resueltos ({{count}})"
   }
 }

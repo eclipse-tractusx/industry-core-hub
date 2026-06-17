@@ -417,6 +417,9 @@
     "openV7Editor": "Open v7.0.0 Form Editor",
     "editV7": "Edit v7.0.0 Data",
     "nextCreateV7": "Next: Create v7.0.0",
+    "validate": "Validate",
+    "continueBtn": "Continue",
+    "save": "Save",
     "fillFromV9": "Refresh from v9.0.0",
     "backToV9": "Back to v9.0.0",
     "backToV7": "Back to v7.0.0",
@@ -468,6 +471,13 @@
     "tooltipRefreshV9": "Overwrite shared fields in v7.0.0 with the current values from v9.0.0. This only affects fields that exist in both versions.",
     "tooltipNextV7": "Validate v9.0.0 data against the schema and proceed to define v7.0.0",
     "tooltipValidateContinue": "Validate v7.0.0 data against the schema and proceed to the reconciliation review",
+    "tooltipValidate": "Validate data against the schema",
+    "tooltipRevalidate": "Revalidate data against the schema",
+    "tooltipValidateBoth": "Validate both PCF versions against their schemas",
+    "tooltipContinue": "Continue to the next step",
+    "tooltipContinueDisabled": "Validate the data first to continue",
+    "tooltipSave": "Save both PCF versions to the catalog",
+    "tooltipSaveDisabled": "Validate both PCF versions first",
     "tooltipSaveBoth": "Save both PCF versions to the catalog. All field differences must be resolved first.",
     "tooltipV9Column": "Click to select the v9.0.0 value for this field",
     "tooltipV7Column": "Click to select the v7.0.0 value for this field",
@@ -479,6 +489,10 @@
     "validationErrorsTitle": "Validation errors",
     "manualErrorNumeric": "Must be a numeric value",
     "manualErrorUrn": "Expected URN format (urn:...)",
-    "manualErrorRange": "Value is outside the allowed range"
+    "manualErrorRange": "Value is outside the allowed range",
+    "fixErrors": "Fix Errors",
+    "tooltipFixErrors": "Open editor to fix validation errors",
+    "showResolved": "Show {{count}} resolved",
+    "hideResolved": "Hide resolved ({{count}})"
   }
 }

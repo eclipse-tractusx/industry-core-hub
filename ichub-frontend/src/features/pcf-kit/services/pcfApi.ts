@@ -209,16 +209,18 @@ export async function getPcfByManufacturerPartId(
 }
 
 /**
- * Upload new PCF data for a catalog part
+ * Upload new PCF data for a catalog part.
+ * @param version - optional PCF schema version (e.g. 'v9.0.0' or 'v7.0.0') sent as a query
+ *                  param so the backend can route to the correct versioned submodel slot.
  */
 export async function uploadPcf(
   manufacturerPartId: string,
-  pcfData: Record<string, unknown>
+  pcfData: Record<string, unknown>,
+  version?: string
 ): Promise<Record<string, unknown>> {
-  const response = await httpClient.post<Record<string, unknown>>(
-    `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`,
-    pcfData
-  );
+  const base = `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`;
+  const url = version ? `${base}?version=${encodeURIComponent(version)}` : base;
+  const response = await httpClient.post<Record<string, unknown>>(url, pcfData);
   return response.data;
 }
 

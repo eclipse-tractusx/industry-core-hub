@@ -1,8 +1,9 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
- *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
+ * 
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
  *
@@ -235,15 +236,15 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             );
 
             if (result.success) {
-                setCopySnackbar({ 
-                    open: true, 
-                    message: t('productDetail.productData.messages.submodelCreatedSuccess', { schemaName: selectedSchema.metadata.name }), 
-                    severity: 'success' 
+                setCopySnackbar({
+                    open: true,
+                    message: t('productDetail.productData.messages.submodelCreatedSuccess', { schemaName: selectedSchema.metadata.name }),
+                    severity: 'success'
                 });
-                
+
                 // Close the creator dialog
                 handleCloseSubmodelCreator();
-                
+
                 // Refresh twin details to show the new submodel
                 if (onPartUpdated) {
                     onPartUpdated();
@@ -254,11 +255,47 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
         } catch (error) {
             console.error('Error creating submodel:', error);
             const errorMessage = error instanceof Error ? error.message : t('productDetail.productData.messages.submodelCreationFailed');
-            setCopySnackbar({ 
-                open: true, 
-                message: errorMessage, 
-                severity: 'error' 
+            setCopySnackbar({
+                open: true,
+                message: errorMessage,
+                severity: 'error'
             });
+        }
+    };
+
+    // Sync flow: register both PCF versions as independent twin-aspect submodels.
+    // Called by SchemaSelector when PCF_BACKWARD_COMPATIBILITY_SATURN=true and the
+    // DualPcfCreationWizard completes. Mirrors two sequential calls to the normal
+    // "create submodel" path, one per version.
+    const handleDualSchemaComplete = async (
+        v9Data: Record<string, unknown>,
+        v7Data: Record<string, unknown>,
+    ) => {
+        if (!twinDetails?.globalId) {
+            throw new Error(t('productDetail.productData.messages.twinRequired'));
+        }
+
+        const PCF_V9_SEMANTIC_ID = 'urn:samm:io.catenax.pcf:9.0.0#Pcf';
+        const PCF_V7_SEMANTIC_ID = 'urn:samm:io.catenax.pcf:7.0.0#Pcf';
+
+        const v9Result = await createTwinAspect(twinDetails.globalId, PCF_V9_SEMANTIC_ID, v9Data);
+        if (!v9Result.success) {
+            throw new Error(v9Result.message || t('productDetail.productData.messages.submodelCreationFailed'));
+        }
+
+        const v7Result = await createTwinAspect(twinDetails.globalId, PCF_V7_SEMANTIC_ID, v7Data);
+        if (!v7Result.success) {
+            throw new Error(v7Result.message || t('productDetail.productData.messages.submodelCreationFailed'));
+        }
+
+        setCopySnackbar({
+            open: true,
+            message: t('productDetail.productData.messages.submodelCreatedSuccess', { schemaName: 'PCF v9.0.0 + v7.0.0' }),
+            severity: 'success',
+        });
+
+        if (onPartUpdated) {
+            onPartUpdated();
         }
     };
 
@@ -1082,6 +1119,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                 onClose={handleCloseSchemaSelector}
                 onSchemaSelect={handleSchemaSelect}
                 manufacturerPartId={part.manufacturerPartId}
+                onDualSchemaComplete={handleDualSchemaComplete}
             />
 
             {/* Submodel Creator Dialog */}

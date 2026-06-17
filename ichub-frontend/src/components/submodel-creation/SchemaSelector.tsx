@@ -1,8 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -76,11 +76,13 @@ interface SchemaSelectorProps {
     /**
      * Called when the dual PCF creation flow (PCF_BACKWARD_COMPATIBILITY_SATURN=true)
      * completes with both validated and reconciled versions.
+     * May return a Promise — SchemaSelector will await it and keep the wizard in
+     * saving state until the Promise settles.
      */
     onDualSchemaComplete?: (
         v9Data: Record<string, unknown>,
         v7Data: Record<string, unknown>,
-    ) => void;
+    ) => Promise<void> | void;
 }
 
 // Dark theme matching the application style
@@ -156,6 +158,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
     // Feature flag: when enabled, PCF requires dual (v9 + v7) creation
     const backwardCompatibility = environmentService.getFeatureFlags().backwardCompatibility;
     const [dualWizardOpen, setDualWizardOpen] = useState(false);
+    const [isDualSaving, setIsDualSaving] = useState(false);
     const [copySuccess, setCopySuccess] = useState(false);
     const [copiedValue, setCopiedValue] = useState<string | null>(null);
     const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({});
@@ -767,12 +770,18 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
             {backwardCompatibility && (
                 <DualPcfCreationWizard
                     open={dualWizardOpen}
-                    onClose={() => setDualWizardOpen(false)}
+                    onClose={() => { if (!isDualSaving) setDualWizardOpen(false); }}
                     manufacturerPartId={manufacturerPartId}
+                    isSaving={isDualSaving}
                     onSaveBoth={async (v9Data, v7Data) => {
-                        onDualSchemaComplete?.(v9Data, v7Data);
-                        setDualWizardOpen(false);
-                        onClose();
+                        setIsDualSaving(true);
+                        try {
+                            await onDualSchemaComplete?.(v9Data, v7Data);
+                            setDualWizardOpen(false);
+                            onClose();
+                        } finally {
+                            setIsDualSaving(false);
+                        }
                     }}
                 />
             )}

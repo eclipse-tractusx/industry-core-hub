@@ -324,11 +324,10 @@ const PcfManagementPage: React.FC = () => {
     setPcfCreateDialogOpen(true);
   };
 
-  // Handle both PCF versions produced by the DualPcfCreationWizard.
-  // v9 is the canonical model that gets normalized and persisted. v7 is the
-  // backward-compatibility companion: the current backend exposes a single
-  // canonical PCF per part (no versioned endpoint), so v7 is normalized into
-  // v9 form and only persisted once a versioned endpoint becomes available.
+  // Handle both PCF versions produced by the DualPcfCreationWizard (async flow).
+  // Both versions are uploaded to the versioned PCF endpoint so that the backend
+  // can store them as distinct submodel slots: v9.0.0 (canonical) and v7.0.0
+  // (backward-compatibility companion).
   const handleDualPcfCreated = async (
     v9Data: Record<string, unknown>,
     v7Data: Record<string, unknown>,
@@ -337,15 +336,12 @@ const PcfManagementPage: React.FC = () => {
 
     setIsUploading(true);
     try {
-      // Ensure the v9 payload is in canonical nested form before upload.
+      // v9: normalize to canonical nested form, then upload with version tag.
       const normalizedV9 = normalizePcfData(v9Data) as unknown as Record<string, unknown>;
-      await uploadPcf(managedPart.manufacturerPartId, normalizedV9);
+      await uploadPcf(managedPart.manufacturerPartId, normalizedV9, 'v9.0.0');
 
-      // The backend currently stores a single canonical PCF per part. Posting
-      // the v7 payload to the same endpoint would overwrite the canonical v9,
-      // so it is intentionally not uploaded here. When a versioned/secondary
-      // submodel endpoint is added, POST `v7Data` to it at this point.
-      void v7Data;
+      // v7: send the raw wizard data (already in v7 schema shape) with version tag.
+      await uploadPcf(managedPart.manufacturerPartId, v7Data, 'v7.0.0');
 
       // Refresh the page data to show the new PCF
       if (manufacturerId) {

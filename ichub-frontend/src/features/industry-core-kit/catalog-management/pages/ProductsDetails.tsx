@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -267,14 +268,14 @@ const ProductsDetails = () => {
 
       if (result.success) {
         const messageKey = editingSubmodelId ? 'messages.submodelUpdatedSuccess' : 'messages.submodelCreatedSuccess';
-        setNotification({ 
-          open: true, 
-          severity: 'success', 
+        setNotification({
+          open: true,
+          severity: 'success',
           title: t(messageKey, { schemaName: selectedSchema.metadata.name })
         });
-        
+
         handleCloseSubmodelCreator();
-        
+
         // Refresh the data
         await fetchData();
       } else {
@@ -282,12 +283,46 @@ const ProductsDetails = () => {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t('messages.submodelCreatedError');
-      setNotification({ 
-        open: true, 
-        severity: 'error', 
+      setNotification({
+        open: true,
+        severity: 'error',
         title: errorMessage
       });
     }
+  };
+
+  // Sync flow: register both PCF versions as independent twin-aspect submodels.
+  // Called by SchemaSelector when PCF_BACKWARD_COMPATIBILITY_SATURN=true and the
+  // DualPcfCreationWizard completes. Mirrors two sequential calls to the normal
+  // "create submodel" path, one per version.
+  const handleDualSchemaComplete = async (
+    v9Data: Record<string, unknown>,
+    v7Data: Record<string, unknown>,
+  ) => {
+    if (!twinDetails?.globalId) {
+      throw new Error('Twin must be created before adding submodels. Please create a twin first.');
+    }
+
+    const PCF_V9_SEMANTIC_ID = 'urn:samm:io.catenax.pcf:9.0.0#Pcf';
+    const PCF_V7_SEMANTIC_ID = 'urn:samm:io.catenax.pcf:7.0.0#Pcf';
+
+    const v9Result = await createTwinAspect(twinDetails.globalId, PCF_V9_SEMANTIC_ID, v9Data);
+    if (!v9Result.success) {
+      throw new Error(v9Result.message || t('messages.submodelCreatedError'));
+    }
+
+    const v7Result = await createTwinAspect(twinDetails.globalId, PCF_V7_SEMANTIC_ID, v7Data);
+    if (!v7Result.success) {
+      throw new Error(v7Result.message || t('messages.submodelCreatedError'));
+    }
+
+    setNotification({
+      open: true,
+      severity: 'success',
+      title: t('messages.submodelCreatedSuccess', { schemaName: 'PCF v9.0.0 + v7.0.0' }),
+    });
+
+    await fetchData();
   };
 
   const handleCloseNotification = () => {
@@ -383,6 +418,7 @@ const ProductsDetails = () => {
           onClose={handleCloseSchemaSelector}
           onSchemaSelect={handleSchemaSelect}
           manufacturerPartId={partType?.manufacturerPartId}
+          onDualSchemaComplete={handleDualSchemaComplete}
         />
 
         {/* Submodel Creator Dialog */}

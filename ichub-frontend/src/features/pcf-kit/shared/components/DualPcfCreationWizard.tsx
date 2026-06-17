@@ -59,6 +59,8 @@ import {
   InsertDriveFile as InsertDriveFileIcon,
   CheckCircleOutline as CheckCircleOutlineIcon,
   InfoOutlined as InfoOutlinedIcon,
+  Replay as ReplayIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { getSchemaByNamespaceAndVersion } from '@/schemas';
 import { createSchemaKey } from '@/schemas/schemaLoader';
@@ -282,6 +284,15 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
   const [differences, setDifferences] = useState<FieldDifference[]>([]);
   const [v9ValidationResult, setV9ValidationResult] = useState<{ valid: boolean; errors: string[] } | null>(null);
   const [v7ValidationResult, setV7ValidationResult] = useState<{ valid: boolean; errors: string[] } | null>(null);
+  // Tracks where data came from: 'file' = loaded from filesystem, 'editor' = saved from SubmodelCreator form
+  const [v9DataSource, setV9DataSource] = useState<'file' | 'editor' | null>(null);
+  const [v7DataSource, setV7DataSource] = useState<'file' | 'editor' | null>(null);
+  // When true, the SubmodelCreator opens with auto-validation (used for Fix Errors flow)
+  const [editorAutoValidate, setEditorAutoValidate] = useState(false);
+  // Controls whether already-resolved-and-valid differences are visible in Step 3
+  const [showResolved, setShowResolved] = useState(true);
+  // Shows loading indicator when opening editor
+  const [isLoadingEditor, setIsLoadingEditor] = useState(false);
 
   const v9Schema = useMemo(() => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_V9), []);
   const v7Schema = useMemo(() => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_V7), []);
@@ -304,46 +315,77 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
       setDifferences([]);
       setV9ValidationResult(null);
       setV7ValidationResult(null);
+      setV9DataSource(null);
+      setV7DataSource(null);
+      setEditorAutoValidate(false);
+      setShowResolved(true);
+      setIsLoadingEditor(false);
     }
   }, [open]);
 
-  // Clear validation results when data is replaced
-  useEffect(() => { setV9ValidationResult(null); }, [v9FormData]);
-  useEffect(() => { setV7ValidationResult(null); }, [v7FormData]);
+  // Clear validation results when data is replaced — but NOT when coming from the form editor,
+  // since handleEditorCapture already sets the result to valid.
+  useEffect(() => {
+    if (v9DataSource !== 'editor') setV9ValidationResult(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v9FormData]);
+  useEffect(() => {
+    if (v7DataSource !== 'editor') setV7ValidationResult(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [v7FormData]);
+
+  // Reset loading state when editor closes (in case user closed it via ESC or outside click)
+  useEffect(() => {
+    if (!editorMode) setIsLoadingEditor(false);
+  }, [editorMode]);
 
   const handleV9FileLoaded = useCallback((data: Record<string, unknown>, detected: string | null) => {
     setV9FormData(data);
     setV9LoadedVersion(detected);
+    setV9DataSource('file');
   }, []);
 
   const handleV7FileLoaded = useCallback((data: Record<string, unknown>, detected: string | null) => {
     setV7FormData(data);
     setV7LoadedVersion(detected);
+    setV7DataSource('file');
   }, []);
 
-  const openV9Editor = useCallback(() => {
+  const openV9Editor = useCallback((autoValidate = false) => {
+    setEditorAutoValidate(autoValidate);
     setEditorInitialData(v9FormData ?? undefined);
     setEditorMode('v9');
   }, [v9FormData]);
 
-  // Opens v7 editor pre-filled with fields extracted from v9 data
-  const openV7Editor = useCallback(() => {
-    const extracted = v9FormData ? extractV7CompatibleFields(v9FormData) : undefined;
-    const merged = (extracted && v7FormData)
-      ? { ...extracted, pcf: { ...((extracted.pcf as object) ?? {}), ...((v7FormData.pcf as object) ?? {}) } }
-      : extracted ?? v7FormData ?? undefined;
-    setEditorInitialData(merged);
+  // Opens v7 editor. When v7 data already exists, uses it directly to preserve all previously
+  // entered values. Only falls back to v9-extracted fields on first open (no v7 data yet).
+  const openV7Editor = useCallback((autoValidate = false) => {
+    setEditorAutoValidate(autoValidate);
+    if (v7FormData) {
+      setEditorInitialData(v7FormData);
+    } else {
+      const extracted = v9FormData ? extractV7CompatibleFields(v9FormData) : undefined;
+      setEditorInitialData(extracted);
+    }
     setEditorMode('v7');
   }, [v9FormData, v7FormData]);
 
   const handleEditorCapture = useCallback(async (data: Record<string, unknown>) => {
+    // SubmodelCreator only calls this callback after successful validation, so we can
+    // immediately mark the data as validated without requiring a separate Validate click.
     if (editorMode === 'v9') {
       setV9FormData(data);
       setV9LoadedVersion(PCF_V9);
+      setV9DataSource('editor');
+      setV9ValidationResult({ valid: true, errors: [] });
     } else if (editorMode === 'v7') {
       setV7FormData(data);
       setV7LoadedVersion(PCF_V7);
+      setV7DataSource('editor');
+      setV7ValidationResult({ valid: true, errors: [] });
     }
+    setEditorAutoValidate(false);
+    setIsLoadingEditor(false);
     setEditorMode(null);
   }, [editorMode]);
 
@@ -365,7 +407,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
     setV7LoadedVersion(PCF_V7);
   }, [v9FormData, v7FormData]);
 
-  const validateAndNextStep = useCallback(() => {
+  const validateV9 = useCallback(() => {
     if (!v9FormData) return;
     if (v9Schema?.validate) {
       const result = v9Schema.validate(v9FormData);
@@ -376,11 +418,14 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
         return;
       }
     }
-    setV9ValidationResult(null);
-    setActiveStep(1);
+    setV9ValidationResult({ valid: true, errors: [] });
   }, [v9FormData, v9Schema]);
 
-  const validateAndGoToReview = useCallback(() => {
+  const goToStep2 = useCallback(() => {
+    setActiveStep(1);
+  }, []);
+
+  const validateV7 = useCallback(() => {
     if (!v7FormData) return;
     if (v7Schema?.validate) {
       const result = v7Schema.validate(v7FormData);
@@ -391,12 +436,45 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
         return;
       }
     }
-    setV7ValidationResult(null);
+    setV7ValidationResult({ valid: true, errors: [] });
+  }, [v7FormData, v7Schema]);
+
+  const goToStep3 = useCallback(() => {
     if (v9FormData && v7FormData) {
       setDifferences(findCrossVersionDifferences(v9FormData, v7FormData));
     }
     setActiveStep(2);
-  }, [v7FormData, v7Schema, v9FormData]);
+  }, [v9FormData, v7FormData]);
+
+  const validateBoth = useCallback(() => {
+    if (v9FormData) {
+      if (v9Schema?.validate) {
+        const result = v9Schema.validate(v9FormData);
+        const errors = [...new Set((result.errors as unknown[]).map(String))];
+        if (!result.isValid && errors.length > 0) {
+          setV9ValidationResult({ valid: false, errors });
+        } else {
+          setV9ValidationResult({ valid: true, errors: [] });
+        }
+      } else {
+        setV9ValidationResult({ valid: true, errors: [] });
+      }
+    }
+    if (v7FormData) {
+      if (v7Schema?.validate) {
+        const result = v7Schema.validate(v7FormData);
+        const errors = [...new Set((result.errors as unknown[]).map(String))];
+        if (!result.isValid && errors.length > 0) {
+          setV7ValidationResult({ valid: false, errors });
+        } else {
+          setV7ValidationResult({ valid: true, errors: [] });
+        }
+      } else {
+        setV7ValidationResult({ valid: true, errors: [] });
+      }
+    }
+    setShowResolved(false);
+  }, [v9FormData, v7FormData, v9Schema, v7Schema]);
 
   const resolveDifference = useCallback(
     (diff: FieldDifference, chosen: 'v9' | 'v7' | 'manual', manualValue?: unknown) => {
@@ -415,10 +493,42 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
     [],
   );
 
+  const v9Validated = v9ValidationResult?.valid === true;
+  const v7Validated = v7ValidationResult?.valid === true;
+  const step3Validated = v9Validated && v7Validated;
   const unresolved = differences.filter((d) => !d.chosenVersion);
   const allResolved = unresolved.length === 0;
-  const canSave = activeStep === 2 && v9FormData != null && v7FormData != null && allResolved && !isSaving;
+  const canSave = v9FormData != null && v7FormData != null && allResolved && !isSaving && step3Validated;
   const emptyLabel = t('dualWizard.empty');
+
+  // Maps validation error messages to fieldKeys whose label appears in the error text
+  const differencesWithErrors = useMemo<Set<string>>(() => {
+    const allErrors = [
+      ...(v9ValidationResult?.errors ?? []),
+      ...(v7ValidationResult?.errors ?? []),
+    ];
+    if (allErrors.length === 0) return new Set();
+    const errorLabels = allErrors.flatMap(err => {
+      const matches = [...err.matchAll(/'([^']+)'/g)];
+      return matches.map(m => m[1].toLowerCase().trim());
+    }).filter(Boolean);
+    return new Set(
+      differences
+        .filter(d => errorLabels.some(el =>
+          el.includes(d.label.toLowerCase().trim()) ||
+          d.label.toLowerCase().trim().includes(el)
+        ))
+        .map(d => d.fieldKey)
+    );
+  }, [differences, v9ValidationResult, v7ValidationResult]);
+
+  const afterValidation = v9ValidationResult !== null || v7ValidationResult !== null;
+  const resolvedAndValidCount = differences.filter(
+    d => d.chosenVersion && !differencesWithErrors.has(d.fieldKey)
+  ).length;
+  const filteredDifferences = (afterValidation && !showResolved)
+    ? differences.filter(d => !d.chosenVersion || differencesWithErrors.has(d.fieldKey))
+    : differences;
 
   // -------- Button styles --------
   const primarySx = {
@@ -438,16 +548,26 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
     borderRadius: '10px',
     '&:hover': { borderColor: 'rgba(255,255,255,0.34)', backgroundColor: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.88)' },
   };
-  const fillSx = {
-    borderColor: alpha(PCF_PRIMARY, 0.5),
-    color: PCF_PRIMARY,
+  const amberSx = {
+    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    color: '#fff',
     textTransform: 'none' as const,
     borderRadius: '10px',
     fontWeight: 600,
-    '&:hover': { borderColor: PCF_PRIMARY, backgroundColor: alpha(PCF_PRIMARY, 0.09), boxShadow: `0 0 12px ${alpha(PCF_PRIMARY, 0.22)}` },
-    '&:disabled': { borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.2)' },
+    boxShadow: '0 4px 14px rgba(245,158,11,0.35)',
+    '&:hover': { background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', boxShadow: '0 6px 20px rgba(245,158,11,0.5)' },
+    '&:disabled': { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.22)', boxShadow: 'none' },
   };
-
+  const errorSx = {
+    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+    color: '#fff',
+    textTransform: 'none' as const,
+    borderRadius: '10px',
+    fontWeight: 600,
+    boxShadow: '0 4px 14px rgba(239,68,68,0.35)',
+    '&:hover': { background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)', boxShadow: '0 6px 20px rgba(239,68,68,0.5)' },
+    '&:disabled': { background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.22)', boxShadow: 'none' },
+  };
   const stepLabels = [
     t('dualWizard.steps.createV9'),
     t('dualWizard.steps.createV7'),
@@ -573,7 +693,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                       variant="outlined"
                       size="large"
                       startIcon={<CodeIcon />}
-                      onClick={openV9Editor}
+                      onClick={() => openV9Editor()}
                       sx={{
                         py: 1.75,
                         borderColor: 'rgba(255,255,255,0.16)',
@@ -615,20 +735,46 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
 
                   {/* Footer */}
                   <Box className="dual-pcf-wizard__step-footer" sx={{ mt: 4 }}>
-                    <Tooltip title={t('dualWizard.exitWizard')} placement="top">
-                      <Button variant="outlined" startIcon={<CloseIcon />} onClick={onClose} sx={outlinedSx}>
-                        {t('dualWizard.exitWizard')}
-                      </Button>
-                    </Tooltip>
+                    <Button variant="outlined" startIcon={<CloseIcon />} onClick={onClose} sx={outlinedSx}>
+                      {t('dualWizard.exitWizard')}
+                    </Button>
                     <Box className="dual-pcf-wizard__nav">
-                      <Tooltip title={!v9FormData ? t('dualWizard.step1NextTooltip') : t('dualWizard.tooltipNextV7')} placement="top">
+                      {v9Validated ? (
+                        <Tooltip title={t('dualWizard.tooltipRevalidate')} placement="top">
+                          <Button variant="contained" onClick={validateV9} sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                            <ReplayIcon fontSize="small" />
+                          </Button>
+                        </Tooltip>
+                      ) : v9ValidationResult?.valid === false && v9DataSource === 'file' ? (
+                        <Tooltip title={t('dualWizard.tooltipFixErrors')} placement="top">
+                          <Button variant="contained" startIcon={isLoadingEditor ? <CircularProgress size={22} color="inherit" /> : <ErrorIcon />}
+                            disabled={isLoadingEditor}
+                            onClick={() => { setIsLoadingEditor(true); setTimeout(() => openV9Editor(true), 60); }} sx={{ ...errorSx, minHeight: '40px' }}>
+                            {t('dualWizard.fixErrors')}
+                          </Button>
+                        </Tooltip>
+                      ) : (
                         <span>
-                          <Button variant="contained" endIcon={<ArrowForwardIcon />}
-                            disabled={!v9FormData} onClick={validateAndNextStep} sx={primarySx}>
-                            {t('dualWizard.nextCreateV7')}
+                          <Button variant="contained" startIcon={<CheckCircleOutlineIcon />}
+                            disabled={!v9FormData} onClick={validateV9}
+                            sx={{ ...(v9DataSource === 'file' ? amberSx : primarySx), minHeight: '40px' }}>
+                            {t('dualWizard.validate')}
                           </Button>
                         </span>
-                      </Tooltip>
+                      )}
+                      {v9Validated ? (
+                        <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={goToStep2} sx={{ ...primarySx, minHeight: '40px' }}>
+                          {t('dualWizard.continueBtn')}
+                        </Button>
+                      ) : (
+                        <Tooltip title={t('dualWizard.tooltipContinueDisabled')} placement="top">
+                          <span>
+                            <Button variant="contained" disabled sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                              <ArrowForwardIcon fontSize="small" />
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
                     </Box>
                   </Box>
                 </Box>
@@ -685,7 +831,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                       variant="outlined"
                       size="large"
                       startIcon={<CodeIcon />}
-                      onClick={openV7Editor}
+                      onClick={() => openV7Editor()}
                       sx={{
                         py: 1.75,
                         borderColor: 'rgba(255,255,255,0.16)',
@@ -751,21 +897,47 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
 
                   {/* Footer */}
                   <Box className="dual-pcf-wizard__step-footer" sx={{ mt: 4 }}>
-                    <Tooltip title={t('dualWizard.tooltipBackToV9')} placement="top">
-                      <Button variant="outlined" startIcon={<ArrowBackIcon />}
-                        onClick={() => setActiveStep(0)} sx={outlinedSx}>
-                        {t('dualWizard.backToV9')}
-                      </Button>
-                    </Tooltip>
+                    <Button variant="outlined" startIcon={<ArrowBackIcon />}
+                      onClick={() => setActiveStep(0)} sx={{ ...outlinedSx, minHeight: '40px' }}>
+                      {t('dualWizard.backToV9')}
+                    </Button>
                     <Box className="dual-pcf-wizard__nav">
-                      <Tooltip title={!v7FormData ? t('dualWizard.step2NextTooltip') : t('dualWizard.tooltipValidateContinue')} placement="top">
+                      {v7Validated ? (
+                        <Tooltip title={t('dualWizard.tooltipRevalidate')} placement="top">
+                          <Button variant="contained" onClick={validateV7} sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                            <ReplayIcon fontSize="small" />
+                          </Button>
+                        </Tooltip>
+                      ) : v7ValidationResult?.valid === false && v7DataSource === 'file' ? (
+                        <Tooltip title={t('dualWizard.tooltipFixErrors')} placement="top">
+                          <Button variant="contained" startIcon={isLoadingEditor ? <CircularProgress size={22} color="inherit" /> : <ErrorIcon />}
+                            disabled={isLoadingEditor}
+                            onClick={() => { setIsLoadingEditor(true); setTimeout(() => openV7Editor(true), 60); }} sx={{ ...errorSx, minHeight: '40px' }}>
+                            {t('dualWizard.fixErrors')}
+                          </Button>
+                        </Tooltip>
+                      ) : (
                         <span>
-                          <Button variant="contained" endIcon={<ArrowForwardIcon />}
-                            disabled={!v7FormData} onClick={validateAndGoToReview} sx={primarySx}>
-                            {t('dualWizard.validateContinue')}
+                          <Button variant="contained" startIcon={<CheckCircleOutlineIcon />}
+                            disabled={!v7FormData} onClick={validateV7}
+                            sx={{ ...(v7DataSource === 'file' ? amberSx : primarySx), minHeight: '40px' }}>
+                            {t('dualWizard.validate')}
                           </Button>
                         </span>
-                      </Tooltip>
+                      )}
+                      {v7Validated ? (
+                        <Button variant="contained" endIcon={<ArrowForwardIcon />} onClick={goToStep3} sx={{ ...primarySx, minHeight: '40px' }}>
+                          {t('dualWizard.continueBtn')}
+                        </Button>
+                      ) : (
+                        <Tooltip title={t('dualWizard.tooltipContinueDisabled')} placement="top">
+                          <span>
+                            <Button variant="contained" disabled sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                              <ArrowForwardIcon fontSize="small" />
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      )}
                     </Box>
                   </Box>
                 </Box>
@@ -774,6 +946,70 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
               {/* ──────── Step 3: Review & Save ──────── */}
               {activeStep === 2 && (
                 <Box sx={{ pb: 2 }}>
+                  {/* Step 3 validation errors — shown after validateBoth is triggered */}
+                  {(v9ValidationResult?.valid === false || v7ValidationResult?.valid === false) && (
+                    <Box sx={{ mb: 2 }}>
+                      {v9ValidationResult?.valid === false && v9ValidationResult.errors.length > 0 && (
+                        <Alert severity="error" sx={{ mb: 1.5, bgcolor: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.22)' }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#ef4444', mb: 0.5 }}>
+                              v9.0.0 — {t('dualWizard.validationFailed', { count: v9ValidationResult.errors.length })}
+                            </Typography>
+                            <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                              {v9ValidationResult.errors.slice(0, 6).map((err, i) => (
+                                <Box component="li" key={i} sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', mb: 0.25 }}>{err}</Box>
+                              ))}
+                              {v9ValidationResult.errors.length > 6 && (
+                                <Box component="li" sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                                  +{v9ValidationResult.errors.length - 6} more
+                                </Box>
+                              )}
+                            </Box>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1.5 }}>
+                            <Button variant="outlined" startIcon={isLoadingEditor ? <CircularProgress size={18} color="inherit" /> : <EditIcon />}
+                              disabled={isLoadingEditor}
+                              onClick={() => { setIsLoadingEditor(true); setActiveStep(0); setTimeout(() => openV9Editor(true), 60); }}
+                              sx={{ borderColor: 'rgba(239,68,68,0.5)', color: '#ef4444', textTransform: 'none',
+                                    borderRadius: '8px', fontWeight: 600, fontSize: '0.78rem',
+                                    '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', borderColor: '#ef4444', color: '#ef4444' } }}>
+                              {t('dualWizard.fixErrors')}
+                            </Button>
+                          </Box>
+                        </Alert>
+                      )}
+                      {v7ValidationResult?.valid === false && v7ValidationResult.errors.length > 0 && (
+                        <Alert severity="error" sx={{ mb: 1.5, bgcolor: 'rgba(239,68,68,0.08)', color: '#ef4444', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.22)' }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#ef4444', mb: 0.5 }}>
+                              v7.0.0 — {t('dualWizard.validationFailed', { count: v7ValidationResult.errors.length })}
+                            </Typography>
+                            <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                              {v7ValidationResult.errors.slice(0, 6).map((err, i) => (
+                                <Box component="li" key={i} sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', mb: 0.25 }}>{err}</Box>
+                              ))}
+                              {v7ValidationResult.errors.length > 6 && (
+                                <Box component="li" sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                                  +{v7ValidationResult.errors.length - 6} more
+                                </Box>
+                              )}
+                            </Box>
+                          </Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1.5 }}>
+                            <Button variant="outlined" startIcon={isLoadingEditor ? <CircularProgress size={18} color="inherit" /> : <EditIcon />}
+                              disabled={isLoadingEditor}
+                              onClick={() => { setIsLoadingEditor(true); setActiveStep(1); setTimeout(() => openV7Editor(true), 60); }}
+                              sx={{ borderColor: 'rgba(239,68,68,0.5)', color: '#ef4444', textTransform: 'none',
+                                    borderRadius: '8px', fontWeight: 600, fontSize: '0.78rem',
+                                    '&:hover': { bgcolor: 'rgba(239,68,68,0.08)', borderColor: '#ef4444', color: '#ef4444' } }}>
+                              {t('dualWizard.fixErrors')}
+                            </Button>
+                          </Box>
+                        </Alert>
+                      )}
+                    </Box>
+                  )}
+
                   {differences.length === 0 || allResolved ? (
                     <Alert icon={<CheckCircleIcon fontSize="inherit" />} severity="success"
                       sx={{ bgcolor: alpha(PCF_PRIMARY, 0.09), color: PCF_PRIMARY, borderRadius: '12px', mb: 3, border: `1px solid ${alpha(PCF_PRIMARY, 0.28)}` }}>
@@ -806,14 +1042,41 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                     </Box>
                   )}
 
-                  {differences.map((diff) => (
-                    <ReconciliationCard
-                      key={diff.fieldKey}
-                      diff={diff}
-                      emptyLabel={emptyLabel}
-                      onResolve={resolveDifference}
-                    />
-                  ))}
+                  {afterValidation && resolvedAndValidCount > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                      <Button size="small" variant="text"
+                        onClick={() => setShowResolved(prev => !prev)}
+                        sx={{ color: PCF_PRIMARY, textTransform: 'none', fontSize: '0.8rem',
+                              '&:hover': { bgcolor: alpha(PCF_PRIMARY, 0.06) } }}>
+                        {showResolved
+                          ? t('dualWizard.hideResolved', { count: resolvedAndValidCount })
+                          : t('dualWizard.showResolved', { count: resolvedAndValidCount })}
+                      </Button>
+                    </Box>
+                  )}
+
+                  {filteredDifferences.map((diff) => {
+                    const allErrors = [
+                      ...(v9ValidationResult?.errors ?? []),
+                      ...(v7ValidationResult?.errors ?? []),
+                    ];
+                    const fieldErrors = allErrors.filter(err => {
+                      const matches = [...err.matchAll(/'([^']+)'/g)];
+                      const el = matches.map(m => m[1].toLowerCase()).join(' ');
+                      return el.includes(diff.label.toLowerCase()) ||
+                        diff.label.toLowerCase().split(' ').some(w => w.length > 2 && el.includes(w));
+                    });
+                    return (
+                      <ReconciliationCard
+                        key={diff.fieldKey}
+                        diff={diff}
+                        emptyLabel={emptyLabel}
+                        onResolve={resolveDifference}
+                        hasFieldError={differencesWithErrors.has(diff.fieldKey)}
+                        fieldErrors={fieldErrors}
+                      />
+                    );
+                  })}
                 </Box>
               )}
 
@@ -824,22 +1087,45 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
           {activeStep === 2 && (
             <Box className="dual-pcf-wizard__sticky-footer">
               <Box sx={{ maxWidth: 900, mx: 'auto', px: { xs: 2, sm: 4 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Tooltip title={t('dualWizard.tooltipBackToV7')} placement="top" arrow>
-                  <Button variant="outlined" startIcon={<ArrowBackIcon />}
-                    onClick={() => setActiveStep(1)} sx={outlinedSx}>
-                    {t('dualWizard.backToV7')}
-                  </Button>
-                </Tooltip>
-                <Tooltip title={!canSave ? (allResolved ? '' : t('dualWizard.tooltipSaveBoth')) : t('dualWizard.tooltipSaveBoth')} placement="top" arrow>
-                  <span>
-                    <Button variant="contained"
-                      startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
-                      disabled={!canSave} onClick={async () => { if (v9FormData && v7FormData) await onSaveBoth(v9FormData, v7FormData); }}
-                      sx={primarySx}>
-                      {isSaving ? t('dualWizard.saving') : t('dualWizard.saveBoth')}
-                    </Button>
-                  </span>
-                </Tooltip>
+                <Button variant="outlined" startIcon={<ArrowBackIcon />}
+                  onClick={() => setActiveStep(1)} sx={{ ...outlinedSx, minHeight: '40px' }}>
+                  {t('dualWizard.backToV7')}
+                </Button>
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                  {step3Validated ? (
+                    <Tooltip title={t('dualWizard.tooltipRevalidate')} placement="top" arrow>
+                      <Button variant="contained" onClick={validateBoth} sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                        <ReplayIcon fontSize="small" />
+                      </Button>
+                    </Tooltip>
+                  ) : (
+                    <span>
+                      <Button variant="contained" startIcon={<CheckCircleOutlineIcon />}
+                        disabled={!v9FormData || !v7FormData} onClick={validateBoth} sx={{ ...primarySx, minHeight: '40px' }}>
+                        {t('dualWizard.validate')}
+                      </Button>
+                    </span>
+                  )}
+                  {step3Validated ? (
+                    <span>
+                      <Button variant="contained"
+                        startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+                        disabled={!canSave}
+                        onClick={async () => { if (v9FormData && v7FormData) await onSaveBoth(v9FormData, v7FormData); }}
+                        sx={{ ...primarySx, minHeight: '40px' }}>
+                        {isSaving ? t('dualWizard.saving') : t('dualWizard.save')}
+                      </Button>
+                    </span>
+                  ) : (
+                    <Tooltip title={t('dualWizard.tooltipSaveDisabled')} placement="top" arrow>
+                      <span>
+                        <Button variant="contained" disabled sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                          <SaveIcon fontSize="small" />
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  )}
+                </Box>
               </Box>
             </Box>
           )}
@@ -859,6 +1145,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
           manufacturerPartId={manufacturerPartId}
           initialData={editorInitialData}
           saveButtonLabel={t('dualWizard.useAsV9')}
+          triggerValidationOnMount={editorAutoValidate}
         />
       )}
 
@@ -874,6 +1161,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
           manufacturerPartId={manufacturerPartId}
           initialData={editorInitialData}
           saveButtonLabel={t('dualWizard.useAsV7')}
+          triggerValidationOnMount={editorAutoValidate}
         />
       )}
     </>
@@ -888,6 +1176,8 @@ interface ReconciliationCardProps {
   diff: FieldDifference;
   emptyLabel: string;
   onResolve: (diff: FieldDifference, chosen: 'v9' | 'v7' | 'manual', manualValue?: unknown) => void;
+  hasFieldError?: boolean;
+  fieldErrors?: string[];
 }
 
 function validateManualInput(text: string, diff: FieldDifference, t: (key: string) => string): string | null {
@@ -903,7 +1193,7 @@ function validateManualInput(text: string, diff: FieldDifference, t: (key: strin
   return null;
 }
 
-const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabel, onResolve }) => {
+const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabel, onResolve, hasFieldError = false, fieldErrors = [] }) => {
   const { t } = useTranslation('pcf');
   const [manualMode, setManualMode] = useState(false);
   const [manualText, setManualText] = useState('');
@@ -929,18 +1219,27 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
 
   const warnChip = (show: boolean, label: string) => show ? (
     <Chip size="small" icon={<WarningIcon sx={{ fontSize: 11 }} />} label={label}
-      sx={{ mt: 0.75, bgcolor: alpha('#ef4444', 0.13), color: '#ef4444', fontSize: '0.62rem', height: 18, fontWeight: 600 }} />
+      sx={{ mt: 0.25, bgcolor: alpha('#ef4444', 0.13), color: '#ef4444', fontSize: '0.62rem', height: 18, fontWeight: 600 }} />
   ) : null;
 
   return (
-    <Box className={`dual-pcf-wizard__diff-card${isResolved ? ' dual-pcf-wizard__diff-card--resolved' : ''}`} sx={{ mb: 2 }}>
+    <Box
+      className={`dual-pcf-wizard__diff-card${isResolved ? ' dual-pcf-wizard__diff-card--resolved' : ''}`}
+      sx={{
+        mb: 1,
+        ...(hasFieldError && {
+          border: '1px solid rgba(239,68,68,0.4) !important',
+          bgcolor: 'rgba(239,68,68,0.04)',
+        }),
+      }}
+    >
       {/* Header row */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '0.88rem' }}>{diff.label}</Typography>
         {isResolved ? (
           <Chip size="small" icon={<CheckCircleIcon sx={{ fontSize: 12 }} />}
             label={chosen === 'manual' ? t('dualWizard.customValue') : chosen === 'v9' ? 'v9.0.0' : 'v7.0.0'}
-            sx={{ bgcolor: alpha('#10b981', 0.16), color: '#10b981', fontWeight: 700, fontSize: '0.68rem', height: 22 }} />
+            sx={{ bgcolor: hasFieldError ? alpha('#ef4444', 0.16) : alpha('#10b981', 0.16), color: hasFieldError ? '#ef4444' : '#10b981', fontWeight: 700, fontSize: '0.68rem', height: 22 }} />
         ) : (
           <Chip size="small" label={t('dualWizard.unresolved')}
             sx={{ bgcolor: alpha('#f59e0b', 0.14), color: '#f59e0b', fontWeight: 600, fontSize: '0.68rem', height: 22 }} />
@@ -948,7 +1247,7 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
       </Box>
 
       {/* Two-column clickable value picker */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
         {/* v9.0.0 */}
         <Tooltip title={t('dualWizard.tooltipV9Column')} placement="top" arrow>
         <Box
@@ -956,16 +1255,16 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
           onClick={() => { setManualMode(false); onResolve(diff, 'v9'); }}
           sx={{ cursor: 'pointer' }}
         >
-          <Typography sx={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.75 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.25 }}>
             v9.0.0
           </Typography>
           <Typography className="dual-pcf-wizard__diff-value"
-            sx={{ color: chosen === 'v9' ? '#fff' : 'rgba(255,255,255,0.78)', fontSize: '0.82rem', wordBreak: 'break-all', minHeight: 20 }}>
+            sx={{ color: chosen === 'v9' ? '#fff' : 'rgba(255,255,255,0.78)', fontSize: '0.75rem', wordBreak: 'break-all', minHeight: 20 }}>
             {formatValue(diff.v9Value, emptyLabel)}
           </Typography>
           {warnChip(v9Warning.outOfV9Range, t('dualWizard.outOfV9Range'))}
           {chosen === 'v9' && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
               <CheckCircleIcon sx={{ fontSize: 13, color: '#10b981' }} />
               <Typography sx={{ color: '#10b981', fontSize: '0.7rem', fontWeight: 600 }}>{t('dualWizard.selected')}</Typography>
             </Box>
@@ -980,16 +1279,16 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
           onClick={() => { setManualMode(false); onResolve(diff, 'v7'); }}
           sx={{ cursor: 'pointer' }}
         >
-          <Typography sx={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.75 }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.25 }}>
             v7.0.0
           </Typography>
           <Typography className="dual-pcf-wizard__diff-value"
-            sx={{ color: chosen === 'v7' ? '#fff' : 'rgba(255,255,255,0.78)', fontSize: '0.82rem', wordBreak: 'break-all', minHeight: 20 }}>
+            sx={{ color: chosen === 'v7' ? '#fff' : 'rgba(255,255,255,0.78)', fontSize: '0.75rem', wordBreak: 'break-all', minHeight: 20 }}>
             {formatValue(diff.v7Value, emptyLabel)}
           </Typography>
           {warnChip(v7Warning.outOfV7Range, t('dualWizard.outOfV7Range'))}
           {chosen === 'v7' && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
               <CheckCircleIcon sx={{ fontSize: 13, color: '#10b981' }} />
               <Typography sx={{ color: '#10b981', fontSize: '0.7rem', fontWeight: 600 }}>{t('dualWizard.selected')}</Typography>
             </Box>
@@ -998,9 +1297,21 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
         </Tooltip>
       </Box>
 
+      {/* Field-level validation errors */}
+      {hasFieldError && fieldErrors.length > 0 && (
+        <Box sx={{ mt: 0.75, display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+          {fieldErrors.map((err, i) => (
+            <Typography key={i} sx={{ color: '#ef4444', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <ErrorIcon sx={{ fontSize: 12, flexShrink: 0 }} />
+              {err}
+            </Typography>
+          ))}
+        </Box>
+      )}
+
       {/* Manual value display when resolved with custom value */}
       {chosen === 'manual' && !manualMode && (
-        <Box sx={{ mt: 2, px: 2, py: 1.5, borderRadius: '10px', bgcolor: alpha('#10b981', 0.07), border: `1px solid ${alpha('#10b981', 0.26)}` }}>
+        <Box sx={{ mt: 1, px: 2, py: 1.5, borderRadius: '10px', bgcolor: alpha('#10b981', 0.07), border: `1px solid ${alpha('#10b981', 0.26)}` }}>
           <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 0.5 }}>
             {t('dualWizard.manualResolved', { value: '' }).replace(': ', '')}
           </Typography>
@@ -1021,7 +1332,7 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
 
       {/* Manual input trigger */}
       {!manualMode && chosen !== 'manual' && (
-        <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'flex-end' }}>
+        <Box sx={{ mt: 0.75, display: 'flex', justifyContent: 'flex-end' }}>
           <Tooltip title={t('dualWizard.tooltipManualEntry')} placement="left" arrow>
             <Button size="small" variant="text" startIcon={<EditIcon sx={{ fontSize: 13 }} />}
               onClick={() => { setManualMode(true); setManualText(''); setManualError(null); }}
@@ -1034,7 +1345,7 @@ const ReconciliationCard: React.FC<ReconciliationCardProps> = ({ diff, emptyLabe
       )}
 
       {manualMode && (
-        <Box sx={{ mt: 2, p: 2, borderRadius: '10px', bgcolor: 'rgba(255,255,255,0.025)', border: `1px solid ${manualError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}` }}>
+        <Box sx={{ mt: 1, p: 1.5, borderRadius: '10px', bgcolor: 'rgba(255,255,255,0.025)', border: `1px solid ${manualError ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}` }}>
           <Typography sx={{ color: 'rgba(255,255,255,0.38)', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, mb: 1 }}>
             {t('dualWizard.customValue')}
           </Typography>
