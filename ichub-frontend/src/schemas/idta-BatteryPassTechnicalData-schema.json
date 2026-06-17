@@ -1,0 +1,125 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#TechnicalData",
+  "description" : "Technical data of the asset and associated product classifications.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "MultiLanguageTexts" : {
+        "type" : "array",
+        "items" : { "type" : "object" },
+        "uniqueItems" : true
+      },
+      "FileWithContentType" : {
+        "type" : "object",
+        "properties" : {
+          "value" : { "type" : "string", "format" : "uri" },
+          "contentType" : { "type" : "string" }
+        },
+        "required" : [ "value", "contentType" ]
+      },
+      "GeneralInformation" : {
+        "type" : "object",
+        "properties" : {
+          "ManufacturerName" : { "type" : "string" },
+          "CompanyLogo" : { "type" : "string" },
+          "ManufacturerProductDesignation" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "ManufacturerArticleNumber" : { "type" : "string" },
+          "ManufacturerOrderCode" : { "type" : "string" },
+          "ManufacturerIdentifier" : { "type" : "string" },
+          "WarrantyPeriod" : { "type" : "string" },
+          "BatteryCategory" : { "type" : "string", "enum" : [ "lmt", "ev", "industrial", "stationary" ] },
+          "BatteryMass" : { "type" : "number" }
+        },
+        "required" : [ "ManufacturerName", "ManufacturerProductDesignation", "ManufacturerArticleNumber", "ManufacturerOrderCode", "ManufacturerIdentifier", "WarrantyPeriod", "BatteryCategory", "BatteryMass" ]
+      },
+      "DocumentIdentifierSet" : {
+        "type" : "array",
+        "items" : { "type" : "string", "minLength" : 1 },
+        "uniqueItems" : true
+      },
+      "PowerCapabilityAt" : {
+        "type" : "object",
+        "properties" : {
+          "atSoC" : { "type" : "number" },
+          "powerCapabilityAt" : { "type" : "number" }
+        },
+        "required" : [ "atSoC", "powerCapabilityAt" ]
+      },
+      "TechnicalAttributes" : {
+        "type" : "object",
+        "properties" : {
+          "CapacityEnergyVoltage" : {
+            "type" : "object",
+            "properties" : {
+              "NominalVoltage" : { "type" : "number" },
+              "MinVoltage" : { "type" : "number" },
+              "MaxVoltage" : { "type" : "number" },
+              "RatedCapacity" : { "type" : "number" },
+              "CapacityFade" : { "type" : "number" },
+              "CertifiedUsableBatteryEnergy" : { "type" : "number" }
+            },
+            "required" : [ "NominalVoltage", "MinVoltage", "MaxVoltage", "RatedCapacity" ]
+          },
+          "RoundTripEnergyEfficiency" : {
+            "type" : "object",
+            "properties" : {
+              "InitialRoundTripEnergyEfficiency" : { "type" : "number" },
+              "RoundTripEnergyEfficiencyAt50PercentOfCycleLife" : { "type" : "number" },
+              "EnergyRoundTripEfficiencyFade" : { "type" : "number" },
+              "InitialSelfDischargingRate" : { "type" : "number" }
+            },
+            "required" : [ "InitialRoundTripEnergyEfficiency", "RoundTripEnergyEfficiencyAt50PercentOfCycleLife" ]
+          },
+          "Resistance" : {
+            "type" : "object",
+            "properties" : {
+              "InitialInternalResistanceAtBatteryCellLevel" : { "type" : "number" },
+              "InitialInternalResistanceAtBatteryPackLevel" : { "type" : "number" },
+              "InitialInternalResistanceAtBatteryModuleLevel" : { "type" : "number" },
+              "InternalResistanceIncreaseAtBatteryCellLevel" : { "type" : "number" },
+              "InternalResistanceIncreaseAtBatteryPackLevel" : { "type" : "number" },
+              "InternalResistanceIncreaseAtBatteryModuleLevel" : { "type" : "number" }
+            },
+            "required" : [ "InitialInternalResistanceAtBatteryCellLevel", "InitialInternalResistanceAtBatteryPackLevel", "InternalResistanceIncreaseAtBatteryPackLevel" ]
+          },
+          "PowerCapability" : {
+            "type" : "object",
+            "properties" : {
+              "MaximumPermittedBatteryPower" : { "type" : "number" },
+              "PowerFade" : { "type" : "number" },
+              "RatioNominalBatteryPowerAndBatteryEnergy" : { "type" : "number" },
+              "OriginalPowerCapability" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/PowerCapabilityAt" } }
+            },
+            "required" : [ "MaximumPermittedBatteryPower", "PowerFade", "RatioNominalBatteryPowerAndBatteryEnergy", "OriginalPowerCapability" ]
+          },
+          "Temperature" : {
+            "type" : "object",
+            "properties" : {
+              "TemperatureRangeIdleState_LowerBoundary" : { "type" : "number" },
+              "TemperatureRangeIdleState_UpperBoundary" : { "type" : "number" }
+            },
+            "required" : [ "TemperatureRangeIdleState_LowerBoundary", "TemperatureRangeIdleState_UpperBoundary" ]
+          },
+          "Lifetime" : {
+            "type" : "object",
+            "properties" : {
+              "ExpectedLifetimeInCalendarYears" : { "type" : "number" },
+              "ExpectedNumberOfCycles" : { "type" : "number" },
+              "CapacityThresholdExhaustion" : { "type" : "number" },
+              "CycleLifeReferenceTest" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+              "CrateOfRelevantCycleLifeTest" : { "type" : "number" }
+            },
+            "required" : [ "ExpectedLifetimeInCalendarYears", "ExpectedNumberOfCycles", "CapacityThresholdExhaustion", "CycleLifeReferenceTest", "CrateOfRelevantCycleLifeTest" ]
+          }
+        },
+        "required" : [ "CapacityEnergyVoltage", "RoundTripEnergyEfficiency", "Resistance", "PowerCapability", "Temperature", "Lifetime" ]
+      }
+    }
+  },
+  "properties" : {
+    "GeneralInformation" : { "$ref" : "#/components/schemas/GeneralInformation" },
+    "TechnicalPropertyAreas" : { "$ref" : "#/components/schemas/TechnicalAttributes" }
+  },
+  "required" : [ "GeneralInformation", "TechnicalPropertyAreas" ]
+}

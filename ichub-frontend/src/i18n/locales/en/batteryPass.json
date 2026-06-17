@@ -1,0 +1,234 @@
+{
+  "common": {
+    "address": "Address",
+    "website": "Website",
+    "email": "Email",
+    "company": "Company",
+    "contact": "Contact",
+    "country": "Country"
+  },
+  "digitalNameplate": {
+    "title": "Battery Pass — Digital Nameplate",
+    "sections": {
+      "productIdentification": "Product Identification",
+      "lifecycleStatus": "Lifecycle Status",
+      "manufacturingDetails": "Manufacturing Details",
+      "manufacturerInformation": "Manufacturer Information",
+      "address": "Address",
+      "contact": "Contact",
+      "ipCommunicationChannels": "IP Communication Channels",
+      "markingsAndCertifications": "Markings & Certifications",
+      "complianceDocuments": "Compliance Documents"
+    },
+    "fields": {
+      "batteryPassportUri": "Battery Passport URI",
+      "serialNumber": "Serial Number",
+      "manufacturerIdentifier": "Manufacturer Identifier",
+      "operatorIdentifier": "Operator Identifier",
+      "manufacturerName": "Manufacturer Name",
+      "company": "Company",
+      "department": "Department",
+      "contactRole": "Contact Role",
+      "contactPerson": "Contact Person",
+      "street": "Street",
+      "cityTown": "City / Town",
+      "zipCode": "Zip Code",
+      "stateCounty": "State / County",
+      "country": "Country",
+      "timeZone": "Time Zone",
+      "poBox": "P.O. Box",
+      "website": "Website",
+      "email": "Email",
+      "phone": "Phone",
+      "fax": "Fax",
+      "document": "Document",
+      "dateOfManufacture": "Date of Manufacture",
+      "dateOfPuttingIntoService": "Date of Putting Into Service",
+      "uniqueFacilityIdentifier": "Unique Facility Identifier",
+      "issueDate": "Issue Date",
+      "expiryDate": "Expiry Date",
+      "additionalInfo": "Additional Info",
+      "euDeclarationOfConformity": "EU Declaration of Conformity",
+      "resultsOfTestReportsProvingCompliance": "Results of Test Reports Proving Compliance"
+    },
+    "lifecycle": {
+      "original": "Battery is new and has never been repurposed or remanufactured.",
+      "repurposed": "Battery has been repurposed for a different application.",
+      "re-used": "Battery has been reused in the same or similar application.",
+      "remanufactured": "Battery has been remanufactured to restore its performance.",
+      "waste": "Battery has reached end-of-life and is classified as waste."
+    }
+  },
+  "technicalData": {
+    "title": "Battery Pass — Technical Data",
+    "sections": {
+      "generalInformation": "General Information",
+      "capacityEnergyVoltage": "Capacity, Energy & Voltage",
+      "roundTripEnergyEfficiency": "Round Trip Energy Efficiency",
+      "internalResistance": "Internal Resistance",
+      "powerCapability": "Power Capability",
+      "powerCapabilityAtSoC": "Power Capability at State of Charge",
+      "temperatureRange": "Temperature Range (Idle)",
+      "lifetime": "Lifetime",
+      "referenceTestDocuments": "Reference Test Documents"
+    },
+    "fields": {
+      "manufacturer": "Manufacturer",
+      "productDesignation": "Product Designation",
+      "articleNumber": "Article Number",
+      "orderCode": "Order Code",
+      "manufacturerIdentifier": "Manufacturer Identifier",
+      "warrantyPeriod": "Warranty Period",
+      "batteryMass": "Battery Mass",
+      "batteryCategory": "Battery Category",
+      "nominalVoltage": "Nominal Voltage",
+      "minimumVoltage": "Minimum Voltage",
+      "maximumVoltage": "Maximum Voltage",
+      "ratedCapacity": "Rated Capacity",
+      "capacityFade": "Capacity Fade",
+      "certifiedUsableBatteryEnergy": "Certified Usable Battery Energy",
+      "initialEfficiency": "Initial Efficiency",
+      "efficiencyAt50PercentCycleLife": "Efficiency at 50% Cycle Life",
+      "efficiencyFade": "Efficiency Fade",
+      "initialSelfDischargingRate": "Initial Self-Discharging Rate",
+      "cellLevelInitial": "Cell Level (Initial)",
+      "packLevelInitial": "Pack Level (Initial)",
+      "moduleLevelInitial": "Module Level (Initial)",
+      "packLevelIncrease": "Pack Level (Increase)",
+      "cellLevelIncrease": "Cell Level (Increase)",
+      "moduleLevelIncrease": "Module Level (Increase)",
+      "maximumPermittedPower": "Maximum Permitted Power",
+      "powerFade": "Power Fade",
+      "powerToEnergyRatio": "Power-to-Energy Ratio",
+      "lowerBoundary": "Lower Boundary",
+      "upperBoundary": "Upper Boundary",
+      "expectedLifetime": "Expected Lifetime",
+      "expectedCycles": "Expected Cycles",
+      "capacityThresholdForExhaustion": "Capacity Threshold for Exhaustion",
+      "cRateCycleLifeTest": "C-Rate (Cycle Life Test)"
+    },
+    "categories": {
+      "lmt": "Light Means of Transport (LMT)",
+      "ev": "Electric Vehicle (EV)",
+      "industrial": "Industrial",
+      "stationary": "Stationary Energy Storage"
+    }
+  },
+  "circularity": {
+    "title": "Battery Pass — Circularity",
+    "sections": {
+      "renewableContent": "Renewable Content",
+      "recycledContent": "Recycled Content",
+      "dismantling": "Dismantling & Removal Information",
+      "sparePartSources": "Spare Part Sources",
+      "safetyMeasures": "Safety Measures",
+      "endOfLife": "End of Life Information"
+    },
+    "fields": {
+      "preConsumerShare": "Pre-consumer Share",
+      "postConsumerShare": "Post-consumer Share",
+      "address": "Address",
+      "email": "Email",
+      "website": "Website",
+      "components": "Components",
+      "safetyInstructions": "Safety Instructions",
+      "extinguishingAgents": "Extinguishing Agents",
+      "wastePrevention": "Waste Prevention",
+      "separateCollection": "Separate Collection",
+      "informationOnCollection": "Information on Collection"
+    }
+  },
+  "productCondition": {
+    "title": "Battery Pass — Product Condition",
+    "sections": {
+      "currentState": "Current State",
+      "energyAndCapacity": "Energy & Capacity",
+      "efficiencyAndSelfDischarge": "Efficiency & Self-Discharge",
+      "temperatureHistory": "Temperature History",
+      "negativeEvents": "Negative Events",
+      "informationOnAccidents": "Information on Accidents"
+    },
+    "fields": {
+      "stateOfCharge": "State of Charge",
+      "numberOfFullCycles": "Number of Full Cycles",
+      "energyThroughput": "Energy Throughput",
+      "capacityThroughput": "Capacity Throughput",
+      "remainingEnergy": "Remaining Energy",
+      "remainingCapacity": "Remaining Capacity",
+      "stateOfCertifiedEnergy": "State of Certified Energy",
+      "remainingRoundTripEnergyEfficiency": "Remaining Round Trip Energy Efficiency",
+      "currentSelfDischargingRate": "Current Self-Discharging Rate",
+      "evolutionOfSelfDischarge": "Evolution of Self-Discharge",
+      "timeAtExtremeHighTemperature": "Time at Extreme High Temperature",
+      "timeAtExtremeLowTemperature": "Time at Extreme Low Temperature",
+      "timeAtExtremeHighTempCharging": "Time at Extreme High Temp (Charging)",
+      "timeAtExtremeLowTempCharging": "Time at Extreme Low Temp (Charging)",
+      "updated": "Updated: {{date}}"
+    },
+    "accidentReports_one": "{{count}} accident report document on record",
+    "accidentReports_other": "{{count}} accident report documents on record"
+  },
+  "carbonFootprint": {
+    "title": "Battery Pass — Carbon Footprint",
+    "empty": "No carbon footprint data available.",
+    "entry": "Carbon Footprint Entry {{index}}",
+    "single": "Product Carbon Footprint",
+    "fields": {
+      "co2Equivalent": "CO₂ Equivalent",
+      "performanceClass": "Performance Class"
+    },
+    "sections": {
+      "calculationMethods": "Calculation Methods",
+      "lifeCyclePhases": "Life Cycle Phases",
+      "publicStudies": "Public Carbon Footprint Studies"
+    }
+  },
+  "materialComposition": {
+    "title": "Battery Pass — Material Composition",
+    "sections": {
+      "batteryChemistry": "Battery Chemistry",
+      "batteryMaterials": "Battery Materials",
+      "hazardousSubstances": "Hazardous Substances"
+    },
+    "table": {
+      "material": "Material",
+      "identifier": "Identifier",
+      "mass": "Mass (kg)",
+      "location": "Location",
+      "critical": "Critical",
+      "criticalChip": "Critical",
+      "standardChip": "Standard"
+    },
+    "fields": {
+      "identifier": "Identifier",
+      "concentration": "Concentration",
+      "location": "Location",
+      "impact": "Impact"
+    },
+    "hazardousClass": {
+      "AcuteToxicity": "Acute Toxicity",
+      "SkinCorrosionOrIrritation": "Skin Corrosion / Irritation",
+      "EyeDamageOrIrritation": "Eye Damage / Irritation"
+    },
+    "criticalCount_one": "{{count}} critical raw material identified",
+    "criticalCount_other": "{{count}} critical raw materials identified",
+    "hazardousCount_one": "{{count}} hazardous substance declared in this battery",
+    "hazardousCount_other": "{{count}} hazardous substances declared in this battery"
+  },
+  "handover": {
+    "title": "Battery Pass — Handover Documentation",
+    "sections": {
+      "documentIdentifiers": "Document Identifiers",
+      "classifications": "Classifications",
+      "versions": "Versions",
+      "digitalFiles": "Digital Files"
+    },
+    "fields": {
+      "domain": "Domain: {{id}}",
+      "primary": "Primary"
+    },
+    "documentIndex": "Document {{index}}",
+    "available_one": "{{count}} document available for handover",
+    "available_other": "{{count}} documents available for handover"
+  }
+}

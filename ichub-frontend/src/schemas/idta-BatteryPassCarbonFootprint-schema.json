@@ -1,0 +1,80 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.carbon_footprint:1.0.0#CarbonFootprintBattery",
+  "description" : "Provides the means to access the Carbon Footprint of the asset in the context of a Battery Passport.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "PcfCalculationMethodSet" : {
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#PcfCalculationMethodSet",
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#PcfCalculationMethodCharacteristic",
+          "description" : "Standard, method for determining the greenhouse gas emissions of a product."
+        },
+        "uniqueItems" : true
+      },
+      "PcfCo2eqCharacteristic" : {
+        "type" : "number",
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#PcfCo2eqCharacteristic"
+      },
+      "ReferenceImpactUnitForCalculationEnum" : {
+        "type" : "string",
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#ReferenceImpactUnitForCalculationEnum",
+        "enum" : [ "g", "kg", "t", "ml", "l", "cbm", "qm", "piece", "kwH" ]
+      },
+      "QuantityOfMeasureForCalculationCharacteristic" : {
+        "type" : "number",
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#QuantityOfMeasureForCalculationCharacteristic"
+      },
+      "LifeCyclePhaseSet" : {
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#LifeCyclePhaseSet",
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.carbon_footprint:1.0.0#LifeCyclePhaseEnum",
+          "enum" : [ "A1 - raw material supply (and upstream production)", "A1-A3", "A3 - production", "A4 - transport to final destination", "A4-A5", "A5 - Installation", "B1 - usage phase", "B1-B7", "B2 - maintenance", "B3 - repair", "B4 - Replacement", "B5 - update/upgrade, refurbishing", "B6 - usage energy consumption", "B7 - usage water consumption", "C1 - reassembly", "C1-C4", "C2 - transport to recycler", "C2-C4", "C3 - recycling, waste treatment", "C4 - landfill", "D - reuse" ]
+        },
+        "uniqueItems" : true
+      },
+      "PerformanceClassCharacteristic" : {
+        "type" : "string"
+      },
+      "DocumentIdentifierSet" : {
+        "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.shared:3.1.0#DocumentIdentifierSet",
+        "type" : "array",
+        "items" : {
+          "type" : "string",
+          "minLength" : 1
+        },
+        "uniqueItems" : true
+      },
+      "ProductCarbonFootprint" : {
+        "type" : "object",
+        "properties" : {
+          "PcfCalculationMethods" : { "$ref" : "#/components/schemas/PcfCalculationMethodSet" },
+          "PcfCo2eq" : { "$ref" : "#/components/schemas/PcfCo2eqCharacteristic" },
+          "ReferenceImpactUnitForCalculation" : { "$ref" : "#/components/schemas/ReferenceImpactUnitForCalculationEnum" },
+          "QuantityOfMeasureForCalculation" : { "$ref" : "#/components/schemas/QuantityOfMeasureForCalculationCharacteristic" },
+          "LifeCyclePhases" : { "$ref" : "#/components/schemas/LifeCyclePhaseSet" },
+          "PerformanceClass" : { "$ref" : "#/components/schemas/PerformanceClassCharacteristic" },
+          "WebLinkToPublicCarbonFootprintStudy" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" }
+        },
+        "required" : [ "PcfCalculationMethods", "PcfCo2eq", "ReferenceImpactUnitForCalculation", "QuantityOfMeasureForCalculation", "LifeCyclePhases", "PerformanceClass", "WebLinkToPublicCarbonFootprintStudy" ]
+      },
+      "ProductCarbonFootprintSet" : {
+        "type" : "array",
+        "items" : { "$ref" : "#/components/schemas/ProductCarbonFootprint" },
+        "uniqueItems" : true
+      }
+    }
+  },
+  "properties" : {
+    "ProductCarbonFootprints" : {
+      "description" : "Balance of greenhouse gas emissions along the entire life cycle of a product.",
+      "$ref" : "#/components/schemas/ProductCarbonFootprintSet"
+    }
+  },
+  "required" : [ "ProductCarbonFootprints" ]
+}
