@@ -479,6 +479,20 @@
     "validationErrorsTitle": "検証エラー",
     "manualErrorNumeric": "数値を入力してください",
     "manualErrorUrn": "URN形式が必要です (urn:...)",
-    "manualErrorRange": "値が許容範囲外です"
+    "manualErrorRange": "値が許容範囲外です",
+    "validate": "検証",
+    "continueBtn": "続行",
+    "save": "保存",
+    "tooltipValidate": "スキーマに対してデータを検証する",
+    "tooltipRevalidate": "スキーマに対してデータを再検証する",
+    "tooltipValidateBoth": "両方のPCFバージョンをスキーマに対して検証する",
+    "tooltipContinue": "次のステップに進む",
+    "tooltipContinueDisabled": "続行するにはまずデータを検証してください",
+    "tooltipSave": "両方のPCFバージョンをカタログに保存する",
+    "tooltipSaveDisabled": "まず両方のPCFバージョンを検証してください",
+    "fixErrors": "エラーを修正",
+    "tooltipFixErrors": "エディタを開いて検証エラーを修正する",
+    "showResolved": "{{count}}件の解決済みを表示",
+    "hideResolved": "解決済みを非表示 ({{count}})"
   }
 }

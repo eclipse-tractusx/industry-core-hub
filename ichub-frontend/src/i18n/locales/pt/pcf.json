@@ -479,6 +479,20 @@
     "validationErrorsTitle": "Erros de validação",
     "manualErrorNumeric": "Deve ser um valor numérico",
     "manualErrorUrn": "Formato URN esperado (urn:...)",
-    "manualErrorRange": "Valor fora do intervalo permitido"
+    "manualErrorRange": "Valor fora do intervalo permitido",
+    "validate": "Validar",
+    "continueBtn": "Continuar",
+    "save": "Guardar",
+    "tooltipValidate": "Validar dados em relação ao esquema",
+    "tooltipRevalidate": "Revalidar dados em relação ao esquema",
+    "tooltipValidateBoth": "Validar ambas as versões PCF em relação aos seus esquemas",
+    "tooltipContinue": "Continuar para o próximo passo",
+    "tooltipContinueDisabled": "Valide os dados primeiro para continuar",
+    "tooltipSave": "Guardar ambas as versões PCF no catálogo",
+    "tooltipSaveDisabled": "Valide primeiro ambas as versões PCF",
+    "fixErrors": "Corrigir Erros",
+    "tooltipFixErrors": "Abrir editor para corrigir erros de validação",
+    "showResolved": "Mostrar {{count}} resolvidos",
+    "hideResolved": "Ocultar resolvidos ({{count}})"
   }
 }

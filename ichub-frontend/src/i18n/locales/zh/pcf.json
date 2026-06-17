@@ -479,6 +479,20 @@
     "validationErrorsTitle": "验证错误",
     "manualErrorNumeric": "必须是数字值",
     "manualErrorUrn": "预期 URN 格式 (urn:...)",
-    "manualErrorRange": "值超出允许范围"
+    "manualErrorRange": "值超出允许范围",
+    "validate": "验证",
+    "continueBtn": "继续",
+    "save": "保存",
+    "tooltipValidate": "根据架构验证数据",
+    "tooltipRevalidate": "根据架构重新验证数据",
+    "tooltipValidateBoth": "根据各自的架构验证两个PCF版本",
+    "tooltipContinue": "继续到下一步",
+    "tooltipContinueDisabled": "请先验证数据以继续",
+    "tooltipSave": "将两个PCF版本保存到目录",
+    "tooltipSaveDisabled": "请先验证两个PCF版本",
+    "fixErrors": "修复错误",
+    "tooltipFixErrors": "打开编辑器以修复验证错误",
+    "showResolved": "显示 {{count}} 个已解决",
+    "hideResolved": "隐藏已解决 ({{count}})"
   }
 }

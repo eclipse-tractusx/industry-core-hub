@@ -479,6 +479,20 @@
     "validationErrorsTitle": "Validierungsfehler",
     "manualErrorNumeric": "Muss ein numerischer Wert sein",
     "manualErrorUrn": "URN-Format erwartet (urn:...)",
-    "manualErrorRange": "Wert liegt außerhalb des erlaubten Bereichs"
+    "manualErrorRange": "Wert liegt außerhalb des erlaubten Bereichs",
+    "validate": "Validieren",
+    "continueBtn": "Weiter",
+    "save": "Speichern",
+    "tooltipValidate": "Daten gegen das Schema validieren",
+    "tooltipRevalidate": "Daten erneut gegen das Schema validieren",
+    "tooltipValidateBoth": "Beide PCF-Versionen gegen ihre Schemas validieren",
+    "tooltipContinue": "Zum nächsten Schritt weiter",
+    "tooltipContinueDisabled": "Daten zuerst validieren, um fortzufahren",
+    "tooltipSave": "Beide PCF-Versionen im Katalog speichern",
+    "tooltipSaveDisabled": "Zuerst beide PCF-Versionen validieren",
+    "fixErrors": "Fehler beheben",
+    "tooltipFixErrors": "Editor öffnen, um Validierungsfehler zu beheben",
+    "showResolved": "{{count}} gelöste anzeigen",
+    "hideResolved": "Gelöste ausblenden ({{count}})"
   }
 }

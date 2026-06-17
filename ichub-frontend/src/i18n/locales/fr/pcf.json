@@ -479,6 +479,20 @@
     "validationErrorsTitle": "Erreurs de validation",
     "manualErrorNumeric": "Doit être une valeur numérique",
     "manualErrorUrn": "Format URN attendu (urn:...)",
-    "manualErrorRange": "Valeur hors de la plage autorisée"
+    "manualErrorRange": "Valeur hors de la plage autorisée",
+    "validate": "Valider",
+    "continueBtn": "Continuer",
+    "save": "Enregistrer",
+    "tooltipValidate": "Valider les données par rapport au schéma",
+    "tooltipRevalidate": "Revalider les données par rapport au schéma",
+    "tooltipValidateBoth": "Valider les deux versions PCF par rapport à leurs schémas",
+    "tooltipContinue": "Passer à l'étape suivante",
+    "tooltipContinueDisabled": "Validez d'abord les données pour continuer",
+    "tooltipSave": "Enregistrer les deux versions PCF dans le catalogue",
+    "tooltipSaveDisabled": "Validez d'abord les deux versions PCF",
+    "fixErrors": "Corriger les erreurs",
+    "tooltipFixErrors": "Ouvrir l'éditeur pour corriger les erreurs de validation",
+    "showResolved": "Afficher {{count}} résolus",
+    "hideResolved": "Masquer les résolus ({{count}})"
   }
 }
