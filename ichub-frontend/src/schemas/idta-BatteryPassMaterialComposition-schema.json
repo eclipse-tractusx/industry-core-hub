@@ -1,0 +1,54 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.material_composition:1.0.0#MaterialComposition",
+  "description" : "Mandatory data: Battery chemistry; critical raw materials; materials used in the cathode, anode, and electrolyte; hazardous substances.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "BatteryChemistry" : {
+        "type" : "object",
+        "properties" : {
+          "ShortName" : { "type" : "string" },
+          "ClearName" : { "type" : "string" }
+        },
+        "required" : [ "ShortName", "ClearName" ]
+      },
+      "BatteryLocation" : {
+        "type" : "object",
+        "properties" : {
+          "ComponentName" : { "type" : "string" },
+          "ComponentId" : { "type" : "string" }
+        }
+      },
+      "BatteryMaterial" : {
+        "type" : "object",
+        "properties" : {
+          "BatteryMaterialLocation" : { "$ref" : "#/components/schemas/BatteryLocation" },
+          "BatteryMaterialIdentifier" : { "type" : "string" },
+          "BatteryMaterialName" : { "type" : "string" },
+          "BatteryMaterialMass" : { "type" : "number" },
+          "IsCriticalRawMaterial" : { "type" : "boolean" }
+        },
+        "required" : [ "BatteryMaterialLocation", "BatteryMaterialIdentifier", "BatteryMaterialName", "BatteryMaterialMass", "IsCriticalRawMaterial" ]
+      },
+      "HazardousSubstance" : {
+        "type" : "object",
+        "properties" : {
+          "HazardousSubstanceClass" : { "type" : "string", "enum" : [ "AcuteToxicity", "SkinCorrosionOrIrritation", "EyeDamageOrIrritation" ] },
+          "HazardousSubstanceName" : { "type" : "string" },
+          "HazardousSubstanceConcentration" : { "type" : "number" },
+          "HazardousSubstanceImpact" : { "type" : "array", "items" : { "type" : "string" } },
+          "HazardousSubstanceLocation" : { "$ref" : "#/components/schemas/BatteryLocation" },
+          "HazardousSubstanceIdentifier" : { "type" : "string" }
+        },
+        "required" : [ "HazardousSubstanceClass", "HazardousSubstanceName", "HazardousSubstanceConcentration", "HazardousSubstanceImpact", "HazardousSubstanceLocation", "HazardousSubstanceIdentifier" ]
+      }
+    }
+  },
+  "properties" : {
+    "BatteryChemistry" : { "$ref" : "#/components/schemas/BatteryChemistry" },
+    "BatteryMaterials" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/BatteryMaterial" } },
+    "HazardousSubstances" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/HazardousSubstance" } }
+  },
+  "required" : [ "BatteryChemistry", "BatteryMaterials", "HazardousSubstances" ]
+}

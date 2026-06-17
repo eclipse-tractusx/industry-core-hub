@@ -2,7 +2,8 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2026 LKS Next
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Capgemini Deutschland GmbH
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -211,7 +212,244 @@ agreements:
             rightOperand: "active"
       prohibitions: []
       obligations: []
-
+  - semanticid: urn:samm:io.admin-shell.idta.batterypass.digital_nameplate:1.0.0#BatteryNameplate
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.carbon_footprint:1.0.0#CarbonFootprintBattery"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.handover_documentation:1.0.0#HandoverDocumentation"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.material_composition:1.0.0#MaterialComposition"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.0#ProductCondition"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+  - semanticid: "urn:samm:io.admin-shell.idta.batterypass.technical_data:1.0.0#TechnicalData"
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+              - leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+              - leftOperand: "UsagePurpose"
+                operator: "isAnyOf"
+                rightOperand: "cx.core.industrycore:1"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "access"
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
