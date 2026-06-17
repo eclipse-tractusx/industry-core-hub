@@ -491,6 +491,113 @@ class ConnectorProviderManager:
             headers=headers
         )
 
+    def register_unique_id_push_offer(
+        self,
+        unique_id_push_url: str,
+        unique_id_push_policy_config: dict = None,
+        existing_asset_id: str = None,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ) -> tuple[str, str, str, str]:
+        """
+        Register a Unique ID Push notification asset, create policies and contract for it.
+
+        Returns a tuple: (asset_id, usage_policy_id, access_policy_id, contract_id)
+        """
+        if self.authorization:
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
+        # Step 1: Create or get the Unique ID Push asset
+        asset_id = self.get_or_create_unique_id_push_asset(
+            unique_id_push_url=unique_id_push_url,
+            existing_asset_id=existing_asset_id,
+            dct_type=dct_type,
+            version=version,
+            headers=headers,
+        )
+
+        # Step 2: Create or get policies and contract
+        policy_config = unique_id_push_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=policy_config,
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+
+    def get_or_create_unique_id_push_asset(
+        self,
+        unique_id_push_url: str,
+        existing_asset_id: str = None,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ) -> str:
+        """Get or create the Unique ID Push notification asset in the connector."""
+        if not existing_asset_id:
+            existing_asset_id = self.generate_unique_id_push_asset_id(unique_id_push_url)
+
+        # Check if the asset already exists
+        existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
+        if existing_asset.status_code == 200:
+            logger.debug(f"[UniqueIdPush] Asset with ID {existing_asset_id} already exists.")
+            return existing_asset_id
+
+        # Create the asset
+        logger.info(f"[UniqueIdPush] Creating new asset with ID {existing_asset_id}.")
+        try:
+            asset = self.create_unique_id_push_asset(
+                asset_id=existing_asset_id,
+                notification_endpoint_url=unique_id_push_url,
+                dct_type=dct_type,
+                version=version,
+                headers=headers,
+            )
+        except ValueError as e:
+            logger.error(
+                f"[UniqueIdPush] Failed to register asset with ID {existing_asset_id} "
+                f"for URL '{unique_id_push_url}'. Error: {e}"
+            )
+            raise
+        logger.info(f"[UniqueIdPush] Successfully registered asset with ID {existing_asset_id}.")
+        return asset.get("@id", existing_asset_id)
+
+    def generate_unique_id_push_asset_id(self, unique_id_push_url: str) -> str:
+        """Generate a unique asset ID for the Unique ID Push asset."""
+        return "ichub:asset:uniqueidpush:" + blake2b_128bit(unique_id_push_url)
+
+    def create_unique_id_push_asset(
+        self,
+        asset_id: str,
+        notification_endpoint_url: str,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ):
+        """
+        Create the Unique ID Push asset directly via the connector provider service.
+
+        Uses the generic create_asset method with the appropriate dct:type for
+        UniqueIdPushConnectToParentNotification.
+        """
+        proxy_params = {
+            "proxyQueryParams": "false",
+            "proxyPath": "true",
+            "proxyMethod": "true",
+            "proxyBody": "true",
+        }
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=notification_endpoint_url,
+            dct_type=dct_type,
+            version=version,
+            proxy_params=proxy_params,
+            headers=headers,
+        )
+
     def register_pcf_exchange_offer(self,
                            base_url:str=None,
                            api_path:str = "/v1/addons/pcf-kit/footprintExchange", 

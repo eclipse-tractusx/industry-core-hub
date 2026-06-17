@@ -71,7 +71,10 @@ class AssetSyncJob:
             # Step 3: Sync Digital Twin Event asset
             self._sync_digital_twin_event_asset()
 
-            # Step 4: Sync PCF Exchange asset if enabled
+            # Step 4: Sync Unique ID Push asset
+            self._sync_unique_id_push_asset()
+
+            # Step 5: Sync PCF Exchange asset if enabled
             if self._pcf_kit_enablement_check():
                 self._sync_pcf_exchange_asset()
             
@@ -143,6 +146,38 @@ class AssetSyncJob:
                 
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error synchronizing DTE asset: {e}", exc_info=True)
+
+    def _sync_unique_id_push_asset(self) -> None:
+        """
+        Synchronize the Unique ID Push notification asset with the connector.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing Unique ID Push asset...")
+
+            uid_config = ConfigManager.get_config("provider.uniqueIdPush")
+            if not uid_config:
+                logger.warning("[AssetSyncJob] No Unique ID Push configuration found. Skipping sync.")
+                return
+
+            asset_config = uid_config.get("asset_config", {})
+
+            uid_asset_id, _, _, _ = self.connector_provider_manager.register_unique_id_push_offer(
+                unique_id_push_url=uid_config.get("hostname"),
+                unique_id_push_policy_config=uid_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id", None),
+                dct_type=asset_config.get(
+                    "dct_type",
+                    "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+                ),
+            )
+
+            if uid_asset_id:
+                logger.info(f"[AssetSyncJob] Unique ID Push asset synchronized: {uid_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize Unique ID Push asset.")
+
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing Unique ID Push asset: {e}", exc_info=True)
     
     def _sync_semantic_assets(self) -> None:
         """
