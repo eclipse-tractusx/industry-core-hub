@@ -484,6 +484,7 @@
     "title": "Gestión de Provisión CCM",
     "subtitle": "Gestione las solicitudes de certificados entrantes y proporcione certificados a sus socios de Catena-X.",
     "pushCertificate": "Enviar Certificado",
+    "sendAvailable": "Enviar Disponibilidad",
     "tabs": {
       "inboundRequests": "Solicitudes Entrantes",
       "shares": "Comparticiones"
@@ -590,6 +591,21 @@
       "pushFailed": "Error al enviar el certificado.",
       "availFailed": "Error al poner el certificado a disposición.",
       "loadFailed": "Error al cargar los datos de provisión."
+    }
+  },
+  "sendAvailableDialog": {
+    "title": "Enviar Notificación de Disponibilidad",
+    "subtitle": "Notifica a un socio que un certificado está disponible, sin necesidad de solicitud previa",
+    "description": "Anuncia que uno de tus certificados está disponible para que el consumidor lo descargue, sin esperar una solicitud.",
+    "certSelect": "Certificado a anunciar",
+    "noCerts": "No hay certificados disponibles.",
+    "willPublish": "Este certificado se publicará automáticamente como asset EDC antes de enviar.",
+    "recipientBpn": "Destinatario (BPN del Consumidor)",
+    "recipientPlaceholder": "Seleccione o escriba el BPNL del destinatario",
+    "sendAvailability": "Enviar Disponibilidad",
+    "errors": {
+      "loadFailed": "Error al cargar los datos.",
+      "sendFailed": "Error al enviar la notificación de disponibilidad."
     }
   },
   "pushDialog": {

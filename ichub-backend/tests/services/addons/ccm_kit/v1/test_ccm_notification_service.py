@@ -1832,3 +1832,111 @@ class TestCcmAutoNotificationsWiring:
         assert call_kwargs["notification_type"] == CCM_NT_AVAILABLE_RECEIVED
         assert call_kwargs["sender_bpn"] == "BPNL000000000099"
         assert call_kwargs["document_id"] == "DOC-AVAIL-001"
+
+class TestUnsolicitedAvailableOutboundTracking:
+    """
+    Verify that process_certificate_available creates a tracking OutboundRequest
+    when no prior Pending/NotFound request exists (unsolicited AVAILABLE).
+    """
+
+    def setup_method(self):
+        self.service = CcmNotificationService()
+
+    @pytest.fixture
+    def mock_repos(self):
+        repos = Mock()
+        repos.ccm_outbound_request_repository = Mock()
+        repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+        repos.commit = Mock()
+        return repos
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".CcmNotificationService._auto_pull_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_creates_outbound_request_when_none_exists(
+        self, mock_factory, mock_auto_pull, mock_repos
+    ):
+        """
+        GIVEN an available notification arrives with no matching outbound requests
+        WHEN process_certificate_available is called
+        THEN a new OutboundRequest with status Found is created for tracking.
+        """
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Available:1.0.0",
+            content_extras={
+                "documentId": "DOC-UNSOLICITED",
+                "certificateType": "ISO9001",
+            },
+        )
+
+        status, _ = self.service.process_certificate_available(notification)
+
+        assert status == 200
+        from models.metadata_database.addons.ccm_kit.v1.models import OutboundRequestStatus
+        mock_repos.ccm_outbound_request_repository.create_new.assert_called_once_with(
+            sender_bpn="BPNL000000000001",
+            provider_bpn="BPNL000000000099",
+            certified_bpn="BPNL000000000099",
+            certificate_type="ISO9001",
+            status=OutboundRequestStatus.Found,
+            document_id="DOC-UNSOLICITED",
+            location_bpns=None,
+        )
+        mock_repos.commit.assert_called_once()
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".CcmNotificationService._auto_pull_certificate"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_notification_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_does_not_create_duplicate_outbound_request_when_one_exists(
+        self, mock_factory, mock_auto_pull, mock_repos
+    ):
+        """
+        GIVEN an available notification arrives and an active outbound request already exists
+        WHEN process_certificate_available is called
+        THEN no new OutboundRequest is created (the existing one is advanced to Found).
+        """
+        from models.metadata_database.addons.ccm_kit.v1.models import (
+            CcmOutboundRequest,
+            OutboundRequestStatus,
+        )
+        existing_req = Mock(spec=CcmOutboundRequest)
+        existing_req.id = 7
+        existing_req.status = OutboundRequestStatus.Pending
+        mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = [
+            existing_req
+        ]
+        mock_factory.return_value.__enter__.return_value = mock_repos
+
+        notification = _make_notification(
+            sender_bpn="BPNL000000000099",
+            receiver_bpn="BPNL000000000001",
+            context="CompanyCertificateManagement-CCMAPI-Available:1.0.0",
+            content_extras={
+                "documentId": "DOC-EXISTING",
+                "certificateType": "ISO9001",
+            },
+        )
+
+        status, _ = self.service.process_certificate_available(notification)
+
+        assert status == 200
+        mock_repos.ccm_outbound_request_repository.create_new.assert_not_called()
+        mock_repos.ccm_outbound_request_repository.update_status.assert_called_once_with(
+            request_id=existing_req.id,
+            new_status=OutboundRequestStatus.Found,
+            document_id="DOC-EXISTING",
+        )

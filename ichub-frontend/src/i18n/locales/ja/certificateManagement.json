@@ -484,6 +484,7 @@
     "title": "CCMプロビジョン管理",
     "subtitle": "受信した証明書リクエストを処理し、Catena-Xパートナーに証明書を提供します。",
     "pushCertificate": "証明書をプッシュ",
+    "sendAvailable": "利用可能通知を送信",
     "tabs": {
       "inboundRequests": "受信リクエスト",
       "shares": "共有"
@@ -590,6 +591,21 @@
       "pushFailed": "証明書のプッシュに失敗しました。",
       "availFailed": "証明書を利用可能にする処理に失敗しました。",
       "loadFailed": "プロビジョニングデータの読み込みに失敗しました。"
+    }
+  },
+  "sendAvailableDialog": {
+    "title": "利用可能通知を送信",
+    "subtitle": "事前のリクエストなしで、証明書が利用可能であることをパートナーに通知します",
+    "description": "リクエストを待たずに、お客様の証明書がコンシューマーによるダウンロードに対応していることをアナウンスします。",
+    "certSelect": "アナウンスする証明書",
+    "noCerts": "利用可能な証明書がありません。",
+    "willPublish": "この証明書は送信前にEDCアセットとして自動的に公開されます。",
+    "recipientBpn": "受信者（コンシューマーBPN）",
+    "recipientPlaceholder": "受信者のBPNLを選択または入力してください",
+    "sendAvailability": "利用可能通知を送信",
+    "errors": {
+      "loadFailed": "データの読み込みに失敗しました。",
+      "sendFailed": "利用可能通知の送信に失敗しました。"
     }
   },
   "pushDialog": {

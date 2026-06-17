@@ -869,6 +869,7 @@ class CcmNotificationService:
             document_id=content.document_id,
             related_message_id=str(_related_msg_id) if _related_msg_id else None,
             location_bpns=CcmBaseService._canonicalize_location_bpns(_avail_sites),
+            sender_bpn=notification.header.receiver_bpn,
         )
 
         # If a documentId is provided, attempt auto-pull
@@ -1011,6 +1012,7 @@ class CcmNotificationService:
         document_id: str,
         related_message_id: Optional[str] = None,
         location_bpns: Optional[str] = None,
+        sender_bpn: Optional[str] = None,
     ) -> None:
         """
         Advance all Pending and NotFound outbound requests from this provider
@@ -1039,6 +1041,10 @@ class CcmNotificationService:
                 REQUEST this notification is responding to.
             location_bpns: Optional canonical JSON string of the site BPNs
                 covered by the certificate being made available.
+            sender_bpn: BPNL of this node (the consumer / receiver).  When
+                provided and no active outbound requests exist, a new
+                OutboundRequest with status ``Found`` is created so the
+                unsolicited AVAILABLE is tracked.
         """
         try:
             with RepositoryManagerFactory.create() as repo:
@@ -1069,6 +1075,22 @@ class CcmNotificationService:
                         f"(documentId={_s(document_id)})"
                     )
                 if active:
+                    repo.commit()
+                elif sender_bpn:
+                    repo.ccm_outbound_request_repository.create_new(
+                        sender_bpn=sender_bpn,
+                        provider_bpn=provider_bpn,
+                        certified_bpn=provider_bpn,
+                        certificate_type=certificate_type,
+                        status=OutboundRequestStatus.Found,
+                        document_id=document_id,
+                        location_bpns=location_bpns,
+                    )
+                    logger.info(
+                        f"[CCM] Created OutboundRequest (Found) for unsolicited "
+                        f"Available from {_s(provider_bpn)} / {_s(certificate_type)} "
+                        f"(documentId={_s(document_id)})"
+                    )
                     repo.commit()
         except Exception:
             logger.exception(

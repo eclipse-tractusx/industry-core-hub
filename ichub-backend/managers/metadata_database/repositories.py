@@ -1967,6 +1967,7 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
         certified_bpn: Optional[str] = None,
         certificate_type: Optional[str] = None,
         status: Optional[InboundRequestStatus] = None,
+        location_bpns: Optional[str] = None,
         offset: int = 0,
         limit: int = 100,
     ) -> List[CcmInboundRequest]:
@@ -1978,6 +1979,11 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             certified_bpn: Filter by certified entity BPNL.
             certificate_type: Filter by certificate type.
             status: Filter by InboundRequestStatus.
+            location_bpns: Optional canonical JSON string (from
+                ``_canonicalize_location_bpns``).  When provided, restricts
+                results to records whose ``location_bpns`` equals this value
+                exactly — preventing a request for site A from masking a
+                distinct request for site B.
             offset: Pagination offset.
             limit: Maximum records to return.
 
@@ -1993,6 +1999,8 @@ class CcmInboundRequestRepository(BaseRepository[CcmInboundRequest]):
             stmt = stmt.where(CcmInboundRequest.certificate_type == certificate_type)
         if status:
             stmt = stmt.where(CcmInboundRequest.status == status)
+        if location_bpns is not None:
+            stmt = stmt.where(CcmInboundRequest.location_bpns == location_bpns)
         stmt = stmt.order_by(desc(CcmInboundRequest.updated_at)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 

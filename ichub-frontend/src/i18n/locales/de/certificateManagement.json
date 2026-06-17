@@ -484,6 +484,7 @@
     "title": "CCM-Bereitstellungsverwaltung",
     "subtitle": "Bearbeiten Sie eingehende Zertifikatsanfragen und stellen Sie Ihren Catena-X-Partnern Zertifikate bereit.",
     "pushCertificate": "Zertifikat pushen",
+    "sendAvailable": "Verfügbarkeit senden",
     "tabs": {
       "inboundRequests": "Eingehende Anfragen",
       "shares": "Freigaben"
@@ -590,6 +591,21 @@
       "pushFailed": "Zertifikat konnte nicht gepusht werden.",
       "availFailed": "Zertifikat konnte nicht verfügbar gemacht werden.",
       "loadFailed": "Bereitstellungsdaten konnten nicht geladen werden."
+    }
+  },
+  "sendAvailableDialog": {
+    "title": "Verfügbarkeitsbenachrichtigung senden",
+    "subtitle": "Notify a partner that a certificate is available, without a prior request",
+    "description": "Announce that one of your certificates is available for the consumer to pull, without waiting for a request.",
+    "certSelect": "Certificate to announce",
+    "noCerts": "No certificates available.",
+    "willPublish": "This certificate will be published as an EDC asset automatically before sending.",
+    "recipientBpn": "Recipient (Consumer BPN)",
+    "recipientPlaceholder": "Select or type the recipient's BPNL",
+    "sendAvailability": "Send Availability",
+    "errors": {
+      "loadFailed": "Failed to load data.",
+      "sendFailed": "Failed to send the availability notification."
     }
   },
   "pushDialog": {

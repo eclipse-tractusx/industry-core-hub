@@ -400,6 +400,30 @@ class CcmProviderService(CcmBaseService):
                         f"(available notification path)."
                     )
 
+                if not updated:
+                    existing_inbound = repo.ccm_inbound_request_repository.find_all_filtered(
+                        consumer_bpn=consumer_bpn,
+                        certified_bpn=certified_bpn,
+                        certificate_type=certificate_type_val,
+                        location_bpns=cert_canonical_sites,
+                        limit=1,
+                    )
+                    if not existing_inbound:
+                        repo.ccm_inbound_request_repository.create_new(
+                            consumer_bpn=consumer_bpn,
+                            certified_bpn=certified_bpn,
+                            certificate_type=certificate_type_val,
+                            status=InboundRequestStatus.Available,
+                            certificate_id=cert_id,
+                            notification_id=str(notification.header.message_id),
+                            location_bpns=cert_canonical_sites,
+                        )
+                        logger.info(
+                            f"[CCM Provider] Created InboundRequest (Available) for "
+                            f"cert {cert_id} → consumer {_s(consumer_bpn)} "
+                            f"(unsolicited available notification)."
+                        )
+
                 repo.commit()
 
         return result

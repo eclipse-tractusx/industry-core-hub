@@ -69,6 +69,7 @@ import { usePartners } from '@/contexts/PartnerContext';
 import { useNotifications } from '@/features/notifications/contexts/NotificationContext';
 import ProvideCertificateDialog, { ProvideMode } from '../components/dialogs/ProvideCertificateDialog';
 import PushCertificateDialog from '../components/dialogs/PushCertificateDialog';
+import SendAvailableDialog from '../components/dialogs/SendAvailableDialog';
 import InboundRequestDetailDialog from '../components/dialogs/InboundRequestDetailDialog';
 import ShareDetailDialog from '../components/dialogs/ShareDetailDialog';
 
@@ -201,6 +202,7 @@ const ProvisionManagement = () => {
 
   const [provideRequest, setProvideRequest] = useState<InboundRequestItem | null>(null);
   const [pushOpen, setPushOpen] = useState(false);
+  const [sendAvailableOpen, setSendAvailableOpen] = useState(false);
   const [detailInbound, setDetailInbound] = useState<InboundRequestItem | null>(null);
   const [detailShare, setDetailShare] = useState<ShareItem | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
@@ -321,6 +323,12 @@ const ProvisionManagement = () => {
     void loadData();
   };
 
+  const handleSendAvailableSuccess = () => {
+    setSendAvailableOpen(false);
+    notify(t('provisionPage.messages.availabilitySent'));
+    void loadData();
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
@@ -334,6 +342,9 @@ const ProvisionManagement = () => {
           actions={
             <>
               <RefreshButton onClick={() => void loadData()} loading={isLoading} />
+              <PrimaryActionButton startIcon={<OpenInNewIcon />} onClick={() => setSendAvailableOpen(true)}>
+                {t('provisionPage.sendAvailable')}
+              </PrimaryActionButton>
               <PrimaryActionButton startIcon={<SendIcon />} onClick={() => setPushOpen(true)}>
                 {t('provisionPage.pushCertificate')}
               </PrimaryActionButton>
@@ -620,6 +631,12 @@ const ProvisionManagement = () => {
       />
 
       <PushCertificateDialog open={pushOpen} onClose={() => setPushOpen(false)} onSuccess={handlePushSuccess} />
+
+      <SendAvailableDialog
+        open={sendAvailableOpen}
+        onClose={() => setSendAvailableOpen(false)}
+        onSuccess={handleSendAvailableSuccess}
+      />
 
       <InboundRequestDetailDialog
         open={!!detailInbound}

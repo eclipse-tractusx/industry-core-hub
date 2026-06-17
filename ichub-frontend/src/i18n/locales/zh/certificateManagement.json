@@ -484,6 +484,7 @@
     "title": "CCM 供应管理",
     "subtitle": "处理传入的证书请求并向您的 Catena-X 合作伙伴提供证书。",
     "pushCertificate": "推送证书",
+    "sendAvailable": "发送可用性通知",
     "tabs": {
       "inboundRequests": "入站请求",
       "shares": "共享"
@@ -590,6 +591,21 @@
       "pushFailed": "推送证书失败。",
       "availFailed": "使证书可用失败。",
       "loadFailed": "加载供应数据失败。"
+    }
+  },
+  "sendAvailableDialog": {
+    "title": "发送可用性通知",
+    "subtitle": "Notify a partner that a certificate is available, without a prior request",
+    "description": "Announce that one of your certificates is available for the consumer to pull, without waiting for a request.",
+    "certSelect": "Certificate to announce",
+    "noCerts": "No certificates available.",
+    "willPublish": "This certificate will be published as an EDC asset automatically before sending.",
+    "recipientBpn": "Recipient (Consumer BPN)",
+    "recipientPlaceholder": "Select or type the recipient's BPNL",
+    "sendAvailability": "Send Availability",
+    "errors": {
+      "loadFailed": "Failed to load data.",
+      "sendFailed": "Failed to send the availability notification."
     }
   },
   "pushDialog": {

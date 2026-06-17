@@ -572,6 +572,112 @@ class TestSendCertificateAvailable:
             location_bpns='["BPNS000000000001"]',
         )
 
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_creates_inbound_request_when_none_exists(
+        self, mock_factory, mock_cm, mock_ncs_class, service
+    ):
+        """
+        GIVEN a valid certificate and no prior inbound requests (unsolicited)
+        WHEN send_certificate_available is called
+        THEN a new InboundRequest with status Available is created.
+        """
+        ccm = _make_ccm(edc_asset_id="asset-42")
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        # advance_status_for_consumer returns [] → no prior requests advanced
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+        # find_all_filtered (relatedMessageId lookup) returns [] first call,
+        # then [] for the duplicate-check call
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = []
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token123",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        result = service.send_certificate_available(
+            _available_request(), SENDER_BPN
+        )
+
+        assert result.success is True
+        repos.ccm_inbound_request_repository.create_new.assert_called_once_with(
+            consumer_bpn=CONSUMER_BPN,
+            certified_bpn=ccm.bpnl,
+            certificate_type=ccm.certificate_type,
+            status=InboundRequestStatus.Available,
+            certificate_id=CERT_ID,
+            notification_id=result.message_id,
+            location_bpns='["BPNS000000000001"]',
+        )
+        # The duplicate-check must be scoped to the exact same site set.
+        duplicate_check_call = repos.ccm_inbound_request_repository.find_all_filtered.call_args_list[-1]
+        assert duplicate_check_call.kwargs.get('location_bpns') == '["BPNS000000000001"]'
+
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service"
+        ".NotificationConsumerService"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_base_service.connector_manager"
+    )
+    @patch(
+        "services.addons.ccm_kit.v1.ccm_provider_service"
+        ".RepositoryManagerFactory.create"
+    )
+    def test_available_does_not_duplicate_inbound_request_when_one_exists(
+        self, mock_factory, mock_cm, mock_ncs_class, service
+    ):
+        """
+        GIVEN a valid certificate with no advanced requests but an existing
+              InboundRequest record for the same consumer/type combination
+        WHEN send_certificate_available is called
+        THEN no duplicate InboundRequest is created.
+        """
+        ccm = _make_ccm(edc_asset_id="asset-42")
+        existing_inbound = Mock(spec=CcmInboundRequest)
+        repos = Mock()
+        repos.ccm_repository.find_by_id_with_relations.return_value = ccm
+        repos.ccm_inbound_request_repository.advance_status_for_consumer.return_value = []
+        # find_all_filtered returns an existing record on the duplicate-check call
+        repos.ccm_inbound_request_repository.find_all_filtered.return_value = [
+            existing_inbound
+        ]
+        repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
+        mock_factory.return_value.__enter__.return_value = repos
+
+        mock_cm.consumer.get_connectors.return_value = [DSP_URL]
+        mock_ncs = Mock()
+        mock_ncs.get_notification_endpoint_with_bpnl.return_value = (
+            "https://endpoint.example.com",
+            "token123",
+        )
+        mock_ncs_class.return_value = mock_ncs
+
+        result = service.send_certificate_available(
+            _available_request(), SENDER_BPN
+        )
+
+        assert result.success is True
+        repos.ccm_inbound_request_repository.create_new.assert_not_called()
+        # Even when a duplicate exists the check must be scoped by location_bpns.
+        duplicate_check_call = repos.ccm_inbound_request_repository.find_all_filtered.call_args_list[-1]
+        assert duplicate_check_call.kwargs.get('location_bpns') == '["BPNS000000000001"]'
+
 
 # ---------------------------------------------------------------------------
 # _build_push_content Tests
