@@ -603,8 +603,8 @@ provider:
         prohibitions: []
         obligations: []
   uniqueIdPush:
-    hostname: "http://<provider-unique-id-push-api>"
-    apiPath: /api/v1
+    hostname: "http://localhost:9000"
+    apiPath: /v1/uniqueidpush
     uri: ""
     asset_config:
       dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"

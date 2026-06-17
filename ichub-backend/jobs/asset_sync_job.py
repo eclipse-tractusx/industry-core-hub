@@ -162,7 +162,8 @@ class AssetSyncJob:
             asset_config = uid_config.get("asset_config", {})
 
             uid_asset_id, _, _, _ = self.connector_provider_manager.register_unique_id_push_offer(
-                unique_id_push_url=uid_config.get("hostname"),
+                hostname=uid_config.get("hostname"),
+                api_path=uid_config.get("apiPath", "/v1/uniqueidpush"),
                 unique_id_push_policy_config=uid_config.get("policy"),
                 existing_asset_id=asset_config.get("existing_asset_id", None),
                 dct_type=asset_config.get(

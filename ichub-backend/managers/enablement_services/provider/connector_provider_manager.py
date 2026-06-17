@@ -21,7 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
 from tractusx_sdk.industry.services.notifications import NotificationService
 from managers.config.log_manager import LoggingManager
@@ -493,7 +493,8 @@ class ConnectorProviderManager:
 
     def register_unique_id_push_offer(
         self,
-        unique_id_push_url: str,
+        hostname: str,
+        api_path: str = "/v1/uniqueidpush",
         unique_id_push_policy_config: dict = None,
         existing_asset_id: str = None,
         dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
@@ -505,6 +506,10 @@ class ConnectorProviderManager:
 
         Returns a tuple: (asset_id, usage_policy_id, access_policy_id, contract_id)
         """
+        unique_id_push_url = urljoin(
+            hostname.rstrip("/") + "/", api_path.lstrip("/")
+        )
+
         if self.authorization:
             headers = {
                 self.backend_api_key: self.backend_api_key_value
