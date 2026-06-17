@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -44,16 +45,17 @@ import { InfoRow } from '../battery-pass-shared/InfoRow';
 import { TechnicalData, BatteryCategory, getMultiLangValue } from './types';
 
 const CATEGORY_LABELS: Record<BatteryCategory, string> = {
-  lmt: 'Light Means of Transport (LMT)',
-  ev: 'Electric Vehicle (EV)',
-  industrial: 'Industrial',
-  stationary: 'Stationary Energy Storage',
+  lmt: 'technicalData.categories.lmt',
+  ev: 'technicalData.categories.ev',
+  industrial: 'technicalData.categories.industrial',
+  stationary: 'technicalData.categories.stationary',
 };
 
 export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalData>> = ({
   data: rawData,
   semanticId,
 }) => {
+  const { t } = useTranslation('batteryPass');
   const data = unwrapSubmodelData<TechnicalData>(rawData);
   if (!data) return null;
   const generalInfo = data.GeneralInformation;
@@ -61,7 +63,7 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
 
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Technical Data"
+      title={t('technicalData.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -71,23 +73,23 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BusinessIcon color="primary" />
-              General Information
+              {t('technicalData.sections.generalInformation')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Manufacturer" value={generalInfo.ManufacturerName} />
+              <InfoRow label={t('technicalData.fields.manufacturer')} value={generalInfo.ManufacturerName} />
               <InfoRow
-                label="Product Designation"
+                label={t('technicalData.fields.productDesignation')}
                 value={getMultiLangValue(generalInfo.ManufacturerProductDesignation)}
               />
-              <InfoRow label="Article Number" value={generalInfo.ManufacturerArticleNumber} />
-              <InfoRow label="Order Code" value={generalInfo.ManufacturerOrderCode} />
-              <InfoRow label="Manufacturer Identifier" value={generalInfo.ManufacturerIdentifier} />
-              <InfoRow label="Warranty Period" value={generalInfo.WarrantyPeriod} />
-              <InfoRow label="Battery Mass" value={generalInfo.BatteryMass} unit="kg" />
+              <InfoRow label={t('technicalData.fields.articleNumber')} value={generalInfo.ManufacturerArticleNumber} />
+              <InfoRow label={t('technicalData.fields.orderCode')} value={generalInfo.ManufacturerOrderCode} />
+              <InfoRow label={t('technicalData.fields.manufacturerIdentifier')} value={generalInfo.ManufacturerIdentifier} />
+              <InfoRow label={t('technicalData.fields.warrantyPeriod')} value={generalInfo.WarrantyPeriod} />
+              <InfoRow label={t('technicalData.fields.batteryMass')} value={generalInfo.BatteryMass} unit="kg" />
               <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
-                <Typography variant="subtitle2" color="text.secondary">Battery Category</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('technicalData.fields.batteryCategory')}</Typography>
                 <Chip
-                  label={CATEGORY_LABELS[generalInfo.BatteryCategory] ?? generalInfo.BatteryCategory}
+                  label={t(CATEGORY_LABELS[generalInfo.BatteryCategory] ?? generalInfo.BatteryCategory)}
                   color="primary"
                   size="small"
                   variant="outlined"
@@ -102,18 +104,18 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BoltIcon color="primary" />
-              Capacity, Energy &amp; Voltage
+              {t('technicalData.sections.capacityEnergyVoltage')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Nominal Voltage" value={techAreas.CapacityEnergyVoltage.NominalVoltage} unit="V" />
-              <InfoRow label="Minimum Voltage" value={techAreas.CapacityEnergyVoltage.MinVoltage} unit="V" />
-              <InfoRow label="Maximum Voltage" value={techAreas.CapacityEnergyVoltage.MaxVoltage} unit="V" />
-              <InfoRow label="Rated Capacity" value={techAreas.CapacityEnergyVoltage.RatedCapacity} unit="Ah" />
+              <InfoRow label={t('technicalData.fields.nominalVoltage')} value={techAreas.CapacityEnergyVoltage.NominalVoltage} unit="V" />
+              <InfoRow label={t('technicalData.fields.minimumVoltage')} value={techAreas.CapacityEnergyVoltage.MinVoltage} unit="V" />
+              <InfoRow label={t('technicalData.fields.maximumVoltage')} value={techAreas.CapacityEnergyVoltage.MaxVoltage} unit="V" />
+              <InfoRow label={t('technicalData.fields.ratedCapacity')} value={techAreas.CapacityEnergyVoltage.RatedCapacity} unit="Ah" />
               {techAreas.CapacityEnergyVoltage.CapacityFade !== undefined && (
-                <InfoRow label="Capacity Fade" value={techAreas.CapacityEnergyVoltage.CapacityFade} unit="%" />
+                <InfoRow label={t('technicalData.fields.capacityFade')} value={techAreas.CapacityEnergyVoltage.CapacityFade} unit="%" />
               )}
               {techAreas.CapacityEnergyVoltage.CertifiedUsableBatteryEnergy !== undefined && (
-                <InfoRow label="Certified Usable Battery Energy" value={techAreas.CapacityEnergyVoltage.CertifiedUsableBatteryEnergy} unit="kWh" />
+                <InfoRow label={t('technicalData.fields.certifiedUsableBatteryEnergy')} value={techAreas.CapacityEnergyVoltage.CertifiedUsableBatteryEnergy} unit="kWh" />
               )}
             </Grid2>
           </CardContent>
@@ -124,16 +126,16 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <SpeedIcon color="primary" />
-              Round Trip Energy Efficiency
+              {t('technicalData.sections.roundTripEnergyEfficiency')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Initial Efficiency" value={techAreas.RoundTripEnergyEfficiency.InitialRoundTripEnergyEfficiency} unit="%" />
-              <InfoRow label="Efficiency at 50% Cycle Life" value={techAreas.RoundTripEnergyEfficiency.RoundTripEnergyEfficiencyAt50PercentOfCycleLife} unit="%" />
+              <InfoRow label={t('technicalData.fields.initialEfficiency')} value={techAreas.RoundTripEnergyEfficiency.InitialRoundTripEnergyEfficiency} unit="%" />
+              <InfoRow label={t('technicalData.fields.efficiencyAt50PercentCycleLife')} value={techAreas.RoundTripEnergyEfficiency.RoundTripEnergyEfficiencyAt50PercentOfCycleLife} unit="%" />
               {techAreas.RoundTripEnergyEfficiency.EnergyRoundTripEfficiencyFade !== undefined && (
-                <InfoRow label="Efficiency Fade" value={techAreas.RoundTripEnergyEfficiency.EnergyRoundTripEfficiencyFade} unit="%" />
+                <InfoRow label={t('technicalData.fields.efficiencyFade')} value={techAreas.RoundTripEnergyEfficiency.EnergyRoundTripEfficiencyFade} unit="%" />
               )}
               {techAreas.RoundTripEnergyEfficiency.InitialSelfDischargingRate !== undefined && (
-                <InfoRow label="Initial Self-Discharging Rate" value={techAreas.RoundTripEnergyEfficiency.InitialSelfDischargingRate} unit="%/month" />
+                <InfoRow label={t('technicalData.fields.initialSelfDischargingRate')} value={techAreas.RoundTripEnergyEfficiency.InitialSelfDischargingRate} unit="%/month" />
               )}
             </Grid2>
           </CardContent>
@@ -144,23 +146,23 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BuildIcon color="primary" />
-              Internal Resistance
+              {t('technicalData.sections.internalResistance')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Cell Level (Initial)" value={techAreas.Resistance.InitialInternalResistanceAtBatteryCellLevel} unit="mΩ" />
-              <InfoRow label="Pack Level (Initial)" value={techAreas.Resistance.InitialInternalResistanceAtBatteryPackLevel} unit="mΩ" />
+              <InfoRow label={t('technicalData.fields.cellLevelInitial')} value={techAreas.Resistance.InitialInternalResistanceAtBatteryCellLevel} unit="mΩ" />
+              <InfoRow label={t('technicalData.fields.packLevelInitial')} value={techAreas.Resistance.InitialInternalResistanceAtBatteryPackLevel} unit="mΩ" />
               {techAreas.Resistance.InitialInternalResistanceAtBatteryModuleLevel !== undefined && (
-                <InfoRow label="Module Level (Initial)" value={techAreas.Resistance.InitialInternalResistanceAtBatteryModuleLevel} unit="mΩ" />
+                <InfoRow label={t('technicalData.fields.moduleLevelInitial')} value={techAreas.Resistance.InitialInternalResistanceAtBatteryModuleLevel} unit="mΩ" />
               )}
               <Grid2 size={12}>
                 <Divider sx={{ my: 0.5 }} />
               </Grid2>
-              <InfoRow label="Pack Level (Increase)" value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryPackLevel} unit="%" />
+              <InfoRow label={t('technicalData.fields.packLevelIncrease')} value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryPackLevel} unit="%" />
               {techAreas.Resistance.InternalResistanceIncreaseAtBatteryCellLevel !== undefined && (
-                <InfoRow label="Cell Level (Increase)" value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryCellLevel} unit="%" />
+                <InfoRow label={t('technicalData.fields.cellLevelIncrease')} value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryCellLevel} unit="%" />
               )}
               {techAreas.Resistance.InternalResistanceIncreaseAtBatteryModuleLevel !== undefined && (
-                <InfoRow label="Module Level (Increase)" value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryModuleLevel} unit="%" />
+                <InfoRow label={t('technicalData.fields.moduleLevelIncrease')} value={techAreas.Resistance.InternalResistanceIncreaseAtBatteryModuleLevel} unit="%" />
               )}
             </Grid2>
           </CardContent>
@@ -171,18 +173,18 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BoltIcon color="primary" />
-              Power Capability
+              {t('technicalData.sections.powerCapability')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Maximum Permitted Power" value={techAreas.PowerCapability.MaximumPermittedBatteryPower} unit="W" />
-              <InfoRow label="Power Fade" value={techAreas.PowerCapability.PowerFade} unit="%" />
-              <InfoRow label="Power-to-Energy Ratio" value={techAreas.PowerCapability.RatioNominalBatteryPowerAndBatteryEnergy} unit="W/Wh" />
+              <InfoRow label={t('technicalData.fields.maximumPermittedPower')} value={techAreas.PowerCapability.MaximumPermittedBatteryPower} unit="W" />
+              <InfoRow label={t('technicalData.fields.powerFade')} value={techAreas.PowerCapability.PowerFade} unit="%" />
+              <InfoRow label={t('technicalData.fields.powerToEnergyRatio')} value={techAreas.PowerCapability.RatioNominalBatteryPowerAndBatteryEnergy} unit="W/Wh" />
             </Grid2>
             {techAreas.PowerCapability.OriginalPowerCapability && techAreas.PowerCapability.OriginalPowerCapability.length > 0 && (
               <>
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                  Power Capability at State of Charge
+                  {t('technicalData.sections.powerCapabilityAtSoC')}
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {techAreas.PowerCapability.OriginalPowerCapability.map((pc) => (
@@ -206,11 +208,11 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
               <CardContent>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <ThermostatIcon color="primary" />
-                  Temperature Range (Idle)
+                  {t('technicalData.sections.temperatureRange')}
                 </Typography>
                 <Grid2 container spacing={2}>
-                  <InfoRow label="Lower Boundary" value={techAreas.Temperature.TemperatureRangeIdleState_LowerBoundary} unit="°C" />
-                  <InfoRow label="Upper Boundary" value={techAreas.Temperature.TemperatureRangeIdleState_UpperBoundary} unit="°C" />
+                  <InfoRow label={t('technicalData.fields.lowerBoundary')} value={techAreas.Temperature.TemperatureRangeIdleState_LowerBoundary} unit="°C" />
+                  <InfoRow label={t('technicalData.fields.upperBoundary')} value={techAreas.Temperature.TemperatureRangeIdleState_UpperBoundary} unit="°C" />
                 </Grid2>
               </CardContent>
             </Card>
@@ -220,18 +222,18 @@ export const TechnicalDataBatteryViewer: React.FC<SubmodelAddonProps<TechnicalDa
               <CardContent>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <TimerIcon color="primary" />
-                  Lifetime
+                  {t('technicalData.sections.lifetime')}
                 </Typography>
                 <Grid2 container spacing={2}>
-                  <InfoRow label="Expected Lifetime" value={techAreas.Lifetime.ExpectedLifetimeInCalendarYears} unit="years" />
-                  <InfoRow label="Expected Cycles" value={techAreas.Lifetime.ExpectedNumberOfCycles} />
-                  <InfoRow label="Capacity Threshold for Exhaustion" value={techAreas.Lifetime.CapacityThresholdExhaustion} unit="%" />
-                  <InfoRow label="C-Rate (Cycle Life Test)" value={techAreas.Lifetime.CrateOfRelevantCycleLifeTest} />
+                  <InfoRow label={t('technicalData.fields.expectedLifetime')} value={techAreas.Lifetime.ExpectedLifetimeInCalendarYears} unit="years" />
+                  <InfoRow label={t('technicalData.fields.expectedCycles')} value={techAreas.Lifetime.ExpectedNumberOfCycles} />
+                  <InfoRow label={t('technicalData.fields.capacityThresholdForExhaustion')} value={techAreas.Lifetime.CapacityThresholdExhaustion} unit="%" />
+                  <InfoRow label={t('technicalData.fields.cRateCycleLifeTest')} value={techAreas.Lifetime.CrateOfRelevantCycleLifeTest} />
                 </Grid2>
                 {techAreas.Lifetime.CycleLifeReferenceTest && techAreas.Lifetime.CycleLifeReferenceTest.length > 0 && (
                   <>
                     <Divider sx={{ my: 1.5 }} />
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>Reference Test Documents</Typography>
+                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>{t('technicalData.sections.referenceTestDocuments')}</Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {techAreas.Lifetime.CycleLifeReferenceTest.map((doc) => (
                         <Chip key={doc} label={doc} size="small" variant="outlined" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }} />

@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -48,17 +49,18 @@ export const CarbonFootprintBatteryViewer: React.FC<SubmodelAddonProps<CarbonFoo
   semanticId,
 }) => {
   const data = unwrapSubmodelData<CarbonFootprintBattery>(rawData);
+  const { t } = useTranslation('batteryPass');
   if (!data) return null;
 
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Carbon Footprint"
+      title={t('carbonFootprint.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {data.ProductCarbonFootprints.length === 0 && (
           <Typography variant="body2" color="text.secondary">
-            No carbon footprint data available.
+            {t('carbonFootprint.empty')}
           </Typography>
         )}
         {data.ProductCarbonFootprints.map((pcf, i) => (
@@ -67,18 +69,18 @@ export const CarbonFootprintBatteryViewer: React.FC<SubmodelAddonProps<CarbonFoo
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <Co2Icon color="primary" />
                 {data.ProductCarbonFootprints.length > 1
-                  ? `Carbon Footprint Entry ${i + 1}`
-                  : 'Product Carbon Footprint'}
+                  ? t('carbonFootprint.entry', { index: i + 1 })
+                  : t('carbonFootprint.single')}
               </Typography>
 
               <Grid2 container spacing={2}>
                 <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Typography variant="subtitle2" color="text.secondary">CO₂ Equivalent</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">{t('carbonFootprint.fields.co2Equivalent')}</Typography>
                   <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
                     {pcf.PcfCo2eq} kg CO₂-eq / {pcf.QuantityOfMeasureForCalculation} {pcf.ReferenceImpactUnitForCalculation}
                   </Typography>
                 </Grid2>
-                <InfoRow label="Performance Class" value={pcf.PerformanceClass} />
+                <InfoRow label={t('carbonFootprint.fields.performanceClass')} value={pcf.PerformanceClass} />
               </Grid2>
 
               {pcf.PcfCalculationMethods && pcf.PcfCalculationMethods.length > 0 && (
@@ -86,7 +88,7 @@ export const CarbonFootprintBatteryViewer: React.FC<SubmodelAddonProps<CarbonFoo
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <ScienceIcon fontSize="small" color="action" />
-                    Calculation Methods
+                    {t('carbonFootprint.sections.calculationMethods')}
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {pcf.PcfCalculationMethods.map((method) => (
@@ -99,7 +101,7 @@ export const CarbonFootprintBatteryViewer: React.FC<SubmodelAddonProps<CarbonFoo
               {pcf.LifeCyclePhases && pcf.LifeCyclePhases.length > 0 && (
                 <>
                   <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" sx={{ mb: 1 }}>Life Cycle Phases</Typography>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>{t('carbonFootprint.sections.lifeCyclePhases')}</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {pcf.LifeCyclePhases.map((phase) => (
                       <Chip key={phase} label={phase} size="small" color="info" variant="outlined" />
@@ -113,7 +115,7 @@ export const CarbonFootprintBatteryViewer: React.FC<SubmodelAddonProps<CarbonFoo
                   <Divider sx={{ my: 2 }} />
                   <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <PublicIcon fontSize="small" color="action" />
-                    Public Carbon Footprint Studies
+                    {t('carbonFootprint.sections.publicStudies')}
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     {pcf.WebLinkToPublicCarbonFootprintStudy.map((link) =>

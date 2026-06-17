@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -60,17 +61,18 @@ const LIFECYCLE_COLORS: Record<BatteryLifeCycleStage, 'success' | 'info' | 'warn
 };
 
 const LIFECYCLE_DESCRIPTIONS: Record<BatteryLifeCycleStage, string> = {
-  original: 'Battery is new and has never been repurposed or remanufactured.',
-  repurposed: 'Battery has been repurposed for a different application.',
-  're-used': 'Battery has been reused in the same or similar application.',
-  remanufactured: 'Battery has been remanufactured to restore its performance.',
-  waste: 'Battery has reached end-of-life and is classified as waste.',
+  original: 'digitalNameplate.lifecycle.original',
+  repurposed: 'digitalNameplate.lifecycle.repurposed',
+  're-used': 'digitalNameplate.lifecycle.re-used',
+  remanufactured: 'digitalNameplate.lifecycle.remanufactured',
+  waste: 'digitalNameplate.lifecycle.waste',
 };
 
 export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<BatteryPassDigitalNameplate>> = ({
   data: rawData,
   semanticId,
 }) => {
+  const { t } = useTranslation('batteryPass');
   const data = unwrapSubmodelData<BatteryPassDigitalNameplate>(rawData);
   if (!data) return null;
   const addr = data.AddressInformation;
@@ -81,7 +83,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
 
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Digital Nameplate"
+      title={t('digitalNameplate.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -91,11 +93,11 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <FingerprintIcon color="primary" />
-              Product Identification
+              {t('digitalNameplate.sections.productIdentification')}
             </Typography>
             <Grid2 container spacing={2}>
               <Grid2 size={12}>
-                <Typography variant="subtitle2" color="text.secondary">Battery Passport URI</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('digitalNameplate.fields.batteryPassportUri')}</Typography>
                 <Link
                   href={data.URIOfTheProduct}
                   target="_blank"
@@ -105,10 +107,10 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                   {data.URIOfTheProduct}
                 </Link>
               </Grid2>
-              <InfoRow label="Serial Number" value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.SerialNumber}</Box>} />
-              <InfoRow label="Manufacturer Identifier" value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.ManufacturerIdentifier}</Box>} />
+              <InfoRow label={t('digitalNameplate.fields.serialNumber')} value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.SerialNumber}</Box>} />
+              <InfoRow label={t('digitalNameplate.fields.manufacturerIdentifier')} value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.ManufacturerIdentifier}</Box>} />
               {data.OperatorIdentifier && (
-                <InfoRow label="Operator Identifier" value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.OperatorIdentifier}</Box>} />
+                <InfoRow label={t('digitalNameplate.fields.operatorIdentifier')} value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.OperatorIdentifier}</Box>} />
               )}
             </Grid2>
           </CardContent>
@@ -119,7 +121,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BatteryChargingFullIcon color="primary" />
-              Lifecycle Status
+              {t('digitalNameplate.sections.lifecycleStatus')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
               <Chip
@@ -128,7 +130,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                 sx={{ fontWeight: 600, textTransform: 'capitalize' }}
               />
               <Typography variant="body2" color="text.secondary">
-                {LIFECYCLE_DESCRIPTIONS[data.LifeCycleStage]}
+                {t(LIFECYCLE_DESCRIPTIONS[data.LifeCycleStage])}
               </Typography>
             </Box>
           </CardContent>
@@ -139,14 +141,14 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <FactoryIcon color="primary" />
-              Manufacturing Details
+              {t('digitalNameplate.sections.manufacturingDetails')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Date of Manufacture" value={data.DateOfManufacture} />
+              <InfoRow label={t('digitalNameplate.fields.dateOfManufacture')} value={data.DateOfManufacture} />
               {data.DateOfPuttingIntoService && (
-                <InfoRow label="Date of Putting Into Service" value={data.DateOfPuttingIntoService} />
+                <InfoRow label={t('digitalNameplate.fields.dateOfPuttingIntoService')} value={data.DateOfPuttingIntoService} />
               )}
-              <InfoRow label="Unique Facility Identifier" value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.UniqueFacilityIdentifier}</Box>} />
+              <InfoRow label={t('digitalNameplate.fields.uniqueFacilityIdentifier')} value={<Box component="span" sx={{ fontFamily: 'monospace' }}>{data.UniqueFacilityIdentifier}</Box>} />
             </Grid2>
           </CardContent>
         </Card>
@@ -156,25 +158,25 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BusinessIcon color="primary" />
-              Manufacturer Information
+              {t('digitalNameplate.sections.manufacturerInformation')}
             </Typography>
             <Grid2 container spacing={2}>
               <InfoRow
-                label="Manufacturer Name"
+                label={t('digitalNameplate.fields.manufacturerName')}
                 value={getMultiLangValue(data.ManufacturerName)}
               />
               {addr.Company && (
-                <InfoRow label="Company" value={getMultiLangValue(addr.Company)} />
+                <InfoRow label={t('digitalNameplate.fields.company')} value={getMultiLangValue(addr.Company)} />
               )}
               {addr.Department && (
-                <InfoRow label="Department" value={getMultiLangValue(addr.Department)} />
+                <InfoRow label={t('digitalNameplate.fields.department')} value={getMultiLangValue(addr.Department)} />
               )}
               {addr.RoleOfContactPerson && (
-                <InfoRow label="Contact Role" value={addr.RoleOfContactPerson} />
+                <InfoRow label={t('digitalNameplate.fields.contactRole')} value={addr.RoleOfContactPerson} />
               )}
               {(addr.NameOfContact || addr.FirstName) && (
                 <InfoRow
-                  label="Contact Person"
+                  label={t('digitalNameplate.fields.contactPerson')}
                   value={[
                     addr.Title && getMultiLangValue(addr.Title),
                     addr.AcademicTitle && getMultiLangValue(addr.AcademicTitle),
@@ -190,23 +192,23 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
 
             <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <LocationOnIcon fontSize="small" color="action" />
-              Address
+              {t('digitalNameplate.sections.address')}
             </Typography>
             <Grid2 container spacing={2}>
-              <InfoRow label="Street" value={getMultiLangValue(addr.Street)} />
-              <InfoRow label="City / Town" value={getMultiLangValue(addr.CityTown)} />
-              <InfoRow label="Zip Code" value={getMultiLangValue(addr.ZipCode)} />
+              <InfoRow label={t('digitalNameplate.fields.street')} value={getMultiLangValue(addr.Street)} />
+              <InfoRow label={t('digitalNameplate.fields.cityTown')} value={getMultiLangValue(addr.CityTown)} />
+              <InfoRow label={t('digitalNameplate.fields.zipCode')} value={getMultiLangValue(addr.ZipCode)} />
               {addr.StateCounty && (
-                <InfoRow label="State / County" value={getMultiLangValue(addr.StateCounty)} />
+                <InfoRow label={t('digitalNameplate.fields.stateCounty')} value={getMultiLangValue(addr.StateCounty)} />
               )}
-              <InfoRow label="Country" value={getMultiLangValue(addr.NationalCode)} />
-              {addr.TimeZone && <InfoRow label="Time Zone" value={addr.TimeZone} />}
+              <InfoRow label={t('digitalNameplate.fields.country')} value={getMultiLangValue(addr.NationalCode)} />
+              {addr.TimeZone && <InfoRow label={t('digitalNameplate.fields.timeZone')} value={addr.TimeZone} />}
               {addr.POBox && (
-                <InfoRow label="P.O. Box" value={`${getMultiLangValue(addr.POBox)}${addr.ZipCodeOfPOBox ? ', ' + getMultiLangValue(addr.ZipCodeOfPOBox) : ''}`} />
+                <InfoRow label={t('digitalNameplate.fields.poBox')} value={`${getMultiLangValue(addr.POBox)}${addr.ZipCodeOfPOBox ? ', ' + getMultiLangValue(addr.ZipCodeOfPOBox) : ''}`} />
               )}
               {addr.AddressOfAdditionalLink && (
                 <Grid2 size={12}>
-                  <Typography variant="subtitle2" color="text.secondary">Website</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">{t('digitalNameplate.fields.website')}</Typography>
                   <Link href={addr.AddressOfAdditionalLink} target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
                     {addr.AddressOfAdditionalLink}
                   </Link>
@@ -219,18 +221,18 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                 <Divider sx={{ my: 2 }} />
                 <Typography variant="subtitle1" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                   <PhoneIcon fontSize="small" color="action" />
-                  Contact
+                  {t('digitalNameplate.sections.contact')}
                 </Typography>
                 <Grid2 container spacing={2}>
                   {addr.Phone && (
                     <InfoRow
-                      label={`Phone${addr.Phone.TypeOfTelephone ? ` (${addr.Phone.TypeOfTelephone})` : ''}`}
+                      label={`${t('digitalNameplate.fields.phone')}${addr.Phone.TypeOfTelephone ? ` (${addr.Phone.TypeOfTelephone})` : ''}`}
                       value={getMultiLangValue(addr.Phone.TelephoneNumber)}
                     />
                   )}
                   {addr.Fax && (
                     <InfoRow
-                      label={`Fax${addr.Fax.TypeOfFaxNumber ? ` (${addr.Fax.TypeOfFaxNumber})` : ''}`}
+                      label={`${t('digitalNameplate.fields.fax')}${addr.Fax.TypeOfFaxNumber ? ` (${addr.Fax.TypeOfFaxNumber})` : ''}`}
                       value={getMultiLangValue(addr.Fax.FaxNumber)}
                     />
                   )}
@@ -238,7 +240,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                     <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                       <Typography variant="subtitle2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <EmailIcon fontSize="small" />
-                        Email{addr.Email.TypeOfEmailAddress ? ` (${addr.Email.TypeOfEmailAddress})` : ''}
+                        {t('digitalNameplate.fields.email')}{addr.Email.TypeOfEmailAddress ? ` (${addr.Email.TypeOfEmailAddress})` : ''}
                       </Typography>
                       <Link href={`mailto:${addr.Email.EmailAddress}`} sx={{ fontSize: '0.875rem' }}>
                         {addr.Email.EmailAddress}
@@ -252,7 +254,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
             {addr.IPCommunicationChannels && addr.IPCommunicationChannels.length > 0 && (
               <>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle1" sx={{ mb: 1.5 }}>IP Communication Channels</Typography>
+                <Typography variant="subtitle1" sx={{ mb: 1.5 }}>{t('digitalNameplate.sections.ipCommunicationChannels')}</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {addr.IPCommunicationChannels.map((ch) => (
                     <Chip
@@ -279,7 +281,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <VerifiedIcon color="primary" />
-                Markings &amp; Certifications
+                {t('digitalNameplate.sections.markingsAndCertifications')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.Markings.map((marking) => (
@@ -300,16 +302,16 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                       </Box>
                       <Grid2 container spacing={1}>
                         {marking.IssueDate && (
-                          <InfoRow label="Issue Date" value={marking.IssueDate} />
+                          <InfoRow label={t('digitalNameplate.fields.issueDate')} value={marking.IssueDate} />
                         )}
                         {marking.ExpiryDate && (
-                          <InfoRow label="Expiry Date" value={marking.ExpiryDate} />
+                          <InfoRow label={t('digitalNameplate.fields.expiryDate')} value={marking.ExpiryDate} />
                         )}
                         {marking.MarkingAdditionalText && (
-                          <InfoRow label="Additional Info" value={marking.MarkingAdditionalText} />
+                          <InfoRow label={t('digitalNameplate.fields.additionalInfo')} value={marking.MarkingAdditionalText} />
                         )}
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Document</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('digitalNameplate.fields.document')}</Typography>
                           <Link
                             href={marking.MarkingFile.value}
                             target="_blank"
@@ -337,13 +339,13 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <GppGoodIcon color="primary" />
-                Compliance Documents
+                {t('digitalNameplate.sections.complianceDocuments')}
               </Typography>
               <Grid2 container spacing={2}>
                 {data.EUDeclarationOfConformity && data.EUDeclarationOfConformity.length > 0 && (
                   <Grid2 size={12}>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                      EU Declaration of Conformity
+                      {t('digitalNameplate.fields.euDeclarationOfConformity')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {data.EUDeclarationOfConformity.map((docId) => (
@@ -361,7 +363,7 @@ export const BatteryPassDigitalNameplateViewer: React.FC<SubmodelAddonProps<Batt
                 {data.ResultsOfTestReportsProvingCompliance && data.ResultsOfTestReportsProvingCompliance.length > 0 && (
                   <Grid2 size={12}>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                      Results of Test Reports Proving Compliance
+                      {t('digitalNameplate.fields.resultsOfTestReportsProvingCompliance')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                       {data.ResultsOfTestReportsProvingCompliance.map((docId) => (

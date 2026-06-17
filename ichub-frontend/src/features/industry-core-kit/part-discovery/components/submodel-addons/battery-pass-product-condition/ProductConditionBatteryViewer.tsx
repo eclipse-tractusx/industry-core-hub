@@ -20,8 +20,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -42,7 +42,6 @@ import { SubmodelAddonProps } from '../shared/types';
 import { unwrapSubmodelData } from '../shared/utils';
 import { SubmodelAddonWrapper } from '../BaseAddon';
 import { ProductCondition } from './types';
-
 function MetricRow({
   label,
   value,
@@ -81,31 +80,29 @@ function MetricRow({
     </Grid2>
   );
 }
-
 export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductCondition>> = ({
   data: rawData,
   semanticId,
 }) => {
+  const { t } = useTranslation('batteryPass');
   const data = unwrapSubmodelData<ProductCondition>(rawData);
   if (!data) return null;
-
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Product Condition"
+      title={t('productCondition.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-
         {/* State of Charge */}
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <BatteryFullIcon color="primary" />
-              Current State
+              {t('productCondition.sections.currentState')}
             </Typography>
             <Grid2 container spacing={2}>
               <Grid2 size={{ xs: 12, sm: 6 }}>
-                <Typography variant="subtitle2" color="text.secondary">State of Charge</Typography>
+                <Typography variant="subtitle2" color="text.secondary">{t('productCondition.fields.stateOfCharge')}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
                   <Box sx={{ flex: 1 }}>
                     <LinearProgress
@@ -120,53 +117,52 @@ export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductC
                   </Typography>
                 </Box>
                 <Typography variant="caption" color="text.secondary">
-                  Updated: {data.StateOfCharge.LastUpdate}
+                  {t('productCondition.fields.updated', { date: data.StateOfCharge.LastUpdate })}
                 </Typography>
               </Grid2>
               <MetricRow
-                label="Number of Full Cycles"
+                label={t('productCondition.fields.numberOfFullCycles')}
                 value={data.NumberOfFullCycles.NumberOfFullCyclesValue}
                 lastUpdate={data.NumberOfFullCycles.LastUpdate}
               />
             </Grid2>
           </CardContent>
         </Card>
-
         {/* Energy & Capacity */}
         {(data.EnergyThroughput || data.CapacityThroughput || data.RemainingEnergy || data.RemainingCapacity || data.StateOfCertifiedEnergy) && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <ThunderstormIcon color="primary" />
-                Energy &amp; Capacity
+                {t('productCondition.sections.energyAndCapacity')}
               </Typography>
               <Grid2 container spacing={2}>
                 <MetricRow
-                  label="Energy Throughput"
+                  label={t('productCondition.fields.energyThroughput')}
                   value={data.EnergyThroughput?.EnergyThroughputValue}
                   unit="kWh"
                   lastUpdate={data.EnergyThroughput?.LastUpdate}
                 />
                 <MetricRow
-                  label="Capacity Throughput"
+                  label={t('productCondition.fields.capacityThroughput')}
                   value={data.CapacityThroughput?.CapacityThroughputValue}
                   unit="Ah"
                   lastUpdate={data.CapacityThroughput?.LastUpdate}
                 />
                 <MetricRow
-                  label="Remaining Energy"
+                  label={t('productCondition.fields.remainingEnergy')}
                   value={data.RemainingEnergy?.RemainingEnergyValue}
                   unit="kWh"
                   lastUpdate={data.RemainingEnergy?.LastUpdate}
                 />
                 <MetricRow
-                  label="Remaining Capacity"
+                  label={t('productCondition.fields.remainingCapacity')}
                   value={data.RemainingCapacity?.RemainingCapacityValue}
                   unit="Ah"
                   lastUpdate={data.RemainingCapacity?.LastUpdate}
                 />
                 <MetricRow
-                  label="State of Certified Energy"
+                  label={t('productCondition.fields.stateOfCertifiedEnergy')}
                   value={data.StateOfCertifiedEnergy?.StateOfCertifiedEnergyValue}
                   unit="%"
                   showProgress={true}
@@ -176,31 +172,30 @@ export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductC
             </CardContent>
           </Card>
         )}
-
         {/* Efficiency & Discharge */}
         {(data.RemainingRoundTripEnergyEfficiency || data.CurrentSelfDischargingRate || data.EvolutionOfSelfDischarge) && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <SpeedIcon color="primary" />
-                Efficiency &amp; Self-Discharge
+                {t('productCondition.sections.efficiencyAndSelfDischarge')}
               </Typography>
               <Grid2 container spacing={2}>
                 <MetricRow
-                  label="Remaining Round Trip Energy Efficiency"
+                  label={t('productCondition.fields.remainingRoundTripEnergyEfficiency')}
                   value={data.RemainingRoundTripEnergyEfficiency?.RemainingRoundTripEnergyEfficiencyValue}
                   unit="%"
                   showProgress={true}
                   lastUpdate={data.RemainingRoundTripEnergyEfficiency?.LastUpdate}
                 />
                 <MetricRow
-                  label="Current Self-Discharging Rate"
+                  label={t('productCondition.fields.currentSelfDischargingRate')}
                   value={data.CurrentSelfDischargingRate?.CurrentSelfDischargingRateValue}
                   unit="%/month"
                   lastUpdate={data.CurrentSelfDischargingRate?.LastUpdate}
                 />
                 <MetricRow
-                  label="Evolution of Self-Discharge"
+                  label={t('productCondition.fields.evolutionOfSelfDischarge')}
                   value={data.EvolutionOfSelfDischarge?.EvolutionOfSelfDischargeValue}
                   lastUpdate={data.EvolutionOfSelfDischarge?.LastUpdate}
                 />
@@ -208,49 +203,47 @@ export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductC
             </CardContent>
           </Card>
         )}
-
         {/* Temperature Information */}
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <ThermostatIcon color="primary" />
-              Temperature History
+              {t('productCondition.sections.temperatureHistory')}
             </Typography>
             <Grid2 container spacing={2}>
               <MetricRow
-                label="Time at Extreme High Temperature"
+                label={t('productCondition.fields.timeAtExtremeHighTemperature')}
                 value={data.TemperatureInformation.TimeExtremeHighTemp}
                 unit="h"
               />
               <MetricRow
-                label="Time at Extreme Low Temperature"
+                label={t('productCondition.fields.timeAtExtremeLowTemperature')}
                 value={data.TemperatureInformation.TimeExtremeLowTemp}
                 unit="h"
               />
               <MetricRow
-                label="Time at Extreme High Temp (Charging)"
+                label={t('productCondition.fields.timeAtExtremeHighTempCharging')}
                 value={data.TemperatureInformation.TimeExtremeHighTempCharging}
                 unit="h"
               />
               <MetricRow
-                label="Time at Extreme Low Temp (Charging)"
+                label={t('productCondition.fields.timeAtExtremeLowTempCharging')}
                 value={data.TemperatureInformation.TimeExtremeLowTempCharging}
                 unit="h"
               />
             </Grid2>
             <Typography variant="caption" color="text.secondary">
-              Updated: {data.TemperatureInformation.LastUpdate}
+              {t('productCondition.fields.updated', { date: data.TemperatureInformation.LastUpdate })}
             </Typography>
           </CardContent>
         </Card>
-
         {/* Negative Events */}
         {data.NegativeEvents && data.NegativeEvents.length > 0 && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <WarningAmberIcon color="warning" />
-                Negative Events
+                {t('productCondition.sections.negativeEvents')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {data.NegativeEvents.map((event) => (
@@ -263,14 +256,13 @@ export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductC
             </CardContent>
           </Card>
         )}
-
         {/* Accidents & Compliance */}
         {data.InformationOnAccidents && data.InformationOnAccidents.length > 0 && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <EventNoteIcon color="primary" />
-                Information on Accidents
+                {t('productCondition.sections.informationOnAccidents')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {data.InformationOnAccidents.map((doc) => (
@@ -279,7 +271,7 @@ export const ProductConditionBatteryViewer: React.FC<SubmodelAddonProps<ProductC
               </Box>
               <Divider sx={{ my: 1.5 }} />
               <Typography variant="caption" color="text.secondary">
-                {data.InformationOnAccidents.length} accident report document(s) on record
+                {t('productCondition.accidentReports', { count: data.InformationOnAccidents.length })}
               </Typography>
             </CardContent>
           </Card>

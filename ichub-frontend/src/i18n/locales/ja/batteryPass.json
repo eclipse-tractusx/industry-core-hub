@@ -1,0 +1,234 @@
+{
+  "common": {
+    "address": "住所",
+    "website": "ウェブサイト",
+    "email": "メール",
+    "company": "会社",
+    "contact": "連絡先",
+    "country": "国"
+  },
+  "digitalNameplate": {
+    "title": "バッテリーパスポート — デジタル銘板",
+    "sections": {
+      "productIdentification": "製品識別",
+      "lifecycleStatus": "ライフサイクルステータス",
+      "manufacturingDetails": "製造詳細",
+      "manufacturerInformation": "メーカー情報",
+      "address": "住所",
+      "contact": "連絡先",
+      "ipCommunicationChannels": "IP通信チャネル",
+      "markingsAndCertifications": "マーキングと認証",
+      "complianceDocuments": "コンプライアンス文書"
+    },
+    "fields": {
+      "batteryPassportUri": "バッテリーパスポートURI",
+      "serialNumber": "シリアル番号",
+      "manufacturerIdentifier": "メーカー識別子",
+      "operatorIdentifier": "オペレーター識別子",
+      "manufacturerName": "メーカー名",
+      "company": "会社",
+      "department": "部門",
+      "contactRole": "連絡役割",
+      "contactPerson": "担当者",
+      "street": "通り",
+      "cityTown": "市区町村",
+      "zipCode": "郵便番号",
+      "stateCounty": "都道府県",
+      "country": "国",
+      "timeZone": "タイムゾーン",
+      "poBox": "私書箱",
+      "website": "ウェブサイト",
+      "email": "メール",
+      "phone": "電話",
+      "fax": "ファックス",
+      "document": "文書",
+      "dateOfManufacture": "製造日",
+      "dateOfPuttingIntoService": "サービス開始日",
+      "uniqueFacilityIdentifier": "施設固有識別子",
+      "issueDate": "発行日",
+      "expiryDate": "有効期限",
+      "additionalInfo": "追加情報",
+      "euDeclarationOfConformity": "EU適合宣言",
+      "resultsOfTestReportsProvingCompliance": "適合を証明するテストレポートの結果"
+    },
+    "lifecycle": {
+      "original": "バッテリーは新品であり、転用や再製造されたことはありません。",
+      "repurposed": "バッテリーは別のアプリケーション向けに転用されました。",
+      "re-used": "バッテリーは同じまたは類似のアプリケーションで再使用されました。",
+      "remanufactured": "バッテリーはパフォーマンスを回復するために再製造されました。",
+      "waste": "バッテリーは寿命に達し、廃棄物として分類されています。"
+    }
+  },
+  "technicalData": {
+    "title": "バッテリーパスポート — 技術データ",
+    "sections": {
+      "generalInformation": "一般情報",
+      "capacityEnergyVoltage": "容量・エネルギー・電圧",
+      "roundTripEnergyEfficiency": "往復エネルギー効率",
+      "internalResistance": "内部抵抗",
+      "powerCapability": "出力能力",
+      "powerCapabilityAtSoC": "充電状態での出力能力",
+      "temperatureRange": "温度範囲（アイドル）",
+      "lifetime": "寿命",
+      "referenceTestDocuments": "参照テスト文書"
+    },
+    "fields": {
+      "manufacturer": "メーカー",
+      "productDesignation": "製品名称",
+      "articleNumber": "品番",
+      "orderCode": "注文コード",
+      "manufacturerIdentifier": "メーカー識別子",
+      "warrantyPeriod": "保証期間",
+      "batteryMass": "バッテリー質量",
+      "batteryCategory": "バッテリーカテゴリ",
+      "nominalVoltage": "定格電圧",
+      "minimumVoltage": "最低電圧",
+      "maximumVoltage": "最高電圧",
+      "ratedCapacity": "定格容量",
+      "capacityFade": "容量低下",
+      "certifiedUsableBatteryEnergy": "認定使用可能バッテリーエネルギー",
+      "initialEfficiency": "初期効率",
+      "efficiencyAt50PercentCycleLife": "サイクル寿命50%時の効率",
+      "efficiencyFade": "効率低下",
+      "initialSelfDischargingRate": "初期自己放電率",
+      "cellLevelInitial": "セルレベル（初期）",
+      "packLevelInitial": "パックレベル（初期）",
+      "moduleLevelInitial": "モジュールレベル（初期）",
+      "packLevelIncrease": "パックレベル（増加）",
+      "cellLevelIncrease": "セルレベル（増加）",
+      "moduleLevelIncrease": "モジュールレベル（増加）",
+      "maximumPermittedPower": "最大許容電力",
+      "powerFade": "出力低下",
+      "powerToEnergyRatio": "出力対エネルギー比",
+      "lowerBoundary": "下限値",
+      "upperBoundary": "上限値",
+      "expectedLifetime": "予想寿命",
+      "expectedCycles": "予想サイクル数",
+      "capacityThresholdForExhaustion": "枯渇の容量閾値",
+      "cRateCycleLifeTest": "Cレート（サイクル寿命テスト）"
+    },
+    "categories": {
+      "lmt": "軽量輸送手段（LMT）",
+      "ev": "電気自動車（EV）",
+      "industrial": "産業用",
+      "stationary": "定置型エネルギー貯蔵"
+    }
+  },
+  "circularity": {
+    "title": "バッテリーパスポート — サーキュラリティ",
+    "sections": {
+      "renewableContent": "再生可能コンテンツ",
+      "recycledContent": "再生コンテンツ",
+      "dismantling": "分解・取り外し情報",
+      "sparePartSources": "スペアパーツ供給元",
+      "safetyMeasures": "安全措置",
+      "endOfLife": "使用終了情報"
+    },
+    "fields": {
+      "preConsumerShare": "消費前割合",
+      "postConsumerShare": "消費後割合",
+      "address": "住所",
+      "email": "メール",
+      "website": "ウェブサイト",
+      "components": "コンポーネント",
+      "safetyInstructions": "安全指示",
+      "extinguishingAgents": "消火剤",
+      "wastePrevention": "廃棄物防止",
+      "separateCollection": "分別収集",
+      "informationOnCollection": "収集に関する情報"
+    }
+  },
+  "productCondition": {
+    "title": "バッテリーパスポート — 製品状態",
+    "sections": {
+      "currentState": "現在の状態",
+      "energyAndCapacity": "エネルギーと容量",
+      "efficiencyAndSelfDischarge": "効率と自己放電",
+      "temperatureHistory": "温度履歴",
+      "negativeEvents": "負のイベント",
+      "informationOnAccidents": "事故に関する情報"
+    },
+    "fields": {
+      "stateOfCharge": "充電状態",
+      "numberOfFullCycles": "完全充放電サイクル数",
+      "energyThroughput": "エネルギースループット",
+      "capacityThroughput": "容量スループット",
+      "remainingEnergy": "残存エネルギー",
+      "remainingCapacity": "残存容量",
+      "stateOfCertifiedEnergy": "認定エネルギー状態",
+      "remainingRoundTripEnergyEfficiency": "残存往復エネルギー効率",
+      "currentSelfDischargingRate": "現在の自己放電率",
+      "evolutionOfSelfDischarge": "自己放電の変化",
+      "timeAtExtremeHighTemperature": "極高温での時間",
+      "timeAtExtremeLowTemperature": "極低温での時間",
+      "timeAtExtremeHighTempCharging": "充電中の極高温での時間",
+      "timeAtExtremeLowTempCharging": "充電中の極低温での時間",
+      "updated": "更新日：{{date}}"
+    },
+    "accidentReports_one": "{{count}}件の事故報告書が記録されています",
+    "accidentReports_other": "{{count}}件の事故報告書が記録されています"
+  },
+  "carbonFootprint": {
+    "title": "バッテリーパスポート — カーボンフットプリント",
+    "empty": "カーボンフットプリントデータはありません。",
+    "entry": "カーボンフットプリントエントリー {{index}}",
+    "single": "製品カーボンフットプリント",
+    "fields": {
+      "co2Equivalent": "CO₂換算量",
+      "performanceClass": "パフォーマンスクラス"
+    },
+    "sections": {
+      "calculationMethods": "計算方法",
+      "lifeCyclePhases": "ライフサイクルフェーズ",
+      "publicStudies": "公開カーボンフットプリント研究"
+    }
+  },
+  "materialComposition": {
+    "title": "バッテリーパスポート — 材料組成",
+    "sections": {
+      "batteryChemistry": "電池化学",
+      "batteryMaterials": "電池材料",
+      "hazardousSubstances": "危険物質"
+    },
+    "table": {
+      "material": "材料",
+      "identifier": "識別子",
+      "mass": "質量（kg）",
+      "location": "場所",
+      "critical": "重要",
+      "criticalChip": "重要",
+      "standardChip": "標準"
+    },
+    "fields": {
+      "identifier": "識別子",
+      "concentration": "濃度",
+      "location": "場所",
+      "impact": "影響"
+    },
+    "hazardousClass": {
+      "AcuteToxicity": "急性毒性",
+      "SkinCorrosionOrIrritation": "皮膚腐食性/刺激性",
+      "EyeDamageOrIrritation": "眼損傷/眼刺激性"
+    },
+    "criticalCount_one": "{{count}}種の重要原材料が特定されました",
+    "criticalCount_other": "{{count}}種の重要原材料が特定されました",
+    "hazardousCount_one": "この電池で{{count}}種の危険物質が申告されています",
+    "hazardousCount_other": "この電池で{{count}}種の危険物質が申告されています"
+  },
+  "handover": {
+    "title": "バッテリーパスポート — 引き渡し文書",
+    "sections": {
+      "documentIdentifiers": "文書識別子",
+      "classifications": "分類",
+      "versions": "バージョン",
+      "digitalFiles": "デジタルファイル"
+    },
+    "fields": {
+      "domain": "ドメイン：{{id}}",
+      "primary": "プライマリ"
+    },
+    "documentIndex": "文書 {{index}}",
+    "available_one": "{{count}}件の引き渡し可能な文書",
+    "available_other": "{{count}}件の引き渡し可能な文書"
+  }
+}

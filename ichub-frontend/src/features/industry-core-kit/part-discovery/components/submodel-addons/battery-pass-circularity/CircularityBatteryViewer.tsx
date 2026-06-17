@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -54,21 +55,23 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
   semanticId,
 }) => {
   const data = unwrapSubmodelData<Circularity>(rawData);
+  const { t } = useTranslation('batteryPass');
   if (!data) return null;
 
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Circularity"
+      title={t('circularity.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
 
         {/* Renewable Content */}
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <RecyclingIcon color="primary" />
-              Renewable Content
+              {t('circularity.sections.renewableContent')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ flex: 1 }}>
@@ -92,7 +95,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <RecyclingIcon color="primary" />
-                Recycled Content
+                {t('circularity.sections.recycledContent')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.RecycledContentInformation.map((rc) => (
@@ -103,7 +106,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
                       </Typography>
                       <Grid2 container spacing={2}>
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Pre-consumer Share</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('circularity.fields.preConsumerShare')}</Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LinearProgress
                               variant="determinate"
@@ -115,7 +118,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
                           </Box>
                         </Grid2>
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Post-consumer Share</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('circularity.fields.postConsumerShare')}</Typography>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <LinearProgress
                               variant="determinate"
@@ -141,7 +144,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <BuildIcon color="primary" />
-                Dismantling &amp; Removal Information
+                {t('circularity.sections.dismantling')}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {data.DismantlingAndRemovalInformation.map((doc) => (
@@ -158,7 +161,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <StorefrontIcon color="primary" />
-                Spare Part Sources
+                {t('circularity.sections.sparePartSources')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.SparePartSources.map((supplier) => (
@@ -169,16 +172,16 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
                       </Typography>
                       <Grid2 container spacing={2}>
                         <InfoRow
-                          label="Address"
+                          label={t('circularity.fields.address')}
                           value={[
                             getMultiLangValue(supplier.AddressOfSupplier.Street),
                             getMultiLangValue(supplier.AddressOfSupplier.PostalCode),
                             getMultiLangValue(supplier.AddressOfSupplier.NationalCode),
                           ].filter(Boolean).join(', ')}
                         />
-                        <InfoRow label="Email" value={supplier.EmailAddressOfSupplier.EmailAddress} />
+                        <InfoRow label={t('circularity.fields.email')} value={supplier.EmailAddressOfSupplier.EmailAddress} />
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Website</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('circularity.fields.website')}</Typography>
                           <Link href={supplier.SupplierWebAddress} target="_blank" rel="noopener noreferrer" sx={{ fontSize: '0.875rem' }}>
                             {supplier.SupplierWebAddress}
                           </Link>
@@ -187,7 +190,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
                       {supplier.Components && supplier.Components.length > 0 && (
                         <>
                           <Divider sx={{ my: 1.5 }} />
-                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Components</Typography>
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.components')}</Typography>
                           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                             {supplier.Components.map((comp) => (
                               <Chip key={comp.PartNumber} label={`${comp.PartName} (${comp.PartNumber})`} size="small" variant="outlined" />
@@ -208,11 +211,11 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <SecurityIcon color="primary" />
-              Safety Measures
+              {t('circularity.sections.safetyMeasures')}
             </Typography>
             {data.SafetyMeasures.SafetyInstructions && data.SafetyMeasures.SafetyInstructions.length > 0 && (
               <>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Safety Instructions</Typography>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.safetyInstructions')}</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                   {data.SafetyMeasures.SafetyInstructions.map((doc) => (
                     <Chip key={doc} label={doc} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
@@ -222,7 +225,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
             )}
             {data.SafetyMeasures.ExtinguishingAgents && data.SafetyMeasures.ExtinguishingAgents.length > 0 && (
               <>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Extinguishing Agents</Typography>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.extinguishingAgents')}</Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {data.SafetyMeasures.ExtinguishingAgents.map((agent) => (
                     <Chip key={agent} label={agent} size="small" color="warning" variant="outlined" />
@@ -238,12 +241,12 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <DeleteIcon color="primary" />
-              End of Life Information
+              {t('circularity.sections.endOfLife')}
             </Typography>
             <Grid2 container spacing={2}>
               {data.EndOfLifeInformation.WastePrevention && data.EndOfLifeInformation.WastePrevention.length > 0 && (
                 <Grid2 size={12}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Waste Prevention</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.wastePrevention')}</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {data.EndOfLifeInformation.WastePrevention.map((doc) => (
                       <Chip key={doc} label={doc} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
@@ -253,7 +256,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
               )}
               {data.EndOfLifeInformation.SeparateCollection && data.EndOfLifeInformation.SeparateCollection.length > 0 && (
                 <Grid2 size={12}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Separate Collection</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.separateCollection')}</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {data.EndOfLifeInformation.SeparateCollection.map((doc) => (
                       <Chip key={doc} label={doc} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />
@@ -263,7 +266,7 @@ export const CircularityBatteryViewer: React.FC<SubmodelAddonProps<Circularity>>
               )}
               {data.EndOfLifeInformation.InformationOnCollection && data.EndOfLifeInformation.InformationOnCollection.length > 0 && (
                 <Grid2 size={12}>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Information on Collection</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('circularity.fields.informationOnCollection')}</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {data.EndOfLifeInformation.InformationOnCollection.map((doc) => (
                       <Chip key={doc} label={doc} size="small" variant="outlined" sx={{ fontFamily: 'monospace' }} />

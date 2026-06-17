@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -45,17 +46,19 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
   semanticId,
 }) => {
   const data = unwrapSubmodelData<HandoverDocumentation>(rawData);
+  const { t } = useTranslation('batteryPass');
   if (!data) return null;
 
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Handover Documentation"
+      title={t('handover.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
 
+
         <Typography variant="body2" color="text.secondary">
-          {data.Documents.length} document{data.Documents.length !== 1 ? 's' : ''} available for handover
+          {t('handover.available', { count: data.Documents.length })}
         </Typography>
 
         {data.Documents.map((doc, i) => (
@@ -63,13 +66,13 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <FolderIcon color="primary" />
-                Document {i + 1}
+                {t('handover.documentIndex', { index: i + 1 })}
               </Typography>
 
               {/* Document IDs */}
               {doc.DocumentIds && doc.DocumentIds.length > 0 && (
                 <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Document Identifiers</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('handover.sections.documentIdentifiers')}</Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 2 }}>
                     {doc.DocumentIds.map((docId) => (
                       <Box key={docId.DocumentDomainId + docId.DocumentIdentifier} sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -80,10 +83,10 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
                           sx={{ fontFamily: 'monospace' }}
                         />
                         <Typography variant="caption" color="text.secondary">
-                          Domain: {docId.DocumentDomainId}
+                          {t('handover.fields.domain', { id: docId.DocumentDomainId })}
                         </Typography>
                         {docId.DocumentIsPrimary && (
-                          <Chip label="Primary" size="small" color="primary" />
+                          <Chip label={t('handover.fields.primary')} size="small" color="primary" />
                         )}
                       </Box>
                     ))}
@@ -95,7 +98,7 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
               {doc.DocumentClassifications && doc.DocumentClassifications.length > 0 && (
                 <>
                   <Divider sx={{ my: 1.5 }} />
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>Classifications</Typography>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>{t('handover.sections.classifications')}</Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                     {doc.DocumentClassifications.map((cls) => (
                       <Chip
@@ -117,7 +120,7 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
                   <Divider sx={{ my: 1.5 }} />
                   <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1.5 }}>
                     <ArticleIcon fontSize="small" color="action" />
-                    Versions
+                    {t('handover.sections.versions')}
                   </Typography>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {doc.DocumentVersions.map((ver, j) => (
@@ -158,7 +161,7 @@ export const HandoverDocumentationBatteryViewer: React.FC<SubmodelAddonProps<Han
                               <Divider sx={{ my: 1 }} />
                               <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                                 <AttachFileIcon sx={{ fontSize: 14 }} />
-                                Digital Files
+                                {t('handover.sections.digitalFiles')}
                               </Typography>
                               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                 {ver.DigitalFiles.map((file) => (

@@ -20,8 +20,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
-
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -43,33 +43,30 @@ import { SubmodelAddonProps } from '../shared/types';
 import { unwrapSubmodelData } from '../shared/utils';
 import { SubmodelAddonWrapper } from '../BaseAddon';
 import { MaterialComposition, HazardousSubstanceClass } from './types';
-
 const HAZARDOUS_CLASS_LABELS: Record<HazardousSubstanceClass, string> = {
-  AcuteToxicity: 'Acute Toxicity',
-  SkinCorrosionOrIrritation: 'Skin Corrosion / Irritation',
-  EyeDamageOrIrritation: 'Eye Damage / Irritation',
+  AcuteToxicity: 'materialComposition.hazardousClass.AcuteToxicity',
+  SkinCorrosionOrIrritation: 'materialComposition.hazardousClass.SkinCorrosionOrIrritation',
+  EyeDamageOrIrritation: 'materialComposition.hazardousClass.EyeDamageOrIrritation',
 };
-
 export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<MaterialComposition>> = ({
   data: rawData,
   semanticId,
 }) => {
+  const { t } = useTranslation('batteryPass');
   const data = unwrapSubmodelData<MaterialComposition>(rawData);
   if (!data) return null;
-
   return (
     <SubmodelAddonWrapper
-      title="Battery Pass — Material Composition"
+      title={t('materialComposition.title')}
       subtitle={`Semantic ID: ${semanticId}`}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-
         {/* Battery Chemistry */}
         <Card>
           <CardContent>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <ScienceIcon color="primary" />
-              Battery Chemistry
+              {t('materialComposition.sections.batteryChemistry')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
               <Chip label={data.BatteryChemistry.ShortName} color="primary" sx={{ fontWeight: 700, fontSize: '1rem', px: 1 }} />
@@ -77,24 +74,23 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
             </Box>
           </CardContent>
         </Card>
-
         {/* Battery Materials */}
         {data.BatteryMaterials && data.BatteryMaterials.length > 0 && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <CategoryIcon color="primary" />
-                Battery Materials
+                {t('materialComposition.sections.batteryMaterials')}
               </Typography>
               <Box sx={{ overflowX: 'auto' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell><Typography variant="subtitle2">Material</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Identifier</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Mass (kg)</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Location</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Critical</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">{t('materialComposition.table.material')}</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">{t('materialComposition.table.identifier')}</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">{t('materialComposition.table.mass')}</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">{t('materialComposition.table.location')}</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">{t('materialComposition.table.critical')}</Typography></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -120,9 +116,9 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
                         </TableCell>
                         <TableCell>
                           {mat.IsCriticalRawMaterial ? (
-                            <Chip label="Critical" size="small" color="warning" />
+                            <Chip label={t('materialComposition.table.criticalChip')} size="small" color="warning" />
                           ) : (
-                            <Chip label="Standard" size="small" variant="outlined" />
+                            <Chip label={t('materialComposition.table.standardChip')} size="small" variant="outlined" />
                           )}
                         </TableCell>
                       </TableRow>
@@ -134,21 +130,20 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1.5 }}>
                   <WarningAmberIcon color="warning" fontSize="small" />
                   <Typography variant="caption" color="text.secondary">
-                    {data.BatteryMaterials.filter(m => m.IsCriticalRawMaterial).length} critical raw material(s) identified
+                    {t('materialComposition.criticalCount', { count: data.BatteryMaterials.filter(m => m.IsCriticalRawMaterial).length })}
                   </Typography>
                 </Box>
               )}
             </CardContent>
           </Card>
         )}
-
         {/* Hazardous Substances */}
         {data.HazardousSubstances && data.HazardousSubstances.length > 0 && (
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                 <WarningAmberIcon color="error" />
-                Hazardous Substances
+                {t('materialComposition.sections.hazardousSubstances')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {data.HazardousSubstances.map((sub) => (
@@ -159,25 +154,25 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
                           {sub.HazardousSubstanceName}
                         </Typography>
                         <Chip
-                          label={HAZARDOUS_CLASS_LABELS[sub.HazardousSubstanceClass]}
+                          label={t(HAZARDOUS_CLASS_LABELS[sub.HazardousSubstanceClass])}
                           size="small"
                           color="warning"
                         />
                       </Box>
                       <Grid2 container spacing={1}>
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Identifier</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('materialComposition.fields.identifier')}</Typography>
                           <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
                             {sub.HazardousSubstanceIdentifier}
                           </Typography>
                         </Grid2>
                         <Grid2 size={{ xs: 12, sm: 6 }}>
-                          <Typography variant="subtitle2" color="text.secondary">Concentration</Typography>
+                          <Typography variant="subtitle2" color="text.secondary">{t('materialComposition.fields.concentration')}</Typography>
                           <Typography variant="body2">{sub.HazardousSubstanceConcentration}%</Typography>
                         </Grid2>
                         {sub.HazardousSubstanceLocation && (sub.HazardousSubstanceLocation.ComponentName || sub.HazardousSubstanceLocation.ComponentId) && (
                           <Grid2 size={12}>
-                            <Typography variant="subtitle2" color="text.secondary">Location</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">{t('materialComposition.fields.location')}</Typography>
                             <Typography variant="body2">
                               {sub.HazardousSubstanceLocation.ComponentName ?? sub.HazardousSubstanceLocation.ComponentId}
                             </Typography>
@@ -185,7 +180,7 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
                         )}
                         {sub.HazardousSubstanceImpact && sub.HazardousSubstanceImpact.length > 0 && (
                           <Grid2 size={12}>
-                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>Impact</Typography>
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>{t('materialComposition.fields.impact')}</Typography>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                               {sub.HazardousSubstanceImpact.map((impact) => (
                                 <Chip key={impact} label={impact} size="small" variant="outlined" color="error" />
@@ -200,7 +195,7 @@ export const MaterialCompositionBatteryViewer: React.FC<SubmodelAddonProps<Mater
               </Box>
               <Divider sx={{ my: 2 }} />
               <Typography variant="caption" color="text.secondary">
-                {data.HazardousSubstances.length} hazardous substance(s) declared in this battery
+                {t('materialComposition.hazardousCount', { count: data.HazardousSubstances.length })}
               </Typography>
             </CardContent>
           </Card>
