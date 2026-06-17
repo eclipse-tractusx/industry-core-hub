@@ -785,7 +785,7 @@ class TestTwinManagementService:
         mock_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_registration.created_date = datetime.now()
         mock_registration.modified_date = datetime.now()
-        mock_existing_aspect.registrations = [mock_registration]
+        mock_existing_aspect.twin_aspect_registrations = [mock_registration]
         
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo

@@ -516,8 +516,8 @@ class TestSharingService:
              patch.object(self.service, '_create_and_get_twin') as mock_create_and_get_twin, \
              patch.object(self.service, '_ensure_twin_exchange'), \
              patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info, \
-             patch.object(self.service, '_create_single_level_bom_aspect_doc'), \
-             patch.object(self.service, '_create_single_level_usage_aspect_doc'):
+             patch.object(self.service, '_create_single_level_bom_aspect_doc') as mock_create_bom, \
+             patch.object(self.service, '_create_single_level_usage_aspect_doc') as mock_create_usage:
             
             # Mock catalog part
             mock_catalog_part = Mock(spec=CatalogPart)
@@ -537,6 +537,8 @@ class TestSharingService:
             
             # Mock part type info document
             mock_create_part_type_info.return_value = {"test": "document"}
+            mock_create_bom.return_value = {}
+            mock_create_usage.return_value = {}
             
             # Mock twin management service
             self.service.twin_management_service.get_or_create_enablement_stack = Mock()
@@ -587,8 +589,8 @@ class TestSharingService:
              patch.object(self.service, '_create_and_get_twin') as mock_create_and_get_twin, \
              patch.object(self.service, '_ensure_twin_exchange'), \
              patch.object(self.service, '_create_part_type_information_aspect_doc') as mock_create_part_type_info, \
-             patch.object(self.service, '_create_single_level_bom_aspect_doc'), \
-             patch.object(self.service, '_create_single_level_usage_aspect_doc'):
+             patch.object(self.service, '_create_single_level_bom_aspect_doc') as mock_create_bom, \
+             patch.object(self.service, '_create_single_level_usage_aspect_doc') as mock_create_usage:
 
             mock_catalog_part = Mock(spec=CatalogPart)
             mock_catalog_part.name = "Test Part"
@@ -608,6 +610,8 @@ class TestSharingService:
             
             # Mock part type info document
             mock_create_part_type_info.return_value = {"test": "document"}
+            mock_create_bom.return_value = {}
+            mock_create_usage.return_value = {}
 
             self.service.twin_management_service.get_or_create_enablement_stack = Mock()
             self.service.twin_management_service.create_twin_aspect = Mock()
