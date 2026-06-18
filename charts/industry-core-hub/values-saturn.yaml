@@ -373,9 +373,15 @@ backend:
         enabled: false
         # -- Hostname of the PCF Exchange API
         hostname: "https://<provider-pcf-exchange-api>"
+        # -- When true, both PCF versions (v7.0.0 and v9.0.0) must be uploaded
+        # -- for a manufacturer part before it can be published or exchanged.
+        requireBothVersions:
+          synchronous: false
+          asynchronous: false
         asset_config:
-          dct_type: "cx-taxo:PcfExchange"
-          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          dct_type: "cx-taxo:PCFExchange"
+          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset (v1.2.0) wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          # existing_legacy_asset_id: <pcf-exchange-legacy-asset> # -- In case an existing PCF Exchange asset (v1.1.1 /productIds) wants to be used specify here the id
         policy:
           usage:
             context:
