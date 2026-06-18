@@ -46,6 +46,8 @@ from dtr import dtr_manager
 
 logger = LoggingManager.get_logger(__name__)
 
+_USE_CONFIG_POLICIES = object()
+
 class NotificationsManagementService():
     """
     Service class for managing notifications.
@@ -211,7 +213,7 @@ class NotificationsManagementService():
             logger.error(f"Error deleting notification: {e}")
             raise NotificationDeleteError(f"Failed to delete notification: {e}")
 
-    def send_notification(self, message_id: UUID, endpoint_url: Optional[str], provider_bpn: str, provider_dsp_url: Optional[str], list_policies: Optional[List[Dict]], dct_type: Optional[str] = None) -> None:
+    def send_notification(self, message_id: UUID, endpoint_url: Optional[str], provider_bpn: str, provider_dsp_url: Optional[str], list_policies=_USE_CONFIG_POLICIES, dct_type: Optional[str] = None) -> None:
         """
         Send a notification to the specified endpoint using the connector consumer service.
         Retrieves the notification from the database using the message_id.
@@ -222,9 +224,10 @@ class NotificationsManagementService():
         If ``provider_dsp_url`` is None, the DSP URL is resolved automatically
         from the connector discovery cache for the given ``provider_bpn``.
 
-        If ``list_policies`` is None or empty, the policy defined at
-        ``provider.digitalTwinEventAPI.policy.usage`` in ``configuration.yml`` is
-        used as the fallback.
+        If ``list_policies`` is the default sentinel, the policy defined at
+        ``provider.digitalTwinEventAPI.policy.consumption`` in ``configuration.yml`` is
+        used as the fallback.  If ``list_policies`` is explicitly ``None``, no
+        policy filtering is applied (accept any offer from the provider).
 
         If ``dct_type`` is provided, it is used as the EDC asset ``dct:type``
         filter for catalog negotiation.  Defaults to
@@ -246,13 +249,20 @@ class NotificationsManagementService():
                     f"DSP URL [{resolved_dsp_url}] for BPN [{provider_bpn}]"
                 )
 
-            # Resolve policies: caller-supplied takes precedence over config fallback
-            resolved_policies = list_policies
-            if not resolved_policies:
-                dte_policy = ConfigManager.get_config("provider.digitalTwinEventAPI.policy.usage")
+            # Resolve policies: explicit None means accept any policy from provider;
+            # sentinel (default) means use config fallback; explicit list is used as-is.
+            if list_policies is _USE_CONFIG_POLICIES:
+                dte_policy = ConfigManager.get_config("provider.digitalTwinEventAPI.policy.consumption")
                 if dte_policy:
                     resolved_policies = [dte_policy]
-                    logger.debug("[Notifications] No governance provided; using provider.digitalTwinEventAPI.policy.usage from configuration")
+                    logger.debug("[Notifications] Using provider.digitalTwinEventAPI.policy.consumption from configuration")
+                else:
+                    resolved_policies = []
+                    logger.warning("[Notifications] No consumption policy configured; will reject all offers")
+            elif list_policies is None:
+                resolved_policies = None
+            else:
+                resolved_policies = list_policies
 
             with RepositoryManagerFactory().create() as repos:
                 db_notification = repos.notification_repository.find_by_message_id(

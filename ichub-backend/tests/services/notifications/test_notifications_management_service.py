@@ -703,7 +703,7 @@ class TestNotificationsManagementService:
     def test_send_notification_policies_from_config_when_none(
         self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
     ):
-        """When list_policies is None, fall back to provider.digitalTwinEventAPI.policy.usage from config."""
+        """When list_policies is not provided (default sentinel), fall back to provider.digitalTwinEventAPI.policy.consumption from config."""
         # Arrange
         config_policy = {"permissions": [{"action": "use"}], "prohibitions": [], "obligations": []}
         mock_config_manager.get_config.return_value = config_policy
@@ -736,7 +736,6 @@ class TestNotificationsManagementService:
             endpoint_url="/connect-to-child",
             provider_bpn="BPNL00000000024R",
             provider_dsp_url="https://example.com/dsp",
-            list_policies=None,
         )
 
         # Assert — policy from config is wrapped in a list and forwarded
@@ -753,7 +752,7 @@ class TestNotificationsManagementService:
     def test_send_notification_policies_from_config_when_empty_list(
         self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
     ):
-        """An empty list_policies also triggers the config fallback."""
+        """An empty list_policies means accept any policy (no filtering)."""
         # Arrange
         config_policy = {"permissions": [{"action": "use"}]}
         mock_config_manager.get_config.return_value = config_policy
@@ -791,7 +790,7 @@ class TestNotificationsManagementService:
 
         # Assert
         call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
-        assert call_kwargs["policies"] == [config_policy]
+        assert call_kwargs["policies"] is None
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
     @patch('services.notifications.notifications_management_service.ConfigManager')
@@ -839,7 +838,6 @@ class TestNotificationsManagementService:
             endpoint_url=None,
             provider_bpn="BPNL00000000024R",
             provider_dsp_url=None,
-            list_policies=None,
         )
 
         # Assert all three were substituted correctly

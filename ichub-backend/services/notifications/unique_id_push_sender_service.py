@@ -21,9 +21,10 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
+from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
 from models.metadata_database.notification.models import NotificationDirection
 from models.services.notification.unique_id_push import (
@@ -109,13 +110,16 @@ class UniqueIdPushSenderService:
                 notification, NotificationDirection.OUTGOING, INDUSTRY_CORE_HUB
             )
 
+            uid_push_policy = ConfigManager.get_config("provider.uniqueIdPush.policy.consumption")
+            list_policies: Optional[List] = [uid_push_policy] if uid_push_policy else []
+
             # Send via EDC data plane (DSP URL resolved automatically from BPN)
             self.notifications_management_service.send_notification(
                 message_id=entity.message_id,
                 endpoint_url=None,
                 provider_bpn=receiver_bpn,
                 provider_dsp_url=None,
-                list_policies=None,
+                list_policies=list_policies,
                 dct_type=UNIQUE_ID_PUSH_DCT_TYPE,
             )
 

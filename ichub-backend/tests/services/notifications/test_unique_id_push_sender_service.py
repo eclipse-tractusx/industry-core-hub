@@ -42,9 +42,21 @@ class TestUniqueIdPushSenderService:
         self.manufacturer_part_id = "MPN-12345"
         self.catena_x_id = str(uuid4())
 
-    def test_send_connect_to_parent_success(self):
+    @patch('services.notifications.unique_id_push_sender_service.ConfigManager')
+    def test_send_connect_to_parent_success(self, mock_config_manager):
         """Test successful send creates and sends notification."""
         # Arrange
+        uid_push_policy = {
+            "permission": [{"action": "use", "constraint": {"and": [
+                {"leftOperand": "FrameworkAgreement", "operator": "eq", "rightOperand": "DataExchangeGovernance:1.0"},
+                {"leftOperand": "Membership", "operator": "eq", "rightOperand": "active"},
+                {"leftOperand": "UsagePurpose", "operator": "isAnyOf", "rightOperand": "cx.core.industrycore:1"},
+            ]}}],
+            "prohibition": [],
+            "obligation": [],
+        }
+        mock_config_manager.get_config.return_value = uid_push_policy
+
         entity = Mock(spec=NotificationEntity)
         entity.message_id = uuid4()
         self.mock_notifications_service.create_notification.return_value = entity
@@ -72,12 +84,13 @@ class TestUniqueIdPushSenderService:
         assert notification.header.sender_bpn == self.sender_bpn
         assert notification.header.receiver_bpn == self.receiver_bpn
 
+        mock_config_manager.get_config.assert_called_once_with("provider.uniqueIdPush.policy.consumption")
         self.mock_notifications_service.send_notification.assert_called_once_with(
             message_id=entity.message_id,
             endpoint_url=None,
             provider_bpn=self.receiver_bpn,
             provider_dsp_url=None,
-            list_policies=None,
+            list_policies=[uid_push_policy],
             dct_type=UNIQUE_ID_PUSH_DCT_TYPE,
         )
 
