@@ -372,6 +372,7 @@ backend:
       uniqueIdPush:
         hostname: "https://<backend-hostname>"
         apiPath: /v1/uniqueidpush
+        sendOnShare: false
         uri: ""
         asset_config:
           dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
