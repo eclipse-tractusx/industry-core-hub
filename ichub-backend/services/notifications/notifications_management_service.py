@@ -289,12 +289,12 @@ class NotificationsManagementService():
                 verbose=True
             )
 
-            # Use get_notification_endpoint + send_notification_to_endpoint so we can
-            # pass the correct dct_type (DigitalTwinEventAPI vs UniqueIdPush, etc.)
-            # instead of relying on the SDK's hardcoded DigitalTwinEventAPI default.
-            edc_endpoint, access_token = notification_service.get_notification_endpoint(
-                provider_bpn=provider_bpn,
-                provider_dsp_url=resolved_dsp_url,
+            # Use get_notification_endpoint_with_bpnl so that Saturn connectors
+            # resolve the BPN to its DID (counterPartyId) via connector discovery
+            # before performing the DSP catalog request.
+            edc_endpoint, access_token = notification_service.get_notification_endpoint_with_bpnl(
+                bpnl=provider_bpn,
+                counter_party_address=resolved_dsp_url,
                 policies=resolved_policies,
                 dct_type=resolved_dct_type,
             )
