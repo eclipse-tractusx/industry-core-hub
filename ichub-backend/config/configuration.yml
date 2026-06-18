@@ -605,6 +605,7 @@ provider:
   uniqueIdPush:
     hostname: "http://localhost:9000"
     apiPath: /v1/uniqueidpush
+    sendOnShare: false
     uri: ""
     asset_config:
       dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"

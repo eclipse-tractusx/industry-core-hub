@@ -27,12 +27,15 @@ from datetime import datetime, timezone
 from uuid import UUID
 from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
+from managers.config.config_manager import ConfigManager
 from models.services.provider.twin_management import CatalogPartTwinCreate, TwinAspectCreate
+from models.services.provider.partner_management import BusinessPartnerRead
 from models.metadata_database.provider.models import BusinessPartner, Twin, DataExchangeAgreement, CatalogPart, PartnerCatalogPart
 from models.services.provider.sharing_management import SharedPartBase, ShareCatalogPart, SharedPartner
-from models.services.provider.partner_management import BusinessPartnerRead
 from typing import Dict, Optional, List, Any, Tuple
 from tools.exceptions import NotFoundError
+from services.notifications.unique_id_push_sender_service import UniqueIdPushSenderService
+from services.notifications.notifications_management_service import NotificationsManagementService
 
 
 from managers.config.log_manager import LoggingManager
@@ -47,6 +50,9 @@ class SharingService:
     def __init__(self):
         self.submodel_document_generator = SubmodelDocumentGenerator()
         self.twin_management_service = TwinManagementService()
+        self.unique_id_push_sender_service = UniqueIdPushSenderService(
+            NotificationsManagementService()
+        )
 
     def get_shared_partners(self, manufacturer_id:str, manufacturer_part_id:str) -> List[SharedPartner]:
         pass
@@ -83,7 +89,17 @@ class SharingService:
                     payload=part_type_info_doc
                 )
             )
-            # Step 9: Return the shared part information
+            # Step 9: Optionally send Unique ID Push connect-to-parent notification
+            if ConfigManager.get_config("provider.uniqueIdPush.sendOnShare", False):
+                customer_part_ids = list(db_partner_catalog_parts.keys())
+                self.unique_id_push_sender_service.send_connect_to_parent(
+                    sender_bpn=catalog_part_to_share.manufacturer_id,
+                    receiver_bpn=catalog_part_to_share.business_partner_number,
+                    manufacturer_part_id=catalog_part_to_share.manufacturer_part_id,
+                    catena_x_id=str(db_twin.global_id),
+                    customer_part_id=customer_part_ids[0] if customer_part_ids else None,
+                )
+            # Step 10: Return the shared part information
             return SharedPartBase(
                 businessPartnerNumber=catalog_part_to_share.business_partner_number,
                 customerPartIds=db_partner_catalog_parts,
