@@ -426,6 +426,22 @@ backend:
                       rightOperand: "cx.core.industrycore:1"
             prohibitions: []
             obligations: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "eq"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibitions: []
+            obligations: []
           access:
             context:
               - "https://w3id.org/tractusx/policy/v1.0.0"
@@ -455,6 +471,22 @@ backend:
               - "http://www.w3.org/ns/odrl.jsonld"
               - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
                 "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "eq"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibitions: []
+            obligations: []
+          consumption:
             permission:
               - action: "use"
                 constraint:

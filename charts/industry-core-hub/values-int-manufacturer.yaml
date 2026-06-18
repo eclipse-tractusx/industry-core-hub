@@ -442,6 +442,22 @@ backend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
           access:
             context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
@@ -450,7 +466,7 @@ backend:
             permission:
               - action: "access"
                 constraint:
-                  leftOperand: "Membership"
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []
@@ -480,6 +496,22 @@ backend:
                       operator: "eq"
                       rightOperand: "active"
                     - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
                       operator: "isAnyOf"
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
