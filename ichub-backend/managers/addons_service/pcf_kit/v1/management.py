@@ -40,6 +40,7 @@ from tools.exceptions import NotFoundError
 from utils.log_utils import sanitize_log_value as _s
 from utils.pcf_utils import (
     DEFAULT_PCF_VERSION,
+    SUPPORTED_PCF_VERSIONS,
     get_pcf_exchange_semantic_id,
     get_pcf_semantic_id,
     pcf_submodel_id,
@@ -159,6 +160,53 @@ class PcfManagementManager:
         except Exception as e:
             logger.warning(f"PCF data not found for manufacturer part ID {_s(manufacturer_part_id)}: {_s(e)}")
             return None
+
+    def check_both_versions_exist(
+        self,
+        manufacturer_part_id: str,
+        flow: str = "synchronous",
+    ) -> None:
+        """Ensure all supported PCF versions have been uploaded for a part.
+
+        When the configuration flag
+        ``provider.pcfExchange.requireBothVersions.<flow>`` is enabled, this
+        method verifies that every version listed in
+        :data:`~utils.pcf_utils.SUPPORTED_PCF_VERSIONS` has a stored submodel
+        document.  If any version is missing, a
+        :class:`~tools.exceptions.PcfVersionGateError` is raised so the
+        caller (provision / exchange managers) can block the operation.
+
+        When the flag is disabled (the default), the method returns
+        immediately without performing any check.
+
+        Args:
+            manufacturer_part_id: The manufacturer part identifier to check.
+            flow: ``"synchronous"`` or ``"asynchronous"`` — selects the
+                corresponding configuration toggle.
+
+        Raises:
+            PcfVersionGateError: If the gate is enabled and at least one
+                version has not been uploaded yet.
+        """
+        from tools.exceptions import PcfVersionGateError
+
+        require_both = ConfigManager.get_config(
+            f"provider.pcfExchange.requireBothVersions.{flow}", default=False
+        )
+        if not require_both:
+            return
+
+        missing = [
+            v for v in sorted(SUPPORTED_PCF_VERSIONS)
+            if self.get_pcf_data_by_manufacturer_part_id(manufacturer_part_id, version=v) is None
+        ]
+
+        if missing:
+            raise PcfVersionGateError(
+                f"Both PCF versions must be uploaded for manufacturerPartId "
+                f"'{manufacturer_part_id}' before it can be published or exchanged. "
+                f"Missing version(s): {', '.join(missing)}"
+            )
 
     def update_pcf_exchange_status(
         self,

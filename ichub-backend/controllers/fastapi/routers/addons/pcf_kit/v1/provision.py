@@ -34,7 +34,7 @@ from managers.config.log_manager import LoggingManager
 from models.metadata_database.pcf import PcfExchangeStatus
 from models.services.addons.pcf_kit.v1.management import GovernanceBodyModel, NotifyUpdateModel
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
-from tools.exceptions import NotFoundError
+from tools.exceptions import NotFoundError, PcfVersionGateError
 from utils.log_utils import sanitize_log_value as _s
 from utils.pcf_utils import DEFAULT_PCF_VERSION, SUPPORTED_PCF_VERSIONS
 from tools.constants import INTERNAL_SERVER_ERROR
@@ -117,6 +117,8 @@ async def update_pcf_and_get_participants(
             )
         result = provision_manager.update_pcf_and_get_participants(manufacturer_part_id, pcf_data, version=version)
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
@@ -138,6 +140,8 @@ async def confirm_and_send_update_to_participants(
             list_policies=body.governance if body else None
         )
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
@@ -179,6 +183,8 @@ async def accept_request_and_send_response(
     try:
         result = provision_manager.accept_request_and_send_response(request_id=request_id, list_policies=body.governance if body else None)
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:

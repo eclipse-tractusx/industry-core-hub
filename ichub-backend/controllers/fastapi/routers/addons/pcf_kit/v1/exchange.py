@@ -30,7 +30,7 @@ from fastapi.responses import JSONResponse
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.addons_service.pcf_kit.v1 import exchange_manager
 from managers.config.log_manager import LoggingManager
-from tools.exceptions import NotFoundError
+from tools.exceptions import NotFoundError, PcfVersionGateError
 from utils.log_utils import sanitize_log_value as _s
 from utils.pcf_utils import DEFAULT_PCF_VERSION, SUPPORTED_PCF_VERSIONS
 from tools.constants import INTERNAL_SERVER_ERROR
@@ -115,6 +115,9 @@ async def put_pcf_with_path_id(
             status_code=200,
             content=result
         )
+    except PcfVersionGateError as e:
+        logger.warning(f"[PCF Exchange PUT] Version gate blocked: {_s(e)}")
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         logger.error(f"[PCF Exchange PUT] ValueError: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))

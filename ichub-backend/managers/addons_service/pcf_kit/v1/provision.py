@@ -255,7 +255,10 @@ class PcfProvisionManager:
         try:
             if pcf_data is None:
                 raise ValueError("PCF data payload is required for update.")
-            
+
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
+
             result = management_manager.update_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
                 pcf_data=pcf_data,
@@ -286,6 +289,8 @@ class PcfProvisionManager:
         """
         try:
             pcf_data = self.view_existing_pcf(manufacturer_part_id=manufacturer_part_id)
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
             # Collect required data from DB first, then close session before EDC calls
             send_targets: List[Dict[str, str]] = []
             with RepositoryManagerFactory.create() as repo_manager:
@@ -369,6 +374,9 @@ class PcfProvisionManager:
                 entity_requesting_bpn = exchange_entity.requesting_bpn
                 entity_manufacturer_part_id = exchange_entity.manufacturer_part_id
                 entity_status = exchange_entity.status
+
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(entity_manufacturer_part_id, flow="asynchronous")
 
             # Perform EDC calls outside DB session
             pcf_data = management_manager.get_pcf_data_by_manufacturer_part_id(entity_manufacturer_part_id)

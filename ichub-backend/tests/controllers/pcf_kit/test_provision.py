@@ -45,6 +45,7 @@ from unittest.mock import MagicMock
 
 from models.metadata_database.pcf.models import PcfExchangeStatus
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
+from tools.exceptions import PcfVersionGateError
 
 # ---------------------------------------------------------------------------
 # URL constants
@@ -226,6 +227,16 @@ class TestUpdatePcfAndGetParticipants:
 
         assert resp.status_code == 500
 
+    def test_version_gate_error_returns_409(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.update_pcf_and_get_participants.side_effect = PcfVersionGateError(
+            "Both PCF versions must be uploaded"
+        )
+
+        resp = app_client.put(f"{BASE}/pcfs/{PART_ID}", json=PCF_DATA_BODY)
+
+        assert resp.status_code == 409
+        assert "Both PCF versions" in resp.json().get("detail", "")
+
 
 # ---------------------------------------------------------------------------
 # POST /pcfs/{manufacturerPartId}/notify-update
@@ -274,6 +285,16 @@ class TestConfirmAndSendUpdateToParticipants:
         resp = app_client.post(f"{BASE}/pcfs/{PART_ID}/notify-update", json=NOTIFY_UPDATE_BODY)
 
         assert resp.status_code == 500
+
+    def test_version_gate_error_returns_409(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.confirm_and_send_update_to_participants.side_effect = PcfVersionGateError(
+            "Both PCF versions must be uploaded"
+        )
+
+        resp = app_client.post(f"{BASE}/pcfs/{PART_ID}/notify-update", json=NOTIFY_UPDATE_BODY)
+
+        assert resp.status_code == 409
+        assert "Both PCF versions" in resp.json().get("detail", "")
 
 
 # ---------------------------------------------------------------------------
@@ -384,6 +405,16 @@ class TestAcceptRequestAndSendResponse:
         resp = app_client.post(f"{BASE}/requests/{REQUEST_ID}/accept")
 
         assert resp.status_code == 500
+
+    def test_version_gate_error_returns_409(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.accept_request_and_send_response.side_effect = PcfVersionGateError(
+            "Both PCF versions must be uploaded"
+        )
+
+        resp = app_client.post(f"{BASE}/requests/{REQUEST_ID}/accept")
+
+        assert resp.status_code == 409
+        assert "Both PCF versions" in resp.json().get("detail", "")
 
 
 # ---------------------------------------------------------------------------

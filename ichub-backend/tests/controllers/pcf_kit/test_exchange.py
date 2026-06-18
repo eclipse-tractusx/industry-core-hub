@@ -39,6 +39,8 @@ GET also requires at least one of ``manufacturerPartId`` or ``customerPartId``
 query parameters; omitting both must return 400.
 """
 
+from tools.exceptions import PcfVersionGateError
+
 # ---------------------------------------------------------------------------
 # URL constants
 # ---------------------------------------------------------------------------
@@ -167,6 +169,20 @@ class TestPutPcfWithPathId:
         assert resp.status_code == 400
         assert "Unsupported PCF version" in resp.json().get("detail", "")
         mock_exchange_mgr.submit_pcf_response.assert_not_called()
+
+    def test_version_gate_error_returns_409(self, app_client, mock_exchange_mgr):
+        mock_exchange_mgr.submit_pcf_response.side_effect = PcfVersionGateError(
+            "Both PCF versions must be uploaded"
+        )
+
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 409
+        assert "Both PCF versions" in resp.json().get("detail", "")
 
 
 # ---------------------------------------------------------------------------
