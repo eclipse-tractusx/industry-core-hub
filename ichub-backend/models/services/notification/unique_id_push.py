@@ -158,9 +158,6 @@ class UniqueIdPushConnectToParentRequest(BaseModel):
         # Build a NotificationContent with extra fields allowed
         notification_content = NotificationContent(
             information=self.content.information,
-            listOfAffectedItems=[
-                item.catena_x_id for item in self.content.list_of_items
-            ],
             # Store the full typed payload as extra fields
             digitalTwinType=self.content.digital_twin_type.value,
             listOfItems=[

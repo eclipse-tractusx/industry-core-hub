@@ -192,8 +192,9 @@ class TestToNotification:
         assert notification.header.sender_bpn == SENDER_BPN
         assert notification.header.receiver_bpn == RECEIVER_BPN
         assert notification.content.information == "New child twin created"
-        # listOfAffectedItems should contain catenaXId values
-        assert "urn:uuid:12345678-1234-1234-1234-123456789012" in notification.content.list_of_affected_items
+        # listOfItems extra field should contain the catenaXId
+        content_data = notification.content.model_dump(by_alias=True)
+        assert content_data["listOfItems"][0]["catenaXId"] == "urn:uuid:12345678-1234-1234-1234-123456789012"
 
     def test_preserves_header_fields(self):
         """Verify header fields are preserved through conversion."""

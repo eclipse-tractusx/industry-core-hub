@@ -101,8 +101,9 @@ class TestUniqueIdPushSenderService:
         # Assert
         call_args = self.mock_notifications_service.create_notification.call_args
         notification = call_args[0][0]
-        # Verify through the notification's list_of_affected_items which stores catena_x_id
-        assert f"urn:uuid:{raw_uuid}" in notification.content.list_of_affected_items
+        # Verify the catenaXId in listOfItems has the urn:uuid: prefix
+        content_data = notification.content.model_dump(by_alias=True)
+        assert content_data["listOfItems"][0]["catenaXId"] == f"urn:uuid:{raw_uuid}"
 
     def test_send_connect_to_parent_preserves_existing_urn_prefix(self):
         """Test that catena_x_id already with urn:uuid: prefix is not double-prefixed."""
@@ -124,7 +125,8 @@ class TestUniqueIdPushSenderService:
         # Assert
         call_args = self.mock_notifications_service.create_notification.call_args
         notification = call_args[0][0]
-        assert urn_uuid in notification.content.list_of_affected_items
+        content_data = notification.content.model_dump(by_alias=True)
+        assert content_data["listOfItems"][0]["catenaXId"] == urn_uuid
 
     def test_send_connect_to_parent_with_customer_part_id(self):
         """Test that customer_part_id is included in the notification content."""
