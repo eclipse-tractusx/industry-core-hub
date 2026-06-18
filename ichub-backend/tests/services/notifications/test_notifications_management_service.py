@@ -740,7 +740,7 @@ class TestNotificationsManagementService:
 
         # Assert — policy from config is wrapped in a list and forwarded
         mock_config_manager.get_config.assert_called_with(
-            "provider.digitalTwinEventAPI.policy.usage"
+            "provider.digitalTwinEventAPI.policy.consumption"
         )
         call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == [config_policy]
@@ -752,7 +752,7 @@ class TestNotificationsManagementService:
     def test_send_notification_policies_from_config_when_empty_list(
         self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
     ):
-        """An empty list_policies means accept any policy (no filtering)."""
+        """An empty list_policies is passed through as-is (reject all in the SDK)."""
         # Arrange
         config_policy = {"permissions": [{"action": "use"}]}
         mock_config_manager.get_config.return_value = config_policy
@@ -788,9 +788,9 @@ class TestNotificationsManagementService:
             list_policies=[],
         )
 
-        # Assert
+        # Assert — empty list is passed through (SDK treats [] as reject-all)
         call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
-        assert call_kwargs["policies"] is None
+        assert call_kwargs["policies"] == []
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
     @patch('services.notifications.notifications_management_service.ConfigManager')
