@@ -95,38 +95,75 @@ class PcfProvisionManager:
         list_policies: Optional[List[Dict]] = None,
     ) -> None:
         """
-        Send PCF data to the requesting party through the EDC dataspace connector.
+        Send PCF data to the requesting party via EDC with version negotiation.
 
-        Delegates to the management manager's generic send_via_edc method which 
-        handles connector discovery, EDR cleanup, contract negotiation, and PUT request.
+        Tries the v1.2.0 asset (``/footprintExchange``) first. If no v1.2.0
+        asset is available in the consumer's catalog, falls back to the
+        v1.1.1 legacy asset (``/productIds``). CX-0136 §6 requires the
+        highest compatible ``cx-common:version`` to be used.
 
         Args:
             request_id: The PCF request ID (used as the PUT path).
             requesting_bpn: BPN of the party that requested the PCF data.
             pcf_data: The validated PCF payload to send.
             is_update: Whether this is an update to a previously delivered response.
-            manufacturer_part_id: The manufacturer part ID (used for pcf_location).
+            manufacturer_part_id: The manufacturer part ID (used for pcf_location and v1.1.1 path).
             list_policies: Optional list of policies for contract negotiation.
 
         Raises:
             ValueError: If no connectors are found or the data transfer fails.
         """
-        put_path = f"/{request_id}"
-        if is_update:
-            put_path += "?update=true"
+        # --- Try v1.2.0 first ---
+        try:
+            put_path = f"/{request_id}"
+            if is_update:
+                put_path += "?update=true"
 
-        # Use the shared EDC method from management manager
+            management_manager.send_via_edc(
+                request_id=request_id,
+                target_bpn=requesting_bpn,
+                http_method="PUT",
+                path=put_path,
+                json_data=pcf_data,
+                list_policies=list_policies,
+                asset_type=PCF_EXCHANGE_ASSET_TYPE,
+                asset_version="1.2.0",
+            )
+            logger.info(f"[PCF Provision] Response {_s(request_id)} sent via v1.2.0 asset")
+
+            self._update_exchange_record(
+                request_id, is_update, manufacturer_part_id=manufacturer_part_id
+            )
+            return
+        except Exception as e:
+            logger.info(
+                f"[PCF Provision] v1.2.0 asset not available for BPN {_s(requesting_bpn)}, "
+                f"falling back to v1.1.1: {_s(e)}"
+            )
+
+        # --- Fall back to v1.1.1 (legacy /productIds) ---
+        if not manufacturer_part_id:
+            raise ValueError(
+                "Cannot fall back to v1.1.1 /productIds API: "
+                "manufacturerPartId is required but not provided."
+            )
+
+        put_path_legacy = f"/{manufacturer_part_id}?requestId={request_id}"
+        if is_update:
+            put_path_legacy += "&update=true"
+
         management_manager.send_via_edc(
             request_id=request_id,
             target_bpn=requesting_bpn,
             http_method="PUT",
-            path=put_path,
+            path=put_path_legacy,
             json_data=pcf_data,
             list_policies=list_policies,
             asset_type=PCF_EXCHANGE_ASSET_TYPE,
+            asset_version="1.1.1",
         )
+        logger.info(f"[PCF Provision] Response {_s(request_id)} sent via v1.1.1 (legacy) asset")
 
-        # Update exchange record after successful EDC transfer
         self._update_exchange_record(
             request_id, is_update, manufacturer_part_id=manufacturer_part_id
         )

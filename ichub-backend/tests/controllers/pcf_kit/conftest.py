@@ -95,6 +95,10 @@ def app_client():
             "controllers.fastapi.routers.addons.pcf_kit.v1.exchange.exchange_manager",
             MagicMock(),
         ),
+        patch(
+            "controllers.fastapi.routers.addons.pcf_kit.v1.product_ids.exchange_manager",
+            MagicMock(),
+        ),
     ):
         from controllers.fastapi.app import app
 
@@ -122,5 +126,13 @@ def mock_provision_mgr():
 def mock_exchange_mgr():
     with patch(
         "controllers.fastapi.routers.addons.pcf_kit.v1.exchange.exchange_manager"
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_product_ids_mgr():
+    with patch(
+        "controllers.fastapi.routers.addons.pcf_kit.v1.product_ids.exchange_manager"
     ) as mock:
         yield mock

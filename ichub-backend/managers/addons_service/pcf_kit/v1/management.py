@@ -510,7 +510,8 @@ class PcfManagementManager:
         params: Optional[Dict[str, str]] = None,
         json_data: Optional[Dict[str, Any]] = None,
         list_policies: Optional[List[Dict]] = None,
-        asset_type: str = "https://w3id.org/catenax/taxonomy#PcfExchange",
+        asset_type: str = "https://w3id.org/catenax/taxonomy#PCFExchange",
+        asset_version: Optional[str] = None,
     ) -> None:
         """
         Send PCF data via EDC using either GET or PUT method with single retry on failure.
@@ -526,7 +527,10 @@ class PcfManagementManager:
             params: Query parameters for GET requests
             json_data: JSON payload for PUT requests
             list_policies: Optional list of policies for contract negotiation
-            asset_type: The EDC asset type to filter by (default: PcfExchange)
+            asset_type: The EDC asset type to filter by (default: PCFExchange)
+            asset_version: Optional ``cx-common:version`` value to add as a
+                catalog filter (e.g. ``"1.2.0"``). When ``None``, only
+                ``dct:type`` is used for filtering.
 
         Returns:
             The response object from the EDC data plane
@@ -577,6 +581,7 @@ class PcfManagementManager:
                 response = self._dispatch_edc_request(
                     consumer_connector_service, http_method, target_bpn,
                     connector_url, asset_type, list_policies, path, params, json_data,
+                    asset_version=asset_version,
                 )
 
                 if response.status_code in (200, 201, 202, 204):
@@ -610,6 +615,7 @@ class PcfManagementManager:
                     response = self._dispatch_edc_request(
                         consumer_connector_service, http_method, target_bpn,
                         connector_url, asset_type, list_policies, path, params, json_data,
+                        asset_version=asset_version,
                     )
                     
                     if response.status_code in (200, 201, 202, 204):
@@ -647,26 +653,46 @@ class PcfManagementManager:
         path: str,
         params: Optional[Dict[str, str]],
         json_data: Optional[Dict[str, Any]],
+        asset_version: Optional[str] = None,
     ):
-        """Execute a single EDC GET or PUT request and return the response."""
+        """Execute a single EDC GET or PUT request and return the response.
+
+        When *asset_version* is provided, a ``cx-common:version`` filter is
+        appended alongside the ``dct:type`` filter so the catalog request
+        targets a specific asset version (e.g. ``1.2.0`` vs ``1.1.1``).
+        """
         logger.info(
             f"[PCF EDC] Attempting {_s(http_method)} on [{_s(connector_url)}] path=[{_s(path)}]"
         )
 
+        # Build filter expressions
+        dct_type_filter = consumer_connector_service.get_filter_expression(
+            key="'http://purl.org/dc/terms/type'.'@id'",
+            value=asset_type,
+        )
+        filter_expression = [dct_type_filter]
+
+        if asset_version:
+            version_filter = consumer_connector_service.get_filter_expression(
+                key="'https://w3id.org/catenax/ontology/common#version'",
+                value=asset_version,
+            )
+            filter_expression.append(version_filter)
+
         if http_method.upper() == "GET":
-            return consumer_connector_service.do_get_by_dct_type_with_bpnl(
+            return consumer_connector_service.do_get_with_bpnl(
                 bpnl=target_bpn,
                 counter_party_address=connector_url,
-                dct_type=asset_type,
+                filter_expression=filter_expression,
                 policies=list_policies,
                 path=path,
                 params=params if params else None,
             )
         elif http_method.upper() == "PUT":
-            return consumer_connector_service.do_put_by_dct_type_with_bpnl(
+            return consumer_connector_service.do_put_with_bpnl(
                 bpnl=target_bpn,
                 counter_party_address=connector_url,
-                dct_type=asset_type,
+                filter_expression=filter_expression,
                 json=json_data if json_data is not None else {},
                 policies=list_policies,
                 path=path,

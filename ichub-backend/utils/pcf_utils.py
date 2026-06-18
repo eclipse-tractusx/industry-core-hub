@@ -48,7 +48,14 @@ PCF_EXCHANGE_SEMANTIC_IDS: dict[str, str] = {
 PCF_SEMANTIC_ID = PCF_EXCHANGE_SEMANTIC_IDS[DEFAULT_PCF_VERSION]
 
 # Asset type used to identify PCF exchange assets in EDC catalogs (CX-0136)
-PCF_EXCHANGE_ASSET_TYPE = "https://w3id.org/catenax/taxonomy#PcfExchange"
+PCF_EXCHANGE_ASSET_TYPE = "https://w3id.org/catenax/taxonomy#PCFExchange"
+
+# CX-0136 §2.1.2.5 / §4.2.2.1 mandated idShort values for PCF submodel descriptors
+PCF_ID_SHORT_SYNC = "SynchronousPCFExchangeEndpoint"
+PCF_ID_SHORT_ASYNC = "PCFExchangeEndpoint"
+
+# All semantic IDs that belong to PCF aspect models (sync + async, all versions)
+_PCF_SEMANTIC_ID_VALUES: set[str] = set(PCF_SEMANTIC_IDS.values()) | set(PCF_EXCHANGE_SEMANTIC_IDS.values())
 
 
 def validate_pcf_version(version: str) -> None:
@@ -115,3 +122,28 @@ def pcf_submodel_id(manufacturer_part_id: str, version: str = DEFAULT_PCF_VERSIO
         Deterministic UUID5 for the (part, version) combination.
     """
     return uuid5(NAMESPACE_URL, f"{manufacturer_part_id}:{version}")
+
+
+def get_pcf_submodel_overrides(semantic_id: str) -> dict[str, str] | None:
+    """Return ``id_short_override`` and ``interface`` for PCF submodel descriptors.
+
+    If *semantic_id* belongs to a PCF aspect model the function returns the
+    CX-0136 mandated values; otherwise ``None`` (= use defaults).
+
+    * Synchronous PCF models (``#Pcf``) → ``SynchronousPCFExchangeEndpoint``, ``SUBMODEL-3.0``
+    * Asynchronous PCF models (``#PcfExchangeAsync``) → ``PCFExchangeEndpoint``, ``PCF-1.1``
+
+    Args:
+        semantic_id: Full SAMM URN of the aspect model.
+
+    Returns:
+        ``dict`` with keys ``id_short_override`` and ``interface``, or ``None``.
+    """
+    if semantic_id not in _PCF_SEMANTIC_ID_VALUES:
+        return None
+
+    is_async = semantic_id in PCF_EXCHANGE_SEMANTIC_IDS.values()
+    return {
+        "id_short_override": PCF_ID_SHORT_ASYNC if is_async else PCF_ID_SHORT_SYNC,
+        "interface": "PCF-1.1" if is_async else "SUBMODEL-3.0",
+    }

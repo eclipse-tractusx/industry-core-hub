@@ -191,10 +191,16 @@ class AssetSyncJob:
 
     def _sync_pcf_exchange_asset(self) -> None:
         """
-        Synchronize the PCF Exchange asset with the connector.
+        Synchronize both PCF Exchange assets with the connector.
+
+        CX-0136 §6 requires two EDC assets with the same ``dct:type``
+        (``PCFExchange``) but different ``cx-common:version``:
+
+        * **v1.2.0** → ``/footprintExchange`` endpoints (PCF v9.0.0)
+        * **v1.1.1** → ``/productIds`` endpoints      (PCF v7.0.0)
         """
         try:
-            logger.info("[AssetSyncJob] Synchronizing PCF Exchange asset...")
+            logger.info("[AssetSyncJob] Synchronizing PCF Exchange assets...")
             
             # Get PCF Exchange configuration
             pcf_config = ConfigManager.get_config("provider.pcfExchange")
@@ -204,20 +210,36 @@ class AssetSyncJob:
             
             asset_config = pcf_config.get("asset_config", {})
             
-            # Register PCF Exchange asset
+            # --- v1.2.0 asset (/footprintExchange → PCF v9.0.0) ---
             pcf_asset_id, _, _, _ = self.connector_provider_manager.register_pcf_exchange_offer(
                 base_url=pcf_config.get("hostname"),
+                api_path="/v1/addons/pcf-kit/footprintExchange",
                 pcf_exchange_policy_config=pcf_config.get("policy"),
-                existing_asset_id=asset_config.get("existing_asset_id", None)
+                existing_asset_id=asset_config.get("existing_asset_id", None),
+                version="1.2.0",
             )
             
             if pcf_asset_id:
-                logger.info(f"[AssetSyncJob] PCF Exchange asset synchronized: {pcf_asset_id}")
+                logger.info(f"[AssetSyncJob] PCF Exchange v1.2.0 asset synchronized: {pcf_asset_id}")
             else:
-                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange asset.")
+                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange v1.2.0 asset.")
+
+            # --- v1.1.1 asset (/productIds → PCF v7.0.0) ---
+            legacy_asset_id, _, _, _ = self.connector_provider_manager.register_pcf_exchange_offer(
+                base_url=pcf_config.get("hostname"),
+                api_path="/v1/addons/pcf-kit/productIds",
+                pcf_exchange_policy_config=pcf_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_legacy_asset_id", None),
+                version="1.1.1",
+            )
+
+            if legacy_asset_id:
+                logger.info(f"[AssetSyncJob] PCF Exchange v1.1.1 (legacy) asset synchronized: {legacy_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange v1.1.1 (legacy) asset.")
                 
         except Exception as e:
-            logger.error(f"[AssetSyncJob] Error synchronizing PCF Exchange asset: {e}", exc_info=True)
+            logger.error(f"[AssetSyncJob] Error synchronizing PCF Exchange assets: {e}", exc_info=True)
 
     def _pcf_kit_enablement_check(self) -> bool:
         """
