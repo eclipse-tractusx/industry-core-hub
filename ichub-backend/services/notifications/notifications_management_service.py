@@ -29,6 +29,7 @@ from typing import List, Optional, Dict
 from tractusx_sdk.industry.models.notifications import Notification
 from tractusx_sdk.industry.services.notifications import NotificationConsumerService
 from tractusx_sdk.industry.services.notifications.exceptions import NotificationError
+from tractusx_sdk.industry.constants import DIGITAL_TWIN_EVENT_API_TYPE
 from tractusx_sdk.dataspace.services.connector.base_connector_consumer import BaseConnectorConsumerService
 
 from managers.config.config_manager import ConfigManager
@@ -57,22 +58,27 @@ class NotificationsManagementService():
     @staticmethod
     def _derive_endpoint_path(context: str) -> str:
         """
-        Derive the DigitalTwinEventAPI endpoint path from a notification context string.
+        Derive the endpoint path from a notification context string.
 
-        Example: ``IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0``
-                 → ``/connect-to-parent``
+        Strips the known prefix (e.g. ``DigitalTwinEventAPI-`` or ``UniqueIDPush-``)
+        and converts the remaining CamelCase operation name to kebab-case.
+
+        Examples:
+          ``IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0`` → ``/connect-to-parent``
+          ``IndustryCore-UniqueIDPush-ConnectToParent:2.0.0``        → ``/connect-to-parent``
         """
-        try:
-            marker = "DigitalTwinEventAPI-"
-            idx = context.index(marker) + len(marker)
-            type_name = context[idx:].split(":")[0]  # e.g. "ConnectToParent"
-            kebab = re.sub(r"([A-Z])", r"-\1", type_name).lower().lstrip("-")
-            return f"/{kebab}"
-        except (ValueError, IndexError):
-            logger.warning(
-                f"[Notifications] Could not derive endpoint path from context '{context}', using empty path"
-            )
-            return ""
+        for marker in ("DigitalTwinEventAPI-", "UniqueIDPush-"):
+            try:
+                idx = context.index(marker) + len(marker)
+                type_name = context[idx:].split(":")[0]  # e.g. "ConnectToParent"
+                kebab = re.sub(r"([A-Z])", r"-\1", type_name).lower().lstrip("-")
+                return f"/{kebab}"
+            except ValueError:
+                continue
+        logger.warning(
+            f"[Notifications] Could not derive endpoint path from context '{context}', using empty path"
+        )
+        return ""
 
     @staticmethod
     def _build_location(message_id: UUID) -> str:
@@ -81,20 +87,23 @@ class NotificationsManagementService():
         """
         return f"{SEM_ID_NOTIFICATION}:{message_id}"
 
-    def _remove_existing_edr_for_digital_twin_event_api(self, provider_bpn: str) -> None:
+    def _purge_edrs_for_notification(self, provider_bpn: str) -> None:
         """
-        Before sending a notification, remove any cached EDR for the
-        DigitalTwinEventAPI asset of this provider so we never reuse a stale token.
-        Delegates to the DTR manager's reusable purge helper.
+        Before sending a notification, remove any cached EDR for this provider's
+        notification assets so we never reuse a stale token.
         """
         rows = dtr_manager.purge_edrs_matching(
             counter_party_id=provider_bpn,
-            asset_id_pattern="ichub:asset:digitaltwin-event:%",
+            asset_id_pattern="ichub:asset:%",
         )
         logger.debug(
-            f"[Notifications] Purged {rows} stale DigitalTwinEventAPI EDR(s) "
-            f"for provider [{provider_bpn}]"
+            f"[Notifications] Purged {rows} stale EDR(s) for provider [{provider_bpn}]"
         )
+
+    def notification_exists(self, message_id: UUID) -> bool:
+        """Check whether a notification with the given messageId already exists."""
+        with RepositoryManagerFactory().create() as repos:
+            return repos.notification_repository.find_by_message_id(message_id) is not None
 
     def create_notification(self, notification: Notification, direction: NotificationDirection, use_case: str = None) -> NotificationEntity:
         """
@@ -202,7 +211,7 @@ class NotificationsManagementService():
             logger.error(f"Error deleting notification: {e}")
             raise NotificationDeleteError(f"Failed to delete notification: {e}")
 
-    def send_notification(self, message_id: UUID, endpoint_url: Optional[str], provider_bpn: str, provider_dsp_url: Optional[str], list_policies: Optional[List[Dict]]) -> None:
+    def send_notification(self, message_id: UUID, endpoint_url: Optional[str], provider_bpn: str, provider_dsp_url: Optional[str], list_policies: Optional[List[Dict]], dct_type: Optional[str] = None) -> None:
         """
         Send a notification to the specified endpoint using the connector consumer service.
         Retrieves the notification from the database using the message_id.
@@ -216,6 +225,10 @@ class NotificationsManagementService():
         If ``list_policies`` is None or empty, the policy defined at
         ``provider.digitalTwinEventAPI.policy.usage`` in ``configuration.yml`` is
         used as the fallback.
+
+        If ``dct_type`` is provided, it is used as the EDC asset ``dct:type``
+        filter for catalog negotiation.  Defaults to
+        ``DIGITAL_TWIN_EVENT_API_TYPE`` when not supplied.
         """
         try:
             # Resolve DSP URL: use provided value or fall back to connector discovery
@@ -242,7 +255,6 @@ class NotificationsManagementService():
                     logger.debug("[Notifications] No governance provided; using provider.digitalTwinEventAPI.policy.usage from configuration")
 
             with RepositoryManagerFactory().create() as repos:
-                self._remove_existing_edr_for_digital_twin_event_api(provider_bpn)
                 db_notification = repos.notification_repository.find_by_message_id(
                     message_id=message_id
                 )
@@ -254,6 +266,9 @@ class NotificationsManagementService():
                 semantic_id=SEM_ID_NOTIFICATION
             )
             notification = db_notification.to_sdk(payload)
+
+            resolved_dct_type = dct_type or DIGITAL_TWIN_EVENT_API_TYPE
+            self._purge_edrs_for_notification(provider_bpn)
 
             # Stamp the actual dispatch time so sentDateTime in the payload reflects
             # when the message left this system, not when it was pre-created.
@@ -274,12 +289,20 @@ class NotificationsManagementService():
                 verbose=True
             )
 
-            result = notification_service.send_notification(
+            # Use get_notification_endpoint + send_notification_to_endpoint so we can
+            # pass the correct dct_type (DigitalTwinEventAPI vs UniqueIdPush, etc.)
+            # instead of relying on the SDK's hardcoded DigitalTwinEventAPI default.
+            edc_endpoint, access_token = notification_service.get_notification_endpoint(
                 provider_bpn=provider_bpn,
                 provider_dsp_url=resolved_dsp_url,
+                policies=resolved_policies,
+                dct_type=resolved_dct_type,
+            )
+            result = notification_service.send_notification_to_endpoint(
+                endpoint_url=edc_endpoint,
+                access_token=access_token,
                 notification=notification,
                 endpoint_path=resolved_endpoint,
-                policies=resolved_policies
             )
             self.update_notification_status(
                 message_id=message_id,

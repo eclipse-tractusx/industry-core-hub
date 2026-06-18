@@ -30,7 +30,6 @@ from models.metadata_database.notification.models import NotificationDirection
 from models.services.notification.unique_id_push import UniqueIdPushConnectToParentRequest
 from services.notifications.notifications_management_service import NotificationsManagementService
 from services.notifications.unique_id_push_service import UniqueIdPushService
-from tools.constants import INTERNAL_SERVER_ERROR
 from tools.exceptions import NotificationCreationError
 
 logger = LoggingManager.get_logger(__name__)
@@ -45,7 +44,19 @@ router = APIRouter(
 )
 
 
-@router.post("/connect-to-parent")
+@router.post(
+    "/connect-to-parent",
+    status_code=201,
+    responses={
+        201: {"description": "Notification was received successfully"},
+        400: {"description": "Request body was malformed"},
+        401: {"description": "Not authorized"},
+        403: {"description": "Forbidden"},
+        405: {"description": "Method not allowed"},
+        409: {"description": "Could not accept the send notification, because a notification with that messageId already exists"},
+        422: {"description": "Could not accept the send notification even though it is syntactically correct. The notification is not accepted, because of semantic reasons (e.g., an item is not known by the receiver)."},
+    },
+)
 async def connect_to_parent(request: UniqueIdPushConnectToParentRequest) -> Response:
     """
     Receive a Unique ID Push Connect-to-Parent notification.
@@ -55,6 +66,15 @@ async def connect_to_parent(request: UniqueIdPushConnectToParentRequest) -> Resp
     linked in the parent's bill-of-material.
     """
     try:
+        # Duplicate check
+        if notification_management_service.notification_exists(request.header.message_id):
+            return JSONResponse(
+                status_code=409,
+                content={
+                    "description": "Could not accept the send notification, because a notification with that messageId already exists"
+                },
+            )
+
         unique_id_push_service.receive_connect_to_parent(
             request, direction=NotificationDirection.INCOMING
         )
@@ -66,5 +86,5 @@ async def connect_to_parent(request: UniqueIdPushConnectToParentRequest) -> Resp
     except Exception as e:
         logger.exception("Unhandled error in uniqueidpush/connect-to-parent endpoint")
         return JSONResponse(
-            status_code=500, content={"detail": INTERNAL_SERVER_ERROR}
+            status_code=500, content={"description": "Internal server error"}
         )

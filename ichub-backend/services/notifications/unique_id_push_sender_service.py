@@ -39,6 +39,7 @@ from tractusx_sdk.industry.models.notifications import NotificationHeader
 logger = LoggingManager.get_logger(__name__)
 
 CONNECT_TO_PARENT_CONTEXT = "IndustryCore-UniqueIDPush-ConnectToParent:2.0.0"
+UNIQUE_ID_PUSH_DCT_TYPE = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
 
 
 class UniqueIdPushSenderService:
@@ -115,6 +116,7 @@ class UniqueIdPushSenderService:
                 provider_bpn=receiver_bpn,
                 provider_dsp_url=None,
                 list_policies=None,
+                dct_type=UNIQUE_ID_PUSH_DCT_TYPE,
             )
 
             logger.info(

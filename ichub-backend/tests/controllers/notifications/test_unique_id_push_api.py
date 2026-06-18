@@ -31,6 +31,7 @@ Key cases covered:
 * Missing required fields → 422
 * Empty listOfItems → 422
 * Invalid digitalTwinType → 422
+* Duplicate messageId → 409
 """
 
 import pytest
@@ -104,17 +105,21 @@ class TestUniqueIdPushConnectToParent:
 
     @pytest.fixture(autouse=True)
     def _mock_service(self):
-        """Mock the unique_id_push_service to avoid real persistence."""
+        """Mock the unique_id_push_service and notification_management_service."""
         with patch(
             "controllers.fastapi.routers.notifications.v1.unique_id_push_api.unique_id_push_service"
-        ) as mock_svc:
+        ) as mock_svc, patch(
+            "controllers.fastapi.routers.notifications.v1.unique_id_push_api.notification_management_service"
+        ) as mock_mgmt_svc:
             # Simulate a successful creation returning a mock entity
             mock_entity = Mock(spec=NotificationEntity)
             mock_entity.message_id = uuid4()
             mock_entity.direction = NotificationDirection.INCOMING
             mock_entity.status = NotificationStatus.RECEIVED
             mock_svc.receive_connect_to_parent.return_value = mock_entity
+            mock_mgmt_svc.notification_exists.return_value = False
             self.mock_svc = mock_svc
+            self.mock_mgmt_svc = mock_mgmt_svc
             yield
 
     def test_valid_serialized_part_item(self, app_client):
@@ -196,3 +201,11 @@ class TestUniqueIdPushConnectToParent:
         body = _make_body([SERIALIZED_PART_ITEM], header=header)
         response = app_client.post(ENDPOINT_URL, json=body)
         assert response.status_code == 422
+
+    def test_duplicate_message_id_returns_409(self, app_client):
+        """POST with a messageId that already exists returns 409."""
+        self.mock_mgmt_svc.notification_exists.return_value = True
+        body = _make_body([SERIALIZED_PART_ITEM])
+        response = app_client.post(ENDPOINT_URL, json=body)
+        assert response.status_code == 409
+        self.mock_svc.receive_connect_to_parent.assert_not_called()

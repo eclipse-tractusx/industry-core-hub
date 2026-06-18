@@ -25,7 +25,7 @@ from uuid import uuid4
 from unittest.mock import Mock, patch
 
 from models.metadata_database.notification.models import NotificationDirection, NotificationEntity, NotificationStatus
-from services.notifications.unique_id_push_sender_service import UniqueIdPushSenderService, CONNECT_TO_PARENT_CONTEXT
+from services.notifications.unique_id_push_sender_service import UniqueIdPushSenderService, CONNECT_TO_PARENT_CONTEXT, UNIQUE_ID_PUSH_DCT_TYPE
 from tools.constants import INDUSTRY_CORE_HUB
 
 
@@ -78,6 +78,7 @@ class TestUniqueIdPushSenderService:
             provider_bpn=self.receiver_bpn,
             provider_dsp_url=None,
             list_policies=None,
+            dct_type=UNIQUE_ID_PUSH_DCT_TYPE,
         )
 
     def test_send_connect_to_parent_adds_urn_prefix(self):
