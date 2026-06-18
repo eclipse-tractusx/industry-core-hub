@@ -42,6 +42,7 @@ from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.pcf import PcfExchangeDirection, PcfExchangeStatus, PcfExchangeType
 from tools.json_validator import json_validator_draft_aware
 from utils.log_utils import sanitize_log_value as _s
+from utils.pcf_utils import DEFAULT_PCF_VERSION, get_pcf_semantic_id
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -70,7 +71,8 @@ class PcfExchangeManager:
         edc_bpn: str,
         manufacturer_part_id: Optional[str] = None,
         customer_part_id: Optional[str] = None,
-        message: Optional[str] = None
+        message: Optional[str] = None,
+        version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         Receive a PCF data request from a data consumer via EDC data plane.
@@ -91,6 +93,7 @@ class PcfExchangeManager:
             manufacturer_part_id: Manufacturer's part identifier
             customer_part_id: Customer's part identifier  
             message: Optional message accompanying the request
+            version: PCF schema version (default: ``"v9.0.0"``).
             
         Returns:
             Dict containing request confirmation details
@@ -124,7 +127,8 @@ class PcfExchangeManager:
                         responding_bpn=self._own_bpn,
                         manufacturer_part_id=manufacturer_part_id,
                         customer_part_id=customer_part_id,
-                        message=message
+                        message=message,
+                        version=version,
                     )
                     logger.info(f"Created PCF exchange record for request {_s(request_id)} with status DELIVERED")
                 else:
@@ -157,7 +161,8 @@ class PcfExchangeManager:
                         manufacturer_part_id=manufacturer_part_id,
                         customer_part_id=customer_part_id,
                         message=message,
-                        pcf_location=pcf_location
+                        pcf_location=pcf_location,
+                        version=version,
                     )
                     logger.info(f"Created PCF exchange record for response to request {_s(request_id)} with status PENDING")
                 else:
@@ -200,7 +205,8 @@ class PcfExchangeManager:
         pcf_data: Dict[str, Any],
         edc_bpn: str,
         is_update: bool = False,
-        message: Optional[str] = None
+        message: Optional[str] = None,
+        version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         Receive PCF response or update via EDC data plane.
@@ -242,10 +248,11 @@ class PcfExchangeManager:
         
         try:
             # submodel_schema_finder returns {'status': ..., 'schema': <actual_schema>}
-            pcf_schema_result = submodel_schema_finder("urn:samm:io.catenax.pcf:9.0.0#Pcf")
+            semantic_id = get_pcf_semantic_id(version)
+            pcf_schema_result = submodel_schema_finder(semantic_id)
             # Use draft-aware validator (PCF schema uses Draft-04, not Draft-07)
             json_validator_draft_aware(pcf_schema_result['schema'], pcf_data)
-            logger.info(f"PCF data for request {_s(request_id)} validated successfully against schema")
+            logger.info(f"PCF data for request {_s(request_id)} validated successfully against {_s(version)} schema")
         except Exception as e:
             logger.error(f"PCF data validation failed for request {_s(request_id)}: {_s(e)}")
             raise ValueError(f"PCF data validation failed: {str(e)}")
@@ -257,7 +264,8 @@ class PcfExchangeManager:
                 pcf_data, 
                 is_update, 
                 type=PcfExchangeType.RESPONSE,
-                responding_bpn=edc_bpn
+                responding_bpn=edc_bpn,
+                version=version,
             )
         except Exception as e:
             logger.error(f"Failed to store PCF data for request {_s(request_id)}: {_s(e)}")
@@ -298,7 +306,8 @@ class PcfExchangeManager:
         pcf_data: Dict[str, Any],
         is_update: bool,
         type: PcfExchangeType,
-        responding_bpn: Optional[str] = None
+        responding_bpn: Optional[str] = None,
+        version: str = DEFAULT_PCF_VERSION,
     ) -> None:
         """
         Store the PCF payload in the submodel service and update the exchange
@@ -327,15 +336,15 @@ class PcfExchangeManager:
         
         # Try to upload new PCF data; if it already exists, check if we should update or if it's identical
         try:
-            management_manager.upload_pcf_data(manufacturer_part_id, pcf_data)
+            management_manager.upload_pcf_data(manufacturer_part_id, pcf_data, version=version)
         except ValueError as e:
             if "already exists" in str(e):
                 if is_update:
                     # Update is allowed when is_update=True
-                    management_manager.update_pcf_data(manufacturer_part_id, pcf_data)
+                    management_manager.update_pcf_data(manufacturer_part_id, pcf_data, version=version)
                 else:
                     # If is_update=False but data exists, check if it's the same data (idempotent)
-                    existing_pcf = management_manager.get_pcf_data_by_manufacturer_part_id(manufacturer_part_id)
+                    existing_pcf = management_manager.get_pcf_data_by_manufacturer_part_id(manufacturer_part_id, version=version)
                     if existing_pcf == pcf_data:
                         logger.info(f"PCF data for {_s(manufacturer_part_id)} already exists and is identical - treating as idempotent operation")
                         # Continue with normal flow (create/update response record)
@@ -349,7 +358,7 @@ class PcfExchangeManager:
                 raise
 
         with RepositoryManagerFactory.create() as repo_manager:
-            pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+            pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=version)
             
             if type == PcfExchangeType.RESPONSE:
                 # When receiving a response, create or update an INCOMING RESPONSE record
@@ -379,7 +388,8 @@ class PcfExchangeManager:
                         manufacturer_part_id=manufacturer_part_id,
                         status=PcfExchangeStatus.DELIVERED if not is_update else PcfExchangeStatus.UPDATED,
                         pcf_location=pcf_location,
-                        request_id=UUID(request_id)
+                        request_id=UUID(request_id),
+                        version=version,
                     )
                     repo_manager.commit()
                     logger.info(f"Created PCF INCOMING RESPONSE for request {_s(request_id)} with status DELIVERED")

@@ -40,7 +40,7 @@ from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.pcf import PcfExchangeDirection, PcfExchangeStatus, PcfExchangeType
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
 from utils.log_utils import sanitize_log_value as _s
-from utils.pcf_utils import PCF_EXCHANGE_ASSET_TYPE
+from utils.pcf_utils import DEFAULT_PCF_VERSION, PCF_EXCHANGE_ASSET_TYPE
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -137,6 +137,7 @@ class PcfProvisionManager:
         is_update: bool,
         message: Optional[str] = None,
         manufacturer_part_id: Optional[str] = None,
+        version: str = DEFAULT_PCF_VERSION,
     ) -> None:
         """
         Update the PCF exchange record in the metadata database.
@@ -152,12 +153,13 @@ class PcfProvisionManager:
             is_update: Whether this is an update to a previously delivered response.
             message: Optional message for the exchange record.
             manufacturer_part_id: The manufacturer part ID (used in pcf_location).
+            version: PCF schema version (default: ``"v9.0.0"``).
 
         Raises:
             ValueError: If the exchange record is not found or the update fails.
         """
         try:
-            pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+            pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=version)
             logger.info(f"Stored PCF data location for request {_s(request_id)}: {_s(pcf_location)}")
             
             if is_update:
@@ -182,7 +184,8 @@ class PcfProvisionManager:
     def upload_new_pcf(
             self,
             manufacturer_part_id: str,
-            pcf_data: Dict[str, Any]
+            pcf_data: Dict[str, Any],
+            version: str = DEFAULT_PCF_VERSION,
     ) -> None:
         """
         Upload a new PCF document to the submodel service for a given manufacturer part ID.
@@ -194,6 +197,8 @@ class PcfProvisionManager:
         Args:
             manufacturer_part_id: The manufacturer part ID to associate with the PCF data.
             pcf_data: The PCF payload to store.
+            version: PCF schema version (default: ``"v9.0.0"``).
+
         Raises:
             ValueError: If there is an error during upload to the submodel service.
         """
@@ -203,7 +208,8 @@ class PcfProvisionManager:
 
             management_manager.upload_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
-                pcf_data=pcf_data
+                pcf_data=pcf_data,
+                version=version,
             )
         except Exception as e:
             logger.error(f"Failed to upload PCF data for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
@@ -212,22 +218,29 @@ class PcfProvisionManager:
 
     def view_existing_pcf(
             self,
-            manufacturer_part_id: str
+            manufacturer_part_id: str,
+            version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         View an existing PCF document from the submodel service for a given manufacturer part ID.
 
         Args:
             manufacturer_part_id: The manufacturer part ID to retrieve the PCF data for.
+            version: PCF schema version (default: ``"v9.0.0"``).
+
         Raises:
             ValueError: If there is an error during retrieval from the submodel service.
         """
         try:
             result = management_manager.get_pcf_data_by_manufacturer_part_id(
-                manufacturer_part_id=manufacturer_part_id
+                manufacturer_part_id=manufacturer_part_id,
+                version=version,
             )
             if result is None:
-                raise ValueError(f"No PCF data found for manufacturerPartId [{manufacturer_part_id}].")
+                raise ValueError(
+                    f"No PCF data found for manufacturerPartId [{manufacturer_part_id}] "
+                    f"version [{version}]."
+                )
             return result
         except Exception as e:
             logger.error(f"Failed to retrieve PCF data for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
@@ -236,7 +249,8 @@ class PcfProvisionManager:
     def update_pcf_and_get_participants(            
             self,
             manufacturer_part_id: str,
-            pcf_data: Dict[str, Any]
+            pcf_data: Dict[str, Any],
+            version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         try:
             if pcf_data is None:
@@ -244,7 +258,8 @@ class PcfProvisionManager:
             
             result = management_manager.update_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
-                pcf_data=pcf_data
+                pcf_data=pcf_data,
+                version=version,
             )
             return result
         except Exception as e:
@@ -293,7 +308,13 @@ class PcfProvisionManager:
             logger.error(f"Failed to confirm and send PCF update for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
             raise ValueError(f"Failed to confirm and send PCF update: {str(e)}")
 
-    def list_provider_notifications(self, status: Optional[str] = None, offset: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    def list_provider_notifications(
+        self,
+        status: Optional[str] = None,
+        version: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """
         List all notifications related to a specific manufacturer part ID.
 
@@ -313,6 +334,7 @@ class PcfProvisionManager:
                         type=PcfExchangeType.RESPONSE,
                         direction=PcfExchangeDirection.OUTGOING,
                         status=status,
+                        version=version,
                         offset=offset,
                         limit=limit)
                 return [PcfExchangeModel.from_entity(n) for n in notifications]
@@ -400,7 +422,8 @@ class PcfProvisionManager:
                 if not manufacturer_part_id:
                     raise ValueError(f"No manufacturerPartId associated with request {request_id}. Cannot retrieve PCF data for refresh.")
                 
-                pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+                entity_version = exchange_entity.version or DEFAULT_PCF_VERSION
+                pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=entity_version)
                 if not pcf_location:
                     raise ValueError(f"No PCF location found for request {request_id}. Cannot refresh PCF data.")
                 final_exchange = repo_manager.pcf_repository.update_pcf_location(

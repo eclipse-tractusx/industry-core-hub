@@ -32,6 +32,7 @@ from managers.addons_service.pcf_kit.v1 import exchange_manager
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import NotFoundError
 from utils.log_utils import sanitize_log_value as _s
+from utils.pcf_utils import DEFAULT_PCF_VERSION, SUPPORTED_PCF_VERSIONS
 from tools.constants import INTERNAL_SERVER_ERROR
 
 logger = LoggingManager.get_logger(__name__)
@@ -55,7 +56,11 @@ async def put_pcf_with_path_id(
     body: dict = Body(...),
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
     message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
-    update: bool = Query(False, description="Whether this is an update to an existing request")
+    update: bool = Query(False, description="Whether this is an update to an existing request"),
+    version: str = Query(
+        DEFAULT_PCF_VERSION,
+        description="PCF schema version (e.g. v7.0.0, v9.0.0)",
+    ),
 ):
     """
     PCF Response / Update endpoint.
@@ -89,6 +94,11 @@ async def put_pcf_with_path_id(
         )
     
     try:
+        if version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
         logger.debug(f"[PCF Exchange PUT] Delegating to exchange_manager.submit_pcf_response()")
         # Delegate to manager to handle PCF response/update
         result = exchange_manager.submit_pcf_response(
@@ -96,7 +106,8 @@ async def put_pcf_with_path_id(
             pcf_data=body,
             edc_bpn=edc_bpn,
             is_update=update,
-            message=message
+            message=message,
+            version=version,
         )
         
         logger.info(f"[PCF Exchange PUT] Response processed successfully: request_id={_s(request_id)}")
@@ -120,7 +131,11 @@ async def request_pcf(
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
     manufacturer_part_id: Optional[str] = Query(None, alias="manufacturerPartId", description="Manufacturer part ID"),
     customer_part_id: Optional[str] = Query(None, alias="customerPartId", description="Customer part ID"),
-    message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION)
+    message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
+    version: str = Query(
+        DEFAULT_PCF_VERSION,
+        description="PCF schema version (e.g. v7.0.0, v9.0.0)",
+    ),
 ):
     """
     PCF Request endpoint.
@@ -162,6 +177,11 @@ async def request_pcf(
         )
 
     try:
+        if version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
         logger.debug(f"[PCF Exchange GET] Delegating to exchange_manager.request_pcf()")
         # Delegate to manager to handle PCF request
         result = exchange_manager.request_pcf(
@@ -169,7 +189,8 @@ async def request_pcf(
             edc_bpn=edc_bpn,
             manufacturer_part_id=manufacturer_part_id,
             customer_part_id=customer_part_id,
-            message=message
+            message=message,
+            version=version,
         )
         
         logger.info(f"[PCF Exchange GET] Request processed successfully: request_id={_s(request_id)}")

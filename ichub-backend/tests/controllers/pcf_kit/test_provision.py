@@ -112,7 +112,7 @@ class TestUploadNewPcf:
         resp = app_client.post(f"{BASE}/pcfs/{PART_ID}", json=PCF_DATA_BODY)
 
         assert resp.status_code == 201
-        mock_provision_mgr.upload_new_pcf.assert_called_once_with(PART_ID, PCF_DATA_BODY)
+        mock_provision_mgr.upload_new_pcf.assert_called_once_with(PART_ID, PCF_DATA_BODY, version="v9.0.0")
 
     def test_manager_value_error_returns_400(self, app_client, mock_provision_mgr):
         mock_provision_mgr.upload_new_pcf.side_effect = ValueError("Schema validation failed")
@@ -129,6 +129,25 @@ class TestUploadNewPcf:
 
         assert resp.status_code == 500
 
+    def test_upload_with_v7_version(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.upload_new_pcf.return_value = {
+            "manufacturerPartId": PART_ID,
+            "pcfLocation": "submodel://some-location",
+            "version": "v7.0.0",
+        }
+
+        resp = app_client.post(f"{BASE}/pcfs/{PART_ID}?version=v7.0.0", json=PCF_DATA_BODY)
+
+        assert resp.status_code == 201
+        mock_provision_mgr.upload_new_pcf.assert_called_once_with(PART_ID, PCF_DATA_BODY, version="v7.0.0")
+
+    def test_upload_with_invalid_version_returns_400(self, app_client, mock_provision_mgr):
+        resp = app_client.post(f"{BASE}/pcfs/{PART_ID}?version=v99.0.0", json=PCF_DATA_BODY)
+
+        assert resp.status_code == 400
+        assert "Unsupported PCF version" in resp.json().get("detail", "")
+        mock_provision_mgr.upload_new_pcf.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # GET /pcfs/{manufacturerPartId}
@@ -143,7 +162,7 @@ class TestViewExistingPcf:
         resp = app_client.get(f"{BASE}/pcfs/{PART_ID}")
 
         assert resp.status_code == 200
-        mock_provision_mgr.view_existing_pcf.assert_called_once_with(PART_ID)
+        mock_provision_mgr.view_existing_pcf.assert_called_once_with(PART_ID, version="v9.0.0")
 
     def test_manager_value_error_returns_400(self, app_client, mock_provision_mgr):
         mock_provision_mgr.view_existing_pcf.side_effect = ValueError("Not found")
@@ -158,6 +177,21 @@ class TestViewExistingPcf:
         resp = app_client.get(f"{BASE}/pcfs/{PART_ID}")
 
         assert resp.status_code == 500
+
+    def test_view_with_v7_version(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.view_existing_pcf.return_value = {"pcfData": PCF_DATA_BODY}
+
+        resp = app_client.get(f"{BASE}/pcfs/{PART_ID}?version=v7.0.0")
+
+        assert resp.status_code == 200
+        mock_provision_mgr.view_existing_pcf.assert_called_once_with(PART_ID, version="v7.0.0")
+
+    def test_view_with_invalid_version_returns_400(self, app_client, mock_provision_mgr):
+        resp = app_client.get(f"{BASE}/pcfs/{PART_ID}?version=v99.0.0")
+
+        assert resp.status_code == 400
+        assert "Unsupported PCF version" in resp.json().get("detail", "")
+        mock_provision_mgr.view_existing_pcf.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +210,7 @@ class TestUpdatePcfAndGetParticipants:
         resp = app_client.put(f"{BASE}/pcfs/{PART_ID}", json=PCF_DATA_BODY)
 
         assert resp.status_code == 200
-        mock_provision_mgr.update_pcf_and_get_participants.assert_called_once_with(PART_ID, PCF_DATA_BODY)
+        mock_provision_mgr.update_pcf_and_get_participants.assert_called_once_with(PART_ID, PCF_DATA_BODY, version="v9.0.0")
 
     def test_manager_value_error_returns_400(self, app_client, mock_provision_mgr):
         mock_provision_mgr.update_pcf_and_get_participants.side_effect = ValueError("No existing PCF")
@@ -258,7 +292,7 @@ class TestListProviderNotifications:
 
         assert resp.status_code == 200
         mock_provision_mgr.list_provider_notifications.assert_called_once_with(
-            status=None, offset=0, limit=100
+            status=None, version=None, offset=0, limit=100
         )
 
     def test_filters_by_status_query_param(self, app_client, mock_provision_mgr):
@@ -268,8 +302,25 @@ class TestListProviderNotifications:
 
         assert resp.status_code == 200
         mock_provision_mgr.list_provider_notifications.assert_called_once_with(
-            status=PcfExchangeStatus.PENDING, offset=5, limit=10
+            status=PcfExchangeStatus.PENDING, version=None, offset=5, limit=10
         )
+
+    def test_filters_by_version_query_param(self, app_client, mock_provision_mgr):
+        mock_provision_mgr.list_provider_notifications.return_value = []
+
+        resp = app_client.get(f"{BASE}/requests?version=v7.0.0")
+
+        assert resp.status_code == 200
+        mock_provision_mgr.list_provider_notifications.assert_called_once_with(
+            status=None, version="v7.0.0", offset=0, limit=100
+        )
+
+    def test_list_with_invalid_version_returns_400(self, app_client, mock_provision_mgr):
+        resp = app_client.get(f"{BASE}/requests?version=v99.0.0")
+
+        assert resp.status_code == 400
+        assert "Unsupported PCF version" in resp.json().get("detail", "")
+        mock_provision_mgr.list_provider_notifications.assert_not_called()
 
     def test_manager_value_error_returns_400(self, app_client, mock_provision_mgr):
         mock_provision_mgr.list_provider_notifications.side_effect = ValueError("Bad status value")

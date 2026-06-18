@@ -82,6 +82,7 @@ class TestPutPcfWithPathId:
             edc_bpn=VALID_BPN,
             is_update=False,
             message=None,
+            version="v9.0.0",
         )
 
     def test_update_flag_is_passed_to_manager(self, app_client, mock_exchange_mgr):
@@ -143,6 +144,30 @@ class TestPutPcfWithPathId:
 
         assert resp.status_code == 500
 
+    def test_put_with_v7_version(self, app_client, mock_exchange_mgr):
+        mock_exchange_mgr.submit_pcf_response.return_value = {"status": "accepted"}
+
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}?version=v7.0.0",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 200
+        _, kwargs = mock_exchange_mgr.submit_pcf_response.call_args
+        assert kwargs["version"] == "v7.0.0"
+
+    def test_put_with_invalid_version_returns_400(self, app_client, mock_exchange_mgr):
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}?version=v99.0.0",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 400
+        assert "Unsupported PCF version" in resp.json().get("detail", "")
+        mock_exchange_mgr.submit_pcf_response.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # GET /{requestId}  — request_pcf
@@ -167,6 +192,7 @@ class TestRequestPcf:
             manufacturer_part_id=PART_ID,
             customer_part_id=None,
             message=None,
+            version="v9.0.0",
         )
 
     def test_valid_request_with_customer_part_id_returns_202(self, app_client, mock_exchange_mgr):
@@ -251,3 +277,27 @@ class TestRequestPcf:
         )
 
         assert resp.status_code == 500
+
+    def test_get_with_v7_version(self, app_client, mock_exchange_mgr):
+        mock_exchange_mgr.request_pcf.return_value = {"status": "accepted"}
+
+        resp = app_client.get(
+            f"{BASE}/{REQUEST_ID}",
+            params={"manufacturerPartId": PART_ID, "version": "v7.0.0"},
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 202
+        _, kwargs = mock_exchange_mgr.request_pcf.call_args
+        assert kwargs["version"] == "v7.0.0"
+
+    def test_get_with_invalid_version_returns_400(self, app_client, mock_exchange_mgr):
+        resp = app_client.get(
+            f"{BASE}/{REQUEST_ID}",
+            params={"manufacturerPartId": PART_ID, "version": "v99.0.0"},
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 400
+        assert "Unsupported PCF version" in resp.json().get("detail", "")
+        mock_exchange_mgr.request_pcf.assert_not_called()

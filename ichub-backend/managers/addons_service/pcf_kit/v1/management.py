@@ -38,7 +38,12 @@ from tractusx_sdk.dataspace.tools.validate_submodels import submodel_schema_find
 from tools.json_validator import json_validator_draft_aware
 from tools.exceptions import NotFoundError
 from utils.log_utils import sanitize_log_value as _s
-from utils.pcf_utils import PCF_SEMANTIC_ID, pcf_submodel_id
+from utils.pcf_utils import (
+    DEFAULT_PCF_VERSION,
+    get_pcf_exchange_semantic_id,
+    get_pcf_semantic_id,
+    pcf_submodel_id,
+)
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -76,6 +81,7 @@ class PcfManagementManager:
             "message": entity.message,
             "pcfLocation": entity.pcf_location,
             "correlationId": entity.correlation_id,
+            "version": entity.version,
             "createdAt": entity.created_at.isoformat() if entity.created_at else None,
             "updatedAt": entity.updated_at.isoformat() if entity.updated_at else None,
         }
@@ -85,7 +91,8 @@ class PcfManagementManager:
         Retrieve the PCF data payload for a request.
 
         The payload is looked up by ``manufacturer_part_id`` (product-scoped
-        storage).
+        storage).  The PCF schema version is read from the stored entity so
+        the correct submodel document is returned.
 
         Args:
             request_id: The unique request identifier (UUID string).
@@ -106,52 +113,47 @@ class PcfManagementManager:
                     )
                     return None
 
-                # Store the manufacturer_part_id while session is open
+                # Store fields while session is open
                 stored_manufacturer_part_id = entity.manufacturer_part_id
+                stored_version = entity.version or DEFAULT_PCF_VERSION
 
-            submodel_id = pcf_submodel_id(stored_manufacturer_part_id)
+            semantic_id = get_pcf_exchange_semantic_id(stored_version)
+            submodel_id = pcf_submodel_id(stored_manufacturer_part_id, stored_version)
             pcf_data = self._submodel_service.get_twin_aspect_document(
                 submodel_id=submodel_id,
-                semantic_id=PCF_SEMANTIC_ID
+                semantic_id=semantic_id
             )
             return pcf_data
         except Exception as e:
             logger.warning(f"PCF data not found for request {_s(request_id)}: {_s(e)}")
             return None
         
-    def get_pcf_data_by_manufacturer_part_id(self, manufacturer_part_id: str) -> Optional[Dict[str, Any]]:
+    def get_pcf_data_by_manufacturer_part_id(
+        self,
+        manufacturer_part_id: str,
+        version: str = DEFAULT_PCF_VERSION,
+    ) -> Optional[Dict[str, Any]]:
         """
-        Retrieve the PCF data payload for a request.
-
-        The payload is looked up by ``manufacturer_part_id`` (product-scoped
-        storage).
+        Retrieve the PCF data payload by manufacturer part ID and version.
 
         Args:
             manufacturer_part_id: The manufacturer part ID.
+            version: PCF schema version (default: ``"v9.0.0"``).
             
         Returns:
             The PCF data payload, or None if not found.
         """
-        logger.info(f"Retrieving PCF data for manufacturer part ID {_s(manufacturer_part_id)}")
+        logger.info(
+            f"Retrieving PCF data for manufacturer part ID {_s(manufacturer_part_id)} "
+            f"version={_s(version)}"
+        )
         
         try:
-            with RepositoryManagerFactory.create() as repo_manager:
-                entity = repo_manager.pcf_repository.find_by_part_id(manufacturer_part_id)
-
-                if not entity or not entity[0].manufacturer_part_id:
-                    logger.warning(
-                        f"No manufacturerPartId for manufacturer part ID {_s(manufacturer_part_id)}. "
-                        "Cannot retrieve PCF data."
-                    )
-                    return None
-
-                # Store the manufacturer_part_id while session is open
-                stored_manufacturer_part_id = entity[0].manufacturer_part_id
-
-            submodel_id = pcf_submodel_id(stored_manufacturer_part_id)
+            semantic_id = get_pcf_exchange_semantic_id(version)
+            submodel_id = pcf_submodel_id(manufacturer_part_id, version)
             pcf_data = self._submodel_service.get_twin_aspect_document(
                 submodel_id=submodel_id,
-                semantic_id=PCF_SEMANTIC_ID
+                semantic_id=semantic_id
             )
             return pcf_data
         except Exception as e:
@@ -212,16 +214,19 @@ class PcfManagementManager:
         self,
         manufacturer_part_id: str,
         pcf_data: Dict[str, Any],
+        version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         Upload a PCF payload for a product.
 
-        Validates the payload against the Catena-X PCF 9.0.0 schema and stores
-        it in the submodel service keyed by ``manufacturerPartId``.
+        Validates the payload against the Catena-X PCF schema for the
+        specified version and stores it in the submodel service keyed by
+        ``manufacturerPartId`` and ``version``.
 
         Args:
             manufacturer_part_id: The manufacturer part ID for the product.
             pcf_data: The PCF payload to store.
+            version: PCF schema version (default: ``"v9.0.0"``).
 
         Returns:
             Dictionary with upload confirmation details.
@@ -229,34 +234,38 @@ class PcfManagementManager:
         Raises:
             ValueError: If the PCF data fails schema validation.
         """
-        logger.info(f"Uploading PCF data for manufacturerPartId={_s(manufacturer_part_id)}")
+        logger.info(
+            f"Uploading PCF data for manufacturerPartId={_s(manufacturer_part_id)} "
+            f"version={_s(version)}"
+        )
 
-        submodel_id = pcf_submodel_id(manufacturer_part_id)
+        semantic_id = get_pcf_exchange_semantic_id(version)
+        submodel_id = pcf_submodel_id(manufacturer_part_id, version)
 
         # Verify that existing data is not present
         try:
             existing = self._submodel_service.get_twin_aspect_document(
                 submodel_id=submodel_id,
-                semantic_id=PCF_SEMANTIC_ID,
+                semantic_id=semantic_id,
             )
             if existing:
                 raise ValueError(
-                    f"PCF data already exists for manufacturerPartId={manufacturer_part_id}. "
-                    "Use update to modify existing data."
+                    f"PCF data already exists for manufacturerPartId={manufacturer_part_id} "
+                    f"version={version}. Use update to modify existing data."
                 )
         except NotFoundError:
             # File doesn't exist yet - this is expected for a new upload
             pass
 
 
-        self._validate_pcf_schema(pcf_data)
+        self._validate_pcf_schema(pcf_data, version)
 
 
-        pcf_location = f"submodel://{PCF_SEMANTIC_ID}/{manufacturer_part_id}"
+        pcf_location = f"submodel://{semantic_id}/{manufacturer_part_id}"
 
         self._submodel_service.upload_twin_aspect_document(
             submodel_id=submodel_id,
-            semantic_id=PCF_SEMANTIC_ID,
+            semantic_id=semantic_id,
             payload=pcf_data,
         )
 
@@ -265,12 +274,13 @@ class PcfManagementManager:
 
         logger.info(
             f"PCF data uploaded for manufacturerPartId={_s(manufacturer_part_id)} "
-            f"(submodel_id={_s(submodel_id)})"
+            f"version={_s(version)} (submodel_id={_s(submodel_id)})"
         )
 
         return {
             "manufacturerPartId": manufacturer_part_id,
             "pcfLocation": pcf_location,
+            "version": version,
             "status": "uploaded",
         }
 
@@ -278,16 +288,19 @@ class PcfManagementManager:
         self,
         manufacturer_part_id: str,
         pcf_data: Dict[str, Any],
+        version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         Update an existing PCF payload for a product.
 
-        Validates the payload against the Catena-X PCF 9.0.0 schema and
-        overwrites the existing data in the submodel service.
+        Validates the payload against the Catena-X PCF schema for the
+        specified version and overwrites the existing data in the submodel
+        service.
 
         Args:
             manufacturer_part_id: The manufacturer part ID for the product.
             pcf_data: The updated PCF payload.
+            version: PCF schema version (default: ``"v9.0.0"``).
 
         Returns:
             Dictionary with update confirmation details.
@@ -296,28 +309,32 @@ class PcfManagementManager:
             ValueError: If the PCF data fails schema validation or no
                         existing data is found.
         """
-        logger.info(f"Updating PCF data for manufacturerPartId={_s(manufacturer_part_id)}")
+        logger.info(
+            f"Updating PCF data for manufacturerPartId={_s(manufacturer_part_id)} "
+            f"version={_s(version)}"
+        )
 
-        submodel_id = pcf_submodel_id(manufacturer_part_id)
+        semantic_id = get_pcf_exchange_semantic_id(version)
+        submodel_id = pcf_submodel_id(manufacturer_part_id, version)
 
         # Verify that existing data is present
         existing = self._submodel_service.get_twin_aspect_document(
             submodel_id=submodel_id,
-            semantic_id=PCF_SEMANTIC_ID,
+            semantic_id=semantic_id,
         )
         if not existing:
             raise ValueError(
-                f"No existing PCF data found for manufacturerPartId={manufacturer_part_id}. "
-                "Use upload to create new data."
+                f"No existing PCF data found for manufacturerPartId={manufacturer_part_id} "
+                f"version={version}. Use upload to create new data."
             )
 
-        self._validate_pcf_schema(pcf_data)
+        self._validate_pcf_schema(pcf_data, version)
 
-        pcf_location = f"submodel://{PCF_SEMANTIC_ID}/{manufacturer_part_id}"
+        pcf_location = f"submodel://{semantic_id}/{manufacturer_part_id}"
 
         self._submodel_service.upload_twin_aspect_document(
             submodel_id=submodel_id,
-            semantic_id=PCF_SEMANTIC_ID,
+            semantic_id=semantic_id,
             payload=pcf_data,
         )
 
@@ -325,38 +342,47 @@ class PcfManagementManager:
 
         logger.info(
             f"PCF data updated for manufacturerPartId={_s(manufacturer_part_id)} "
-            f"(submodel_id={_s(submodel_id)})"
+            f"version={_s(version)} (submodel_id={_s(submodel_id)})"
         )
 
         return {
             "manufacturerPartId": manufacturer_part_id,
             "pcfLocation": pcf_location,
+            "version": version,
             "status": "updated",
             "sharedWithBpns": shared_bpns
         }
     
-    def get_pcf_location(self, manufacturer_part_id: str) -> str:
+    def get_pcf_location(
+        self,
+        manufacturer_part_id: str,
+        version: str = DEFAULT_PCF_VERSION,
+    ) -> str:
         """
         Get the storage location of the PCF data for a given manufacturer part ID.
 
         Args:
             manufacturer_part_id: The manufacturer part ID to look up.
+            version: PCF schema version (default: ``"v9.0.0"``).
+
         Returns:
             The PCF location string (e.g., submodel URL).
         """
-        submodel_id = pcf_submodel_id(manufacturer_part_id)
+        semantic_id = get_pcf_exchange_semantic_id(version)
+        submodel_id = pcf_submodel_id(manufacturer_part_id, version)
 
         # Verify that existing data is present
         existing = self._submodel_service.get_twin_aspect_document(
             submodel_id=submodel_id,
-            semantic_id=PCF_SEMANTIC_ID,
+            semantic_id=semantic_id,
         )
 
         if not existing:
             raise ValueError(
-                f"No existing PCF data found for manufacturerPartId={manufacturer_part_id}."
+                f"No existing PCF data found for manufacturerPartId={manufacturer_part_id} "
+                f"version={version}."
             )
-        return f"submodel://{PCF_SEMANTIC_ID}/{manufacturer_part_id}"
+        return f"submodel://{semantic_id}/{manufacturer_part_id}"
 
 
     def _update_pending_responses_with_pcf_location(self, manufacturer_part_id: str, pcf_location: str) -> None:
@@ -409,13 +435,22 @@ class PcfManagementManager:
 
         return sorted(bpns)
 
-    def _validate_pcf_schema(self, pcf_data: Dict[str, Any]) -> None:
-        """Validate PCF data against the Catena-X PCF 9.0.0 JSON schema.
+    def _validate_pcf_schema(
+        self,
+        pcf_data: Dict[str, Any],
+        version: str = DEFAULT_PCF_VERSION,
+    ) -> None:
+        """Validate PCF data against the Catena-X PCF JSON schema.
+
+        Args:
+            pcf_data: The PCF payload to validate.
+            version: PCF schema version to validate against (default: ``"v9.0.0"``).
 
         Raises:
             ValueError: If the data does not conform to the schema.
         """
-        pcf_schema_result = submodel_schema_finder("urn:samm:io.catenax.pcf:9.0.0#Pcf")
+        semantic_id = get_pcf_semantic_id(version)
+        pcf_schema_result = submodel_schema_finder(semantic_id)
         json_validator_draft_aware(pcf_schema_result["schema"], pcf_data)
 
     def send_via_edc(
