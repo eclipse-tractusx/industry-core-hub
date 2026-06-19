@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -29,28 +30,17 @@ import {
   CardContent,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid2,
   InputAdornment,
   Paper,
   TextField,
   Typography,
 } from '@mui/material';
-import { Search as SearchIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
-import { discoverShells } from '@/features/industry-core-kit/part-discovery/api';
-import { fetchAllSerializedPartTwins } from '@/features/industry-core-kit/serialized-parts/api';
-import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
-import { getParticipantId } from '@/services/EnvironmentService';
-import { fetchSubmodelContent } from '@/features/industry-core-kit/catalog-management/api';
+import { Launch as LaunchIcon, Search as SearchIcon } from '@mui/icons-material';
+import { fetchAllSerializedPartTwins, fetchSerializedPartTwinDetails } from '@/features/industry-core-kit/serialized-parts/api';
+import { SerializedPartTwinDetailsRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
 import { darkCardStyles } from '@/features/eco-pass-kit/passport-provision/styles/cardStyles';
-
-const BOM_AS_BUILT_SEMANTIC_IDS = new Set([
-  'urn:samm:io.catenax.single_level_bom_as_built:4.0.0#SingleLevelBomAsBuilt',
-  'urn:samm:io.catenax.single_level_bom_as_built:4.0.0#SingleLevelBoMAsBuilt',
-]);
+import { BOM_AS_BUILT_SEMANTIC_ID, BOM_AS_BUILT_SEMANTIC_ID_ALT, TwinAspectRead } from '../utils/bomAsBuilt';
 
 interface InvestigationRow {
   id: string;
@@ -60,62 +50,29 @@ interface InvestigationRow {
   partInstanceId: string;
   globalId: string;
   dtrAasId: string;
-  bomSubmodelId: string;
-  bomSemanticId: string;
+  bomSubmodelCount: number;
 }
-
-interface SemanticKey {
-  value?: string;
-}
-
-interface SubmodelDescriptorLike {
-  id?: string;
-  submodelId?: string;
-  semanticId?: {
-    keys?: SemanticKey[];
-  };
-}
-
-interface ShellDescriptorLike {
-  globalAssetId?: string;
-  specificAssetIds?: Array<{ name?: string; value?: string }>;
-  submodelDescriptors?: SubmodelDescriptorLike[];
-}
-
-const getSubmodelSemanticIds = (descriptor: SubmodelDescriptorLike): string[] => {
-  const keys = descriptor.semanticId?.keys ?? [];
-  return keys.map((key) => key.value).filter((value): value is string => Boolean(value));
-};
-
-const extractGlobalAssetId = (shell: ShellDescriptorLike): string | null => {
-  if (shell.globalAssetId) {
-    return shell.globalAssetId;
-  }
-
-  const fromSpecificAssets = shell.specificAssetIds?.find((asset) => asset.name === 'globalAssetId')?.value;
-  return fromSpecificAssets || null;
-};
-
-const findBomDescriptor = (shell: ShellDescriptorLike): SubmodelDescriptorLike | null => {
-  const descriptors = shell.submodelDescriptors ?? [];
-  for (const descriptor of descriptors) {
-    const semanticIds = getSubmodelSemanticIds(descriptor);
-    if (semanticIds.some((semanticId) => BOM_AS_BUILT_SEMANTIC_IDS.has(semanticId))) {
-      return descriptor;
-    }
-  }
-  return null;
-};
 
 const TraceabilityQualityInvestigationPage: React.FC = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<InvestigationRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRow, setSelectedRow] = useState<InvestigationRow | null>(null);
-  const [selectedSubmodelContent, setSelectedSubmodelContent] = useState<Record<string, unknown> | null>(null);
-  const [loadingSubmodel, setLoadingSubmodel] = useState(false);
-  const [submodelError, setSubmodelError] = useState<string | null>(null);
+
+  const getBomAsBuiltAspects = (twinDetails: SerializedPartTwinDetailsRead): TwinAspectRead[] => {
+    const fromAllAspects = twinDetails.allAspects ?? [];
+    const fromAspectMap = Object.values(twinDetails.aspects ?? {});
+
+    return [...fromAllAspects, ...fromAspectMap].filter((aspect, index, allAspects) => {
+      const isBomAspect = aspect.semanticId === BOM_AS_BUILT_SEMANTIC_ID || aspect.semanticId === BOM_AS_BUILT_SEMANTIC_ID_ALT;
+      if (!isBomAspect) {
+        return false;
+      }
+
+      return allAspects.findIndex((candidate) => candidate.submodelId === aspect.submodelId) === index;
+    });
+  };
 
   useEffect(() => {
     const loadInvestigationData = async () => {
@@ -123,65 +80,38 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
       setError(null);
 
       try {
-        const participantId = getParticipantId();
-        if (!participantId) {
-          throw new Error('Participant ID is not configured.');
-        }
-
-        const [localTwins, discoveryResponse] = await Promise.all([
-          fetchAllSerializedPartTwins(),
-          discoverShells({
-            counterPartyId: participantId,
-            querySpec: [{ name: 'digitalTwinType', value: 'PartInstance' }],
-            dtrGovernance: [],
-            limit: 500,
-          }),
-        ]);
-
-        if (discoveryResponse.error) {
-          throw new Error(discoveryResponse.error);
-        }
-
-        const localTwinByGlobalId = new Map<string, SerializedPartTwinRead>(
+        const localTwins = await fetchAllSerializedPartTwins();
+        const detailedTwins = await Promise.all(
           localTwins
             .filter((twin) => Boolean(twin.globalId))
-            .map((twin) => [twin.globalId as string, twin])
+            .map(async (twin) => {
+              const twinDetails = await fetchSerializedPartTwinDetails(String(twin.globalId));
+              return twinDetails;
+            })
         );
 
-        const discoveredRows: InvestigationRow[] = [];
-        const shellDescriptors = (discoveryResponse.shellDescriptors ?? []) as ShellDescriptorLike[];
+        const uniqueRows = detailedTwins
+          .filter((twinDetails): twinDetails is SerializedPartTwinDetailsRead => Boolean(twinDetails))
+          .map((twinDetails) => {
+            const bomAsBuiltAspects = getBomAsBuiltAspects(twinDetails);
+            if (bomAsBuiltAspects.length === 0) {
+              return null;
+            }
 
-        for (const shell of shellDescriptors) {
-          const globalAssetId = extractGlobalAssetId(shell);
-          if (!globalAssetId) {
-            continue;
-          }
+            return {
+              id: String(twinDetails.globalId),
+              name: `${twinDetails.manufacturerPartId} / ${twinDetails.partInstanceId}`,
+              manufacturerId: twinDetails.manufacturerId,
+              manufacturerPartId: twinDetails.manufacturerPartId,
+              partInstanceId: twinDetails.partInstanceId,
+              globalId: String(twinDetails.globalId),
+              dtrAasId: String(twinDetails.dtrAasId),
+              bomSubmodelCount: bomAsBuiltAspects.length,
+            } as InvestigationRow;
+          })
+          .filter((row): row is InvestigationRow => Boolean(row));
 
-          const localTwin = localTwinByGlobalId.get(globalAssetId);
-          if (!localTwin) {
-            continue;
-          }
-
-          const bomDescriptor = findBomDescriptor(shell);
-          if (!bomDescriptor) {
-            continue;
-          }
-
-          const bomSemanticId = getSubmodelSemanticIds(bomDescriptor)[0] || 'n/a';
-          discoveredRows.push({
-            id: `${localTwin.globalId}-${bomDescriptor.id || bomDescriptor.submodelId || 'n-a'}`,
-            name: `${localTwin.manufacturerPartId} / ${localTwin.partInstanceId}`,
-            manufacturerId: localTwin.manufacturerId,
-            manufacturerPartId: localTwin.manufacturerPartId,
-            partInstanceId: localTwin.partInstanceId,
-            globalId: localTwin.globalId as string,
-            dtrAasId: localTwin.dtrAasId as string,
-            bomSubmodelId: bomDescriptor.id || bomDescriptor.submodelId || 'n/a',
-            bomSemanticId,
-          });
-        }
-
-        discoveredRows.sort((a, b) => {
+        uniqueRows.sort((a, b) => {
           const byPart = a.manufacturerPartId.localeCompare(b.manufacturerPartId);
           if (byPart !== 0) {
             return byPart;
@@ -189,7 +119,7 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
           return a.partInstanceId.localeCompare(b.partInstanceId);
         });
 
-        setRows(discoveredRows);
+        setRows(uniqueRows);
       } catch (loadError) {
         const message = loadError instanceof Error ? loadError.message : 'Failed to load investigation data.';
         setError(message);
@@ -214,32 +144,12 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
       row.manufacturerPartId.toLowerCase().includes(query) ||
       row.partInstanceId.toLowerCase().includes(query) ||
       row.globalId.toLowerCase().includes(query) ||
-      row.bomSubmodelId.toLowerCase().includes(query)
+      String(row.bomSubmodelCount).includes(query)
     );
   }, [rows, searchQuery]);
 
-  const handleViewSubmodel = async (row: InvestigationRow) => {
-    setSelectedRow(row);
-    setLoadingSubmodel(true);
-    setSelectedSubmodelContent(null);
-    setSubmodelError(null);
-
-    try {
-      const content = await fetchSubmodelContent(row.bomSemanticId, row.bomSubmodelId);
-      setSelectedSubmodelContent(content);
-    } catch (viewError) {
-      const message = viewError instanceof Error ? viewError.message : 'Failed to load BoMAsBuilt submodel.';
-      setSubmodelError(message);
-    } finally {
-      setLoadingSubmodel(false);
-    }
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedRow(null);
-    setSelectedSubmodelContent(null);
-    setSubmodelError(null);
-    setLoadingSubmodel(false);
+  const handleOpenDetail = (row: InvestigationRow) => {
+    navigate(`/traceability/quality-investigation/detail?globalId=${encodeURIComponent(row.globalId)}`);
   };
 
   return (
@@ -275,7 +185,7 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
           fullWidth
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search by manufacturer part ID, part instance ID, global asset ID or submodel ID"
+          placeholder="Search by manufacturer part ID, part instance ID, global asset ID or BoM submodel count"
           sx={{
             ...darkCardStyles.textField,
             mb: 3,
@@ -350,15 +260,15 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
                         <strong>Global Asset ID:</strong> {row.globalId}
                       </Typography>
                       <Typography variant="body2" sx={{ color: '#fff', fontFamily: 'monospace' }}>
-                        <strong>BoM Submodel ID:</strong> {row.bomSubmodelId}
+                        <strong>BoMAsBuilt Submodels:</strong> {row.bomSubmodelCount}
                       </Typography>
                     </Box>
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                       <Button
                         variant="outlined"
-                        startIcon={<VisibilityIcon />}
-                        onClick={() => handleViewSubmodel(row)}
+                        startIcon={<LaunchIcon />}
+                        onClick={() => handleOpenDetail(row)}
                         sx={{
                           borderColor: 'rgba(255, 122, 0, 0.5)',
                           color: '#fff',
@@ -368,7 +278,7 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
                           },
                         }}
                       >
-                        View BoMAsBuilt
+                        Open Investigation Detail
                       </Button>
                     </Box>
                   </CardContent>
@@ -378,58 +288,6 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
           </Grid2>
         )}
       </Paper>
-
-      <Dialog
-        open={Boolean(selectedRow)}
-        onClose={handleCloseDialog}
-        maxWidth="lg"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.98) 0%, rgba(15, 15, 15, 0.98) 100%)',
-            color: '#fff',
-          },
-        }}
-      >
-        <DialogTitle>
-          {selectedRow ? `BoMAsBuilt - ${selectedRow.manufacturerPartId} / ${selectedRow.partInstanceId}` : 'BoMAsBuilt'}
-        </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          {loadingSubmodel && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
-              <CircularProgress size={20} />
-              <Typography sx={{ color: 'rgba(255,255,255,0.8)' }}>Loading submodel content...</Typography>
-            </Box>
-          )}
-
-          {submodelError && (
-            <Alert severity="error" sx={{ mt: 1 }}>
-              {submodelError}
-            </Alert>
-          )}
-
-          {!loadingSubmodel && !submodelError && selectedSubmodelContent && (
-            <Paper
-              variant="outlined"
-              sx={{
-                p: 2,
-                background: 'rgba(18, 18, 18, 0.92)',
-                borderColor: 'rgba(255,255,255,0.12)',
-                overflow: 'auto',
-              }}
-            >
-              <pre style={{ margin: 0, color: '#fff', whiteSpace: 'pre-wrap' }}>
-                {JSON.stringify(selectedSubmodelContent, null, 2)}
-              </pre>
-            </Paper>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog} sx={{ color: '#fff' }}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };

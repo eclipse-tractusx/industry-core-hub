@@ -34,6 +34,27 @@ interface ShareInfo {
   contracts: unknown[];
 }
 
+export interface TwinAspectRegistration {
+  endpointAddress?: string;
+  assetId?: string;
+  contractDefinitionId?: string;
+  policyId?: string;
+  [key: string]: unknown;
+}
+
+export interface TwinAspectRead {
+  semanticId: string;
+  submodelId: string;
+  registrations?: Record<string, TwinAspectRegistration>;
+}
+
+export interface TwinDetailsReadBase {
+  additionalContext?: Record<string, unknown>;
+  registrations?: Record<string, boolean>;
+  allAspects?: TwinAspectRead[];
+  aspects?: Record<string, TwinAspectRead>;
+}
+
 export interface TwinReadType {
   globalId: UUIDTypes;
   dtrAasId: UUIDTypes;
@@ -44,6 +65,10 @@ export interface TwinReadType {
 
 export interface SerializedPartTwinRead extends SerializedPart, TwinReadType {
   // This represents a serialized part with twin information
+}
+
+export interface SerializedPartTwinDetailsRead extends SerializedPartTwinRead, TwinDetailsReadBase {
+  // This represents a serialized part with twin details and aspect metadata
 }
 
 export interface SerializedPartTwinCreateType {

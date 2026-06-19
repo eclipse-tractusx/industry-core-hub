@@ -23,6 +23,7 @@
 import { ManageSearch } from '@mui/icons-material';
 import { FeatureConfig } from '@/types/routing';
 import TraceabilityQualityInvestigationPage from './pages/TraceabilityQualityInvestigationPage';
+import TraceabilityQualityInvestigationDetailPage from './pages/TraceabilityQualityInvestigationDetailPage';
 
 export const traceabilityQualityInvestigationFeature: FeatureConfig = {
   name: 'Traceability Quality Investigation',
@@ -33,6 +34,10 @@ export const traceabilityQualityInvestigationFeature: FeatureConfig = {
     {
       path: '/traceability/quality-investigation',
       element: <TraceabilityQualityInvestigationPage />
+    },
+    {
+      path: '/traceability/quality-investigation/detail',
+      element: <TraceabilityQualityInvestigationDetailPage />
     }
   ]
 };

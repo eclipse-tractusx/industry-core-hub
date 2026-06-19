@@ -24,7 +24,7 @@ import axios from 'axios'; // only for isAxiosError checks
 import httpClient from '@/services/HttpClient';
 import { getIchubBackendUrl } from '@/services/EnvironmentService';
 import { SerializedPart, AddSerializedPartRequest } from './types';
-import { SerializedPartTwinCreateType, SerializedPartTwinShareCreateType, SerializedPartTwinUnshareCreateType, TwinReadType, SerializedPartTwinRead } from './types/twin-types';
+import { SerializedPartTwinCreateType, SerializedPartTwinShareCreateType, SerializedPartTwinUnshareCreateType, TwinReadType, SerializedPartTwinRead, SerializedPartTwinDetailsRead } from './types/twin-types';
 
 const SERIALIZED_PART_READ_BASE_PATH = '/part-management/serialized-part';
 const SERIALIZED_PART_TWIN_BASE_PATH = '/twin-management/serialized-part-twin';
@@ -179,6 +179,31 @@ export const fetchSerializedPartTwinsForCatalogPart = async (
   );
   
   return response.data;
+};
+
+export const fetchSerializedPartTwinDetails = async (
+  globalId: string
+): Promise<SerializedPartTwinDetailsRead | null> => {
+  try {
+    if (!backendUrl) {
+      console.warn('Backend URL not configured, returning no serialized part twin details');
+      return null;
+    }
+
+    const response = await httpClient.get<SerializedPartTwinDetailsRead>(
+      `${backendUrl}${SERIALIZED_PART_TWIN_BASE_PATH}/${encodeURIComponent(globalId)}`,
+      { headers: { 'Cache-Control': 'max-age=60' } }
+    );
+
+    return response.data ?? null;
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error?.response?.status === 404) {
+      return null;
+    }
+
+    console.error('Failed to fetch serialized part twin details:', error);
+    throw error;
+  }
 };
 
 export const unshareSerializedPartTwin = async (

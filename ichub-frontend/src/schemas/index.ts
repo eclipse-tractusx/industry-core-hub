@@ -2,7 +2,8 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2025 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -35,8 +36,18 @@ import { createSchemaKey, loadSchema } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
 import UsTariffInformationSchema from './UsTariffInformation-schema.json';
 import PcfSchema from './Pcf-schema.json';
+<<<<<<< HEAD
 import SingleLevelBomAsBuiltSchema from './SingleLevelBomAsBuilt-schema.json';
 import SingleLevelUsageAsBuiltSchema from './SingleLevelUsageAsBuilt-schema.json';
+=======
+import idtaBatteryPassDigitalNameplate from './idta-BatteryPassDigitalNameplate-schema.json';
+import idtaBatteryPassCarbonFootprint from './idta-BatteryPassCarbonFootprint-schema.json';
+import idtaBatteryPassCircularity from './idta-BatteryPassCircularity-schema.json';
+import idtaBatteryPassHandoverDocumentation from './idta-BatteryPassHandoverDocumentation-schema.json';
+import idtaBatteryPassMaterialComposition from './idta-BatteryPassMaterialComposition-schema.json';
+import idtaBatteryPassProductCondition from './idta-BatteryPassProductCondition-schema.json';
+import idtaBatteryPassTechnicalData from './idta-BatteryPassTechnicalData-schema.json';
+>>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -87,6 +98,7 @@ interface SchemaRegistration {
  * 
  * Simply import the JSON schema file and add it to this array.
  */
+<<<<<<< HEAD
 const schemasToLoad: SchemaRegistration[] = [
   {
     schema: digitalProductPassportSchema as JSONSchema,
@@ -122,6 +134,19 @@ const schemasToLoad: SchemaRegistration[] = [
       tags: ['traceability', 'as-built', 'usage']
     }
   }
+=======
+const schemasToLoad = [
+  digitalProductPassportSchema as JSONSchema,
+  UsTariffInformationSchema as JSONSchema,
+  PcfSchema as JSONSchema,
+  idtaBatteryPassDigitalNameplate as JSONSchema,
+  idtaBatteryPassCarbonFootprint as JSONSchema,
+  idtaBatteryPassCircularity as JSONSchema,
+  idtaBatteryPassHandoverDocumentation as JSONSchema,
+  idtaBatteryPassMaterialComposition as JSONSchema,
+  idtaBatteryPassProductCondition as JSONSchema,
+  idtaBatteryPassTechnicalData as JSONSchema,
+>>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
   // Add more schemas here:
   // { schema: serialPartSchema as JSONSchema, metadata: { tags: ['traceability'] } },
   // { schema: batchSchema as JSONSchema, metadata: { tags: ['traceability'] } },

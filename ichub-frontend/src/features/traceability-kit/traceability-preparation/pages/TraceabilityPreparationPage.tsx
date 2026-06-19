@@ -47,9 +47,11 @@ import { PartnerInstance } from '@/features/business-partner-kit/partner-managem
 import SubmodelCreator from '@/components/submodel-creation/SubmodelCreator';
 import { getSchemaBySemanticId } from '@/schemas';
 import { createTwinAspect } from '@/features/industry-core-kit/catalog-management/api';
+import { fetchSubmodelContent } from '@/features/industry-core-kit/catalog-management/api';
 import { fetchAllSerializedPartTwins, fetchAllSerializedParts } from '@/features/industry-core-kit/serialized-parts/api';
 import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
+import { getParticipantId } from '@/services/EnvironmentService';
 import { darkCardStyles } from '@/features/eco-pass-kit/passport-provision/styles/cardStyles';
 
 interface LocalPartOption extends SerializedPart {
@@ -62,6 +64,41 @@ const BOM_AS_BUILT_SEMANTIC_ID =
 const BOM_AS_BUILT_SEMANTIC_ID_ALT =
   'urn:samm:io.catenax.single_level_bom_as_built:4.0.0#SingleLevelBoMAsBuilt';
 const BOM_AS_BUILT_URN = 'urn:samm:io.catenax.single_level_bom_as_built:4.0.0';
+const BOM_AS_BUILT_SEMANTIC_IDS = new Set([
+  BOM_AS_BUILT_SEMANTIC_ID,
+  BOM_AS_BUILT_SEMANTIC_ID_ALT,
+]);
+
+interface SemanticKeyLike {
+  value?: string;
+}
+
+interface SubmodelDescriptorLike {
+  id?: string;
+  submodelId?: string;
+  semanticId?: {
+    keys?: SemanticKeyLike[];
+  };
+}
+
+interface ShellDescriptorLike {
+  globalAssetId?: string;
+  specificAssetIds?: Array<{ name?: string; value?: string }>;
+  submodelDescriptors?: SubmodelDescriptorLike[];
+}
+
+interface BomChildItem {
+  quantity?: {
+    value?: unknown;
+    unit?: unknown;
+  };
+  hasAlternatives?: unknown;
+  createdOn?: unknown;
+  lastModifiedOn?: unknown;
+  globalAssetId?: unknown;
+  businessPartner?: unknown;
+  [key: string]: unknown;
+}
 
 const WIZARD_STEPS = [
   'Select Local Part Instance',
@@ -83,6 +120,8 @@ const TraceabilityPreparationPage: React.FC = () => {
   const [loadingLocalParts, setLoadingLocalParts] = useState(false);
   const [searchingPartnerParts, setSearchingPartnerParts] = useState(false);
   const [attachingSubmodel, setAttachingSubmodel] = useState(false);
+  const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [attachCompleted, setAttachCompleted] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -217,6 +256,95 @@ const TraceabilityPreparationPage: React.FC = () => {
     loadAvailablePartners();
   }, []);
 
+  const getSubmodelSemanticIds = (descriptor: SubmodelDescriptorLike): string[] => {
+    const keys = descriptor.semanticId?.keys ?? [];
+    return keys.map((key) => key.value).filter((value): value is string => Boolean(value));
+  };
+
+  const extractGlobalAssetId = (shell: ShellDescriptorLike): string | null => {
+    if (shell.globalAssetId) {
+      return shell.globalAssetId;
+    }
+
+    return shell.specificAssetIds?.find((asset) => asset.name === 'globalAssetId')?.value ?? null;
+  };
+
+  const isBomAsBuiltSemanticId = (semanticId: string) => {
+    return BOM_AS_BUILT_SEMANTIC_IDS.has(semanticId) || semanticId.startsWith(BOM_AS_BUILT_URN);
+  };
+
+  const findExistingBomDescriptors = async (localGlobalAssetId: string) => {
+    const participantId = getParticipantId();
+    if (!participantId) {
+      return [] as Array<{ semanticId: string; submodelId: string }>;
+    }
+
+    const discoveryResponse = await discoverShells({
+      counterPartyId: participantId,
+      querySpec: [{ name: 'digitalTwinType', value: 'PartInstance' }],
+      dtrGovernance: [],
+      limit: 500,
+    });
+
+    if (discoveryResponse.error) {
+      throw new Error(discoveryResponse.error);
+    }
+
+    const shellDescriptors = (discoveryResponse.shellDescriptors ?? []) as ShellDescriptorLike[];
+    const localShell = shellDescriptors.find((shell) => extractGlobalAssetId(shell) === localGlobalAssetId);
+    if (!localShell) {
+      return [] as Array<{ semanticId: string; submodelId: string }>;
+    }
+
+    const descriptors = localShell.submodelDescriptors ?? [];
+    return descriptors
+      .map((descriptor) => {
+        const semanticIds = getSubmodelSemanticIds(descriptor);
+        const semanticId = semanticIds.find(isBomAsBuiltSemanticId);
+        const submodelId = descriptor.id || descriptor.submodelId;
+        if (!semanticId || !submodelId) {
+          return null;
+        }
+        return { semanticId, submodelId };
+      })
+      .filter((entry): entry is { semanticId: string; submodelId: string } => Boolean(entry));
+  };
+
+  const toChildItems = (submodelContent: Record<string, unknown>): BomChildItem[] => {
+    const childItems = submodelContent.childItems;
+    if (!Array.isArray(childItems)) {
+      return [];
+    }
+
+    return childItems.filter((item): item is BomChildItem => {
+      return typeof item === 'object' && item !== null;
+    });
+  };
+
+  const childItemDedupKey = (childItem: BomChildItem) => {
+    return `${String(childItem.globalAssetId ?? '')}|${String(childItem.businessPartner ?? '')}`;
+  };
+
+  const loadExistingChildItems = async (localGlobalAssetId: string) => {
+    const descriptors = await findExistingBomDescriptors(localGlobalAssetId);
+    if (descriptors.length === 0) {
+      return [] as BomChildItem[];
+    }
+
+    const existingContent = await Promise.all(
+      descriptors.map(async (descriptor) => {
+        try {
+          const submodelContent = await fetchSubmodelContent(descriptor.semanticId, descriptor.submodelId);
+          return toChildItems(submodelContent);
+        } catch {
+          return [] as BomChildItem[];
+        }
+      })
+    );
+
+    return existingContent.flat();
+  };
+
   const searchPartnerOfferedParts = async () => {
     const trimmedBpnl = bpnl.trim();
     if (!trimmedBpnl) {
@@ -255,27 +383,49 @@ const TraceabilityPreparationPage: React.FC = () => {
     }
   };
 
-  const buildDefaultPayload = (partnerPart: SerializedPartData, partnerBpnl: string) => {
+  const buildDefaultPayload = async (
+    localPart: LocalPartOption,
+    partnerPart: SerializedPartData,
+    partnerBpnl: string
+  ) => {
+    if (!localPart.globalId) {
+      throw new Error('Selected local part instance has no registered globalAssetId.');
+    }
+
     const timestamp = new Date().toISOString();
-    return {
+    const existingChildItems = await loadExistingChildItems(localPart.globalId);
+    const newChildItem: BomChildItem = {
+      quantity: {
+        value: 1,
+        unit: 'unit:piece',
+      },
+      hasAlternatives: false,
+      createdOn: timestamp,
+      lastModifiedOn: timestamp,
       globalAssetId: partnerPart.globalAssetId,
-      childItems: [
-        {
-          quantity: {
-            value: 1,
-            unit: 'unit:piece',
-          },
-          hasAlternatives: false,
-          createdOn: timestamp,
-          lastModifiedOn: timestamp,
-          globalAssetId: partnerPart.globalAssetId,
-          businessPartner: partnerBpnl,
-        },
-      ],
+      businessPartner: partnerBpnl,
+    };
+
+    const dedupedChildItems = [...existingChildItems, newChildItem].reduce<BomChildItem[]>((acc, childItem) => {
+      const key = childItemDedupKey(childItem);
+      if (!key || acc.some((existing) => childItemDedupKey(existing) === key)) {
+        return acc;
+      }
+      acc.push(childItem);
+      return acc;
+    }, []);
+
+    return {
+      globalAssetId: localPart.globalId,
+      childItems: dedupedChildItems,
     };
   };
 
-  const handleOpenBomAsBuilt = () => {
+  const handleOpenBomAsBuilt = async () => {
+    if (!selectedLocalPart?.globalId) {
+      setError('Select a registered local part instance first.');
+      return;
+    }
     if (!selectedPartnerPart) {
       setError('Select an offered part instance from the partner first.');
       return;
@@ -285,17 +435,29 @@ const TraceabilityPreparationPage: React.FC = () => {
       return;
     }
 
-    const payload = buildDefaultPayload(selectedPartnerPart, bpnl.trim());
-    setGeneratedPayload(payload);
-    setDraftPayload(payload);
-    setEditorOpen(true);
+    setGeneratingDraft(true);
     setError(null);
-    setSuccessMessage('BoMAsBuilt draft generated and opened in editor.');
+    setSuccessMessage(null);
+
+    try {
+      const payload = await buildDefaultPayload(selectedLocalPart, selectedPartnerPart, bpnl.trim());
+      setGeneratedPayload(payload);
+      setDraftPayload(payload);
+      setEditorOpen(true);
+      setAttachCompleted(false);
+      setSuccessMessage('BoMAsBuilt draft generated and opened in editor. Existing BoMAsBuilt links were preserved.');
+    } catch (generationError) {
+      const message = generationError instanceof Error ? generationError.message : 'Failed to generate BoMAsBuilt draft.';
+      setError(message);
+    } finally {
+      setGeneratingDraft(false);
+    }
   };
 
   const handleSaveDraftFromEditor = async (submodelData: Record<string, unknown>) => {
     setDraftPayload(submodelData);
     setEditorOpen(false);
+    setAttachCompleted(false);
     setSuccessMessage('BoMAsBuilt payload validated and saved to the wizard draft.');
     setActiveStep(3);
   };
@@ -319,7 +481,6 @@ const TraceabilityPreparationPage: React.FC = () => {
 
     try {
       const rawSemanticCandidates = [
-        ((selectedSchema.schema as { [key: string]: unknown } | undefined)?.['x-samm-aspect-model-urn']) as string | undefined,
         selectedSchema.metadata.semanticId,
         BOM_AS_BUILT_SEMANTIC_ID,
         BOM_AS_BUILT_SEMANTIC_ID_ALT,
@@ -365,6 +526,7 @@ const TraceabilityPreparationPage: React.FC = () => {
       setSuccessMessage(
         `BoMAsBuilt submodel attached successfully to local part instance ${selectedLocalPart.partInstanceId}.`
       );
+      setAttachCompleted(true);
     } catch (attachError) {
       const message = attachError instanceof Error ? attachError.message : 'Failed to attach submodel.';
       setError(message);
@@ -400,6 +562,21 @@ const TraceabilityPreparationPage: React.FC = () => {
     if (activeStep > 0) {
       setActiveStep((prev) => prev - 1);
     }
+  };
+
+  const handleFinishAndExit = () => {
+    setActiveStep(0);
+    setSelectedLocalPart(null);
+    setBpnl('');
+    setPartnerPartResults([]);
+    setSelectedPartnerPart(null);
+    setGeneratedPayload(null);
+    setDraftPayload(null);
+    setEditorOpen(false);
+    setError(null);
+    setSuccessMessage(null);
+    setAttachCompleted(false);
+    setActiveWizard('none');
   };
 
   const localPartLabel = (part: LocalPartOption) => {
@@ -609,6 +786,7 @@ const TraceabilityPreparationPage: React.FC = () => {
                     setSelectedPartnerPart(null);
                     setGeneratedPayload(null);
                     setDraftPayload(null);
+                    setAttachCompleted(false);
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -659,7 +837,7 @@ const TraceabilityPreparationPage: React.FC = () => {
                     setBpnl('');
                   }}
                   renderOption={(props, option) => (
-                    <Box component="li" {...props} key={option.id}>
+                    <Box component="li" {...props} key={option.bpnl}>
                       <Box>
                         <Typography variant="body2" sx={{ color: '#fff', fontWeight: 600 }}>
                           {option.name}
@@ -708,6 +886,7 @@ const TraceabilityPreparationPage: React.FC = () => {
                     setSelectedPartnerPart(nextValue);
                     setGeneratedPayload(null);
                     setDraftPayload(null);
+                    setAttachCompleted(false);
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -737,9 +916,11 @@ const TraceabilityPreparationPage: React.FC = () => {
                   variant="contained"
                   color="warning"
                   onClick={handleOpenBomAsBuilt}
+                  disabled={generatingDraft}
+                  startIcon={generatingDraft ? <CircularProgress size={16} /> : <CloudUpload />}
                   sx={orangeButtonSx}
                 >
-                  Open BoMAsBuilt
+                  {generatingDraft ? 'Generating Draft...' : 'Open BoMAsBuilt'}
                 </Button>
               </Grid2>
               {draftPayload && (
@@ -827,7 +1008,7 @@ const TraceabilityPreparationPage: React.FC = () => {
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-          <Button startIcon={<ArrowBack />} onClick={handleBack} disabled={activeStep === 0} sx={orangeOutlinedButtonSx}>
+          <Button startIcon={<ArrowBack />} onClick={handleBack} disabled={activeStep === 0 || attachingSubmodel} sx={orangeOutlinedButtonSx}>
             Back
           </Button>
           {activeStep < 3 && (
@@ -836,10 +1017,22 @@ const TraceabilityPreparationPage: React.FC = () => {
               color="warning"
               endIcon={<ArrowForward />}
               onClick={handleNext}
-              disabled={!canGoNext()}
+              disabled={!canGoNext() || generatingDraft || attachingSubmodel}
               sx={orangeButtonSx}
             >
               Next
+            </Button>
+          )}
+          {activeStep === 3 && (
+            <Button
+              variant="contained"
+              color="warning"
+              endIcon={<CheckCircle />}
+              onClick={handleFinishAndExit}
+              disabled={!attachCompleted || attachingSubmodel}
+              sx={orangeButtonSx}
+            >
+              Finish and Exit
             </Button>
           )}
         </Box>
