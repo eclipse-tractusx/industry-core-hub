@@ -44,6 +44,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 
 import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/types';
 import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
@@ -68,6 +69,7 @@ interface InstanceProductsTableProps {
 export default function InstanceProductsTable({ part, onAddClick }: Readonly<InstanceProductsTableProps>) {
   const { t } = useTranslation('catalogManagement');
   const { t: tCommon } = useTranslation('common');
+  const { palette: { common } } = useTheme();
   // Ref to prevent duplicate API calls in React StrictMode
   const dataLoadedRef = useRef(false);
   
@@ -962,76 +964,74 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       <Box sx={{ 
         mb: 3,
         p: 3,
-        background: 'rgba(35, 35, 38, 0.95)',
+        background: common.deepOverlay95,
         borderRadius: '16px 16px 0 0',
-        borderLeft: '4px solid #1976d2',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+        borderLeft: `4px solid ${common.accent}`,
+        boxShadow: `0 8px 32px ${common.black40}`,
         backdropFilter: 'blur(10px)',
       }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          mb: 1
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{
-              width: 40,
-              height: 40,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)',
-            }}>
-              <ViewListIcon sx={{ color: 'white', fontSize: 20 }} />
-            </Box>
-            <Box>
-              <Typography
-                variant="h5"
-                sx={{ 
-                  color: 'rgb(248, 249, 250)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                {t('productDetail.instanceProductsTable.title')}
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ 
-                  color: 'rgba(248, 249, 250, 0.7)',
-                  mt: 0.5,
-                }}
-              >
-                {t('productDetail.instanceProductsTable.subtitle')}
-              </Typography>
-            </Box>
+        {/* Row 1: icon + title + subtitle */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+          <Box sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '10px',
+            backgroundColor: common.accent,
+            display: { xs: 'none', md: 'flex' },
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 4px 16px ${common.accent30}`,
+          }}>
+            <ViewListIcon sx={{ color: common.white, fontSize: 20 }} />
           </Box>
-          
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddClick}
+          <Box>
+            <Typography
+              variant="h5"
               sx={{ 
-                background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                borderRadius: '10px',
-                textTransform: 'none',
-                fontWeight: 600,
-                boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
-                },
-                transition: 'all 0.2s ease-in-out',
+                color: 'text.primary',
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                fontSize: { xs: '1.1rem', sm: '1.5rem' },
               }}
             >
-              {t('productDetail.instanceProductsTable.addButton')}
-            </Button>
+              {t('productDetail.instanceProductsTable.title')}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ 
+                color: 'text.secondary',
+                mt: 0.5,
+              }}
+            >
+              {t('productDetail.instanceProductsTable.subtitle')}
+            </Typography>
           </Box>
+        </Box>
+
+        {/* Row 2: add button */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddClick}
+            sx={{ 
+              backgroundColor: common.accent,
+              borderRadius: '10px',
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: { xs: '11px', sm: '14px' },
+              boxShadow: `0 4px 16px ${common.accent30}`,
+              '&:hover': {
+                backgroundColor: common.accent,
+                filter: 'brightness(1.15)',
+                transform: 'translateY(-1px)',
+                boxShadow: `0 6px 20px ${common.accent30}`,
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          >
+            {t('productDetail.instanceProductsTable.addButton')}
+          </Button>
         </Box>
       </Box>
 
