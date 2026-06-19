@@ -36,18 +36,8 @@ import { createSchemaKey, loadSchema } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
 import UsTariffInformationSchema from './UsTariffInformation-schema.json';
 import PcfSchema from './Pcf-schema.json';
-<<<<<<< HEAD
 import SingleLevelBomAsBuiltSchema from './SingleLevelBomAsBuilt-schema.json';
 import SingleLevelUsageAsBuiltSchema from './SingleLevelUsageAsBuilt-schema.json';
-=======
-import idtaBatteryPassDigitalNameplate from './idta-BatteryPassDigitalNameplate-schema.json';
-import idtaBatteryPassCarbonFootprint from './idta-BatteryPassCarbonFootprint-schema.json';
-import idtaBatteryPassCircularity from './idta-BatteryPassCircularity-schema.json';
-import idtaBatteryPassHandoverDocumentation from './idta-BatteryPassHandoverDocumentation-schema.json';
-import idtaBatteryPassMaterialComposition from './idta-BatteryPassMaterialComposition-schema.json';
-import idtaBatteryPassProductCondition from './idta-BatteryPassProductCondition-schema.json';
-import idtaBatteryPassTechnicalData from './idta-BatteryPassTechnicalData-schema.json';
->>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
 import idtaBatteryPassDigitalNameplate from './idta-BatteryPassDigitalNameplate-schema.json';
 import idtaBatteryPassCarbonFootprint from './idta-BatteryPassCarbonFootprint-schema.json';
 import idtaBatteryPassCircularity from './idta-BatteryPassCircularity-schema.json';
@@ -89,12 +79,6 @@ export interface SchemaDefinition<T = any> {
   properties?: Record<string, any>; // Schema properties for section detection
 }
 
-interface SchemaRegistration {
-  schema: JSONSchema;
-  metadata?: Partial<SchemaMetadata>;
-  key?: string;
-}
-
 /**
  * Define schemas to load
  * 
@@ -106,42 +90,42 @@ interface SchemaRegistration {
  * Simply import the JSON schema file and add it to this array.
  */
 
-const schemasToLoad: SchemaRegistration[] = [
-  {
-    schema: digitalProductPassportSchema as JSONSchema,
-    metadata: {
-      tags: ['eco-pass']
-    }
-  },
-  {
-    schema: UsTariffInformationSchema as JSONSchema,
-    metadata: {
-      tags: ['industry-core', 'compliance']
-    }
-  },
-  {
-    schema: PcfSchema as JSONSchema,
-    metadata: {
-      tags: ['pcf', 'sustainability']
-    }
-  },
-  {
-    schema: SingleLevelBomAsBuiltSchema as JSONSchema,
-    metadata: {
-      icon: 'AccountTree',
-      color: '#2e7d32',
-      tags: ['traceability', 'as-built', 'bom']
-    }
-  },
-  {
-    schema: SingleLevelUsageAsBuiltSchema as JSONSchema,
-    metadata: {
-      icon: 'Hub',
-      color: '#1565c0',
-      tags: ['traceability', 'as-built', 'usage']
-    }
-  }
-
+// const schemasToLoad: SchemaRegistration[] = [
+//   {
+//     schema: digitalProductPassportSchema as JSONSchema,
+//     metadata: {
+//       tags: ['eco-pass']
+//     }
+//   },
+//   {
+//     schema: UsTariffInformationSchema as JSONSchema,
+//     metadata: {
+//       tags: ['industry-core', 'compliance']
+//     }
+//   },
+//   {
+//     schema: PcfSchema as JSONSchema,
+//     metadata: {
+//       tags: ['pcf', 'sustainability']
+//     }
+//   },
+//   {
+//     schema: SingleLevelBomAsBuiltSchema as JSONSchema,
+//     metadata: {
+//       icon: 'AccountTree',
+//       color: '#2e7d32',
+//       tags: ['traceability', 'as-built', 'bom']
+//     }
+//   },
+//   {
+//     schema: SingleLevelUsageAsBuiltSchema as JSONSchema,
+//     metadata: {
+//       icon: 'Hub',
+//       color: '#1565c0',
+//       tags: ['traceability', 'as-built', 'usage']
+//     }
+//   }
+// ];
 const schemasToLoad = [
   digitalProductPassportSchema as JSONSchema,
   UsTariffInformationSchema as JSONSchema,
@@ -153,6 +137,8 @@ const schemasToLoad = [
   idtaBatteryPassMaterialComposition as JSONSchema,
   idtaBatteryPassProductCondition as JSONSchema,
   idtaBatteryPassTechnicalData as JSONSchema,
+  SingleLevelBomAsBuiltSchema as JSONSchema,
+  SingleLevelUsageAsBuiltSchema as JSONSchema,
 
   // Add more schemas here:
   // { schema: serialPartSchema as JSONSchema, metadata: { tags: ['traceability'] } },
@@ -190,9 +176,9 @@ const matchesSchemaFilters = (
  * Automatically populated by loading and interpreting JSON schemas
  */
 const SCHEMA_REGISTRY: Record<string, SchemaDefinition> = schemasToLoad.reduce<Record<string, SchemaDefinition>>(
-  (registry, { schema, metadata, key }) => {
-    const schemaDefinition = loadSchema(schema, metadata);
-    const registryKey = key ?? createSchemaKey(schemaDefinition.metadata.semanticId);
+  (registry, schema) => {
+    const schemaDefinition = loadSchema(schema);
+    const registryKey = createSchemaKey(schemaDefinition.metadata.semanticId);
     registry[registryKey] = schemaDefinition;
     return registry;
   },

@@ -151,9 +151,7 @@ agreements:
             rightOperand: "active"
       prohibitions: []
       obligations: []
-<<<<<<< HEAD
-  
-=======
+
   - semanticid: urn:samm:io.catenax.pcf:9.0.0#Pcf
     usage:
       context:
@@ -426,10 +424,7 @@ agreements:
             rightOperand: "active"
       prohibitions: []
       obligations: []
-<<<<<<< HEAD
->>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
-=======
->>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
+
 database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
