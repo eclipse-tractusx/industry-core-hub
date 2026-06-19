@@ -21,6 +21,7 @@ export const paletteDefinitions = {
   common: {
     white: '#fff',
     black: '#000',
+    whiteMuted: 'rgba(255, 255, 255, 0.6)',
   },
   primary: {
     main: 'rgb(1,32,96)',
