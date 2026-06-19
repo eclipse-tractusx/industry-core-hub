@@ -48,6 +48,13 @@ import idtaBatteryPassMaterialComposition from './idta-BatteryPassMaterialCompos
 import idtaBatteryPassProductCondition from './idta-BatteryPassProductCondition-schema.json';
 import idtaBatteryPassTechnicalData from './idta-BatteryPassTechnicalData-schema.json';
 >>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
+import idtaBatteryPassDigitalNameplate from './idta-BatteryPassDigitalNameplate-schema.json';
+import idtaBatteryPassCarbonFootprint from './idta-BatteryPassCarbonFootprint-schema.json';
+import idtaBatteryPassCircularity from './idta-BatteryPassCircularity-schema.json';
+import idtaBatteryPassHandoverDocumentation from './idta-BatteryPassHandoverDocumentation-schema.json';
+import idtaBatteryPassMaterialComposition from './idta-BatteryPassMaterialComposition-schema.json';
+import idtaBatteryPassProductCondition from './idta-BatteryPassProductCondition-schema.json';
+import idtaBatteryPassTechnicalData from './idta-BatteryPassTechnicalData-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -98,7 +105,7 @@ interface SchemaRegistration {
  * 
  * Simply import the JSON schema file and add it to this array.
  */
-<<<<<<< HEAD
+
 const schemasToLoad: SchemaRegistration[] = [
   {
     schema: digitalProductPassportSchema as JSONSchema,
@@ -134,7 +141,7 @@ const schemasToLoad: SchemaRegistration[] = [
       tags: ['traceability', 'as-built', 'usage']
     }
   }
-=======
+
 const schemasToLoad = [
   digitalProductPassportSchema as JSONSchema,
   UsTariffInformationSchema as JSONSchema,
@@ -146,7 +153,7 @@ const schemasToLoad = [
   idtaBatteryPassMaterialComposition as JSONSchema,
   idtaBatteryPassProductCondition as JSONSchema,
   idtaBatteryPassTechnicalData as JSONSchema,
->>>>>>> 54b3bc12c5e5018d2c82c28c58408d8fa1d1f45e
+
   // Add more schemas here:
   // { schema: serialPartSchema as JSONSchema, metadata: { tags: ['traceability'] } },
   // { schema: batchSchema as JSONSchema, metadata: { tags: ['traceability'] } },
