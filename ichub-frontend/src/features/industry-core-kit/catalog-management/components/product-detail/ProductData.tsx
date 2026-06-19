@@ -561,7 +561,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
 
                                 {/* Timestamps */}
                                 <Grid2 container spacing={2}>
-                                    <Grid2 size={6}>
+                                    <Grid2 size={{ lg: 6, md: 12, sm: 12, xs: 12 }}>
                                         <Box sx={{ 
                                             textAlign: 'center', 
                                             p: 2, 
@@ -578,16 +578,16 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 boxShadow: `0 12px 40px ${common.black40}`
                                             }
                                         }}>
-                                            <AccessTimeIcon sx={{ color: 'success.main', mb: 1 }} />
-                                            <Typography variant="caption1" sx={{ 
-                                                color: 'text.secondary',
-                                                display: 'block',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.08em',
-                                                mb: 1
-                                            }}>
-                                                {tCommon('labels.created')}
-                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                                                <AccessTimeIcon sx={{ color: 'success.main' }} />
+                                                <Typography variant="caption1" sx={{ 
+                                                    color: 'text.secondary',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.08em',
+                                                }}>
+                                                    {tCommon('labels.created')}
+                                                </Typography>
+                                            </Box>
                                             <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                 {isLoadingTwin 
                                                     ? tCommon('actions.loading')
@@ -598,7 +598,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             </Typography>
                                         </Box>
                                     </Grid2>
-                                    <Grid2 size={6}>
+                                    <Grid2 size={{ lg: 6, md: 12, sm: 12, xs: 12 }}>
                                         <Box sx={{ 
                                             textAlign: 'center', 
                                             p: 2, 
@@ -615,16 +615,16 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 boxShadow: `0 12px 40px ${common.black40}`
                                             }
                                         }}>
-                                            <UpdateIcon sx={{ color: 'warning.main', mb: 1 }} />
-                                            <Typography variant="caption1" sx={{ 
-                                                color: 'text.secondary',
-                                                display: 'block',
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.08em',
-                                                mb: 1
-                                            }}>
-                                                {tCommon('labels.updated')}
-                                            </Typography>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
+                                                <UpdateIcon sx={{ color: 'warning.main' }} />
+                                                <Typography variant="caption1" sx={{ 
+                                                    color: 'text.secondary',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.08em',
+                                                }}>
+                                                    {tCommon('labels.updated')}
+                                                </Typography>
+                                            </Box>
                                             <Typography variant="body2" sx={{ color: 'text.primary' }}>
                                                 {isLoadingTwin 
                                                     ? tCommon('actions.loading')

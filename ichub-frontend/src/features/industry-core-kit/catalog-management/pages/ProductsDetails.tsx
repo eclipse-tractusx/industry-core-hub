@@ -295,15 +295,16 @@ const ProductsDetails = () => {
       overflow: "auto" // Enable scrolling when content overflows
     }}>
       <Grid2 container className="productDetail" sx={{ flexGrow: 1 }}>
-        <Grid2 size={4} display="flex" justifyContent="start" alignItems="center">
+        <Grid2 size={{ lg: 4, md: 12, sm: 12 }} display="flex" alignItems="center"
+          sx={{ justifyContent: { xs: 'center', lg: 'flex-start' }, mb: { xs: 2, lg: 0 } }}>
           {getStatusTag(partType?.status ?? PRODUCT_STATUS.DRAFT)}
         </Grid2>
-        <Grid2 size={4} display="flex" justifyContent="center" alignItems="center">
+        <Grid2 size={{ lg: 4, md: 12, sm: 6 }} display="flex" justifyContent="center" alignItems="center">
           <Button size="small" className="update-button" endIcon={<EditIcon />}>            
               <span className="update-button-content">{t('details.update')}</span>            
           </Button>
         </Grid2>
-        <Grid2 size={4} display="flex" justifyContent="end" alignItems="center">
+        <Grid2 size={{ lg: 4, md: 12, sm: 6 }} display="flex" justifyContent="end" alignItems="center">
           <ShareDropdown 
             partData={partType} 
             twinDetails={twinDetails} 
@@ -313,7 +314,7 @@ const ProductsDetails = () => {
           />
         </Grid2>
 
-  <ProductData part={partType} sharedParts={sharedPartners} twinDetails={twinDetails} onPartUpdated={fetchData} />
+        <ProductData part={partType} sharedParts={sharedPartners} twinDetails={twinDetails} onPartUpdated={fetchData} />
         
         <Grid2 container size={12} spacing={2}className="add-on-buttons">
           <Grid2 size={{ sm: 12 }}>
