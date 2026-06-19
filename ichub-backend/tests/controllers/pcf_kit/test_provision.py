@@ -44,6 +44,7 @@ All tests are pure controller tests: the manager layer is fully mocked.
 from unittest.mock import MagicMock
 
 from models.metadata_database.pcf.models import PcfExchangeStatus
+from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
 
 # ---------------------------------------------------------------------------
 # URL constants
@@ -250,7 +251,7 @@ class TestListProviderNotifications:
 
     def test_returns_200_with_list(self, app_client, mock_provision_mgr):
         mock_provision_mgr.list_provider_notifications.return_value = [
-            MagicMock(**EXCHANGE_MODEL, model_dump=lambda **_: EXCHANGE_MODEL)
+            PcfExchangeModel.model_validate(EXCHANGE_MODEL)
         ]
 
         resp = app_client.get(f"{BASE}/requests")
@@ -342,9 +343,7 @@ class TestRefreshPcfDataForRequest:
     """GET /requests/{requestId}/refresh-pcf"""
 
     def test_returns_200_with_updated_model(self, app_client, mock_provision_mgr):
-        mock_provision_mgr.refresh_pcf_data_for_request.return_value = MagicMock(
-            **EXCHANGE_MODEL, model_dump=lambda **_: EXCHANGE_MODEL
-        )
+        mock_provision_mgr.refresh_pcf_data_for_request.return_value = PcfExchangeModel.model_validate(EXCHANGE_MODEL)
 
         resp = app_client.get(f"{BASE}/requests/{REQUEST_ID}/refresh-pcf")
 

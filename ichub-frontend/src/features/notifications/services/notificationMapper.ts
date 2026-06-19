@@ -2,7 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -282,6 +282,25 @@ const mapPcfContent = (rawContent: Record<string, unknown>): PcfNotificationPayl
 });
 
 // ---------------------------------------------------------------------------
+// Date utilities
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses a UTC datetime string returned by the backend, which may lack a
+ * timezone designator (e.g. "2026-05-22T08:37:28.350003" instead of
+ * "2026-05-22T08:37:28.350003Z"). Without the "Z", JavaScript's Date
+ * constructor treats the value as local time, causing incorrect relative-time
+ * calculations for users outside UTC.
+ *
+ * This helper appends "Z" when no timezone designator is present so the
+ * timestamp is always interpreted as UTC, matching the backend's intent.
+ */
+export const parseUtcDate = (dateStr: string): Date => {
+  const hasTimezone = dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr);
+  return new Date(hasTimezone ? dateStr : `${dateStr}Z`);
+};
+
+// ---------------------------------------------------------------------------
 // Main mapper
 // ---------------------------------------------------------------------------
 
@@ -307,10 +326,10 @@ export const mapApiResponseToInboxNotification = (
   const verifiedItems: VerifiedItem[] = content.listOfItems.map((item) => ({
     item,
     verificationStatus: verificationState === 'feedback-sent' ? 'accessible' : 'not-verified',
-    verifiedAt: verificationState === 'feedback-sent' ? new Date(response.createdAt) : undefined,
+    verifiedAt: verificationState === 'feedback-sent' ? parseUtcDate(response.createdAt) : undefined,
   }));
 
-  const receivedAt = new Date(response.createdAt);
+  const receivedAt = parseUtcDate(response.createdAt);
   const isFeedbackSent = status === 'feedback-sent';
 
   return {

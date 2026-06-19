@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -160,15 +161,15 @@ export function isValidSemanticId(semanticId: string): boolean {
  * @returns Array of versions sorted in ascending order
  */
 export function getSupportedVersionsForModel(
-  semanticIds: string[], 
-  namespace: string, 
+  semanticIds: string[],
+  namespace: string,
   modelName: string
 ): string[] {
   return semanticIds
     .map(parseSemanticId)
-    .filter((parsed): parsed is ParsedSemanticId => 
-      parsed !== null && 
-      parsed.namespace === namespace && 
+    .filter((parsed): parsed is ParsedSemanticId =>
+      parsed !== null &&
+      parsed.namespace === namespace &&
       parsed.fragment === modelName
     )
     .map(parsed => `${parsed.version.major}.${parsed.version.minor}.${parsed.version.patch}`)
@@ -178,4 +179,13 @@ export function getSupportedVersionsForModel(
       const versionB = { major: parseInt(b.split('.')[0]), minor: parseInt(b.split('.')[1]), patch: parseInt(b.split('.')[2]) };
       return compareVersions(versionA, versionB);
     });
+}
+
+/**
+ * Unwraps submodel data that may arrive as a single object or a single-element array.
+ * Some backends wrap the submodel payload in an array; this normalises both forms.
+ */
+export function unwrapSubmodelData<T>(data: T | T[]): T | undefined {
+  if (!Array.isArray(data)) return data;
+  return data.length > 0 ? data[0] : undefined;
 }

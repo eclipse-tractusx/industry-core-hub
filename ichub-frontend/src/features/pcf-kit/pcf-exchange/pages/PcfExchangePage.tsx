@@ -434,7 +434,7 @@ const PcfExchangePage: React.FC = () => {
         <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
-              Loading Catalog Part
+              {t('exchange.loadingTitle')}
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'monospace' }}>
               {searchTerm}
@@ -511,7 +511,7 @@ const PcfExchangePage: React.FC = () => {
         <CardContent sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>{error}</Typography>
           <Button variant="contained" onClick={handleBackToSearch} sx={{ background: `linear-gradient(135deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`, textTransform: 'none', borderRadius: '10px' }}>
-            Back to Search
+            {t('exchange.backToSearch')}
           </Button>
         </CardContent>
       </Card>
@@ -536,7 +536,7 @@ const PcfExchangePage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             {/* Left: Back button, icon, title, subtitle */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Tooltip title="New Search">
+              <Tooltip title={t('exchange.newSearch')}>
                 <IconButton
                   onClick={handleBackToSearch}
                   sx={{
@@ -564,10 +564,10 @@ const PcfExchangePage: React.FC = () => {
               </Box>
               <Box>
                 <Typography variant="h5" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1.2 }}>
-                  PCF Exchange
+                  {t('exchange.title')}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 0.25 }}>
-                  Manage PCF data and respond to incoming requests
+                  {t('exchange.subtitle')}
                 </Typography>
               </Box>
             </Box>
@@ -592,7 +592,7 @@ const PcfExchangePage: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                   <Box>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Manufacturer Part ID
+                      {t('exchange.manufacturerPartId')}
                     </Typography>
                     <Typography variant="body2" sx={{ color: PCF_PRIMARY, fontWeight: 600, fontFamily: 'monospace' }}>
                       {managedPart.manufacturerPartId}
@@ -600,7 +600,7 @@ const PcfExchangePage: React.FC = () => {
                   </Box>
                   <Box sx={{ borderLeft: '1px solid rgba(255,255,255,0.1)', pl: 3 }}>
                     <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                      Part Name
+                      {t('exchange.partName')}
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#fff', fontWeight: 500 }}>
                       {managedPart.partName}
@@ -608,7 +608,7 @@ const PcfExchangePage: React.FC = () => {
                   </Box>
                 </Box>
               </Box>
-              <Tooltip title="Refresh">
+              <Tooltip title={t('exchange.refresh')}>
                 <IconButton
                   onClick={handleRefresh}
                   disabled={isRefreshing}
@@ -855,7 +855,7 @@ const PcfExchangePage: React.FC = () => {
             <Box sx={{ position: 'relative' }}>
               <TextField
                 fullWidth
-                placeholder="Enter Manufacturer Part ID..."
+                placeholder={t('exchange.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit()}

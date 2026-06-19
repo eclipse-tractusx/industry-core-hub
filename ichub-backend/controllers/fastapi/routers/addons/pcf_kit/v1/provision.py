@@ -117,7 +117,7 @@ async def confirm_and_send_update_to_participants(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests")
+@router.get("/requests", response_model=List[PcfExchangeModel], response_model_by_alias=True)
 async def list_provider_notifications(
     status: Optional[PcfExchangeStatus] = Query(None, description="Filter by request status (e.g., pending, delivered)"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
@@ -152,7 +152,7 @@ async def accept_request_and_send_response(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests/{requestId}/refresh-pcf")
+@router.get("/requests/{requestId}/refresh-pcf", response_model=PcfExchangeModel, response_model_by_alias=True)
 async def refresh_pcf_data_for_request(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
     try:
         result = provision_manager.refresh_pcf_data_for_request(request_id=request_id)

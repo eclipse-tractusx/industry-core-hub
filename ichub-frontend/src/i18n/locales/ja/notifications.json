@@ -80,6 +80,9 @@
   "detail": {
     "viewTwin": "ツインを表示",
     "viewDigitalTwin": "デジタルツインを表示",
+    "viewIncomingPcfRequests": "受け取ったPCFリクエストを表示",
+    "goPcfPrecalculation": "PCF事前計算に移動",
+    "viewUpdatedPcfData": "更新されたPCFデータを表示",
     "overdue": "期限超過",
     "verifyAll": "すべて検証",
     "sendFeedback": "フィードバックを送信",

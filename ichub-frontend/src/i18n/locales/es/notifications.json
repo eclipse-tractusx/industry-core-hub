@@ -80,6 +80,9 @@
   "detail": {
     "viewTwin": "Ver Gemelo",
     "viewDigitalTwin": "Ver Gemelo Digital",
+    "viewIncomingPcfRequests": "Ver solicitudes PCF recibidas",
+    "goPcfPrecalculation": "Ir a precálculo de PCF",
+    "viewUpdatedPcfData": "Ver datos PCF actualizados",
     "overdue": "Vencido",
     "verifyAll": "Verificar todo",
     "verifyAccess": "Verificar acceso",
@@ -111,7 +114,6 @@
     "discoveryFailed": "Descubrimiento fallido",
     "retry": "Reintentar",
     "feedbackSent": "Feedback enviado",
-    "sent": "Enviado",
     "message": "Mensaje",
     "items": "elementos",
     "statusItems": "Estado: {{status}} • {{count}} elementos",
