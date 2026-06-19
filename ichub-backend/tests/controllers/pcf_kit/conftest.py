@@ -46,6 +46,13 @@ _MODULES_NEEDING_REAL_IMPL = [
     "managers.config.log_manager",
     "tools.exceptions",
     "tools.constants",
+    # test_twin_management_service.py replaces these with MagicMock at
+    # collection time; they must be restored so that the tractusx_sdk
+    # import chain works when the FastAPI app is loaded.
+    "tractusx_sdk",
+    "tractusx_sdk.dataspace",
+    "tractusx_sdk.dataspace.tools",
+    "tractusx_sdk.dataspace.tools.validate_submodels",
 ]
 
 
