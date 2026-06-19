@@ -21,6 +21,7 @@
 ********************************************************************************/
 
 import { Box, Chip, Snackbar, Alert, Card, CardContent, Divider, Tooltip, IconButton, CircularProgress } from '@mui/material'
+import { useTheme } from '@mui/material/styles';
 import Grid2 from '@mui/material/Grid2';
 import { Typography } from '@mui/material';
 import { PartType, StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
@@ -57,6 +58,7 @@ interface ProductDataProps {
 }
 
 const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUpdated }: ProductDataProps) => {
+    const { palette: { common } } = useTheme();
     const [twinDetails, setTwinDetails] = useState<CatalogPartTwinDetailsRead | null>(propTwinDetails || null);
     const [isLoadingTwin, setIsLoadingTwin] = useState(false);
     const [isUpdatingParent, setIsUpdatingParent] = useState(false);
@@ -274,7 +276,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    backgroundColor: common.black70,
                     zIndex: 9999,
                     display: 'flex',
                     alignItems: 'center',
@@ -286,12 +288,12 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                         flexDirection: 'column', 
                         alignItems: 'center',
                         gap: 2,
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        backgroundColor: common.deepOverlay95,
                         p: 4,
                         borderRadius: 2,
-                        border: '1px solid rgba(59, 130, 246, 0.3)',
+                        border: `1px solid ${common.accent30}`,
                     }}>
-                        <CircularProgress size={40} sx={{ color: '#3b82f6' }} />
+                        <CircularProgress size={40} sx={{ color: common.accent }} />
                         <Typography variant="h6" sx={{ color: 'text.primary' }}>
                             {t('productDetail.productData.updatingStatus')}
                         </Typography>
@@ -304,53 +306,141 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             
             {/* Header Section */}
             <Card sx={{ 
-                mb: 3, 
-                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                borderLeft: '4px solid #3b82f6',
+                mb: 3,
+                background: `linear-gradient(135deg, ${common.darkOverlay}, ${common.deepOverlay98})`,
+                border: `1px solid ${common.accent30}`,
+                borderLeft: `4px solid ${common.accent}`,
                 borderRadius: 3,
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+                boxShadow: `0 8px 32px ${common.black40}`,
                 backdropFilter: 'blur(10px)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
-                    transform: 'translateY(-2px)'
-                }
+                overflow: 'hidden',
             }}>
                 <CardContent sx={{ 
-                    p: 4,
-                    '&:last-child': {
-                        paddingBottom: 4
-                    }
+                    p: { xs: 2, sm: 3, md: 4 },
+                    '&:last-child': { paddingBottom: { xs: 2, sm: 3, md: 4 } }
                 }}>
-                    <Box sx={{ position: 'relative' }}>
-                        {/* Digital Twin IDs - Top Right Corner */}
-                        <Box sx={{ 
-                            position: 'absolute', 
-                            top: 0, 
-                            right: 0, 
-                            display: 'flex', 
+                    {/* Responsive flex row: on md+ chips sit right; on xs they stack above the title */}
+                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, minWidth: 0 }}>
+
+                        {/* Left: name + category + manufacturer info */}
+                        <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden', order: { xs: 1, md: 0 } }}>
+                            <Tooltip title={part.name} arrow placement="top">
+                                <Typography variant="h3" sx={{ 
+                                    color: 'common.white',
+                                    mb: 2,
+                                    fontWeight: 700,
+                                    fontSize: { xs: '1.4rem', sm: '1.8rem', md: '2.5rem' },
+                                    letterSpacing: '-0.02em',
+                                    textShadow: `0 2px 4px ${common.black30}`,
+                                    whiteSpace: { xs: 'normal', md: 'nowrap' },
+                                    overflow: { xs: 'visible', md: 'hidden' },
+                                    textOverflow: { xs: 'clip', md: 'ellipsis' },
+                                    wordBreak: { xs: 'break-word', md: 'normal' },
+                                    cursor: 'help',
+                                }}>
+                                    {part.name}
+                                </Typography>
+                            </Tooltip>
+                            {part.category && part.category.trim() && (
+                                <Chip
+                                    label={part.category}
+                                    variant="filled"
+                                    size="medium"
+                                    sx={{
+                                        mb: 2,
+                                        background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                                        height: 28,
+                                        borderRadius: 2,
+                                        boxShadow: `0 2px 8px ${common.accent30}`,
+                                        '& .MuiChip-label': { color: 'common.white', fontSize: '13px', fontWeight: 500 },
+                                    }}
+                                />
+                            )}
+                            {/* Manufacturer chips — row+wrap on desktop, each chip truncates via maxWidth */}
+                            <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}>
+                                <Tooltip title={t('common:tooltips.copyManufacturerId')}>
+                                    <Chip
+                                        icon={<BusinessIcon />}
+                                        label={`${t('common:fields.manufacturerId')}: ${part.manufacturerId}`}
+                                        variant="outlined"
+                                        size="small"
+                                        clickable
+                                        onClick={() => handleCopy(part.manufacturerId, t('common:fields.manufacturerId'))}
+                                        sx={{
+                                            maxWidth: '100%',
+                                            backgroundColor: common.white05,
+                                            borderColor: common.white20,
+                                            fontFamily: 'monospace',
+                                            '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
+                                            '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
+                                            '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
+                                        }}
+                                    />
+                                </Tooltip>
+                                <Tooltip title={t('common:tooltips.copyManufacturerPartId')}>
+                                    <Chip
+                                        icon={<InventoryIcon />}
+                                        label={`${t('common:fields.manufacturerPartId')}: ${part.manufacturerPartId}`}
+                                        variant="outlined"
+                                        size="small"
+                                        clickable
+                                        onClick={() => handleCopy(part.manufacturerPartId, t('common:fields.manufacturerPartId'))}
+                                        sx={{
+                                            maxWidth: '100%',
+                                            backgroundColor: common.white05,
+                                            borderColor: common.white20,
+                                            fontFamily: 'monospace',
+                                            '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
+                                            '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
+                                            '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
+                                        }}
+                                    />
+                                </Tooltip>
+                                {part.bpns && (
+                                    <Tooltip title={t('productDetail.productData.tooltips.clickToCopySiteOfOrigin')}>
+                                        <Chip
+                                            icon={<LocationOnIcon />}
+                                            label={`${t('productDetail.productData.labels.siteOfOrigin')}: ${part.bpns}`}
+                                            variant="outlined"
+                                            size="small"
+                                            clickable
+                                            onClick={() => handleCopy(part.bpns || '', t('productDetail.productData.labels.siteOfOrigin'))}
+                                            sx={{
+                                                maxWidth: '100%',
+                                                backgroundColor: common.white05,
+                                                borderColor: common.white20,
+                                                fontFamily: 'monospace',
+                                                '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
+                                                '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
+                                                '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
+                                            }}
+                                        />
+                                    </Tooltip>
+                                )}
+                            </Box>
+                        </Box>
+
+                        {/* Right: register button + twin ID chips */}
+                        <Box sx={{
+                            display: 'flex',
                             flexDirection: 'column',
-                            flexWrap: 'wrap', 
-                            gap: 1, 
-                            justifyContent: 'flex-end',
-                            alignItems: 'flex-end',
-                            maxWidth: '60%'
+                            gap: 1,
+                            alignItems: { xs: 'flex-start', md: 'flex-end' },
+                            width: { xs: '100%', md: 'auto' },
+                            overflow: 'hidden',
+                            order: { xs: 0, md: 1 },
+                            flexShrink: 0,
+                            maxWidth: { md: '45%' },
                         }}>
-                            {/* Register Twin Button - Only show if status is draft */}
                             {(part.status === StatusVariants.draft || part.status === StatusVariants.pending) && (
                                 <Tooltip title={t('productDetail.productData.registerPartTwin')} arrow>
                                     <IconButton
                                         onClick={handleRegisterTwin}
                                         sx={{
-                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                            color: '#3b82f6',
-                                            border: '1px solid rgba(59, 130, 246, 0.3)',
-                                            '&:hover': {
-                                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                                                borderColor: 'rgba(59, 130, 246, 0.5)'
-                                            },
-                                            marginBottom: 1
+                                            backgroundColor: common.accent10,
+                                            color: 'primary.main',
+                                            border: `1px solid ${common.accent30}`,
+                                            '&:hover': { backgroundColor: common.accent20, borderColor: common.accent50 },
                                         }}
                                     >
                                         <CloudUploadIcon />
@@ -359,33 +449,12 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                             )}
                             {isLoadingTwin ? (
                                 <>
-                                    <Chip 
-                                        label={t('productDetail.productData.loadingAasId')} 
-                                        variant="outlined" 
-                                        size="small" 
-                                        disabled 
-                                        sx={{
-                                            '& .MuiChip-label': {
-                                                color: '#ffffff !important',
-                                                fontSize: '12px'
-                                            }
-                                        }}
-                                    />
-                                    <Chip 
-                                        label={t('productDetail.productData.loadingTwinId')} 
-                                        variant="outlined" 
-                                        size="small" 
-                                        disabled 
-                                        sx={{
-                                            '& .MuiChip-label': {
-                                                color: '#ffffff !important',
-                                                fontSize: '12px'
-                                            }
-                                        }}
-                                    />
+                                    <Chip label={t('productDetail.productData.loadingAasId')} variant="outlined" size="small" disabled sx={{ '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
+                                    <Chip label={t('productDetail.productData.loadingTwinId')} variant="outlined" size="small" disabled sx={{ '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
                                 </>
                             ) : twinDetails ? (
-                                <> {twinDetails.globalId && (
+                                <>
+                                    {twinDetails.globalId && (
                                         <Tooltip title={t('common:tooltips.copyGlobalAssetId')}>
                                             <Chip
                                                 icon={<AccountTreeIcon />}
@@ -395,23 +464,13 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 clickable
                                                 onClick={() => handleCopy(twinDetails.globalId.startsWith('urn:uuid:') ? twinDetails.globalId : `urn:uuid:${twinDetails.globalId}`, 'Global Asset ID')}
                                                 sx={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                                                    color: '#ffffff',
+                                                    maxWidth: '100%',
+                                                    backgroundColor: common.white05,
+                                                    borderColor: common.white30,
                                                     fontFamily: 'monospace',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
-                                                    },
-                                                    '& .MuiChip-icon': {
-                                                        color: '#ffffff'
-                                                    },
-                                                    '& .MuiChip-label': {
-                                                        color: '#ffffff !important',
-                                                        fontSize: '11px',
-                                                        fontWeight: 500,
-                                                        fontFamily: 'monospace'
-                                                    }
+                                                    '&:hover': { backgroundColor: common.white10, borderColor: common.white50 },
+                                                    '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
+                                                    '& .MuiChip-label': { color: 'common.white', fontSize: '11px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
                                                 }}
                                             />
                                         </Tooltip>
@@ -426,209 +485,26 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                                 clickable
                                                 onClick={() => handleCopy(twinDetails.dtrAasId.startsWith('urn:uuid:') ? twinDetails.dtrAasId : `urn:uuid:${twinDetails.dtrAasId}`, 'AAS ID')}
                                                 sx={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                    borderColor: 'rgba(255, 255, 255, 0.3)',
-                                                    color: '#ffffff',
+                                                    maxWidth: '100%',
+                                                    backgroundColor: common.white05,
+                                                    borderColor: common.white30,
                                                     fontFamily: 'monospace',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                        borderColor: 'rgba(255, 255, 255, 0.5)'
-                                                    },
-                                                    '& .MuiChip-icon': {
-                                                        color: '#ffffff'
-                                                    },
-                                                    '& .MuiChip-label': {
-                                                        color: '#ffffff !important',
-                                                        fontSize: '11px',
-                                                        fontWeight: 500,
-                                                        fontFamily: 'monospace'
-                                                    },
-                                                    '& span': {
-                                                        color: '#ffffff !important'
-                                                    }
+                                                    '&:hover': { backgroundColor: common.white10, borderColor: common.white50 },
+                                                    '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
+                                                    '& .MuiChip-label': { color: 'common.white', fontSize: '11px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
                                                 }}
                                             />
                                         </Tooltip>
                                     )}
-                                    {(!twinDetails.dtrAasId && !twinDetails.globalId) && (
-                                        <Chip 
-                                            label={t('productDetail.productData.noTwinIds')} 
-                                            variant="outlined" 
-                                            size="small" 
-                                            sx={{ 
-                                                color: '#ffffff',
-                                                borderColor: '#ffffff',
-                                                '& .MuiChip-label': {
-                                                    color: '#ffffff !important',
-                                                    fontSize: '12px'
-                                                }
-                                            }}
-                                        />
+                                    {!twinDetails.dtrAasId && !twinDetails.globalId && (
+                                        <Chip label={t('productDetail.productData.noTwinIds')} variant="outlined" size="small" sx={{ color: 'common.white', borderColor: 'common.white', '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
                                     )}
                                 </>
                             ) : (
-                                <Chip 
-                                    label={t('productDetail.productData.twinDataUnavailable')} 
-                                    variant="outlined" 
-                                    size="small" 
-                                    sx={{ 
-                                        color: '#ffffff',
-                                        borderColor: '#ffffff',
-                                        '& .MuiChip-label': {
-                                            color: '#ffffff !important',
-                                            fontSize: '12px'
-                                        }
-                                    }}
-                                />
+                                <Chip label={t('productDetail.productData.twinDataUnavailable')} variant="outlined" size="small" sx={{ color: 'common.white', borderColor: 'common.white', '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
                             )}
                         </Box>
 
-                        <Grid2 container spacing={2} alignItems="center">
-                            {/* Left Side - Product Name and Manufacturer Info */}
-                            <Grid2 size={{ xs: 12, md: 8 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2, pr: { xs: 0, md: 10 } }}>
-                                    <Box>
-                                        <Tooltip title={part.name} arrow placement="top">
-                                            <Typography variant="h3" sx={{ 
-                                                color: '#ffffff', 
-                                                mb: 1, 
-                                                fontWeight: 700,
-                                                fontSize: '2.5rem',
-                                                letterSpacing: '-0.02em',
-                                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
-                                                wordBreak: 'break-word',
-                                                overflowWrap: 'break-word',
-                                                maxWidth: '100%',
-                                                cursor: 'help'
-                                            }}>
-                                                {(() => {
-                                                    // Smart truncation for very long product names
-                                                    const productName = part.name;
-                                                    if (productName.length <= 80) return productName;
-                                                    // Show first 40 characters and last 35 for better recognition
-                                                    const startLength = 40;
-                                                    const endLength = 35;
-                                                    return `${productName.substring(0, startLength)}...${productName.substring(productName.length - endLength)}`;
-                                                })()}
-                                            </Typography>
-                                        </Tooltip>
-                                        {part.category && part.category.trim() && (
-                                            <Chip 
-                                                label={part.category} 
-                                                variant="filled" 
-                                                size="medium"
-                                                sx={{ 
-                                                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                                                    color: '#ffffff',
-                                                    fontWeight: 600,
-                                                    fontSize: '13px',
-                                                    height: 28,
-                                                    borderRadius: 2,
-                                                    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
-                                                    '& .MuiChip-label': {
-                                                        color: '#ffffff !important',
-                                                        fontSize: '13px',
-                                                        fontWeight: 500
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </Box>
-                                </Box>
-                                {/* Manufacturer Info Chips */}
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                                    <Tooltip title={t('common:tooltips.copyManufacturerId')}>
-                                        <Chip
-                                            icon={<BusinessIcon />}
-                                            label={`${t('common:fields.manufacturerId')}: ${part.manufacturerId}`}
-                                            variant="outlined"
-                                            size="small"
-                                            clickable
-                                            onClick={() => handleCopy(part.manufacturerId, t('common:fields.manufacturerId'))}
-                                            sx={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                                color: '#ffffff',
-                                                fontFamily: 'monospace',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                    borderColor: 'rgba(255, 255, 255, 0.4)'
-                                                },
-                                                '& .MuiChip-icon': {
-                                                    color: '#ffffff'
-                                                },
-                                                '& .MuiChip-label': {
-                                                    color: '#ffffff',
-                                                    fontSize: '12px',
-                                                    fontWeight: 500,
-                                                    fontFamily: 'monospace'
-                                                }
-                                            }}
-                                        />
-                                    </Tooltip>
-                                    <Tooltip title={t('common:tooltips.copyManufacturerPartId')}>
-                                        <Chip
-                                            icon={<InventoryIcon />}
-                                            label={`${t('common:fields.manufacturerPartId')}: ${part.manufacturerPartId}`}
-                                            variant="outlined"
-                                            size="small"
-                                            clickable
-                                            onClick={() => handleCopy(part.manufacturerPartId, t('common:fields.manufacturerPartId'))}
-                                            sx={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                                color: '#ffffff',
-                                                fontFamily: 'monospace',
-                                                '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                    borderColor: 'rgba(255, 255, 255, 0.4)'
-                                                },
-                                                '& .MuiChip-icon': {
-                                                    color: '#ffffff'
-                                                },
-                                                '& .MuiChip-label': {
-                                                    color: '#ffffff',
-                                                    fontSize: '12px',
-                                                    fontWeight: 500,
-                                                    fontFamily: 'monospace'
-                                                }
-                                            }}
-                                        />
-                                    </Tooltip>
-                                    {part.bpns && (
-                                        <Tooltip title={t('productDetail.productData.tooltips.clickToCopySiteOfOrigin')}>
-                                            <Chip
-                                                icon={<LocationOnIcon />}
-                                                label={`${t('productDetail.productData.labels.siteOfOrigin')}: ${part.bpns}`}
-                                                variant="outlined"
-                                                size="small"
-                                                clickable
-                                                onClick={() => handleCopy(part.bpns || '', t('productDetail.productData.labels.siteOfOrigin'))}
-                                                sx={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                                    borderColor: 'rgba(255, 255, 255, 0.2)',
-                                                    color: '#ffffff',
-                                                    fontFamily: 'monospace',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                                        borderColor: 'rgba(255, 255, 255, 0.4)'
-                                                    },
-                                                    '& .MuiChip-icon': {
-                                                        color: '#ffffff'
-                                                    },
-                                                    '& .MuiChip-label': {
-                                                        color: '#ffffff',
-                                                        fontSize: '12px',
-                                                        fontWeight: 500,
-                                                        fontFamily: 'monospace'
-                                                    }
-                                                }}
-                                            />
-                                        </Tooltip>
-                                    )}
-                                </Box>
-                            </Grid2>
-                        </Grid2>
                     </Box>
                 </CardContent>
             </Card>
@@ -638,8 +514,8 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                 <Grid2 size={{ lg: 6, md: 12, sm: 12 }}>
                     <Card sx={{ 
                         height: '100%',
-                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        backgroundColor: common.black40,
+                        border: `1px solid ${common.white12}`,
                         borderRadius: 2
                     }}>
                         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -671,7 +547,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
 
                             {/* Digital Twin Timestamps */}
                             <>
-                                <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.12)' }} />
+                                <Divider sx={{ my: 3, borderColor: common.white12 }} />
                                 <Typography variant="h6" sx={{ 
                                     color: 'text.primary', 
                                     mb: 3,
@@ -689,17 +565,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         <Box sx={{ 
                                             textAlign: 'center', 
                                             p: 2, 
-                                            backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                            backgroundColor: common.white08,
                                             borderRadius: 2,
-                                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                                            border: `1px solid ${common.white15}`,
                                             backdropFilter: 'blur(20px)',
-                                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                            boxShadow: `0 8px 32px ${common.black30}`,
                                             transition: 'all 0.3s ease',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                backgroundColor: common.white12,
+                                                border: `1px solid ${common.white25}`,
                                                 transform: 'translateY(-2px)',
-                                                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                boxShadow: `0 12px 40px ${common.black40}`
                                             }
                                         }}>
                                             <AccessTimeIcon sx={{ color: 'success.main', mb: 1 }} />
@@ -726,17 +602,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         <Box sx={{ 
                                             textAlign: 'center', 
                                             p: 2, 
-                                            backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                            backgroundColor: common.white08,
                                             borderRadius: 2,
-                                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                                            border: `1px solid ${common.white15}`,
                                             backdropFilter: 'blur(20px)',
-                                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                            boxShadow: `0 8px 32px ${common.black30}`,
                                             transition: 'all 0.3s ease',
                                             '&:hover': {
-                                                backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                backgroundColor: common.white12,
+                                                border: `1px solid ${common.white25}`,
                                                 transform: 'translateY(-2px)',
-                                                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                boxShadow: `0 12px 40px ${common.black40}`
                                             }
                                         }}>
                                             <UpdateIcon sx={{ color: 'warning.main', mb: 1 }} />
@@ -770,8 +646,8 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     {/* Sharing Information Card */}
                     <Card sx={{ 
                         mb: 3,
-                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        backgroundColor: common.black40,
+                        border: `1px solid ${common.white12}`,
                         borderRadius: 2
                     }}>
                         <CardContent sx={{ p: 3 }}>
@@ -795,13 +671,13 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                     gap: 2,
                                     p: 2,
                                     mb: 3,
-                                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                                    backgroundColor: common.warning10,
                                     borderRadius: 1,
-                                    border: '1px solid rgba(255, 152, 0, 0.3)'
+                                    border: `1px solid ${common.warning30}`
                                 }}>
-                                    <WarningIcon sx={{ color: '#ff9800', fontSize: 20 }} />
+                                    <WarningIcon sx={{ color: 'warning.main', fontSize: 20 }} />
                                     <Typography variant="body2" sx={{ 
-                                        color: '#ff9800',
+                                        color: 'warning.main',
                                         fontWeight: 500,
                                         fontSize: '0.875rem'
                                     }}>
@@ -818,9 +694,9 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                     alignItems: 'center', 
                                     gap: 2,
                                     p: 3,
-                                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                                    backgroundColor: common.white02,
                                     borderRadius: 1,
-                                    border: '1px dashed rgba(255, 255, 255, 0.12)'
+                                    border: `1px dashed ${common.white12}`
                                 }}>
                                     <WifiTetheringErrorIcon sx={{ color: 'text.secondary' }} />
                                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -833,8 +709,8 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
 
                     {/* Materials & Dimensions Card */}
                     <Card sx={{ 
-                        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        backgroundColor: common.black40,
+                        border: `1px solid ${common.white12}`,
                         borderRadius: 2
                     }}>
                         <CardContent sx={{ p: 3 }}>
@@ -859,7 +735,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                         <Box sx={{ 
                                             display: 'flex', 
                                             justifyContent: 'center',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                                            backgroundColor: common.white02,
                                             borderRadius: 1,
                                             p: 2
                                         }}>
@@ -883,9 +759,9 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             p: 3,
-                                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                                            backgroundColor: common.white02,
                                             borderRadius: 1,
-                                            border: '1px dashed rgba(255, 255, 255, 0.12)'
+                                            border: `1px dashed ${common.white12}`
                                         }}>
                                             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                                                 {t('productDetail.productData.moreInformation.noMaterials')}
@@ -904,17 +780,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             <Box sx={{ 
                                                 textAlign: 'center', 
                                                 p: 1.5, 
-                                                backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                                backgroundColor: common.white08,
                                                 borderRadius: 2,
-                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                border: `1px solid ${common.white15}`,
                                                 backdropFilter: 'blur(20px)',
-                                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                                boxShadow: `0 8px 32px ${common.black30}`,
                                                 transition: 'all 0.3s ease',
                                                 '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                    backgroundColor: common.white12,
+                                                    border: `1px solid ${common.white25}`,
                                                     transform: 'translateY(-2px)',
-                                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                    boxShadow: `0 12px 40px ${common.black40}`
                                                 }
                                             }}>
                                                 <Typography variant="caption1" sx={{ 
@@ -933,17 +809,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             <Box sx={{ 
                                                 textAlign: 'center', 
                                                 p: 1.5, 
-                                                backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                                backgroundColor: common.white08,
                                                 borderRadius: 2,
-                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                border: `1px solid ${common.white15}`,
                                                 backdropFilter: 'blur(20px)',
-                                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                                boxShadow: `0 8px 32px ${common.black30}`,
                                                 transition: 'all 0.3s ease',
                                                 '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                    backgroundColor: common.white12,
+                                                    border: `1px solid ${common.white25}`,
                                                     transform: 'translateY(-2px)',
-                                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                    boxShadow: `0 12px 40px ${common.black40}`
                                                 }
                                             }}>
                                                 <Typography variant="caption1" sx={{ 
@@ -962,17 +838,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             <Box sx={{ 
                                                 textAlign: 'center', 
                                                 p: 1.5, 
-                                                backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                                backgroundColor: common.white08,
                                                 borderRadius: 2,
-                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                border: `1px solid ${common.white15}`,
                                                 backdropFilter: 'blur(20px)',
-                                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                                boxShadow: `0 8px 32px ${common.black30}`,
                                                 transition: 'all 0.3s ease',
                                                 '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                    backgroundColor: common.white12,
+                                                    border: `1px solid ${common.white25}`,
                                                     transform: 'translateY(-2px)',
-                                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                    boxShadow: `0 12px 40px ${common.black40}`
                                                 }
                                             }}>
                                                 <Typography variant="caption1" sx={{ 
@@ -991,17 +867,17 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                             <Box sx={{ 
                                                 textAlign: 'center', 
                                                 p: 1.5, 
-                                                backgroundColor: 'rgba(255, 255, 255, 0.08)', 
+                                                backgroundColor: common.white08,
                                                 borderRadius: 2,
-                                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                border: `1px solid ${common.white15}`,
                                                 backdropFilter: 'blur(20px)',
-                                                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                                                boxShadow: `0 8px 32px ${common.black30}`,
                                                 transition: 'all 0.3s ease',
                                                 '&:hover': {
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                                                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                                                    backgroundColor: common.white12,
+                                                    border: `1px solid ${common.white25}`,
                                                     transform: 'translateY(-2px)',
-                                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)'
+                                                    boxShadow: `0 12px 40px ${common.black40}`
                                                 }
                                             }}>
                                                 <Typography variant="caption1" sx={{ 
@@ -1028,8 +904,8 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             {twinDetails && (
                 <Card sx={{ 
                     mt: 3,
-                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    backgroundColor: common.black40,
+                    border: `1px solid ${common.white12}`,
                     borderRadius: 2
                 }}>
                     <CardContent sx={{ p: 3 }}>
