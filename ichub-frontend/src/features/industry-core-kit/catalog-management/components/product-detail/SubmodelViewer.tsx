@@ -46,6 +46,7 @@ import {
 import { CatalogPartTwinDetailsRead } from '@/features/industry-core-kit/catalog-management/types/twin-types';
 import { parseSemanticId } from '@/utils/semantics';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
 
 interface SubmodelViewerProps {
     twinDetails: CatalogPartTwinDetailsRead;
@@ -67,6 +68,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
     const [currentStartIndex, setCurrentStartIndex] = useState(0);
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
+    const { palette: { common } } = useTheme();
     const submodelsPerPage = 3;
     const submodelEntries = Object.entries(twinDetails.aspects || {});
     const totalSubmodels = submodelEntries.length;
@@ -125,8 +127,8 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
     if (!twinDetails?.aspects || Object.keys(twinDetails.aspects).length === 0) {
         return (
             <Card sx={{
-                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
+                backgroundColor: common.black40,
+                border: `1px solid ${common.white12}`,
                 borderRadius: 2
             }}>
                 <CardContent sx={{ p: 3, textAlign: 'center' }}>
@@ -144,89 +146,81 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
 
     return (
         <Box sx={{ width: '100%' }}>
-            <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                mb: 3 
+            {/* Row 1: title */}
+            <Typography variant="h6" sx={{ 
+                color: 'text.primary',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mb: 1.5
             }}>
-                <Typography variant="h6" sx={{ 
-                    color: 'text.primary',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                }}>
-                    <SchemaIcon sx={{ color: 'primary.main' }} />
-                    {t('productDetail.submodelViewer.title')} ({totalSubmodels})
-                </Typography>
-                
-                {onCreateSubmodel && (
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={onCreateSubmodel}
-                        sx={{
-                            background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
-                            borderRadius: '10px',
-                            textTransform: 'none',
-                            fontWeight: 600,
-                            boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)',
-                            '&:hover': {
-                                background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
-                                transform: 'translateY(-1px)',
-                                boxShadow: '0 6px 20px rgba(25, 118, 210, 0.4)',
-                            },
-                            transition: 'all 0.2s ease-in-out',
-                        }}
-                    >
-                        {t('productDetail.submodelViewer.newSubmodel')}
-                    </Button>
-                )}
-                
-                {showCarousel && (
-                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
-                            {currentStartIndex + 1}-{Math.min(currentStartIndex + submodelsPerPage, totalSubmodels)} of {totalSubmodels}
-                        </Typography>
-                        <IconButton
-                            onClick={handlePrevious}
-                            disabled={currentStartIndex === 0}
-                            size="small"
+                <SchemaIcon sx={{ color: 'primary.main' }} />
+                {t('productDetail.submodelViewer.title')} ({totalSubmodels})
+            </Typography>
+
+            {/* Row 2: actions (button + carousel) — only rendered when at least one is present */}
+            {(onCreateSubmodel || showCarousel) && (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 3 }}>
+                    {onCreateSubmodel && (
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={onCreateSubmodel}
                             sx={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                color: 'white',
+                                backgroundColor: common.accent,
+                                borderRadius: '10px',
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                fontSize: { xs: '11px', sm: '14px' },
+                                boxShadow: `0 4px 16px ${common.accent30}`,
                                 '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                    backgroundColor: common.accent,
+                                    filter: 'brightness(1.15)',
+                                    transform: 'translateY(-1px)',
+                                    boxShadow: `0 6px 20px ${common.accent30}`,
                                 },
-                                '&:disabled': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                    color: 'rgba(255, 255, 255, 0.3)',
-                                }
+                                transition: 'all 0.2s ease-in-out',
                             }}
                         >
-                            <ChevronLeftIcon />
-                        </IconButton>
-                        <IconButton
-                            onClick={handleNext}
-                            disabled={currentStartIndex + submodelsPerPage >= totalSubmodels}
-                            size="small"
-                            sx={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                color: 'white',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                                },
-                                '&:disabled': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                    color: 'rgba(255, 255, 255, 0.3)',
-                                }
-                            }}
-                        >
-                            <ChevronRightIcon />
-                        </IconButton>
-                    </Box>
-                )}
-            </Box>
+                            {t('productDetail.submodelViewer.newSubmodel')}
+                        </Button>
+                    )}
+
+                    {showCarousel && (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <Typography variant="caption" sx={{ color: 'text.secondary', mr: 1 }}>
+                                {currentStartIndex + 1}-{Math.min(currentStartIndex + submodelsPerPage, totalSubmodels)} of {totalSubmodels}
+                            </Typography>
+                            <IconButton
+                                onClick={handlePrevious}
+                                disabled={currentStartIndex === 0}
+                                size="small"
+                                sx={{
+                                    backgroundColor: common.white10,
+                                    color: common.white,
+                                    '&:hover': { backgroundColor: common.white20 },
+                                    '&:disabled': { backgroundColor: common.white05, color: common.white30 }
+                                }}
+                            >
+                                <ChevronLeftIcon />
+                            </IconButton>
+                            <IconButton
+                                onClick={handleNext}
+                                disabled={currentStartIndex + submodelsPerPage >= totalSubmodels}
+                                size="small"
+                                sx={{
+                                    backgroundColor: common.white10,
+                                    color: common.white,
+                                    '&:hover': { backgroundColor: common.white20 },
+                                    '&:disabled': { backgroundColor: common.white05, color: common.white30 }
+                                }}
+                            >
+                                <ChevronRightIcon />
+                            </IconButton>
+                        </Box>
+                    )}
+                </Box>
+            )}
 
             <Box sx={{ 
                 overflow: 'hidden',
@@ -241,16 +235,16 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                     return (
                         <Grid2 size={{ xs: 12, md: 6, lg: 4 }} key={semanticId}>
                             <Card sx={{
-                                backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                backgroundColor: common.black40,
+                                border: `1px solid ${common.white12}`,
                                 borderRadius: 2,
                                 height: '100%',
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    backgroundColor: common.white05,
+                                    border: `1px solid ${common.white20}`,
                                     transform: 'translateY(-2px)',
-                                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)'
+                                    boxShadow: `0 8px 24px ${common.black30}`
                                 },
                                 display: 'flex',
                                 flexDirection: 'column'
@@ -290,7 +284,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                                 label={t('productDetail.submodelViewer.noRegistration')}
                                                 size="small"
                                                 sx={{
-                                                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                                    backgroundColor: common.white08,
                                                     color: 'text.secondary',
                                                     fontSize: '11px'
                                                 }}
@@ -301,7 +295,7 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                             label={`v${getSemanticIdVersion(semanticId)}`}
                                             size="small"
                                             sx={{
-                                                backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                                backgroundColor: common.accent10,
                                                 color: 'primary.main',
                                                 fontSize: '11px',
                                                 fontWeight: 600,
@@ -392,14 +386,16 @@ const SubmodelViewer: React.FC<SubmodelViewerProps> = ({ twinDetails, onViewFull
                                                 }, aspect.submodelId, semanticId);
                                             }}
                                             sx={{
-                                                backgroundColor: 'rgba(96, 165, 250, 0.9)',
-                                                color: '#ffffff',
+                                                backgroundColor: common.accent,
+                                                color: common.white,
                                                 fontSize: '11px',
                                                 textTransform: 'none',
                                                 fontWeight: 500,
                                                 py: 0.75,
+                                                opacity: 0.9,
                                                 '&:hover': {
-                                                    backgroundColor: 'rgba(59, 130, 246, 1)',
+                                                    backgroundColor: common.accent,
+                                                    opacity: 1,
                                                 },
                                                 borderRadius: 1
                                             }}
