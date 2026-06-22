@@ -293,8 +293,6 @@ class PcfProvisionManager:
             if pcf_data is None:
                 raise ValueError("PCF data payload is required for update.")
 
-            # Gate: require both PCF versions before allowing publish/exchange
-            management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
 
             result = management_manager.update_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
