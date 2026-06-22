@@ -40,6 +40,43 @@ const PCF_KIT_BASE_PATH = '/addons/pcf-kit';
 
 const getBaseUrl = () => `${getIchubBackendUrl()}${PCF_KIT_BASE_PATH}`;
 
+/**
+ * Supported PCF schema versions, matching the backend's `SUPPORTED_PCF_VERSIONS`.
+ * The backend stores each version in its own submodel slot keyed by
+ * `(manufacturerPartId, version)`, so they can be queried and persisted
+ * independently.
+ */
+export const PCF_VERSIONS = ['v9.0.0', 'v7.0.0'] as const;
+export type PcfVersion = (typeof PCF_VERSIONS)[number];
+
+/** Per-version PCF payload map (null when that version has no stored data). */
+export type PcfVersionDataMap = Record<PcfVersion, Record<string, unknown> | null>;
+
+/**
+ * Normalizes an unknown (axios or generic) error into a `{ status, message }`
+ * pair, extracting the backend's `detail`/`message` field when present so the
+ * UI can surface the real cause (e.g. schema validation or "already exists").
+ */
+export function extractApiErrorDetail(error: unknown): { status?: number; message: string } {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const ax = error as { response?: { status?: number; data?: unknown }; message?: string };
+    const status = ax.response?.status;
+    const data = ax.response?.data;
+    let detail: string | undefined;
+    if (typeof data === 'string') {
+      detail = data;
+    } else if (data && typeof data === 'object') {
+      const d = data as Record<string, unknown>;
+      if (typeof d.detail === 'string') detail = d.detail;
+      else if (typeof d.message === 'string') detail = d.message;
+      else detail = JSON.stringify(d);
+    }
+    return { status, message: detail || ax.message || 'Request failed' };
+  }
+  if (error instanceof Error) return { message: error.message };
+  return { message: String(error) };
+}
+
 // =============================================================================
 // Types
 // =============================================================================
@@ -186,18 +223,26 @@ export const DEFAULT_PCF_POLICIES: OdrlPolicy[] = [
 // =============================================================================
 
 /**
- * Get PCF data for a catalog part by manufacturer part ID
+ * Get PCF data for a catalog part by manufacturer part ID.
+ *
+ * @param version - optional PCF schema version (e.g. 'v9.0.0' or 'v7.0.0').
+ *                  When provided it is sent as a `?version=` query param so the
+ *                  backend returns that specific versioned submodel slot. When
+ *                  omitted the backend falls back to its default version.
+ * @returns the PCF payload, or `null` when that version has no stored data
+ *          (the backend answers 400/404 for a missing slot).
  */
 export async function getPcfByManufacturerPartId(
-  manufacturerPartId: string
+  manufacturerPartId: string,
+  version?: PcfVersion
 ): Promise<Record<string, unknown> | null> {
   try {
-    const response = await httpClient.get<Record<string, unknown>>(
-      `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`
-    );
+    const base = `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`;
+    const url = version ? `${base}?version=${encodeURIComponent(version)}` : base;
+    const response = await httpClient.get<Record<string, unknown>>(url);
     return response.data;
   } catch (error: unknown) {
-    // Return null if PCF not found (404)
+    // Return null if PCF not found (the backend answers 400 or 404 for a missing slot)
     if (error && typeof error === 'object' && 'response' in error) {
       const axiosError = error as { response?: { status?: number } };
       if (axiosError.response?.status === 404 || axiosError.response?.status === 400) {
@@ -206,6 +251,24 @@ export async function getPcfByManufacturerPartId(
     }
     throw error;
   }
+}
+
+/**
+ * Fetch the stored PCF payload for every supported version of a part in
+ * parallel. The result lets the UI know, per version, whether data exists
+ * (`SUBIDO`) or not (`NO EXISTE`) and compare it against locally edited data
+ * to decide between upload / update / skip on save.
+ */
+export async function getPcfVersionStatus(
+  manufacturerPartId: string
+): Promise<PcfVersionDataMap> {
+  const entries = await Promise.all(
+    PCF_VERSIONS.map(async (version) => {
+      const data = await getPcfByManufacturerPartId(manufacturerPartId, version);
+      return [version, data] as const;
+    })
+  );
+  return Object.fromEntries(entries) as PcfVersionDataMap;
 }
 
 /**
@@ -244,12 +307,12 @@ export interface PcfUpdateResponse {
  */
 export async function updatePcfAndGetParticipants(
   manufacturerPartId: string,
-  pcfData: Record<string, unknown>
+  pcfData: Record<string, unknown>,
+  version?: PcfVersion
 ): Promise<string[]> {
-  const response = await httpClient.put<PcfUpdateResponse>(
-    `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`,
-    pcfData
-  );
+  const base = `${getBaseUrl()}/provider/pcfs/${encodeURIComponent(manufacturerPartId)}`;
+  const url = version ? `${base}?version=${encodeURIComponent(version)}` : base;
+  const response = await httpClient.put<PcfUpdateResponse>(url, pcfData);
   // Extract `sharedWithBpns` from the response object.
   // The API returns { manufacturerPartId, pcfLocation, status, sharedWithBpns },
   // not a bare string array.

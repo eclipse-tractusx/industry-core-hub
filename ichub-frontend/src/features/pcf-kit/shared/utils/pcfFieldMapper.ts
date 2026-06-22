@@ -55,7 +55,202 @@ export interface CrossVersionFieldMapEntry {
   label: string;
   /** Optional per-version numeric range constraints (for reconciliation warnings). */
   constraints?: CrossVersionConstraint;
+  /**
+   * Optional semantic-equivalence predicate. When provided and it returns
+   * `true`, the two raw values are treated as the SAME choice even if they are
+   * spelled differently (so the field is not flagged as a difference to
+   * reconcile). Used for enums whose versions encode the same concept with
+   * different wording.
+   */
+  equivalent?: (v9Value: unknown, v7Value: unknown) => boolean;
+  /**
+   * Optional value coercion. Converts a chosen value into the spelling that is
+   * valid for the target version (e.g. v9's "polluter pays principle" → v7's
+   * "reverse cut-off"). Returns the value unchanged when no mapping applies.
+   */
+  coerce?: (value: unknown, target: 'v9' | 'v7') => unknown;
 }
+
+// ---------------------------------------------------------------------------
+// Allocation Waste Incineration — cross-version enum equivalence
+// ---------------------------------------------------------------------------
+//
+// v7.0.0 enum: "cut-off", "reverse cut-off", "system expansion"
+// v9.0.0 enum: adds "polluter pays principle", which the v9 SAMM schema
+// explicitly defines as equivalent to the "reverse cut-off" approach.
+//
+// We canonicalize values to a case/space/hyphen-insensitive token and treat
+// "polluter pays principle" as the same choice as "reverse cut-off", so each
+// version can keep its own valid spelling without being reported as a conflict.
+
+/** Lowercase, trim and collapse spaces/hyphens/underscores into single spaces. */
+function normalizeAllocationToken(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const norm = value.trim().toLowerCase().replace(/[\s_-]+/g, ' ').trim();
+  return norm.length > 0 ? norm : undefined;
+}
+
+/** Synonyms folded onto a single canonical token (space form). */
+const ALLOCATION_SYNONYMS: Record<string, string> = {
+  'polluter pays principle': 'reverse cut off',
+};
+
+/** Returns the canonical token for an Allocation Waste Incineration value. */
+export function canonicalAllocationWaste(value: unknown): string | undefined {
+  const n = normalizeAllocationToken(value);
+  if (n === undefined) return undefined;
+  return ALLOCATION_SYNONYMS[n] ?? n;
+}
+
+/** Canonical token → the valid enum spelling for each version. */
+const ALLOCATION_CANON_TO_V7: Record<string, string> = {
+  'cut off': 'cut-off',
+  'reverse cut off': 'reverse cut-off',
+  'system expansion': 'system expansion',
+};
+const ALLOCATION_CANON_TO_V9: Record<string, string> = {
+  'cut off': 'cut-off',
+  'reverse cut off': 'reverse cut-off',
+  'system expansion': 'system expansion',
+};
+
+/**
+ * Coerces an Allocation Waste Incineration value to the spelling that is valid
+ * for the target version. Unknown values are returned unchanged so custom
+ * input is never silently dropped.
+ */
+export function coerceAllocationWaste(value: unknown, target: 'v9' | 'v7'): unknown {
+  const canon = canonicalAllocationWaste(value);
+  if (canon === undefined) return value;
+  const table = target === 'v7' ? ALLOCATION_CANON_TO_V7 : ALLOCATION_CANON_TO_V9;
+  return table[canon] ?? value;
+}
+
+function allocationWasteEquivalent(a: unknown, b: unknown): boolean {
+  const ca = canonicalAllocationWaste(a);
+  const cb = canonicalAllocationWaste(b);
+  return ca !== undefined && ca === cb;
+}
+
+// ---------------------------------------------------------------------------
+// Standards / rules / emission sources — structural cross-version coercion
+// ---------------------------------------------------------------------------
+//
+// These fields hold the SAME information in both versions but with different
+// shapes:
+//   crossSectoralStandards         v9: string[]              v7: [{ crossSectoralStandard }]
+//   productOrSectorSpecificRules   v9: string[]              v7: [{ extWBCSD_operator, productOrSectorSpecificRules: [{ ruleName }] }]
+//   secondaryEmissionFactorSources v9: string[]              v7: [{ secondaryEmissionFactorSource }]
+//
+// Copying them 1:1 across versions (auto-fill / reconciliation) produced data
+// that failed the other version's schema. These coercers convert to the exact
+// shape required by the target version and tolerate legacy/partial inputs
+// (plain strings, urn-fragment keys like `operator`/`ruleNames`, etc.).
+
+function asArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (value === undefined || value === null || value === '') return [];
+  return [value];
+}
+
+function toStringValue(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
+}
+
+/** crossSectoralStandards (v9 string[]) ↔ crossSectoralStandardsUsed (v7 [{crossSectoralStandard}]). */
+function coerceCrossSectoral(value: unknown, target: 'v9' | 'v7'): unknown {
+  const items = asArray(value);
+  if (target === 'v7') {
+    return items
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          const o = item as Record<string, unknown>;
+          const s = toStringValue(o.crossSectoralStandard) ?? toStringValue(o.value) ?? toStringValue(o.name);
+          return { crossSectoralStandard: s ?? '' };
+        }
+        return { crossSectoralStandard: toStringValue(item) ?? '' };
+      })
+      .filter((o) => o.crossSectoralStandard !== '');
+  }
+  return items
+    .map((item) => {
+      if (item && typeof item === 'object') {
+        const o = item as Record<string, unknown>;
+        return toStringValue(o.crossSectoralStandard) ?? toStringValue(o.value) ?? '';
+      }
+      return toStringValue(item) ?? '';
+    })
+    .filter((s) => s !== '');
+}
+
+/** Flatten any rule representation into plain rule-name strings. */
+function extractRuleNameStrings(item: unknown): string[] {
+  const s = toStringValue(item);
+  if (s !== undefined) return [s];
+  if (item && typeof item === 'object') {
+    const o = item as Record<string, unknown>;
+    if (typeof o.ruleName === 'string') return [o.ruleName];
+    const inner = o.productOrSectorSpecificRules ?? o.ruleNames;
+    if (Array.isArray(inner)) return inner.flatMap(extractRuleNameStrings);
+  }
+  return [];
+}
+
+/** productOrSectorSpecificRules (v9 string[]) ↔ v7 [{extWBCSD_operator, productOrSectorSpecificRules:[{ruleName}]}]. */
+function coerceRules(value: unknown, target: 'v9' | 'v7'): unknown {
+  const ruleStrings = asArray(value).flatMap(extractRuleNameStrings).filter((s) => s !== '');
+  if (target === 'v9') return ruleStrings;
+  if (ruleStrings.length === 0) return [];
+  // v9 carries no operator concept — group all rules under the Catena-X default "Other".
+  return [
+    {
+      extWBCSD_operator: 'Other',
+      productOrSectorSpecificRules: ruleStrings.map((name) => ({ ruleName: name })),
+    },
+  ];
+}
+
+/** secondaryEmissionFactorSources (v9 string[]) ↔ v7 [{secondaryEmissionFactorSource}]. */
+function coerceEmissionSources(value: unknown, target: 'v9' | 'v7'): unknown {
+  const items = asArray(value);
+  if (target === 'v7') {
+    return items
+      .map((item) => {
+        if (item && typeof item === 'object') {
+          const o = item as Record<string, unknown>;
+          return { secondaryEmissionFactorSource: toStringValue(o.secondaryEmissionFactorSource) ?? toStringValue(o.value) ?? '' };
+        }
+        return { secondaryEmissionFactorSource: toStringValue(item) ?? '' };
+      })
+      .filter((o) => o.secondaryEmissionFactorSource !== '');
+  }
+  return items
+    .map((item) => {
+      if (item && typeof item === 'object') {
+        const o = item as Record<string, unknown>;
+        return toStringValue(o.secondaryEmissionFactorSource) ?? '';
+      }
+      return toStringValue(item) ?? '';
+    })
+    .filter((s) => s !== '');
+}
+
+/** Equivalence for structurally-different list fields: compare their v9 (string-list)
+ *  projections as sorted sets, so the same content in different shapes is not flagged. */
+function listEquivalent(toV9: (v: unknown) => unknown): (a: unknown, b: unknown) => boolean {
+  const canon = (v: unknown): string => {
+    const arr = toV9(v);
+    const list = Array.isArray(arr) ? [...arr].map((x) => JSON.stringify(x)).sort() : [JSON.stringify(arr)];
+    return JSON.stringify(list);
+  };
+  return (a, b) => canon(a) === canon(b);
+}
+
+const crossSectoralEquivalent = listEquivalent((v) => coerceCrossSectoral(v, 'v9'));
+const rulesEquivalent = listEquivalent((v) => coerceRules(v, 'v9'));
+const emissionSourcesEquivalent = listEquivalent((v) => coerceEmissionSources(v, 'v9'));
 
 /**
  * A single field whose v9 and v7 values diverge and must be reconciled before
@@ -142,12 +337,13 @@ export const PCF_CROSS_VERSION_FIELD_MAP: CrossVersionFieldMapEntry[] = [
   { v9: 'pcfAssessmentAndMethodology[0].dataSourcesAndQuality[0].technologicalDQR', v7: 'pcf.dataQualityRating.technologicalDQR', label: 'Technological DQR', constraints: { v7: { min: 1, max: 3 }, v9: { min: 1, max: 5 } } },
   { v9: 'pcfAssessmentAndMethodology[0].dataSourcesAndQuality[0].temporalDQR', v7: 'pcf.dataQualityRating.temporalDQR', label: 'Temporal DQR', constraints: { v7: { min: 1, max: 3 }, v9: { min: 1, max: 5 } } },
   { v9: 'pcfAssessmentAndMethodology[0].dataSourcesAndQuality[0].geographicalDQR', v7: 'pcf.dataQualityRating.geographicalDQR', label: 'Geographical DQR', constraints: { v7: { min: 1, max: 3 }, v9: { min: 1, max: 5 } } },
+  { v9: 'pcfAssessmentAndMethodology[0].dataSourcesAndQuality[0].secondaryEmissionFactorSources', v7: 'pcf.secondaryEmissionFactorSources', label: 'Secondary Emission Factor Sources', equivalent: emissionSourcesEquivalent, coerce: coerceEmissionSources },
 
   // ── Methodology ─────────────────────────────────────────────────────────────
-  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].standards[0].crossSectoralStandards', v7: 'pcf.crossSectoralStandardsUsed', label: 'Cross-Sectoral Standards' },
-  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].standards[0].productOrSectorSpecificRules', v7: 'pcf.productOrSectorSpecificRules', label: 'Product/Sector Rules' },
+  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].standards[0].crossSectoralStandards', v7: 'pcf.crossSectoralStandardsUsed', label: 'Cross-Sectoral Standards', equivalent: crossSectoralEquivalent, coerce: coerceCrossSectoral },
+  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].standards[0].productOrSectorSpecificRules', v7: 'pcf.productOrSectorSpecificRules', label: 'Product/Sector Rules', equivalent: rulesEquivalent, coerce: coerceRules },
   { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].gwpCharacterizationFactorDetails[0].ipccCharacterizationFactors', v7: 'pcf.extWBCSD_characterizationFactors', label: 'Characterization Factors' },
-  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].allocationInForeground[0].allocationWasteIncineration', v7: 'pcf.extTFS_allocationWasteIncineration', label: 'Allocation Waste Incineration' },
+  { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].allocationInForeground[0].allocationWasteIncineration', v7: 'pcf.extTFS_allocationWasteIncineration', label: 'Allocation Waste Incineration', equivalent: allocationWasteEquivalent, coerce: coerceAllocationWaste },
   { v9: 'pcfAssessmentAndMethodology[0].pcfMethodology[0].allocationInForeground[0].allocationRulesDescription', v7: 'pcf.extWBCSD_allocationRulesDescription', label: 'Allocation Rules' },
 
   // ── General ─────────────────────────────────────────────────────────────────
@@ -280,8 +476,9 @@ export function extractV7CompatibleFields(
 ): Record<string, unknown> {
   let result: Record<string, unknown> = {};
   for (const entry of PCF_CROSS_VERSION_FIELD_MAP) {
-    const value = getNestedValue(v9Data, entry.v9);
-    if (value !== undefined) {
+    const raw = getNestedValue(v9Data, entry.v9);
+    if (raw !== undefined) {
+      const value = entry.coerce ? entry.coerce(raw, 'v7') : raw;
       result = setNestedValue(result, entry.v7, value);
     }
   }
@@ -297,12 +494,28 @@ export function extractV9CompatibleFields(
 ): Record<string, unknown> {
   let result: Record<string, unknown> = {};
   for (const entry of PCF_CROSS_VERSION_FIELD_MAP) {
-    const value = getNestedValue(v7Data, entry.v7);
-    if (value !== undefined) {
+    const raw = getNestedValue(v7Data, entry.v7);
+    if (raw !== undefined) {
+      const value = entry.coerce ? entry.coerce(raw, 'v9') : raw;
       result = setNestedValue(result, entry.v9, value);
     }
   }
   return result;
+}
+
+/**
+ * Coerces a resolved value to the spelling valid for the target version, using
+ * the field's `coerce` hook (keyed by its v9 path). Returns the value unchanged
+ * when the field has no coercion rule. Used when applying a reconciliation
+ * choice to both versions so each one stores a valid representation.
+ */
+export function coerceCrossVersionValue(
+  fieldKey: string,
+  value: unknown,
+  target: 'v9' | 'v7',
+): unknown {
+  const entry = PCF_CROSS_VERSION_FIELD_MAP.find((e) => e.v9 === fieldKey);
+  return entry?.coerce ? entry.coerce(value, target) : value;
 }
 
 // ---------------------------------------------------------------------------
@@ -338,6 +551,9 @@ export function findCrossVersionDifferences(
 
     if (isEmpty(v9Value) && isEmpty(v7Value)) continue;
     if (deepEqual(v9Value, v7Value)) continue;
+    // Cross-version synonyms (e.g. Allocation Waste Incineration) are the same
+    // choice spelled differently — not a difference to reconcile.
+    if (entry.equivalent?.(v9Value, v7Value)) continue;
 
     differences.push({
       fieldKey: entry.v9,

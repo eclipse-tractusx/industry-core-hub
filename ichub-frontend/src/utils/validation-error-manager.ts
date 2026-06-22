@@ -109,6 +109,7 @@ export interface ValidationErrorResult {
 const ERROR_PATH_PATTERNS: RegExp[] = [
   // Full path patterns (with potential array indices)
   /^([\w.\[\]]+)\s+is required/i,
+  /^([\w.\[\]]+)\s+is not allowed/i,
   /^([\w.\[\]]+)\s+must be at least/i,
   /^([\w.\[\]]+)\s+must be at most/i,
   /^([\w.\[\]]+)\s+must be greater than/i,

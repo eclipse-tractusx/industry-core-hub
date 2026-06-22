@@ -774,6 +774,8 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                     manufacturerPartId={manufacturerPartId}
                     isSaving={isDualSaving}
                     onSaveBoth={async (v9Data, v7Data) => {
+                        // The synchronous catalog flow always provides both versions.
+                        if (!v9Data || !v7Data) return;
                         setIsDualSaving(true);
                         try {
                             await onDualSchemaComplete?.(v9Data, v7Data);

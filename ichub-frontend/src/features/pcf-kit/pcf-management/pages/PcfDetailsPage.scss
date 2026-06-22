@@ -25,6 +25,11 @@
 .pcf-details-page {
   height: 100%;
   width: 100%;
+  // Shrink within a flex-row app layout and clip horizontal overflow so the
+  // many-section tab bar never forces a page-level horizontal scrollbar.
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   position: relative;
 
   // Loading / error states share the same centered layout

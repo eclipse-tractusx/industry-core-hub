@@ -180,7 +180,13 @@
       "high": "Haute qualité — principalement des données mesurées",
       "medium": "Qualité moyenne — mélange de données primaires et secondaires",
       "low": "Faible qualité — principalement des données estimées/secondaires"
-    }
+    },
+    "incompleteTitle": "PCF incomplet",
+    "incompleteDescription": "Cette pièce ne dispose pas de la/des version(s) PCF suivante(s) : {{versions}}. Complétez-la pour que les deux versions soient disponibles.",
+    "completePcf": "Compléter le PCF",
+    "versionMissing": "Le PCF {{version}} n'a pas encore été téléversé.",
+    "createVersion": "Créer la version",
+    "uploadSuccess": "PCF téléversé"
   },
   "requests": {
     "title": "Demandes PCF",
@@ -493,6 +499,60 @@
     "fixErrors": "Corriger les erreurs",
     "tooltipFixErrors": "Ouvrir l'éditeur pour corriger les erreurs de validation",
     "showResolved": "Afficher {{count}} résolus",
-    "hideResolved": "Masquer les résolus ({{count}})"
+    "hideResolved": "Masquer les résolus ({{count}})",
+    "versionState": {
+      "NO_EXISTE": "NON TÉLÉVERSÉ",
+      "PENDIENTE": "TÉLÉVERSEMENT EN ATTENTE",
+      "SUBIDO": "TÉLÉVERSÉ"
+    },
+    "versionStateHint": {
+      "NO_EXISTE": "{{version}} n'a pas encore été créé",
+      "PENDIENTE": "{{version}} est prêt et sera téléversé lors de l'enregistrement",
+      "SUBIDO": "{{version}} est stocké sur le backend"
+    },
+    "saveResult": {
+      "uploaded": "téléversé avec succès",
+      "updated": "mis à jour avec succès",
+      "skipped": "aucune modification — ignoré",
+      "error": "n'a pas pu être enregistré"
+    },
+    "savePartialHint": "Certaines versions ont échoué. Corrigez le problème et cliquez à nouveau sur Enregistrer — seules les versions en attente seront réessayées.",
+    "saveFailed": "Échec de l'enregistrement",
+    "retrySave": "Réessayer l'enregistrement",
+    "individualReconcileHint": "Mise à jour individuelle : examinez ci-dessous les champs partagés avec l'autre version et décidez si elle doit aussi être mise à jour."
+  },
+  "overview": {
+    "title": "Aperçu de l'empreinte carbone",
+    "subtitle": "Données représentatives partagées par les deux versions de PCF",
+    "consistent": "Versions cohérentes",
+    "inconsistent": "Versions différentes",
+    "emissions": {
+      "title": "Répartition des émissions",
+      "fossil": "GES fossiles",
+      "biogenicNonCo2": "Biogénique hors CO₂",
+      "biogenicUptake": "Absorption biogénique",
+      "luc": "Changement d'usage des sols",
+      "aircraft": "GES aériens"
+    },
+    "stages": {
+      "title": "Étapes du cycle de vie",
+      "production": "Production",
+      "distribution": "Distribution",
+      "packaging": "Emballage"
+    },
+    "compare": {
+      "title": "v9.0.0 vs v7.0.0",
+      "match": "Les deux versions indiquent la même valeur",
+      "mismatch": "Les deux versions indiquent des valeurs différentes"
+    },
+    "quality": {
+      "title": "Qualité des données"
+    },
+    "dqr": {
+      "tech": "Technologique",
+      "temporal": "Temporelle",
+      "geo": "Géographique",
+      "hint": "Note de qualité des données : 1 (meilleure) – 5 (pire)"
+    }
   }
 }

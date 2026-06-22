@@ -22,14 +22,14 @@
  ********************************************************************************/
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Snackbar } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { getSchemaByNamespaceAndVersion, SchemaDefinition } from '@/schemas';
 import { createSchemaKey } from '@/schemas/schemaLoader';
 import SubmodelCreator from '@/components/submodel-creation/SubmodelCreator';
-import { getPcfByManufacturerPartId, updatePcfAndGetParticipants, notifyParticipants, DEFAULT_PCF_POLICIES } from '../../services/pcfApi';
+import { getPcfByManufacturerPartId, updatePcfAndGetParticipants, uploadPcf, notifyParticipants, DEFAULT_PCF_POLICIES, type PcfVersion } from '../../services/pcfApi';
 import { detectPcfVersion } from '../utils/pcfVersionDetector';
 import { ParticipantSelectionDialog } from '../components';
 import { getPcfExchangePoliciesConfig } from '@/services/EnvironmentService';
@@ -37,6 +37,13 @@ import { generatePoliciesFromDefinition } from '@/features/industry-core-kit/par
 import './PcfEditPage.scss';
 
 const PCF_NAMESPACE = 'io.catenax.pcf';
+
+/** Normalize a `?version=` query value to the API's PcfVersion key, or null. */
+const toPcfVersionKey = (raw: string | null): PcfVersion | null => {
+  if (!raw) return null;
+  const v = raw.startsWith('v') ? raw : `v${raw}`;
+  return v === 'v9.0.0' || v === 'v7.0.0' ? (v as PcfVersion) : null;
+};
 
 /**
  * PCF edit page — opens the shared SubmodelCreator (full-screen dialog) pre-populated
@@ -48,7 +55,12 @@ const PCF_NAMESPACE = 'io.catenax.pcf';
 const PcfEditPage: React.FC = () => {
   const { manufacturerPartId } = useParams<{ manufacturerPartId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('pcf');
+
+  // Version to edit, from the ?version= query param (e.g. "9.0.0" / "7.0.0").
+  // Drives both the GET (which slot to load) and the PUT (which slot to update).
+  const requestedVersion = toPcfVersionKey(searchParams.get('version'));
 
   // PCF schema — resolved after data loads, matching the actual version of the stored PCF
   const [pcfSchema, setPcfSchema] = useState<SchemaDefinition | undefined>(undefined);
@@ -57,6 +69,9 @@ const PcfEditPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<Record<string, unknown> | null>(null);
+  // Create mode: the requested version slot is empty on the backend, so saving
+  // POSTs (uploads) a new submodel instead of PUT-updating an existing one.
+  const [isCreateMode, setIsCreateMode] = useState(false);
 
   // --------------- Save / Notify state ---------------
   const [isSaving, setIsSaving] = useState(false);
@@ -72,16 +87,27 @@ const PcfEditPage: React.FC = () => {
       setIsLoading(true);
       setLoadError(null);
       try {
-        const raw = await getPcfByManufacturerPartId(manufacturerPartId);
+        const raw = await getPcfByManufacturerPartId(manufacturerPartId, requestedVersion ?? undefined);
         if (!raw) {
+          // No stored data for this slot. With an explicit version we switch to
+          // create mode (empty form → upload); without one it's a genuine error.
+          if (requestedVersion) {
+            const version = requestedVersion.replace(/^v/, '');
+            setPcfSchema(getSchemaByNamespaceAndVersion(PCF_NAMESPACE, version));
+            setInitialData({});
+            setIsCreateMode(true);
+            return;
+          }
           setLoadError(t('error.pcfNotFound', 'PCF data not found for this part.'));
           return;
         }
-        // Detect the actual schema version and use it — no conversion, edit in native format
-        const version = detectPcfVersion(raw);
+        // Use the requested version when provided; otherwise detect from shape.
+        // Edit in native format — no cross-version conversion.
+        const version = requestedVersion ? requestedVersion.replace(/^v/, '') : detectPcfVersion(raw);
         const schema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, version);
         setPcfSchema(schema);
         setInitialData(raw as Record<string, unknown>);
+        setIsCreateMode(false);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : t('error.failedToLoadPcf'));
       } finally {
@@ -89,7 +115,7 @@ const PcfEditPage: React.FC = () => {
       }
     };
     load();
-  }, [manufacturerPartId, t]);
+  }, [manufacturerPartId, requestedVersion, t]);
 
   // Governance policies — same logic as PcfManagementPage
   const governancePolicies = useMemo(() => {
@@ -106,7 +132,15 @@ const PcfEditPage: React.FC = () => {
       if (!manufacturerPartId) return;
       setIsSaving(true);
       try {
-        const result = await updatePcfAndGetParticipants(manufacturerPartId, submodelData);
+        if (isCreateMode) {
+          // New slot → upload, then return to the management page (no notify,
+          // since a brand-new PCF has no prior interested participants).
+          await uploadPcf(manufacturerPartId, submodelData, requestedVersion ?? undefined);
+          setSnackbar({ open: true, message: t('management.uploadSuccess', 'PCF uploaded'), severity: 'success' });
+          navigate('/pcf/management');
+          return;
+        }
+        const result = await updatePcfAndGetParticipants(manufacturerPartId, submodelData, requestedVersion ?? undefined);
         const bpns = Array.isArray(result) ? result : [];
         setParticipantBpns(bpns);
         setIsParticipantDialogOpen(true);
@@ -117,7 +151,7 @@ const PcfEditPage: React.FC = () => {
         setIsSaving(false);
       }
     },
-    [manufacturerPartId]
+    [manufacturerPartId, requestedVersion, isCreateMode, navigate, t]
   );
 
   // --------------- Notify participants → navigate home ---------------

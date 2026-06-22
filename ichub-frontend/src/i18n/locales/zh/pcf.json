@@ -180,7 +180,13 @@
       "high": "高质量 — 主要是测量数据",
       "medium": "中等质量 — 原始数据和辅助数据的混合",
       "low": "低质量 — 主要是估计/辅助数据"
-    }
+    },
+    "incompleteTitle": "PCF 不完整",
+    "incompleteDescription": "此零件缺少以下 PCF 版本：{{versions}}。请将其补全以使两个版本都可用。",
+    "completePcf": "补全 PCF",
+    "versionMissing": "PCF {{version}} 尚未上传。",
+    "createVersion": "创建版本",
+    "uploadSuccess": "PCF 已上传"
   },
   "requests": {
     "title": "PCF请求",
@@ -493,6 +499,60 @@
     "fixErrors": "修复错误",
     "tooltipFixErrors": "打开编辑器以修复验证错误",
     "showResolved": "显示 {{count}} 个已解决",
-    "hideResolved": "隐藏已解决 ({{count}})"
+    "hideResolved": "隐藏已解决 ({{count}})",
+    "versionState": {
+      "NO_EXISTE": "未上传",
+      "PENDIENTE": "待上传",
+      "SUBIDO": "已上传"
+    },
+    "versionStateHint": {
+      "NO_EXISTE": "{{version}} 尚未创建",
+      "PENDIENTE": "{{version}} 已就绪，将在保存时上传",
+      "SUBIDO": "{{version}} 已存储在后端"
+    },
+    "saveResult": {
+      "uploaded": "上传成功",
+      "updated": "更新成功",
+      "skipped": "无更改 — 已跳过",
+      "error": "无法保存"
+    },
+    "savePartialHint": "部分版本失败。请修复问题后再次点击保存 — 仅会重试待处理的版本。",
+    "saveFailed": "保存失败",
+    "retrySave": "重试保存",
+    "individualReconcileHint": "单独更新：请查看下方与另一版本共享的字段，并决定是否也需要更新它。"
+  },
+  "overview": {
+    "title": "碳足迹概览",
+    "subtitle": "两个 PCF 版本共享的代表性数据",
+    "consistent": "版本一致",
+    "inconsistent": "版本不一致",
+    "emissions": {
+      "title": "排放明细",
+      "fossil": "化石温室气体",
+      "biogenicNonCo2": "生物源（非 CO₂）",
+      "biogenicUptake": "生物源吸收",
+      "luc": "土地利用变化",
+      "aircraft": "航空温室气体"
+    },
+    "stages": {
+      "title": "生命周期阶段",
+      "production": "生产",
+      "distribution": "配送",
+      "packaging": "包装"
+    },
+    "compare": {
+      "title": "v9.0.0 对比 v7.0.0",
+      "match": "两个版本报告相同的值",
+      "mismatch": "两个版本报告不同的值"
+    },
+    "quality": {
+      "title": "数据质量"
+    },
+    "dqr": {
+      "tech": "技术",
+      "temporal": "时间",
+      "geo": "地理",
+      "hint": "数据质量评级：1（最佳）– 5（最差）"
+    }
   }
 }

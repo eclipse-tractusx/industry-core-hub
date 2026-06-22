@@ -149,6 +149,9 @@
     "uploadDescription": "Tu pieza del catálogo está registrada. Sube datos PCF para habilitar el seguimiento y compartición de la huella de carbono.",
     "uploading": "Subiendo...",
     "uploadButton": "Subir Datos PCF",
+    "incompleteTitle": "PCF incompleto",
+    "incompleteDescription": "A esta pieza le falta(n) la(s) versión(es) PCF: {{versions}}. Complétala para que ambas versiones estén disponibles.",
+    "completePcf": "Completar PCF",
     "pcfExclBiogenic": "PCF (excl. biogénico)",
     "pcfInclBiogenic": "PCF (incl. biogénico)",
     "primaryData": "Datos Primarios",
@@ -180,7 +183,10 @@
       "high": "Alta calidad — principalmente datos medidos",
       "medium": "Calidad media — mezcla de datos primarios y secundarios",
       "low": "Baja calidad — principalmente datos estimados/secundarios"
-    }
+    },
+    "versionMissing": "PCF {{version}} aún no se ha subido.",
+    "createVersion": "Crear versión",
+    "uploadSuccess": "PCF subido"
   },
   "partInfoHeader": {
     "viewDetails": "Haz clic para ver los detalles de la pieza",
@@ -493,6 +499,60 @@
     "fixErrors": "Gestionar Errores",
     "tooltipFixErrors": "Abrir editor para corregir los errores de validación",
     "showResolved": "Mostrar {{count}} resueltos",
-    "hideResolved": "Ocultar resueltos ({{count}})"
+    "hideResolved": "Ocultar resueltos ({{count}})",
+    "versionState": {
+      "NO_EXISTE": "NO EXISTE",
+      "PENDIENTE": "PENDIENTE DE SUBIR",
+      "SUBIDO": "SUBIDO"
+    },
+    "versionStateHint": {
+      "NO_EXISTE": "{{version}} aún no se ha creado",
+      "PENDIENTE": "{{version}} está lista y se subirá al guardar",
+      "SUBIDO": "{{version}} está almacenada en el backend"
+    },
+    "saveResult": {
+      "uploaded": "subida correctamente",
+      "updated": "actualizada correctamente",
+      "skipped": "sin cambios — omitida",
+      "error": "no se pudo guardar"
+    },
+    "savePartialHint": "Algunas versiones fallaron. Corrige el problema y pulsa Guardar de nuevo — solo se reintentará(n) la(s) versión(es) pendiente(s).",
+    "saveFailed": "Error al guardar",
+    "retrySave": "Reintentar guardado",
+    "individualReconcileHint": "Actualización individual: revisa abajo los campos compartidos con la otra versión y decide si también debe actualizarse."
+  },
+  "overview": {
+    "title": "Resumen de huella de carbono",
+    "subtitle": "Datos representativos compartidos por ambas versiones de PCF",
+    "consistent": "Versiones consistentes",
+    "inconsistent": "Las versiones difieren",
+    "emissions": {
+      "title": "Desglose de emisiones",
+      "fossil": "GEI fósiles",
+      "biogenicNonCo2": "Biogénicas no-CO₂",
+      "biogenicUptake": "Captura biogénica",
+      "luc": "Cambio uso del suelo",
+      "aircraft": "GEI aéreos"
+    },
+    "stages": {
+      "title": "Etapas del ciclo de vida",
+      "production": "Producción",
+      "distribution": "Distribución",
+      "packaging": "Embalaje"
+    },
+    "compare": {
+      "title": "v9.0.0 vs v7.0.0",
+      "match": "Ambas versiones reportan el mismo valor",
+      "mismatch": "Las dos versiones reportan valores distintos"
+    },
+    "quality": {
+      "title": "Calidad del dato"
+    },
+    "dqr": {
+      "tech": "Tecnológica",
+      "temporal": "Temporal",
+      "geo": "Geográfica",
+      "hint": "Calificación de calidad del dato: 1 (mejor) – 5 (peor)"
+    }
   }
 }

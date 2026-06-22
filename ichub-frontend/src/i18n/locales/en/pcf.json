@@ -149,6 +149,9 @@
     "uploadDescription": "Your catalog part is registered. Upload PCF data to enable carbon footprint tracking and sharing.",
     "uploading": "Uploading...",
     "uploadButton": "Upload PCF Data",
+    "incompleteTitle": "Incomplete PCF",
+    "incompleteDescription": "This part is missing the following PCF version(s): {{versions}}. Complete it so both versions are available.",
+    "completePcf": "Complete PCF",
     "pcfExclBiogenic": "PCF (excl. biogenic)",
     "pcfInclBiogenic": "PCF (incl. biogenic)",
     "primaryData": "Primary Data",
@@ -180,7 +183,10 @@
       "high": "High quality — primarily measured data",
       "medium": "Medium quality — mix of primary and secondary data",
       "low": "Low quality — mostly estimated/secondary data"
-    }
+    },
+    "versionMissing": "PCF {{version}} has not been uploaded yet.",
+    "createVersion": "Create version",
+    "uploadSuccess": "PCF uploaded"
   },
   "requests": {
     "title": "PCF Requests",
@@ -493,6 +499,60 @@
     "fixErrors": "Fix Errors",
     "tooltipFixErrors": "Open editor to fix validation errors",
     "showResolved": "Show {{count}} resolved",
-    "hideResolved": "Hide resolved ({{count}})"
+    "hideResolved": "Hide resolved ({{count}})",
+    "versionState": {
+      "NO_EXISTE": "NOT UPLOADED",
+      "PENDIENTE": "PENDING UPLOAD",
+      "SUBIDO": "UPLOADED"
+    },
+    "versionStateHint": {
+      "NO_EXISTE": "{{version}} has not been created yet",
+      "PENDIENTE": "{{version}} is ready and will be uploaded on save",
+      "SUBIDO": "{{version}} is stored on the backend"
+    },
+    "saveResult": {
+      "uploaded": "uploaded successfully",
+      "updated": "updated successfully",
+      "skipped": "no changes — skipped",
+      "error": "could not be saved"
+    },
+    "savePartialHint": "Some versions failed. Fix the issue and click Save again — only the pending version(s) will be retried.",
+    "saveFailed": "Save failed",
+    "retrySave": "Retry Save",
+    "individualReconcileHint": "Individual update: review the fields shared with the other version below and decide whether it must be updated too."
+  },
+  "overview": {
+    "title": "Carbon Footprint Overview",
+    "subtitle": "Representative data shared across both PCF versions",
+    "consistent": "Versions consistent",
+    "inconsistent": "Versions differ",
+    "emissions": {
+      "title": "Emissions breakdown",
+      "fossil": "Fossil GHG",
+      "biogenicNonCo2": "Biogenic non-CO₂",
+      "biogenicUptake": "Biogenic uptake",
+      "luc": "Land use change",
+      "aircraft": "Aircraft GHG"
+    },
+    "stages": {
+      "title": "Lifecycle stages",
+      "production": "Production",
+      "distribution": "Distribution",
+      "packaging": "Packaging"
+    },
+    "compare": {
+      "title": "v9.0.0 vs v7.0.0",
+      "match": "Both versions report the same value",
+      "mismatch": "The two versions report different values"
+    },
+    "quality": {
+      "title": "Data quality"
+    },
+    "dqr": {
+      "tech": "Technological",
+      "temporal": "Temporal",
+      "geo": "Geographical",
+      "hint": "Data Quality Rating: 1 (best) – 5 (worst)"
+    }
   }
 }

@@ -46,13 +46,8 @@ import {
 import {
   CloudUpload as CloudUploadIcon,
   CheckCircle,
-  RadioButtonUnchecked,
-  Downloading,
-  Security,
-  VerifiedUser,
   ArrowBack,
   Refresh,
-  Search,
   Co2,
   DraftsOutlined,
   Inventory,
@@ -61,27 +56,33 @@ import {
   OpenInNew
 } from '@mui/icons-material';
 import { CatalogPartSearch, CatalogPartSearchResult, PartInfoHeader, DualPcfCreationWizard } from '../../shared/components';
+import type {
+  DualPcfVersionStatus,
+  DualSaveOutcome,
+  DualPcfInitialData,
+  PcfVersionSaveResult,
+} from '../../shared/components/DualPcfCreationWizard';
 import { ManagedPart } from '../../pcf-exchange/api/pcfExchangeApi';
 import type { PcfNestedData } from '../types/pcfNestedData';
 import { normalizePcfData } from '../utils/pcfNormalizer';
 import {
-  getPcfExcludingBiogenic,
-  getPcfIncludingBiogenic,
-  getPrimaryDataShare,
-  getGeographyCountry,
-  getReferencePeriod,
-  getSpecVersion,
-  getPcfVersion,
   getPcfStatus,
   mapPcfStatus,
 } from '../utils/pcfDataExtractors';
 import { PcfDetailsDialog, PcfEditDialog, PcfManagementSection } from '../../pcf-exchange/components';
+import { PcfOverviewPanel, PcfVersionBlock } from '../components';
+import type { PcfVersionKey } from '../components';
+import environmentService from '@/services/EnvironmentService';
 import {
-  getPcfByManufacturerPartId,
+  getPcfVersionStatus,
   uploadPcf,
   updatePcfAndGetParticipants,
   notifyParticipants,
-  DEFAULT_PCF_POLICIES
+  extractApiErrorDetail,
+  PCF_VERSIONS,
+  DEFAULT_PCF_POLICIES,
+  type PcfVersion,
+  type PcfVersionDataMap,
 } from '../../services/pcfApi';
 import { fetchCatalogPart } from '@/features/industry-core-kit/catalog-management/api';
 import { ParticipantSelectionDialog } from '../components';
@@ -118,22 +119,39 @@ const ColoredStepConnector = styled(StepConnector)(() => ({
 // Part readiness status
 type PartReadiness = 'draft' | 'registered-no-pcf' | 'has-pcf';
 
-// Loading steps for animation
-interface LoadingStep {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  description: string;
-}
-
-const LOADING_STEPS: LoadingStep[] = [
-  { id: 'search', label: 'loading.searchingPart', icon: Search, description: 'loading.searchingPartDesc' },
-  { id: 'pcf', label: 'loading.loadingPcf', icon: Downloading, description: 'loading.loadingPcfDesc' },
-  { id: 'validate', label: 'loading.validating', icon: Security, description: 'loading.validatingDesc' },
-  { id: 'complete', label: 'loading.ready', icon: VerifiedUser, description: 'loading.dataLoadedDesc' }
-];
-
 type PageState = 'search' | 'loading' | 'visualization' | 'error';
+
+/** Order-insensitive deep equality, used to detect whether a version's data
+ *  actually changed versus what is already stored on the backend. */
+const deepEqualData = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  if (typeof a !== typeof b) return false;
+  if (a === null || b === null || typeof a !== 'object') return a === b;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((v, i) => deepEqualData(v, b[i]));
+  }
+  const ao = a as Record<string, unknown>;
+  const bo = b as Record<string, unknown>;
+  const ak = Object.keys(ao);
+  const bk = Object.keys(bo);
+  if (ak.length !== bk.length) return false;
+  return ak.every((k) => Object.prototype.hasOwnProperty.call(bo, k) && deepEqualData(ao[k], bo[k]));
+};
+
+/** Builds the wizard's per-version payload from the wizard's v9/v7 form data.
+ *  A `null` side (individual-update flow without a counterpart) is omitted, so
+ *  only the supplied version(s) are persisted. */
+const buildVersionPayloads = (
+  v9Data: Record<string, unknown> | null,
+  v7Data: Record<string, unknown> | null,
+): Partial<Record<PcfVersion, Record<string, unknown>>> => {
+  const payloads: Partial<Record<PcfVersion, Record<string, unknown>>> = {};
+  // v9 is already the canonical nested shape; normalize is a safe pass-through.
+  if (v9Data) payloads['v9.0.0'] = normalizePcfData(v9Data) as unknown as Record<string, unknown>;
+  if (v7Data) payloads['v7.0.0'] = v7Data;
+  return payloads;
+};
 
 const PcfManagementPage: React.FC = () => {
   const { t } = useTranslation('pcf');
@@ -142,7 +160,6 @@ const PcfManagementPage: React.FC = () => {
 
   // Page state
   const [pageState, setPageState] = useState<PageState>('search');
-  const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Part readiness state
@@ -160,11 +177,22 @@ const PcfManagementPage: React.FC = () => {
   const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
   const [availableParticipants, setAvailableParticipants] = useState<string[]>([]);
 
+  // Per-version PCF state for the dual creation wizard (async flow).
+  // `remotePcfByVersion` holds the backend-stored payload per version (or null);
+  // `versionStatus` drives the NO EXISTE / PENDIENTE / SUBIDO header blocks.
+  const [remotePcfByVersion, setRemotePcfByVersion] = useState<PcfVersionDataMap | null>(null);
+  const [versionStatus, setVersionStatus] = useState<DualPcfVersionStatus | null>(null);
+
   // PCF loading state
   const [isPcfLoading, setIsPcfLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Feature flag (PCF_BACKWARD_COMPATIBILITY_SATURN): when true, PCF is managed
+  // as a dual pair (v9 + v7) through the wizard; when false, each version is
+  // managed individually through the submodel creator.
+  const pcfBackwardCompatibility = environmentService.getFeatureFlags().backwardCompatibility;
 
   // Governance policies — use PCF_EXCHANGE_POLICIES_CONFIG from environment,
   // falling back to the default PCF policies (same as PCF Request/Response flows).
@@ -175,6 +203,16 @@ const PcfManagementPage: React.FC = () => {
     }
     return DEFAULT_PCF_POLICIES;
   }, []);
+
+  // Pre-seed the dual wizard with whatever versions already exist on the backend
+  // so completing a missing version doesn't require re-entering the existing one.
+  const dualInitialData = useMemo<DualPcfInitialData | undefined>(() => {
+    if (!remotePcfByVersion) return undefined;
+    const data: DualPcfInitialData = {};
+    if (remotePcfByVersion['v9.0.0']) data['v9.0.0'] = remotePcfByVersion['v9.0.0']!;
+    if (remotePcfByVersion['v7.0.0']) data['v7.0.0'] = remotePcfByVersion['v7.0.0']!;
+    return Object.keys(data).length > 0 ? data : undefined;
+  }, [remotePcfByVersion]);
 
   // Parse part ID and manufacturer ID from URL
   const manufacturerIdFromUrl = params?.manufacturerId;
@@ -193,18 +231,16 @@ const PcfManagementPage: React.FC = () => {
   const loadPartData = async (manufacturerId: string, manufacturerPartId: string) => {
     setPageState('loading');
     setError(null);
-    setCurrentStep(0);
     setManufacturerId(manufacturerId);
 
     try {
-      // Step 1: Fetch catalog part details
-      setCurrentStep(0);
+      // Fetch catalog part details
       const catalogPart = await fetchCatalogPart(manufacturerId, manufacturerPartId);
-      
+
       // Determine part status based on catalog part data
       // API status: 0 = Draft, 1 = Pending, 2 = Registered, 3 = Shared
       const isDraft = catalogPart.status === 0;
-      
+
       if (isDraft) {
         // Part is in Draft status - not registered
         setPartReadiness('draft');
@@ -216,36 +252,38 @@ const PcfManagementPage: React.FC = () => {
           hasPcf: false,
           pcfStatus: 'DRAFT'
         };
-        setCurrentStep(3);
-        await new Promise(resolve => setTimeout(resolve, 300));
         setManagedPart(part);
         setRawPcfData(null);
         setPageState('visualization');
         return;
       }
 
-      // Step 2: Fetch PCF data for the part
-      setCurrentStep(1);
+      // Fetch PCF data for the part — per version, so we know whether the part
+      // has both versions, only one (incomplete), or none.
       let pcfResponse: { pcfData?: Record<string, unknown>; exists: boolean } = { exists: false };
-      
-      try {
-        const pcfResult = await getPcfByManufacturerPartId(manufacturerPartId);
-        if (pcfResult && Object.keys(pcfResult).length > 0) {
-          pcfResponse = { pcfData: pcfResult as Record<string, unknown>, exists: true };
-        }
-      } catch {
-        // No PCF data found for this part
-        pcfResponse = { exists: false };
-      }
 
-      // Step 3: Validate data
-      setCurrentStep(2);
-      await new Promise(resolve => setTimeout(resolve, 400));
+      let versionMap: PcfVersionDataMap = { 'v9.0.0': null, 'v7.0.0': null };
+      try {
+        versionMap = await getPcfVersionStatus(manufacturerPartId);
+      } catch {
+        versionMap = { 'v9.0.0': null, 'v7.0.0': null };
+      }
+      setRemotePcfByVersion(versionMap);
+      setVersionStatus({
+        'v9.0.0': { state: versionMap['v9.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+        'v7.0.0': { state: versionMap['v7.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+      });
+
+      // Use v9.0.0 as the canonical payload for display; fall back to v7.0.0.
+      const canonicalPcf = versionMap['v9.0.0'] ?? versionMap['v7.0.0'];
+      if (canonicalPcf && Object.keys(canonicalPcf).length > 0) {
+        pcfResponse = { pcfData: canonicalPcf as Record<string, unknown>, exists: true };
+      }
 
       // Create managed part from catalog part
       const hasPcf = pcfResponse.exists;
       const pcfDataRecord = pcfResponse.pcfData;
-      
+
       // Extract PCF values from raw data if available
       const pcfValue = pcfDataRecord?.pcfValue as number | undefined;
       const pcfValueUnit = (pcfDataRecord?.pcfValueUnit as string) || 'kg CO2e';
@@ -262,10 +300,6 @@ const PcfManagementPage: React.FC = () => {
         pcfValueUnit: hasPcf ? pcfValueUnit : undefined,
         pcfStatus: hasPcf ? 'PUBLISHED' : undefined
       };
-
-      // Step 4: Complete
-      setCurrentStep(3);
-      await new Promise(resolve => setTimeout(resolve, 300));
 
       if (!hasPcf) {
         setPartReadiness('registered-no-pcf');
@@ -319,39 +353,145 @@ const PcfManagementPage: React.FC = () => {
     }
   };
 
-  // Handle opening the PCF create dialog - for parts with no PCF
-  const handleOpenPcfCreateDialog = () => {
+  // Derive the wizard header status from the per-version backend payload map.
+  const buildVersionStatus = (map: PcfVersionDataMap): DualPcfVersionStatus => ({
+    'v9.0.0': { state: map['v9.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+    'v7.0.0': { state: map['v7.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+  });
+
+  // Open the dual creation wizard (PCF_BACKWARD_COMPATIBILITY_SATURN=true).
+  // Primes the per-version status so the wizard header reflects the backend.
+  const handleOpenPcfCreateDialog = async () => {
     setPcfCreateDialogOpen(true);
+    if (!managedPart) return;
+    try {
+      const map = await getPcfVersionStatus(managedPart.manufacturerPartId);
+      setRemotePcfByVersion(map);
+      setVersionStatus(buildVersionStatus(map));
+    } catch (err) {
+      console.error('Failed to load PCF version status:', err);
+      // Fall back to "unknown → not existing" so the wizard still works.
+      setVersionStatus({ 'v9.0.0': { state: 'NO_EXISTE' }, 'v7.0.0': { state: 'NO_EXISTE' } });
+    }
+  };
+
+  // Navigate to the version-aware details view (PcfDetailsPage reads ?version=).
+  const handleViewVersionDetails = (version: PcfVersionKey) => {
+    if (!managedPart) return;
+    const v = version === 'v9.0.0' ? '9.0.0' : '7.0.0';
+    navigate(
+      `/pcf/management/details/${encodeURIComponent(managedPart.manufacturerPartId)}?version=${v}`,
+    );
+  };
+
+  // Update/create a single version.
+  //   - dual mode (PCF_BACKWARD_COMPATIBILITY_SATURN=true) → open the dual
+  //     wizard, pre-seeded with both versions; the smart-save persists what
+  //     changed and lets the user reconcile shared data across versions.
+  //   - individual mode → edit ONLY the selected submodel through the
+  //     version-aware editor; no dual wizard, no cross-version reconciliation.
+  const handleUpdateVersion = (version: PcfVersionKey) => {
+    if (!managedPart) return;
+    if (pcfBackwardCompatibility) {
+      void handleOpenPcfCreateDialog();
+      return;
+    }
+    const v = version === 'v9.0.0' ? '9.0.0' : '7.0.0';
+    navigate(
+      `/pcf/management/edit/${encodeURIComponent(managedPart.manufacturerPartId)}?version=${v}`,
+    );
   };
 
   // Handle both PCF versions produced by the DualPcfCreationWizard (async flow).
-  // Both versions are uploaded to the versioned PCF endpoint so that the backend
-  // can store them as distinct submodel slots: v9.0.0 (canonical) and v7.0.0
-  // (backward-compatibility companion).
+  //
+  // Smart, per-version save against the version-aware provider endpoints:
+  //   - version missing on backend         → POST (upload)
+  //   - version present but data changed    → PUT  (update)
+  //   - version present and unchanged       → skip
+  // Each version is handled independently and its error is captured, so a
+  // partial failure (one published, one failing) only blocks the failing one.
+  // The wizard stays open on any error to allow a targeted retry; the page is
+  // only reloaded/closed on full success.
   const handleDualPcfCreated = async (
-    v9Data: Record<string, unknown>,
-    v7Data: Record<string, unknown>,
-  ) => {
-    if (!managedPart) return;
+    v9Data: Record<string, unknown> | null,
+    v7Data: Record<string, unknown> | null,
+  ): Promise<DualSaveOutcome> => {
+    const errorOutcome = (detail: string): DualSaveOutcome => ({
+      'v9.0.0': { status: 'error', detail },
+      'v7.0.0': { status: 'error', detail },
+    });
+    if (!managedPart) return errorOutcome('No part selected');
 
+    const partId = managedPart.manufacturerPartId;
     setIsUploading(true);
     try {
-      // v9: normalize to canonical nested form, then upload with version tag.
-      const normalizedV9 = normalizePcfData(v9Data) as unknown as Record<string, unknown>;
-      await uploadPcf(managedPart.manufacturerPartId, normalizedV9, 'v9.0.0');
+      // Re-read the backend truth so the decision uses the freshest state
+      // (handles retries after a previous partial save).
+      const remote = await getPcfVersionStatus(partId).catch(
+        () => remotePcfByVersion ?? ({ 'v9.0.0': null, 'v7.0.0': null } as PcfVersionDataMap),
+      );
+      const payloads = buildVersionPayloads(v9Data, v7Data);
 
-      // v7: send the raw wizard data (already in v7 schema shape) with version tag.
-      await uploadPcf(managedPart.manufacturerPartId, v7Data, 'v7.0.0');
+      // Versions not supplied this round (individual-update without a
+      // counterpart) are left untouched and reported as skipped.
+      const outcome = {
+        'v9.0.0': { status: 'skipped' } as PcfVersionSaveResult,
+        'v7.0.0': { status: 'skipped' } as PcfVersionSaveResult,
+      } as DualSaveOutcome;
 
-      // Refresh the page data to show the new PCF
-      if (manufacturerId) {
-        await loadPartData(manufacturerId, managedPart.manufacturerPartId);
+      for (const version of PCF_VERSIONS) {
+        const payload = payloads[version];
+        if (!payload) continue; // version not part of this save
+        const existing = remote[version];
+        try {
+          if (!existing) {
+            await uploadPcf(partId, payload, version);
+            outcome[version] = { status: 'uploaded' };
+          } else if (!deepEqualData(existing, payload)) {
+            await updatePcfAndGetParticipants(partId, payload, version);
+            outcome[version] = { status: 'updated' };
+          } else {
+            outcome[version] = { status: 'skipped' };
+          }
+        } catch (err) {
+          const { status, message } = extractApiErrorDetail(err);
+          outcome[version] = { status: 'error', detail: status ? `${status} — ${message}` : message };
+        }
       }
 
-      setPcfCreateDialogOpen(false);
-    } catch (err) {
-      console.error('Failed to upload PCF:', err);
-      throw err; // Re-throw to let the wizard surface the error
+      // Reflect the new state in the header blocks (preserve versions not saved).
+      setVersionStatus((prev) => {
+        const next: DualPcfVersionStatus = {
+          'v9.0.0': prev?.['v9.0.0'] ?? { state: remote['v9.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+          'v7.0.0': prev?.['v7.0.0'] ?? { state: remote['v7.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+        };
+        for (const version of PCF_VERSIONS) {
+          if (!payloads[version]) continue;
+          next[version] = outcome[version].status === 'error'
+            ? { state: 'PENDIENTE', error: outcome[version].detail }
+            : { state: 'SUBIDO' };
+        }
+        return next;
+      });
+      // Keep the local cache in sync for the next save decision (only the
+      // versions saved this round change; the others keep their stored value).
+      setRemotePcfByVersion({
+        'v9.0.0': payloads['v9.0.0'] && outcome['v9.0.0'].status !== 'error'
+          ? payloads['v9.0.0']!
+          : remote['v9.0.0'],
+        'v7.0.0': payloads['v7.0.0'] && outcome['v7.0.0'].status !== 'error'
+          ? payloads['v7.0.0']!
+          : remote['v7.0.0'],
+      });
+
+      const allOk = outcome['v9.0.0'].status !== 'error' && outcome['v7.0.0'].status !== 'error';
+      if (allOk) {
+        if (manufacturerId) {
+          await loadPartData(manufacturerId, partId);
+        }
+        setPcfCreateDialogOpen(false);
+      }
+      return outcome;
     } finally {
       setIsUploading(false);
     }
@@ -434,98 +574,23 @@ const PcfManagementPage: React.FC = () => {
     });
   };
 
-  // Render loading state
+  // Render loading state — a simple spinner while the part + PCF data load.
   const renderLoading = () => (
     <Box
       sx={{
         minHeight: 'calc(100vh - 68.8px)',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 2,
         px: { xs: 2, sm: 3, md: 4 }
       }}
     >
-      <Card
-        sx={{
-          maxWidth: '600px',
-          width: '100%',
-          background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '20px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
-        }}
-      >
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
-              {t('loading.title')}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'monospace' }}>
-              {partIdFromUrl && decodeURIComponent(partIdFromUrl)}
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-            {LOADING_STEPS.map((step, index) => {
-              const Icon = step.icon;
-              const isActive = index === currentStep;
-              const isCompleted = index < currentStep;
-              const isPending = index > currentStep;
-
-              return (
-                <React.Fragment key={step.id}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, opacity: isPending ? 0.4 : 1 }}>
-                    <Box
-                      sx={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: isCompleted
-                          ? `linear-gradient(135deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`
-                          : isActive
-                          ? alpha(PCF_PRIMARY, 0.2)
-                          : 'rgba(255, 255, 255, 0.05)',
-                        border: isActive ? `2px solid ${PCF_PRIMARY}` : 'none',
-                        ...(isActive && {
-                          animation: 'pulse 2s ease-in-out infinite',
-                          '@keyframes pulse': {
-                            '0%, 100%': { boxShadow: `0 0 0 0 ${alpha(PCF_PRIMARY, 0.4)}` },
-                            '50%': { boxShadow: `0 0 0 8px ${alpha(PCF_PRIMARY, 0)}` }
-                          }
-                        })
-                      }}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle sx={{ fontSize: 24, color: '#fff' }} />
-                      ) : isActive ? (
-                        <Icon sx={{ fontSize: 24, color: PCF_PRIMARY }} />
-                      ) : (
-                        <RadioButtonUnchecked sx={{ fontSize: 20, color: 'rgba(255, 255, 255, 0.3)' }} />
-                      )}
-                    </Box>
-                    <Typography variant="caption" sx={{ color: isActive || isCompleted ? '#fff' : 'rgba(255, 255, 255, 0.5)', fontWeight: isActive ? 600 : 500, mt: 1 }}>
-                      {t(step.label)}
-                    </Typography>
-                  </Box>
-                  {index < LOADING_STEPS.length - 1 && (
-                    <Box sx={{ height: 2, flex: 1, mx: 1, background: isCompleted ? `linear-gradient(90deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)` : 'rgba(255, 255, 255, 0.1)', position: 'relative', top: -18 }} />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button variant="outlined" onClick={handleBackToSearch} sx={{ borderColor: 'rgba(255, 255, 255, 0.2)', color: 'rgba(255, 255, 255, 0.7)', textTransform: 'none', px: 4, borderRadius: '10px' }}>
-              {t('common.cancel')}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+      <CircularProgress sx={{ color: PCF_PRIMARY }} size={44} />
+      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+        {t('loading.title')}
+      </Typography>
     </Box>
   );
 
@@ -896,7 +961,7 @@ const PcfManagementPage: React.FC = () => {
                           <Button
                             variant="contained"
                             startIcon={isUploading ? <CircularProgress size={18} sx={{ color: 'inherit' }} /> : <PlaylistAdd />}
-                            onClick={handleOpenPcfCreateDialog}
+                            onClick={() => handleOpenPcfCreateDialog()}
                             disabled={isUploading}
                             sx={{
                               px: 4,
@@ -917,8 +982,43 @@ const PcfManagementPage: React.FC = () => {
                 </Box>
               )}
 
-              {/* Has PCF Data — rendered inline inside this Card (no nested card) */}
-              {hasPcf && !isPcfLoading && managedPart && (
+              {/* Has PCF Data — per-version blocks (top) + combined overview.
+                   The two version blocks sit directly under the "PCF Data"
+                   header; the representative Carbon Footprint Overview follows. */}
+              {hasPcf && !isPcfLoading && managedPart && remotePcfByVersion && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {/* Top — one block per version, each with its own actions */}
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                      gap: 2,
+                    }}
+                  >
+                    {(['v9.0.0', 'v7.0.0'] as PcfVersionKey[]).map((version) => (
+                      <PcfVersionBlock
+                        key={version}
+                        version={version}
+                        data={remotePcfByVersion[version]}
+                        onViewDetails={() => handleViewVersionDetails(version)}
+                        onUpdate={() => handleUpdateVersion(version)}
+                        onCreate={() => handleUpdateVersion(version)}
+                        busy={isUploading}
+                      />
+                    ))}
+                  </Box>
+
+                  {/* Below — combined / representative overview with charts */}
+                  <PcfOverviewPanel
+                    v9Raw={remotePcfByVersion['v9.0.0']}
+                    v7Raw={remotePcfByVersion['v7.0.0']}
+                  />
+                </Box>
+              )}
+
+              {/* Fallback — part flagged as having PCF but the per-version map
+                   hasn't loaded yet (e.g. legacy single-payload path). */}
+              {hasPcf && !isPcfLoading && managedPart && !remotePcfByVersion && (
                 <PcfManagementSection
                   part={managedPart}
                   pcfData={rawPcfData}
@@ -959,13 +1059,19 @@ const PcfManagementPage: React.FC = () => {
           isLoading={isUpdating}
         />
 
-        {/* Create PCF Dialog — dual (v9 + v7) creation wizard for parts without PCF data */}
+        {/* Create PCF Dialog — dual (v9 + v7) creation wizard. Used both for parts
+            with no PCF and to complete a part that only has one version uploaded. */}
         <DualPcfCreationWizard
           open={pcfCreateDialogOpen}
-          onClose={() => !isUploading && setPcfCreateDialogOpen(false)}
+          onClose={() => {
+            if (isUploading) return;
+            setPcfCreateDialogOpen(false);
+          }}
           onSaveBoth={handleDualPcfCreated}
           manufacturerPartId={managedPart?.manufacturerPartId || ''}
           isSaving={isUploading}
+          versionStatus={versionStatus ?? undefined}
+          initialData={dualInitialData}
         />
       </Box>
     );

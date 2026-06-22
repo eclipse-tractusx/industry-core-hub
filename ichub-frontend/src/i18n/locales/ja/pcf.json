@@ -180,7 +180,13 @@
       "high": "高品質 — 主に実測データ",
       "medium": "中品質 — 一次データと二次データの混合",
       "low": "低品質 — 主に推定/二次データ"
-    }
+    },
+    "incompleteTitle": "PCF が不完全です",
+    "incompleteDescription": "この部品には次の PCF バージョンがありません: {{versions}}。両方のバージョンが利用できるように完成させてください。",
+    "completePcf": "PCF を完成",
+    "versionMissing": "PCF {{version}} はまだアップロードされていません。",
+    "createVersion": "バージョンを作成",
+    "uploadSuccess": "PCF をアップロードしました"
   },
   "requests": {
     "title": "PCFリクエスト",
@@ -493,6 +499,60 @@
     "fixErrors": "エラーを修正",
     "tooltipFixErrors": "エディタを開いて検証エラーを修正する",
     "showResolved": "{{count}}件の解決済みを表示",
-    "hideResolved": "解決済みを非表示 ({{count}})"
+    "hideResolved": "解決済みを非表示 ({{count}})",
+    "versionState": {
+      "NO_EXISTE": "未アップロード",
+      "PENDIENTE": "アップロード保留中",
+      "SUBIDO": "アップロード済み"
+    },
+    "versionStateHint": {
+      "NO_EXISTE": "{{version}} はまだ作成されていません",
+      "PENDIENTE": "{{version}} は準備完了で、保存時にアップロードされます",
+      "SUBIDO": "{{version}} はバックエンドに保存されています"
+    },
+    "saveResult": {
+      "uploaded": "正常にアップロードされました",
+      "updated": "正常に更新されました",
+      "skipped": "変更なし — スキップ",
+      "error": "保存できませんでした"
+    },
+    "savePartialHint": "一部のバージョンが失敗しました。問題を修正して再度保存をクリックしてください — 保留中のバージョンのみ再試行されます。",
+    "saveFailed": "保存に失敗しました",
+    "retrySave": "再保存",
+    "individualReconcileHint": "個別更新: 下記の他バージョンと共有するフィールドを確認し、そちらも更新が必要か判断してください。"
+  },
+  "overview": {
+    "title": "カーボンフットプリント概要",
+    "subtitle": "両 PCF バージョンで共有される代表的なデータ",
+    "consistent": "バージョン一致",
+    "inconsistent": "バージョン相違",
+    "emissions": {
+      "title": "排出量の内訳",
+      "fossil": "化石 GHG",
+      "biogenicNonCo2": "生物起源（CO₂ 以外）",
+      "biogenicUptake": "生物起源吸収",
+      "luc": "土地利用変化",
+      "aircraft": "航空 GHG"
+    },
+    "stages": {
+      "title": "ライフサイクル段階",
+      "production": "生産",
+      "distribution": "流通",
+      "packaging": "包装"
+    },
+    "compare": {
+      "title": "v9.0.0 対 v7.0.0",
+      "match": "両バージョンとも同じ値を報告",
+      "mismatch": "2 つのバージョンは異なる値を報告"
+    },
+    "quality": {
+      "title": "データ品質"
+    },
+    "dqr": {
+      "tech": "技術的",
+      "temporal": "時間的",
+      "geo": "地理的",
+      "hint": "データ品質評価: 1（最良）– 5（最悪）"
+    }
   }
 }

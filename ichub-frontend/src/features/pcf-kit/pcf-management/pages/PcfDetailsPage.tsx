@@ -22,13 +22,13 @@
  ********************************************************************************/
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, CircularProgress, Alert, Fab, Tooltip } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { BasePassportVisualization } from '@/features/eco-pass-kit/passport-consumption/passport-types/base/BasePassportVisualization';
 import { JsonSchema } from '@/features/eco-pass-kit/passport-consumption/types';
-import { getPcfByManufacturerPartId } from '../../services/pcfApi';
+import { getPcfByManufacturerPartId, type PcfVersion } from '../../services/pcfApi';
 import { PcfNestedData } from '../types/pcfNestedData';
 import { PcfSummaryCard } from '../components/header-cards/PcfSummaryCard';
 import { PcfCompanyCard } from '../components/header-cards/PcfCompanyCard';
@@ -40,6 +40,13 @@ import type { SchemaDefinition } from '@/schemas';
 import './PcfDetailsPage.scss';
 
 const PCF_NAMESPACE = 'io.catenax.pcf';
+
+/** Normalize a `?version=` query value to the API's PcfVersion key, or null. */
+const toPcfVersionKey = (raw: string | null): PcfVersion | null => {
+  if (!raw) return null;
+  const v = raw.startsWith('v') ? raw : `v${raw}`;
+  return v === 'v9.0.0' || v === 'v7.0.0' ? (v as PcfVersion) : null;
+};
 
 /**
  * Full-screen details view for a PCF (Product Carbon Footprint).
@@ -54,10 +61,20 @@ const PCF_NAMESPACE = 'io.catenax.pcf';
 const PcfDetailsPage: React.FC = () => {
   const { manufacturerPartId } = useParams<{ manufacturerPartId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation('pcf');
 
-  const [pcfData, setPcfData] = useState<PcfNestedData | null>(null);
+  // Requested version from the ?version= query param (e.g. "9.0.0" / "7.0.0").
+  const requestedVersion = toPcfVersionKey(searchParams.get('version'));
+
+  // The data passed to BasePassportVisualization. For v9 it is the canonical
+  // nested model; for v7 it is the raw flat payload (rendered against the v7
+  // schema directly, so the v7 structure is shown faithfully — not normalized).
+  const [pcfData, setPcfData] = useState<Record<string, unknown> | null>(null);
   const [pcfSchema, setPcfSchema] = useState<SchemaDefinition | null>(null);
+  // Whether the rendered data is in the canonical v9 nested shape (drives the
+  // v9-specific header cards, which assume the nested structure).
+  const [isV9Shape, setIsV9Shape] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,17 +85,42 @@ const PcfDetailsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const raw = await getPcfByManufacturerPartId(manufacturerPartId);
+        const raw = await getPcfByManufacturerPartId(
+          manufacturerPartId,
+          requestedVersion ?? undefined,
+        );
         if (!raw) {
           setError(t('error.pcfNotFound', 'PCF data not found for this part.'));
           return;
         }
-        const version = detectPcfVersion(raw);
-        const normalized = normalizePcfData(raw);
-        const schema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, version)
-          ?? getSchemaByNamespaceAndVersion(PCF_NAMESPACE, '9.0.0');
+        // Resolve the effective version: the explicit query param wins, else
+        // fall back to shape-based detection ("9.0.0" | "7.0.0").
+        const detected = detectPcfVersion(raw);
+        const effective = requestedVersion
+          ? requestedVersion.replace(/^v/, '')
+          : detected;
+
+        if (effective === '7.0.0') {
+          // v7: render the raw flat payload against the v7 schema so the v7
+          // structure is shown as-is. Fall back to v9 (normalized) only if the
+          // v7 schema is somehow unavailable.
+          const v7Schema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, '7.0.0');
+          if (v7Schema) {
+            setPcfData(raw);
+            setPcfSchema(v7Schema);
+            setIsV9Shape(false);
+            return;
+          }
+        }
+
+        // v9 (or fallback): normalize to the canonical nested model + v9 schema.
+        const normalized = normalizePcfData(raw) as unknown as Record<string, unknown>;
+        const schema =
+          getSchemaByNamespaceAndVersion(PCF_NAMESPACE, '9.0.0') ??
+          getSchemaByNamespaceAndVersion(PCF_NAMESPACE, detected);
         setPcfData(normalized);
         setPcfSchema(schema ?? null);
+        setIsV9Shape(true);
       } catch (err) {
         const message = err instanceof Error ? err.message : t('error.failedToLoadPcf');
         setError(message);
@@ -88,7 +130,7 @@ const PcfDetailsPage: React.FC = () => {
     };
 
     loadPcf();
-  }, [manufacturerPartId, t]);
+  }, [manufacturerPartId, requestedVersion, t]);
 
   if (isLoading) {
     return (
@@ -108,25 +150,34 @@ const PcfDetailsPage: React.FC = () => {
     );
   }
 
-  // Extract display names from the nested structure
+  // Extract display names — handle both the v9 nested shape and the v7 flat shape.
+  const nested = isV9Shape ? (pcfData as unknown as PcfNestedData) : null;
   const productName =
-    pcfData.companyAndProductInformation?.[0]?.productInformation?.[0]?.productNameCompany ??
+    nested?.companyAndProductInformation?.[0]?.productInformation?.[0]?.productNameCompany ??
     (pcfData.productName as string | undefined) ??
     manufacturerPartId;
 
-  const specVersion = pcfData.scopeOfPcfForm?.[0]?.specVersion;
+  const specVersion = isV9Shape
+    ? nested?.scopeOfPcfForm?.[0]?.specVersion
+    : (pcfData.specVersion as string | undefined);
+
+  // The version label shown in the header / edit link.
+  const versionLabel = isV9Shape ? '9.0.0' : '7.0.0';
 
   return (
     // Relative container so the FAB can be positioned fixed without layout issues
     <Box className="pcf-details-page">
       <BasePassportVisualization
         schema={pcfSchema.rawSchema as unknown as JsonSchema}
-        data={pcfData as unknown as Record<string, unknown>}
+        data={pcfData}
         passportId={manufacturerPartId ?? ''}
         onBack={() => navigate(-1)}
         passportName={productName}
         passportVersion={specVersion}
         config={{
+          // The header cards normalize their input internally, so the same
+          // representative summary renders for both the v9 nested shape and the
+          // raw v7 flat shape (which is shown faithfully in the tabs below).
           headerCards: [PcfSummaryCard, PcfCompanyCard, PcfPeriodCard],
           hideActionButtons: ['dataContract', 'exportPdf'],
         }}
@@ -137,7 +188,9 @@ const PcfDetailsPage: React.FC = () => {
         <Fab
           className="pcf-details-page__edit-fab"
           onClick={() =>
-            navigate(`/pcf/management/edit/${encodeURIComponent(manufacturerPartId ?? '')}`)
+            navigate(
+              `/pcf/management/edit/${encodeURIComponent(manufacturerPartId ?? '')}?version=${versionLabel}`,
+            )
           }
           aria-label={t('management.update', 'Update PCF')}
         >

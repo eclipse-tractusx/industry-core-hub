@@ -31,6 +31,7 @@
 
 import { interpretJSONSchema, JSONSchema } from './json-schema-interpreter';
 import { SchemaDefinition, SchemaMetadata } from './index';
+import { buildAjvValidator } from './ajv-validator';
 
 /**
  * Extended JSONSchema type to include SAMM aspect model URN
@@ -115,15 +116,23 @@ export function loadSchema(
         ...customMetadata
     };
     
-    // Interpret the JSON schema to generate form fields and validation
+    // Interpret the JSON schema to generate form fields and (legacy) validation
     const interpreted = interpretJSONSchema(jsonSchema);
-    
+
+    // Prefer real JSON-Schema validation (Ajv) against the canonical schema so the
+    // frontend rejects exactly what the backend rejects. Fall back to the legacy
+    // interpreter-based validator only if the schema cannot be compiled by Ajv.
+    // Both return the same { isValid, errors: string[] } contract and the same
+    // error-string shape, so the SubmodelCreator's error highlighting / ErrorViewer
+    // and the Schema Rules view keep working unchanged.
+    const ajvValidate = buildAjvValidator(jsonSchema as unknown as Record<string, unknown>);
+
     return {
         metadata,
         formFields: interpreted.formFields,
         properties: jsonSchema.properties, // Store schema properties for dynamic section detection
         createDefault: interpreted.createDefault,
-        validate: interpreted.validate,
+        validate: ajvValidate ?? interpreted.validate,
         rawSchema: jsonSchema as unknown as Record<string, unknown>,
     };
 }

@@ -327,12 +327,18 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
   });
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         height: '100%',
         width: '100%',
-        display: 'flex', 
-        flexDirection: 'column', 
+        // Allow the column to shrink inside a flex-row layout (sidebar + content)
+        // and never let wide content (e.g. many section tabs) push the page into
+        // a horizontal scroll — the scrollable tab bar handles overflow itself.
+        minWidth: 0,
+        maxWidth: '100%',
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: '#0d0d0d'
       }}
     >
@@ -701,6 +707,14 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
             pt: { xs: 1, sm: 1.5 },
             pb: { xs: 1, sm: 1.5 },
             px: { xs: 2, sm: 3, md: 4 },
+            maxWidth: '100%',
+              // Hide the native horizontal scrollbar — navigation is via the
+              // left/right scroll buttons only — while keeping the panel within
+              // the viewport width.
+              '& .MuiTabs-scroller': {
+                scrollbarWidth: 'none',
+                '&::-webkit-scrollbar': { display: 'none' },
+              },
               '& .MuiTabs-indicator': {
                 backgroundColor: '#667eea',
                 height: 3,

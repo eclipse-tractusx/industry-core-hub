@@ -71,6 +71,7 @@ import {
   extractV7CompatibleFields,
   setNestedValue,
   getConstraintWarning,
+  coerceCrossVersionValue,
   type FieldDifference,
 } from '../utils/pcfFieldMapper';
 import './DualPcfCreationWizard.scss';
@@ -81,15 +82,64 @@ const PCF_NAMESPACE = 'io.catenax.pcf';
 const PCF_V9 = '9.0.0';
 const PCF_V7 = '7.0.0';
 
+/** Version keys used for the per-version status blocks and save outcome. */
+export type DualPcfVersionKey = 'v9.0.0' | 'v7.0.0';
+
+/** Lifecycle state of a single PCF version slot, shown in the wizard header. */
+export type PcfVersionState = 'NO_EXISTE' | 'PENDIENTE' | 'SUBIDO';
+
+/** Backend-derived status for a version slot (+ last error, if any). */
+export interface PcfVersionSlotStatus {
+  state: PcfVersionState;
+  error?: string;
+}
+
+/** Per-version backend status driving the header blocks (async flow only). */
+export type DualPcfVersionStatus = Record<DualPcfVersionKey, PcfVersionSlotStatus>;
+
+/** Outcome of one version after a save attempt. */
+export interface PcfVersionSaveResult {
+  status: 'uploaded' | 'updated' | 'skipped' | 'error';
+  detail?: string;
+}
+
+/** Structured per-version result returned by `onSaveBoth` (async flow). */
+export type DualSaveOutcome = Record<DualPcfVersionKey, PcfVersionSaveResult>;
+
+/** Optional initial data to pre-seed the wizard (e.g. completing a missing version). */
+export type DualPcfInitialData = Partial<Record<DualPcfVersionKey, Record<string, unknown>>>;
+
 export interface DualPcfCreationWizardProps {
   open: boolean;
   onClose: () => void;
+  /**
+   * Persist both versions. Returning a {@link DualSaveOutcome} (async flow)
+   * lets the wizard render per-version success/error and keep itself open on
+   * partial failure. Returning `void` (sync flow) is treated as full success.
+   * Throwing surfaces a generic error banner.
+   */
   onSaveBoth: (
-    v9Data: Record<string, unknown>,
-    v7Data: Record<string, unknown>,
-  ) => Promise<void>;
+    v9Data: Record<string, unknown> | null,
+    v7Data: Record<string, unknown> | null,
+  ) => Promise<DualSaveOutcome | void>;
   manufacturerPartId?: string;
   isSaving?: boolean;
+  /**
+   * Per-version backend status. When provided, the header shows two status
+   * blocks (v9.0.0 / v7.0.0) with NO EXISTE / PENDIENTE / SUBIDO. Omit it for
+   * the synchronous catalog flow, which keeps the original behaviour.
+   */
+  versionStatus?: DualPcfVersionStatus;
+  /** Optional data to pre-seed the form (e.g. when completing a missing version). */
+  initialData?: DualPcfInitialData;
+  /**
+   * Individual-update entry point (PCF_BACKWARD_COMPATIBILITY_SATURN=false).
+   * When set, the wizard opens straight into the SubmodelCreator for that single
+   * version; after the user saves, it jumps directly to the Step 3 cross-version
+   * synchronization screen (skipping the two upload steps). Used to edit one
+   * submodel individually and then reconcile shared data with the other version.
+   */
+  focusVersion?: DualPcfVersionKey;
 }
 
 type WizardStep = 0 | 1 | 2;
@@ -271,6 +321,9 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
   onSaveBoth,
   manufacturerPartId,
   isSaving = false,
+  versionStatus,
+  initialData,
+  focusVersion,
 }) => {
   const { t } = useTranslation('pcf');
 
@@ -293,6 +346,10 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
   const [showResolved, setShowResolved] = useState(true);
   // Shows loading indicator when opening editor
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
+  // Per-version result of the last save attempt (async flow). null = not attempted.
+  const [saveOutcome, setSaveOutcome] = useState<DualSaveOutcome | null>(null);
+  // Generic save error (e.g. when onSaveBoth throws, as in the sync flow).
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const v9Schema = useMemo(() => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_V9), []);
   const v7Schema = useMemo(() => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_V7), []);
@@ -305,22 +362,44 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
 
   useEffect(() => {
     if (open) {
-      setActiveStep(0);
-      setV9FormData(null);
-      setV9LoadedVersion(null);
-      setV7FormData(null);
-      setV7LoadedVersion(null);
-      setEditorMode(null);
-      setEditorInitialData(undefined);
+      const seedV9 = initialData?.['v9.0.0'] ?? null;
+      const seedV7 = initialData?.['v7.0.0'] ?? null;
+      setV9FormData(seedV9);
+      setV9LoadedVersion(seedV9 ? PCF_V9 : null);
+      setV7FormData(seedV7);
+      setV7LoadedVersion(seedV7 ? PCF_V7 : null);
       setDifferences([]);
       setV9ValidationResult(null);
       setV7ValidationResult(null);
-      setV9DataSource(null);
-      setV7DataSource(null);
+      setV9DataSource(seedV9 ? 'file' : null);
+      setV7DataSource(seedV7 ? 'file' : null);
       setEditorAutoValidate(false);
       setShowResolved(true);
       setIsLoadingEditor(false);
+      setSaveOutcome(null);
+      setSaveError(null);
+
+      if (focusVersion) {
+        // Individual-update entry: open the chosen version's editor immediately
+        // and park the wizard on Step 3 behind it, so saving the submodel lands
+        // the user on the cross-version synchronization screen.
+        setActiveStep(2);
+        if (focusVersion === 'v9.0.0') {
+          setEditorInitialData(seedV9 ?? undefined);
+          setEditorMode('v9');
+        } else {
+          setEditorInitialData(
+            seedV7 ?? (seedV9 ? extractV7CompatibleFields(seedV9) : undefined),
+          );
+          setEditorMode('v7');
+        }
+      } else {
+        setActiveStep(0);
+        setEditorMode(null);
+        setEditorInitialData(undefined);
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Clear validation results when data is replaced — but NOT when coming from the form editor,
@@ -373,12 +452,16 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
   const handleEditorCapture = useCallback(async (data: Record<string, unknown>) => {
     // SubmodelCreator only calls this callback after successful validation, so we can
     // immediately mark the data as validated without requiring a separate Validate click.
+    let nextV9 = v9FormData;
+    let nextV7 = v7FormData;
     if (editorMode === 'v9') {
+      nextV9 = data;
       setV9FormData(data);
       setV9LoadedVersion(PCF_V9);
       setV9DataSource('editor');
       setV9ValidationResult({ valid: true, errors: [] });
     } else if (editorMode === 'v7') {
+      nextV7 = data;
       setV7FormData(data);
       setV7LoadedVersion(PCF_V7);
       setV7DataSource('editor');
@@ -387,7 +470,20 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
     setEditorAutoValidate(false);
     setIsLoadingEditor(false);
     setEditorMode(null);
-  }, [editorMode]);
+
+    // Individual-update flow: after editing a single submodel, jump straight to
+    // the Step 3 synchronization screen, recomputing the cross-version diff from
+    // the freshly edited data so the user can decide whether the other version
+    // must be updated too.
+    if (focusVersion) {
+      if (nextV9 && nextV7) {
+        setDifferences(findCrossVersionDifferences(nextV9, nextV7));
+      } else {
+        setDifferences([]);
+      }
+      setActiveStep(2);
+    }
+  }, [editorMode, focusVersion, v9FormData, v7FormData]);
 
   const refreshV7FromV9 = useCallback(() => {
     if (!v9FormData) return;
@@ -478,14 +574,18 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
 
   const resolveDifference = useCallback(
     (diff: FieldDifference, chosen: 'v9' | 'v7' | 'manual', manualValue?: unknown) => {
-      const resolvedValue =
+      const baseValue =
         chosen === 'v9' ? diff.v9Value : chosen === 'v7' ? diff.v7Value : manualValue;
-      setV9FormData((prev) => (prev ? setNestedValue(prev, diff.v9Path, resolvedValue) : prev));
-      setV7FormData((prev) => (prev ? setNestedValue(prev, diff.v7Path, resolvedValue) : prev));
+      // Write each version with its own valid spelling (e.g. Allocation Waste
+      // Incineration), so applying one choice never injects an out-of-enum value.
+      const v9Value = coerceCrossVersionValue(diff.fieldKey, baseValue, 'v9');
+      const v7Value = coerceCrossVersionValue(diff.fieldKey, baseValue, 'v7');
+      setV9FormData((prev) => (prev ? setNestedValue(prev, diff.v9Path, v9Value) : prev));
+      setV7FormData((prev) => (prev ? setNestedValue(prev, diff.v7Path, v7Value) : prev));
       setDifferences((prev) =>
         prev.map((d) =>
           d.fieldKey === diff.fieldKey
-            ? { ...d, chosenVersion: chosen, resolvedValue, manualValue }
+            ? { ...d, chosenVersion: chosen, resolvedValue: baseValue, manualValue }
             : d,
         ),
       );
@@ -495,11 +595,66 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
 
   const v9Validated = v9ValidationResult?.valid === true;
   const v7Validated = v7ValidationResult?.valid === true;
-  const step3Validated = v9Validated && v7Validated;
+  // In individual-update mode (focusVersion) with no counterpart stored yet,
+  // there is nothing to reconcile: only the focused version must be present and
+  // valid. Otherwise both versions are required (dual flow + sync reconciliation).
+  const focusOnly =
+    focusVersion != null &&
+    (focusVersion === 'v9.0.0' ? v7FormData == null : v9FormData == null);
+  const step3Validated = focusOnly
+    ? focusVersion === 'v9.0.0'
+      ? v9Validated
+      : v7Validated
+    : v9Validated && v7Validated;
   const unresolved = differences.filter((d) => !d.chosenVersion);
   const allResolved = unresolved.length === 0;
-  const canSave = v9FormData != null && v7FormData != null && allResolved && !isSaving && step3Validated;
+  // True when a save attempt left at least one version in error (keeps wizard open).
+  const hasSaveErrors = saveOutcome
+    ? (Object.values(saveOutcome) as PcfVersionSaveResult[]).some((r) => r.status === 'error')
+    : false;
+  const focusedDataPresent = focusOnly
+    ? focusVersion === 'v9.0.0'
+      ? v9FormData != null
+      : v7FormData != null
+    : v9FormData != null && v7FormData != null;
+  const canSave = focusedDataPresent && allResolved && !isSaving && step3Validated && !hasSaveErrors;
   const emptyLabel = t('dualWizard.empty');
+
+  // Derives the status shown in a header version block by combining the
+  // backend status (versionStatus prop), the last save outcome and whether the
+  // wizard already holds local data prepared for that version.
+  const displayVersionState = useCallback(
+    (key: DualPcfVersionKey): PcfVersionSlotStatus => {
+      const slot = versionStatus?.[key];
+      const localData = key === 'v9.0.0' ? v9FormData : v7FormData;
+      const outcome = saveOutcome?.[key];
+      if (outcome) {
+        if (outcome.status === 'error') return { state: 'PENDIENTE', error: outcome.detail };
+        if (outcome.status === 'uploaded' || outcome.status === 'updated' || outcome.status === 'skipped') {
+          return { state: 'SUBIDO' };
+        }
+      }
+      if (slot?.state === 'SUBIDO') return { state: 'SUBIDO' };
+      if (localData) return { state: 'PENDIENTE', error: slot?.error };
+      return { state: slot?.state ?? 'NO_EXISTE', error: slot?.error };
+    },
+    [versionStatus, saveOutcome, v9FormData, v7FormData],
+  );
+
+  const handleSave = useCallback(async () => {
+    // Dual flow needs both; individual-update flow may persist a single version
+    // when its counterpart doesn't exist yet (nothing to reconcile).
+    if (!focusVersion && (!v9FormData || !v7FormData)) return;
+    if (focusVersion && !v9FormData && !v7FormData) return;
+    setSaveOutcome(null);
+    setSaveError(null);
+    try {
+      const outcome = await onSaveBoth(v9FormData, v7FormData);
+      if (outcome) setSaveOutcome(outcome);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
+    }
+  }, [v9FormData, v7FormData, onSaveBoth, focusVersion]);
 
   // Maps validation error messages to fieldKeys whose label appears in the error text
   const differencesWithErrors = useMemo<Set<string>>(() => {
@@ -582,6 +737,39 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
     </Box>
   );
 
+  // -------- Per-version status block (header) --------
+  const VERSION_STATE_STYLE: Record<PcfVersionState, { color: string; icon: React.ReactNode }> = {
+    SUBIDO: { color: PCF_PRIMARY, icon: <CheckCircleIcon sx={{ fontSize: 14 }} /> },
+    PENDIENTE: { color: '#f59e0b', icon: <CloudUploadIcon sx={{ fontSize: 14 }} /> },
+    NO_EXISTE: { color: 'rgba(255,255,255,0.45)', icon: <InfoOutlinedIcon sx={{ fontSize: 14 }} /> },
+  };
+  const renderVersionBlock = (key: DualPcfVersionKey) => {
+    const { state, error } = displayVersionState(key);
+    const style = VERSION_STATE_STYLE[state];
+    const tip = error || t(`dualWizard.versionStateHint.${state}`, { version: key });
+    return (
+      <Tooltip key={key} title={tip} placement="bottom" arrow>
+        <Box sx={{
+          display: 'flex', flexDirection: 'column', gap: 0.25,
+          px: 1.25, py: 0.5, borderRadius: '8px',
+          border: `1px solid ${alpha(style.color, 0.35)}`,
+          background: alpha(style.color, 0.1),
+          minWidth: 96,
+        }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.6rem', fontWeight: 700, letterSpacing: 0.5 }}>
+            {key}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: style.color }}>
+            {style.icon}
+            <Typography sx={{ color: style.color, fontSize: '0.68rem', fontWeight: 700 }}>
+              {t(`dualWizard.versionState.${state}`)}
+            </Typography>
+          </Box>
+        </Box>
+      </Tooltip>
+    );
+  };
+
   return (
     <>
       <Dialog
@@ -614,6 +802,12 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                 </Typography>
               </Box>
             </Box>
+            {versionStatus && (
+              <Box sx={{ display: 'flex', gap: 1, mr: 1.5, alignItems: 'center' }}>
+                {renderVersionBlock('v9.0.0')}
+                {renderVersionBlock('v7.0.0')}
+              </Box>
+            )}
             <IconButton onClick={onClose}
               sx={{ color: 'rgba(255,255,255,0.55)', '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)', color: '#fff' } }}>
               <CloseIcon />
@@ -745,7 +939,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                             <ReplayIcon fontSize="small" />
                           </Button>
                         </Tooltip>
-                      ) : v9ValidationResult?.valid === false && v9DataSource === 'file' ? (
+                      ) : v9ValidationResult?.valid === false ? (
                         <Tooltip title={t('dualWizard.tooltipFixErrors')} placement="top">
                           <Button variant="contained" startIcon={isLoadingEditor ? <CircularProgress size={22} color="inherit" /> : <ErrorIcon />}
                             disabled={isLoadingEditor}
@@ -908,7 +1102,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                             <ReplayIcon fontSize="small" />
                           </Button>
                         </Tooltip>
-                      ) : v7ValidationResult?.valid === false && v7DataSource === 'file' ? (
+                      ) : v7ValidationResult?.valid === false ? (
                         <Tooltip title={t('dualWizard.tooltipFixErrors')} placement="top">
                           <Button variant="contained" startIcon={isLoadingEditor ? <CircularProgress size={22} color="inherit" /> : <ErrorIcon />}
                             disabled={isLoadingEditor}
@@ -946,6 +1140,72 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
               {/* ──────── Step 3: Review & Save ──────── */}
               {activeStep === 2 && (
                 <Box sx={{ pb: 2 }}>
+                  {/* Individual-update banner — explains the reconciliation step */}
+                  {focusVersion && (
+                    <Alert
+                      severity="info"
+                      icon={<InfoOutlinedIcon />}
+                      sx={{
+                        mb: 2,
+                        borderRadius: '10px',
+                        backgroundColor: alpha('#3b82f6', 0.1),
+                        border: `1px solid ${alpha('#3b82f6', 0.3)}`,
+                        '& .MuiAlert-icon': { color: '#3b82f6' },
+                        '& .MuiAlert-message': { color: 'rgba(255,255,255,0.85)' },
+                      }}
+                    >
+                      {t('dualWizard.individualReconcileHint')}
+                    </Alert>
+                  )}
+                  {/* Per-version save result — surfaces which version failed and why */}
+                  {saveOutcome && (
+                    <Box sx={{ mb: 2 }}>
+                      {(['v9.0.0', 'v7.0.0'] as const).map((key) => {
+                        const r = saveOutcome[key];
+                        if (!r) return null;
+                        const isError = r.status === 'error';
+                        const isSkipped = r.status === 'skipped';
+                        return (
+                          <Alert
+                            key={key}
+                            severity={isError ? 'error' : isSkipped ? 'info' : 'success'}
+                            icon={isError ? <ErrorIcon fontSize="inherit" /> : <CheckCircleIcon fontSize="inherit" />}
+                            sx={{
+                              mb: 1,
+                              borderRadius: '12px',
+                              bgcolor: isError ? 'rgba(239,68,68,0.08)' : isSkipped ? 'rgba(255,255,255,0.04)' : alpha(PCF_PRIMARY, 0.08),
+                              color: isError ? '#ef4444' : isSkipped ? 'rgba(255,255,255,0.7)' : PCF_PRIMARY,
+                              border: `1px solid ${isError ? 'rgba(239,68,68,0.22)' : isSkipped ? 'rgba(255,255,255,0.12)' : alpha(PCF_PRIMARY, 0.28)}`,
+                            }}
+                          >
+                            <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff' }}>
+                              {`PCF ${key} — ${t(`dualWizard.saveResult.${r.status}`)}`}
+                            </Typography>
+                            {isError && r.detail && (
+                              <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', mt: 0.5, wordBreak: 'break-word' }}>
+                                {r.detail}
+                              </Typography>
+                            )}
+                          </Alert>
+                        );
+                      })}
+                      {hasSaveErrors && (
+                        <Typography sx={{ fontSize: '0.78rem', color: '#f59e0b', mt: 0.5 }}>
+                          {t('dualWizard.savePartialHint')}
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Generic save error (e.g. when the save handler throws) */}
+                  {saveError && (
+                    <Alert severity="error" icon={<ErrorIcon fontSize="inherit" />}
+                      sx={{ mb: 2, borderRadius: '12px', bgcolor: 'rgba(239,68,68,0.08)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.22)' }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: '#fff' }}>{t('dualWizard.saveFailed')}</Typography>
+                      <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.8)', mt: 0.5, wordBreak: 'break-word' }}>{saveError}</Typography>
+                    </Alert>
+                  )}
+
                   {/* Step 3 validation errors — shown after validateBoth is triggered */}
                   {(v9ValidationResult?.valid === false || v7ValidationResult?.valid === false) && (
                     <Box sx={{ mb: 2 }}>
@@ -1111,7 +1371,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                       <Button variant="contained"
                         startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
                         disabled={!canSave}
-                        onClick={async () => { if (v9FormData && v7FormData) await onSaveBoth(v9FormData, v7FormData); }}
+                        onClick={handleSave}
                         sx={{ ...primarySx, minHeight: '40px' }}>
                         {isSaving ? t('dualWizard.saving') : t('dualWizard.save')}
                       </Button>
@@ -1137,8 +1397,8 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
       {editorMode === 'v9' && v9Schema && (
         <SubmodelCreator
           open
-          onClose={() => setEditorMode(null)}
-          onBack={() => setEditorMode(null)}
+          onClose={() => { setEditorMode(null); if (focusVersion) onClose(); }}
+          onBack={() => { setEditorMode(null); if (focusVersion) onClose(); }}
           onCreateSubmodel={handleEditorCapture}
           selectedSchema={v9Schema}
           schemaKey={createSchemaKey(v9Schema.metadata.semanticId)}
@@ -1153,8 +1413,8 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
       {editorMode === 'v7' && v7Schema && (
         <SubmodelCreator
           open
-          onClose={() => setEditorMode(null)}
-          onBack={() => setEditorMode(null)}
+          onClose={() => { setEditorMode(null); if (focusVersion) onClose(); }}
+          onBack={() => { setEditorMode(null); if (focusVersion) onClose(); }}
           onCreateSubmodel={handleEditorCapture}
           selectedSchema={v7Schema}
           schemaKey={createSchemaKey(v7Schema.metadata.semanticId)}

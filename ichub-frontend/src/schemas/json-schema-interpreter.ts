@@ -479,36 +479,49 @@ function processProperties(
  */
 function resolveSchemaProperty(property: JSONSchemaProperty, schema: JSONSchema): JSONSchemaProperty {
   let resolved = { ...property };
-  
-  // Resolve $ref
-  if (property.$ref) {
-    const refResolved = resolveRef(property.$ref, schema);
-    if (refResolved) {
-      resolved = { ...refResolved, ...resolved };
-      delete resolved.$ref;
-    }
+
+  // Resolve $ref, following chains (a referenced schema may itself be a $ref).
+  // IMPORTANT: the composition keywords below are checked on `resolved` (the
+  // dereferenced schema), not on the original `property`. SAMM schemas commonly
+  // reference an object that is defined via `allOf` (e.g. v7 CarbonFootprint →
+  // allOf → PcfEntity); the previous code inspected `property.allOf`, which is
+  // undefined for a plain `{ $ref }`, so the referenced `allOf` was dropped and
+  // the object rendered with no properties.
+  let refGuard = 0;
+  while (resolved.$ref && refGuard++ < 20) {
+    const currentRef = resolved.$ref;
+    const refResolved = resolveRef(currentRef, schema);
+    delete resolved.$ref;
+    if (!refResolved) break;
+    // Local overrides (e.g. description) win over the referenced definition.
+    resolved = { ...refResolved, ...resolved };
+    if (resolved.$ref === currentRef) break; // guard against self-reference
   }
-  
-  // Handle allOf - merge all schemas
-  if (property.allOf) {
-    for (const subSchema of property.allOf) {
+
+  // Handle allOf - merge all sub-schemas (each fully resolved).
+  if (resolved.allOf) {
+    const parts = resolved.allOf;
+    delete resolved.allOf;
+    for (const subSchema of parts) {
       const subResolved = resolveSchemaProperty(subSchema, schema);
       resolved = mergeSchemas(resolved, subResolved);
     }
   }
-  
-  // Handle oneOf - take the first schema for now (could be enhanced with UI selection)
-  if (property.oneOf && property.oneOf.length > 0) {
-    const firstOption = resolveSchemaProperty(property.oneOf[0], schema);
+
+  // Handle oneOf - take the first schema for now (could be enhanced with UI selection).
+  if (resolved.oneOf && resolved.oneOf.length > 0) {
+    const firstOption = resolveSchemaProperty(resolved.oneOf[0], schema);
+    delete resolved.oneOf;
     resolved = mergeSchemas(resolved, firstOption);
   }
-  
-  // Handle anyOf - similar to oneOf for now
-  if (property.anyOf && property.anyOf.length > 0) {
-    const firstOption = resolveSchemaProperty(property.anyOf[0], schema);
+
+  // Handle anyOf - similar to oneOf for now.
+  if (resolved.anyOf && resolved.anyOf.length > 0) {
+    const firstOption = resolveSchemaProperty(resolved.anyOf[0], schema);
+    delete resolved.anyOf;
     resolved = mergeSchemas(resolved, firstOption);
   }
-  
+
   return resolved;
 }
 
