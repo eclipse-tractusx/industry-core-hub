@@ -495,7 +495,7 @@ class ConnectorProviderManager:
                            base_url:str=None,
                            api_path:str = "/v1/addons/pcf-kit/footprintExchange", 
                            pcf_exchange_policy_config=dict, 
-                           dct_type:str="cx-taxo:PcfExchange", 
+                           dct_type:str="cx-taxo:PCFExchange", 
                            existing_asset_id:str=None,
                            version="1.2.0",
                            headers:dict=None) -> tuple[str, str, str, str]:

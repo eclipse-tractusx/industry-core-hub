@@ -40,7 +40,7 @@ from managers.metadata_database.manager import RepositoryManagerFactory
 from models.metadata_database.pcf import PcfExchangeDirection, PcfExchangeStatus, PcfExchangeType
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
 from utils.log_utils import sanitize_log_value as _s
-from utils.pcf_utils import PCF_EXCHANGE_ASSET_TYPE
+from utils.pcf_utils import DEFAULT_PCF_VERSION, PCF_EXCHANGE_ASSET_TYPE
 
 logger = LoggingManager.get_logger(__name__)
 
@@ -95,38 +95,75 @@ class PcfProvisionManager:
         list_policies: Optional[List[Dict]] = None,
     ) -> None:
         """
-        Send PCF data to the requesting party through the EDC dataspace connector.
+        Send PCF data to the requesting party via EDC with version negotiation.
 
-        Delegates to the management manager's generic send_via_edc method which 
-        handles connector discovery, EDR cleanup, contract negotiation, and PUT request.
+        Tries the v1.2.0 asset (``/footprintExchange``) first. If no v1.2.0
+        asset is available in the consumer's catalog, falls back to the
+        v1.1.1 legacy asset (``/productIds``). CX-0136 §6 requires the
+        highest compatible ``cx-common:version`` to be used.
 
         Args:
             request_id: The PCF request ID (used as the PUT path).
             requesting_bpn: BPN of the party that requested the PCF data.
             pcf_data: The validated PCF payload to send.
             is_update: Whether this is an update to a previously delivered response.
-            manufacturer_part_id: The manufacturer part ID (used for pcf_location).
+            manufacturer_part_id: The manufacturer part ID (used for pcf_location and v1.1.1 path).
             list_policies: Optional list of policies for contract negotiation.
 
         Raises:
             ValueError: If no connectors are found or the data transfer fails.
         """
-        put_path = f"/{request_id}"
-        if is_update:
-            put_path += "?update=true"
+        # --- Try v1.2.0 first ---
+        try:
+            put_path = f"/{request_id}"
+            if is_update:
+                put_path += "?update=true"
 
-        # Use the shared EDC method from management manager
+            management_manager.send_via_edc(
+                request_id=request_id,
+                target_bpn=requesting_bpn,
+                http_method="PUT",
+                path=put_path,
+                json_data=pcf_data,
+                list_policies=list_policies,
+                asset_type=PCF_EXCHANGE_ASSET_TYPE,
+                asset_version="1.2.0",
+            )
+            logger.info(f"[PCF Provision] Response {_s(request_id)} sent via v1.2.0 asset")
+
+            self._update_exchange_record(
+                request_id, is_update, manufacturer_part_id=manufacturer_part_id
+            )
+            return
+        except Exception as e:
+            logger.info(
+                f"[PCF Provision] v1.2.0 asset not available for BPN {_s(requesting_bpn)}, "
+                f"falling back to v1.1.1: {_s(e)}"
+            )
+
+        # --- Fall back to v1.1.1 (legacy /productIds) ---
+        if not manufacturer_part_id:
+            raise ValueError(
+                "Cannot fall back to v1.1.1 /productIds API: "
+                "manufacturerPartId is required but not provided."
+            )
+
+        put_path_legacy = f"/{manufacturer_part_id}?requestId={request_id}"
+        if is_update:
+            put_path_legacy += "&update=true"
+
         management_manager.send_via_edc(
             request_id=request_id,
             target_bpn=requesting_bpn,
             http_method="PUT",
-            path=put_path,
+            path=put_path_legacy,
             json_data=pcf_data,
             list_policies=list_policies,
             asset_type=PCF_EXCHANGE_ASSET_TYPE,
+            asset_version="1.1.1",
         )
+        logger.info(f"[PCF Provision] Response {_s(request_id)} sent via v1.1.1 (legacy) asset")
 
-        # Update exchange record after successful EDC transfer
         self._update_exchange_record(
             request_id, is_update, manufacturer_part_id=manufacturer_part_id
         )
@@ -137,6 +174,7 @@ class PcfProvisionManager:
         is_update: bool,
         message: Optional[str] = None,
         manufacturer_part_id: Optional[str] = None,
+        version: str = DEFAULT_PCF_VERSION,
     ) -> None:
         """
         Update the PCF exchange record in the metadata database.
@@ -152,12 +190,13 @@ class PcfProvisionManager:
             is_update: Whether this is an update to a previously delivered response.
             message: Optional message for the exchange record.
             manufacturer_part_id: The manufacturer part ID (used in pcf_location).
+            version: PCF schema version (default: ``"v9.0.0"``).
 
         Raises:
             ValueError: If the exchange record is not found or the update fails.
         """
         try:
-            pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+            pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=version)
             logger.info(f"Stored PCF data location for request {_s(request_id)}: {_s(pcf_location)}")
             
             if is_update:
@@ -182,7 +221,8 @@ class PcfProvisionManager:
     def upload_new_pcf(
             self,
             manufacturer_part_id: str,
-            pcf_data: Dict[str, Any]
+            pcf_data: Dict[str, Any],
+            version: str = DEFAULT_PCF_VERSION,
     ) -> None:
         """
         Upload a new PCF document to the submodel service for a given manufacturer part ID.
@@ -194,6 +234,8 @@ class PcfProvisionManager:
         Args:
             manufacturer_part_id: The manufacturer part ID to associate with the PCF data.
             pcf_data: The PCF payload to store.
+            version: PCF schema version (default: ``"v9.0.0"``).
+
         Raises:
             ValueError: If there is an error during upload to the submodel service.
         """
@@ -203,7 +245,8 @@ class PcfProvisionManager:
 
             management_manager.upload_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
-                pcf_data=pcf_data
+                pcf_data=pcf_data,
+                version=version,
             )
         except Exception as e:
             logger.error(f"Failed to upload PCF data for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
@@ -212,22 +255,29 @@ class PcfProvisionManager:
 
     def view_existing_pcf(
             self,
-            manufacturer_part_id: str
+            manufacturer_part_id: str,
+            version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         """
         View an existing PCF document from the submodel service for a given manufacturer part ID.
 
         Args:
             manufacturer_part_id: The manufacturer part ID to retrieve the PCF data for.
+            version: PCF schema version (default: ``"v9.0.0"``).
+
         Raises:
             ValueError: If there is an error during retrieval from the submodel service.
         """
         try:
             result = management_manager.get_pcf_data_by_manufacturer_part_id(
-                manufacturer_part_id=manufacturer_part_id
+                manufacturer_part_id=manufacturer_part_id,
+                version=version,
             )
             if result is None:
-                raise ValueError(f"No PCF data found for manufacturerPartId [{manufacturer_part_id}].")
+                raise ValueError(
+                    f"No PCF data found for manufacturerPartId [{manufacturer_part_id}] "
+                    f"version [{version}]."
+                )
             return result
         except Exception as e:
             logger.error(f"Failed to retrieve PCF data for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
@@ -236,15 +286,20 @@ class PcfProvisionManager:
     def update_pcf_and_get_participants(            
             self,
             manufacturer_part_id: str,
-            pcf_data: Dict[str, Any]
+            pcf_data: Dict[str, Any],
+            version: str = DEFAULT_PCF_VERSION,
     ) -> Dict[str, Any]:
         try:
             if pcf_data is None:
                 raise ValueError("PCF data payload is required for update.")
-            
+
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
+
             result = management_manager.update_pcf_data(
                 manufacturer_part_id=manufacturer_part_id,
-                pcf_data=pcf_data
+                pcf_data=pcf_data,
+                version=version,
             )
             return result
         except Exception as e:
@@ -271,6 +326,8 @@ class PcfProvisionManager:
         """
         try:
             pcf_data = self.view_existing_pcf(manufacturer_part_id=manufacturer_part_id)
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
             # Collect required data from DB first, then close session before EDC calls
             send_targets: List[Dict[str, str]] = []
             with RepositoryManagerFactory.create() as repo_manager:
@@ -293,7 +350,13 @@ class PcfProvisionManager:
             logger.error(f"Failed to confirm and send PCF update for manufacturerPartId [{_s(manufacturer_part_id)}]: {_s(e)}")
             raise ValueError(f"Failed to confirm and send PCF update: {str(e)}")
 
-    def list_provider_notifications(self, status: Optional[str] = None, offset: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
+    def list_provider_notifications(
+        self,
+        status: Optional[str] = None,
+        version: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
         """
         List all notifications related to a specific manufacturer part ID.
 
@@ -313,6 +376,7 @@ class PcfProvisionManager:
                         type=PcfExchangeType.RESPONSE,
                         direction=PcfExchangeDirection.OUTGOING,
                         status=status,
+                        version=version,
                         offset=offset,
                         limit=limit)
                 return [PcfExchangeModel.from_entity(n) for n in notifications]
@@ -347,6 +411,9 @@ class PcfProvisionManager:
                 entity_requesting_bpn = exchange_entity.requesting_bpn
                 entity_manufacturer_part_id = exchange_entity.manufacturer_part_id
                 entity_status = exchange_entity.status
+
+            # Gate: require both PCF versions before allowing publish/exchange
+            management_manager.check_both_versions_exist(entity_manufacturer_part_id, flow="asynchronous")
 
             # Perform EDC calls outside DB session
             pcf_data = management_manager.get_pcf_data_by_manufacturer_part_id(entity_manufacturer_part_id)
@@ -400,7 +467,8 @@ class PcfProvisionManager:
                 if not manufacturer_part_id:
                     raise ValueError(f"No manufacturerPartId associated with request {request_id}. Cannot retrieve PCF data for refresh.")
                 
-                pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+                entity_version = exchange_entity.version or DEFAULT_PCF_VERSION
+                pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=entity_version)
                 if not pcf_location:
                     raise ValueError(f"No PCF location found for request {request_id}. Cannot refresh PCF data.")
                 final_exchange = repo_manager.pcf_repository.update_pcf_location(

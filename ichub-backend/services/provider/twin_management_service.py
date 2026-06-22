@@ -61,6 +61,7 @@ from models.services.provider.twin_management import (
 )
 from models.metadata_database.provider.models import CatalogPart, EnablementServiceStack, Twin, BusinessPartner, TwinAspect, TwinAspectRegistration
 from tools.exceptions import NotFoundError, NotAvailableError
+from utils.pcf_utils import get_pcf_submodel_overrides
 
 from managers.config.log_manager import LoggingManager
 
@@ -753,11 +754,15 @@ class TwinManagementService:
         if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:               
             # Register the submodel in the DTR (if necessary)
             try:
+                # PCF submodels require CX-0136 mandated idShort + interface
+                pcf_overrides = get_pcf_submodel_overrides(db_twin_aspect.semantic_id) or {}
+
                 dtr_provider_manager.create_submodel_descriptor(
                     aas_id=db_twin.aas_id,
                     submodel_id=db_twin_aspect.submodel_id,
                     semantic_id=db_twin_aspect.semantic_id,
-                    connector_asset_id=asset_id
+                    connector_asset_id=asset_id,
+                    **pcf_overrides,
                 )
                 # Update the registration status to DTR_REGISTERED only on success
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value

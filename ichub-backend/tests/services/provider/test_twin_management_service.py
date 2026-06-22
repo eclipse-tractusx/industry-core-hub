@@ -52,7 +52,6 @@ mock_modules = [
     'managers.config.config_manager',
     'managers.config.log_manager',
     'managers.metadata_database.manager',
-    'tools.exceptions',
     'database',
     'connector',
 ]

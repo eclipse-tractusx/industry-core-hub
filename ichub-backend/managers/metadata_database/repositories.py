@@ -797,6 +797,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
         pcf_location: Optional[str] = None,
         correlation_id: Optional[str] = None,
         request_id: Optional[UUID] = None,
+        version: str = "v9.0.0",
     ) -> PcfExchangeEntity:
         """
         Creates a new PCF exchange record.
@@ -812,6 +813,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
             pcf_location: URI/path where PCF payload is stored.
             correlation_id: Optional external correlation ID.
             request_id: Optional UUID for the request (auto-generated if not provided).
+            version: PCF schema version (e.g. "v7.0.0", "v9.0.0").
 
         Returns:
             The created PcfExchangeEntity.
@@ -829,6 +831,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
             message=message,
             pcf_location=pcf_location,
             correlation_id=correlation_id,
+            version=version,
             created_at=now,
             updated_at=now,
         )
@@ -852,6 +855,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
         manufacturer_part_id: Optional[str] = None,
         customer_part_id: Optional[str] = None,
         type: Optional[PcfExchangeType] = None,
+        version: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[PcfExchangeEntity]:
@@ -865,6 +869,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
             manufacturer_part_id: Filter by manufacturer part ID (optional).
             customer_part_id: Filter by customer part ID (optional).
             type: Filter by exchange type (optional).
+            version: Filter by PCF schema version (optional).
             limit: Maximum number of results.
             offset: Number of results to skip.
 
@@ -910,6 +915,9 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
         if type:
             stmt = stmt.where(PcfExchangeEntity.type == type)
 
+        if version:
+            stmt = stmt.where(PcfExchangeEntity.version == version)
+
         # Order by newest first
         stmt = stmt.order_by(desc(PcfExchangeEntity.created_at)).offset(offset).limit(limit)
 
@@ -920,6 +928,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
         manufacturer_part_id: Optional[str] = None,
         customer_part_id: Optional[str] = None,
         status: Optional[PcfExchangeStatus] = None,
+        version: Optional[str] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[PcfExchangeEntity]:
@@ -930,6 +939,7 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
             manufacturer_part_id: Filter by manufacturer part ID (optional).
             customer_part_id: Filter by customer part ID (optional).
             status: Filter by exchange status (optional).
+            version: Filter by PCF schema version (optional).
             limit: Maximum number of results.
             offset: Number of results to skip.
 
@@ -946,6 +956,9 @@ class PCFRepository(BaseRepository[PcfExchangeEntity]):
 
         if status:
             stmt = stmt.where(PcfExchangeEntity.status == status)
+
+        if version:
+            stmt = stmt.where(PcfExchangeEntity.version == version)
 
         stmt = stmt.order_by(desc(PcfExchangeEntity.created_at)).offset(offset).limit(limit)
 

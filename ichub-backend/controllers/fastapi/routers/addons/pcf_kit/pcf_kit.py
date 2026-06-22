@@ -23,7 +23,7 @@
 
 from fastapi import APIRouter, Depends
 
-from .v1 import consumption, exchange, provision
+from .v1 import consumption, exchange, product_ids, provision
 
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
@@ -36,3 +36,4 @@ router = APIRouter(
 router.include_router(consumption.router)
 router.include_router(provision.router)
 router.include_router(exchange.router)
+router.include_router(product_ids.router)

@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -45,13 +46,28 @@ export interface ParsedSemanticId {
 }
 
 /**
- * Regular expression for parsing Catena-X semantic IDs
+ * Regular expression for parsing Catena-X semantic IDs.
+ * Captures the namespace portion after 'io.catenax.' so that existing addons
+ * referencing e.g. 'us_tariff_information' continue to work unchanged.
  */
-const SEMANTIC_ID_REGEX = /^urn:samm:io\.catenax\.([\w.]+):(\d+\.\d+\.\d+)#(\w+)$/;
+const CATENA_X_SEMANTIC_ID_REGEX = /^urn:samm:io\.catenax\.([\w.]+):(\d+\.\d+\.\d+)#(\w+)$/;
 
 /**
- * Parses a Catena-X semantic ID into its components
- * 
+ * Fallback regex for any other SAMM-based semantic ID (e.g. IDTA models).
+ * The full domain path (e.g. 'io.admin-shell.idta.batterypass.digital_nameplate')
+ * is used as the namespace so that addons can reference it directly.
+ */
+const GENERIC_SAMM_SEMANTIC_ID_REGEX = /^urn:samm:([\w.-]+):(\d+\.\d+\.\d+)#(\w+)$/;
+
+/**
+ * Parses a semantic ID into its components.
+ * Supports both Catena-X ('urn:samm:io.catenax.*') and generic SAMM URNs.
+ *
+ * For Catena-X IDs the namespace is the short name after 'io.catenax.'
+ * (e.g. 'us_tariff_information'), preserving backward compatibility.
+ * For all other SAMM IDs the full domain path is used as namespace
+ * (e.g. 'io.admin-shell.idta.batterypass.digital_nameplate').
+ *
  * @param semanticId - The semantic ID to parse
  * @returns Parsed components or null if invalid format
  * 
@@ -67,17 +83,27 @@ const SEMANTIC_ID_REGEX = /^urn:samm:io\.catenax\.([\w.]+):(\d+\.\d+\.\d+)#(\w+)
  * ```
  */
 export function parseSemanticId(semanticId: string): ParsedSemanticId | null {
-  const match = semanticId.match(SEMANTIC_ID_REGEX);
-  if (!match) {
-    return null;
+  const cxMatch = semanticId.match(CATENA_X_SEMANTIC_ID_REGEX);
+  if (cxMatch) {
+    return {
+      namespace: cxMatch[1],
+      version: cxMatch[2],
+      modelName: cxMatch[3],
+      fullUrn: semanticId
+    };
   }
-  
-  return {
-    namespace: match[1],
-    version: match[2],
-    modelName: match[3],
-    fullUrn: semanticId
-  };
+
+  const genericMatch = semanticId.match(GENERIC_SAMM_SEMANTIC_ID_REGEX);
+  if (genericMatch) {
+    return {
+      namespace: genericMatch[1],
+      version: genericMatch[2],
+      modelName: genericMatch[3],
+      fullUrn: semanticId
+    };
+  }
+
+  return null;
 }
 
 /**
