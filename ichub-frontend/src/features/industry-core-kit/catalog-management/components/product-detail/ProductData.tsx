@@ -64,6 +64,7 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const [copySnackbar, setCopySnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
+    const { t: tNotifications } = useTranslation('notifications');
     
     // Submodel viewer dialog state
     const [submodelViewerOpen, setSubmodelViewerOpen] = useState(false);
@@ -162,10 +163,10 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const handleCopy = async (text: string, fieldName: string) => {
         try {
             await navigator.clipboard.writeText(text);
-            setCopySnackbar({ open: true, message: tCommon('notifications.copiedToClipboard', { field: fieldName }), severity: 'success' });
+            setCopySnackbar({ open: true, message: tNotifications('copiedToClipboard', { field: fieldName }), severity: 'success' });
         } catch (error) {
             console.error('Failed to copy:', error);
-            setCopySnackbar({ open: true, message: tCommon('notifications.failedToCopy', { field: fieldName }), severity: 'error' });
+            setCopySnackbar({ open: true, message: tNotifications('failedToCopy', { field: fieldName }), severity: 'error' });
         }
     };
 

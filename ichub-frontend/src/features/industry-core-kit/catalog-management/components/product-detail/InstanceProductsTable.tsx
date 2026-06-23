@@ -98,20 +98,20 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
   const handleCopyWithFeedback = async (text: string, label: string, animationKey: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      
+
       // Trigger animation
       setCopyAnimations(prev => ({ ...prev, [animationKey]: true }));
-      
+
       // Show success notification
-      showSuccess(`${label} copied to clipboard!`);
-      
+      showSuccess(tCommon('notifications.copiedToClipboard', { field: label }));
+
       // Reset animation after 600ms
       setTimeout(() => {
         setCopyAnimations(prev => ({ ...prev, [animationKey]: false }));
       }, 600);
     } catch (err) {
       console.error(`Failed to copy ${label}:`, err);
-      showError(`Failed to copy ${label}`);
+      showError(tCommon('notifications.failedToCopy', { field: label }));
     }
   };
 

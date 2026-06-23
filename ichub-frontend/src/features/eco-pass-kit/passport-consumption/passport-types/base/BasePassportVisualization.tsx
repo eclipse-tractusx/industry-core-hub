@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -108,13 +109,13 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
   digitalTwinData,
   counterPartyId
 }) => {
+  const { t } = useTranslation('notifications');
   const [activeTab, setActiveTab] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [tabMenuAnchor, setTabMenuAnchor] = useState<null | HTMLElement>(null);
   const [digitalTwinModalOpen, setDigitalTwinModalOpen] = useState(false);
   const [headerCardsVisible, setHeaderCardsVisible] = useState(true);
-  
   // Parse schema and data
   const parser = useMemo(() => new SchemaParser(schema), [schema]);
   const tabs = useMemo(() => parser.generateTabs(data), [parser, data]);
@@ -127,10 +128,10 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
   // Handle copy to clipboard
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      setSnackbarMessage(`${label} copied to clipboard`);
+      setSnackbarMessage(t('copiedToClipboard', { field: label }));
       setSnackbarOpen(true);
     }).catch(() => {
-      setSnackbarMessage('Failed to copy');
+      setSnackbarMessage(t('failedToCopy', { field: label }));
       setSnackbarOpen(true);
     });
   };
@@ -697,23 +698,27 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
       >
         {/* Tabs - Desktop (Hidden on mobile) */}
         <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
-          variant="scrollable"
-          scrollButtons
-          allowScrollButtonsMobile
-          sx={{
-            pt: { xs: 1, sm: 1.5 },
-            pb: { xs: 1, sm: 1.5 },
-            px: { xs: 2, sm: 3, md: 4 },
-            maxWidth: '100%',
-              // Hide the native horizontal scrollbar — navigation is via the
-              // left/right scroll buttons only — while keeping the panel within
-              // the viewport width.
+          <Tabs
+            value={activeTab}
+            onChange={(_, newValue) => setActiveTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{
+              pt: { xs: 1, sm: 1.5 },
+              pb: { xs: 1, sm: 1.5 },
+              // No px on the root — scroll buttons are flex siblings inside this
+              // element. Putting px here adds to the element's total width when
+              // box-sizing is content-box, pushing the right scroll button past
+              // the overflow:hidden ancestor and making it invisible.
+              // Padding is applied to MuiTabs-flexContainer instead so it lives
+              // inside the scroller and never affects the scroll-button positions.
               '& .MuiTabs-scroller': {
                 scrollbarWidth: 'none',
                 '&::-webkit-scrollbar': { display: 'none' },
+              },
+              '& .MuiTabs-flexContainer': {
+                px: { xs: 2, sm: 3, md: 4 },
               },
               '& .MuiTabs-indicator': {
                 backgroundColor: '#667eea',
@@ -741,6 +746,7 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
               '& .MuiTabs-scrollButtons': {
                 color: 'rgba(255, 255, 255, 0.7)',
                 width: 40,
+                flexShrink: 0,
                 '&.Mui-disabled': {
                   opacity: 0.3
                 },
@@ -762,7 +768,7 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
               );
             })}
           </Tabs>
-          </Box>
+        </Box>
         {/* Tab Dropdown - Mobile (Hidden on desktop) */}
         <Box sx={{ px: 2, py: { xs: 1, sm: 1.5 }, display: { xs: 'block', md: 'none' } }}>
           <Button

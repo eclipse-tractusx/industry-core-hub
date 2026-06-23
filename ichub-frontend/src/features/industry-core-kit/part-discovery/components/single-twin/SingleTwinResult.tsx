@@ -1570,15 +1570,21 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
         open={copySuccess}
         autoHideDuration={2000}
         onClose={() => setCopySuccess(false)}
-        message="ID copied to clipboard!"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{
-          '& .MuiSnackbarContent-root': {
+      >
+        <Box
+          sx={{
             backgroundColor: 'success.main',
+            color: '#fff',
+            px: 2,
+            py: 1,
+            borderRadius: 1,
             fontSize: '0.875rem'
-          }
-        }}
-      />
+          }}
+        >
+          {t('common:notifications.copiedToClipboard', { field: 'ID' })}
+        </Box>
+      </Snackbar>
 
       {/* Submodel Viewer Dialog */}
       {selectedSubmodel && (
