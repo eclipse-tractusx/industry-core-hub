@@ -107,6 +107,8 @@ export interface PcfExchangeModel {
   pcfLocation?: string;
   pcfData?: Record<string, unknown>;
   createdAt?: string;
+  /** PCF schema version requested in the exchange body (e.g. 'v7.0.0' or 'v9.0.0'). */
+  version?: string;
 }
 
 /**
@@ -137,26 +139,23 @@ export interface PcfSpecificStateModel {
 }
 
 /**
- * ODRL Policy for PCF requests
+ * ODRL Policy for PCF requests (Compact Format without prefixes)
  */
 export interface OdrlPolicy {
-  'odrl:permission': {
-    'odrl:action': { '@id': string };
-    'odrl:constraint': {
-      'odrl:and'?: Array<{
-        'odrl:leftOperand': { '@id': string };
-        'odrl:operator': { '@id': string };
-        'odrl:rightOperand': string;
+  permission: {
+    action: string;
+    constraint: {
+      and?: Array<{
+        leftOperand: string;
+        operator: string;
+        rightOperand: string;
       }>;
-      'odrl:leftOperand'?: { '@id': string };
-      'odrl:operator'?: { '@id': string };
-      'odrl:rightOperand'?: string;
+      leftOperand?: string;
+      operator?: string;
+      rightOperand?: string;
     };
   };
-  'odrl:prohibition': unknown[];
-  'odrl:obligation': unknown[];
 }
-
 /**
  * Provider request (notification) for PCF data
  */
@@ -191,30 +190,26 @@ const getDefaultPcfPolicies = (): object[] => {
 
 export const DEFAULT_PCF_POLICIES: OdrlPolicy[] = [
   {
-    'odrl:permission': {
-      'odrl:action': { '@id': 'odrl:use' },
-      'odrl:constraint': {
-        'odrl:and': [
-          { 'odrl:leftOperand': { '@id': 'cx-policy:FrameworkAgreement' }, 'odrl:operator': { '@id': 'odrl:eq' }, 'odrl:rightOperand': 'DataExchangeGovernance:1.0' },
-          { 'odrl:leftOperand': { '@id': 'cx-policy:Membership' }, 'odrl:operator': { '@id': 'odrl:eq' }, 'odrl:rightOperand': 'active' },
-          { 'odrl:leftOperand': { '@id': 'cx-policy:UsagePurpose' }, 'odrl:operator': { '@id': 'odrl:eq' }, 'odrl:rightOperand': 'cx.pcf.base:1' }
+    permission: {
+      action: 'use',
+      constraint: {
+        and: [
+          { leftOperand: 'FrameworkAgreement', operator: 'eq', rightOperand: 'DataExchangeGovernance:1.0' },
+          { leftOperand: 'Membership', operator: 'eq', rightOperand: 'active' },
+          { leftOperand: 'UsagePurpose', operator: 'isAnyOf', rightOperand: 'cx.pcf.base:1' }
         ]
       }
-    },
-    'odrl:prohibition': [],
-    'odrl:obligation': []
+    }
   },
   {
-    'odrl:permission': {
-      'odrl:action': { '@id': 'odrl:use' },
-      'odrl:constraint': {
-        'odrl:leftOperand': { '@id': 'cx-policy:UsagePurpose' },
-        'odrl:operator': { '@id': 'odrl:eq' },
-        'odrl:rightOperand': 'cx.pcf.base:1'
+    permission: {
+      action: 'use',
+      constraint: {
+        leftOperand: 'UsagePurpose',
+        operator: 'isAnyOf',
+        rightOperand: 'cx.pcf.base:1'
       }
-    },
-    'odrl:prohibition': [],
-    'odrl:obligation': []
+    }
   }
 ];
 
