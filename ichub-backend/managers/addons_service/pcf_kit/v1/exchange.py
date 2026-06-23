@@ -138,7 +138,7 @@ class PcfExchangeManager:
                 pcf_location = None
                 if manufacturer_part_id:
                     try:
-                        pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+                        pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=version)
                     except Exception as e:
                         logger.info(f"No existing PCF data found for manufacturer_part_id {_s(manufacturer_part_id)}: {_s(e)}")
                         pcf_location = None
