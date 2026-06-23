@@ -323,18 +323,26 @@ class PcfProvisionManager:
             ValueError: If there is an error during the update or sending process.
         """
         try:
-            pcf_data = self.view_existing_pcf(manufacturer_part_id=manufacturer_part_id)
             # Gate: require both PCF versions before allowing publish/exchange
             management_manager.check_both_versions_exist(manufacturer_part_id, flow="synchronous")
-            # Collect required data from DB first, then close session before EDC calls
+            # Collect required data from DB first, then close session before EDC calls.
             send_targets: List[Dict[str, str]] = []
             with RepositoryManagerFactory.create() as repo_manager:
                 for bpn in list_bpns:
                     result = repo_manager.pcf_repository.find_by_bpn(bpn, manufacturer_part_id=manufacturer_part_id, direction=PcfExchangeDirection.OUTGOING, status=PcfExchangeStatus.DELIVERED)
                     if result:
-                        send_targets.append({"request_id": str(result[0].request_id), "bpn": bpn})
-            # Send EDC calls outside DB session to avoid holding connections
+                        send_targets.append({
+                            "request_id": str(result[0].request_id),
+                            "bpn": bpn,
+                            "version": result[0].version or DEFAULT_PCF_VERSION,
+                        })
+            # Send EDC calls outside DB session to avoid holding connections.
+            # Retrieve the PCF data matching each exchange's version.
             for target in send_targets:
+                pcf_data = self.view_existing_pcf(
+                    manufacturer_part_id=manufacturer_part_id,
+                    version=target["version"],
+                )
                 self._send_pcf_via_edc(
                     request_id=target["request_id"],
                     requesting_bpn=target["bpn"],
@@ -409,12 +417,17 @@ class PcfProvisionManager:
                 entity_requesting_bpn = exchange_entity.requesting_bpn
                 entity_manufacturer_part_id = exchange_entity.manufacturer_part_id
                 entity_status = exchange_entity.status
+                entity_version = exchange_entity.version or DEFAULT_PCF_VERSION
 
             # Gate: require both PCF versions before allowing publish/exchange
             management_manager.check_both_versions_exist(entity_manufacturer_part_id, flow="asynchronous")
 
-            # Perform EDC calls outside DB session
-            pcf_data = management_manager.get_pcf_data_by_manufacturer_part_id(entity_manufacturer_part_id)
+            # Perform EDC calls outside DB session — use the version
+            # stored on the exchange record so that a v7 request retrieves
+            # the v7 PCF document (not the default v9).
+            pcf_data = management_manager.get_pcf_data_by_manufacturer_part_id(
+                entity_manufacturer_part_id, version=entity_version
+            )
             self._send_pcf_via_edc(
                 request_id=request_id,
                 requesting_bpn=entity_requesting_bpn,
