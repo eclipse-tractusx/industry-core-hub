@@ -37,7 +37,7 @@ from models.services.notification.unique_id_push import (
     UniqueIdPushContent,
     UniqueIdPushConnectToParentRequest,
 )
-from tractusx_sdk.industry.models.notifications import Notification, NotificationHeader
+from tractusx_sdk.industry.models.notifications import Notification
 
 
 # ---------------------------------------------------------------------------

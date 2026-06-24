@@ -24,7 +24,7 @@
 from uuid import uuid4
 from unittest.mock import Mock, patch
 
-from models.metadata_database.notification.models import NotificationDirection, NotificationEntity, NotificationStatus
+from models.metadata_database.notification.models import NotificationDirection, NotificationEntity
 from services.notifications.unique_id_push_sender_service import UniqueIdPushSenderService, CONNECT_TO_PARENT_CONTEXT, UNIQUE_ID_PUSH_DCT_TYPE
 from tools.constants import INDUSTRY_CORE_HUB
 
