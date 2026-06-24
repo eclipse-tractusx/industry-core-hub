@@ -13,7 +13,10 @@
     "registerSuccess": "¡Twin de pieza registrado correctamente!",
     "registerError": "¡Error al registrar el twin de pieza!",
     "submodelCreatedSuccess": "¡Submodelo creado correctamente con el esquema {{schemaName}}!",
-    "submodelCreatedError": "Error al crear el submodelo"
+    "submodelCreatedError": "Error al crear el submodelo",
+    "submodelUpdatedSuccess": "¡Submodelo actualizado correctamente con el esquema {{schemaName}}!",
+    "noSchemaForEdit": "No se encontró un esquema compatible para este submodelo. No se puede editar en el editor de formularios.",
+    "submodelLoadError": "Error al cargar los datos del submodelo para edición"
   },
   "createDialog": {
     "title": "Crear Nueva Pieza de Catálogo",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "Crear un nuevo aspecto de submodelo",
       "noSubmodels": "No Hay Submodelos Disponibles",
       "noSubmodelsDescription": "Este gemelo digital no tiene aspectos de submodelo disponibles para visualizar.",
-      "submodelsDisplayed": "{{count}} submodelo(s) de gemelo digital mostrado(s)"
+      "submodelsDisplayed": "{{count}} submodelo(s) de gemelo digital mostrado(s)",
+      "updateSubmodel": "Actualizar Submodelo"
     },
     "jsonViewer": {
       "title": "Visor JSON",

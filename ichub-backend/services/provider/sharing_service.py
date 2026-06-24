@@ -26,7 +26,12 @@
 from .twin_management_service import TwinManagementService
 from datetime import datetime, timezone
 from uuid import UUID
-from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1
+from managers.submodels.submodel_document_generator import (
+    SubmodelDocumentGenerator,
+    SEM_ID_PART_TYPE_INFORMATION_V1,
+    SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+    SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+)
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.config.config_manager import ConfigManager
 from models.services.provider.twin_management import CatalogPartTwinCreate, TwinAspectCreate
@@ -88,6 +93,24 @@ class SharingService:
                     globalId=db_twin.global_id,
                     semanticId=SEM_ID_PART_TYPE_INFORMATION_V1,
                     payload=part_type_info_doc
+                )
+            )
+            # Step 8b: Create SingleLevelBomAsPlanned submodel (default empty)
+            bom_doc = self._create_single_level_bom_aspect_doc(global_id=db_twin.global_id)
+            self.twin_management_service.create_twin_aspect(
+                TwinAspectCreate(
+                    globalId=db_twin.global_id,
+                    semanticId=SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+                    payload=bom_doc
+                )
+            )
+            # Step 8c: Create SingleLevelUsageAsPlanned submodel (default empty)
+            usage_doc = self._create_single_level_usage_aspect_doc(global_id=db_twin.global_id)
+            self.twin_management_service.create_twin_aspect(
+                TwinAspectCreate(
+                    globalId=db_twin.global_id,
+                    semanticId=SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+                    payload=usage_doc
                 )
             )
             # Step 9: Optionally send Unique ID Push connect-to-parent notification
@@ -233,5 +256,15 @@ class SharingService:
             manufacturer_part_id=manufacturer_part_id,
             name=name,
             bpns=bpns
+        )
+
+    def _create_single_level_bom_aspect_doc(self, global_id: UUID):
+        return self.submodel_document_generator.generate_single_level_bom_as_planned_v3(
+            global_id=global_id
+        )
+
+    def _create_single_level_usage_aspect_doc(self, global_id: UUID):
+        return self.submodel_document_generator.generate_single_level_usage_as_planned_v3(
+            global_id=global_id
         )
 
