@@ -698,6 +698,83 @@ backend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- hostname points to the ichub-backend itself, which serves this endpoint
+      uniqueIdPush:
+        hostname: "https://<backend-hostname>"
+        apiPath: /v1/uniqueidpush
+        sendOnShare: false
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
+          # existing_asset_id: <unique-id-push-asset> # -- In case an existing Unique ID Push asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
           access:
             context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
