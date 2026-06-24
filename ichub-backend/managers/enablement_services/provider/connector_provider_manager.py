@@ -23,6 +23,7 @@
 
 from urllib.parse import quote
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
+from tractusx_sdk.dataspace.models.connector import ModelFactory
 from tractusx_sdk.industry.services.notifications import NotificationService
 from managers.config.log_manager import LoggingManager
 from tools.exceptions import NotFoundError
@@ -80,6 +81,78 @@ class ConnectorProviderManager:
         self.empty_policy = self.get_empty_policy_config()
         self.connector_service = connector_provider_service
         self.notification_service = NotificationService(connector_provider_service)
+
+    @staticmethod
+    def _mask_credential(value: str) -> str:
+        """Mask a credential value for safe logging (show only last 4 chars)."""
+        if not value or len(value) <= 4:
+            return "****"
+        return "****" + value[-4:]
+
+    def _extract_headers_from_data_address(self, data_address: dict) -> dict:
+        """Extract header:* entries from an EDC data-address dict.
+
+        Returns a dict mapping the header name (without the ``header:`` prefix)
+        to its value.  For example ``{"header:X-Api-Key": "secret"}`` becomes
+        ``{"X-Api-Key": "secret"}``.
+        """
+        headers: dict = {}
+        for key, value in data_address.items():
+            if key.startswith("header:"):
+                header_name = key[len("header:"):]
+                headers[header_name] = value
+        return headers
+
+    def update_asset_headers(self, asset_id: str, desired_headers: dict | None) -> bool:
+        """Compare and update the header:* properties in an existing asset's data-address.
+
+        If the desired headers differ from the ones currently stored in the EDC
+        asset, the asset is updated via a PUT request.  Credentials are never
+        written to logs in plain text.
+
+        Returns True if an update was performed, False otherwise.
+        """
+        if desired_headers is None:
+            desired_headers = {}
+
+        response = self.connector_service.assets.get_by_id(oid=asset_id)
+        if response.status_code != 200:
+            logger.warning(f"Cannot update headers for asset {asset_id}: asset not found.")
+            return False
+
+        asset_data = response.json()
+        data_address = asset_data.get("dataAddress", asset_data.get("edc:dataAddress", {}))
+        current_headers = self._extract_headers_from_data_address(data_address)
+
+        # Compare desired vs current — only header values matter
+        if current_headers == desired_headers:
+            return False
+
+        # Build an updated data-address: remove old header:* keys, add new ones
+        new_data_address = {k: v for k, v in data_address.items() if not k.startswith("header:")}
+        for key, value in desired_headers.items():
+            new_data_address["header:" + key] = value
+
+        # Reconstruct the AssetModel for the PUT request
+        asset_model = ModelFactory.get_asset_model(
+            dataspace_version=self.dataspace_version,
+            oid=asset_id,
+            data_address=new_data_address,
+            context=asset_data.get("@context"),
+            properties=asset_data.get("properties", {}),
+            private_properties=asset_data.get("privateProperties", {}),
+        )
+
+        update_response = self.connector_service.assets.update(obj=asset_model)
+        if update_response.status_code not in (200, 204):
+            logger.error(f"Failed to update headers for asset {asset_id}. Status: {update_response.status_code}")
+            return False
+
+        masked_keys = ", ".join(
+            f"{k}={self._mask_credential(v)}" for k, v in desired_headers.items()
+        )
+        logger.info(f"Updated headers for asset {asset_id}: [{masked_keys}]")
+        return True
 
     def get_empty_policy_config(self) -> dict:
         """
@@ -301,15 +374,17 @@ class ConnectorProviderManager:
     
     
     def get_or_create_dtr_asset(self, dtr_url:str, dct_type:str, existing_asset_id:str=None, headers:dict=None, version:str="3.0") -> str:
-        
+        """Get or create a DTR asset, updating headers if they changed."""
         if(not existing_asset_id):
             existing_asset_id = self.generate_dtr_asset_id(dtr_url=dtr_url)
-        """Get or create a circular submodel asset."""
+
         # Check if the asset already exists
         existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
         
         if existing_asset.status_code == 200:
             logger.debug(f"[DTR] Asset with ID {existing_asset_id} already exists.")
+            # Ensure credentials in the data-address are up to date
+            self.update_asset_headers(asset_id=existing_asset_id, desired_headers=headers)
             return existing_asset_id
         
         # If it doesn't exist, create it
@@ -323,13 +398,15 @@ class ConnectorProviderManager:
         return asset.get("@id", existing_asset_id)
     
     def get_or_create_circular_submodel_asset(self, semantic_id: str, headers: dict = None) -> str:
-        """Get or create a circular submodel asset."""
+        """Get or create a circular submodel asset, updating headers if they changed."""
         standard_asset_id = self.generate_asset_id(semantic_id=semantic_id)
 
         # Check if the asset already exists
         existing_asset = self.connector_service.assets.get_by_id(oid=standard_asset_id)
         if existing_asset.status_code == 200:
             logger.debug(f"Asset with ID {standard_asset_id} already exists.")
+            # Ensure credentials in the data-address are up to date
+            self.update_asset_headers(asset_id=standard_asset_id, desired_headers=headers)
             return standard_asset_id
 
         # If it doesn't exist, create it
@@ -443,15 +520,15 @@ class ConnectorProviderManager:
         headers: dict = None,
         version: str = "3.0"
     ) -> str:
-        """
-        Get or create a digital twin event asset.
-        """
+        """Get or create a digital twin event asset, updating headers if they changed."""
         if not existing_asset_id:
             existing_asset_id = self.generate_digital_twin_event_asset_id(digital_twin_event_url=digital_twin_event_url)
         # Check if the asset already exists
         existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
         if existing_asset.status_code == 200:
             logger.debug(f"[DigitalTwinEvent] Asset with ID {existing_asset_id} already exists.")
+            # Ensure credentials in the data-address are up to date
+            self.update_asset_headers(asset_id=existing_asset_id, desired_headers=headers)
             return existing_asset_id
         # If it doesn't exist, create it
         logger.info(f"[DigitalTwinEvent] Creating new asset with ID {existing_asset_id}.")
@@ -520,15 +597,17 @@ class ConnectorProviderManager:
         return asset_id, usage_policy_id, access_policy_id, contract_id
     
     def get_or_create_pcf_exchange_asset(self, pcf_exchange_url:str, dct_type:str, existing_asset_id:str=None, headers:dict=None, version:str="3.0") -> str:
-        
+        """Get or create a PCF exchange asset, updating headers if they changed."""
         if(not existing_asset_id):
             existing_asset_id = self.generate_pcf_exchange_asset_id(pcf_exchange_url=pcf_exchange_url)
-        """Get or create a pcf exchange asset."""
+
         # Check if the asset already exists
         existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
         
         if existing_asset.status_code == 200:
             logger.debug(f"[PCF Exchange] Asset with ID {existing_asset_id} already exists.")
+            # Ensure credentials in the data-address are up to date
+            self.update_asset_headers(asset_id=existing_asset_id, desired_headers=headers)
             return existing_asset_id
         
         # If it doesn't exist, create it
