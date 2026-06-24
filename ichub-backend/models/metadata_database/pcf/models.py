@@ -80,6 +80,7 @@ class PcfExchangeEntity(SQLModel, table=True):
         message: Optional message associated with the exchange.
         pcf_location: URI/path where the PCF data payload is stored.
         correlation_id: Optional ID to correlate with external systems.
+        version: PCF schema version (e.g. "v7.0.0", "v9.0.0").
     """
     __tablename__ = "pcf_exchanges"
     __table_args__ = {"schema": "public"}
@@ -152,7 +153,14 @@ class PcfExchangeEntity(SQLModel, table=True):
         default=None,
         index=True,
         description="Optional ID to correlate with external systems"
-    ) 
+    )
+
+    # PCF schema version
+    version: str = Field(
+        default="v9.0.0",
+        index=True,
+        description="PCF schema version used for this exchange (e.g. v7.0.0, v9.0.0)"
+    )
 
 class PcfRelationshipEntity(SQLModel, table=True):
 

@@ -1,7 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
-* Copyright (c) 2025 LKS Next
+* Copyright (c) 2025,2026 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -234,7 +234,8 @@ data:
         customer_part_id character varying,
         message character varying,
         pcf_location character varying,
-        correlation_id character varying
+        correlation_id character varying,
+        version character varying NOT NULL DEFAULT 'v9.0.0'
     );
 
     CREATE TABLE public.pcf_relationships (
@@ -544,6 +545,7 @@ data:
     CREATE INDEX idx_pcf_exchanges_manufacturer_part_id ON public.pcf_exchanges USING btree (manufacturer_part_id);
     CREATE INDEX idx_pcf_exchanges_customer_part_id ON public.pcf_exchanges USING btree (customer_part_id);
     CREATE INDEX idx_pcf_exchanges_correlation_id ON public.pcf_exchanges USING btree (correlation_id);
+    CREATE INDEX idx_pcf_exchanges_version ON public.pcf_exchanges USING btree (version);
     CREATE INDEX idx_pcf_exchanges_type ON public.pcf_exchanges USING btree (type);
 
     CREATE INDEX idx_pcf_relationships_main_manufacturer_part_id ON public.pcf_relationships USING btree (main_manufacturer_part_id);

@@ -39,6 +39,8 @@ GET also requires at least one of ``manufacturerPartId`` or ``customerPartId``
 query parameters; omitting both must return 400.
 """
 
+from tools.exceptions import PcfVersionGateError
+
 # ---------------------------------------------------------------------------
 # URL constants
 # ---------------------------------------------------------------------------
@@ -82,6 +84,7 @@ class TestPutPcfWithPathId:
             edc_bpn=VALID_BPN,
             is_update=False,
             message=None,
+            version="v9.0.0",
         )
 
     def test_update_flag_is_passed_to_manager(self, app_client, mock_exchange_mgr):
@@ -143,6 +146,48 @@ class TestPutPcfWithPathId:
 
         assert resp.status_code == 500
 
+    def test_put_with_v7_version(self, app_client, mock_exchange_mgr):
+        """version query param is ignored — endpoint always uses v9.0.0."""
+        mock_exchange_mgr.submit_pcf_response.return_value = {"status": "accepted"}
+
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}?version=v7.0.0",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 200
+        _, kwargs = mock_exchange_mgr.submit_pcf_response.call_args
+        assert kwargs["version"] == "v9.0.0"
+
+    def test_put_with_invalid_version_is_ignored(self, app_client, mock_exchange_mgr):
+        """Invalid version query param is silently ignored; endpoint hardcodes v9.0.0."""
+        mock_exchange_mgr.submit_pcf_response.return_value = {"status": "accepted"}
+
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}?version=v99.0.0",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 200
+        _, kwargs = mock_exchange_mgr.submit_pcf_response.call_args
+        assert kwargs["version"] == "v9.0.0"
+
+    def test_version_gate_error_returns_409(self, app_client, mock_exchange_mgr):
+        mock_exchange_mgr.submit_pcf_response.side_effect = PcfVersionGateError(
+            "Both PCF versions must be uploaded"
+        )
+
+        resp = app_client.put(
+            f"{BASE}/{REQUEST_ID}",
+            json=PCF_BODY,
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 409
+        assert "Both PCF versions" in resp.json().get("detail", "")
+
 
 # ---------------------------------------------------------------------------
 # GET /{requestId}  — request_pcf
@@ -167,6 +212,7 @@ class TestRequestPcf:
             manufacturer_part_id=PART_ID,
             customer_part_id=None,
             message=None,
+            version="v9.0.0",
         )
 
     def test_valid_request_with_customer_part_id_returns_202(self, app_client, mock_exchange_mgr):
@@ -251,3 +297,31 @@ class TestRequestPcf:
         )
 
         assert resp.status_code == 500
+
+    def test_get_with_v7_version(self, app_client, mock_exchange_mgr):
+        """version query param is ignored — endpoint always uses v9.0.0."""
+        mock_exchange_mgr.request_pcf.return_value = {"status": "accepted"}
+
+        resp = app_client.get(
+            f"{BASE}/{REQUEST_ID}",
+            params={"manufacturerPartId": PART_ID, "version": "v7.0.0"},
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 202
+        _, kwargs = mock_exchange_mgr.request_pcf.call_args
+        assert kwargs["version"] == "v9.0.0"
+
+    def test_get_with_invalid_version_is_ignored(self, app_client, mock_exchange_mgr):
+        """Invalid version query param is silently ignored; endpoint hardcodes v9.0.0."""
+        mock_exchange_mgr.request_pcf.return_value = {"status": "accepted"}
+
+        resp = app_client.get(
+            f"{BASE}/{REQUEST_ID}",
+            params={"manufacturerPartId": PART_ID, "version": "v99.0.0"},
+            headers={"edc-bpn": VALID_BPN},
+        )
+
+        assert resp.status_code == 202
+        _, kwargs = mock_exchange_mgr.request_pcf.call_args
+        assert kwargs["version"] == "v9.0.0"
