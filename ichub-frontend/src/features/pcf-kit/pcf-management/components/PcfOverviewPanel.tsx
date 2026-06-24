@@ -126,7 +126,12 @@ const chartTextSx = {
   '& .MuiChartsAxis-label': { fill: 'rgba(255,255,255,0.75) !important' },
   '& .MuiChartsAxis-line': { stroke: 'rgba(255,255,255,0.15) !important' },
   '& .MuiChartsAxis-tick': { stroke: 'rgba(255,255,255,0.15) !important' },
-  '& .MuiChartsLegend-series text': { fill: 'rgba(255,255,255,0.7) !important' },
+  // In MUI X Charts v8 the legend is rendered as HTML (a <ul>), not SVG, so the
+  // `& text` rule above can't reach it. Recolor the HTML legend label explicitly
+  // so labels like "kg CO₂e" / "PCF excl. biogenic" match the dark theme instead
+  // of falling back to the near-black default text color.
+  '& .MuiChartsLegend-root': { color: 'rgba(255,255,255,0.7) !important' },
+  '& .MuiChartsLegend-label': { color: 'rgba(255,255,255,0.7) !important' },
 };
 
 const PcfOverviewPanel: React.FC<PcfOverviewPanelProps> = ({ v9Raw, v7Raw }) => {

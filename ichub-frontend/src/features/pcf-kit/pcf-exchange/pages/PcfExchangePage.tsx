@@ -761,7 +761,6 @@ const PcfExchangePage: React.FC = () => {
                     key={notification.id}
                     notification={notification}
                     onAccept={handleAcceptNotification}
-                    onReject={handleOpenRejectDialog}
                     onRefreshPcf={handleRefreshPcf}
                     isProcessing={processingNotificationId === notification.id}
                     viewMode={viewMode}
