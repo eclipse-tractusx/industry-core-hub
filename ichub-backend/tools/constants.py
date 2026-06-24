@@ -60,5 +60,5 @@ API_V1 = "v1"
 # ==================== USE CASE =========================
 CCM = "CCM"
 TRACEABILITY = "Traceability"
-INDUSTRY_CORE_HUB = "Industry Core Hub"
+INDUSTRY_CORE_HUB = "ICHUB"
 PCF = "PCF"
