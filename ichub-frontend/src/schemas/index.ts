@@ -1,7 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
+ * Copyright (c) 2025,2026 LKS Next
  * Copyright (c) 2026 Contributors to the Eclipse Foundation
  * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
@@ -38,6 +38,8 @@ import digitalProductPassportSchema from './catena-x/DigitalProductPassport-sche
 import UsTariffInformationSchema from './catena-x/UsTariffInformation-schema.json';
 import PcfSchemav9 from './catena-x/Pcf-schema-v9.0.0.json';
 import PcfSchemav7 from './catena-x/Pcf-schema-v7.0.0.json';
+import SingleLevelBomAsPlannedSchema from './catena-x/SingleLevelBomAsPlanned-schema.json';
+import SingleLevelUsageAsPlannedSchema from './catena-x/SingleLevelUsageAsPlanned-schema.json';
 import idtaBatteryPassDigitalNameplate from './idta/idta-BatteryPassDigitalNameplate-schema.json';
 import idtaBatteryPassCarbonFootprint from './idta/idta-BatteryPassCarbonFootprint-schema.json';
 import idtaBatteryPassCircularity from './idta/idta-BatteryPassCircularity-schema.json';
@@ -113,6 +115,8 @@ const schemasToLoad = [
   UsTariffInformationSchema as JSONSchema,
   PcfSchemav9 as JSONSchema,
   PcfSchemav7 as JSONSchema,
+  SingleLevelBomAsPlannedSchema as JSONSchema,
+  SingleLevelUsageAsPlannedSchema as JSONSchema,
   idtaBatteryPassDigitalNameplate as JSONSchema,
   idtaBatteryPassCarbonFootprint as JSONSchema,
   idtaBatteryPassCircularity as JSONSchema,

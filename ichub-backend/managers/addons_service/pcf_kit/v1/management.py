@@ -105,7 +105,11 @@ class PcfManagementManager:
         
         try:
             with RepositoryManagerFactory.create() as repo_manager:
-                entity = repo_manager.pcf_repository.find_by_request_id(UUID(request_id))
+                entity = repo_manager.pcf_repository.find_by_request_id(
+                    UUID(request_id), type=PcfExchangeType.RESPONSE
+                )
+                if not entity:
+                    entity = repo_manager.pcf_repository.find_by_request_id(UUID(request_id))
 
                 if not entity or not entity.manufacturer_part_id:
                     logger.warning(

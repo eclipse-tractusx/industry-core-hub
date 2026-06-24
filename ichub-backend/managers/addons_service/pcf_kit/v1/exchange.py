@@ -138,7 +138,7 @@ class PcfExchangeManager:
                 pcf_location = None
                 if manufacturer_part_id:
                     try:
-                        pcf_location = management_manager.get_pcf_location(manufacturer_part_id)
+                        pcf_location = management_manager.get_pcf_location(manufacturer_part_id, version=version)
                     except Exception as e:
                         logger.info(f"No existing PCF data found for manufacturer_part_id {_s(manufacturer_part_id)}: {_s(e)}")
                         pcf_location = None
@@ -334,9 +334,6 @@ class PcfExchangeManager:
             manufacturer_part_id = outgoing_request.manufacturer_part_id
             requesting_bpn = outgoing_request.requesting_bpn
 
-        # Gate: require both PCF versions before allowing publish/exchange
-        management_manager.check_both_versions_exist(manufacturer_part_id, flow="asynchronous")
-        
         # Try to upload new PCF data; if it already exists, check if we should update or if it's identical
         try:
             management_manager.upload_pcf_data(manufacturer_part_id, pcf_data, version=version)
