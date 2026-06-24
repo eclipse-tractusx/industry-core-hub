@@ -1,6 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -300,6 +301,78 @@ backend:
                 rightOperand: "active"
           prohibitions: []
           obligations: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
         usage:
           context:
@@ -313,6 +386,78 @@ backend:
                 leftOperand: "UsagePurpose"
                 operator: "eq"
                 rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
           prohibitions: []
           obligations: []
         access:

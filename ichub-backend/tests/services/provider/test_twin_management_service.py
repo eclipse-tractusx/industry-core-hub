@@ -1,7 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS NEXT
+# Copyright (c) 2025,2026 LKS NEXT
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -785,7 +785,7 @@ class TestTwinManagementService:
         mock_registration.registration_mode = TwinsAspectRegistrationMode.DISPATCHED.value
         mock_registration.created_date = datetime.now()
         mock_registration.modified_date = datetime.now()
-        mock_existing_aspect.registrations = [mock_registration]
+        mock_existing_aspect.twin_aspect_registrations = [mock_registration]
         
         mock_repo = Mock()
         mock_repo_factory.return_value.__enter__.return_value = mock_repo
