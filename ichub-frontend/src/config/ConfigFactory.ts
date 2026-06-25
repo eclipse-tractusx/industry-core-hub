@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -20,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { AppConfig, RawEnvironmentConfig, ConfigurationError, AgreementConfig, DtrPolicyConfig } from './schema';
+import { AppConfig, RawEnvironmentConfig, ConfigurationError, AgreementConfig, DtrPolicyConfig, CcmPolicyConfig } from './schema';
 
 export class ConfigFactory {
   private static instance: AppConfig | null = null;
@@ -114,6 +115,7 @@ export class ConfigFactory {
       // Governance and policies
       VITE_GOVERNANCE_CONFIG: windowEnv.GOVERNANCE_CONFIG || viteEnv.VITE_GOVERNANCE_CONFIG,
       VITE_DTR_POLICIES_CONFIG: windowEnv.DTR_POLICIES_CONFIG || viteEnv.VITE_DTR_POLICIES_CONFIG,
+      VITE_CCM_POLICY_GOVERNANCE: windowEnv.CCM_POLICY_GOVERNANCE || viteEnv.VITE_CCM_POLICY_GOVERNANCE,
       
       // Feature flags
       VITE_ENABLE_ADVANCED_LOGGING: windowEnv.ENABLE_ADVANCED_LOGGING || viteEnv.VITE_ENABLE_ADVANCED_LOGGING,
@@ -184,6 +186,7 @@ export class ConfigFactory {
       governance: {
         agreements: this.parseJsonConfig<AgreementConfig[]>(raw.VITE_GOVERNANCE_CONFIG, []),
         dtrPolicy: this.parseJsonConfig<DtrPolicyConfig>(raw.VITE_DTR_POLICIES_CONFIG, []),
+        ccmPolicy: this.parseJsonConfig<CcmPolicyConfig>(raw.VITE_CCM_POLICY_GOVERNANCE, []),
       },
       
       features: {

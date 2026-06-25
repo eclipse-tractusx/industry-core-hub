@@ -71,6 +71,7 @@ interface ImportMetaEnv {
   readonly VITE_GOVERNANCE_CONFIG: string
   readonly VITE_DTR_POLICIES_CONFIG: string
   readonly VITE_PCF_EXCHANGE_POLICIES_CONFIG: string
+  readonly VITE_CCM_POLICY_GOVERNANCE: string
   
   // Feature flags
   readonly VITE_ENABLE_ADVANCED_LOGGING: string
@@ -141,6 +142,7 @@ declare global {
       GOVERNANCE_CONFIG?: string | object[];
       DTR_POLICIES_CONFIG?: string | object[];
       PCF_EXCHANGE_POLICIES_CONFIG?: string | object[];
+      CCM_POLICY_GOVERNANCE?: string | object[];
       GOVERNANCE_STRICT_MODE?: string;
       
       // Feature flags

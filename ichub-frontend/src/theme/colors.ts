@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -61,5 +62,11 @@ export const kitThemes = {
     gradientStart: '#1B5E20',
     gradientEnd: '#4CAF50',
     shadowColor: 'rgba(27, 94, 32, 0.3)',
+  },
+  /** CCM KIT — company certificate management (purple = quality & exclusivity) */
+  ccm: {
+    gradientStart: '#6B3FA0',
+    gradientEnd: '#9D6FD4',
+    shadowColor: 'rgba(157, 111, 212, 0.35)',
   },
 } as const satisfies Record<string, KitTheme>

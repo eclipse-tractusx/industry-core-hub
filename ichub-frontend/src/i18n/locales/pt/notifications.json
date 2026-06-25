@@ -152,6 +152,33 @@
     "expectedResponse": "Resposta esperada",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Solicitação de certificado enviada para {{certificateType}} a {{receiverBpn}}",
+    "CCM_REQUEST_RECEIVED": "Solicitação de certificado recebida para {{certificateType}} de {{senderBpn}}",
+    "CCM_REQUEST_NOT_FOUND": "Certificado não encontrado: {{certificateType}} não pôde ser fornecido por {{senderBpn}}",
+    "CCM_AVAILABLE_RECEIVED": "Certificado disponível: {{certificateType}} pronto para download",
+    "CCM_AVAILABLE_SENT": "Disponibilidade de certificado enviada: {{certificateType}} para {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Certificado recebido: {{certificateType}} enviado por {{senderBpn}}",
+    "CCM_PUSH_SENT": "Certificado enviado: {{certificateType}} para {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Atualização de status enviada para o documento {{documentId}}",
+    "CCM_STATUS_RECEIVED": "Status recebido para o documento {{documentId}} de {{senderBpn}}",
+    "details": "Detalhes CCM",
+    "notificationType": "Tipo de notificação",
+    "certificateType": "Tipo de certificado",
+    "certifiedBpn": "BPN certificado",
+    "documentId": "ID do documento",
+    "viewInConsumption": "Ver em CCM Consumption",
+    "viewInProvision": "Ver em Provision Management",
+    "viewInboundRequests": "Ver solicitações recebidas",
+    "descriptionTitle": "O que aconteceu",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}} solicitou um certificado {{certificateType}} existente para a empresa. Analise e gerencie a solicitação no CCM Provision Management na tabela de Solicitações Recebidas.",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}} solicitou um certificado {{certificateType}} que não foi encontrado para a empresa. Analise e gerencie a solicitação no CCM Provision Management na tabela de Solicitações Recebidas.",
+      "CCM_STATUS_RECEIVED": "{{senderName}} respondeu ao seu envio de certificado. Verifique o feedback no CCM Provision Management na tabela de Compartilhamentos.",
+      "CCM_PUSH_RECEIVED": "O fornecedor {{senderName}} enviou diretamente um certificado {{certificateType}} que pode ser de seu interesse. Acesse CCM Consumption para visualizá-lo e enviar seu feedback.",
+      "CCM_AVAILABLE_RECEIVED": "O fornecedor {{senderName}} disponibilizou o certificado {{certificateType}} que você solicitou. Acesse CCM Consumption para visualizá-lo."
+    }
+  },
   "feedback": {
     "title": "Enviar feedback",
     "composeFeedback": "Compor Feedback",
