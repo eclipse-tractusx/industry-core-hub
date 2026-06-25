@@ -64,9 +64,6 @@ from models.services.addons.ccm_kit.v1.notifications import (
     RejectionReasonPayload,
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
-from managers.addons_service.ccm_kit.v1.notifications import (
-    ccm_notification_manager,
-)
 from tools.constants import (
     CCM_CONTEXT_REQUEST,
     CCM_CONTEXT_STATUS,

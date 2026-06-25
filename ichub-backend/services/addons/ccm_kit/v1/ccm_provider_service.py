@@ -63,9 +63,6 @@ from models.metadata_database.addons.ccm_kit.v1.models import (
 )
 from connector import connector_provider_manager
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
-from managers.addons_service.ccm_kit.v1.notifications import (
-    ccm_notification_manager,
-)
 from tools.constants import (
     CCM_CONTEXT_AVAILABLE,
     CCM_CONTEXT_PUSH,

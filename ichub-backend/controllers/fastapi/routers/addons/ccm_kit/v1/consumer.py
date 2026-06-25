@@ -57,7 +57,6 @@ from models.services.addons.ccm_kit.v1.notifications import (
     ReceivedCertificateItem,
 )
 from services.addons.ccm_kit.v1.ccm_consumer_service import ccm_consumer_service
-from tools.constants import INTERNAL_SERVER_ERROR
 from tools.exceptions import InvalidError
 
 logger = LoggingManager.get_logger(__name__)

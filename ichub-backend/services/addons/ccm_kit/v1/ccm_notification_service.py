@@ -25,7 +25,6 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 import base64
 import binascii
-import json
 import uuid
 
 from tractusx_sdk.industry.models.notifications import Notification
