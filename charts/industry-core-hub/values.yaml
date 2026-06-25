@@ -217,6 +217,74 @@ backend:
                 rightOperand: "active"
           prohibition: []
           obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
       - semanticid: urn:samm:io.catenax.pcf:9.0.0#Pcf
         usage:
           context:
@@ -639,6 +707,83 @@ backend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- hostname points to the ichub-backend itself, which serves this endpoint
+      uniqueIdPush:
+        hostname: "https://<backend-hostname>"
+        apiPath: /v1/uniqueidpush
+        sendOnShare: false
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
+          # existing_asset_id: <unique-id-push-asset> # -- In case an existing Unique ID Push asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
           access:
             context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
@@ -658,9 +803,16 @@ backend:
         enabled: false
         # -- Hostname of the PCF Exchange API
         hostname: "https://<provider-pcf-exchange-api>"
+        # -- When true, both PCF versions (v7.0.0 and v9.0.0) must be uploaded
+        # -- for a manufacturer part before it can be published or exchanged.
+        # -- Each flow type can be toggled independently.
+        requireBothVersions:
+          synchronous: false
+          asynchronous: false
         asset_config:
-          dct_type: "cx-taxo:PcfExchange"
-          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          dct_type: "cx-taxo:PCFExchange"
+          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset (v1.2.0) wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          # existing_legacy_asset_id: <pcf-exchange-legacy-asset> # -- In case an existing PCF Exchange asset (v1.1.1 /productIds) wants to be used specify here the id
         policy:
           usage:
             context:
@@ -1117,6 +1269,48 @@ frontend:
     # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
     governance:
       - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies:
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        policies:
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
         policies:
           - context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"

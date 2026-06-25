@@ -235,7 +235,8 @@ CREATE TABLE public.pcf_exchanges (
     customer_part_id character varying,
     message character varying,
     pcf_location character varying,
-    correlation_id character varying
+    correlation_id character varying,
+    version character varying NOT NULL DEFAULT 'v9.0.0'
 );
 
 CREATE TABLE public.pcf_relationships (
@@ -741,6 +742,7 @@ CREATE INDEX idx_pcf_exchanges_requesting_bpn ON public.pcf_exchanges USING btre
 CREATE INDEX idx_pcf_exchanges_responding_bpn ON public.pcf_exchanges USING btree (responding_bpn);
 CREATE INDEX idx_pcf_exchanges_manufacturer_part_id ON public.pcf_exchanges USING btree (manufacturer_part_id);
 CREATE INDEX idx_pcf_exchanges_correlation_id ON public.pcf_exchanges USING btree (correlation_id);
+CREATE INDEX idx_pcf_exchanges_version ON public.pcf_exchanges USING btree (version);
 
 CREATE INDEX idx_pcf_relationships_main_manufacturer_part_id ON public.pcf_relationships USING btree (main_manufacturer_part_id);
 

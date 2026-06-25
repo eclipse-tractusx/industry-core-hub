@@ -30,114 +30,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os
-import logging
-
-from tools.exceptions import BaseError, ValidationError
+from tools.exceptions import BaseError
 from tools.constants import API_V1
 from managers.config.config_manager import ConfigManager
 
-startup_logger = logging.getLogger("app.startup")
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Run startup tasks before serving requests."""
-    _sync_digital_twin_event_asset_on_startup()
-    _sync_ccm_asset_on_startup()
+    """Application lifespan handler. Asset registration is handled by the Kubernetes asset-sync Job."""
     yield
-
-
-def _sync_digital_twin_event_asset_on_startup() -> None:
-    """
-    Register the Digital Twin Event asset in the EDC on every backend startup.
-    This ensures the notification endpoint is always advertised in the connector
-    catalog, even if the Kubernetes sync Job has not run yet.
-    Failures are logged but do not prevent the backend from starting.
-    """
-    try:
-        # Import here to avoid circular imports at module load time.
-        from connector import connector_provider_manager, connector_start_up_error
-
-        if connector_start_up_error or connector_provider_manager is None:
-            startup_logger.warning(
-                "[Startup] Connector is not available. Skipping Digital Twin Event asset sync."
-            )
-            return
-
-        dte_config = ConfigManager.get_config("provider.digitalTwinEventAPI")
-        if not dte_config:
-            startup_logger.warning(
-                "[Startup] No 'provider.digitalTwinEventAPI' config found. "
-                "Skipping Digital Twin Event asset sync."
-            )
-            return
-
-        asset_config = dte_config.get("asset_config", {})
-        dte_asset_id, _, _, _ = connector_provider_manager.register_digital_twin_event_offer(
-            digital_twin_event_url=dte_config.get("hostname"),
-            digital_twin_event_policy_config=dte_config.get("policy"),
-            existing_asset_id=asset_config.get("existing_asset_id"),
-        )
-        startup_logger.info(
-            f"[Startup] Digital Twin Event asset synced successfully: {dte_asset_id}"
-        )
-    except Exception as e:
-        startup_logger.error(
-            f"[Startup] Failed to sync Digital Twin Event asset: {e}", exc_info=True
-        )
-
-def _sync_ccm_asset_on_startup() -> None:
-    """
-    Register the CCM notification asset in the EDC on every backend startup.
-
-    Mirrors the DTE startup sync so the CCM endpoint is always advertised in
-    the connector catalog even when the Kubernetes sync Job has not run yet.
-    Failures are logged but do not prevent the backend from starting.
-    """
-    try:
-        from connector import connector_provider_manager, connector_start_up_error
-
-        if connector_start_up_error or connector_provider_manager is None:
-            startup_logger.warning(
-                "[Startup] Connector is not available. Skipping CCM asset sync."
-            )
-            return
-
-        ccm_config = ConfigManager.get_config("provider.ccm")
-        if not ccm_config:
-            startup_logger.warning(
-                "[Startup] No 'provider.ccm' config found. "
-                "Skipping CCM asset sync."
-            )
-            return
-
-        if not ccm_config.get("enabled", True):
-            startup_logger.info(
-                "[Startup] CCM is disabled (provider.ccm.enabled=false). "
-                "Skipping CCM asset sync."
-            )
-            return
-
-        asset_config = ccm_config.get("asset_config", {})
-        hostname = ccm_config.get("hostname", "").rstrip("/")
-        api_path = ccm_config.get("apiPath", "").rstrip("/")
-        ccm_notification_url = hostname + api_path
-
-        ccm_asset_id, _, _, _ = connector_provider_manager.register_ccm_notification_offer(
-            ccm_notification_url=ccm_notification_url,
-            ccm_policy_config=ccm_config.get("policy"),
-            existing_asset_id=asset_config.get("existing_asset_id"),
-        )
-        startup_logger.info(
-            "[Startup] CCM notification asset synced successfully: %s",
-            ccm_asset_id,
-        )
-    except Exception as e:
-        startup_logger.error(
-            "[Startup] Failed to sync CCM notification asset: %s",
-            e, exc_info=True,
-        )
-
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -154,7 +54,8 @@ from .routers.consumer.v1 import (
 )
 from .routers.notifications.v1 import (
     digital_twin_event_api,
-    notifications_management
+    notifications_management,
+    unique_id_push_api
 )
 from .routers.addons import addons
 
@@ -194,6 +95,10 @@ tags_metadata = [
     {
         "name": "Notifications Management",
         "description": "Endpoints for managing notifications, such as retrieving, deleting or marking notifications related to digital twins and part sharing"
+    },
+    {
+        "name": "Unique ID Push Notifications",
+        "description": "Endpoints for receiving Unique ID Push notifications (CX-0126) to link child digital twins to their parents"
     },
     {
         "name": "Add-Ons Microservices",
@@ -282,6 +187,7 @@ v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
 v1_router.include_router(digital_twin_event_api.router)
 v1_router.include_router(notifications_management.router)
+v1_router.include_router(unique_id_push_api.router)
 v1_router.include_router(addons.router)
 
 # Include the API version 1 router into the main app
@@ -315,7 +221,8 @@ def custom_openapi():
                 "Open Connection Management",
                 "Part Discovery Management",
                 "Digital Twin Event Management",
-                "Notifications Management"
+                "Notifications Management",
+                "Unique ID Push Notifications"
             ],
         },
         {

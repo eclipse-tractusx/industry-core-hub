@@ -65,7 +65,8 @@ const NotificationsPanel: React.FC = () => {
   const getUseCaseChipColors = (useCase: string, isActive: boolean) => {
     const palette: Record<string, { bg: string; activeBg: string; color: string }> = {
       PCF: { bg: 'rgba(0, 188, 212, 0.12)', activeBg: 'rgba(0, 188, 212, 0.35)', color: '#00bcd4' },
-      CCM: { bg: 'rgba(157, 111, 212, 0.12)', activeBg: 'rgba(157, 111, 212, 0.35)', color: '#9D6FD4' },
+      CCM: { bg: 'rgba(255, 152, 0, 0.12)', activeBg: 'rgba(255, 152, 0, 0.35)', color: '#ffa726' },
+      ICHUB: { bg: 'rgba(102, 187, 106, 0.12)', activeBg: 'rgba(102, 187, 106, 0.35)', color: '#66bb6a' },
     };
     const p = palette[useCase.toUpperCase()] ?? { bg: 'rgba(158,158,158,0.12)', activeBg: 'rgba(158,158,158,0.35)', color: '#bdbdbd' };
     return { backgroundColor: isActive ? p.activeBg : p.bg, color: isActive ? '#fff' : p.color };
