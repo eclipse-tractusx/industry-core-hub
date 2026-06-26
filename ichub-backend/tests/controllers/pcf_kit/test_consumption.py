@@ -47,6 +47,8 @@ Cases covered per endpoint:
 
 from unittest.mock import MagicMock
 
+from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
+
 # ---------------------------------------------------------------------------
 # URL constants
 # ---------------------------------------------------------------------------
@@ -228,10 +230,7 @@ class TestConsultPcfResponse:
     """GET /requests/{requestId}/response"""
 
     def test_returns_200_with_exchange_model(self, app_client, mock_consumption_mgr):
-        mock_consumption_mgr.consult_pcf_response.return_value = MagicMock(
-            **EXCHANGE_MODEL,
-            model_dump=lambda **_: EXCHANGE_MODEL,
-        )
+        mock_consumption_mgr.consult_pcf_response.return_value = PcfExchangeModel.model_validate(EXCHANGE_MODEL)
 
         resp = app_client.get(f"{BASE}/requests/{REQUEST_ID}/response")
 

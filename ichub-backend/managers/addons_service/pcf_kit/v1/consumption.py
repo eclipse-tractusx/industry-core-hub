@@ -40,11 +40,9 @@ from managers.addons_service.pcf_kit.v1.management import management_manager
 from models.metadata_database.pcf import PcfExchangeDirection, PcfExchangeStatus, PcfExchangeType
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel, PcfRelationshipModel, PcfSpecificStateModel
 from utils.log_utils import sanitize_log_value as _s
+from utils.pcf_utils import PCF_EXCHANGE_ASSET_TYPE
 
 logger = LoggingManager.get_logger(__name__)
-
-# Asset type used to identify PCF exchange assets in EDC catalogs (CX-0136)
-PCF_EXCHANGE_ASSET_TYPE = "https://w3id.org/catenax/taxonomy#PcfExchange"
 
 
 class PcfConsumptionManager:
@@ -85,9 +83,12 @@ class PcfConsumptionManager:
         list_policies: Optional[List[Dict]] = None,
     ) -> None:
         """
-        Send a PCF request to the data provider via EDC.
+        Send a PCF request to the data provider via EDC with version negotiation.
 
-        Delegates to the management manager's generic send_via_edc method.
+        Tries the v1.2.0 asset (``/footprintExchange``) first. If no v1.2.0
+        asset is available in the provider's catalog, falls back to the
+        v1.1.1 legacy asset (``/productIds``). CX-0136 §6 requires the
+        consumer to pick the highest compatible ``cx-common:version``.
 
         Args:
             request_id: The PCF request ID.
@@ -98,29 +99,58 @@ class PcfConsumptionManager:
             list_policies: Optional list of policies.
 
         Raises:
-            ValueError: If the data transfer fails.
+            ValueError: If the data transfer fails on all versions.
         """
-        # Build query parameters per CX-0136 footprintExchange GET spec
-        params: Dict[str, str] = {}
-        if manufacturer_part_id:
-            params["manufacturerPartId"] = manufacturer_part_id
-        if customer_part_id:
-            params["customerPartId"] = customer_part_id
+        # --- Try v1.2.0 first (highest version) ---
+        try:
+            params_v120: Dict[str, str] = {}
+            if manufacturer_part_id:
+                params_v120["manufacturerPartId"] = manufacturer_part_id
+            if customer_part_id:
+                params_v120["customerPartId"] = customer_part_id
+            if message:
+                params_v120["message"] = quote(message, safe="")
+
+            management_manager.send_via_edc(
+                request_id=request_id,
+                target_bpn=target_bpn,
+                http_method="GET",
+                path=f"/{request_id}",
+                params=params_v120 if params_v120 else None,
+                list_policies=list_policies,
+                asset_type=PCF_EXCHANGE_ASSET_TYPE,
+                asset_version="1.2.0",
+            )
+            logger.info(f"[PCF Consumption] Request {_s(request_id)} sent via v1.2.0 asset")
+            return
+        except Exception as e:
+            logger.info(
+                f"[PCF Consumption] v1.2.0 asset not available for BPN {_s(target_bpn)}, "
+                f"falling back to v1.1.1: {_s(e)}"
+            )
+
+        # --- Fall back to v1.1.1 (legacy /productIds) ---
+        if not manufacturer_part_id:
+            raise ValueError(
+                "Cannot fall back to v1.1.1 /productIds API: "
+                "manufacturerPartId is required but not provided."
+            )
+
+        params_v111: Dict[str, str] = {"requestId": request_id}
         if message:
-            params["message"] = quote(message, safe="")
+            params_v111["message"] = quote(message, safe="")
 
-        get_path = f"/{request_id}"
-
-        # Use the shared EDC method from management manager
         management_manager.send_via_edc(
             request_id=request_id,
             target_bpn=target_bpn,
             http_method="GET",
-            path=get_path,
-            params=params if params else None,
+            path=f"/{manufacturer_part_id}",
+            params=params_v111,
             list_policies=list_policies,
             asset_type=PCF_EXCHANGE_ASSET_TYPE,
+            asset_version="1.1.1",
         )
+        logger.info(f"[PCF Consumption] Request {_s(request_id)} sent via v1.1.1 (legacy) asset")
 
     def search_own_parts_by_manufacturer_part_id(
         self,

@@ -1,8 +1,9 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2025,2026 LKS Next
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -35,6 +36,15 @@ import { loadSchemas } from './schemaLoader';
 import digitalProductPassportSchema from './DigitalProductPassport-schema.json';
 import UsTariffInformationSchema from './UsTariffInformation-schema.json';
 import PcfSchema from './Pcf-schema.json';
+import SingleLevelBomAsPlannedSchema from './SingleLevelBomAsPlanned-schema.json';
+import SingleLevelUsageAsPlannedSchema from './SingleLevelUsageAsPlanned-schema.json';
+import idtaBatteryPassDigitalNameplate from './idta-BatteryPassDigitalNameplate-schema.json';
+import idtaBatteryPassCarbonFootprint from './idta-BatteryPassCarbonFootprint-schema.json';
+import idtaBatteryPassCircularity from './idta-BatteryPassCircularity-schema.json';
+import idtaBatteryPassHandoverDocumentation from './idta-BatteryPassHandoverDocumentation-schema.json';
+import idtaBatteryPassMaterialComposition from './idta-BatteryPassMaterialComposition-schema.json';
+import idtaBatteryPassProductCondition from './idta-BatteryPassProductCondition-schema.json';
+import idtaBatteryPassTechnicalData from './idta-BatteryPassTechnicalData-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -76,7 +86,16 @@ export interface SchemaDefinition<T = any> {
 const schemasToLoad = [
   digitalProductPassportSchema as JSONSchema,
   UsTariffInformationSchema as JSONSchema,
-  PcfSchema as JSONSchema
+  PcfSchema as JSONSchema,
+  SingleLevelBomAsPlannedSchema as JSONSchema,
+  SingleLevelUsageAsPlannedSchema as JSONSchema,
+  idtaBatteryPassDigitalNameplate as JSONSchema,
+  idtaBatteryPassCarbonFootprint as JSONSchema,
+  idtaBatteryPassCircularity as JSONSchema,
+  idtaBatteryPassHandoverDocumentation as JSONSchema,
+  idtaBatteryPassMaterialComposition as JSONSchema,
+  idtaBatteryPassProductCondition as JSONSchema,
+  idtaBatteryPassTechnicalData as JSONSchema,
   // Add more schemas here:
   // serialPartSchema as JSONSchema,
   // batchSchema as JSONSchema,

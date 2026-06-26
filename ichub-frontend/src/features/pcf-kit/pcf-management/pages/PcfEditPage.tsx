@@ -79,7 +79,7 @@ const PcfEditPage: React.FC = () => {
         }
         setInitialData(raw as Record<string, unknown>);
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : 'Failed to load PCF data');
+        setLoadError(err instanceof Error ? err.message : t('error.failedToLoadPcf'));
       } finally {
         setIsLoading(false);
       }
@@ -107,7 +107,7 @@ const PcfEditPage: React.FC = () => {
         setParticipantBpns(bpns);
         setIsParticipantDialogOpen(true);
       } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to save PCF';
+        const msg = err instanceof Error ? err.message : t('error.failedToSavePcf');
         setSnackbar({ open: true, message: msg, severity: 'error' });
       } finally {
         setIsSaving(false);
@@ -156,7 +156,7 @@ const PcfEditPage: React.FC = () => {
   // --------------- Error state (load failed or schema missing) ---------------
   if (loadError || !initialData || !pcfSchema) {
     const message = loadError
-      ?? (!pcfSchema ? 'PCF schema definition not found. Please check the application configuration.' : 'PCF data not found for this part.');
+      ?? (!pcfSchema ? t('error.schemaNotFound') : t('error.loadError'));
     return (
       <Box className="pcf-edit-page__error">
         <Alert severity="error" sx={{ maxWidth: 520 }}>{message}</Alert>

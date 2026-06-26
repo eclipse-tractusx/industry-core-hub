@@ -34,8 +34,9 @@ from managers.config.log_manager import LoggingManager
 from models.metadata_database.pcf import PcfExchangeStatus
 from models.services.addons.pcf_kit.v1.management import GovernanceBodyModel, NotifyUpdateModel
 from models.services.addons.pcf_kit.v1.models import PcfExchangeModel
-from tools.exceptions import NotFoundError
+from tools.exceptions import NotFoundError, PcfVersionGateError
 from utils.log_utils import sanitize_log_value as _s
+from utils.pcf_utils import DEFAULT_PCF_VERSION, SUPPORTED_PCF_VERSIONS
 from tools.constants import INTERNAL_SERVER_ERROR
 
 logger = LoggingManager.get_logger(__name__)
@@ -51,10 +52,19 @@ router = APIRouter(
 @router.post("/pcfs/{manufacturerPartId}", status_code=201)
 async def upload_new_pcf(
     manufacturer_part_id: str = Path(..., alias="manufacturerPartId"),
-    pcf_data: Dict[str, Any] = Body(...)
+    pcf_data: Dict[str, Any] = Body(...),
+    version: str = Query(
+        DEFAULT_PCF_VERSION,
+        description="PCF schema version (e.g. v7.0.0, v9.0.0)",
+    ),
 ) -> Dict[str, Any]:
     try:
-        result = provision_manager.upload_new_pcf(manufacturer_part_id, pcf_data)
+        if version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
+        result = provision_manager.upload_new_pcf(manufacturer_part_id, pcf_data, version=version)
         return JSONResponse(status_code=201, content=result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -66,9 +76,20 @@ async def upload_new_pcf(
 
 
 @router.get("/pcfs/{manufacturerPartId}")
-async def view_existing_pcf(manufacturer_part_id: str = Path(..., alias="manufacturerPartId")) -> Dict[str, Any]:
+async def view_existing_pcf(
+    manufacturer_part_id: str = Path(..., alias="manufacturerPartId"),
+    version: str = Query(
+        DEFAULT_PCF_VERSION,
+        description="PCF schema version to retrieve (e.g. v7.0.0, v9.0.0)",
+    ),
+) -> Dict[str, Any]:
     try:
-        result = provision_manager.view_existing_pcf(manufacturer_part_id)
+        if version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
+        result = provision_manager.view_existing_pcf(manufacturer_part_id, version=version)
         return JSONResponse(status_code=200, content=result)
     except ValueError as e: 
         raise HTTPException(status_code=400, detail=str(e))
@@ -82,11 +103,22 @@ async def view_existing_pcf(manufacturer_part_id: str = Path(..., alias="manufac
 @router.put("/pcfs/{manufacturerPartId}")
 async def update_pcf_and_get_participants(
     manufacturer_part_id: str = Path(..., alias="manufacturerPartId"),
-    pcf_data: Dict[str, Any] = Body(...)
+    pcf_data: Dict[str, Any] = Body(...),
+    version: str = Query(
+        DEFAULT_PCF_VERSION,
+        description="PCF schema version (e.g. v7.0.0, v9.0.0)",
+    ),
 ) -> List[str]:
     try:
-        result = provision_manager.update_pcf_and_get_participants(manufacturer_part_id, pcf_data)
+        if version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
+        result = provision_manager.update_pcf_and_get_participants(manufacturer_part_id, pcf_data, version=version)
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
@@ -108,6 +140,8 @@ async def confirm_and_send_update_to_participants(
             list_policies=body.governance if body else None
         )
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
@@ -117,14 +151,20 @@ async def confirm_and_send_update_to_participants(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests")
+@router.get("/requests", response_model=List[PcfExchangeModel], response_model_by_alias=True)
 async def list_provider_notifications(
     status: Optional[PcfExchangeStatus] = Query(None, description="Filter by request status (e.g., pending, delivered)"),
+    version: Optional[str] = Query(None, description="Filter by PCF schema version (e.g. v7.0.0, v9.0.0)"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(100, ge=1, le=1000, description="Pagination limit")
 ) -> List[PcfExchangeModel]:
     try:
-        result = provision_manager.list_provider_notifications(status=status, offset=offset, limit=limit)
+        if version is not None and version not in SUPPORTED_PCF_VERSIONS:
+            raise ValueError(
+                f"Unsupported PCF version '{version}'. "
+                f"Supported versions: {sorted(SUPPORTED_PCF_VERSIONS)}"
+            )
+        result = provision_manager.list_provider_notifications(status=status, version=version, offset=offset, limit=limit)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -143,6 +183,8 @@ async def accept_request_and_send_response(
     try:
         result = provision_manager.accept_request_and_send_response(request_id=request_id, list_policies=body.governance if body else None)
         return JSONResponse(status_code=200, content=result)
+    except PcfVersionGateError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
@@ -152,7 +194,7 @@ async def accept_request_and_send_response(
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/requests/{requestId}/refresh-pcf")
+@router.get("/requests/{requestId}/refresh-pcf", response_model=PcfExchangeModel, response_model_by_alias=True)
 async def refresh_pcf_data_for_request(request_id: str = Path(..., alias="requestId")) -> PcfExchangeModel:
     try:
         result = provision_manager.refresh_pcf_data_for_request(request_id=request_id)

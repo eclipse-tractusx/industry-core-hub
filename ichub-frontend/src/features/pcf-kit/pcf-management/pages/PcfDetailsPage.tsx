@@ -69,7 +69,7 @@ const PcfDetailsPage: React.FC = () => {
         }
         setPcfData(raw as unknown as PcfNestedData);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load PCF data';
+        const message = err instanceof Error ? err.message : t('error.failedToLoadPcf');
         setError(message);
       } finally {
         setIsLoading(false);
