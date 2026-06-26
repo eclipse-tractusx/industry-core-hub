@@ -68,6 +68,7 @@ interface InstanceProductsTableProps {
 export default function InstanceProductsTable({ part, onAddClick }: Readonly<InstanceProductsTableProps>) {
   const { t } = useTranslation('catalogManagement');
   const { t: tCommon } = useTranslation('common');
+  const { t: tNotifications } = useTranslation('notifications');
   // Ref to prevent duplicate API calls in React StrictMode
   const dataLoadedRef = useRef(false);
   
@@ -103,7 +104,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       setCopyAnimations(prev => ({ ...prev, [animationKey]: true }));
 
       // Show success notification
-      showSuccess(tCommon('notifications.copiedToClipboard', { field: label }));
+      showSuccess(tNotifications('copiedToClipboard', { field: label }));
 
       // Reset animation after 600ms
       setTimeout(() => {
@@ -111,7 +112,7 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
       }, 600);
     } catch (err) {
       console.error(`Failed to copy ${label}:`, err);
-      showError(tCommon('notifications.failedToCopy', { field: label }));
+      showError(tNotifications('failedToCopy', { field: label }));
     }
   };
 

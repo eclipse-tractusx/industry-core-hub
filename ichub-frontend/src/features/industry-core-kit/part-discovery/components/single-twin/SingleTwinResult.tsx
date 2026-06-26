@@ -103,7 +103,7 @@ interface SingleTwinResultProps {
 }
 
 export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterPartyId, singleTwinResult }) => {
-  const { t } = useTranslation(['partDiscovery', 'common']);
+  const { t } = useTranslation(['partDiscovery', 'common', 'notifications']);
   const [dtrInfoOpen, setDtrInfoOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -1582,7 +1582,7 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
             fontSize: '0.875rem'
           }}
         >
-          {t('common:notifications.copiedToClipboard', { field: 'ID' })}
+          {t('notifications:copiedToClipboard', { field: 'ID' })}
         </Box>
       </Snackbar>
 

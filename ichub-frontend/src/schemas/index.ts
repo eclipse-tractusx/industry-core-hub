@@ -34,19 +34,6 @@
  */
 
 import { loadSchema, createSchemaKey } from './schemaLoader';
-import digitalProductPassportSchema from './catena-x/DigitalProductPassport-schema.json';
-import UsTariffInformationSchema from './catena-x/UsTariffInformation-schema.json';
-import PcfSchemav9 from './catena-x/Pcf-schema-v9.0.0.json';
-import PcfSchemav7 from './catena-x/Pcf-schema-v7.0.0.json';
-import SingleLevelBomAsPlannedSchema from './catena-x/SingleLevelBomAsPlanned-schema.json';
-import SingleLevelUsageAsPlannedSchema from './catena-x/SingleLevelUsageAsPlanned-schema.json';
-import idtaBatteryPassDigitalNameplate from './idta/idta-BatteryPassDigitalNameplate-schema.json';
-import idtaBatteryPassCarbonFootprint from './idta/idta-BatteryPassCarbonFootprint-schema.json';
-import idtaBatteryPassCircularity from './idta/idta-BatteryPassCircularity-schema.json';
-import idtaBatteryPassHandoverDocumentation from './idta/idta-BatteryPassHandoverDocumentation-schema.json';
-import idtaBatteryPassMaterialComposition from './idta/idta-BatteryPassMaterialComposition-schema.json';
-import idtaBatteryPassProductCondition from './idta/idta-BatteryPassProductCondition-schema.json';
-import idtaBatteryPassTechnicalData from './idta/idta-BatteryPassTechnicalData-schema.json';
 import { JSONSchema } from './json-schema-interpreter';
 
 export interface SchemaMetadata {
@@ -110,25 +97,6 @@ const globModules = import.meta.glob('./*/*-schema*.json', { eager: true }) as R
   string,
   { default: JSONSchema }
 >;
-const schemasToLoad = [
-  digitalProductPassportSchema as JSONSchema,
-  UsTariffInformationSchema as JSONSchema,
-  PcfSchemav9 as JSONSchema,
-  PcfSchemav7 as JSONSchema,
-  SingleLevelBomAsPlannedSchema as JSONSchema,
-  SingleLevelUsageAsPlannedSchema as JSONSchema,
-  idtaBatteryPassDigitalNameplate as JSONSchema,
-  idtaBatteryPassCarbonFootprint as JSONSchema,
-  idtaBatteryPassCircularity as JSONSchema,
-  idtaBatteryPassHandoverDocumentation as JSONSchema,
-  idtaBatteryPassMaterialComposition as JSONSchema,
-  idtaBatteryPassProductCondition as JSONSchema,
-  idtaBatteryPassTechnicalData as JSONSchema,
-  // Add more schemas here:
-  // serialPartSchema as JSONSchema,
-  // batchSchema as JSONSchema,
-];
-
 /**
  * Extracts the group name (subfolder) from a glob path.
  * e.g. "./catena-x/Pcf-schema.json" → "catena-x"
