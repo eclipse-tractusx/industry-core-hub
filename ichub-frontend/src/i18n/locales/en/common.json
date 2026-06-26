@@ -159,7 +159,7 @@
     "possibleCauses": "Possible causes:",
     "retry": "Retry",
     "notFound": "No catalog parts available, please check your ichub-backend connection/configuration.",
-    "fileReadError": "Could not read file{{message, : }}",
+    "fileReadError": "Could not read file: {{message}}",
     "invalidJson": "Invalid JSON format"
   },
   "header": {

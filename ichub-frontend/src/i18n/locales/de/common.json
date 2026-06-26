@@ -159,7 +159,7 @@
     "possibleCauses": "Mögliche Ursachen:",
     "retry": "Erneut versuchen",
     "notFound": "Keine Katalogteile verfügbar, bitte überprüfen Sie die ichub-backend Verbindung/Konfiguration.",
-    "fileReadError": "Datei konnte nicht gelesen werden{{message, : }}",
+    "fileReadError": "Datei konnte nicht gelesen werden: {{message}}",
     "invalidJson": "Ungültiges JSON-Format"
   },
   "header": {

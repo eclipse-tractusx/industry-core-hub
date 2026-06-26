@@ -362,11 +362,11 @@ const KitDetailPage: React.FC = () => {
         </Grid2>
 
         {/* Right Side: Features Grid */}
-        <Grid2 size={{ sm: 12, md: 7, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '100%', height: { xs: 'auto', md: '100%' } }}>
+        <Grid2 size={{ xs: 12, md: 7, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '100%', height: { xs: 'auto', md: '100%' } }}>
           <Box sx={{ p: 3, width: '100%', maxWidth: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
               <Grid2 container spacing={3} sx={{ width: '100%', maxWidth: '100%', margin: 0 }}>
                 {kit.features.map((feature) => (
-                  <Grid2 size={{ md: 12, lg: 4 }} key={feature.id} sx={{ maxWidth: '100%' }}>
+                  <Grid2 size={{ xs: 12, lg: 4 }} key={feature.id} sx={{ maxWidth: '100%' }}>
                     <FeatureCard feature={feature} onToggle={handleFeatureToggle} />
                   </Grid2>
                 ))}
