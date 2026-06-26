@@ -1,7 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
-* Copyright (c) 2025 LKS NEXT
+* Copyright (c) 2025,2026 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -54,6 +54,9 @@ data:
       retry_interval: {{ .Values.backend.configuration.database.retry_interval }}
     server: {{ .Values.backend.server | toYaml | nindent 6 }}
     cors: {{ .Values.backend.cors | toYaml | nindent 6 }}
+    metrics:
+      enabled: {{ .Values.backend.metrics.enabled }}
+      endpoint: {{ .Values.backend.metrics.endpoint | quote }}
     consumer:
       discovery:
         discovery_finder: {{ .Values.backend.configuration.consumer.discovery.discovery_finder | toYaml | nindent 10 }}
