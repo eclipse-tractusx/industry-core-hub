@@ -29,7 +29,9 @@ import {
   Typography,
   Alert,
   Snackbar,
-  IconButton
+  IconButton,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   ChevronLeft,
@@ -51,6 +53,15 @@ const KitFeaturesPage: React.FC = () => {
   // Carousel state - smooth sliding carousel
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Responsive card dimensions — scale down on small screens
+  const theme = useTheme();
+  const isXs = useMediaQuery(theme.breakpoints.only('xs'));
+  const isSm = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const cardWidth = isXs ? 240 : isSm ? 280 : 320;
+  const cardHeight = isXs ? 280 : isSm ? 330 : 380;
+  // centerOffset mirrors the original 196px at 320px card width
+  const centerOffset = Math.round(cardWidth * 0.6125);
 
   useEffect(() => {
     // Load KITs data from translated hook
@@ -248,9 +259,9 @@ const KitFeaturesPage: React.FC = () => {
     >
       {/* Hero Header Section */}
       <Box sx={{ 
-        pt: 6, 
-        pb: 3,
-        px: 4,
+        pt: { xs: 1.5, md: 6 }, 
+        pb: { xs: 1, md: 3 },
+        px: { xs: 2, md: 4 },
         textAlign: 'center',
         position: 'relative',
         zIndex: 1,
@@ -275,13 +286,13 @@ const KitFeaturesPage: React.FC = () => {
         <Typography 
           variant="h2" 
           sx={{ 
-            fontSize: { xs: '2.5rem', md: '3.5rem' },
+            fontSize: { xs: '1.6rem', sm: '2.2rem', md: '3.5rem' },
             fontWeight: 700,
             background: 'linear-gradient(135deg, #42a5f5 0%, #1976d2 50%, #0d47a1 100%)',
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            mb: 2,
+            mb: { xs: 0.5, md: 2 },
             letterSpacing: '-0.02em',
             textShadow: '0 0 40px rgba(66, 165, 245, 0.3)'
           }}
@@ -295,10 +306,10 @@ const KitFeaturesPage: React.FC = () => {
             color: 'rgba(255, 255, 255, 0.9)',
             maxWidth: '900px',
             margin: '0 auto',
-            fontSize: { xs: '1.1rem', md: '1.3rem' },
+            fontSize: { xs: '0.875rem', md: '1.3rem' },
             fontWeight: 500,
             lineHeight: 1.6,
-            mb: 1
+            mb: { xs: 0.5, md: 1 }
           }}
         >
           {t('page.subtitle')}
@@ -312,7 +323,8 @@ const KitFeaturesPage: React.FC = () => {
             margin: '0 auto',
             fontSize: { xs: '0.95rem', md: '1.05rem' },
             lineHeight: 1.8,
-            fontWeight: 400
+            fontWeight: 400,
+            display: { xs: 'none', md: 'block' }
           }}
         >
           {t('page.description')}<br />
@@ -327,8 +339,8 @@ const KitFeaturesPage: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        maxHeight: 'calc(100vh - 200px)', // Responsive height based on viewport
-        minHeight: '350px' // Minimum height for cards
+        maxHeight: { xs: 'calc(100vh - 180px)', md: 'calc(100vh - 200px)' },
+        minHeight: { xs: '250px', md: '350px' },
       }}>
         {/* Side Navigation Arrows - Centered with carousel */}
         {sortedKits.length > 1 && (
@@ -352,11 +364,11 @@ const KitFeaturesPage: React.FC = () => {
                   transform: 'translateY(-50%) scale(1.1)',
                   boxShadow: '0 12px 40px rgba(66,165,245,0.2)'
                 },
-                width: 56,
-                height: 56
+                width: { xs: 36, md: 56 },
+                height: { xs: 36, md: 56 }
               }}
             >
-              <ChevronLeft sx={{ fontSize: 32 }} />
+              <ChevronLeft sx={{ fontSize: { xs: 22, md: 32 } }} />
             </IconButton>
 
             {/* Right Arrow - positioned at right edge of container */}
@@ -378,11 +390,11 @@ const KitFeaturesPage: React.FC = () => {
                   transform: 'translateY(-50%) scale(1.1)',
                   boxShadow: '0 12px 40px rgba(66,165,245,0.2)'
                 },
-                width: 56,
-                height: 56
+                width: { xs: 36, md: 56 },
+                height: { xs: 36, md: 56 }
               }}
             >
-              <ChevronRight sx={{ fontSize: 32 }} />
+              <ChevronRight sx={{ fontSize: { xs: 22, md: 32 } }} />
             </IconButton>
           </>
         )}
@@ -390,7 +402,7 @@ const KitFeaturesPage: React.FC = () => {
           sx={{
             position: 'relative',
             width: '100%',
-            height: '380px', // Fixed height matching cards
+            height: `${cardHeight}px`, // Fixed height matching cards
             overflow: 'visible' // Allow cards to extend beyond bounds for animations
           }}
         >
@@ -400,8 +412,8 @@ const KitFeaturesPage: React.FC = () => {
               alignItems: 'center',
               height: '100%',
               // Create infinite loop by multiplying array size
-              width: `${sortedKits.length * 320 * 5}px`, // 5 copies for seamless infinite scroll
-              transform: `translateX(calc(50vw - 196px - ${(currentIndex + sortedKits.length * 2) * 320}px))`, // Adjusted for perfect centering with title and dots
+              width: `${sortedKits.length * cardWidth * 5}px`,
+              transform: `translateX(calc(50vw - ${centerOffset}px - ${(currentIndex + sortedKits.length * 2) * cardWidth}px))`,
               transition: isAnimating ? 'transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1)' : 'none',
               gap: 0
             }}
@@ -460,9 +472,9 @@ const KitFeaturesPage: React.FC = () => {
                       }
                     }}
                     sx={{
-                      flex: '0 0 320px',
-                      width: '320px',
-                      height: '380px', // More compact cards
+                      flex: `0 0 ${cardWidth}px`,
+                      width: `${cardWidth}px`,
+                      height: `${cardHeight}px`,
                       transform: `scale(${scale}) translateY(${distance * 5}px)`,
                       opacity: opacity,
                       filter: `blur(${blur}px)`,
@@ -496,8 +508,8 @@ const KitFeaturesPage: React.FC = () => {
             justifyContent: 'center', 
             alignItems: 'center',
             gap: 1.5, 
-            mt: 3, // Same margin as header spacing
-            mb: 3, // Same margin for bottom spacing
+            mt: { xs: 1, md: 3 },
+            mb: { xs: 1, md: 3 },
             px: 3
           }}
         >
