@@ -454,6 +454,11 @@ database:
   connection_string: "postgresql://user:password@localhost:5432/ichub"
   echo: false
 
+# When enabled, the application publishes an OpenMetrics endpoint (default: /metrics)
+metrics:
+  enabled: true
+  endpoint: "/metrics"
+
 cors:
   enabled: true
   allow_origins:
