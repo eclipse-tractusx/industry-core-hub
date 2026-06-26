@@ -45,6 +45,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -74,6 +76,8 @@ import AddSerializedPartDialog from '@/features/industry-core-kit/serialized-par
 const PassportProvisionWizard: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['passportProvision', 'common']);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const steps = [
     t('wizard.steps.selectVersion'),
@@ -1262,7 +1266,7 @@ const PassportProvisionWizard: React.FC = () => {
       sx={{
         height: '100%',
         overflow: 'auto',
-        p: 3,
+        p: { sm: 0.5, md: 3 },
       }}
     >
       <Container maxWidth="lg" sx={{ pb: 3 }}>
@@ -1274,7 +1278,9 @@ const PassportProvisionWizard: React.FC = () => {
             sx={{
               color: '#fff',
               mb: 1.5,
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+              p: { sm: 1, md: 3 },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              '&:hover': { bgcolor: 'action.hover' },
             }}
           >
             {t('wizard.header.backToList')}
@@ -1290,17 +1296,15 @@ const PassportProvisionWizard: React.FC = () => {
         {/* Stepper */}
         <Paper
           sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 90,
             background: `linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)`,
             backdropFilter: 'blur(20px)',
             border: `1px solid rgba(16, 185, 129, 0.2)`,
             borderRadius: 2,
-            p: 2.5,
+            p: { xs: 1.5, sm: 2.5 },
             mb: 2.5,
             boxShadow: `0 8px 32px rgba(16, 185, 129, 0.15)`,
             bgcolor: 'rgba(10, 10, 15, 0.95)',
+            overflowX: 'auto',
           }}
         >
           <Stepper activeStep={activeStep} alternativeLabel>
@@ -1311,10 +1315,12 @@ const PassportProvisionWizard: React.FC = () => {
                     '& .MuiStepLabel-label': {
                       color: 'rgba(255,255,255,0.5)',
                       fontWeight: 500,
-                      fontSize: '0.95rem',
+                      fontSize: { xs: '0.7rem', sm: '0.95rem' },
+                      display: isMobile ? 'none' : 'block',
                       '&.Mui-active': { 
                         color: '#fff',
                         fontWeight: 600,
+                        display: 'block',
                       },
                       '&.Mui-completed': { 
                         color: kitThemes.ecoPass.gradientStart,
@@ -1323,7 +1329,7 @@ const PassportProvisionWizard: React.FC = () => {
                     },
                     '& .MuiStepIcon-root': {
                       color: 'rgba(255,255,255,0.2)',
-                      fontSize: '1.75rem',
+                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
                       '&.Mui-active': {
                         color: kitThemes.ecoPass.gradientStart,
                         filter: `drop-shadow(0 4px 20px ${kitThemes.ecoPass.shadowColor})`,
@@ -1359,7 +1365,7 @@ const PassportProvisionWizard: React.FC = () => {
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 255, 255, 0.12)',
             borderRadius: 2,
-            p: 3,
+            p: { sm: 1.5, md: 3 },
             mb: 2.5,
           }}
         >
