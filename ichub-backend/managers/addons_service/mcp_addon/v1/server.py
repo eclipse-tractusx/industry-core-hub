@@ -70,7 +70,6 @@ mcp_leaf_path = f"/{_mcp_leaf}"                      # e.g. "/mcp"
 # Public base URL of the mounted sub-app. The protected-resource URL is derived
 # from this + mcp_leaf_path inside FastMCP, reproducing the full endpoint URL.
 _mcp_base_url = f"{_hostname}{mcp_mount_parent_path}"
-_mcp_server_url = f"{_hostname}{_mount_path}"        # full endpoint URL, for logs/instructions
 
 _dtr_policies = get_dtr_policies()
 _READ_ONLY = ToolAnnotations(readOnlyHint=True)
