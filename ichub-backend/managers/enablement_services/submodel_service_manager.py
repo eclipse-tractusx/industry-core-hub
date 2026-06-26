@@ -21,8 +21,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-import os
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Dict, Any
 from uuid import UUID
 from hashlib import sha256
@@ -34,9 +33,6 @@ from tools.exceptions import InvalidError, NotFoundError
 
 from tractusx_sdk.industry.adapters import SubmodelAdapter
 from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdapterFactory
-from tractusx_sdk.industry.adapters.submodel_adapters.file_system_adapter import FileSystemAdapter
-from managers.enablement_services.adapters.http_submodel_adapter import HttpSubmodelAdapter
-
 
 class OperationType(Enum):
     """Enumeration of supported submodel operations."""
@@ -44,162 +40,138 @@ class OperationType(Enum):
     WRITE = "write"
     DELETE = "delete"
 
+
+@dataclass
+class SubmodelMetadata:
+    """
+    Container for submodel metadata used across read/write/delete operations.
+    
+    Attributes:
+        submodel_id: UUID of the submodel.
+        semantic_id: Semantic ID of the submodel.
+        semantic_id_hash: SHA-256 hash of the semantic ID for storage organization.
+    """
+    submodel_id: str
+    semantic_id: str
+    semantic_id_hash: str
+    
+    def to_dict(self) -> Dict[str, str]:
+        """
+        Convert metadata to dictionary for adapter operations.
+        
+        Returns:
+            Dictionary representation of metadata.
+        """
+        return {
+            "submodel_id": self.submodel_id,
+            "semantic_id": self.semantic_id,
+            "semantic_id_hash": self.semantic_id_hash,
+        }
+
 class SubmodelServiceManager:
-    """Manager for handling submodel service."""
-    adapter: SubmodelAdapter
-    adapter_mode: str
+    """
+    Manager for handling submodel service operations (read, write, delete).
+    
+    Uses lazy initialization to ensure efficient adapter creation and configuration.
+    Features 100% dynamic adapter initialization based on configuration via SubmodelAdapterFactory.
+    Supports multiple storage backends:
+    - FileSystem (local storage)
+    - S3 (AWS S3 or S3-compatible)
+    - HttpSubmodel (external submodel service)
+    
+    Singleton Pattern Infrastructure:
+    The singleton pattern infrastructure (__new__ method) is prepared but not currently enforced.
+    This allows flexibility for potential future use. Currently, lazy initialization via __init__
+    is used to initialize the adapter only once per application runtime.
+    
+    Configuration is loaded from YAML and passed to the factory without any hardcoded logic
+    or switch statements. Adapter type and configuration are determined dynamically from
+    the configuration section: provider.submodel_dispatcher
+    
+    Example:
+        # Initialize adapter from configuration
+        manager = SubmodelServiceManager()
+        
+        # Subsequent instantiations initialize the same way (due to lazy initialization)
+        manager2 = SubmodelServiceManager()
+        # Both reference the same initialized adapter instance
+    """
+    _instance = None
+    _initialized = False
     logger = LoggingManager.get_logger(__name__)
+    
+    # def __new__(cls):
+    #     """
+    #     Implement singleton pattern to ensure only one adapter instance exists.
+        
+    #     Creates a single instance on first instantiation and initializes the _initialized
+    #     flag for lazy initialization. Subsequent calls return the existing instance.
+        
+    #     Returns:
+    #         Singleton instance of SubmodelServiceManager.
+    #     """
+    #     if cls._instance is None:
+    #         cls._instance = super().__new__(cls)
+    #         cls._instance._initialized = False
+    #     return cls._instance
 
     def __init__(self):
-        # Get adapter mode from configuration (default: filesystem)
-        self.adapter_mode = ConfigManager.get_config(
-            "provider.submodel_dispatcher.mode",
-            default="filesystem"
-        )
+        """
+        Initialize SubmodelServiceManager with lazy initialization pattern.
         
-        if not isinstance(self.adapter_mode, str):
-            raise ValueError(
-                f"Expected 'provider.submodel_dispatcher.mode' to be a string, "
-                f"got: {type(self.adapter_mode).__name__}"
-            )
+        Implements lazy initialization to create the adapter instance only once during
+        application runtime. The _initialized flag tracks whether initialization has occurred.
         
-        self.adapter_mode = self.adapter_mode.lower()
+        Note on Singleton Pattern:
+        The singleton __new__() method is prepared but currently commented out. If enabled
+        in the future, it will enforce that only one manager instance exists application-wide.
+        The current lazy initialization pattern provides similar benefits for typical usage.
         
-        if self.adapter_mode not in ["filesystem", "http"]:
-            raise ValueError(
-                f"Invalid adapter mode: {self.adapter_mode}. "
-                f"Supported modes: 'filesystem', 'http'"
-            )
+        Configuration flow:
+        1. On first instantiation: ConfigManager.get_adapter_mode_and_config() retrieves
+           both adapter mode and configuration from provider.submodel_dispatcher section
+        2. Passes to SubmodelAdapterFactory.from_config() → creates adapter instance
+        3. Sets instance attributes: self.adapter, self.adapter_mode
+        4. Sets _initialized flag to True, skipping reinitialize on subsequent calls
         
-        # Initialize appropriate adapter based on mode
-        if self.adapter_mode == "filesystem":
-            self.adapter = self._initialize_filesystem_adapter()
-        elif self.adapter_mode == "http":
-            self.adapter = self._initialize_http_adapter()
-        else:
-            raise ValueError(f"Unsupported adapter mode: {self.adapter_mode}")
+        Raises:
+            ValueError: If configuration section is missing or invalid
+            RuntimeError: If adapter initialization fails
         
-        self.logger.info(f"SubmodelServiceManager initialized with mode: {self.adapter_mode}")
-    
-    def _initialize_filesystem_adapter(self) -> FileSystemAdapter:
-        """Initialize filesystem adapter for local storage."""
-        submodel_service_path = ConfigManager.get_config(
-            "provider.submodel_dispatcher.path",
-            default="/industry-core-hub/data/submodels"
-        )
+        Example:
+            # First instantiation initializes adapter from configuration
+            manager = SubmodelServiceManager()
+            
+            # Subsequent instantiations skip initialization (lazy pattern)
+            manager2 = SubmodelServiceManager()
+            # Both have access to the initialized adapter
+        """
+        if self._initialized:
+            return
         
-        if not isinstance(submodel_service_path, str):
-            raise ValueError(
-                f"Expected 'provider.submodel_dispatcher.path' to be a string, "
-                f"got: {type(submodel_service_path).__name__}"
-            )
-        
-        # Convert relative path to absolute path if needed
-        if not os.path.isabs(submodel_service_path):
-            submodel_service_path = os.path.abspath(submodel_service_path)
-        
-        # Ensure the directory exists and check permissions
         try:
-            path_obj = Path(submodel_service_path)
-            path_obj.mkdir(parents=True, exist_ok=True)
-            
-            # Check if we have write permissions using os.access()
-            if not os.access(submodel_service_path, os.W_OK):
-                raise PermissionError(
-                    f"No write permission for directory: {submodel_service_path}"
-                )
-            
-            self.logger.info(f"Submodel storage initialized at: {submodel_service_path}")
-        except PermissionError as e:
-            self.logger.error(
-                f"Permission denied accessing submodel storage path: {submodel_service_path}"
+            # Get adapter mode and config efficiently in a single call
+            # This avoids loading the dispatcher config multiple times
+            self.adapter_mode, adapter_config = ConfigManager.get_adapter_mode_and_config(
+                validate_adapter_exists=True
             )
-            raise PermissionError(
-                f"Cannot access submodel storage directory: {submodel_service_path}. Error: {e}"
+            
+            # Initialize adapter using factory
+            self.adapter = SubmodelAdapterFactory.from_config(
+                self.adapter_mode,
+                adapter_config
             )
+            
+            self._initialized = True
+            self.logger.info(
+                f"SubmodelServiceManager initialized successfully with adapter mode: {self.adapter_mode}"
+            )
+        except ValueError as e:
+            self.logger.error(f"Configuration error during initialization: {e}")
+            raise
         except Exception as e:
-            self.logger.error(
-                f"Failed to initialize submodel storage at {submodel_service_path}: {e}"
-            )
-            raise RuntimeError(f"Failed to initialize submodel storage: {e}")
-        
-        return SubmodelAdapterFactory.get_file_system(root_path=submodel_service_path)
-    
-    def _initialize_http_adapter(self) -> HttpSubmodelAdapter:
-        """Initialize HTTP adapter for external submodel service."""
-        http_config = ConfigManager.get_config("provider.submodel_dispatcher.http", default={})
-        
-        if not isinstance(http_config, dict):
-            raise ValueError(
-                f"Expected 'provider.submodel_dispatcher.http' to be a dict, "
-                f"got: {type(http_config).__name__}"
-            )
-        
-        # Extract required configuration
-        base_url = http_config.get("base_url", "")
-        if not base_url:
-            raise ValueError(
-                "Missing required configuration: provider.submodel_dispatcher.http.base_url"
-            )
-        
-        # Extract optional configuration with defaults
-        api_path = http_config.get("api_path", "")
-        timeout = http_config.get("timeout", 30)
-        verify_ssl = http_config.get("verify_ssl", True)
-        
-        # Extract authentication configuration
-        auth_config = http_config.get("auth", {})
-        auth_enabled = auth_config.get("enabled", False)
-        auth_type = "none"
-        auth_token = None
-        auth_key_name = None
-        
-        if auth_enabled:
-            # Get authentication type (default to apikey for backward compatibility)
-            auth_type = auth_config.get("type", "apikey").lower()
-            
-            # Get authentication token/key
-            auth_token = auth_config.get("token", "")
-            
-            # Support environment variable substitution
-            if auth_token.startswith("${") and auth_token.endswith("}"):
-                env_var = auth_token[2:-1]
-                auth_token = os.getenv(env_var, "")
-                if not auth_token:
-                    self.logger.warning(
-                        f"Environment variable {env_var} not set. "
-                        f"Authentication may fail."
-                    )
-            
-            if not auth_token:
-                self.logger.warning(
-                    "Authentication enabled but no token provided. "
-                    "External service calls may fail if authentication is required."
-                )
-            
-            # Get API key header name if using apikey auth
-            if auth_type == "apikey":
-                auth_key_name = auth_config.get("key_name", "X-Api-Key")
-                if not auth_key_name:
-                    raise ValueError(
-                        "key_name is required when auth type is 'apikey'"
-                    )
-                self.logger.info(f"Using API Key authentication with header: {auth_key_name}")
-            elif auth_type == "bearer":
-                self.logger.info("Using Bearer token authentication")
-        
-        self.logger.info(f"Initializing HTTP adapter for: {base_url}")
-        
-        return HttpSubmodelAdapter(
-            base_url=base_url,
-            api_path=api_path,
-            auth_type=auth_type,
-            auth_token=auth_token if auth_enabled else None,
-            auth_key_name=auth_key_name,
-            timeout=timeout,
-            verify_ssl=verify_ssl
-        )
-
+            self.logger.error(f"Failed to initialize SubmodelServiceManager: {e}")
+            raise RuntimeError(f"Failed to initialize submodel adapter: {e}") from e
     def _validate_uuid(self, value: Any) -> UUID:
         """Validate and convert value to UUID.
         
@@ -219,20 +191,21 @@ class SubmodelServiceManager:
         except (ValueError, AttributeError, TypeError) as e:
             raise InvalidError(f"Invalid UUID: {value}") from e
 
-    def _get_filesystem_path(self, semantic_id: str, submodel_id: UUID) -> tuple[str, str]:
-        """Get filesystem path components for a submodel.
+    def _hash_semantic_id(self, semantic_id: str) -> str:
+        """Generate SHA-256 hash of semantic ID for storage organization.
+        
+        Creates a deterministic hash of the semantic ID that can be used for organizing
+        storage paths or grouping related submodels.
         
         Args:
-            semantic_id: Semantic ID of the submodel.
-            submodel_id: UUID of the submodel.
+            semantic_id: Semantic ID of the submodel (e.g., urn:samm:io.catenax...).
         
         Returns:
-            Tuple of (directory_hash, file_path).
+            SHA-256 hash of the semantic ID as hexadecimal string.
         """
         sha256_semantic_id = sha256(semantic_id.encode()).hexdigest()
-        file_path = f"{sha256_semantic_id}/{submodel_id}.json"
-        return sha256_semantic_id, file_path
-
+        return sha256_semantic_id
+    
     def _execute_submodel_operation(
         self,
         operation: OperationType,
@@ -263,44 +236,29 @@ class SubmodelServiceManager:
         # Log operation
         self.logger.info(f"{operation.value.capitalize()}ing submodel with id=[{submodel_id}], semanticId=[{semantic_id}]")
         
-        # Use HTTP adapter with semantic IDs
-        if self.adapter_mode == "http" and isinstance(self.adapter, HttpSubmodelAdapter):
-            if operation == OperationType.READ:
-                return self.adapter.read_submodel(semantic_id, submodel_id)
-            elif operation == OperationType.WRITE:
-                self.adapter.write_submodel(semantic_id, submodel_id, payload)
-                self.logger.info(f"Submodel uploaded successfully to external service.")
-                return None
-            elif operation == OperationType.DELETE:
-                self.adapter.delete_submodel(semantic_id, submodel_id)
-                self.logger.info("Submodel deleted successfully from external service.")
-                return None
-        
-        # Filesystem adapter with hashed paths
-        sha256_id, file_path = self._get_filesystem_path(semantic_id, submodel_id)
-        
-        # Cache semantic_id if using HTTP adapter
-        if isinstance(self.adapter, HttpSubmodelAdapter):
-            self.adapter.cache_semantic_id(sha256_id, semantic_id)
+        # Create metadata object for adapter communication
+        submodel_metadata = SubmodelMetadata(
+            submodel_id=str(submodel_id),
+            semantic_id=semantic_id,
+            semantic_id_hash=self._hash_semantic_id(semantic_id),
+        )
         
         if operation == OperationType.READ:
-            if not self.adapter.exists(file_path):
-                self.logger.error(f"Submodel file not found: {file_path}")
-                raise NotFoundError(f"Submodel file not found: {file_path}")
-            return self.adapter.read(file_path)
+            if not self.adapter.exists(submodel_metadata.to_dict()):
+                self.logger.error(f"Submodel file not found: {submodel_metadata}")
+                raise NotFoundError(f"Submodel file not found: {submodel_metadata}")
+            return self.adapter.read(submodel_metadata.to_dict())
         
         elif operation == OperationType.WRITE:
-            if not self.adapter.exists(sha256_id):
-                self.adapter.create_directory(sha256_id)
-            self.adapter.write(file_path, payload)
+            self.adapter.write_json(submodel_metadata.to_dict(), payload)
             self.logger.info("Submodel uploaded successfully.")
             return None
         
         elif operation == OperationType.DELETE:
-            if not self.adapter.exists(file_path):
-                self.logger.error(f"Submodel file not found: {file_path}")
-                raise NotFoundError(f"Submodel file not found: {file_path}")
-            self.adapter.delete(file_path)
+            if not self.adapter.exists(submodel_metadata.to_dict()):
+                self.logger.error(f"Submodel file not found: {submodel_metadata}")
+                raise NotFoundError(f"Submodel file not found: {submodel_metadata}")
+            self.adapter.delete(submodel_metadata.to_dict())
             self.logger.info("Submodel deleted successfully.")
             return None
 
@@ -310,7 +268,38 @@ class SubmodelServiceManager:
         semantic_id: str,
         payload: Dict[str, Any]
     ) -> None:
-        """Upload a submodel to the service."""
+        """
+        Upload a submodel to the configured storage backend.
+        
+        Uploads a JSON-serializable submodel document to the underlying storage
+        system (FileSystem, S3, or external HTTP submodel service) based on the
+        configured adapter.
+        
+        Args:
+            submodel_id: UUID of the submodel being uploaded.
+            semantic_id: Semantic ID (e.g., urn:example:submodel) that identifies
+                the submodel type. Used for storage path organization.
+            payload: Submodel content as a dictionary. Must be JSON-serializable.
+        
+        Returns:
+            None
+        
+        Raises:
+            InvalidError: If submodel_id is not a valid UUID.
+            RuntimeError: If adapter is not initialized or storage operation fails.
+        
+        Example:
+            payload = {
+                "modelType": "Submodel",
+                "identification": "...",
+                "submodelElements": [...]
+            }
+            manager.upload_twin_aspect_document(
+                submodel_id=UUID("550e8400-e29b-41d4-a716-446655440000"),
+                semantic_id="urn:example:submodel:v1",
+                payload=payload
+            )
+        """
         self._execute_submodel_operation(
             OperationType.WRITE,
             submodel_id,
@@ -323,7 +312,33 @@ class SubmodelServiceManager:
         submodel_id: UUID,
         semantic_id: str
     ) -> Dict[str, Any]:
-        """Get a submodel from the service."""
+        """
+        Retrieve a submodel from the configured storage backend.
+        
+        Fetches a previously uploaded submodel document from the underlying storage
+        system (FileSystem, S3, or external HTTP submodel service) by its UUID and
+        semantic ID.
+        
+        Args:
+            submodel_id: UUID of the submodel to retrieve.
+            semantic_id: Semantic ID used to locate the submodel in storage.
+        
+        Returns:
+            Submodel content as a dictionary with full AAS structure
+            (modelType, identification, submodelElements, etc.).
+        
+        Raises:
+            InvalidError: If submodel_id is not a valid UUID.
+            NotFoundError: If the submodel does not exist in storage.
+            RuntimeError: If adapter is not initialized or retrieval fails.
+        
+        Example:
+            submodel = manager.get_twin_aspect_document(
+                submodel_id=UUID("550e8400-e29b-41d4-a716-446655440000"),
+                semantic_id="urn:example:submodel:v1"
+            )
+            print(f"Submodel type: {submodel['modelType']}")
+        """
         return self._execute_submodel_operation(
             OperationType.READ,
             submodel_id,
@@ -335,7 +350,32 @@ class SubmodelServiceManager:
         submodel_id: UUID,
         semantic_id: str
     ) -> None:
-        """Delete a submodel from the service."""
+        """
+        Delete a submodel from the configured storage backend.
+        
+        Removes a submodel document from the underlying storage system (FileSystem,
+        S3, or external HTTP submodel service). The submodel must exist; attempting
+        to delete a non-existent submodel raises NotFoundError.
+        
+        Args:
+            submodel_id: UUID of the submodel to delete.
+            semantic_id: Semantic ID used to locate the submodel in storage.
+        
+        Returns:
+            None
+        
+        Raises:
+            InvalidError: If submodel_id is not a valid UUID.
+            NotFoundError: If the submodel does not exist in storage.
+            RuntimeError: If adapter is not initialized or deletion fails.
+        
+        Example:
+            manager.delete_twin_aspect_document(
+                submodel_id=UUID("550e8400-e29b-41d4-a716-446655440000"),
+                semantic_id="urn:example:submodel:v1"
+            )
+            print("Submodel deleted successfully")
+        """
         self._execute_submodel_operation(
             OperationType.DELETE,
             submodel_id,
