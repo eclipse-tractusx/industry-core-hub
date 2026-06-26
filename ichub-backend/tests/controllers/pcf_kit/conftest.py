@@ -46,6 +46,13 @@ _MODULES_NEEDING_REAL_IMPL = [
     "managers.config.log_manager",
     "tools.exceptions",
     "tools.constants",
+    # test_twin_management_service.py replaces these with MagicMock at
+    # collection time; they must be restored so that the tractusx_sdk
+    # import chain works when the FastAPI app is loaded.
+    "tractusx_sdk",
+    "tractusx_sdk.dataspace",
+    "tractusx_sdk.dataspace.tools",
+    "tractusx_sdk.dataspace.tools.validate_submodels",
 ]
 
 
@@ -95,6 +102,10 @@ def app_client():
             "controllers.fastapi.routers.addons.pcf_kit.v1.exchange.exchange_manager",
             MagicMock(),
         ),
+        patch(
+            "controllers.fastapi.routers.addons.pcf_kit.v1.product_ids.exchange_manager",
+            MagicMock(),
+        ),
     ):
         from controllers.fastapi.app import app
 
@@ -122,5 +133,13 @@ def mock_provision_mgr():
 def mock_exchange_mgr():
     with patch(
         "controllers.fastapi.routers.addons.pcf_kit.v1.exchange.exchange_manager"
+    ) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_product_ids_mgr():
+    with patch(
+        "controllers.fastapi.routers.addons.pcf_kit.v1.product_ids.exchange_manager"
     ) as mock:
         yield mock

@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -72,6 +73,7 @@ import { SerializedPart } from '@/features/industry-core-kit/serialized-parts/ty
 import { SerializedPartTwinRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
 import { StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
 import AddSerializedPartDialog from '@/features/industry-core-kit/serialized-parts/components/AddSerializedPartDialog';
+import DppShareDialog from '../components/DppShareDialog';
 
 const PassportProvisionWizard: React.FC = () => {
   const navigate = useNavigate();
@@ -117,6 +119,16 @@ const PassportProvisionWizard: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [publishingDialog, setPublishingDialog] = useState(false);
   const [publishingResult, setPublishingResult] = useState<{ success: boolean; submodelId?: string; error?: string } | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  const getCreatedDppId = (): string | null => {
+    const passportId = dppData?.metadata?.passportId || dppData?.passportId;
+    if (passportId) return passportId;
+    if (selectedPart?.manufacturerPartId && selectedPart?.partInstanceId) {
+      return `CX:${selectedPart.manufacturerPartId}:${selectedPart.partInstanceId}`;
+    }
+    return null;
+  };
 
   const handleNext = async () => {
     setError(null);
@@ -1589,6 +1601,8 @@ const PassportProvisionWizard: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   startIcon={<LinkIcon />}
+                  disabled={!getCreatedDppId()}
+                  onClick={() => setShareDialogOpen(true)}
                   sx={{
                     borderColor: `rgba(16, 185, 129, 0.5)`,
                     color: kitThemes.ecoPass.gradientStart,
@@ -1664,6 +1678,15 @@ const PassportProvisionWizard: React.FC = () => {
           </DialogActions>
         )}
       </Dialog>
+      {shareDialogOpen && (
+        <DppShareDialog
+          open={shareDialogOpen}
+          onClose={() => setShareDialogOpen(false)}
+          dppId={getCreatedDppId() ?? ''}
+          dppName={selectedPart?.name || (getCreatedDppId() ?? '')}
+          onShareSuccess={() => navigate('/passport/provision')}
+        />
+      )}
     </Box>
   );
 };

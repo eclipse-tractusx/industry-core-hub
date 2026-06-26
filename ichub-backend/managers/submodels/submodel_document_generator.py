@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -29,6 +30,8 @@ from tools.exceptions import InvalidError
 
 SEM_ID_PART_TYPE_INFORMATION_V1 = "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
 SEM_ID_SERIAL_PART_V3 = "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3 = "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3 = "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
 
 
 class SubmodelDocumentGenerator:
@@ -42,6 +45,10 @@ class SubmodelDocumentGenerator:
             return self.generate_part_type_information_v1(**data)
         elif semantic_id == SEM_ID_SERIAL_PART_V3:
             return self.generate_serial_part_v3(**data)
+        elif semantic_id == SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3:
+            return self.generate_single_level_bom_as_planned_v3(**data)
+        elif semantic_id == SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3:
+            return self.generate_single_level_usage_as_planned_v3(**data)
         raise InvalidError(f"Unsupported semantic ID: {semantic_id}")
     
     def generate_part_type_information_v1(self,
@@ -67,6 +74,25 @@ class SubmodelDocumentGenerator:
                 }
             ]
         return result
+
+    def generate_single_level_bom_as_planned_v3(self,
+        global_id: UUID) -> Dict[str, Any]:
+        """Generate SingleLevelBomAsPlanned v3.0.0 document with empty child items."""
+
+        return {
+            "catenaXId": str(global_id),
+            "childItems": []
+        }
+
+    def generate_single_level_usage_as_planned_v3(self,
+        global_id: UUID) -> Dict[str, Any]:
+        """Generate SingleLevelUsageAsPlanned v3.0.0 document with empty parent items and customers."""
+
+        return {
+            "catenaXId": str(global_id),
+            "parentItems": [],
+            "customers": []
+        }
 
     def generate_serial_part_v3(self,
         global_id: UUID,

@@ -42,6 +42,7 @@ from tools.exceptions import (
 )
 from tools.constants import SEM_ID_NOTIFICATION
 from tractusx_sdk.industry.models.notifications import Notification
+from tractusx_sdk.industry.constants import DIGITAL_TWIN_EVENT_API_TYPE
 
 
 class TestNotificationsManagementService:
@@ -439,7 +440,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.upload_twin_aspect_document.return_value = None
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
         
         self.service.connector_consumer_service = Mock()
@@ -459,12 +461,17 @@ class TestNotificationsManagementService:
             self.service.connector_consumer_service,
             verbose=True
         )
-        mock_service_instance.send_notification.assert_called_once_with(
-            provider_bpn=provider_bpn,
-            provider_dsp_url=provider_dsp_url,
+        mock_service_instance.get_notification_endpoint_with_bpnl.assert_called_once_with(
+            bpnl=provider_bpn,
+            counter_party_address=provider_dsp_url,
+            policies=list_policies,
+            dct_type=DIGITAL_TWIN_EVENT_API_TYPE,
+        )
+        mock_service_instance.send_notification_to_endpoint.assert_called_once_with(
+            endpoint_url="https://dataplane.example.com",
+            access_token="token123",
             notification=mock_notification,
             endpoint_path=endpoint_url,
-            policies=list_policies
         )
         mock_repo_manager.notification_repository.update_status.assert_called_once_with(
             message_id=message_id,
@@ -502,7 +509,7 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.upload_twin_aspect_document.return_value = None
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.side_effect = NotificationError("Send failed")
+        mock_service_instance.get_notification_endpoint_with_bpnl.side_effect = NotificationError("Send failed")
         mock_notification_consumer_service.return_value = mock_service_instance
 
         self.service.connector_consumer_service = Mock()
@@ -543,7 +550,7 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
         
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.side_effect = Exception("Generic error")
+        mock_service_instance.get_notification_endpoint_with_bpnl.side_effect = Exception("Generic error")
         mock_notification_consumer_service.return_value = mock_service_instance
 
         self.service.connector_consumer_service = Mock()
@@ -593,7 +600,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
 
         self.service.connector_consumer_service = Mock()
@@ -607,8 +615,8 @@ class TestNotificationsManagementService:
             list_policies=[{"policy": "test"}],
         )
 
-        # Assert — SDK must be called with the derived path, not None
-        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        # Assert — endpoint path must be derived and forwarded to send_notification_to_endpoint
+        call_kwargs = mock_service_instance.send_notification_to_endpoint.call_args[1]
         assert call_kwargs["endpoint_path"] == "/connect-to-parent"
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
@@ -643,7 +651,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
 
         self.service.connector_consumer_service = Mock()
@@ -659,8 +668,8 @@ class TestNotificationsManagementService:
 
         # Assert — SDK must receive the discovered DSP URL
         mock_connector_manager.consumer.get_connectors.assert_called_once_with(provider_bpn)
-        call_kwargs = mock_service_instance.send_notification.call_args[1]
-        assert call_kwargs["provider_dsp_url"] == discovered_dsp_url
+        call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["counter_party_address"] == discovered_dsp_url
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
     @patch('services.notifications.notifications_management_service.RepositoryManagerFactory')
@@ -694,7 +703,7 @@ class TestNotificationsManagementService:
     def test_send_notification_policies_from_config_when_none(
         self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
     ):
-        """When list_policies is None, fall back to provider.digitalTwinEventAPI.policy.usage from config."""
+        """When list_policies is not provided (default sentinel), fall back to provider.digitalTwinEventAPI.policy.consumption from config."""
         # Arrange
         config_policy = {"permissions": [{"action": "use"}], "prohibitions": [], "obligations": []}
         mock_config_manager.get_config.return_value = config_policy
@@ -716,7 +725,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
         self.service.connector_consumer_service = Mock()
 
@@ -726,14 +736,13 @@ class TestNotificationsManagementService:
             endpoint_url="/connect-to-child",
             provider_bpn="BPNL00000000024R",
             provider_dsp_url="https://example.com/dsp",
-            list_policies=None,
         )
 
         # Assert — policy from config is wrapped in a list and forwarded
         mock_config_manager.get_config.assert_called_with(
-            "provider.digitalTwinEventAPI.policy.usage"
+            "provider.digitalTwinEventAPI.policy.consumption"
         )
-        call_kwargs = mock_service_instance.send_notification.call_args[1]
+        call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
         assert call_kwargs["policies"] == [config_policy]
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
@@ -743,7 +752,7 @@ class TestNotificationsManagementService:
     def test_send_notification_policies_from_config_when_empty_list(
         self, mock_repo_factory, mock_notification_consumer_service, mock_config_manager, mock_dtr_manager
     ):
-        """An empty list_policies also triggers the config fallback."""
+        """An empty list_policies is passed through as-is (reject all in the SDK)."""
         # Arrange
         config_policy = {"permissions": [{"action": "use"}]}
         mock_config_manager.get_config.return_value = config_policy
@@ -765,7 +774,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
         self.service.connector_consumer_service = Mock()
 
@@ -778,9 +788,9 @@ class TestNotificationsManagementService:
             list_policies=[],
         )
 
-        # Assert
-        call_kwargs = mock_service_instance.send_notification.call_args[1]
-        assert call_kwargs["policies"] == [config_policy]
+        # Assert — empty list is passed through (SDK treats [] as reject-all)
+        call_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
+        assert call_kwargs["policies"] == []
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
     @patch('services.notifications.notifications_management_service.ConfigManager')
@@ -817,7 +827,8 @@ class TestNotificationsManagementService:
         self.service.submodel_service_manager.get_twin_aspect_document.return_value = {"some": "payload"}
 
         mock_service_instance = Mock()
-        mock_service_instance.send_notification.return_value = {"status": "sent"}
+        mock_service_instance.get_notification_endpoint_with_bpnl.return_value = ("https://dataplane.example.com", "token123")
+        mock_service_instance.send_notification_to_endpoint.return_value = {"status": "sent"}
         mock_notification_consumer_service.return_value = mock_service_instance
         self.service.connector_consumer_service = Mock()
 
@@ -827,14 +838,14 @@ class TestNotificationsManagementService:
             endpoint_url=None,
             provider_bpn="BPNL00000000024R",
             provider_dsp_url=None,
-            list_policies=None,
         )
 
         # Assert all three were substituted correctly
-        call_kwargs = mock_service_instance.send_notification.call_args[1]
-        assert call_kwargs["endpoint_path"] == "/submodel-update"
-        assert call_kwargs["provider_dsp_url"] == discovered_dsp
-        assert call_kwargs["policies"] == [config_policy]
+        get_ep_kwargs = mock_service_instance.get_notification_endpoint_with_bpnl.call_args[1]
+        assert get_ep_kwargs["counter_party_address"] == discovered_dsp
+        assert get_ep_kwargs["policies"] == [config_policy]
+        send_kwargs = mock_service_instance.send_notification_to_endpoint.call_args[1]
+        assert send_kwargs["endpoint_path"] == "/submodel-update"
 
     @patch('services.notifications.notifications_management_service.dtr_manager')
     @patch('services.notifications.notifications_management_service.NotificationConsumerService')

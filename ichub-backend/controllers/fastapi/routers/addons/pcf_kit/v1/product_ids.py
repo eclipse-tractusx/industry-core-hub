@@ -21,11 +21,16 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""PCF Exchange API - EDC-level endpoints for PCF data exchange (v1.2.0).
+"""PCF Exchange API - Legacy v1.1.1 ``/productIds`` endpoints (CX-0136 backward compatibility).
 
-These endpoints are served behind the v1.2.0 EDC asset and always operate
-with PCF schema version v9.0.0.  The version is implicit from the asset
+These endpoints are served behind the v1.1.1 EDC asset and always operate
+with PCF schema version v7.0.0.  The version is implicit from the asset
 negotiated — no version query parameter is exposed.
+
+Key differences from the v1.2.0 ``/footprintExchange`` endpoints:
+
+* Path parameter is ``productId`` (= manufacturerPartId), **not** ``requestId``.
+* ``requestId`` is a **query** parameter, not a path parameter.
 """
 
 from typing import Optional
@@ -42,39 +47,40 @@ from tools.constants import INTERNAL_SERVER_ERROR
 logger = LoggingManager.get_logger(__name__)
 
 router = APIRouter(
-    prefix="/footprintExchange",
+    prefix="/productIds",
     tags=["PCF KIT Microservices"],
     dependencies=[Depends(get_authentication_dependency())]
 )
 
-logger.info("[PCF Exchange] Router initialized")
+logger.info("[PCF ProductIds] Router initialized")
 
 
-# PCF schema version used by the v1.2.0 /footprintExchange endpoints
-_PCF_VERSION = "v9.0.0"
+# PCF schema version used by the v1.1.1 /productIds endpoints
+_PCF_VERSION = "v7.0.0"
 
 EDC_BPN_DESCRIPTION = "The caller's Catena-X BusinessPartnerNumber"
 MESSAGE_DESCRIPTION = "URL encoded, max 250 chars"
 
 
-@router.put("/{requestId}")
-async def put_pcf_with_path_id(
-    request_id: str = Path(..., alias="requestId"),
+@router.put("/{productId}")
+async def put_pcf_legacy(
+    product_id: str = Path(..., alias="productId"),
     body: dict = Body(...),
+    request_id: str = Query(..., alias="requestId", description="ID of the PCF exchange request"),
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
     message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
     update: bool = Query(False, description="Whether this is an update to an existing request"),
 ):
     """
-    PCF Response / Update endpoint.
+    Legacy PCF Response / Update endpoint (v1.1.1 API shape).
 
-    This endpoint accepts PCF data as a response to an open request or as an update
-    to an existing request. The PCF data should match the Catena-X aspect model
-    urn:samm:io.catenax.pcf:9.0.0#Pcf.
+    Accepts PCF data as a response to an open request or as an update. The PCF
+    data should match the Catena-X aspect model ``urn:samm:io.catenax.pcf:7.0.0#Pcf``.
 
     Args:
-        request_id: The ID of the footprint request or response
-        body: PCF data matching the Catena-X PCF aspect model (9.0.0)
+        product_id: The manufacturer part ID (path parameter in v1.1.1 API)
+        body: PCF data matching the Catena-X PCF aspect model (7.0.0)
+        request_id: The ID of the footprint request or response (query parameter)
         edc_bpn: The caller's Catena-X BusinessPartnerNumber (automatically set by EDC)
         message: Optional URL encoded message (max 250 chars)
         update: Whether this is an update to an existing request (default: False)
@@ -85,20 +91,21 @@ async def put_pcf_with_path_id(
     Raises:
         HTTPException: 400 for bad request
     """
-    # Log incoming request
-    logger.info(f"[PCF Exchange PUT] Incoming request: request_id={_s(request_id)}, edc_bpn={_s(edc_bpn)}, update={_s(update)}, message={_s(message)}")
-    
-    # Validate edc_bpn header
+    logger.info(
+        f"[PCF ProductIds PUT] Incoming request: productId={_s(product_id)}, "
+        f"requestId={_s(request_id)}, edc_bpn={_s(edc_bpn)}, "
+        f"update={_s(update)}, message={_s(message)}"
+    )
+
     if not edc_bpn:
-        logger.error("[PCF Exchange PUT] Missing edc-bpn header")
+        logger.error("[PCF ProductIds PUT] Missing edc-bpn header")
         raise HTTPException(
             status_code=400,
             detail="Missing required header: edc-bpn"
         )
-    
+
     try:
-        logger.debug(f"[PCF Exchange PUT] Delegating to exchange_manager.submit_pcf_response()")
-        # Delegate to manager to handle PCF response/update
+        logger.debug("[PCF ProductIds PUT] Delegating to exchange_manager.submit_pcf_response()")
         result = exchange_manager.submit_pcf_response(
             request_id=request_id,
             pcf_data=body,
@@ -107,94 +114,77 @@ async def put_pcf_with_path_id(
             message=message,
             version=_PCF_VERSION,
         )
-        
-        logger.info(f"[PCF Exchange PUT] Response processed successfully: request_id={_s(request_id)}")
-        return JSONResponse(
-            status_code=200,
-            content=result
-        )
+
+        logger.info(f"[PCF ProductIds PUT] Response processed successfully: requestId={_s(request_id)}")
+        return JSONResponse(status_code=200, content=result)
     except PcfVersionGateError as e:
-        logger.warning(f"[PCF Exchange PUT] Version gate blocked: {_s(e)}")
+        logger.warning(f"[PCF ProductIds PUT] Version gate blocked: {_s(e)}")
         raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
-        logger.error(f"[PCF Exchange PUT] ValueError: {_s(e)}", exc_info=True)
+        logger.error(f"[PCF ProductIds PUT] ValueError: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error(f"[PCF Exchange PUT] Unexpected exception: {_s(e)}", exc_info=True)
+        logger.error(f"[PCF ProductIds PUT] Unexpected exception: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
 
 
-@router.get("/{requestId}")
-async def request_pcf(
-    request_id: str = Path(..., alias="requestId"),
+@router.get("/{productId}")
+async def request_pcf_legacy(
+    product_id: str = Path(..., alias="productId"),
+    request_id: str = Query(..., alias="requestId", description="ID of the PCF exchange request"),
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
-    manufacturer_part_id: Optional[str] = Query(None, alias="manufacturerPartId", description="Manufacturer part ID"),
-    customer_part_id: Optional[str] = Query(None, alias="customerPartId", description="Customer part ID"),
     message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
 ):
     """
-    PCF Request endpoint.
+    Legacy PCF Request endpoint (v1.1.1 API shape).
 
-    Request a footprint for a product. At least one of manufacturerPartId or 
-    customerPartId must be provided. This initiates an asynchronous PCF data 
-    exchange with the supplier.
+    Request a footprint for a product identified by ``productId``
+    (= manufacturerPartId).
 
     Args:
-        request_id: The ID of the footprint request
+        product_id: The manufacturer part ID (path parameter in v1.1.1 API)
+        request_id: Unique identifier for the PCF request (query parameter)
         edc_bpn: The caller's Catena-X BusinessPartnerNumber (automatically set by EDC)
-        manufacturer_part_id: Manufacturer's part identifier
-        customer_part_id: Customer's part identifier
         message: Optional URL encoded message (max 250 chars)
 
     Returns:
-        JSONResponse with status code 200 for success
+        JSONResponse with status code 202 for accepted
 
     Raises:
-        HTTPException: 400 if both IDs are missing, 404 if request not found
+        HTTPException: 400 for missing edc-bpn, 404 if not found
     """
-    # Log incoming request
-    logger.info(f"[PCF Exchange GET] Incoming request: request_id={_s(request_id)}, edc_bpn={_s(edc_bpn)}, manufacturerPartId={_s(manufacturer_part_id)}, customerPartId={_s(customer_part_id)}, message={_s(message)}")
-    
-    # Validate edc_bpn header
+    logger.info(
+        f"[PCF ProductIds GET] Incoming request: productId={_s(product_id)}, "
+        f"requestId={_s(request_id)}, edc_bpn={_s(edc_bpn)}, message={_s(message)}"
+    )
+
     if not edc_bpn:
-        logger.error("[PCF Exchange GET] Missing edc-bpn header")
+        logger.error("[PCF ProductIds GET] Missing edc-bpn header")
         raise HTTPException(
             status_code=400,
             detail="Missing required header: edc-bpn"
         )
-    
-    # Validate that at least one part ID is provided
-    if not manufacturer_part_id and not customer_part_id:
-        logger.warning(f"[PCF Exchange GET] Missing part IDs: manufacturerPartId={_s(manufacturer_part_id)}, customerPartId={_s(customer_part_id)}")
-        raise HTTPException(
-            status_code=400,
-            detail="At least one of manufacturerPartId or customerPartId must be provided"
-        )
 
     try:
-        logger.debug(f"[PCF Exchange GET] Delegating to exchange_manager.request_pcf()")
-        # Delegate to manager to handle PCF request
+        logger.debug("[PCF ProductIds GET] Delegating to exchange_manager.request_pcf()")
         result = exchange_manager.request_pcf(
             request_id=request_id,
             edc_bpn=edc_bpn,
-            manufacturer_part_id=manufacturer_part_id,
-            customer_part_id=customer_part_id,
+            manufacturer_part_id=product_id,
+            customer_part_id=None,
             message=message,
             version=_PCF_VERSION,
         )
-        
-        logger.info(f"[PCF Exchange GET] Request processed successfully: request_id={_s(request_id)}")
-        return JSONResponse(
-            status_code=202,
-            content=result
-        )
+
+        logger.info(f"[PCF ProductIds GET] Request processed successfully: requestId={_s(request_id)}")
+        return JSONResponse(status_code=202, content=result)
     except ValueError as e:
-        logger.error(f"[PCF Exchange GET] ValueError: {_s(e)}", exc_info=True)
+        logger.error(f"[PCF ProductIds GET] ValueError: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
     except NotFoundError:
         raise
     except Exception as e:
-        logger.error(f"[PCF Exchange GET] Unexpected exception: {_s(e)}", exc_info=True)
+        logger.error(f"[PCF ProductIds GET] Unexpected exception: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=INTERNAL_SERVER_ERROR)
