@@ -50,8 +50,8 @@ For the runtime sequence diagrams, see the
 
 ## Endpoints
 
-| Purpose           | Method / transport    | Path                                          |
-|-------------------|-----------------------|-----------------------------------------------|
+| Purpose           | Method / transport    | Path                                            |
+|-------------------|-----------------------|-------------------------------------------------|
 | MCP tool surface  | Streamable HTTP (MCP) | `{hostname}/addons/mcp-addon/mcp`               |
 | Liveness check    | `GET`                 | `{hostname}/v1/addons/mcp-addon/health`         |
 | Audit log (admin) | `GET`                 | `{hostname}/v1/addons/mcp-addon/audit?limit=50` |
@@ -91,9 +91,6 @@ addons:
     session_ttl_seconds: 7200
     # Background sweep interval for expiring idle sessions (seconds).
     session_eviction_interval_seconds: 300
-    # Optional Redis URL for session storage in multi-replica deployments.
-    # Leave null to use the default in-process store.
-    redis_url: null
     audit:
       # Expose GET /v1/addons/mcp-addon/audit.
       expose_admin_endpoint: true
@@ -111,10 +108,10 @@ directly on the FastAPI app and bypasses router dependencies).
 The effective mode is derived from three flags:
 
 | `authorization.enabled` | `addons.mcp_addon.oauth_enabled` + `keycloak.enabled` | MCP auth behaviour                                                                                               |
-|-------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `false`                 | any                                                 | **No auth** — endpoint publicly accessible (dev/test only; logs a warning)                                       |
-| `true`                  | both `true`                                         | **`OIDCProxy`** — OAuth 2.0 proxy, JWT validation, plus API-key Bearer fallback                                  |
-| `true`                  | either `false`                                      | **API-key Bearer fallback only** — token validation works, but OAuth browser-discovery endpoints are not exposed |
+|-------------------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `false`                 | any                                                   | **No auth** — endpoint publicly accessible (dev/test only; logs a warning)                                       |
+| `true`                  | both `true`                                           | **`OIDCProxy`** — OAuth 2.0 proxy, JWT validation, plus API-key Bearer fallback                                  |
+| `true`                  | either `false`                                        | **API-key Bearer fallback only** — token validation works, but OAuth browser-discovery endpoints are not exposed |
 
 Two verifiers are tried in order (first success wins):
 
@@ -285,9 +282,9 @@ ranges from 1 to 500 (default 50).
 | All MCP requests rejected at startup        | `authorization.enabled: true` but no Keycloak verifier and no (non-placeholder) API key configured.                                |
 | Endpoint open without credentials           | `authorization.enabled: false` — expected for dev only; a warning is logged.                                                       |
 | Write tool never executes                   | Confirmation gate is on — call the tool a **second time with identical arguments**.                                                |
-| Confirm call fails on a scaled deployment   | Sessions are in-process; set `redis_url` to share session state across replicas.                                                   |
+| Confirm call fails on a scaled deployment   | Sessions are in-process                                                                                                            |
 | OAuth discovery URL wrong                   | `hostname` not set to the publicly reachable URL; the MCP URL and metadata are derived from it.                                    |
-| `404` on the MCP path                       | `addons.mcp_addon.enabled: false`, or a non-default `mount_path` the client isn't using.                                             |
+| `404` on the MCP path                       | `addons.mcp_addon.enabled: false`, or a non-default `mount_path` the client isn't using.                                           |
 
 ## NOTICE
 
