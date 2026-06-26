@@ -58,7 +58,7 @@ export const PassportVisualization: React.FC<PassportVisualizationProps> = ({
   data,
   passportId,
   onBack,
-  digitalTwinData
+  digitalTwinData: _digitalTwinData
 }) => {
   const { t } = useTranslation(['passportConsumption', 'common']);
   const [activeTab, setActiveTab] = useState(0);

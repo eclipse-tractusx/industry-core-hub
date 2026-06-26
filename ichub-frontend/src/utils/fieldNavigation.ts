@@ -52,7 +52,7 @@ export function scrollToElement(options: ScrollOptions) {
   if (!target && selector) {
     try {
       target = document.querySelector(selector) as HTMLElement | null;
-    } catch (err) {
+    } catch {
       target = null;
     }
   }
@@ -79,7 +79,7 @@ export function scrollToElement(options: ScrollOptions) {
     } else if (typeof target.scrollIntoView === 'function') {
       target.scrollIntoView({ block });
     }
-  } catch (err) {
+  } catch {
     // ignore
   }
 
@@ -91,7 +91,7 @@ export function scrollToElement(options: ScrollOptions) {
       if (focusable) {
         (target as HTMLElement).focus({ preventScroll: true } as any);
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
   }
@@ -104,13 +104,13 @@ export function scrollToElement(options: ScrollOptions) {
       if (!prefersReduced && typeof target.scrollIntoView === 'function') {
         // small delay so container scroll finishes first
         setTimeout(() => {
-          try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+          try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch { /* ignore */ }
         }, 120);
       } else if (typeof target.scrollIntoView === 'function') {
-        try { target.scrollIntoView({ block: 'center' }); } catch (e) {}
+        try { target.scrollIntoView({ block: 'center' }); } catch { /* ignore */ }
       }
     }
-  } catch (err) {
+  } catch {
     // ignore
   }
 
@@ -119,10 +119,6 @@ export function scrollToElement(options: ScrollOptions) {
   if (highlightClass) {
     // Check if this is a special container type that should be highlighted directly
     // These are identified by the specific highlight class being passed
-    const isDirectHighlight = 
-      highlightClass.includes('array-header') ||
-      highlightClass.includes('nested-object') ||
-      highlightClass.includes('container');
     
     let highlightTarget: HTMLElement | null = null;
     
@@ -145,7 +141,7 @@ export function scrollToElement(options: ScrollOptions) {
     highlightTarget.classList.add(highlightClass);
 
     // Also add the hover-like class to the nearest input/select root so the outline matches hover
-    let hoverTarget: HTMLElement | null = highlightTarget;
+    const hoverTarget: HTMLElement | null = highlightTarget;
     hoverTarget.classList.add(hoverClass);
 
     const t = setTimeout(() => {

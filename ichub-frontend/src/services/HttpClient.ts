@@ -79,7 +79,7 @@ httpClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
-      try { await authService.logout(); } catch {}
+      try { await authService.logout(); } catch { /* Auth logout failed - ignore */ }
     }
     return Promise.reject(error);
   }

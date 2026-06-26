@@ -115,10 +115,6 @@ const ProductsList = () => {
     }
   };
 
-  const handleMore = (manufacturerId: string, manufacturerPartId: string) => {
-    // More options logic
-  };
-
   const handleRegisterPart = async (manufacturerId: string, manufacturerPartId: string) => {
     try {
       const twinToCreate: CatalogPartTwinCreateType = {
@@ -205,7 +201,7 @@ const ProductsList = () => {
             <ProductCard
               onClick={handleButtonClick}
               onShare={handleShareDialog}
-              onMore={handleMore}
+              onMore={() => {}} // Implement if needed
               onRegisterClick={handleRegisterPart}
               items={visibleRows.map((part) => ({
                 manufacturerId: part.manufacturerId,

@@ -31,7 +31,6 @@ import {
     Card,
     CardContent,
     Chip,
-    Divider,
     TextField,
     InputAdornment,
     IconButton,
@@ -44,7 +43,6 @@ import {
     CheckCircle as CheckCircleIcon,
     Rule as RuleIcon,
     Info as InfoIcon,
-    ChevronRight as ChevronRightIcon,
     Search as SearchIcon,
     Clear as ClearIcon,
     Place as PlaceIcon
@@ -133,23 +131,18 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
         }
 
         // Add validation rules if they exist
-        let hasFormat = false;
         if (field.validation) {
             if (field.validation.pattern) {
                 rules.pattern = field.validation.pattern;
-                hasFormat = true;
             }
             if (field.validation.minLength !== undefined) {
                 rules.minLength = field.validation.minLength;
-                hasFormat = true;
             }
             if (field.validation.maxLength !== undefined) {
                 rules.maxLength = field.validation.maxLength;
-                hasFormat = true;
             }
             if (field.validation.format) {
                 rules.format = field.validation.format;
-                hasFormat = true;
             }
             if (field.validation.min !== undefined) {
                 rules.minimum = field.validation.min;
@@ -692,7 +685,7 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                         if (reason === 'clear' || value === '') setAutocompleteOpen(false);
                         else setAutocompleteOpen(true);
                     }}
-                    onChange={(_, value, reason) => {
+                    onChange={(_, value) => {
                         if (typeof value === 'string') {
                             setSearchTerm(value);
                             onSearchTermChange?.(value);

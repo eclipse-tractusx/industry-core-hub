@@ -194,8 +194,6 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
   const handleAddClick = () => {
     if (onAddClick) {
       onAddClick();
-    } else {
-      
     }
   };
 
