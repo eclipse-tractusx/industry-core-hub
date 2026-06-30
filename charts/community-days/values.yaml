@@ -170,6 +170,7 @@ tx-data-provider:
           storageClass: "microk8s-hostpath"
 
 industry-core-hub:
+  deploymentMode: "argocd"
   enabled: true
   participantId: "<YOUR_BPN>"
   backend:
