@@ -110,7 +110,7 @@ dataconsumerOne:
         tarea: backup-bot
       primary:
         persistence:
-          enabled: true
+          enabled: false
           size: 10Gi
 
     vault:
@@ -150,7 +150,7 @@ dataconsumerOne:
           annotations:
             backup/targets: "dtr:postgres:dataprovider-digital-twin-db:postgres-password"
         persistence:
-          enabled: true
+          enabled: false
           size: 10Gi
 
 industry-core-hub:
@@ -234,13 +234,13 @@ industry-core-hub:
                 service: "backend"
                 port: 8000
     persistence:
-      enabled: true
+      enabled: false
       data:
-        enabled: true
+        enabled: false
         size: 1Gi
         accessMode: ReadWriteOnce
       logs:
-        enabled: true
+        enabled: false
         size: 1Gi
         accessMode: ReadWriteOnce
   frontend:
@@ -285,5 +285,5 @@ industry-core-hub:
         adminPasswordKey: "postgres-password"
       ichubUser: "ichub"
     persistence:
-      enabled: true
+      enabled: false
       size: 10Gi
