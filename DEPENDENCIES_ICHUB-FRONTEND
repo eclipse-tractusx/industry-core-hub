@@ -89,7 +89,7 @@ npm/npmjs/-/fast-levenshtein/2.0.6, MIT, approved, #15236
 npm/npmjs/-/fast-png/6.4.0, MIT, approved, clearlydefined
 npm/npmjs/-/fastq/1.19.1, ISC, approved, #19306
 npm/npmjs/-/fdir/6.5.0, MIT, approved, clearlydefined
-npm/npmjs/-/fflate/0.8.2, MIT AND (0BSD AND MIT), approved, https://gitlab.eclipse.org/eclip
+npm/npmjs/-/fflate/0.8.2, MIT AND (0BSD AND MIT), approved, #29217
 npm/npmjs/-/file-entry-cache/8.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/fill-range/7.1.1, MIT, approved, #14867
 npm/npmjs/-/find-root/1.1.0, MIT, approved, clearlydefined
@@ -217,7 +217,7 @@ npm/npmjs/-/shebang-command/2.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/shebang-regex/3.0.0, MIT, approved, clearlydefined
 npm/npmjs/-/siginfo/2.0.0, ISC, approved, clearlydefined
 npm/npmjs/-/source-map-js/1.2.1, BSD-3-Clause, approved, #15272
-npm/npmjs/-/source-map/0.5.7, BSD-3-Clause, approved, https://gitlab.eclipse.org/eclip
+npm/npmjs/-/source-map/0.5.7, BSD-3-Clause, approved, #29267
 npm/npmjs/-/stackback/0.0.2, BSD-3-Clause AND MIT, approved, #8129
 npm/npmjs/-/stackblur-canvas/2.7.0, MIT, approved, clearlydefined
 npm/npmjs/-/std-env/4.1.0, MIT, approved, clearlydefined
