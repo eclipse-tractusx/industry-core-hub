@@ -112,7 +112,7 @@ tx-data-provider:
         persistence:
           enabled: true
           size: 10Gi
-          storageClass: "microk8s-hostpath"
+          storageClass: "null"
 
     vault:
       nameOverride: edc-dataprovider-vault
@@ -167,7 +167,7 @@ tx-data-provider:
         persistence:
           enabled: true
           size: 10Gi
-          storageClass: "microk8s-hostpath"
+          storageClass: "null"
 
 industry-core-hub:
   deploymentMode: "argocd"
@@ -256,12 +256,12 @@ industry-core-hub:
         enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: "microk8s-hostpath"
+        storageClass: "null"
       logs:
         enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: "microk8s-hostpath"
+        storageClass: "null"
   frontend:
     enabled: true
     config:
@@ -306,6 +306,6 @@ industry-core-hub:
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: "microk8s-hostpath"
+      storageClass: "null"
   keycloak:
     enabled: false

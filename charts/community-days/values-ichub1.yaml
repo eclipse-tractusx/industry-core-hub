@@ -112,7 +112,6 @@ tx-data-provider:
         persistence:
           enabled: true
           size: 10Gi
-          storageClass: "microk8s-hostpath"
 
     vault:
       nameOverride: edc-dataprovider-vault
@@ -153,7 +152,6 @@ tx-data-provider:
         persistence:
           enabled: true
           size: 10Gi
-          storageClass: "microk8s-hostpath"
 
 industry-core-hub:
   enabled: true
