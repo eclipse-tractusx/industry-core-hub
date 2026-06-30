@@ -637,7 +637,7 @@ data:
         ADD CONSTRAINT pk_pcf_exchanges PRIMARY KEY (id);
 
     ALTER TABLE ONLY public.pcf_exchanges
-        ADD CONSTRAINT uk_pcf_exchanges_request_id UNIQUE (request_id);
+        ADD CONSTRAINT uk_pcf_exchanges_request_id UNIQUE (request_id, type);
 
     ALTER TABLE ONLY public.pcf_relationships
         ADD CONSTRAINT pk_pcf_relationships PRIMARY KEY (id);
