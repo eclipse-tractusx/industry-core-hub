@@ -134,21 +134,23 @@ dataconsumerOne:
     enabled: true
     digital-twin-registry:
       nameOverride: dataprovider-dtr
+      keycloak:
+        fullnameOverride: "ichub1-registry-keycloak"
       registry:
         authentication: false
         host: ichub1-connector-dtr.txcd.arena2036-x.de
         dataSource:
-          url: "jdbc:postgresql://dataprovider-digital-twin-db:5432/dtr"
+          url: "jdbc:postgresql://ichub1-dataprovider-digital-twin-db:5432/dtr"
 
     postgresql:
-      fullnameOverride: "dataprovider-digital-twin-db"
+      fullnameOverride: ""
       nameOverride: "dataprovider-digital-twin-db"
       commonLabels:
         tarea: backup-bot
       primary:
         service:
           annotations:
-            backup/targets: "dtr:postgres:dataprovider-digital-twin-db:postgres-password"
+            backup/targets: "dtr:postgres:ichub1-dataprovider-digital-twin-db:postgres-password"
         persistence:
           enabled: false
           size: 10Gi
@@ -276,10 +278,16 @@ industry-core-hub:
     auth:
       database: "ichub-postgres"
       port: 5432
-      existingSecret: "ichub-postgres-secret"
+      existingSecret: "ichub1-postgres-secret"
       secretKeys:
         adminPasswordKey: "postgres-password"
       ichubUser: "ichub"
+    extraEnvVars:
+      - name: "DATABASE_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "ichub1-postgres-secret"
+            key: "ichub-password"
     persistence:
       enabled: false
       size: 10Gi

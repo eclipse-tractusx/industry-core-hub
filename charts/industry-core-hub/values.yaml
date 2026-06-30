@@ -39,7 +39,7 @@ participantId: ""
 backend:
   apiVersion: v1
   enabled: true
-  name: "industry-core-hub-backend"
+  name: ""
   image:
     repository: "tractusx/industry-core-hub-backend"
     pullPolicy: IfNotPresent
@@ -1208,7 +1208,7 @@ frontend:
     # -- industry-core-hub backend base URL
     backendUrl: "https://<backend-hostname>/v1"
   enabled: true
-  name: "industry-core-hub-frontend"
+  name: ""
   image:
     repository: "tractusx/industry-core-hub-frontend"
     pullPolicy: IfNotPresent

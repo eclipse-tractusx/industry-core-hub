@@ -135,11 +135,13 @@ dataconsumerOne:
     enabled: true
     digital-twin-registry:
       nameOverride: dataprovider-dtr
+      keycloak:
+        fullnameOverride: "admin-registry-keycloak"
       registry:
         authentication: false
         host: admin-connector-dtr.<YOUR_DOMAIN>
         dataSource:
-          url: "jdbc:postgresql://dataprovider-digital-twin-db:5432/dtr"
+          url: "jdbc:postgresql://admin-dataprovider-digital-twin-db:5432/dtr"
         ingress:
           enabled: false
           className: "nginx"
@@ -156,14 +158,14 @@ dataconsumerOne:
           tls:
             enabled: false
     postgresql:
-      fullnameOverride: "dataprovider-digital-twin-db"
+      fullnameOverride: ""
       nameOverride: "dataprovider-digital-twin-db"
       commonLabels:
         tarea: backup-bot
       primary:
         service:
           annotations:
-            backup/targets: "dtr:postgres:dataprovider-digital-twin-db:postgres-password"
+            backup/targets: "dtr:postgres:admin-dataprovider-digital-twin-db:postgres-password"
         persistence:
           enabled: true
           size: 10Gi
@@ -295,10 +297,16 @@ industry-core-hub:
     auth:
       database: "ichub-postgres"
       port: 5432
-      existingSecret: "ichub-postgres-secret"
+      existingSecret: "admin-postgres-secret"
       secretKeys:
         adminPasswordKey: "postgres-password"
       ichubUser: "ichub"
+    extraEnvVars:
+      - name: "DATABASE_PASSWORD"
+        valueFrom:
+          secretKeyRef:
+            name: "admin-postgres-secret"
+            key: "ichub-password"
     persistence:
       enabled: true
       size: 10Gi
