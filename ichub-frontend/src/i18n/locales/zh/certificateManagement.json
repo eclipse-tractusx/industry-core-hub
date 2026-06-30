@@ -524,6 +524,7 @@
       "type": "类型",
       "consumer": "消费者",
       "status": "状态",
+      "consumerStatus": "消费者状态",
       "lastShared": "最后共享时间"
     },
     "locations": "{{count}} 个站点",
