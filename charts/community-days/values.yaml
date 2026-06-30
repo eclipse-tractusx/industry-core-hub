@@ -1,0 +1,312 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+tx-data-provider:
+  enabled: true
+  seedTestdata: false
+  nameOverride: dataprovider
+  secrets:
+    edc-wallet-secret: <YOUR_BPN>
+  dataspace-connector-bundle:
+    tractusx-connector:
+      nameOverride: dataprovider-edc
+      participant:
+        id: <YOUR_BPN>
+      iatp:
+        id: did:web:ssi-dim-wallet-stub.<YOUR_DOMAIN>:<YOUR_BPN>
+        trustedIssuers:
+          - did:web:ssi-dim-wallet-stub.<YOUR_DOMAIN>:<YOUR_BPN>
+        sts:
+          dim:
+            url: https://ssi-dim-wallet-stub.<YOUR_DOMAIN>/api/sts
+          oauth:
+            token_url: https://ssi-dim-wallet-stub.<YOUR_DOMAIN>/oauth/token
+            client:
+              id: <YOUR_BPN>
+              secret_alias: edc-wallet-secret
+      controlplane:
+        env:
+          TX_IAM_IATP_CREDENTIALSERVICE_URL: https://ssi-dim-wallet-stub.<YOUR_DOMAIN>/api
+          EDC_IAM_DID_WEB_USE_HTTPS: true
+        bdrs:
+          server:
+            url: https://ssi-dim-wallet-stub.<YOUR_DOMAIN>/api/v1/directory
+        endpoints:
+          management:
+            authKey: <YOUR_API_KEY>
+        ingresses:
+          - enabled: true
+            hostname: "admin-connector-controlplane.<YOUR_DOMAIN>"
+            endpoints:
+              - default
+              - protocol
+              - management
+            className: "nginx"
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+            tls:
+              enabled: true
+              secretName: "admin-connector-controlplane.<YOUR_DOMAIN>-tls"
+      dataplane:
+        env:
+          TX_IAM_IATP_CREDENTIALSERVICE_URL: https://ssi-dim-wallet-stub.<YOUR_DOMAIN>/api
+          EDC_IAM_DID_WEB_USE_HTTPS: true
+        ingresses:
+          - enabled: true
+            hostname: "admin-connector-dataplane.<YOUR_DOMAIN>"
+            endpoints:
+              - default
+              - public
+            className: "nginx"
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+            tls:
+              enabled: true
+              secretName: "admin-connector-dataplane.<YOUR_DOMAIN>-tls"
+        token:
+          signer:
+            privatekey_alias: tokenSignerPrivateKey
+          verifier:
+            publickey_alias: tokenSignerPublicKey
+      install:
+        postgresql: false
+        vault: false
+      postgresql:
+        jdbcUrl: "jdbc:postgresql://{{ .Release.Name }}-dataprovider-db:5432/edc"
+        auth:
+          user: "<YOUR_DB_USER>"
+          password: "<YOUR_DB_PASSWORD>"
+          postgresPassword: "<YOUR_DB_PASSWORD>"
+      vault:
+        hashicorp:
+          url: http://{{ .Release.Name }}-edc-dataprovider-vault:8200
+
+    postgresql:
+      nameOverride: dataprovider-db
+      auth:
+        user: "<YOUR_DB_USER>"
+        password: "<YOUR_DB_PASSWORD>"
+        postgresPassword: "<YOUR_DB_PASSWORD>"
+      commonLabels:
+        tarea: backup-bot
+      primary:
+        persistence:
+          enabled: true
+          size: 10Gi
+          storageClass: "microk8s-hostpath"
+
+    vault:
+      nameOverride: edc-dataprovider-vault
+      enabled: true
+
+  data-persistence-layer-bundle:
+    enabled: false
+    simple-data-backend:
+      nameOverride: dataprovider-submodelserver
+      ingress:
+        enabled: true
+        className: "nginx"
+        hosts:
+          - host: "dataprovider-submodelserver.tx.test"
+            paths:
+              - path: "/"
+                pathType: "Prefix"
+
+  digital-twin-bundle:
+    enabled: true
+    digital-twin-registry:
+      nameOverride: dataprovider-dtr
+      registry:
+        authentication: false
+        host: admin-connector-dtr.<YOUR_DOMAIN>
+        dataSource:
+          url: "jdbc:postgresql://dataprovider-digital-twin-db:5432/dtr"
+        ingress:
+          enabled: false
+          className: "nginx"
+          urlPrefix: ""
+          rules:
+          - host:
+            http:
+              paths:
+                - path: /
+          annotations:
+            kubernetes.io/ingress.class: nginx
+            nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+            nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+          tls:
+            enabled: false
+    postgresql:
+      fullnameOverride: "dataprovider-digital-twin-db"
+      nameOverride: "dataprovider-digital-twin-db"
+      commonLabels:
+        tarea: backup-bot
+      primary:
+        service:
+          annotations:
+            backup/targets: "dtr:postgres:dataprovider-digital-twin-db:postgres-password"
+        persistence:
+          enabled: true
+          size: 10Gi
+          storageClass: "microk8s-hostpath"
+
+industry-core-bundle:
+  enabled: true
+  industry-core-hub:
+    enabled: true
+    participantId: "<YOUR_BPN>"
+    backend:
+      enabled: true
+      cors:
+        enabled: false
+      configuration:
+        authorization:
+          apiKey:
+            header: "X-Api-Key"
+            value: "<YOUR_FULL_API_KEY>"
+          keycloak:
+            enabled: false
+        consumer:
+          discovery:
+            discovery_finder:
+              url: "https://semantics.<YOUR_DOMAIN>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+            oauth:
+              url: "https://centralidp.<YOUR_DOMAIN>/auth/"
+              realm: "CX-Central"
+              client_id: "<YOUR_OAUTH_CLIENT_ID>"
+              client_secret: "<YOUR_OAUTH_CLIENT_SECRET>"
+          connector:
+            controlplane:
+              hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
+              apiKeyHeader: "X-Api-Key"
+              apiKey: "<YOUR_API_KEY>"
+              managementPath: "/management"
+              protocolPath: "/api/v1/dsp"
+              catalogPath: "/catalog"
+        provider:
+          connector:
+            controlplane:
+              hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
+              apiKeyHeader: "X-Api-Key"
+              apiKey: "<YOUR_API_KEY>"
+              managementPath: "/management"
+              protocolPath: "/api/v1/dsp"
+            dataplane:
+              hostname: "https://admin-connector-dataplane.<YOUR_DOMAIN>"
+              publicPath: "/api/public"
+          digitalTwinRegistry:
+            hostname: "http://admin-connector-dataprovider-dtr:8080"
+            apiPath: "/api/v3"
+          digitalTwinEventAPI:
+            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+          uniqueIdPush:
+            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+            sendOnShare: true
+          pcfExchange:
+            enabled: true
+            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+          ccm:
+            enabled: true
+            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+      ingress:
+        enabled: true
+        className: "nginx"
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+          nginx.ingress.kubernetes.io/use-regex: "true"
+          nginx.ingress.kubernetes.io/enable-cors: "true"
+          nginx.ingress.kubernetes.io/cors-allow-origin: "https://admin-ichub-frontend.<YOUR_DOMAIN>"
+          nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+          nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
+          nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        tls:
+          - secretName: "admin-ichub-backend.<YOUR_DOMAIN>-tls"
+            hosts:
+              - "admin-ichub-backend.<YOUR_DOMAIN>"
+        hosts:
+          - host: "admin-ichub-backend.<YOUR_DOMAIN>"
+            paths:
+              - path: /
+                pathType: ImplementationSpecific
+                backend:
+                  service: "backend"
+                  port: 8000
+      persistence:
+        enabled: true
+        data:
+          enabled: true
+          size: 1Gi
+          accessMode: ReadWriteOnce
+          storageClass: "microk8s-hostpath"
+        logs:
+          enabled: true
+          size: 1Gi
+          accessMode: ReadWriteOnce
+          storageClass: "microk8s-hostpath"
+    frontend:
+      enabled: true
+      config:
+        ichubBackendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
+        requireHttpsUrlPattern: true
+        apiKey: "<YOUR_FULL_API_KEY>"
+        apiKeyHeader: "X-Api-Key"
+        authEnabled: false
+        authProvider: "none"
+      env:
+        backendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
+      ingress:
+        enabled: true
+        className: "nginx"
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+          nginx.ingress.kubernetes.io/use-regex: "true"
+          nginx.ingress.kubernetes.io/enable-cors: "true"
+          nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.<YOUR_DOMAIN>"
+        tls:
+          - secretName: "admin-ichub-frontend.<YOUR_DOMAIN>-tls"
+            hosts:
+              - "admin-ichub-frontend.<YOUR_DOMAIN>"
+        hosts:
+          - host: "admin-ichub-frontend.<YOUR_DOMAIN>"
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service: "frontend"
+                  port: 8080
+    postgresql:
+      enabled: true
+      auth:
+        database: "ichub-postgres"
+        port: 5432
+        existingSecret: "ichub-postgres-secret"
+        secretKeys:
+          adminPasswordKey: "postgres-password"
+        ichubUser: "ichub"
+      persistence:
+        enabled: true
+        size: 10Gi
+        storageClass: "microk8s-hostpath"
+    keycloak:
+      enabled: false
