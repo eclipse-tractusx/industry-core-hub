@@ -23,6 +23,7 @@
 
 """PCF Consumption API - Data Consumer endpoints for requesting PCF data."""
 
+import asyncio
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Path
@@ -97,7 +98,11 @@ async def send_pcf_request_to_participant(
     manufacturerPartId or customerPartId must be provided.
     """
     try:
-        result = consumption_manager.send_pcf_request_to_participant(request_id=request_id, list_policies=body.governance if body else None)
+        result = await asyncio.to_thread(
+            consumption_manager.send_pcf_request_to_participant,
+            request_id=request_id,
+            list_policies=body.governance if body else None,
+        )
         return JSONResponse(status_code=201, content=result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -137,7 +142,11 @@ async def retry_pcf_request_sending(
         ValueError: If the request does not exist, is not in a retryable status, or if the retry fails.
     """
     try:
-        result = consumption_manager.send_pcf_request_to_participant(request_id=request_id, list_policies=body.governance if body else None)
+        result = await asyncio.to_thread(
+            consumption_manager.send_pcf_request_to_participant,
+            request_id=request_id,
+            list_policies=body.governance if body else None,
+        )
         return JSONResponse(status_code=201, content=result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

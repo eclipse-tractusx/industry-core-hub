@@ -29,6 +29,7 @@ negotiated — no version query parameter is exposed.
 """
 
 from typing import Optional
+import asyncio
 from fastapi import APIRouter, Depends, Header, Query, HTTPException, Path, Body
 from fastapi.responses import JSONResponse
 
@@ -99,7 +100,8 @@ async def put_pcf_with_path_id(
     try:
         logger.debug(f"[PCF Exchange PUT] Delegating to exchange_manager.submit_pcf_response()")
         # Delegate to manager to handle PCF response/update
-        result = exchange_manager.submit_pcf_response(
+        result = await asyncio.to_thread(
+            exchange_manager.submit_pcf_response,
             request_id=request_id,
             pcf_data=body,
             edc_bpn=edc_bpn,
@@ -176,7 +178,8 @@ async def request_pcf(
     try:
         logger.debug(f"[PCF Exchange GET] Delegating to exchange_manager.request_pcf()")
         # Delegate to manager to handle PCF request
-        result = exchange_manager.request_pcf(
+        result = await asyncio.to_thread(
+            exchange_manager.request_pcf,
             request_id=request_id,
             edc_bpn=edc_bpn,
             manufacturer_part_id=manufacturer_part_id,

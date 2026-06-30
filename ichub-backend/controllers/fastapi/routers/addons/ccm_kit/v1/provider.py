@@ -37,6 +37,7 @@ to initiate outbound operations towards a consumer:
 
 from typing import Dict, List, Optional
 
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
@@ -79,9 +80,7 @@ async def push_certificate(request: CcmPushRequest) -> CcmSendResult:
     ``/companycertificate/push`` notification endpoint via the EDC.
     """
     try:
-        return ccm_provider_service.push_certificate(
-            request, request.sender_bpn
-        )
+        return await asyncio.to_thread(ccm_provider_service.push_certificate, request, request.sender_bpn)
     except Exception as e:
         logger.exception("Unhandled error in push_certificate endpoint")
         return CcmSendResult(success=False, error=str(e))
@@ -102,9 +101,7 @@ async def send_certificate_available(
     in the provider's EDC catalog and can be retrieved via the PULL mechanism.
     """
     try:
-        return ccm_provider_service.send_certificate_available(
-            request, request.sender_bpn
-        )
+        return await asyncio.to_thread(ccm_provider_service.send_certificate_available, request, request.sender_bpn)
     except Exception as e:
         logger.exception(
             "Unhandled error in send_certificate_available endpoint"
@@ -128,9 +125,7 @@ async def publish_certificate(request: CcmPublishRequest) -> CcmPublishResult:
     CX-0135 PULL mechanism.
     """
     try:
-        result = ccm_provider_service.publish_certificate(
-            request.certificate_id
-        )
+        result = await asyncio.to_thread(ccm_provider_service.publish_certificate, request.certificate_id)
         return CcmPublishResult(**result)
     except Exception as e:
         logger.exception("Unhandled error in publish_certificate endpoint")
@@ -168,7 +163,7 @@ async def republish_certificate(certificate_id: int) -> CcmPublishResult:
     is updated.  Use this when the BPN allowlist or usage constraints change.
     """
     try:
-        result = ccm_provider_service.republish_certificate(certificate_id)
+        result = await asyncio.to_thread(ccm_provider_service.republish_certificate, certificate_id)
         return CcmPublishResult(**result)
     except Exception as e:
         logger.exception("Unhandled error in republish_certificate endpoint")
@@ -187,7 +182,7 @@ async def unpublish_certificate(certificate_id: int) -> None:
     discoverable in the provider's catalog.
     """
     try:
-        ccm_provider_service.unpublish_certificate(certificate_id)
+        await asyncio.to_thread(ccm_provider_service.unpublish_certificate, certificate_id)
     except Exception as e:
         logger.exception("Unhandled error in unpublish_certificate endpoint")
         raise HTTPException(status_code=500, detail=str(e))
