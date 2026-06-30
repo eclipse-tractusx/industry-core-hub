@@ -524,6 +524,7 @@
       "type": "種別",
       "consumer": "コンシューマー",
       "status": "ステータス",
+      "consumerStatus": "コンシューマーステータス",
       "lastShared": "最終共有日"
     },
     "locations": "{{count}}サイト",
