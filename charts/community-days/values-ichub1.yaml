@@ -155,139 +155,137 @@ tx-data-provider:
           size: 10Gi
           storageClass: "microk8s-hostpath"
 
-industry-core-bundle:
+industry-core-hub:
   enabled: true
-  industry-core-hub:
+  participantId: "BPNL00000000015G"
+  backend:
     enabled: true
-    participantId: "BPNL00000000015G"
-    backend:
-      enabled: true
-      cors:
-        enabled: false
-      configuration:
-        authorization:
-          apiKey:
-            header: "X-Api-Key"
-            value: "HACKATHON1-HACKATHON1-HACKATHON1"
-          keycloak:
-            enabled: false
-        consumer:
-          discovery:
-            discovery_finder:
-              url: "https://semantics.txcd.arena2036-x.de/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
-            oauth:
-              url: "https://centralidp.txcd.arena2036-x.de/auth/"
-              realm: "CX-Central"
-              client_id: "sa1"
-              client_secret: "9Fmk4diFqNBtDdFo7f2zjTdt92Q2OrtJ"
-          connector:
-            controlplane:
-              hostname: "https://ichub1-connector-controlplane.txcd.arena2036-x.de"
-              apiKeyHeader: "X-Api-Key"
-              apiKey: "HACKATHON1"
-              managementPath: "/management"
-              protocolPath: "/api/v1/dsp"
-              catalogPath: "/catalog"
-        provider:
-          connector:
-            controlplane:
-              hostname: "https://ichub1-connector-controlplane.txcd.arena2036-x.de"
-              apiKeyHeader: "X-Api-Key"
-              apiKey: "HACKATHON1"
-              managementPath: "/management"
-              protocolPath: "/api/v1/dsp"
-            dataplane:
-              hostname: "https://ichub1-connector-dataplane.txcd.arena2036-x.de"
-              publicPath: "/api/public"
-          digitalTwinRegistry:
-            hostname: "http://ichub1-connector-dataprovider-dtr:8080"
-            apiPath: "/api/v3"
-          digitalTwinEventAPI:
-            hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
-          uniqueIdPush:
-            hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
-            sendOnShare: true
-          pcfExchange:
-            enabled: true
-            hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
-          ccm:
-            enabled: true
-            hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
-      ingress:
-        enabled: true
-        className: "nginx"
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-          nginx.ingress.kubernetes.io/enable-cors: "true"
-          nginx.ingress.kubernetes.io/cors-allow-origin: "https://ichub1-ichub-frontend.txcd.arena2036-x.de"
-          nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-          nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
-          nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        tls:
-          - secretName: "ichub1-ichub-backend.txcd.arena2036-x.de-tls"
-            hosts:
-              - "ichub1-ichub-backend.txcd.arena2036-x.de"
-        hosts:
-          - host: "ichub1-ichub-backend.txcd.arena2036-x.de"
-            paths:
-              - path: /
-                pathType: ImplementationSpecific
-                backend:
-                  service: "backend"
-                  port: 8000
-      persistence:
-        enabled: true
-        data:
+    cors:
+      enabled: false
+    configuration:
+      authorization:
+        apiKey:
+          header: "X-Api-Key"
+          value: "HACKATHON1-HACKATHON1-HACKATHON1"
+        keycloak:
+          enabled: false
+      consumer:
+        discovery:
+          discovery_finder:
+            url: "https://semantics.txcd.arena2036-x.de/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+          oauth:
+            url: "https://centralidp.txcd.arena2036-x.de/auth/"
+            realm: "CX-Central"
+            client_id: "sa1"
+            client_secret: "9Fmk4diFqNBtDdFo7f2zjTdt92Q2OrtJ"
+        connector:
+          controlplane:
+            hostname: "https://ichub1-connector-controlplane.txcd.arena2036-x.de"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "HACKATHON1"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+            catalogPath: "/catalog"
+      provider:
+        connector:
+          controlplane:
+            hostname: "https://ichub1-connector-controlplane.txcd.arena2036-x.de"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "HACKATHON1"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+          dataplane:
+            hostname: "https://ichub1-connector-dataplane.txcd.arena2036-x.de"
+            publicPath: "/api/public"
+        digitalTwinRegistry:
+          hostname: "http://ichub1-connector-dataprovider-dtr:8080"
+          apiPath: "/api/v3"
+        digitalTwinEventAPI:
+          hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
+        uniqueIdPush:
+          hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
+          sendOnShare: true
+        pcfExchange:
           enabled: true
-          size: 1Gi
-          accessMode: ReadWriteOnce
-        logs:
+          hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
+        ccm:
           enabled: true
-          size: 1Gi
-          accessMode: ReadWriteOnce
-    frontend:
+          hostname: "https://ichub1-ichub-backend.txcd.arena2036-x.de"
+    ingress:
       enabled: true
-      config:
-        ichubBackendUrl: "https://ichub1-ichub-backend.txcd.arena2036-x.de/v1"
-        requireHttpsUrlPattern: true
-        apiKey: "HACKATHON1-HACKATHON1-HACKATHON1"
-        apiKeyHeader: "X-Api-Key"
-        authEnabled: false
-        authProvider: "none"
-      env:
-        backendUrl: "https://ichub1-ichub-backend.txcd.arena2036-x.de/v1"
-      ingress:
-        enabled: true
-        className: "nginx"
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-          nginx.ingress.kubernetes.io/enable-cors: "true"
-          nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.txcd.arena2036-x.de"
-        tls:
-          - secretName: "ichub1-ichub-frontend.txcd.arena2036-x.de-tls"
-            hosts:
-              - "ichub1-ichub-frontend.txcd.arena2036-x.de"
-        hosts:
-          - host: "ichub1-ichub-frontend.txcd.arena2036-x.de"
-            paths:
-              - path: /
-                pathType: Prefix
-                backend:
-                  service: "frontend"
-                  port: 8080
-    postgresql:
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://ichub1-ichub-frontend.txcd.arena2036-x.de"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+      tls:
+        - secretName: "ichub1-ichub-backend.txcd.arena2036-x.de-tls"
+          hosts:
+            - "ichub1-ichub-backend.txcd.arena2036-x.de"
+      hosts:
+        - host: "ichub1-ichub-backend.txcd.arena2036-x.de"
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                service: "backend"
+                port: 8000
+    persistence:
       enabled: true
-      auth:
-        database: "ichub-postgres"
-        port: 5432
-        existingSecret: "ichub-postgres-secret"
-        secretKeys:
-          adminPasswordKey: "postgres-password"
-        ichubUser: "ichub"
-      persistence:
+      data:
         enabled: true
-        size: 10Gi
+        size: 1Gi
+        accessMode: ReadWriteOnce
+      logs:
+        enabled: true
+        size: 1Gi
+        accessMode: ReadWriteOnce
+  frontend:
+    enabled: true
+    config:
+      ichubBackendUrl: "https://ichub1-ichub-backend.txcd.arena2036-x.de/v1"
+      requireHttpsUrlPattern: true
+      apiKey: "HACKATHON1-HACKATHON1-HACKATHON1"
+      apiKeyHeader: "X-Api-Key"
+      authEnabled: false
+      authProvider: "none"
+    env:
+      backendUrl: "https://ichub1-ichub-backend.txcd.arena2036-x.de/v1"
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.txcd.arena2036-x.de"
+      tls:
+        - secretName: "ichub1-ichub-frontend.txcd.arena2036-x.de-tls"
+          hosts:
+            - "ichub1-ichub-frontend.txcd.arena2036-x.de"
+      hosts:
+        - host: "ichub1-ichub-frontend.txcd.arena2036-x.de"
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service: "frontend"
+                port: 8080
+  postgresql:
+    enabled: true
+    auth:
+      database: "ichub-postgres"
+      port: 5432
+      existingSecret: "ichub-postgres-secret"
+      secretKeys:
+        adminPasswordKey: "postgres-password"
+      ichubUser: "ichub"
+    persistence:
+      enabled: true
+      size: 10Gi

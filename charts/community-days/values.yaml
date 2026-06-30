@@ -169,144 +169,142 @@ tx-data-provider:
           size: 10Gi
           storageClass: "microk8s-hostpath"
 
-industry-core-bundle:
+industry-core-hub:
   enabled: true
-  industry-core-hub:
+  participantId: "<YOUR_BPN>"
+  backend:
     enabled: true
-    participantId: "<YOUR_BPN>"
-    backend:
-      enabled: true
-      cors:
-        enabled: false
-      configuration:
-        authorization:
-          apiKey:
-            header: "X-Api-Key"
-            value: "<YOUR_FULL_API_KEY>"
-          keycloak:
-            enabled: false
-        consumer:
-          discovery:
-            discovery_finder:
-              url: "https://semantics.<YOUR_DOMAIN>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
-            oauth:
-              url: "https://centralidp.<YOUR_DOMAIN>/auth/"
-              realm: "CX-Central"
-              client_id: "<YOUR_OAUTH_CLIENT_ID>"
-              client_secret: "<YOUR_OAUTH_CLIENT_SECRET>"
-          connector:
-            controlplane:
-              hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
-              apiKeyHeader: "X-Api-Key"
-              apiKey: "<YOUR_API_KEY>"
-              managementPath: "/management"
-              protocolPath: "/api/v1/dsp"
-              catalogPath: "/catalog"
-        provider:
-          connector:
-            controlplane:
-              hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
-              apiKeyHeader: "X-Api-Key"
-              apiKey: "<YOUR_API_KEY>"
-              managementPath: "/management"
-              protocolPath: "/api/v1/dsp"
-            dataplane:
-              hostname: "https://admin-connector-dataplane.<YOUR_DOMAIN>"
-              publicPath: "/api/public"
-          digitalTwinRegistry:
-            hostname: "http://admin-connector-dataprovider-dtr:8080"
-            apiPath: "/api/v3"
-          digitalTwinEventAPI:
-            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
-          uniqueIdPush:
-            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
-            sendOnShare: true
-          pcfExchange:
-            enabled: true
-            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
-          ccm:
-            enabled: true
-            hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
-      ingress:
-        enabled: true
-        className: "nginx"
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-          nginx.ingress.kubernetes.io/enable-cors: "true"
-          nginx.ingress.kubernetes.io/cors-allow-origin: "https://admin-ichub-frontend.<YOUR_DOMAIN>"
-          nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-          nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
-          nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        tls:
-          - secretName: "admin-ichub-backend.<YOUR_DOMAIN>-tls"
-            hosts:
-              - "admin-ichub-backend.<YOUR_DOMAIN>"
-        hosts:
-          - host: "admin-ichub-backend.<YOUR_DOMAIN>"
-            paths:
-              - path: /
-                pathType: ImplementationSpecific
-                backend:
-                  service: "backend"
-                  port: 8000
-      persistence:
-        enabled: true
-        data:
-          enabled: true
-          size: 1Gi
-          accessMode: ReadWriteOnce
-          storageClass: "microk8s-hostpath"
-        logs:
-          enabled: true
-          size: 1Gi
-          accessMode: ReadWriteOnce
-          storageClass: "microk8s-hostpath"
-    frontend:
-      enabled: true
-      config:
-        ichubBackendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
-        requireHttpsUrlPattern: true
-        apiKey: "<YOUR_FULL_API_KEY>"
-        apiKeyHeader: "X-Api-Key"
-        authEnabled: false
-        authProvider: "none"
-      env:
-        backendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
-      ingress:
-        enabled: true
-        className: "nginx"
-        annotations:
-          cert-manager.io/cluster-issuer: letsencrypt-prod
-          nginx.ingress.kubernetes.io/rewrite-target: "/$1"
-          nginx.ingress.kubernetes.io/use-regex: "true"
-          nginx.ingress.kubernetes.io/enable-cors: "true"
-          nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.<YOUR_DOMAIN>"
-        tls:
-          - secretName: "admin-ichub-frontend.<YOUR_DOMAIN>-tls"
-            hosts:
-              - "admin-ichub-frontend.<YOUR_DOMAIN>"
-        hosts:
-          - host: "admin-ichub-frontend.<YOUR_DOMAIN>"
-            paths:
-              - path: /
-                pathType: Prefix
-                backend:
-                  service: "frontend"
-                  port: 8080
-    postgresql:
-      enabled: true
-      auth:
-        database: "ichub-postgres"
-        port: 5432
-        existingSecret: "ichub-postgres-secret"
-        secretKeys:
-          adminPasswordKey: "postgres-password"
-        ichubUser: "ichub"
-      persistence:
-        enabled: true
-        size: 10Gi
-        storageClass: "microk8s-hostpath"
-    keycloak:
+    cors:
       enabled: false
+    configuration:
+      authorization:
+        apiKey:
+          header: "X-Api-Key"
+          value: "<YOUR_FULL_API_KEY>"
+        keycloak:
+          enabled: false
+      consumer:
+        discovery:
+          discovery_finder:
+            url: "https://semantics.<YOUR_DOMAIN>/discoveryfinder/api/v1.0/administration/connectors/discovery/search"
+          oauth:
+            url: "https://centralidp.<YOUR_DOMAIN>/auth/"
+            realm: "CX-Central"
+            client_id: "<YOUR_OAUTH_CLIENT_ID>"
+            client_secret: "<YOUR_OAUTH_CLIENT_SECRET>"
+        connector:
+          controlplane:
+            hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "<YOUR_API_KEY>"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+            catalogPath: "/catalog"
+      provider:
+        connector:
+          controlplane:
+            hostname: "https://admin-connector-controlplane.<YOUR_DOMAIN>"
+            apiKeyHeader: "X-Api-Key"
+            apiKey: "<YOUR_API_KEY>"
+            managementPath: "/management"
+            protocolPath: "/api/v1/dsp"
+          dataplane:
+            hostname: "https://admin-connector-dataplane.<YOUR_DOMAIN>"
+            publicPath: "/api/public"
+        digitalTwinRegistry:
+          hostname: "http://admin-connector-dataprovider-dtr:8080"
+          apiPath: "/api/v3"
+        digitalTwinEventAPI:
+          hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+        uniqueIdPush:
+          hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+          sendOnShare: true
+        pcfExchange:
+          enabled: true
+          hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+        ccm:
+          enabled: true
+          hostname: "https://admin-ichub-backend.<YOUR_DOMAIN>"
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://admin-ichub-frontend.<YOUR_DOMAIN>"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+      tls:
+        - secretName: "admin-ichub-backend.<YOUR_DOMAIN>-tls"
+          hosts:
+            - "admin-ichub-backend.<YOUR_DOMAIN>"
+      hosts:
+        - host: "admin-ichub-backend.<YOUR_DOMAIN>"
+          paths:
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                service: "backend"
+                port: 8000
+    persistence:
+      enabled: true
+      data:
+        enabled: true
+        size: 1Gi
+        accessMode: ReadWriteOnce
+        storageClass: "microk8s-hostpath"
+      logs:
+        enabled: true
+        size: 1Gi
+        accessMode: ReadWriteOnce
+        storageClass: "microk8s-hostpath"
+  frontend:
+    enabled: true
+    config:
+      ichubBackendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
+      requireHttpsUrlPattern: true
+      apiKey: "<YOUR_FULL_API_KEY>"
+      apiKeyHeader: "X-Api-Key"
+      authEnabled: false
+      authProvider: "none"
+    env:
+      backendUrl: "https://admin-ichub-backend.<YOUR_DOMAIN>/v1"
+    ingress:
+      enabled: true
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.<YOUR_DOMAIN>"
+      tls:
+        - secretName: "admin-ichub-frontend.<YOUR_DOMAIN>-tls"
+          hosts:
+            - "admin-ichub-frontend.<YOUR_DOMAIN>"
+      hosts:
+        - host: "admin-ichub-frontend.<YOUR_DOMAIN>"
+          paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service: "frontend"
+                port: 8080
+  postgresql:
+    enabled: true
+    auth:
+      database: "ichub-postgres"
+      port: 5432
+      existingSecret: "ichub-postgres-secret"
+      secretKeys:
+        adminPasswordKey: "postgres-password"
+      ichubUser: "ichub"
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: "microk8s-hostpath"
+  keycloak:
+    enabled: false
