@@ -446,6 +446,8 @@
     "outOfV9Range": "⚠ Fora do intervalo v9.0.0",
     "saveBoth": "Guardar Ambos os PCFs",
     "saving": "A guardar…",
+    "update": "Atualizar",
+    "updating": "A atualizar…",
     "empty": "(vazio)",
     "useAsV9": "Usar como Dados v9.0.0",
     "useAsV7": "Usar como Dados v7.0.0",
