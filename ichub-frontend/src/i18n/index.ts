@@ -41,6 +41,7 @@ import enSerializedParts from './locales/en/serializedParts.json';
 import enPcf from './locales/en/pcf.json';
 import enNotifications from './locales/en/notifications.json';
 import enBatteryPass from './locales/en/batteryPass.json';
+import enCertificateManagement from './locales/en/certificateManagement.json';
 
 // Spanish
 import esCommon from './locales/es/common.json';
@@ -54,6 +55,7 @@ import esSerializedParts from './locales/es/serializedParts.json';
 import esPcf from './locales/es/pcf.json';
 import esNotifications from './locales/es/notifications.json';
 import esBatteryPass from './locales/es/batteryPass.json';
+import esCertificateManagement from './locales/es/certificateManagement.json';
 
 // German
 import deCommon from './locales/de/common.json';
@@ -67,6 +69,7 @@ import deSerializedParts from './locales/de/serializedParts.json';
 import dePcf from './locales/de/pcf.json';
 import deNotifications from './locales/de/notifications.json';
 import deBatteryPass from './locales/de/batteryPass.json';
+import deCertificateManagement from './locales/de/certificateManagement.json';
 
 // French
 import frCommon from './locales/fr/common.json';
@@ -80,6 +83,7 @@ import frSerializedParts from './locales/fr/serializedParts.json';
 import frPcf from './locales/fr/pcf.json';
 import frNotifications from './locales/fr/notifications.json';
 import frBatteryPass from './locales/fr/batteryPass.json';
+import frCertificateManagement from './locales/fr/certificateManagement.json';
 
 // Chinese (Simplified)
 import zhCommon from './locales/zh/common.json';
@@ -93,6 +97,7 @@ import zhSerializedParts from './locales/zh/serializedParts.json';
 import zhPcf from './locales/zh/pcf.json';
 import zhNotifications from './locales/zh/notifications.json';
 import zhBatteryPass from './locales/zh/batteryPass.json';
+import zhCertificateManagement from './locales/zh/certificateManagement.json';
 
 // Japanese
 import jaCommon from './locales/ja/common.json';
@@ -106,6 +111,7 @@ import jaSerializedParts from './locales/ja/serializedParts.json';
 import jaPcf from './locales/ja/pcf.json';
 import jaNotifications from './locales/ja/notifications.json';
 import jaBatteryPass from './locales/ja/batteryPass.json';
+import jaCertificateManagement from './locales/ja/certificateManagement.json';
 
 // Portuguese
 import ptCommon from './locales/pt/common.json';
@@ -119,6 +125,7 @@ import ptSerializedParts from './locales/pt/serializedParts.json';
 import ptPcf from './locales/pt/pcf.json';
 import ptNotifications from './locales/pt/notifications.json';
 import ptBatteryPass from './locales/pt/batteryPass.json';
+import ptCertificateManagement from './locales/pt/certificateManagement.json';
 
 export const defaultNS = 'common';
 export const resources = {
@@ -133,7 +140,8 @@ export const resources = {
     serializedParts: enSerializedParts,
     pcf: enPcf,
     notifications: enNotifications,
-    batteryPass: enBatteryPass
+    batteryPass: enBatteryPass,
+    certificateManagement: enCertificateManagement
   },
   es: {
     common: esCommon,
@@ -146,7 +154,8 @@ export const resources = {
     serializedParts: esSerializedParts,
     pcf: esPcf,
     notifications: esNotifications,
-    batteryPass: esBatteryPass
+    batteryPass: esBatteryPass,
+    certificateManagement: esCertificateManagement
   },
   de: {
     common: deCommon,
@@ -159,7 +168,8 @@ export const resources = {
     serializedParts: deSerializedParts,
     pcf: dePcf,
     notifications: deNotifications,
-    batteryPass: deBatteryPass
+    batteryPass: deBatteryPass,
+    certificateManagement: deCertificateManagement
   },
   fr: {
     common: frCommon,
@@ -172,7 +182,8 @@ export const resources = {
     serializedParts: frSerializedParts,
     pcf: frPcf,
     notifications: frNotifications,
-    batteryPass: frBatteryPass
+    batteryPass: frBatteryPass,
+    certificateManagement: frCertificateManagement
   },
   zh: {
     common: zhCommon,
@@ -185,7 +196,8 @@ export const resources = {
     serializedParts: zhSerializedParts,
     pcf: zhPcf,
     notifications: zhNotifications,
-    batteryPass: zhBatteryPass
+    batteryPass: zhBatteryPass,
+    certificateManagement: zhCertificateManagement
   },
   ja: {
     common: jaCommon,
@@ -198,7 +210,8 @@ export const resources = {
     serializedParts: jaSerializedParts,
     pcf: jaPcf,
     notifications: jaNotifications,
-    batteryPass: jaBatteryPass
+    batteryPass: jaBatteryPass,
+    certificateManagement: jaCertificateManagement
   },
   pt: {
     common: ptCommon,
@@ -211,7 +224,8 @@ export const resources = {
     serializedParts: ptSerializedParts,
     pcf: ptPcf,
     notifications: ptNotifications,
-    batteryPass: ptBatteryPass
+    batteryPass: ptBatteryPass,
+    certificateManagement: ptCertificateManagement
   }
 } as const;
 

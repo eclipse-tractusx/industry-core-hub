@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -76,6 +77,22 @@ export interface AgreementConfig {
  * Permutations are generated for each entry and combined into a flat list for the backend.
  */
 export type DtrPolicyConfig = PolicyDefinition[];
+
+/**
+ * A single CCM ODRL policy entry (raw format sent to the EDC connector).
+ * Uses singular `permission` (object, not array) as required by the CCM API.
+ */
+export interface CcmOdrlPolicy {
+  permission: PolicyRule;
+  prohibition: PolicyRule[];
+  obligation: PolicyRule[];
+}
+
+/**
+ * CCM policy governance configuration — array of ODRL policies passed directly
+ * to the CCM API calls for contract negotiation in the dataspace.
+ */
+export type CcmPolicyConfig = CcmOdrlPolicy[];
 
 // ----- Backward-compatible aliases (deprecated) -----
 
@@ -160,6 +177,7 @@ export interface AppConfig {
   governance: {
     agreements: AgreementConfig[];
     dtrPolicy: DtrPolicyConfig;
+    ccmPolicy: CcmPolicyConfig;
   };
   
   // Feature flags
@@ -167,6 +185,11 @@ export interface AppConfig {
     enableAdvancedLogging: boolean;
     enablePerformanceMonitoring: boolean;
     enableDevTools: boolean;
+    /**
+     * When enabled, PCF creation requires producing both v9 and v7 submodels
+     * (dual creation flow) instead of selecting a single PCF schema version.
+     */
+    backwardCompatibility: boolean;
   };
   
   // UI and theming
@@ -224,11 +247,13 @@ export interface RawEnvironmentConfig {
   // Governance and policies
   VITE_GOVERNANCE_CONFIG?: string;
   VITE_DTR_POLICIES_CONFIG?: string;
+  VITE_CCM_POLICY_GOVERNANCE?: string;
   
   // Feature flags
   VITE_ENABLE_ADVANCED_LOGGING?: string;
   VITE_ENABLE_PERFORMANCE_MONITORING?: string;
   VITE_ENABLE_DEV_TOOLS?: string;
+  VITE_PCF_BACKWARD_COMPATIBILITY_SATURN?: string;
   
   // UI configuration
   VITE_UI_THEME?: string;

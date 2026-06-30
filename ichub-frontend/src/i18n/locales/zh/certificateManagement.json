@@ -1,0 +1,625 @@
+{
+  "page": {
+    "title": "证书管理",
+    "subtitle": "在 Catena-X 数据空间中管理、共享和使用合规证书",
+    "uploadCertificate": "上传证书"
+  },
+  "tabs": {
+    "myCertificates": "我的证书",
+    "shareOutbox": "共享与发件箱",
+    "discoverConsume": "发现与消费"
+  },
+  "compliance": {
+    "title": "合规概览",
+    "score": "合规评分",
+    "validOf": "{{total}} 个证书中有 {{valid}} 个有效",
+    "valid": "有效",
+    "expiringSoon": "即将到期",
+    "expired": "已过期",
+    "sharedWith": "{{total}} 个中有 {{count}} 个已与合作伙伴共享",
+    "registeredInDtr": "{{total}} 个中有 {{count}} 个已在 DTR 中注册",
+    "allValid": "所有证书均有效",
+    "collapse": "收起",
+    "expand": "展开"
+  },
+  "table": {
+    "subtitle": "管理您的合规证书（共 {{count}} 个）",
+    "columns": {
+      "name": "证书",
+      "type": "类型",
+      "issuer": "颁发机构",
+      "validFrom": "有效期自",
+      "validUntil": "有效期至",
+      "status": "状态",
+      "shared": "已共享",
+      "certId": "证书 ID",
+      "dtr": "DTR"
+    },
+    "status": {
+      "valid": "有效",
+      "expiring": "即将到期",
+      "expired": "已过期"
+    },
+    "dtr": {
+      "registered": "已在 DTR 中注册",
+      "pending": "DTR 注册待处理",
+      "notRegistered": "未在 DTR 中注册",
+      "registerAction": "在 DTR 中注册"
+    },
+    "actions": {
+      "view": "查看",
+      "share": "共享",
+      "delete": "删除"
+    },
+    "empty": {
+      "title": "未找到证书",
+      "subtitle": "上传您的第一个合规证书以开始使用。"
+    }
+  },
+  "messages": {
+    "uploadSuccess": "证书上传成功！",
+    "uploadFailed": "证书上传失败。",
+    "shareSuccess": "证书共享成功！",
+    "shareFailed": "证书共享失败。",
+    "deleteNotAvailable": "删除功能暂不可用。",
+    "deleteSuccess": "证书删除成功！",
+    "deleteFailed": "证书删除失败。",
+    "publishSuccess": "证书发布成功！",
+    "publishFailed": "证书发布失败。",
+    "updateSuccess": "证书更新成功！",
+    "updateFailed": "证书更新失败。",
+    "registerDtrSuccess": "证书已成功在 DTR 中注册！",
+    "registerDtrFailed": "在 DTR 中注册证书失败。",
+    "loadFailed": "加载证书失败，请重试。"
+  },
+  "filters": {
+    "searchPlaceholder": "按名称、BPN 或颁发机构搜索...",
+    "allTypes": "所有类型",
+    "allStatuses": "所有状态",
+    "type": "类型",
+    "status": "状态"
+  },
+  "dialogs": {
+    "upload": {
+      "title": "上传证书",
+      "editTitle": "编辑证书"
+    },
+    "share": {
+      "title": "共享证书"
+    },
+    "view": {
+      "title": "证书详情"
+    },
+    "delete": {
+      "title": "删除证书",
+      "confirmation": "确定要删除此证书吗？",
+      "warning": "此操作无法撤销。"
+    }
+  },
+  "shareOutbox": {
+    "title": "共享发件箱",
+    "pushSection": "向合作伙伴推送通知",
+    "columns": {
+      "certificate": "证书",
+      "partner": "合作伙伴",
+      "method": "方式",
+      "sharedOn": "共享时间",
+      "edcContract": "EDC 合同",
+      "status": "状态"
+    },
+    "status": {
+      "active": "活跃",
+      "pending": "待处理",
+      "revoked": "已撤销"
+    },
+    "revoke": "撤销",
+    "sendPush": "发送推送通知",
+    "targetBpn": "目标合作伙伴 BPN",
+    "selectCertificate": "选择证书",
+    "empty": "暂无共享记录。"
+  },
+  "consumer": {
+    "discoveryTitle": "合作伙伴证书发现",
+    "inboxTitle": "传入证书通知",
+    "searchBpn": "按 BPN 搜索",
+    "search": "搜索",
+    "stepper": {
+      "bpnLookup": "BPN 查询",
+      "dtrResolution": "DTR 解析",
+      "assetDiscovery": "资产发现"
+    },
+    "negotiation": {
+      "requestAccess": "请求访问",
+      "viewCertificate": "查看证书",
+      "retry": "重试"
+    },
+    "inbox": {
+      "columns": {
+        "sender": "发送方",
+        "type": "证书类型",
+        "issuer": "颁发机构",
+        "received": "接收时间",
+        "status": "状态"
+      },
+      "status": {
+        "pending": "待处理",
+        "acknowledged": "已确认",
+        "rejected": "已拒绝"
+      },
+      "acknowledge": "确认",
+      "reject": "拒绝",
+      "empty": "暂无传入证书通知。"
+    }
+  },
+  "common": {
+    "cancel": "取消",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一步",
+    "add": "添加",
+    "delete": "删除",
+    "publish": "发布",
+    "update": "更新",
+    "revoke": "撤销",
+    "share": "共享",
+    "saveChanges": "保存更改",
+    "upload": "上传",
+    "provide": "提供",
+    "refresh": "刷新"
+  },
+  "filterBar": {
+    "clear": "清除",
+    "listView": "列表视图",
+    "cardView": "卡片视图"
+  },
+  "certTable": {
+    "columns": {
+      "certificate": "证书",
+      "type": "类型",
+      "issuer": "颁发机构",
+      "validUntil": "有效期至",
+      "status": "状态",
+      "actions": "操作"
+    },
+    "tooltips": {
+      "certDetails": "证书详情",
+      "cannotPublishExpired": "无法发布已过期的证书",
+      "alreadyPublished": "已发布到 EDC 网络"
+    },
+    "buttons": {
+      "publish": "发布",
+      "update": "更新",
+      "delete": "删除"
+    },
+    "dateToday": "今天 {{time}}",
+    "empty": "未找到证书。请上传证书以开始使用。"
+  },
+  "cardGrid": {
+    "empty": "未找到证书。请上传证书以开始使用。",
+    "issuedBy": "签发人",
+    "validUntil": "有效期至",
+    "sharedWith": "与{{count}}个合作伙伴共享",
+    "pdfAttached": "已附加PDF",
+    "pdfDocumentAttached": "已附加PDF文档",
+    "buttons": {
+      "info": "证书详情",
+      "publish": "发布",
+      "update": "更新",
+      "delete": "删除"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "无法发布已过期的证书",
+      "alreadyPublished": "已发布至EDC网络"
+    }
+  },
+  "pdfViewer": {
+    "buttons": {
+      "info": "证书详情",
+      "publish": "发布",
+      "updatePdf": "更新PDF",
+      "delete": "删除"
+    },
+    "tooltips": {
+      "cannotPublishExpired": "无法发布已过期的证书",
+      "alreadyPublished": "已发布至EDC网络"
+    }
+  },
+  "shareDialog": {
+    "title": "共享证书",
+    "description": "输入要与其共享此证书的合作伙伴的商业伙伴号。他们将通过EDC通知接收到该证书。",
+    "partnerBpn": "合作伙伴BPN",
+    "errors": {
+      "partnerBpnRequired": "合作伙伴BPN为必填项"
+    }
+  },
+  "statsBar": {
+    "total": "总计",
+    "valid": "有效",
+    "expiring": "即将到期",
+    "expired": "已过期"
+  },
+  "deleteDialog": {
+    "title": "删除证书",
+    "confirmation": "确定要删除此证书吗？",
+    "warning": "此操作无法撤销。所有共享引用也将被删除。"
+  },
+  "publishDialog": {
+    "title": "发布证书",
+    "subtitle": "使此证书在 Catena-X 数据空间中可被发现",
+    "confirmation": "确定要发布此证书吗？",
+    "explanation": "发布后将在网络中注册此证书，使您的合作伙伴可通过 Catena-X 数据空间发现它。"
+  },
+  "detailDialog": {
+    "certInfo": "证书信息",
+    "type": "类型",
+    "issuer": "颁发机构",
+    "validFrom": "有效期自",
+    "validUntil": "有效期至",
+    "businessPartner": "商业伙伴",
+    "certificateId": "证书 ID",
+    "scope": "范围",
+    "scopeSite": "站点级别 (BPNS)",
+    "scopeEntity": "法律实体 (BPNL)",
+    "enclosedSites": "包含的站点",
+    "description": "描述",
+    "sharingHistory": "共享历史 ({{count}})",
+    "noSharingRecords": "暂无共享记录。使用共享按钮与合作伙伴共享此证书。",
+    "columns": {
+      "partner": "合作伙伴",
+      "method": "方式",
+      "sharedOn": "共享时间",
+      "edcContract": "EDC 合同",
+      "status": "状态",
+      "action": "操作"
+    },
+    "revokeSuccess": "已撤销 {{partner}} 的访问权限。",
+    "revokeFailed": "撤销访问权限失败。",
+    "updatePdf": "更新 PDF",
+    "shareCertificate": "共享证书"
+  },
+  "infoPanel": {
+    "noName": "（无名称）",
+    "coreInfo": "核心信息",
+    "issuer": "颁发机构",
+    "bpnHolder": "BPN 持有者",
+    "uploaderBpn": "上传者 BPN",
+    "validity": "有效期",
+    "validFrom": "有效期自",
+    "validUntil": "有效期至",
+    "trustLevel": "信任级别",
+    "scopeApp": "范围与应用",
+    "regNumber": "注册编号",
+    "areaOfApplication": "应用领域",
+    "validator": "验证方",
+    "associatedSites": "关联站点",
+    "descriptionLabel": "描述",
+    "metadata": "元数据",
+    "certificateId": "证书 ID",
+    "created": "创建时间",
+    "updated": "更新时间"
+  },
+  "uploadDialog": {
+    "title": "上传证书",
+    "editTitle": "编辑证书",
+    "steps": {
+      "certDetails": "证书详情",
+      "validityScope": "有效期与范围",
+      "certFile": "证书文件"
+    },
+    "sections": {
+      "coreDetails": "证书核心详情",
+      "validityContext": "有效期、信任与应用背景"
+    },
+    "fields": {
+      "certType": "证书类型",
+      "certTypeHelper": "搜索或输入证书类型",
+      "certName": "证书名称",
+      "certNamePlaceholder": "例如：质量管理体系证书",
+      "issuer": "颁发机构 / 认证机构",
+      "issuerPlaceholder": "例如：DEKRA、TÜV SÜD",
+      "description": "描述",
+      "descriptionPlaceholder": "关于范围的可选描述或备注",
+      "orgBpnl": "组织 BPNL（持有者）",
+      "orgBpnlHelper": "此证书将在您的组织 ID 下注册",
+      "validFrom": "有效期自",
+      "validUntil": "有效期至",
+      "trustLevel": "信任级别",
+      "trustNone": "无",
+      "trustLow": "低",
+      "trustHigh": "高",
+      "trustTrusted": "受信任",
+      "regNumber": "注册编号",
+      "regNumberPlaceholder": "例如：REG-123456-XYZ",
+      "areaOfApplication": "应用领域",
+      "areaOfApplicationPlaceholder": "例如：动力总成工厂、采购部门",
+      "areaOfApplicationHelper": "目标部门、背景或设施",
+      "validatorName": "验证方名称",
+      "validatorPlaceholder": "例如：首席审计员张三",
+      "validatorHelper": "审计员或验证实体负责人",
+      "associatedSites": "关联站点 (BPNS)"
+    },
+    "fileZone": {
+      "dragDrop": "拖放或点击浏览",
+      "format": "支持格式：仅限 PDF（最大 10MB）"
+    },
+    "errors": {
+      "invalidFileType": "文件类型无效。仅允许 PDF 格式的证书。",
+      "fileTooLarge": "文件大小超过最大限制 10MB。",
+      "certTypeRequired": "证书类型为必填项",
+      "issuerRequired": "颁发机构为必填项",
+      "validFromRequired": "有效期开始日期为必填项",
+      "validUntilAfterFrom": "有效期至必须晚于有效期自",
+      "fileRequired": "证书文件为必填项"
+    }
+  },
+  "bpnsInput": {
+    "label": "站点 / 地点 (BPNS)",
+    "optional": "— 可选",
+    "placeholder": "例如：BPNS0000000000XY",
+    "helper": "输入 BPNS 并按回车键添加",
+    "addTooltip": "添加站点",
+    "errorFormat": "必须以 \"BPNS\" 开头，后跟 12 个字母数字字符",
+    "errorDuplicate": "已在列表中"
+  },
+  "consumptionPage": {
+    "title": "CCM 消费",
+    "subtitle": "向您的 Catena-X 合作伙伴请求、追踪、下载和审查合规证书。",
+    "newRequest": "新请求",
+    "searchPlaceholder": "按提供方、类型或状态搜索…",
+    "filterAllStatuses": "所有状态",
+    "filterAllTypes": "所有类型",
+    "columns": {
+      "provider": "提供方",
+      "certifiedBpn": "认证 BPN",
+      "type": "类型",
+      "locations": "地点",
+      "status": "状态",
+      "response": "响应",
+      "updated": "更新时间",
+      "actions": "操作"
+    },
+    "statusValues": {
+      "Pending": "待处理",
+      "Found": "已找到",
+      "NotFound": "未找到",
+      "Failed": "失败"
+    },
+    "localStatusValues": {
+      "Pending": "待处理",
+      "Accepted": "已接受",
+      "Rejected": "已拒绝"
+    },
+    "locations": "{{count}} 个站点",
+    "empty": {
+      "noRequests": "暂无证书请求。使用「新请求」向提供方申请证书。",
+      "noMatch": "没有请求符合您的筛选条件。"
+    },
+    "tooltips": {
+      "viewHistory": "查看历史",
+      "pullCertificate": "拉取证书",
+      "viewCertificate": "查看证书",
+      "sendFeedback": "发送反馈"
+    },
+    "messages": {
+      "loadFailed": "加载证书请求失败。",
+      "pullSuccess": "证书拉取成功。",
+      "pullFailed": "拉取证书失败。",
+      "feedbackSent": "反馈「{{status}}」已发送至提供方。",
+      "requestSent": "请求已发送（messageId：{{messageId}}）。",
+      "requestSentSimple": "请求已发送。"
+    }
+  },
+  "requestDialog": {
+    "title": "新证书请求",
+    "subtitle": "请求提供方与您共享合规证书",
+    "providerBpn": "提供方 BPN",
+    "providerPlaceholder": "选择或输入提供方的 BPNL",
+    "verifyCcm": "验证 CCM 支持",
+    "ccmSupported": "支持 CCM",
+    "certifiedBpn": "认证 BPN",
+    "certifiedBpnHelper": "已认证法律实体的 BPNL",
+    "certType": "证书类型",
+    "certTypeHelper": "搜索或输入证书类型",
+    "sendRequest": "发送请求",
+    "errors": {
+      "notSupported": "此提供方不支持 CCM。",
+      "verifyFailed": "无法验证此提供方的 CCM 支持。",
+      "submitFailed": "发送证书请求失败。"
+    }
+  },
+  "feedbackDialog": {
+    "title": "证书反馈",
+    "subtitle": "通知提供方您的评估结果",
+    "description": "就文件向提供方通知您的评估结果",
+    "statusReceived": "已接收",
+    "statusAccepted": "已接受",
+    "statusRejected": "已拒绝",
+    "certErrors": {
+      "title": "证书错误",
+      "helper": "一般证书级别问题 *",
+      "placeholder": "例如：证书已过期"
+    },
+    "locErrors": {
+      "title": "地点错误",
+      "helper": "每个站点的问题（BPNS 级别）*",
+      "siteBpn": "站点 BPN",
+      "errorMessage": "错误信息"
+    },
+    "rejectionAlert": "拒绝操作需要至少一个证书错误和一个地点错误。",
+    "submitError": "发送状态反馈失败。",
+    "sendFeedback": "发送反馈"
+  },
+  "historyDialog": {
+    "title": "请求历史",
+    "subtitle": "此证书请求的完整时间线",
+    "provider": "提供方",
+    "certified": "已认证",
+    "noHistory": "未找到历史记录。",
+    "loadFailed": "加载请求历史失败。",
+    "columns": {
+      "status": "状态",
+      "notificationId": "通知 ID",
+      "documentId": "文档 ID",
+      "requested": "请求时间",
+      "updated": "更新时间"
+    }
+  },
+  "requestDetailDialog": {
+    "title": "请求详情",
+    "providerBpn": "提供方 BPN",
+    "certifiedBpn": "认证 BPN",
+    "certType": "证书类型",
+    "documentId": "文档 ID",
+    "requested": "请求时间",
+    "updated": "更新时间",
+    "localStatus": "本地状态",
+    "requestedSites": "请求的站点 ({{count}})",
+    "notificationId": "通知 ID",
+    "history": "历史",
+    "sendFeedback": "发送反馈",
+    "pullCertificate": "拉取证书",
+    "viewCertificate": "查看证书"
+  },
+  "provisionPage": {
+    "title": "CCM 供应管理",
+    "subtitle": "处理传入的证书请求并向您的 Catena-X 合作伙伴提供证书。",
+    "pushCertificate": "推送证书",
+    "sendAvailable": "发送可用性通知",
+    "tabs": {
+      "inboundRequests": "入站请求",
+      "shares": "共享"
+    },
+    "inboundSearch": "按 BPN、类型或状态搜索…",
+    "sharesSearch": "按消费者、类型或状态搜索…",
+    "filterAllStatuses": "所有状态",
+    "filterAllConsumerStatuses": "所有消费者状态",
+    "filterAllTypes": "所有类型",
+    "inboundStatusValues": {
+      "Registered": "已注册",
+      "Available": "可用",
+      "Pushed": "已推送",
+      "NotFound": "未找到"
+    },
+    "consumerStatusValues": {
+      "RECEIVED": "已接收",
+      "ACCEPTED": "已接受",
+      "REJECTED": "已拒绝"
+    },
+    "sharesStatusValues": {
+      "Active": "活跃",
+      "Pending": "待处理",
+      "Revoked": "已撤销"
+    },
+    "inboundColumns": {
+      "consumer": "消费者",
+      "certifiedBpn": "认证 BPN",
+      "type": "类型",
+      "locations": "地点",
+      "status": "状态",
+      "consumerStatus": "消费者状态",
+      "updated": "更新时间",
+      "actions": "操作"
+    },
+    "sharesColumns": {
+      "type": "类型",
+      "consumer": "消费者",
+      "status": "状态",
+      "lastShared": "最后共享时间"
+    },
+    "locations": "{{count}} 个站点",
+    "inbound": {
+      "empty": "暂无入站证书请求。",
+      "noMatch": "没有请求符合您的筛选条件。"
+    },
+    "shares": {
+      "empty": "暂无共享证书。使用「推送证书」或响应入站请求。",
+      "noMatch": "没有共享记录符合您的筛选条件。",
+      "rejectionIcon": "有拒绝原因 — 点击行查看"
+    },
+    "provide": "提供",
+    "messages": {
+      "loadFailed": "加载供应数据失败。",
+      "availabilitySent": "可用性通知已发送。",
+      "certificatePushed": "证书已推送至消费者。"
+    }
+  },
+  "inboundDetailDialog": {
+    "title": "入站请求详情",
+    "consumerBpn": "消费者 BPN",
+    "certifiedBpn": "认证 BPN",
+    "certType": "证书类型",
+    "certificateId": "证书 ID",
+    "received": "接收时间",
+    "updated": "更新时间",
+    "notificationId": "通知 ID",
+    "requestedSites": "请求的站点 ({{count}})",
+    "consumerPrefix": "消费者：",
+    "provideCertificate": "提供证书"
+  },
+  "shareDetailDialog": {
+    "title": "共享详情",
+    "providerBpn": "提供方 BPN",
+    "consumerBpn": "消费者 BPN",
+    "certType": "证书类型",
+    "certificateId": "证书 ID",
+    "lastShared": "最后共享时间",
+    "created": "创建时间",
+    "rejectionReason": "拒绝原因",
+    "certErrors": "证书错误",
+    "locErrors": "地点错误",
+    "rawPayload": "原始载荷"
+  },
+  "provideDialog": {
+    "title": "提供证书",
+    "subtitle": "通过可用性通知或直接推送响应消费者请求",
+    "description": "响应 {{consumer}} 关于以下内容的 {{type}} 请求",
+    "modeAvailable": "设为可用（PULL）",
+    "modePush": "直接推送",
+    "certSelect": "要提供的证书",
+    "noCertsTitle": "未找到匹配的证书",
+    "noCertsDescription": "未找到以下内容的 {{type}} 证书",
+    "noCertsUpload": "上传证书",
+    "uploadOther": "上传其他证书…",
+    "notPublishedAlert": "此证书尚未发布 — 在发送可用性通知前将自动发布。",
+    "respondTo": "响应请求",
+    "respondToHelper": "找到多个请求 — 请选择要响应的请求。",
+    "respondingTo": "正在响应通知",
+    "invalidCert": "所选证书无效。",
+    "sendAvailability": "发送可用性通知",
+    "errors": {
+      "sendAvailFailed": "发送可用性通知失败。",
+      "pushFailed": "推送证书失败。",
+      "availFailed": "使证书可用失败。",
+      "loadFailed": "加载供应数据失败。"
+    }
+  },
+  "sendAvailableDialog": {
+    "title": "发送可用性通知",
+    "subtitle": "Notify a partner that a certificate is available, without a prior request",
+    "description": "Announce that one of your certificates is available for the consumer to pull, without waiting for a request.",
+    "certSelect": "Certificate to announce",
+    "noCerts": "No certificates available.",
+    "willPublish": "This certificate will be published as an EDC asset automatically before sending.",
+    "recipientBpn": "Recipient (Consumer BPN)",
+    "recipientPlaceholder": "Select or type the recipient's BPNL",
+    "sendAvailability": "Send Availability",
+    "errors": {
+      "loadFailed": "Failed to load data.",
+      "sendFailed": "Failed to send the availability notification."
+    }
+  },
+  "pushDialog": {
+    "title": "推送证书",
+    "subtitle": "无需事先请求，直接将证书发送给合作伙伴",
+    "description": "无需事先请求，直接将您的证书发送给合作伙伴。",
+    "certSelect": "要推送的证书",
+    "noCerts": "暂无可用证书。",
+    "recipientBpn": "接收方（消费者 BPN）",
+    "recipientPlaceholder": "选择或输入接收方的 BPNL",
+    "pushCertificate": "推送证书",
+    "errors": {
+      "loadFailed": "加载证书失败。",
+      "pushFailed": "推送证书失败。"
+    }
+  }
+}

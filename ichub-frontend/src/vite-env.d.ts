@@ -71,11 +71,13 @@ interface ImportMetaEnv {
   readonly VITE_GOVERNANCE_CONFIG: string
   readonly VITE_DTR_POLICIES_CONFIG: string
   readonly VITE_PCF_EXCHANGE_POLICIES_CONFIG: string
+  readonly VITE_CCM_POLICY_GOVERNANCE: string
   
   // Feature flags
   readonly VITE_ENABLE_ADVANCED_LOGGING: string
   readonly VITE_ENABLE_PERFORMANCE_MONITORING: string
   readonly VITE_ENABLE_DEV_TOOLS: string
+  readonly VITE_PCF_BACKWARD_COMPATIBILITY_SATURN: string
   
   // UI configuration
   readonly VITE_UI_THEME: 'light' | 'dark' | 'auto'
@@ -141,12 +143,14 @@ declare global {
       GOVERNANCE_CONFIG?: string | object[];
       DTR_POLICIES_CONFIG?: string | object[];
       PCF_EXCHANGE_POLICIES_CONFIG?: string | object[];
+      CCM_POLICY_GOVERNANCE?: string | object[];
       GOVERNANCE_STRICT_MODE?: string;
       
       // Feature flags
       ENABLE_ADVANCED_LOGGING?: string;
       ENABLE_PERFORMANCE_MONITORING?: string;
       ENABLE_DEV_TOOLS?: string;
+      PCF_BACKWARD_COMPATIBILITY_SATURN?: string;
       
       // Notifications
       NOTIFICATIONS_POLL_INTERVAL?: string;
