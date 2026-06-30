@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -119,6 +120,7 @@ export class ConfigFactory {
       VITE_ENABLE_ADVANCED_LOGGING: windowEnv.ENABLE_ADVANCED_LOGGING || viteEnv.VITE_ENABLE_ADVANCED_LOGGING,
       VITE_ENABLE_PERFORMANCE_MONITORING: windowEnv.ENABLE_PERFORMANCE_MONITORING || viteEnv.VITE_ENABLE_PERFORMANCE_MONITORING,
       VITE_ENABLE_DEV_TOOLS: windowEnv.ENABLE_DEV_TOOLS || viteEnv.VITE_ENABLE_DEV_TOOLS,
+      VITE_PCF_BACKWARD_COMPATIBILITY_SATURN: windowEnv.PCF_BACKWARD_COMPATIBILITY_SATURN || viteEnv.VITE_PCF_BACKWARD_COMPATIBILITY_SATURN,
       
       // UI configuration
       VITE_UI_THEME: windowEnv.UI_THEME || viteEnv.VITE_UI_THEME,
@@ -190,6 +192,7 @@ export class ConfigFactory {
         enableAdvancedLogging: raw.VITE_ENABLE_ADVANCED_LOGGING === 'true' || isDevelopment,
         enablePerformanceMonitoring: raw.VITE_ENABLE_PERFORMANCE_MONITORING === 'true',
         enableDevTools: raw.VITE_ENABLE_DEV_TOOLS === 'true' || isDevelopment,
+        backwardCompatibility: raw.VITE_PCF_BACKWARD_COMPATIBILITY_SATURN === 'true',
       },
       
       ui: {

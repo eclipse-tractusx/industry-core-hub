@@ -117,6 +117,9 @@ export interface PcfNotification {
   // Metadata
   message?: string;         // Optional message from requester
   priority?: 'LOW' | 'NORMAL' | 'HIGH';
+
+  // PCF schema version requested in the exchange body (e.g. 'v7.0.0' or 'v9.0.0').
+  version?: string;
 }
 
 /**

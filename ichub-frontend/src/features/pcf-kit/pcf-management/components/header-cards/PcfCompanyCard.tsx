@@ -27,6 +27,7 @@ import { Box, Card, Typography } from '@mui/material';
 import { Business } from '@mui/icons-material';
 import { HeaderCardProps } from '@/features/eco-pass-kit/passport-consumption/passport-types/base/BasePassportVisualization';
 import { PcfNestedData } from '../../types/pcfNestedData';
+import { normalizePcfData } from '../../utils/pcfNormalizer';
 import './PcfCompanyCard.scss';
 
 /**
@@ -35,7 +36,7 @@ import './PcfCompanyCard.scss';
  */
 export const PcfCompanyCard: React.FC<HeaderCardProps> = ({ data }) => {
   const { t } = useTranslation('pcf');
-  const pcf = data as unknown as PcfNestedData;
+  const pcf = normalizePcfData(data) as unknown as PcfNestedData;
   const companyInfo = pcf.companyAndProductInformation?.[0]?.companyInformation?.[0];
   const productInfo = pcf.companyAndProductInformation?.[0]?.productInformation?.[0];
 
