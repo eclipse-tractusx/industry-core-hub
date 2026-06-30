@@ -21,14 +21,22 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, CircularProgress, Alert, Fab, Tooltip } from '@mui/material';
 import { Edit } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { BasePassportVisualization } from '@/features/eco-pass-kit/passport-consumption/passport-types/base/BasePassportVisualization';
 import { JsonSchema } from '@/features/eco-pass-kit/passport-consumption/types';
-import { getPcfByManufacturerPartId, type PcfVersion } from '../../services/pcfApi';
+import {
+  getPcfByManufacturerPartId,
+  getPcfVersionStatus,
+  updatePcfAndGetParticipants,
+  notifyParticipants,
+  DEFAULT_PCF_POLICIES,
+  type PcfVersion,
+  type PcfVersionDataMap,
+} from '../../services/pcfApi';
 import { PcfNestedData } from '../types/pcfNestedData';
 import { PcfSummaryCard } from '../components/header-cards/PcfSummaryCard';
 import { PcfCompanyCard } from '../components/header-cards/PcfCompanyCard';
@@ -37,6 +45,13 @@ import { normalizePcfData } from '../utils/pcfNormalizer';
 import { detectPcfVersion } from '../utils/pcfVersionDetector';
 import { getSchemaByNamespaceAndVersion } from '@/schemas';
 import type { SchemaDefinition } from '@/schemas';
+import { DualPcfCreationWizard } from '../../shared/components';
+import type { DualPcfVersionStatus, DualSaveOutcome, DualPcfInitialData, PcfVersionSaveResult } from '../../shared/components/DualPcfCreationWizard';
+import { ParticipantSelectionDialog } from '../components';
+import { getPcfExchangePoliciesConfig } from '@/services/EnvironmentService';
+import { generatePoliciesFromDefinition } from '@/features/industry-core-kit/part-discovery/utils/governancePolicyUtils';
+import environmentService from '@/services/EnvironmentService';
+import { PCF_VERSIONS } from '../../services/pcfApi';
 import './PcfDetailsPage.scss';
 
 const PCF_NAMESPACE = 'io.catenax.pcf';
@@ -77,6 +92,121 @@ const PcfDetailsPage: React.FC = () => {
   const [isV9Shape, setIsV9Shape] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Feature flag: when true the FAB opens the Dual PCF Wizard instead of the
+  // individual SubmodelCreator editor.
+  const pcfBackwardCompatibility = environmentService.getFeatureFlags().backwardCompatibility;
+
+  // Dual PCF wizard state (used only when pcfBackwardCompatibility = true)
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardSaving, setWizardSaving] = useState(false);
+  const [versionStatus, setVersionStatus] = useState<DualPcfVersionStatus | null>(null);
+  const [remotePcfByVersion, setRemotePcfByVersion] = useState<PcfVersionDataMap | null>(null);
+  const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
+  const [availableParticipants, setAvailableParticipants] = useState<string[]>([]);
+  const [isNotifying, setIsNotifying] = useState(false);
+
+  // Governance policies for PCF exchange notifications
+  const governancePolicies = useMemo(() => {
+    const configured = getPcfExchangePoliciesConfig();
+    if (configured.length > 0) {
+      return configured.flatMap(def => generatePoliciesFromDefinition(def));
+    }
+    return DEFAULT_PCF_POLICIES;
+  }, []);
+
+  // Pre-seed the wizard with whatever versions already exist on the backend
+  const dualInitialData = useMemo<DualPcfInitialData | undefined>(() => {
+    if (!remotePcfByVersion) return undefined;
+    const data: DualPcfInitialData = {};
+    if (remotePcfByVersion['v9.0.0']) data['v9.0.0'] = remotePcfByVersion['v9.0.0']!;
+    if (remotePcfByVersion['v7.0.0']) data['v7.0.0'] = remotePcfByVersion['v7.0.0']!;
+    return Object.keys(data).length > 0 ? data : undefined;
+  }, [remotePcfByVersion]);
+
+  /** Opens the Dual PCF Wizard, first fetching the current per-version status. */
+  const handleOpenWizard = async () => {
+    if (!manufacturerPartId) return;
+    setWizardOpen(true);
+    try {
+      const map = await getPcfVersionStatus(manufacturerPartId);
+      setRemotePcfByVersion(map);
+      setVersionStatus({
+        'v9.0.0': { state: map['v9.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+        'v7.0.0': { state: map['v7.0.0'] ? 'SUBIDO' : 'NO_EXISTE' },
+      });
+    } catch (err) {
+      console.error('Failed to load PCF version status:', err);
+      setVersionStatus({ 'v9.0.0': { state: 'NO_EXISTE' }, 'v7.0.0': { state: 'NO_EXISTE' } });
+    }
+  };
+
+  /** Called by DualPcfCreationWizard when the user confirms. Updates both
+   *  versions, collects participants, then opens ParticipantSelectionDialog. */
+  const handleDualPcfUpdate = async (
+    v9Data: Record<string, unknown> | null,
+    v7Data: Record<string, unknown> | null,
+  ): Promise<DualSaveOutcome> => {
+    const errorOutcome = (detail: string): DualSaveOutcome => ({
+      'v9.0.0': { status: 'error', detail },
+      'v7.0.0': { status: 'error', detail },
+    });
+    if (!manufacturerPartId) return errorOutcome('No part selected');
+
+    setWizardSaving(true);
+    const payloads: Partial<Record<typeof PCF_VERSIONS[number], Record<string, unknown>>> = {};
+    if (v9Data) payloads['v9.0.0'] = v9Data;
+    if (v7Data) payloads['v7.0.0'] = v7Data;
+
+    const outcome = {
+      'v9.0.0': { status: 'skipped' } as PcfVersionSaveResult,
+      'v7.0.0': { status: 'skipped' } as PcfVersionSaveResult,
+    } as DualSaveOutcome;
+
+    let collectedParticipants: string[] = [];
+
+    try {
+      for (const version of PCF_VERSIONS) {
+        const payload = payloads[version];
+        if (!payload) continue;
+        try {
+          const participants = await updatePcfAndGetParticipants(manufacturerPartId, payload, version);
+          collectedParticipants = [...new Set([...collectedParticipants, ...participants])];
+          outcome[version] = { status: 'updated' };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          outcome[version] = { status: 'error', detail: msg };
+        }
+      }
+
+      const allOk = outcome['v9.0.0'].status !== 'error' && outcome['v7.0.0'].status !== 'error';
+      if (allOk) {
+        setWizardOpen(false);
+        if (outcome['v9.0.0'].status === 'updated' || outcome['v7.0.0'].status === 'updated') {
+          setAvailableParticipants(collectedParticipants);
+          setParticipantDialogOpen(true);
+        }
+      }
+      return outcome;
+    } finally {
+      setWizardSaving(false);
+    }
+  };
+
+  /** Notifies selected participants after a successful PCF update. */
+  const handleNotifyParticipants = async (selectedParticipants: string[]) => {
+    if (!manufacturerPartId) return;
+    setIsNotifying(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await notifyParticipants(manufacturerPartId, selectedParticipants, governancePolicies as any);
+    } catch (err) {
+      console.error('Failed to notify participants:', err);
+      throw err;
+    } finally {
+      setIsNotifying(false);
+    }
+  };
 
   useEffect(() => {
     if (!manufacturerPartId) return;
@@ -187,16 +317,49 @@ const PcfDetailsPage: React.FC = () => {
       <Tooltip title={t('management.update', 'Update PCF')} placement="left">
         <Fab
           className="pcf-details-page__edit-fab"
-          onClick={() =>
-            navigate(
-              `/pcf/management/edit/${encodeURIComponent(manufacturerPartId ?? '')}?version=${versionLabel}`,
-            )
-          }
+          onClick={() => {
+            if (pcfBackwardCompatibility) {
+              // Dual mode: open the wizard so both versions are updated together
+              void handleOpenWizard();
+            } else {
+              // Individual mode: navigate to the version-specific submodel editor
+              navigate(
+                `/pcf/management/edit/${encodeURIComponent(manufacturerPartId ?? '')}?version=${versionLabel}`,
+              );
+            }
+          }}
           aria-label={t('management.update', 'Update PCF')}
         >
           <Edit />
         </Fab>
       </Tooltip>
+
+      {/* Dual PCF Creation Wizard — shown when PCF_BACKWARD_COMPATIBILITY_SATURN=true */}
+      {pcfBackwardCompatibility && (
+        <DualPcfCreationWizard
+          open={wizardOpen}
+          onClose={() => {
+            if (wizardSaving) return;
+            setWizardOpen(false);
+          }}
+          onSaveBoth={handleDualPcfUpdate}
+          manufacturerPartId={manufacturerPartId ?? ''}
+          isSaving={wizardSaving}
+          versionStatus={versionStatus ?? undefined}
+          initialData={dualInitialData}
+          isUpdate
+        />
+      )}
+
+      {/* Participant Selection Dialog — opened after a successful update */}
+      <ParticipantSelectionDialog
+        open={participantDialogOpen}
+        onClose={() => setParticipantDialogOpen(false)}
+        onConfirm={handleNotifyParticipants}
+        participants={availableParticipants}
+        manufacturerPartId={manufacturerPartId ?? ''}
+        isLoading={isNotifying}
+      />
     </Box>
   );
 };

@@ -489,6 +489,8 @@
     "validate": "Validieren",
     "continueBtn": "Weiter",
     "save": "Speichern",
+    "update": "Aktualisieren",
+    "updating": "Aktualisierung…",
     "tooltipValidate": "Daten gegen das Schema validieren",
     "tooltipRevalidate": "Daten erneut gegen das Schema validieren",
     "tooltipValidateBoth": "Beide PCF-Versionen gegen ihre Schemas validieren",
