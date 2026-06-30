@@ -34,6 +34,7 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 from sqlalchemy import Column, JSON
+from sqlalchemy import Enum as SAEnum
 from sqlmodel import SQLModel, Field
 
 
@@ -103,17 +104,44 @@ class PcfExchangeEntity(SQLModel, table=True):
     # Exchange metadata
     direction: PcfExchangeDirection = Field(
         default=PcfExchangeDirection.OUTGOING,
-        index=True,
+        sa_column=Column(
+            SAEnum(
+                PcfExchangeDirection,
+                values_callable=lambda x: [e.value for e in x],
+                name="pcf_exchange_direction",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
         description="Direction of exchange from this system's perspective"
     )
     status: PcfExchangeStatus = Field(
         default=PcfExchangeStatus.PENDING,
-        index=True,
+        sa_column=Column(
+            SAEnum(
+                PcfExchangeStatus,
+                values_callable=lambda x: [e.value for e in x],
+                name="pcf_exchange_status",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
         description="Current status of the PCF exchange"
     )
     type: PcfExchangeType = Field(
         default=PcfExchangeType.REQUEST,
-        index=True,
+        sa_column=Column(
+            SAEnum(
+                PcfExchangeType,
+                values_callable=lambda x: [e.value for e in x],
+                name="pcf_exchange_type",
+                create_type=False,
+            ),
+            index=True,
+            nullable=False,
+        ),
         description="Type of PCF exchange (request or response)"
     )
 

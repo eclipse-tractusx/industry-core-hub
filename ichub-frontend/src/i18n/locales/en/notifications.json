@@ -152,6 +152,36 @@
     "expectedResponse": "Expected Response",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Certificate request sent for {{certificateType}} to {{receiverBpn}}",
+    "CCM_REQUEST_RECEIVED": "Certificate request received for {{certificateType}} from {{senderBpn}}",
+    "CCM_REQUEST_NOT_FOUND": "Certificate not found: {{certificateType}} could not be provided by {{senderBpn}}",
+    "CCM_AVAILABLE_RECEIVED": "Certificate available: {{certificateType}} is ready for download",
+    "CCM_AVAILABLE_SENT": "Certificate availability sent: {{certificateType}} for {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Certificate received: {{certificateType}} pushed by {{senderBpn}}",
+    "CCM_PUSH_SENT": "Certificate pushed: {{certificateType}} for {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Status update sent for document {{documentId}}",
+    "CCM_STATUS_RECEIVED": "Status received for document {{documentId}} from {{senderBpn}}",
+    "details": "CCM Details",
+    "notificationType": "Notification Type",
+    "certificateType": "Certificate Type",
+    "certifiedBpn": "Certified BPN",
+    "documentId": "Document ID",
+    "viewInConsumption": "View in CCM Consumption",
+    "viewInProvision": "View in Provision Management",
+    "viewInboundRequests": "View Inbound Requests",
+    "descriptionTitle": "What happened",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}} has requested an existing {{certificateType}} certificate for their company. Review and manage the request in CCM Provision Management in the Inbound Requests table.",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}} has requested a {{certificateType}} certificate that could not be found for their company. Review and manage the request in CCM Provision Management in the Inbound Requests table.",
+      "CCM_STATUS_RECEIVED": "{{senderName}} has responded to your certificate submission. Check their feedback in CCM Provision Management in the Shares table.",
+      "CCM_PUSH_RECEIVED": "Provider {{senderName}} has directly sent you a {{certificateType}} certificate that may be of interest. Access CCM Consumption to view it and send your feedback.",
+      "CCM_AVAILABLE_RECEIVED": "Provider {{senderName}} has made available the {{certificateType}} certificate you requested. Access CCM Consumption to view it."
+    }
+  },
+  "pcf": {
+    "viewInRequests": "View in PCF Requests"
+  },
   "feedback": {
     "title": "Send Feedback",
     "composeFeedback": "Compose Feedback",
