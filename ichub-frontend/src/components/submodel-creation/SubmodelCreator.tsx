@@ -1,8 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -108,6 +108,8 @@ interface SubmodelCreatorProps {
     loading?: boolean;
     initialData?: any;
     saveButtonLabel?: string;
+    /** When true, runs validation automatically once initialData has been loaded into formData. */
+    triggerValidationOnMount?: boolean;
 }
 
 // Dark theme matching the application style
@@ -197,7 +199,8 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     serializedPartTwin,
     loading = false,
     initialData,
-    saveButtonLabel = 'Create Submodel'
+    saveButtonLabel = 'Create Submodel',
+    triggerValidationOnMount = false,
 }) => {
     const [formData, setFormData] = useState<any>(initialData || {});
     const [requestedActive, setRequestedActive] = useState(false);
@@ -233,6 +236,7 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
     const [jsonImportError, setJsonImportError] = useState<string | undefined>(undefined);
     const formRef = useRef<DynamicFormRef>(null);
     const containerRef = React.useRef<HTMLDivElement>(null) as React.RefObject<HTMLDivElement>;
+    const autoValidatedRef = useRef(false);
 
     // Unified error processing using the centralized validation-error-manager
     // This provides a single source of truth for both ErrorViewer and DynamicForm
@@ -310,7 +314,14 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
         };
 
         return (
-            <Box sx={{ height: '100%', overflow: 'auto' }}>
+            <Box sx={{
+                height: '100%',
+                overflow: 'auto',
+                '&::-webkit-scrollbar': { width: '6px' },
+                '&::-webkit-scrollbar-track': { background: 'rgba(255,255,255,0.04)', borderRadius: '3px' },
+                '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.18)', borderRadius: '3px' },
+                '&::-webkit-scrollbar-thumb:hover': { background: 'rgba(255,255,255,0.32)' },
+            }}>
                 {/* Grouped Errors by Section */}
                 {Array.from(errorsBySection.entries()).map(([sectionName, sectionErrors]) => {
                     const isExpanded = expandedGroups[sectionName] ?? false; // Default collapsed
@@ -509,6 +520,28 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
         }
     }, [selectedSchema, manufacturerPartId, open, initialData]);
 
+    // Reset the auto-validate guard whenever the dialog closes so it fires again on next open.
+    useEffect(() => {
+        if (!open) { autoValidatedRef.current = false; }
+    }, [open]);
+
+    // When triggerValidationOnMount is true, run validation once formData is populated.
+    // This is used by DualPcfCreationWizard to open the editor already showing errors.
+    useEffect(() => {
+        if (
+            open &&
+            triggerValidationOnMount &&
+            !autoValidatedRef.current &&
+            selectedSchema?.validate &&
+            formData &&
+            Object.keys(formData).length > 0
+        ) {
+            autoValidatedRef.current = true;
+            handleValidate();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, triggerValidationOnMount, selectedSchema, formData]);
+
     const handleFormChange = (newData: any, changedFieldKey?: string) => {
         setFormData(newData);
         // Siempre que se edite un campo tras validar, volver a estado 'initial' para forzar revalidación
@@ -660,12 +693,16 @@ const SubmodelCreator: React.FC<SubmodelCreatorProps> = ({
                 </AppBar>
 
                 <DialogContent
-                    sx={{ 
+                    sx={{
                         p: 0,
                         backgroundColor: '#121212',
                         height: 'calc(100vh - 140px)',
                         overflow: 'auto',
-                        position: 'relative' // Needed for absolute FAB
+                        position: 'relative', // Needed for absolute FAB
+                        '&::-webkit-scrollbar': { width: '6px', height: '6px' },
+                        '&::-webkit-scrollbar-track': { background: 'rgba(255,255,255,0.04)', borderRadius: '3px' },
+                        '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.18)', borderRadius: '3px' },
+                        '&::-webkit-scrollbar-thumb:hover': { background: 'rgba(255,255,255,0.32)' },
                     }}
                     ref={containerRef}
                 >

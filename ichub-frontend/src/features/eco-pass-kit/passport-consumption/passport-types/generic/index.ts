@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -22,7 +23,7 @@
 
 import { PassportTypeRegistry } from '../types';
 import { GenericPassportVisualization } from './GenericPassportVisualization';
-import schema from '../../../../../schemas/DigitalProductPassport-schema.json';
+import schema from '../../../../../schemas/catena-x/DigitalProductPassport-schema.json';
 
 // Register generic passport type
 PassportTypeRegistry.register({

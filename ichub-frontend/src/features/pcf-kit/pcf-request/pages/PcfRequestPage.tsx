@@ -42,10 +42,6 @@ import {
   Calculate as CalculateIcon,
   CheckCircle,
   MoveToInbox,
-  RadioButtonUnchecked,
-  Downloading,
-  Security,
-  VerifiedUser,
   Add,
   AddCircleOutline,
   ArrowBack,
@@ -59,7 +55,6 @@ import {
   AccountTree,
   Send,
   Block,
-  Search,
   SystemUpdateAlt
 } from '@mui/icons-material';
 import { CatalogPartSearch, CatalogPartSearchResult as SharedCatalogPartSearchResult, PartInfoHeader } from '../../shared/components';
@@ -86,21 +81,6 @@ import AddSubpartDialog from '../components/AddSubpartDialog';
 const PCF_PRIMARY = '#10b981';
 const PCF_SECONDARY = '#059669';
 
-// Loading steps for animation
-interface LoadingStep {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  description: string;
-}
-
-const LOADING_STEPS: LoadingStep[] = [
-  { id: 'search', label: 'loading.searchingPart', icon: Search, description: 'loading.searchingPartDesc' },
-  { id: 'subparts', label: 'loading.loadingSubparts', icon: Downloading, description: 'loading.loadingSubpartsDesc' },
-  { id: 'status', label: 'loading.checkingStatus', icon: Security, description: 'loading.checkingStatusDesc' },
-  { id: 'complete', label: 'loading.ready', icon: VerifiedUser, description: 'loading.readyDesc' }
-];
-
 type PageState = 'search' | 'loading' | 'visualization' | 'error';
 
 const PcfRequestPage: React.FC = () => {
@@ -110,7 +90,6 @@ const PcfRequestPage: React.FC = () => {
 
   // Page state
   const [pageState, setPageState] = useState<PageState>('search');
-  const [currentStep, setCurrentStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Data state
@@ -154,29 +133,12 @@ const PcfRequestPage: React.FC = () => {
     setError(null);
     setPcfStatusError(null);
     setDownloadError(null);
-    setCurrentStep(0);
 
     try {
-      // Step 1: Search for part
-      setCurrentStep(0);
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 2: Load subparts
-      setCurrentStep(1);
-      await new Promise(resolve => setTimeout(resolve, 800));
-
       const partWithSubparts = await getCatalogPartWithSubparts(manufacturerPartId);
       if (!partWithSubparts) {
         throw new Error(`Catalog part not found: ${manufacturerPartId}`);
       }
-
-      // Step 3: Check status
-      setCurrentStep(2);
-      await new Promise(resolve => setTimeout(resolve, 600));
-
-      // Step 4: Complete
-      setCurrentStep(3);
-      await new Promise(resolve => setTimeout(resolve, 400));
 
       setPartData(partWithSubparts);
 
@@ -225,7 +187,6 @@ const PcfRequestPage: React.FC = () => {
     if (!requestIdFromUrl || partIdFromUrl) return;
     (async () => {
       setPageState('loading');
-      setCurrentStep(0);
       try {
         // Step 1: get the subpart's manufacturerPartId from the exchange
         const exchange = await consultPcfResponse(requestIdFromUrl);
@@ -495,194 +456,24 @@ const PcfRequestPage: React.FC = () => {
     };
   }, [partData]);
 
-  // Render loading state
+  // Render loading state — a simple spinner while the part + subparts load
+  // (mirrors the PCF Management loading state; no mock step animation).
   const renderLoading = () => (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         minHeight: 'calc(100vh - 68.8px)',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 2,
         px: { xs: 2, sm: 3, md: 4 }
       }}
     >
-      <Card
-        sx={{
-          maxWidth: '600px',
-          width: '100%',
-          background: 'linear-gradient(135deg, rgba(30, 30, 30, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: { xs: '16px', md: '20px' },
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
-        }}
-      >
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h5" sx={{ color: '#fff', fontWeight: 600, mb: 1 }}>
-              {t('loading.title')}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontFamily: 'monospace' }}>
-              {partIdFromUrl ? decodeURIComponent(partIdFromUrl) : ''}
-            </Typography>
-          </Box>
-
-          {/* Progress Steps - Horizontal */}
-          <Box sx={{ mb: 4 }}>
-            {/* Step Icons Row */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              {LOADING_STEPS.map((step, index) => {
-                const Icon = step.icon;
-                const isActive = index === currentStep;
-                const isCompleted = index < currentStep;
-                const isPending = index > currentStep;
-
-                return (
-                  <React.Fragment key={step.id}>
-                    {/* Step Icon */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        flex: 1,
-                        position: 'relative',
-                        transition: 'all 0.3s ease',
-                        opacity: isPending ? 0.4 : 1
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: { xs: 36, sm: 44 },
-                          height: { xs: 36, sm: 44 },
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: isCompleted
-                            ? `linear-gradient(135deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`
-                            : isActive
-                            ? alpha(PCF_PRIMARY, 0.2)
-                            : 'rgba(255, 255, 255, 0.05)',
-                          border: isActive ? `2px solid ${PCF_PRIMARY}` : 'none',
-                          transition: 'all 0.3s ease',
-                          position: 'relative',
-                          zIndex: 2,
-                          ...(isActive && {
-                            animation: 'pulse 2s ease-in-out infinite',
-                            '@keyframes pulse': {
-                              '0%, 100%': { boxShadow: `0 0 0 0 ${alpha(PCF_PRIMARY, 0.4)}` },
-                              '50%': { boxShadow: `0 0 0 8px ${alpha(PCF_PRIMARY, 0)}` }
-                            }
-                          })
-                        }}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle sx={{ fontSize: { xs: 20, sm: 24 }, color: '#fff' }} />
-                        ) : isActive ? (
-                          <Icon sx={{ fontSize: { xs: 20, sm: 24 }, color: PCF_PRIMARY }} />
-                        ) : (
-                          <RadioButtonUnchecked sx={{ fontSize: { xs: 20, sm: 24 }, color: 'rgba(255, 255, 255, 0.3)' }} />
-                        )}
-                      </Box>
-                      
-                      {/* Step Label */}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: isActive || isCompleted ? '#fff' : 'rgba(255, 255, 255, 0.5)',
-                          fontWeight: isActive ? 600 : 500,
-                          fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                          mt: 1,
-                          textAlign: 'center',
-                          transition: 'all 0.3s ease',
-                          display: { xs: 'none', sm: 'block' }
-                        }}
-                      >
-                        {t(step.label)}
-                      </Typography>
-                    </Box>
-
-                    {/* Connector Line */}
-                    {index < LOADING_STEPS.length - 1 && (
-                      <Box
-                        sx={{
-                          height: 2,
-                          flex: 1,
-                          mx: { xs: 0.5, sm: 1 },
-                          background: isCompleted
-                            ? `linear-gradient(90deg, ${PCF_PRIMARY} 0%, ${PCF_SECONDARY} 100%)`
-                            : 'rgba(255, 255, 255, 0.1)',
-                          transition: 'all 0.5s ease',
-                          position: 'relative',
-                          top: { xs: -18, sm: -22 }
-                        }}
-                      />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </Box>
-
-            {/* Active Step Description */}
-            {LOADING_STEPS[currentStep] && (
-              <Box
-                sx={{
-                  textAlign: 'center',
-                  p: 2,
-                  borderRadius: '10px',
-                  background: alpha(PCF_PRIMARY, 0.1),
-                  border: `1px solid ${alpha(PCF_PRIMARY, 0.2)}`
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: '#fff',
-                    fontWeight: 600,
-                    mb: 0.5,
-                    fontSize: { xs: '0.85rem', sm: '0.9rem' }
-                  }}
-                >
-                  {t(LOADING_STEPS[currentStep].label)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: { xs: '0.75rem', sm: '0.8rem' }
-                  }}
-                >
-                  {t(LOADING_STEPS[currentStep].description)}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-
-          {/* Cancel Button */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button
-              variant="outlined"
-              onClick={handleBackToSearch}
-              sx={{
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                textTransform: 'none',
-                px: 3,
-                py: 1,
-                borderRadius: '10px',
-                '&:hover': {
-                  borderColor: 'rgba(255, 255, 255, 0.4)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.05)'
-                }
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+      <CircularProgress sx={{ color: PCF_PRIMARY }} size={44} />
+      <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+        {t('loading.title')}
+      </Typography>
     </Box>
   );
 
