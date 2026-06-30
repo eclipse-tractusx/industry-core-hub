@@ -23,6 +23,7 @@
 
 """PCF Provision API - Data Provider endpoints for responding to PCF requests."""
 
+import asyncio
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
@@ -134,7 +135,8 @@ async def confirm_and_send_update_to_participants(
     body: NotifyUpdateModel = None
 ) -> Dict[str, Any]:
     try:
-        result = provision_manager.confirm_and_send_update_to_participants(
+        result = await asyncio.to_thread(
+            provision_manager.confirm_and_send_update_to_participants,
             manufacturer_part_id=manufacturer_part_id,
             list_bpns=body.list_bpns if body else [],
             list_policies=body.governance if body else None
@@ -181,7 +183,11 @@ async def accept_request_and_send_response(
     body: GovernanceBodyModel = None
 ) -> Dict[str, Any]:
     try:
-        result = provision_manager.accept_request_and_send_response(request_id=request_id, list_policies=body.governance if body else None)
+        result = await asyncio.to_thread(
+            provision_manager.accept_request_and_send_response,
+            request_id=request_id,
+            list_policies=body.governance if body else None
+        )
         return JSONResponse(status_code=200, content=result)
     except PcfVersionGateError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -213,7 +219,11 @@ async def retry_response_sending(
     body: GovernanceBodyModel = None
 ) -> Dict[str, Any]:
     try:
-        result = provision_manager.accept_request_and_send_response(request_id=request_id, list_policies=body.governance if body else None)
+        result = await asyncio.to_thread(
+            provision_manager.accept_request_and_send_response,
+            request_id=request_id,
+            list_policies=body.governance if body else None
+        )
         return JSONResponse(status_code=200, content=result)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

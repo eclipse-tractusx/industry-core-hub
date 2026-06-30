@@ -157,6 +157,27 @@ export interface PcfNotificationPayload {
   isUpdate?: boolean;
 }
 
+/**
+ * CCM (Conformance Credential Management) notification content payload.
+ * Context format: "IndustryCore-CCM-{notificationType}:1.0.0"
+ *
+ * notificationType values:
+ *   CCM_REQUEST_SENT       — Consumer sent a certificate request
+ *   CCM_REQUEST_NOT_FOUND  — Provider could not find the requested certificate
+ *   CCM_AVAILABLE_SENT     — Provider notified consumer that certificate is available
+ *   CCM_AVAILABLE_RECEIVED — Consumer received an availability notification
+ *   CCM_PUSH_SENT          — Provider proactively pushed a certificate
+ *   CCM_PUSH_RECEIVED      — Consumer received a pushed certificate
+ *   CCM_STATUS_SENT        — Consumer sent a status acknowledgment
+ */
+export interface CcmNotificationPayload {
+  notificationType: string;
+  timestamp: string;
+  certificateType?: string;
+  certifiedBpn?: string;
+  documentId?: string;
+}
+
 // ============================================================================
 // Internal Application Types
 // ============================================================================
@@ -223,6 +244,8 @@ export interface InboxNotification {
   useCase?: string;
   // Typed PCF payload — only populated when type === 'pcf'
   pcfContent?: PcfNotificationPayload;
+  // Typed CCM payload — only populated when type === 'ccm'
+  ccmContent?: CcmNotificationPayload;
 }
 
 /**
