@@ -152,6 +152,33 @@
     "expectedResponse": "Respuesta esperada",
     "bpnl": "BPNL"
   },
+  "ccm": {
+    "CCM_REQUEST_SENT": "Solicitud de certificado enviada para {{certificateType}} a {{receiverBpn}}",
+    "CCM_REQUEST_RECEIVED": "Solicitud de certificado recibida para {{certificateType}} de {{senderBpn}}",
+    "CCM_REQUEST_NOT_FOUND": "Certificado no encontrado: {{certificateType}} no pudo ser proporcionado por {{senderBpn}}",
+    "CCM_AVAILABLE_RECEIVED": "Certificado disponible: {{certificateType}} listo para descargar",
+    "CCM_AVAILABLE_SENT": "Disponibilidad de certificado enviada: {{certificateType}} para {{certifiedBpn}}",
+    "CCM_PUSH_RECEIVED": "Certificado recibido: {{certificateType}} enviado por {{senderBpn}}",
+    "CCM_PUSH_SENT": "Certificado enviado: {{certificateType}} para {{certifiedBpn}}",
+    "CCM_STATUS_SENT": "Actualización de estado enviada para el documento {{documentId}}",
+    "CCM_STATUS_RECEIVED": "Estado recibido para el documento {{documentId}} de {{senderBpn}}",
+    "details": "Detalles CCM",
+    "notificationType": "Tipo de notificación",
+    "certificateType": "Tipo de certificado",
+    "certifiedBpn": "BPN certificado",
+    "documentId": "ID de documento",
+    "viewInConsumption": "Ver en CCM Consumption",
+    "viewInProvision": "Ver en Provision Management",
+    "viewInboundRequests": "Ver solicitudes entrantes",
+    "descriptionTitle": "Qué ha ocurrido",
+    "description": {
+      "CCM_REQUEST_RECEIVED": "{{senderName}} le ha solicitado un certificado existente de tipo {{certificateType}} para su empresa. Revise y gestione la solicitud en CCM Provision Management en la tabla de Solicitudes Entrantes.",
+      "CCM_REQUEST_NOT_FOUND": "{{senderName}} le ha solicitado un certificado de tipo {{certificateType}} que no se ha podido encontrar para su empresa. Revise y gestione la solicitud en CCM Provision Management en la tabla de Solicitudes Entrantes.",
+      "CCM_STATUS_RECEIVED": "{{senderName}} ha respondido a su envío del certificado. Compruebe el feedback en CCM Provision Management en la tabla de Compartidos.",
+      "CCM_PUSH_RECEIVED": "El proveedor {{senderName}} le ha enviado directamente un certificado de tipo {{certificateType}} que le podría interesar. Acceda a CCM Consumption para verlo y enviar su feedback.",
+      "CCM_AVAILABLE_RECEIVED": "El proveedor {{senderName}} ha puesto a disposición el certificado de tipo {{certificateType}} que solicitó. Acceda a CCM Consumption para verlo."
+    }
+  },
   "feedback": {
     "title": "Enviar feedback",
     "composeFeedback": "Redactar Feedback",

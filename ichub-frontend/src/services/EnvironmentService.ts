@@ -36,10 +36,12 @@ export type {
   PolicyDefinition,
   AgreementConfig,
   DtrPolicyConfig,
+  CcmOdrlPolicy,
+  CcmPolicyConfig,
   GovernanceConstraint,
 } from '../config/schema';
 
-import type { AgreementConfig, DtrPolicyConfig } from '../config/schema';
+import type { AgreementConfig, DtrPolicyConfig, CcmPolicyConfig } from '../config/schema';
 
 // =================================================================
 // REUSABLE CONFIGURATION UTILITIES
@@ -243,6 +245,11 @@ class EnvironmentService {
     return this.config.governance.dtrPolicy;
   }
 
+  /** Get CCM policy governance configuration (raw ODRL format for CCM API calls) */
+  getCcmPolicyGovernance(): CcmPolicyConfig {
+    return this.config.governance.ccmPolicy;
+  }
+
   // Configuration management
   reloadConfiguration(): void {
     this.config = ConfigFactory.reload();
@@ -327,6 +334,14 @@ export const getPcfExchangePoliciesConfig = (): DtrPolicyConfig => {
   return parseConfig<DtrPolicyConfig>(
     'PCF_EXCHANGE_POLICIES_CONFIG',
     'VITE_PCF_EXCHANGE_POLICIES_CONFIG',
+    []
+  );
+};
+
+export const getCcmPolicyGovernance = (): CcmPolicyConfig => {
+  return parseConfig<CcmPolicyConfig>(
+    'CCM_POLICY_GOVERNANCE',
+    'VITE_CCM_POLICY_GOVERNANCE',
     []
   );
 };
