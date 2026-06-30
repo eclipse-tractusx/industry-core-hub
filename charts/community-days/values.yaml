@@ -20,7 +20,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 
-tx-data-provider:
+dataconsumerOne:
   enabled: true
   seedTestdata: false
   nameOverride: dataprovider

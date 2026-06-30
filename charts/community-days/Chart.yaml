@@ -34,7 +34,7 @@ dependencies:
     repository: file://../industry-core-hub
     condition: industry-core-hub.enabled
   - name: tx-data-provider
-    alias: dataconsumerTwo
+    alias: dataconsumerOne
     version: 0.4.4
     repository: https://eclipse-tractusx.github.io/charts/dev
-    condition: dataconsumerTwo.enabled
+    condition: dataconsumerOne.enabled
