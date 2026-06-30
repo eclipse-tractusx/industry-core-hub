@@ -39,9 +39,11 @@ import {
   Badge,
   Policy,
   PostAdd,
+  WorkspacePremium as WorkspacePremiumIcon,
   Calculate,
   CloudUpload,
-  Inbox
+  Inbox,
+  ShoppingCart
 } from '@mui/icons-material';
 import { KitFeature } from '@/features/kit-features/types';
 import { FeatureConfig } from '@/types/routing';
@@ -55,6 +57,7 @@ import PcfKitImage from '@/features/kit-features/assets/kit-images/pcf-kit.svg';
 import DataChainKitImage from '@/features/kit-features/assets/kit-images/data-chain-kit.svg';
 import DcmKitImage from '@/features/kit-features/assets/kit-images/dcm-kit.svg';
 import TraceabilityKitImage from '@/features/kit-features/assets/kit-images/traceability-kit.svg';
+import CcmKitImage from '@/features/kit-features/assets/kit-images/certificate-management-kit.svg';
 
 // Import feature modules
 import { catalogManagementFeature } from '@/features/industry-core-kit/catalog-management/routes';
@@ -63,6 +66,9 @@ import { partnerManagementFeature } from '@/features/business-partner-kit/partne
 import { serializedPartsFeature } from '@/features/industry-core-kit/serialized-parts/routes';
 import { passportConsumptionFeature } from '@/features/eco-pass-kit/passport-consumption/routes';
 import { passportProvisionFeature } from '@/features/eco-pass-kit/passport-provision/routes';
+import { certificateManagementFeature } from '@/features/ccm-kit/certificate-management/routes';
+import { provisionManagementFeature } from '@/features/ccm-kit/provision-management/routes';
+import { ccmConsumptionFeature } from '@/features/ccm-kit/consumption/routes';
 import { pcfRequestFeature } from '@/features/pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from '@/features/pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from '@/features/pcf-kit/pcf-management/routes';
@@ -214,6 +220,48 @@ export const useTranslatedKits = (): KitFeature[] => {
       createdAt: '2026-03-06',
       lastUpdated: '2026-03-06',
       documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
+    },
+    {
+      id: 'ccm',
+      name: t('items.ccm.name'),
+      description: t('items.ccm.description'),
+      status: 'available',
+      icon: <WorkspacePremiumIcon />,
+      image: CcmKitImage,
+      features: [
+        // --- Provider role ---
+        {
+          module: certificateManagementFeature,
+          id: 'certificate-management',
+          name: t('items.ccm.features.certificateManagement.name'),
+          description: t('items.ccm.features.certificateManagement.description'),
+          icon: <WorkspacePremiumIcon />,
+          enabled: true,
+          default: false
+        },
+        {
+          module: provisionManagementFeature,
+          id: 'ccm-provision-management',
+          name: t('items.ccm.features.provisionManagement.name'),
+          description: t('items.ccm.features.provisionManagement.description'),
+          icon: <Inbox />,
+          enabled: true,
+          default: false
+        },
+        // --- Consumer role ---
+        {
+          module: ccmConsumptionFeature,
+          id: 'ccm-consumption',
+          name: t('items.ccm.features.consumption.name'),
+          description: t('items.ccm.features.consumption.description'),
+          icon: <ShoppingCart />,
+          enabled: false,
+          default: false
+        }
+      ],
+      version: '1.0.0',
+      domain: 'compliance',
+      documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/certificate-management-kit/adoption-view'
     },
     {
       id: 'data-governance',

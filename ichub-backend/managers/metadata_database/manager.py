@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -43,6 +44,12 @@ class RepositoryManager:
         self._twin_exchange_repository = None
         self._twin_registration_repository = None
         self._notification_repository = None
+        self._ccm_repository = None
+        self._ccm_site_repository = None
+        self._certificate_share_repository = None
+        self._ccm_received_repository = None
+        self._ccm_outbound_request_repository = None
+        self._ccm_inbound_request_repository = None
         self._pcf_repository = None
         self._pcf_relationship_repository = None
 
@@ -62,6 +69,15 @@ class RepositoryManager:
         self._session.close()
 
     # Manual Session Control
+    def flush(self):
+        """Flush pending changes to the database without committing.
+
+        Useful to obtain auto-generated primary keys (e.g. after an INSERT)
+        while keeping the transaction open so that subsequent operations
+        are persisted atomically in a single ``commit()``.
+        """
+        self._session.flush()
+
     def commit(self):
         """Manually commit the session."""
         self._session.commit()
@@ -182,6 +198,54 @@ class RepositoryManager:
             from managers.metadata_database.repositories import NotificationRepository
             self._notification_repository = NotificationRepository(self._session)
         return self._notification_repository
+
+    @property
+    def ccm_repository(self):
+        """Lazy initialization of the CCM (Company Certificate Management) repository."""
+        if self._ccm_repository is None:
+            from managers.metadata_database.repositories import CcmRepository
+            self._ccm_repository = CcmRepository(self._session)
+        return self._ccm_repository
+
+    @property
+    def ccm_site_repository(self):
+        """Lazy initialization of the CcmSite (certificate BPNS/BPNA sites) repository."""
+        if self._ccm_site_repository is None:
+            from managers.metadata_database.repositories import CcmSiteRepository
+            self._ccm_site_repository = CcmSiteRepository(self._session)
+        return self._ccm_site_repository
+
+    @property
+    def certificate_share_repository(self):
+        """Lazy initialization of the CertificateShare (sharing-history) repository."""
+        if self._certificate_share_repository is None:
+            from managers.metadata_database.repositories import CertificateShareRepository
+            self._certificate_share_repository = CertificateShareRepository(self._session)
+        return self._certificate_share_repository
+
+    @property
+    def ccm_received_repository(self):
+        """Lazy initialization of the CcmReceived (received certificates) repository."""
+        if self._ccm_received_repository is None:
+            from managers.metadata_database.repositories import CcmReceivedRepository
+            self._ccm_received_repository = CcmReceivedRepository(self._session)
+        return self._ccm_received_repository
+
+    @property
+    def ccm_outbound_request_repository(self):
+        """Lazy initialization of the CcmOutboundRequest (outbound requests) repository."""
+        if self._ccm_outbound_request_repository is None:
+            from managers.metadata_database.repositories import CcmOutboundRequestRepository
+            self._ccm_outbound_request_repository = CcmOutboundRequestRepository(self._session)
+        return self._ccm_outbound_request_repository
+
+    @property
+    def ccm_inbound_request_repository(self):
+        """Lazy initialization of the CcmInboundRequest (inbound requests) repository."""
+        if self._ccm_inbound_request_repository is None:
+            from managers.metadata_database.repositories import CcmInboundRequestRepository
+            self._ccm_inbound_request_repository = CcmInboundRequestRepository(self._session)
+        return self._ccm_inbound_request_repository
 
     @property
     def pcf_repository(self):
