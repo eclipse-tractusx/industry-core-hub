@@ -28,6 +28,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Container,
   Grid2,
@@ -37,7 +38,18 @@ import {
 import { ArrowBack, PlayArrow } from '@mui/icons-material';
 import { fetchSerializedPartTwinDetails } from '@/features/industry-core-kit/serialized-parts/api';
 import { SerializedPartTwinDetailsRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
-import { fetchBomAsBuiltSubmodelContent } from '../api';
+import { getParticipantId } from '@/services/EnvironmentService';
+import {
+  fetchBomAsBuiltSubmodelContent,
+  fetchQualityInvestigationNotifications,
+  getFinishedQualityInvestigationRequestIds,
+  QI_CONTEXT_ACK,
+  QI_CONTEXT_FAULT,
+  QI_CONTEXT_REQUEST,
+  QualityInvestigationNotification,
+  QualityInvestigationStatus,
+  sendQualityInvestigationRequest,
+} from '../api';
 import {
   BOM_AS_BUILT_SEMANTIC_ID,
   BOM_AS_BUILT_SEMANTIC_ID_ALT,
@@ -54,6 +66,58 @@ interface BomSubmodelView {
   childItems: BomChildItem[];
 }
 
+interface ChildInvestigationState {
+  status: QualityInvestigationStatus;
+  requestMessageId?: string;
+  faultMessageId?: string;
+}
+
+const localBpn = getParticipantId();
+
+const getChildString = (childItem: BomChildItem, key: string): string => {
+  const value = childItem[key];
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  return '';
+};
+
+const getNotificationContentString = (notification: QualityInvestigationNotification, key: string): string => {
+  const value = notification.content[key];
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  return '';
+};
+
+const getStatusChipConfig = (status: QualityInvestigationStatus): {
+  label: string;
+  backgroundColor: string;
+  color: string;
+} => {
+  switch (status) {
+    case 'OPEN':
+      return { label: 'QI Sent', backgroundColor: '#f7d358', color: '#1a1a1a' };
+    case 'ACK':
+      return { label: 'QI Ack', backgroundColor: '#f7d358', color: '#1a1a1a' };
+    case 'ACCEPTED':
+      return { label: 'QI Accepted', backgroundColor: '#8ed1fc', color: '#082032' };
+    case 'OK':
+    default:
+      return { label: 'OK', backgroundColor: '#6ccf7d', color: '#0f2716' };
+  }
+};
+
 const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -64,6 +128,8 @@ const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [localTwin, setLocalTwin] = useState<SerializedPartTwinDetailsRead | null>(null);
   const [bomSubmodels, setBomSubmodels] = useState<BomSubmodelView[]>([]);
+  const [notifications, setNotifications] = useState<QualityInvestigationNotification[]>([]);
+  const [activeChildKey, setActiveChildKey] = useState<string | null>(null);
 
   const getBomAsBuiltAspects = (twinDetails: SerializedPartTwinDetailsRead): TwinAspectRead[] => {
     const fromAllAspects = twinDetails.allAspects ?? [];
@@ -116,6 +182,9 @@ const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
         );
 
         setBomSubmodels(loadedSubmodels);
+
+        const loadedNotifications = await fetchQualityInvestigationNotifications(localBpn);
+        setNotifications(loadedNotifications);
       } catch (loadError) {
         const message = loadError instanceof Error ? loadError.message : 'Failed to load quality investigation detail.';
         setError(message);
@@ -131,10 +200,113 @@ const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
     return bomSubmodels.reduce((acc, model) => acc + model.childItems.length, 0);
   }, [bomSubmodels]);
 
-  const handleStartInvestigation = (childItem: BomChildItem) => {
-    setInfoMessage(
-      `Quality Investigation for child item ${String(childItem.globalAssetId ?? 'n/a')} will be implemented in a later step.`
-    );
+  const finishedRequestIds = useMemo(() => new Set(getFinishedQualityInvestigationRequestIds()), [notifications]);
+
+  const resolveChildInvestigationState = (childItem: BomChildItem): ChildInvestigationState => {
+    if (!localTwin) {
+      return { status: 'OK' };
+    }
+
+    const remoteBpn = getChildString(childItem, 'businessPartner');
+    const remotePartGlobalId = getChildString(childItem, 'globalAssetId');
+    const localPartGlobalId = String(localTwin.globalId ?? '');
+
+    if (!remoteBpn || !remotePartGlobalId || !localPartGlobalId) {
+      return { status: 'OK' };
+    }
+
+    const request = notifications.find((notification) => {
+      return notification.context === QI_CONTEXT_REQUEST
+        && notification.senderBpn === localBpn
+        && notification.receiverBpn === remoteBpn
+        && getNotificationContentString(notification, 'localPartGlobalId') === localPartGlobalId
+        && getNotificationContentString(notification, 'remotePartGlobalId') === remotePartGlobalId;
+    });
+
+    if (!request) {
+      return { status: 'OK' };
+    }
+
+    if (finishedRequestIds.has(request.messageId)) {
+      return { status: 'OK' };
+    }
+
+    const fault = notifications.find((notification) => {
+      return notification.context === QI_CONTEXT_FAULT
+        && notification.senderBpn === remoteBpn
+        && notification.receiverBpn === localBpn
+        && notification.relatedMessageId === request.messageId;
+    });
+
+    if (fault) {
+      return {
+        status: 'ACCEPTED',
+        requestMessageId: request.messageId,
+        faultMessageId: fault.messageId,
+      };
+    }
+
+    const ack = notifications.find((notification) => {
+      return notification.context === QI_CONTEXT_ACK
+        && notification.senderBpn === remoteBpn
+        && notification.receiverBpn === localBpn
+        && notification.relatedMessageId === request.messageId;
+    });
+
+    if (ack) {
+      return {
+        status: 'ACK',
+        requestMessageId: request.messageId,
+      };
+    }
+
+    return {
+      status: 'OPEN',
+      requestMessageId: request.messageId,
+    };
+  };
+
+  const refreshNotifications = async () => {
+    const loadedNotifications = await fetchQualityInvestigationNotifications(localBpn);
+    setNotifications(loadedNotifications);
+  };
+
+  const handleStartInvestigation = async (childItem: BomChildItem) => {
+    if (!localTwin) {
+      return;
+    }
+
+    const remoteBpn = getChildString(childItem, 'businessPartner');
+    const remotePartGlobalId = getChildString(childItem, 'globalAssetId');
+    const localPartGlobalId = String(localTwin.globalId ?? '');
+    const localPartInstanceId = String(localTwin.partInstanceId ?? '');
+
+    if (!remoteBpn || !remotePartGlobalId || !localPartGlobalId || !localPartInstanceId) {
+      setInfoMessage('Missing local or remote BoMAsBuilt identifiers required to start a Quality Investigation.');
+      return;
+    }
+
+    const childKey = `${remoteBpn}::${remotePartGlobalId}`;
+
+    try {
+      setActiveChildKey(childKey);
+      const messageId = await sendQualityInvestigationRequest({
+        localBpn,
+        remoteBpn,
+        localPartGlobalId,
+        localPartInstanceId,
+        remotePartGlobalId,
+        information: 'Traceability quality investigation started by local partner.',
+      });
+
+      await refreshNotifications();
+      setInfoMessage(`Quality Investigation notification sent (messageId: ${messageId}).`);
+    } catch (sendError) {
+      const message = sendError instanceof Error ? sendError.message : 'Failed to send Quality Investigation notification.';
+      setError(message);
+    } finally {
+      setActiveChildKey(null);
+    }
   };
 
   return (
@@ -291,6 +463,14 @@ const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
                   )}
 
                   {submodel.childItems.map((childItem, index) => (
+                    (() => {
+                      const state = resolveChildInvestigationState(childItem);
+                      const remoteBpn = getChildString(childItem, 'businessPartner');
+                      const remotePartGlobalId = getChildString(childItem, 'globalAssetId');
+                      const childKey = `${remoteBpn}::${remotePartGlobalId}`;
+                      const statusChip = getStatusChipConfig(state.status);
+
+                      return (
                     <Paper
                       key={`${submodel.id}-child-${index}`}
                       variant="outlined"
@@ -314,26 +494,52 @@ const TraceabilityQualityInvestigationDetailPage: React.FC = () => {
                           </Typography>
                         </Grid2>
                         <Grid2 size={{ xs: 12, md: 4 }}>
-                          <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                          <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1, flexWrap: 'wrap' }}>
+                            <Chip
+                              label={statusChip.label}
+                              onClick={() => {
+                                if (state.status !== 'ACCEPTED' || !state.requestMessageId || !state.faultMessageId) {
+                                  return;
+                                }
+
+                                navigate(
+                                  `/traceability/quality-investigation/fault-detail?globalId=${encodeURIComponent(globalId)}&requestMessageId=${encodeURIComponent(state.requestMessageId)}&faultMessageId=${encodeURIComponent(state.faultMessageId)}`
+                                );
+                              }}
+                              clickable={state.status === 'ACCEPTED'}
+                              sx={{
+                                fontWeight: 700,
+                                backgroundColor: statusChip.backgroundColor,
+                                color: statusChip.color,
+                                cursor: state.status === 'ACCEPTED' ? 'pointer' : 'default',
+                              }}
+                            />
                             <Button
                               variant="contained"
                               startIcon={<PlayArrow />}
                               onClick={() => handleStartInvestigation(childItem)}
+                              disabled={state.status !== 'OK' || activeChildKey === childKey}
                               sx={{
                                 background: 'linear-gradient(135deg, #ff7a00 0%, #ff5a00 100%)',
                                 color: '#fff',
                                 textTransform: 'none',
+                                '&.Mui-disabled': {
+                                  background: 'rgba(255,255,255,0.2)',
+                                  color: 'rgba(255,255,255,0.6)',
+                                },
                                 '&:hover': {
                                   filter: 'brightness(1.05)',
                                 },
                               }}
                             >
-                              Start Quality Investigation
+                              {activeChildKey === childKey ? 'Sending...' : 'Start Quality Investigation'}
                             </Button>
                           </Box>
                         </Grid2>
                       </Grid2>
                     </Paper>
+                      );
+                    })()
                   ))}
                 </CardContent>
               </Card>

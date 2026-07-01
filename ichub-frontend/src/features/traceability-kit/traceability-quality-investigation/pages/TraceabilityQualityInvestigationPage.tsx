@@ -40,6 +40,15 @@ import { Launch as LaunchIcon, Search as SearchIcon } from '@mui/icons-material'
 import { fetchAllSerializedPartTwins, fetchSerializedPartTwinDetails } from '@/features/industry-core-kit/serialized-parts/api';
 import { SerializedPartTwinDetailsRead } from '@/features/industry-core-kit/serialized-parts/types/twin-types';
 import { darkCardStyles } from '@/features/eco-pass-kit/passport-provision/styles/cardStyles';
+import { getParticipantId } from '@/services/EnvironmentService';
+import {
+  fetchQualityInvestigationNotifications,
+  QI_CONTEXT_ACK,
+  QI_CONTEXT_FAULT,
+  QI_CONTEXT_REQUEST,
+  QualityInvestigationNotification,
+  sendQualityInvestigationAck,
+} from '../api';
 import { BOM_AS_BUILT_SEMANTIC_ID, BOM_AS_BUILT_SEMANTIC_ID_ALT, TwinAspectRead } from '../utils/bomAsBuilt';
 
 interface InvestigationRow {
@@ -53,12 +62,28 @@ interface InvestigationRow {
   bomSubmodelCount: number;
 }
 
+const localBpn = getParticipantId();
+
+const getNotificationContentString = (notification: QualityInvestigationNotification, key: string): string => {
+  const value = notification.content[key];
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'number') {
+    return String(value);
+  }
+
+  return '';
+};
+
 const TraceabilityQualityInvestigationPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<InvestigationRow[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<QualityInvestigationNotification[]>([]);
 
   const getBomAsBuiltAspects = (twinDetails: SerializedPartTwinDetailsRead): TwinAspectRead[] => {
     const fromAllAspects = twinDetails.allAspects ?? [];
@@ -120,6 +145,38 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
         });
 
         setRows(uniqueRows);
+
+        const fetchedNotifications = await fetchQualityInvestigationNotifications(localBpn);
+        const incomingRequests = fetchedNotifications.filter((notification) => {
+          return notification.context === QI_CONTEXT_REQUEST
+            && notification.receiverBpn === localBpn;
+        });
+
+        const requestsMissingAck = incomingRequests.filter((requestNotification) => {
+          return !fetchedNotifications.some((notification) => {
+            return notification.context === QI_CONTEXT_ACK
+              && notification.senderBpn === localBpn
+              && notification.receiverBpn === requestNotification.senderBpn
+              && notification.relatedMessageId === requestNotification.messageId;
+          });
+        });
+
+        if (requestsMissingAck.length > 0) {
+          await Promise.all(
+            requestsMissingAck.map(async (requestNotification) => {
+              await sendQualityInvestigationAck({
+                localBpn,
+                remoteBpn: requestNotification.senderBpn,
+                relatedMessageId: requestNotification.messageId,
+                localPartGlobalId: getNotificationContentString(requestNotification, 'localPartGlobalId'),
+                remotePartGlobalId: getNotificationContentString(requestNotification, 'remotePartGlobalId'),
+              });
+            })
+          );
+        }
+
+        const refreshedNotifications = await fetchQualityInvestigationNotifications(localBpn);
+        setNotifications(refreshedNotifications);
       } catch (loadError) {
         const message = loadError instanceof Error ? loadError.message : 'Failed to load investigation data.';
         setError(message);
@@ -150,6 +207,30 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
 
   const handleOpenDetail = (row: InvestigationRow) => {
     navigate(`/traceability/quality-investigation/detail?globalId=${encodeURIComponent(row.globalId)}`);
+  };
+
+  const getReceiverStatus = (row: InvestigationRow): { requested: boolean; requestMessageId?: string } => {
+    const incomingRequests = notifications.filter((notification) => {
+      return notification.context === QI_CONTEXT_REQUEST
+        && notification.receiverBpn === localBpn
+        && getNotificationContentString(notification, 'localPartGlobalId') === row.globalId;
+    });
+
+    const unresolvedRequest = incomingRequests.find((requestNotification) => {
+      const hasFaultResponse = notifications.some((notification) => {
+        return notification.context === QI_CONTEXT_FAULT
+          && notification.senderBpn === localBpn
+          && notification.relatedMessageId === requestNotification.messageId;
+      });
+
+      return !hasFaultResponse;
+    });
+
+    if (!unresolvedRequest) {
+      return { requested: false };
+    }
+
+    return { requested: true, requestMessageId: unresolvedRequest.messageId };
   };
 
   return (
@@ -264,7 +345,26 @@ const TraceabilityQualityInvestigationPage: React.FC = () => {
                       </Typography>
                     </Box>
 
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3, flexWrap: 'wrap' }}>
+                      <Button
+                        variant="contained"
+                        onClick={() => navigate(`/traceability/quality-investigation/respond?globalId=${encodeURIComponent(row.globalId)}`)}
+                        disabled={!getReceiverStatus(row).requested}
+                        sx={{
+                          background: getReceiverStatus(row).requested
+                            ? 'linear-gradient(135deg, #ff9f1c 0%, #ff7a00 100%)'
+                            : 'linear-gradient(135deg, #41c77b 0%, #2f8f49 100%)',
+                          color: '#fff',
+                          textTransform: 'none',
+                          '&.Mui-disabled': {
+                            color: '#fff',
+                            opacity: 0.85,
+                          },
+                        }}
+                      >
+                        {getReceiverStatus(row).requested ? 'QI Requested' : 'OK'}
+                      </Button>
+
                       <Button
                         variant="outlined"
                         startIcon={<LaunchIcon />}
