@@ -62,7 +62,8 @@ dataconsumerOne:
               - management
             className: "nginx"
             annotations:
-              cert-manager.io/cluster-issuer: letsencrypt-prod
+              cert-manager.io/cluster-issuer: letsencrypt-int
+              external-dns.alpha.kubernetes.io/hostname: "ichub3-connector-controlplane.txcd.arena2036.app"
             tls:
               enabled: true
               secretName: "ichub3-connector-controlplane.txcd.arena2036.app-tls"
@@ -78,7 +79,8 @@ dataconsumerOne:
               - public
             className: "nginx"
             annotations:
-              cert-manager.io/cluster-issuer: letsencrypt-prod
+              cert-manager.io/cluster-issuer: letsencrypt-int
+              external-dns.alpha.kubernetes.io/hostname: "ichub3-connector-dataplane.txcd.arena2036.app"
             tls:
               enabled: true
               secretName: "ichub3-connector-dataplane.txcd.arena2036.app-tls"
@@ -106,8 +108,6 @@ dataconsumerOne:
         user: "dbusertxdataprovider"
         password: "dbpasswordtxdataprovider"
         postgresPassword: "dbpasswordtxdataprovider"
-      commonLabels:
-        tarea: backup-bot
       primary:
         persistence:
           enabled: false
@@ -145,12 +145,7 @@ dataconsumerOne:
     postgresql:
       fullnameOverride: ""
       nameOverride: "dataprovider-digital-twin-db"
-      commonLabels:
-        tarea: backup-bot
       primary:
-        service:
-          annotations:
-            backup/targets: "dtr:postgres:ichub3-dataprovider-digital-twin-db:postgres-password"
         persistence:
           enabled: false
           size: 10Gi
@@ -215,7 +210,8 @@ industry-core-hub:
       enabled: true
       className: "nginx"
       annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/cluster-issuer: letsencrypt-int
+        external-dns.alpha.kubernetes.io/hostname: "ichub3-ichub-backend.txcd.arena2036.app"
         nginx.ingress.kubernetes.io/enable-cors: "true"
         nginx.ingress.kubernetes.io/cors-allow-origin: "https://ichub3-ichub-frontend.txcd.arena2036.app"
         nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
@@ -258,7 +254,8 @@ industry-core-hub:
       enabled: true
       className: "nginx"
       annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
+        cert-manager.io/cluster-issuer: letsencrypt-int
+        external-dns.alpha.kubernetes.io/hostname: "ichub3-ichub-frontend.txcd.arena2036.app"
         nginx.ingress.kubernetes.io/enable-cors: "true"
         nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.txcd.arena2036.app"
       tls:
