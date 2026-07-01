@@ -55,7 +55,7 @@ dataconsumerOne:
             authKey: HACKATHON1
         ingresses:
           - enabled: true
-            hostname: "ichub2-connector-controlplane.txcd.arena2036-x.app"
+            hostname: "ichub2-connector-controlplane.txcd.arena2036.app"
             endpoints:
               - default
               - protocol
@@ -65,14 +65,14 @@ dataconsumerOne:
               cert-manager.io/cluster-issuer: letsencrypt-prod
             tls:
               enabled: true
-              secretName: "ichub2-connector-controlplane.txcd.arena2036-x.app-tls"
+              secretName: "ichub2-connector-controlplane.txcd.arena2036.app-tls"
       dataplane:
         env:
           TX_IAM_IATP_CREDENTIALSERVICE_URL: https://ssi-dim-wallet-stub.txcd.arena2036-x.de/api
           EDC_IAM_DID_WEB_USE_HTTPS: true
         ingresses:
           - enabled: true
-            hostname: "ichub2-connector-dataplane.txcd.arena2036-x.app"
+            hostname: "ichub2-connector-dataplane.txcd.arena2036.app"
             endpoints:
               - default
               - public
@@ -81,7 +81,7 @@ dataconsumerOne:
               cert-manager.io/cluster-issuer: letsencrypt-prod
             tls:
               enabled: true
-              secretName: "ichub2-connector-dataplane.txcd.arena2036-x.app-tls"
+              secretName: "ichub2-connector-dataplane.txcd.arena2036.app-tls"
         token:
           signer:
             privatekey_alias: tokenSignerPrivateKey
@@ -138,7 +138,7 @@ dataconsumerOne:
         fullnameOverride: "ichub2-registry-keycloak"
       registry:
         authentication: false
-        host: ichub2-connector-dtr.txcd.arena2036-x.app
+        host: ichub2-connector-dtr.txcd.arena2036.app
         dataSource:
           url: "jdbc:postgresql://ichub2-dataprovider-digital-twin-db:5432/dtr"
 
@@ -180,7 +180,7 @@ industry-core-hub:
             client_secret: "fxEhGj5mVhkVnAftGz8S066YXqHpDtB0"
         connector:
           controlplane:
-            hostname: "https://ichub2-connector-controlplane.txcd.arena2036-x.app"
+            hostname: "https://ichub2-connector-controlplane.txcd.arena2036.app"
             apiKeyHeader: "X-Api-Key"
             apiKey: "HACKATHON1"
             managementPath: "/management"
@@ -189,44 +189,44 @@ industry-core-hub:
       provider:
         connector:
           controlplane:
-            hostname: "https://ichub2-connector-controlplane.txcd.arena2036-x.app"
+            hostname: "https://ichub2-connector-controlplane.txcd.arena2036.app"
             apiKeyHeader: "X-Api-Key"
             apiKey: "HACKATHON1"
             managementPath: "/management"
             protocolPath: "/api/v1/dsp"
           dataplane:
-            hostname: "https://ichub2-connector-dataplane.txcd.arena2036-x.app"
+            hostname: "https://ichub2-connector-dataplane.txcd.arena2036.app"
             publicPath: "/api/public"
         digitalTwinRegistry:
           hostname: "http://ichub2-connector-dataprovider-dtr:8080"
           apiPath: "/api/v3"
         digitalTwinEventAPI:
-          hostname: "https://ichub2-ichub-backend.txcd.arena2036-x.app"
+          hostname: "https://ichub2-ichub-backend.txcd.arena2036.app"
         uniqueIdPush:
-          hostname: "https://ichub2-ichub-backend.txcd.arena2036-x.app"
+          hostname: "https://ichub2-ichub-backend.txcd.arena2036.app"
           sendOnShare: true
         pcfExchange:
           enabled: true
-          hostname: "https://ichub2-ichub-backend.txcd.arena2036-x.app"
+          hostname: "https://ichub2-ichub-backend.txcd.arena2036.app"
         ccm:
           enabled: true
-          hostname: "https://ichub2-ichub-backend.txcd.arena2036-x.app"
+          hostname: "https://ichub2-ichub-backend.txcd.arena2036.app"
     ingress:
       enabled: true
       className: "nginx"
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/enable-cors: "true"
-        nginx.ingress.kubernetes.io/cors-allow-origin: "https://ichub2-ichub-frontend.txcd.arena2036-x.app"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://ichub2-ichub-frontend.txcd.arena2036.app"
         nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
         nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,X-Api-Key"
         nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS, PATCH"
       tls:
-        - secretName: "ichub2-ichub-backend.txcd.arena2036-x.app-tls"
+        - secretName: "ichub2-ichub-backend.txcd.arena2036.app-tls"
           hosts:
-            - "ichub2-ichub-backend.txcd.arena2036-x.app"
+            - "ichub2-ichub-backend.txcd.arena2036.app"
       hosts:
-        - host: "ichub2-ichub-backend.txcd.arena2036-x.app"
+        - host: "ichub2-ichub-backend.txcd.arena2036.app"
           paths:
             - path: /
               pathType: ImplementationSpecific
@@ -246,27 +246,27 @@ industry-core-hub:
   frontend:
     enabled: true
     config:
-      ichubBackendUrl: "https://ichub2-ichub-backend.txcd.arena2036-x.app/v1"
+      ichubBackendUrl: "https://ichub2-ichub-backend.txcd.arena2036.app/v1"
       requireHttpsUrlPattern: true
       apiKey: "HACKATHON1-HACKATHON1-HACKATHON1"
       apiKeyHeader: "X-Api-Key"
       authEnabled: false
       authProvider: "none"
     env:
-      backendUrl: "https://ichub2-ichub-backend.txcd.arena2036-x.app/v1"
+      backendUrl: "https://ichub2-ichub-backend.txcd.arena2036.app/v1"
     ingress:
       enabled: true
       className: "nginx"
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
         nginx.ingress.kubernetes.io/enable-cors: "true"
-        nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.txcd.arena2036-x.app"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.txcd.arena2036.app"
       tls:
-        - secretName: "ichub2-ichub-frontend.txcd.arena2036-x.app-tls"
+        - secretName: "ichub2-ichub-frontend.txcd.arena2036.app-tls"
           hosts:
-            - "ichub2-ichub-frontend.txcd.arena2036-x.app"
+            - "ichub2-ichub-frontend.txcd.arena2036.app"
       hosts:
-        - host: "ichub2-ichub-frontend.txcd.arena2036-x.app"
+        - host: "ichub2-ichub-frontend.txcd.arena2036.app"
           paths:
             - path: /
               pathType: Prefix
