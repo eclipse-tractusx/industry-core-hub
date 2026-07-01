@@ -1,7 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -41,9 +42,10 @@ interface DppShareDialogProps {
   onClose: () => void;
   dppId: string;
   dppName: string;
+  onShareSuccess?: () => void;
 }
 
-const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) => {
+const DppShareDialog = ({ open, onClose, dppId, dppName, onShareSuccess }: DppShareDialogProps) => {
   const navigate = useNavigate();
   const { t } = useTranslation(['passportProvision', 'common']);
 
@@ -105,8 +107,12 @@ const DppShareDialog = ({ open, onClose, dppId, dppName }: DppShareDialogProps) 
       setTimeout(() => {
         setSuccessMessage('');
         onClose();
-        // Refresh the page to update the view
-        window.location.reload();
+        if (onShareSuccess) {
+          onShareSuccess();
+        } else {
+          // Refresh the page to update the view
+          window.location.reload();
+        }
         setIsLoading(false);
       }, 2000);
 
