@@ -193,7 +193,7 @@ industry-core-hub:
             hostname: "https://ichub3-connector-dataplane.txcd.arena2036.app"
             publicPath: "/api/public"
         digitalTwinRegistry:
-          hostname: "http://ichub3-connector-dataprovider-dtr:8080"
+          hostname: "http://ichub3-dataprovider-dtr:8080"
           apiPath: "/api/v3"
         digitalTwinEventAPI:
           hostname: "https://ichub3-ichub-backend.txcd.arena2036.app"
