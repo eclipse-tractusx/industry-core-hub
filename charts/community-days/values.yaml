@@ -112,7 +112,6 @@ dataconsumerOne:
         persistence:
           enabled: true
           size: 10Gi
-          storageClass: "null"
 
     vault:
       nameOverride: edc-dataprovider-vault
@@ -256,12 +255,10 @@ industry-core-hub:
         enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: "null"
       logs:
         enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
-        storageClass: "null"
   frontend:
     enabled: true
     config:
@@ -310,6 +307,5 @@ industry-core-hub:
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: "null"
   keycloak:
     enabled: false
