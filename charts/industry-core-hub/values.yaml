@@ -1108,7 +1108,6 @@ backend:
       # -- Access mode for data volume
       accessMode: ReadWriteOnce
       # -- Storage class for data volume
-      storageClass: "standard"
     logs:
       # -- Enable logs persistence
       enabled: true
@@ -1117,7 +1116,6 @@ backend:
       # -- Access mode for logs volume
       accessMode: ReadWriteOnce
       # -- Storage class for logs volume
-      storageClass: "standard"
 
   # @url: https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-resource-requests-and-limits
   resources:

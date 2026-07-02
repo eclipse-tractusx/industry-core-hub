@@ -22,15 +22,15 @@
 apiVersion: v2
 name: industry-core-hub-community-days
 type: application
-appVersion: "v0.0.3"
-version: "v0.0.3"
+appVersion: "v0.0.4"
+version: "v0.0.4"
 description: A Helm chart for Eclipse Tractus-X - Industry Core Hub
 home: https://github.com/eclipse-tractusx/industry-core-hub
 sources:
   - https://github.com/eclipse-tractusx/industry-core-hub
 dependencies:
   - name: industry-core-hub
-    version: v0.6.0-sixth-community-days-2.1
+    version: v0.6.0-sixth-community-days-2.2
     repository: file://../industry-core-hub
     condition: industry-core-hub.enabled
   - name: tx-data-provider
