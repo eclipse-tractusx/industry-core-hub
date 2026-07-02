@@ -64,7 +64,7 @@ pypi/pypi/-/opentelemetry-api/1.43.0, Apache-2.0, approved, #29438
 pypi/pypi/-/packaging/24.2, (Apache-2.0 OR BSD-2-Clause) AND MIT, approved, #19866
 pypi/pypi/-/pathable/0.6.0, Apache-2.0, approved, #29436
 pypi/pypi/-/pendulum/3.2.0, MIT, approved, #28391
-pypi/pypi/-/pip/24.0, MIT AND ISC AND Apache-2.0 AND (BSD-2-Clause OR Apache-2.0) AND BSD-2-Clause AND BSD-3-Clause AND Python-2.0 AND LGPL-2.1-or-later AND MPL-2.0, approved, #14695
+pypi/pypi/-/pip/25.0.1, MIT AND ISC AND Apache-2.0 AND (BSD-2-Clause OR Apache-2.0) AND BSD-2-Clause AND BSD-3-Clause AND Python-2.0 AND MPL-2.0, approved, #20397
 pypi/pypi/-/platformdirs/4.10.0, MIT, approved, #29428
 pypi/pypi/-/pluggy/1.5.0, MIT, approved, clearlydefined
 pypi/pypi/-/psycopg2-binary/2.9.10, (LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) AND ((LGPL-3.0-or-later WITH LicenseRef-scancode-openssl-exception-lgpl3.0plus) OR Zlib) AND LicenseRef-Public-domain, approved, #20738
