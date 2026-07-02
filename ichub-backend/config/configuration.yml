@@ -719,7 +719,7 @@ provider:
     # -- Auto-push certificate to consumers upon receiving a request notification
     auto_push_on_request: false
     asset_config:
-      dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+      dct_type: "https://w3id.org/catenax/taxonomy#CCMAPI"
       # existing_asset_id: <ccm-asset>  # optional: pin to a specific asset ID
     policy:
       usage:

@@ -110,7 +110,7 @@ dataconsumerOne:
         postgresPassword: "dbpasswordtxdataprovider"
       primary:
         persistence:
-          enabled: false
+          enabled: true
           size: 10Gi
 
     vault:
@@ -147,7 +147,7 @@ dataconsumerOne:
       nameOverride: "dataprovider-digital-twin-db"
       primary:
         persistence:
-          enabled: false
+          enabled: true
           size: 10Gi
 
 industry-core-hub:
@@ -230,13 +230,13 @@ industry-core-hub:
                 service: "backend"
                 port: 8000
     persistence:
-      enabled: false
+      enabled: true
       data:
-        enabled: false
+        enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
       logs:
-        enabled: false
+        enabled: true
         size: 1Gi
         accessMode: ReadWriteOnce
   frontend:
@@ -286,5 +286,5 @@ industry-core-hub:
             name: "ichub1-postgres-secret"
             key: "ichub-password"
     persistence:
-      enabled: false
+      enabled: true
       size: 10Gi
