@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="400" height="400" fill="#ffffff"/>
+  <rect x="8" y="8" width="384" height="384" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="28" y="48" font-size="16" font-weight="700" fill="#111">Certificate Feedback</text>
+  <rect x="272" y="30" width="100" height="24" rx="12" fill="#F0F5D5" stroke="#B3CB2D"/>
+  <text x="322" y="47" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+  <rect x="28" y="60" width="60" height="4" fill="#B3CB2D" rx="2"/>
+
+  <text x="28" y="96" font-size="13" font-weight="700" fill="#c0392b">Outcome: REJECTED</text>
+
+  <rect x="28" y="116" width="110" height="44" rx="8" fill="#ffffff" stroke="#cfcfcf"/>
+  <text x="83" y="143" font-size="12" fill="#888" text-anchor="middle">Received</text>
+  <rect x="146" y="116" width="110" height="44" rx="8" fill="#ffffff" stroke="#cfcfcf"/>
+  <text x="201" y="143" font-size="12" fill="#888" text-anchor="middle">Accepted</text>
+  <rect x="264" y="116" width="108" height="44" rx="8" fill="#FEE7E2" stroke="#FF532F" stroke-width="2"/>
+  <text x="318" y="143" font-size="12" font-weight="700" fill="#c0392b" text-anchor="middle">Rejected</text>
+
+  <rect x="28" y="176" width="344" height="66" rx="8" fill="#FEE7E2"/>
+  <text x="44" y="200" font-size="11" font-weight="700" fill="#c0392b">Certificate Errors *</text>
+  <rect x="44" y="210" width="312" height="22" rx="5" fill="#ffffff" stroke="#e0b4ab"/>
+  <text x="52" y="225" font-size="10" fill="#a05043">e.g. Certificate expired</text>
+
+  <rect x="28" y="250" width="344" height="72" rx="8" fill="#FEE7E2"/>
+  <text x="44" y="274" font-size="11" font-weight="700" fill="#c0392b">Location Errors * (Site BPN + message)</text>
+  <rect x="44" y="284" width="150" height="22" rx="5" fill="#ffffff" stroke="#e0b4ab"/>
+  <text x="52" y="299" font-size="10" fill="#a05043">BPNS…</text>
+  <rect x="202" y="284" width="154" height="22" rx="5" fill="#ffffff" stroke="#e0b4ab"/>
+  <text x="210" y="299" font-size="10" fill="#a05043">error message</text>
+
+  <text x="28" y="344" font-size="10" fill="#a05043">Both error types required before you can send.</text>
+  <rect x="252" y="352" width="120" height="34" rx="8" fill="#D91E18"/>
+  <text x="312" y="374" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Send Feedback</text>
+</svg>

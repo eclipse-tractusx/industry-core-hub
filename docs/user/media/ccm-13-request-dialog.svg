@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="440" fill="#ffffff"/>
+  <rect x="0" y="0" width="900" height="440" fill="#0f1b33" opacity="0.06"/>
+  <rect x="220" y="30" width="460" height="380" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="250" y="66" font-size="17" font-weight="700" fill="#111">New Certificate Request</text>
+  <rect x="250" y="78" width="70" height="4" fill="#B3CB2D" rx="2"/>
+  <rect x="560" y="46" width="92" height="24" rx="12" fill="#F0F5D5" stroke="#B3CB2D"/>
+  <text x="606" y="63" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+
+  <text x="250" y="106" font-size="12" font-weight="600" fill="#333">Provider BPN</text>
+  <rect x="250" y="114" width="300" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="266" y="139" font-size="13" fill="#333">alice — BPNL0000000PROV</text>
+  <rect x="558" y="114" width="122" height="40" rx="8" fill="#ffffff" stroke="#15803d" stroke-width="1.5"/>
+  <text x="619" y="139" font-size="11" font-weight="700" fill="#15803d" text-anchor="middle">Verify CCM support</text>
+  <circle cx="250" cy="114" r="12" fill="#FFA600"/><text x="250" y="118" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <text x="250" y="178" font-size="12" font-weight="600" fill="#333">Certified BPN</text>
+  <rect x="250" y="186" width="430" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="266" y="211" font-size="13" fill="#9a9a9a">BPNL of the certified legal entity</text>
+  <circle cx="250" cy="186" r="12" fill="#FFA600"/><text x="250" y="190" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+
+  <text x="250" y="250" font-size="12" font-weight="600" fill="#333">Certificate Type</text>
+  <rect x="250" y="258" width="430" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="266" y="283" font-size="13" fill="#333">ISO 9001 - Quality Management</text>
+  <circle cx="250" cy="258" r="12" fill="#FFA600"/><text x="250" y="262" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+
+  <text x="250" y="322" font-size="11" fill="#999">Optional: Associated Sites (BPNS).</text>
+
+  <rect x="470" y="356" width="90" height="38" rx="8" fill="#ffffff" stroke="#c0c0c0"/><text x="515" y="380" font-size="13" fill="#555" text-anchor="middle">Cancel</text>
+  <rect x="570" y="356" width="110" height="38" rx="8" fill="#6B3FA0"/><text x="625" y="380" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Send Request</text>
+  <circle cx="680" cy="356" r="12" fill="#FFA600"/><text x="680" y="360" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+</svg>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="520" fill="#ffffff"/>
+  <rect x="12" y="12" width="876" height="496" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <rect x="12" y="12" width="876" height="38" rx="12" fill="#B3CB2D"/>
+  <rect x="12" y="38" width="876" height="12" fill="#B3CB2D"/>
+  <circle cx="36" cy="31" r="5" fill="#ffffff" opacity="0.9"/><circle cx="54" cy="31" r="5" fill="#ffffff" opacity="0.7"/><circle cx="72" cy="31" r="5" fill="#ffffff" opacity="0.5"/>
+  <rect x="92" y="19" width="460" height="24" rx="12" fill="#ffffff"/>
+  <text x="108" y="36" font-size="12" fill="#666">/pcf/precalculation/001-alice-wheel</text>
+  <rect x="760" y="19" width="116" height="24" rx="12" fill="#ffffff"/>
+  <text x="818" y="36" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+
+  <text x="40" y="80" font-size="18" font-weight="700" fill="#111">PCF Precalculation</text>
+  <rect x="700" y="64" width="150" height="32" rx="8" fill="#1B5E20"/>
+  <text x="775" y="85" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">+ Add Subpart Relation</text>
+  <circle cx="700" cy="64" r="12" fill="#FFA600"/><text x="700" y="68" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <!-- progress -->
+  <text x="40" y="118" font-size="12" font-weight="700" fill="#333">PCF Collection Progress</text>
+  <text x="560" y="118" font-size="12" font-weight="700" fill="#1B5E20">66%</text>
+  <rect x="40" y="126" width="520" height="8" rx="4" fill="#ececec"/>
+  <rect x="40" y="126" width="345" height="8" rx="4" fill="#4CAF50"/>
+  <rect x="700" y="110" width="150" height="30" rx="8" fill="#B3CB2D"/><text x="775" y="130" font-size="12" font-weight="700" fill="#3d4a0f" text-anchor="middle">Download JSON</text>
+  <circle cx="700" cy="110" r="12" fill="#FFA600"/><text x="700" y="114" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+
+  <!-- stat cards -->
+  <rect x="40" y="150" width="150" height="56" rx="8" fill="#f7f8fa" stroke="#e0e0e0"/><text x="115" y="178" font-size="20" font-weight="700" fill="#111" text-anchor="middle">3</text><text x="115" y="197" font-size="11" fill="#777" text-anchor="middle">Total Subparts</text>
+  <rect x="200" y="150" width="150" height="56" rx="8" fill="#F5F9EE" stroke="#B3CB2D"/><text x="275" y="178" font-size="20" font-weight="700" fill="#1B5E20" text-anchor="middle">2</text><text x="275" y="197" font-size="11" fill="#5c6b16" text-anchor="middle">Delivered</text>
+  <rect x="360" y="150" width="150" height="56" rx="8" fill="#FFF7EC" stroke="#FFA600"/><text x="435" y="178" font-size="20" font-weight="700" fill="#8a5a00" text-anchor="middle">1</text><text x="435" y="197" font-size="11" fill="#8a5a00" text-anchor="middle">Pending</text>
+
+  <text x="40" y="234" font-size="13" font-weight="700" fill="#333">Subpart Relations</text>
+
+  <!-- tree trunk -->
+  <line x1="52" y1="252" x2="52" y2="430" stroke="#bcd7b0" stroke-width="2"/>
+  <!-- parent -->
+  <circle cx="52" cy="262" r="8" fill="#1B5E20"/>
+  <rect x="72" y="248" width="300" height="30" rx="8" fill="#F5F9EE" stroke="#4CAF50"/>
+  <text x="88" y="268" font-size="12" font-weight="700" fill="#1B5E20">001-alice-wheel  (parent part)</text>
+
+  <!-- subpart row 1 delivered -->
+  <line x1="52" y1="305" x2="72" y2="305" stroke="#4CAF50" stroke-width="2"/><circle cx="72" cy="305" r="5" fill="#10b981"/>
+  <rect x="84" y="288" width="766" height="34" rx="8" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="100" y="303" font-size="11" font-weight="600" fill="#333">supplier-a</text><text x="100" y="316" font-size="9" fill="#999" font-family="monospace">BPNL…SUPP</text>
+  <line x1="230" y1="296" x2="230" y2="314" stroke="#10b981" stroke-width="2"/>
+  <text x="246" y="309" font-size="12" fill="#333" font-family="monospace">001-alice-rim</text>
+  <text x="470" y="309" font-size="12" font-weight="600" fill="#10b981">✓ Delivered</text>
+  <text x="640" y="309" font-size="12" font-weight="700" fill="#10b981">4.8 kg CO2e</text>
+  <text x="820" y="309" font-size="16" fill="#999">⌄</text>
+  <circle cx="820" cy="290" r="11" fill="#FFA600"/><text x="820" y="294" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+
+  <!-- subpart row 2 delivered -->
+  <line x1="52" y1="345" x2="72" y2="345" stroke="#4CAF50" stroke-width="2"/><circle cx="72" cy="345" r="5" fill="#10b981"/>
+  <rect x="84" y="328" width="766" height="34" rx="8" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="100" y="343" font-size="11" font-weight="600" fill="#333">supplier-b</text><text x="100" y="356" font-size="9" fill="#999" font-family="monospace">BPNL…SUPB</text>
+  <line x1="230" y1="336" x2="230" y2="354" stroke="#10b981" stroke-width="2"/>
+  <text x="246" y="349" font-size="12" fill="#333" font-family="monospace">001-alice-tyre</text>
+  <text x="470" y="349" font-size="12" font-weight="600" fill="#10b981">✓ Delivered</text>
+  <text x="640" y="349" font-size="12" font-weight="700" fill="#10b981">6.1 kg CO2e</text>
+  <text x="820" y="349" font-size="16" fill="#999">⌄</text>
+
+  <!-- subpart row 3 pending -->
+  <line x1="52" y1="385" x2="72" y2="385" stroke="#f59e0b" stroke-width="2"/><circle cx="72" cy="385" r="5" fill="#f59e0b"/>
+  <rect x="84" y="368" width="766" height="34" rx="8" fill="#FFFCF5" stroke="#FFE1A8"/>
+  <text x="100" y="383" font-size="11" font-weight="600" fill="#333">supplier-c</text><text x="100" y="396" font-size="9" fill="#999" font-family="monospace">BPNL…SUPC</text>
+  <line x1="230" y1="376" x2="230" y2="394" stroke="#f59e0b" stroke-width="2"/>
+  <text x="246" y="389" font-size="12" fill="#333" font-family="monospace">001-alice-bolt</text>
+  <text x="470" y="389" font-size="12" font-weight="600" fill="#f59e0b">⧗ Pending</text>
+  <text x="640" y="389" font-size="12" fill="#bbb">—</text>
+  <!-- paper-plane send icon button -->
+  <rect x="802" y="371" width="34" height="28" rx="7" fill="#1B5E20"/>
+  <path d="M809,385 L831,378 L820,397 L817,388 Z" fill="#ffffff"/>
+  <circle cx="802" cy="371" r="11" fill="#FFA600"/><text x="802" y="375" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+
+  <!-- ghost add -->
+  <rect x="84" y="410" width="766" height="30" rx="8" fill="#fafafa" stroke="#d8d8d8" stroke-dasharray="6 5"/>
+  <text x="461" y="430" font-size="12" fill="#999" text-anchor="middle">＋ Add Subpart Relation</text>
+
+  <text x="40" y="470" font-size="12" fill="#777">Each subpart shows: supplier · part ID · status · PCF value · action. ② The paper-plane sends a Pending request;</text>
+  <text x="40" y="488" font-size="12" fill="#777">③ click a Delivered / Received row to expand its PCF Details. ④ Download JSON once all are collected.</text>
+</svg>

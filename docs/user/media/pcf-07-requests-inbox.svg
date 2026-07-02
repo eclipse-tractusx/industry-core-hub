@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="500" fill="#ffffff"/>
+  <rect x="12" y="12" width="876" height="476" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <rect x="12" y="12" width="876" height="38" rx="12" fill="#FFA600"/>
+  <rect x="12" y="38" width="876" height="12" fill="#FFA600"/>
+  <circle cx="36" cy="31" r="5" fill="#ffffff" opacity="0.9"/><circle cx="54" cy="31" r="5" fill="#ffffff" opacity="0.7"/><circle cx="72" cy="31" r="5" fill="#ffffff" opacity="0.5"/>
+  <rect x="92" y="19" width="460" height="24" rx="12" fill="#ffffff"/>
+  <text x="108" y="36" font-size="12" fill="#666">/pcf/requests</text>
+  <rect x="762" y="19" width="114" height="24" rx="12" fill="#ffffff"/>
+  <text x="819" y="36" font-size="11" font-weight="700" fill="#8a5a00" text-anchor="middle">PROVIDER</text>
+
+  <text x="40" y="82" font-size="18" font-weight="700" fill="#111">PCF Requests</text>
+
+  <!-- status filters -->
+  <rect x="40" y="98" width="56" height="28" rx="14" fill="#eef" stroke="#c8c8e0"/><text x="68" y="117" font-size="11" fill="#444" text-anchor="middle">All 2</text>
+  <rect x="102" y="98" width="86" height="28" rx="14" fill="#FDF6D8" stroke="#eab308"/><text x="145" y="117" font-size="11" font-weight="700" fill="#8a6d00" text-anchor="middle">Pending 1</text>
+  <rect x="194" y="98" width="92" height="28" rx="14" fill="#f3f3f3" stroke="#ddd"/><text x="240" y="117" font-size="11" fill="#888" text-anchor="middle">Accepted 0</text>
+  <rect x="292" y="98" width="96" height="28" rx="14" fill="#E6F7EF" stroke="#10b981"/><text x="340" y="117" font-size="11" fill="#0b7a55" text-anchor="middle">Delivered 1</text>
+  <rect x="394" y="98" width="84" height="28" rx="14" fill="#f3f3f3" stroke="#ddd"/><text x="436" y="117" font-size="11" fill="#888" text-anchor="middle">Updated 0</text>
+  <rect x="484" y="98" width="90" height="28" rx="14" fill="#f3f3f3" stroke="#ddd"/><text x="529" y="117" font-size="11" fill="#888" text-anchor="middle">Rejected 0</text>
+  <rect x="580" y="98" width="74" height="28" rx="14" fill="#f3f3f3" stroke="#ddd"/><text x="617" y="117" font-size="11" fill="#888" text-anchor="middle">Failed 0</text>
+
+  <!-- Card 1: Pending -->
+  <rect x="40" y="146" width="400" height="250" rx="12" fill="#FFFCF5" stroke="#FFA600" stroke-width="1.5"/>
+  <text x="60" y="176" font-size="13" font-weight="700" fill="#333">alice-consumer</text>
+  <text x="60" y="194" font-size="11" fill="#888" font-family="monospace">BPNL0000000CONS</text>
+  <rect x="300" y="160" width="54" height="22" rx="11" fill="#EAF1FE"/><text x="327" y="175" font-size="10" fill="#1565c0" text-anchor="middle" font-family="monospace">v9.0.0</text>
+  <rect x="300" y="188" width="120" height="24" rx="12" fill="#FDF6D8"/><text x="360" y="204" font-size="11" font-weight="700" fill="#8a6d00" text-anchor="middle">⧗ Pending</text>
+  <!-- part box -->
+  <rect x="60" y="222" width="360" height="56" rx="8" fill="#F5F9EE" stroke="#cfe3bf"/>
+  <text x="76" y="246" font-size="13" font-weight="700" fill="#1B5E20">001-alice-rim</text>
+  <text x="76" y="266" font-size="10" fill="#5c6b16" font-family="monospace">001-alice-rim : —</text>
+  <text x="60" y="304" font-size="11" fill="#888">Requested: Today at 10:14</text>
+  <!-- actions -->
+  <rect x="60" y="336" width="44" height="40" rx="8" fill="#ffffff" stroke="#c0c0c0"/><text x="82" y="361" font-size="16" fill="#888" text-anchor="middle">⟳</text>
+  <rect x="116" y="336" width="304" height="40" rx="8" fill="#1B5E20"/><text x="268" y="361" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">✓  Accept</text>
+  <circle cx="60" cy="336" r="12" fill="#FFA600"/><text x="60" y="340" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+  <circle cx="116" cy="336" r="12" fill="#FFA600"/><text x="116" y="340" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+  <circle cx="52" cy="146" r="13" fill="#FFA600"/><text x="52" y="151" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <!-- Card 2: Delivered -->
+  <rect x="455" y="146" width="400" height="250" rx="12" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="475" y="176" font-size="13" font-weight="700" fill="#333">bob-consumer</text>
+  <text x="475" y="194" font-size="11" fill="#888" font-family="monospace">BPNL0000000BOBB</text>
+  <rect x="715" y="160" width="54" height="22" rx="11" fill="#EAF1FE"/><text x="742" y="175" font-size="10" fill="#1565c0" text-anchor="middle" font-family="monospace">v7.0.0</text>
+  <rect x="715" y="188" width="120" height="24" rx="12" fill="#E6F7EF"/><text x="775" y="204" font-size="11" font-weight="700" fill="#0b7a55" text-anchor="middle">Delivered</text>
+  <rect x="475" y="222" width="360" height="56" rx="8" fill="#F5F9EE" stroke="#cfe3bf"/>
+  <text x="491" y="246" font-size="13" font-weight="700" fill="#1B5E20">001-bob-gear</text>
+  <text x="491" y="266" font-size="10" fill="#5c6b16" font-family="monospace">001-bob-gear : —</text>
+  <text x="475" y="304" font-size="11" fill="#888">Requested: Yesterday at 16:02</text>
+  <text x="475" y="352" font-size="12" fill="#1976d2">Show details ›</text>
+
+  <rect x="40" y="410" width="815" height="66" fill="#FFF7EC" stroke="#FFA600" stroke-width="1.5" rx="10"/>
+  <text x="60" y="436" font-size="12" fill="#8a5a00">Requests appear as cards. If <tspan font-weight="700">Accept</tspan> is disabled (PCF location not resolved), create the PCF data in</text>
+  <text x="60" y="456" font-size="12" fill="#8a5a00">PCF Management first, then use the <tspan font-weight="700">Refresh (⟳)</tspan> button on the card and Accept.</text>
+</svg>

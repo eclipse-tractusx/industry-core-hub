@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <rect x="0" y="0" width="900" height="470" fill="#0f1b33" opacity="0.06"/>
+  <rect x="180" y="30" width="540" height="410" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="210" y="68" font-size="18" font-weight="700" fill="#111">Upload Certificate</text>
+  <rect x="584" y="48" width="92" height="24" rx="12" fill="#FFF0D6" stroke="#FFA600"/>
+  <text x="630" y="65" font-size="11" font-weight="700" fill="#8a5a00" text-anchor="middle">PROVIDER</text>
+  <rect x="210" y="80" width="70" height="4" fill="#B3CB2D" rx="2"/>
+
+  <circle cx="240" cy="118" r="14" fill="#B3CB2D"/><text x="240" y="123" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">✓</text>
+  <text x="262" y="123" font-size="12" fill="#777">Details</text>
+  <line x1="330" y1="118" x2="380" y2="118" stroke="#B3CB2D" stroke-width="2"/>
+  <circle cx="400" cy="118" r="14" fill="#6B3FA0"/><text x="400" y="123" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+  <text x="422" y="123" font-size="12" font-weight="600" fill="#333">Validity</text>
+  <line x1="490" y1="118" x2="540" y2="118" stroke="#ccc" stroke-width="2"/>
+  <circle cx="560" cy="118" r="14" fill="#eaeaea"/><text x="560" y="123" font-size="13" font-weight="700" fill="#999" text-anchor="middle">3</text>
+  <text x="582" y="123" font-size="12" fill="#999">File (PDF)</text>
+
+  <text x="210" y="166" font-size="12" font-weight="600" fill="#333">Valid From *</text>
+  <rect x="210" y="174" width="230" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="226" y="199" font-size="13" fill="#333">2026-01-01</text>
+  <circle cx="440" cy="194" r="12" fill="#FFA600"/><text x="440" y="198" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <text x="460" y="166" font-size="12" font-weight="600" fill="#333">Valid Until</text>
+  <rect x="460" y="174" width="230" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="476" y="199" font-size="13" fill="#333">2027-01-01</text>
+
+  <text x="210" y="242" font-size="12" font-weight="600" fill="#333">Trust Level</text>
+  <rect x="210" y="250" width="230" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="226" y="275" font-size="13" fill="#9a9a9a">None / Low / High / Trusted</text>
+  <text x="460" y="242" font-size="12" font-weight="600" fill="#333">Registration Number</text>
+  <rect x="460" y="250" width="230" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="476" y="275" font-size="13" fill="#9a9a9a">Optional</text>
+
+  <text x="210" y="318" font-size="12" font-weight="600" fill="#333">Associated Sites (BPNS)</text>
+  <rect x="210" y="326" width="480" height="40" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="226" y="351" font-size="12" fill="#9a9a9a">Type a BPNS and press Enter to add (optional)</text>
+
+  <rect x="380" y="388" width="90" height="38" rx="8" fill="#ffffff" stroke="#c0c0c0"/><text x="425" y="412" font-size="13" fill="#555" text-anchor="middle">Back</text>
+  <rect x="590" y="388" width="100" height="38" rx="8" fill="#6B3FA0"/><text x="640" y="412" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Next</text>
+  <circle cx="690" cy="388" r="12" fill="#FFA600"/><text x="690" y="392" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+</svg>

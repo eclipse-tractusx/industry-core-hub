@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <rect x="0" y="0" width="900" height="470" fill="#0f1b33" opacity="0.06"/>
+  <!-- dialog -->
+  <rect x="230" y="40" width="440" height="390" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="260" y="80" font-size="18" font-weight="700" fill="#111">Add Subpart Relation</text>
+  <rect x="548" y="60" width="96" height="24" rx="12" fill="#F0F5D5" stroke="#B3CB2D"/>
+  <text x="596" y="77" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+  <rect x="260" y="92" width="70" height="4" fill="#B3CB2D" rx="2"/>
+  <text x="260" y="118" font-size="12" fill="#777">Parent Part: 001-alice-wheel</text>
+  <text x="260" y="142" font-size="12" fill="#666">Enter the supplier BPN and part ID to create a subpart</text>
+  <text x="260" y="158" font-size="12" fill="#666">relation and enable PCF data requests.</text>
+
+  <!-- supplier BPN field -->
+  <text x="260" y="192" font-size="12" font-weight="600" fill="#333">Supplier BPN</text>
+  <rect x="260" y="200" width="380" height="42" rx="8" fill="#f7f7f7" stroke="#cfcfcf" stroke-width="1.5"/>
+  <text x="276" y="226" font-size="13" fill="#9a9a9a">BPNL00000001SUPP</text>
+  <text x="260" y="258" font-size="10" fill="#999">Business Partner Number (BPNL or BPNS)</text>
+  <circle cx="640" cy="221" r="13" fill="#FFA600"/><text x="640" y="226" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <!-- part id field -->
+  <text x="260" y="292" font-size="12" font-weight="600" fill="#333">Manufacturer Part ID</text>
+  <rect x="260" y="300" width="380" height="42" rx="8" fill="#f7f7f7" stroke="#cfcfcf" stroke-width="1.5"/>
+  <text x="276" y="326" font-size="13" fill="#9a9a9a">Enter supplier's part ID</text>
+  <text x="260" y="358" font-size="10" fill="#999">The part ID as assigned by the supplier</text>
+  <circle cx="640" cy="321" r="13" fill="#FFA600"/><text x="640" y="326" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+
+  <!-- buttons -->
+  <rect x="382" y="378" width="90" height="38" rx="8" fill="#ffffff" stroke="#c0c0c0" stroke-width="1.5"/>
+  <text x="427" y="402" font-size="13" fill="#555" text-anchor="middle">Cancel</text>
+  <rect x="480" y="378" width="160" height="38" rx="8" fill="#1B5E20"/>
+  <text x="560" y="402" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Add Subpart Relation</text>
+  <circle cx="640" cy="378" r="13" fill="#FFA600"/><text x="640" y="383" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+</svg>

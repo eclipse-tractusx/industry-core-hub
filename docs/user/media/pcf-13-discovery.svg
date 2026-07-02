@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <rect x="12" y="12" width="876" height="446" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <rect x="12" y="12" width="876" height="38" rx="12" fill="#B3CB2D"/>
+  <rect x="12" y="38" width="876" height="12" fill="#B3CB2D"/>
+  <circle cx="36" cy="31" r="5" fill="#ffffff" opacity="0.9"/><circle cx="54" cy="31" r="5" fill="#ffffff" opacity="0.7"/><circle cx="72" cy="31" r="5" fill="#ffffff" opacity="0.5"/>
+  <rect x="92" y="19" width="460" height="24" rx="12" fill="#ffffff"/>
+  <text x="108" y="36" font-size="12" fill="#666">/dataspace-discovery</text>
+  <rect x="760" y="19" width="116" height="24" rx="12" fill="#ffffff"/>
+  <text x="818" y="36" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+
+  <text x="40" y="84" font-size="18" font-weight="700" fill="#111">Parts Discovery</text>
+
+  <!-- mode tabs -->
+  <rect x="40" y="100" width="110" height="30" rx="8" fill="#576A8F"/><text x="95" y="120" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Discovery</text>
+  <rect x="154" y="100" width="110" height="30" rx="8" fill="#ffffff" stroke="#cfcfcf"/><text x="209" y="120" font-size="12" fill="#666" text-anchor="middle">Single Twin</text>
+
+  <!-- left filter column -->
+  <rect x="40" y="146" width="230" height="266" rx="10" fill="#f7f8fa" stroke="#e0e0e0"/>
+  <text x="58" y="172" font-size="12" font-weight="700" fill="#555">Digital Twin Type</text>
+  <rect x="58" y="182" width="194" height="34" rx="8" fill="#EAF1FE" stroke="#4D73D5"/>
+  <text x="155" y="204" font-size="12" font-weight="700" fill="#2B4078" text-anchor="middle">Part Type (Catalog)</text>
+  <circle cx="252" cy="199" r="12" fill="#FFA600"/><text x="252" y="203" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+  <text x="58" y="244" font-size="12" font-weight="700" fill="#555">Results per Page</text>
+  <rect x="58" y="254" width="90" height="30" rx="8" fill="#ffffff" stroke="#cfcfcf"/><text x="103" y="274" font-size="12" fill="#666" text-anchor="middle">No Limit</text>
+  <text x="58" y="312" font-size="12" font-weight="700" fill="#555">Optional filters</text>
+  <rect x="58" y="322" width="194" height="30" rx="8" fill="#ffffff" stroke="#cfcfcf"/><text x="70" y="342" font-size="11" fill="#9a9a9a">Manufacturer Part ID…</text>
+  <rect x="58" y="360" width="194" height="30" rx="8" fill="#ffffff" stroke="#cfcfcf"/><text x="70" y="380" font-size="11" fill="#9a9a9a">Customer Part ID…</text>
+
+  <!-- main search -->
+  <text x="290" y="170" font-size="12" font-weight="700" fill="#555">Partner BPNL</text>
+  <rect x="290" y="180" width="420" height="46" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="308" y="208" font-size="13" fill="#333">alice — BPNL0000000PROV</text>
+  <circle cx="290" cy="180" r="13" fill="#FFA600"/><text x="290" y="185" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <rect x="726" y="180" width="120" height="46" rx="8" fill="#576A8F"/>
+  <text x="786" y="208" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Start Discovery</text>
+  <circle cx="846" cy="180" r="13" fill="#FFA600"/><text x="846" y="185" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+
+  <rect x="290" y="246" width="556" height="166" fill="#F5F9EE" stroke="#4CAF50" stroke-width="1.5" rx="10"/>
+  <text x="310" y="274" font-size="13" font-weight="700" fill="#1B5E20">How to search the shared part</text>
+  <text x="310" y="298" font-size="12" fill="#444">① Partner BPNL — select the provider who shared with you.</text>
+  <text x="310" y="320" font-size="12" fill="#444">② Digital Twin Type — keep Part Type (Catalog) for a catalog part.</text>
+  <text x="310" y="342" font-size="12" fill="#444">③ Start Discovery — searches the dataspace (may take a few seconds).</text>
+  <text x="310" y="372" font-size="12" fill="#777">Tip: to find only your piece among many, type its Manufacturer</text>
+  <text x="310" y="390" font-size="12" fill="#777">Part ID (001-alice-wheel) in the optional filter on the left.</text>
+</svg>
