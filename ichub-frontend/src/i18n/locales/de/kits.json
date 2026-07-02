@@ -97,6 +97,16 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "End-to-End-Rückverfolgbarkeit von Teilen, Warnungen und Komponenten entlang der Lieferkette."
+    },
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Erkunden und interagieren Sie mit Catena-X-Dataspace-Daten mithilfe von KI-gestützten Tools über das Model Context Protocol (MCP). Verbinden Sie Ihren KI-Assistenten direkt mit digitalen Zwillingen, Partnernetzwerken und Lieferkettendaten.",
+      "features": {
+        "mcpTools": {
+          "name": "MCP-Tools",
+          "description": "KI-gestützte Tools zum Erkunden digitaler Zwillinge, Entdecken von Partnern und Konsumieren von Dataspace-Daten über das Model Context Protocol."
+        }
+      }
     }
   }
 }

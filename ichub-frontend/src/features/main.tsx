@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
- * 
+ *
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
@@ -42,6 +43,7 @@ import {
   CloudUpload,
   Inbox
 } from '@mui/icons-material';
+import McpIcon from './mcp-addon/McpIcon';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
 import { KitFeature } from './kit-features/types';
@@ -55,6 +57,7 @@ import PcfKitImage from '@/features/kit-features/assets/kit-images/pcf-kit.svg';
 import DataChainKitImage from '@/features/kit-features/assets/kit-images/data-chain-kit.svg';
 import DcmKitImage from '@/features/kit-features/assets/kit-images/dcm-kit.svg';
 import TraceabilityKitImage from '@/features/kit-features/assets/kit-images/traceability-kit.svg';
+import McpAddonImage from '@/features/kit-features/assets/kit-images/mcp-addon.svg';
 
 // Import feature modules
 import { catalogManagementFeature } from './industry-core-kit/catalog-management/routes';
@@ -66,6 +69,7 @@ import { passportProvisionFeature } from './eco-pass-kit/passport-provision/rout
 import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
+import { mcpAddonFeature } from './mcp-addon/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -256,6 +260,30 @@ export const kits: KitFeature[] = [
     version: '0.0.0',
     domain: 'industry-core',
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/Traceability%20Kit/Adoption%20View%20Traceability%20Kit'
+  },
+  {
+    id: 'mcp',
+    name: i18n.t('mcp.name', { ns: 'kits' }),
+    description: i18n.t('mcp.description', { ns: 'kits' }),
+    status: 'available',
+    icon: <McpIcon />,
+    image: McpAddonImage,
+    features: [
+      {
+        module: mcpAddonFeature,
+        id: 'mcp-tools',
+        name: i18n.t('mcp.features.mcpTools.name', { ns: 'kits' }),
+        description: i18n.t('mcp.features.mcpTools.description', { ns: 'kits' }),
+        icon: <McpIcon />,
+        enabled: false,
+        default: false
+      }
+    ],
+    domain: 'dataspace-foundation',
+    version: '0.0.1',
+    createdAt: '2026-05-19',
+    lastUpdated: '2026-05-19',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits'
   }
 ];
 

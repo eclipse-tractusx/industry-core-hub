@@ -105,6 +105,16 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "Trazabilidad de extremo a extremo de piezas, alertas y componentes a lo largo de la cadena de suministro."
+    },
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Explora e interactúa con los datos del dataspace de Catena-X usando herramientas impulsadas por IA a través del Model Context Protocol (MCP). Conecta tu asistente de IA directamente con gemelos digitales, redes de socios y datos de la cadena de suministro.",
+      "features": {
+        "mcpTools": {
+          "name": "Herramientas MCP",
+          "description": "Herramientas impulsadas por IA para explorar gemelos digitales, descubrir socios y consumir datos del dataspace a través del Model Context Protocol."
+        }
+      }
     }
   }
 }

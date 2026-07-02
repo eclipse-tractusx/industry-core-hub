@@ -11,7 +11,7 @@
 # terms of the Apache License, Version 2.0 which is available at
 # https://www.apache.org/licenses/LICENSE-2.0.
 #
-# Unless required by applicable law or agreed in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 # either express or implied. See the
@@ -21,21 +21,19 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from fastapi import APIRouter, Depends
-from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
-from managers.config.config_manager import ConfigManager
-from .ecopass_kit import ecopass_kit
-from .pcf_kit import pcf_kit
+from typing import Optional
+from pydantic import BaseModel
 
-router = APIRouter(
-    prefix="/addons",
-    tags=["Add-Ons Microservices"],
-    dependencies=[Depends(get_authentication_dependency())]
-)
 
-router.include_router(ecopass_kit.router)
-router.include_router(pcf_kit.router)
+class AuditRecord(BaseModel):
+    """One structured audit log entry per MCP tool call."""
 
-if ConfigManager.get_config("addons.mcp_addon.enabled", True):
-    from .mcp_addon import mcp_addon
-    router.include_router(mcp_addon.router)
+    timestamp: str
+    mcp_session_id: str
+    mcp_tool_name: str
+    redacted_args: dict
+    end_user_sub: str
+    outcome: str  # "success" | "error"
+    duration_ms: int
+    downstream_ids: list[str]
+    error_message: Optional[str] = None
