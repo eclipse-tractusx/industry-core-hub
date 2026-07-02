@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="470" fill="#ffffff"/>
+  <rect x="12" y="12" width="876" height="446" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <rect x="12" y="12" width="876" height="38" rx="12" fill="#FFA600"/>
+  <rect x="12" y="38" width="876" height="12" fill="#FFA600"/>
+  <circle cx="36" cy="31" r="5" fill="#ffffff" opacity="0.9"/><circle cx="54" cy="31" r="5" fill="#ffffff" opacity="0.7"/><circle cx="72" cy="31" r="5" fill="#ffffff" opacity="0.5"/>
+  <rect x="92" y="19" width="460" height="24" rx="12" fill="#ffffff"/>
+  <text x="108" y="36" font-size="12" fill="#666">/product/…/001-alice-wheel</text>
+  <rect x="762" y="19" width="114" height="24" rx="12" fill="#ffffff"/>
+  <text x="819" y="36" font-size="11" font-weight="700" fill="#8a5a00" text-anchor="middle">PROVIDER</text>
+
+  <text x="40" y="82" font-size="16" font-weight="700" fill="#333">Catalog part details — scroll down to the Submodels section</text>
+
+  <!-- Submodels section header -->
+  <text x="40" y="120" font-size="16" font-weight="700" fill="#111">Submodels</text>
+  <rect x="686" y="102" width="164" height="36" rx="8" fill="#1976d2"/>
+  <text x="768" y="125" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">+  New Submodel</text>
+  <circle cx="686" cy="102" r="13" fill="#FFA600"/><text x="686" y="107" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <!-- existing submodel cards (carousel, 3 per page) -->
+  <rect x="40" y="150" width="250" height="180" rx="10" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="60" y="180" font-size="13" font-weight="700" fill="#333">SingleLevelBomAsPlanned</text>
+  <rect x="60" y="192" width="90" height="22" rx="11" fill="#F0F5D5"/><text x="105" y="207" font-size="10" font-weight="700" fill="#5c6b16" text-anchor="middle">Registered</text>
+  <rect x="158" y="192" width="60" height="22" rx="11" fill="#EAF1FE"/><text x="188" y="207" font-size="10" fill="#1565c0" text-anchor="middle">v3.0.0</text>
+  <text x="60" y="238" font-size="9" fill="#999">SUBMODEL ID</text>
+  <text x="60" y="252" font-size="10" fill="#777" font-family="monospace">urn:uuid:8a…c2</text>
+  <rect x="60" y="284" width="210" height="30" rx="8" fill="#1976d2"/><text x="165" y="304" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">View Submodel</text>
+
+  <rect x="305" y="150" width="250" height="180" rx="10" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="325" y="180" font-size="13" font-weight="700" fill="#333">SingleLevelUsageAsPlanned</text>
+  <rect x="325" y="192" width="70" height="22" rx="11" fill="#f5efd5"/><text x="360" y="207" font-size="10" font-weight="700" fill="#8f8013" text-anchor="middle">Created</text>
+  <rect x="403" y="192" width="60" height="22" rx="11" fill="#EAF1FE"/><text x="433" y="207" font-size="10" fill="#1565c0" text-anchor="middle">v3.0.0</text>
+  <text x="325" y="238" font-size="9" fill="#999">SUBMODEL ID</text>
+  <text x="325" y="252" font-size="10" fill="#777" font-family="monospace">urn:uuid:1f…9b</text>
+  <rect x="325" y="284" width="210" height="30" rx="8" fill="#1976d2"/><text x="430" y="304" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">View Submodel</text>
+
+  <rect x="570" y="150" width="130" height="180" rx="10" fill="#fafafa" stroke="#eee" stroke-dasharray="5 5"/>
+  <text x="635" y="245" font-size="26" fill="#ccc" text-anchor="middle">›</text>
+
+  <rect x="40" y="348" width="810" height="96" fill="#FFF7EC" stroke="#FFA600" stroke-width="1.5" rx="10"/>
+  <text x="60" y="376" font-size="13" font-weight="700" fill="#8a5a00">Where to add the PCF submodel</text>
+  <text x="60" y="400" font-size="12" fill="#444">Open the part with View Details and scroll down to the Submodels section. Click ① New Submodel.</text>
+  <text x="60" y="422" font-size="12" fill="#777">The submodels already listed (SingleLevel BoM, etc.) are not PCF — you are creating a new one.</text>
+</svg>

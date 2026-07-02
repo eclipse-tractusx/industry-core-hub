@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="400" height="400" fill="#ffffff"/>
+  <rect x="8" y="8" width="384" height="384" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="28" y="48" font-size="16" font-weight="700" fill="#111">Certificate Feedback</text>
+  <rect x="272" y="30" width="100" height="24" rx="12" fill="#F0F5D5" stroke="#B3CB2D"/>
+  <text x="322" y="47" font-size="11" font-weight="700" fill="#5c6b16" text-anchor="middle">CONSUMER</text>
+  <rect x="28" y="60" width="60" height="4" fill="#B3CB2D" rx="2"/>
+
+  <text x="28" y="96" font-size="13" font-weight="700" fill="#2e7d32">Outcome: ACCEPTED</text>
+
+  <rect x="28" y="116" width="110" height="44" rx="8" fill="#ffffff" stroke="#cfcfcf"/>
+  <text x="83" y="143" font-size="12" fill="#888" text-anchor="middle">Received</text>
+  <rect x="146" y="116" width="110" height="44" rx="8" fill="#E8F5E9" stroke="#2e7d32" stroke-width="2"/>
+  <text x="201" y="143" font-size="12" font-weight="700" fill="#2e7d32" text-anchor="middle">Accepted</text>
+  <rect x="264" y="116" width="108" height="44" rx="8" fill="#ffffff" stroke="#cfcfcf"/>
+  <text x="318" y="143" font-size="12" fill="#888" text-anchor="middle">Rejected</text>
+
+  <rect x="28" y="196" width="344" height="90" rx="8" fill="#E8F5E9"/>
+  <text x="44" y="226" font-size="12" fill="#2e7d32">You approve the certificate.</text>
+  <text x="44" y="250" font-size="12" fill="#2e7d32">No extra details are required.</text>
+
+  <rect x="252" y="336" width="120" height="38" rx="8" fill="#6B3FA0"/>
+  <text x="312" y="360" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Send Feedback</text>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" font-family="'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <rect width="900" height="380" fill="#ffffff"/>
+  <rect x="0" y="0" width="900" height="380" fill="#0f1b33" opacity="0.06"/>
+  <rect x="230" y="40" width="440" height="300" rx="12" fill="#ffffff" stroke="#dcdcdc" stroke-width="2"/>
+  <text x="260" y="76" font-size="17" font-weight="700" fill="#111">Push Certificate</text>
+  <rect x="260" y="88" width="70" height="4" fill="#B3CB2D" rx="2"/>
+  <rect x="566" y="56" width="86" height="24" rx="12" fill="#FFF0D6" stroke="#FFA600"/>
+  <text x="609" y="73" font-size="11" font-weight="700" fill="#8a5a00" text-anchor="middle">PROVIDER</text>
+  <text x="260" y="112" font-size="12" fill="#666">Send a certificate directly to a partner — no prior request</text>
+
+  <text x="260" y="148" font-size="12" font-weight="600" fill="#333">Certificate to push</text>
+  <rect x="260" y="156" width="380" height="42" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="276" y="182" font-size="13" fill="#333">001-alice.4 — ISO 27001</text>
+  <circle cx="640" cy="177" r="12" fill="#FFA600"/><text x="640" y="181" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+
+  <text x="260" y="222" font-size="12" font-weight="600" fill="#333">Recipient (Consumer BPN)</text>
+  <rect x="260" y="230" width="380" height="42" rx="8" fill="#f7f7f7" stroke="#cfcfcf"/>
+  <text x="276" y="256" font-size="13" fill="#9a9a9a">Select or type the recipient's BPNL</text>
+  <circle cx="640" cy="251" r="12" fill="#FFA600"/><text x="640" y="255" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+
+  <rect x="440" y="292" width="90" height="34" rx="8" fill="#ffffff" stroke="#c0c0c0"/><text x="485" y="314" font-size="12" fill="#555" text-anchor="middle">Cancel</text>
+  <rect x="536" y="292" width="104" height="34" rx="8" fill="#6B3FA0"/><text x="588" y="314" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">Push Certificate</text>
+  <circle cx="640" cy="292" r="12" fill="#FFA600"/><text x="640" y="296" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+</svg>
