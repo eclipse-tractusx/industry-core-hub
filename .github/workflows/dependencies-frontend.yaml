@@ -50,7 +50,7 @@ jobs:
 
       - name: Generate Dependencies file
         run: |
-          curl -L --output ./dash.jar 'https://repo.eclipse.org/service/local/artifact/maven/redirect?r=dash-licenses&g=org.eclipse.dash&a=org.eclipse.dash.licenses&v=LATEST'
+          curl -L --output ./dash.jar 'https://repo.eclipse.org/service/rest/v1/search/assets/download?repository=dash-maven2-releases&maven.groupId=org.eclipse.dash&maven.artifactId=org.eclipse.dash.licenses&maven.baseVersion=1.1.0&maven.extension=jar'
 
           java -jar ./dash.jar ichub-frontend/package-lock.json -project automotive.tractusx -summary DEPENDENCIES_ICHUB-FRONTEND || true
 

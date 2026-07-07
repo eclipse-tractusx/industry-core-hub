@@ -36,6 +36,13 @@ SPDX-License-Identifier: CC-BY-4.0
 | --------------------- | ------- | ------------------------------------------ | --------------------------------------- |
 | Mathias Brunkow Moser | Catena-X e.V. | [@matbmoser](https://github.com/matbmoser) | Chief Software Architect & Eclipse Tractus-X Project Lead |
 
+---
+
+> **📘 Getting Started**  
+> New to Industry Core Hub? Try our **[Quickstart Guide](../QUICKSTART.md)** to get hands-on experience before diving into the architecture details.
+
+---
+
 # Index
 
 - [Metadata](#metadata)

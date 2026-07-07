@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -26,30 +27,19 @@ import { AppConfig } from '../config/schema';
 // Re-export types for backward compatibility
 export type { AuthUser, AuthTokens } from '../config/schema';
 
-// Types for governance configuration
-export interface GovernanceConstraint {
-  leftOperand: string;
-  operator: string;
-  rightOperand: string;
-}
+// Re-export Saturn-format policy types from schema
+export type {
+  PolicyConstraint,
+  PolicyConstraintExpression,
+  PolicyRule,
+  PolicyContextEntry,
+  PolicyDefinition,
+  AgreementConfig,
+  DtrPolicyConfig,
+  GovernanceConstraint,
+} from '../config/schema';
 
-export interface GovernanceRule {
-  action: string;
-  LogicalConstraint?: string;
-  constraints: GovernanceConstraint[];
-}
-
-export interface GovernancePolicy {
-  strict?: boolean; // Made optional to handle missing values
-  permission: GovernanceRule | GovernanceRule[];
-  prohibition: GovernanceRule | GovernanceRule[];
-  obligation: GovernanceRule | GovernanceRule[];
-}
-
-export interface GovernanceConfig {
-  semanticid: string;
-  policies: GovernancePolicy[];
-}
+import type { AgreementConfig, DtrPolicyConfig } from '../config/schema';
 
 // =================================================================
 // REUSABLE CONFIGURATION UTILITIES
@@ -171,7 +161,7 @@ class EnvironmentService {
     const keycloakConfig = this.getKeycloakConfig();
     return {
       onLoad: keycloakConfig.onLoad || 'check-sso',
-      checkLoginIframe: keycloakConfig.checkLoginIframe !== false,
+      checkLoginIframe: false, // Disable to prevent session checking issues during navigation
       silentCheckSsoRedirectUri: keycloakConfig.silentCheckSsoRedirectUri,
       pkceMethod: keycloakConfig.pkceMethod || 'S256',
       enableLogging: keycloakConfig.enableLogging || false,
@@ -243,14 +233,14 @@ class EnvironmentService {
     return this.config.participant.id;
   }
 
-  /** @deprecated Use getGovernanceConfig().config */
-  getGovernanceConfigLegacy(): GovernanceConfig[] {
-    return this.config.governance.config;
+  /** Get agreements configuration (Saturn format) */
+  getAgreementsConfig(): AgreementConfig[] {
+    return this.config.governance.agreements;
   }
 
-  /** @deprecated Use getGovernanceConfig().dtrPolicies */
-  getDtrPoliciesConfig(): GovernancePolicy[] {
-    return this.config.governance.dtrPolicies;
+  /** Get DTR policy configuration (Saturn format with usage/access) */
+  getDtrPolicyConfig(): DtrPolicyConfig {
+    return this.config.governance.dtrPolicy;
   }
 
   // Configuration management
@@ -330,23 +320,35 @@ export const getBpn = (): string => {
 export const isRequireHttpsUrlPattern = () =>
   import.meta.env.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
-export const getIchubBackendUrl = () => window?.ENV?.ICHUB_BACKEND_URL ?? import.meta.env.VITE_ICHUB_BACKEND_URL ?? '';
-
-/** @deprecated Use getBpn() instead */
+export const getIchubBackendUrl = () => import.meta.env.VITE_ICHUB_BACKEND_URL || window?.ENV?.ICHUB_BACKEND_URL || '';
 export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
-export const getGovernanceConfig = (): GovernanceConfig[] => {
-  return parseConfig<GovernanceConfig[]>(
+/** Polling interval in ms for fetching notifications (default 30s) */
+export const getNotificationsPollInterval = (): number => {
+  const value = window?.ENV?.NOTIFICATIONS_POLL_INTERVAL ?? import.meta.env.VITE_NOTIFICATIONS_POLL_INTERVAL ?? '30000';
+  return parseInt(value, 10) || 30000;
+};
+
+export const getGovernanceConfig = (): AgreementConfig[] => {
+  return parseConfig<AgreementConfig[]>(
     'GOVERNANCE_CONFIG',
     'VITE_GOVERNANCE_CONFIG',
     []
   );
 };
 
-export const getDtrPoliciesConfig = (): GovernancePolicy[] => {
-  return parseConfig<GovernancePolicy[]>(
+export const getDtrPoliciesConfig = (): DtrPolicyConfig => {
+  return parseConfig<DtrPolicyConfig>(
     'DTR_POLICIES_CONFIG',
     'VITE_DTR_POLICIES_CONFIG',
+    []
+  );
+};
+
+export const getPcfExchangePoliciesConfig = (): DtrPolicyConfig => {
+  return parseConfig<DtrPolicyConfig>(
+    'PCF_EXCHANGE_POLICIES_CONFIG',
+    'VITE_PCF_EXCHANGE_POLICIES_CONFIG',
     []
   );
 };

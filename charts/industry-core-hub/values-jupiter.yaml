@@ -1,0 +1,1242 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+# Default values for industry-core-hub.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nameOverride: ""
+fullnameOverride: ""
+replicaCount: 1
+
+# -- Deployment mode: "helm" for standard Helm deployments, "argocd" for ArgoCD deployments
+# This controls which annotations are used for the realm import job
+deploymentMode: "helm"
+
+participantId: ""
+
+# -- Backend configuration
+backend:
+  apiVersion: v1
+  enabled: true
+  name: "industry-core-hub-backend"
+  image:
+    repository: "tractusx/industry-core-hub-backend"
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag whose default is the chart appVersion
+    tag: ""
+    # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
+    pullSecrets: []
+
+  service:
+    # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
+    type: ClusterIP
+    portService: 8000
+    portContainer: 8000
+  cors:
+    enabled: true
+    allow_origins:
+      - "https://<frontend-hostname>"  # Production frontend URL
+    allow_credentials: true
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+      - "PATCH"
+    allow_headers:
+      - "*"
+  # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
+  configuration:
+    # -- Agreements define the ODRL policies for each semantic model.
+    # The format follows the Tractus-X SDK TCK reference (plain keys).
+    # Both Jupiter and Saturn use identical rule structures — only the context differs.
+    # The JSON-LD @context handles namespace expansion (ODRL prefixes, cx-policy terms).
+    agreements:
+      - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "UsagePurpose"
+                operator: "eq"
+                rightOperand: "cx.circular.dpp:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: urn:samm:io.catenax.serial_part:3.0.0#SerialPart
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "eq"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+      - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        usage:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "UsagePurpose"
+                operator: "eq"
+                rightOperand: "cx.core.industrycore:1"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibitions: []
+          obligations: []
+    authorization:
+      enabled: true
+      apiKey:
+        key: "X-Api-Key"
+        value: ["<example>"]
+      keycloak:
+        enabled: false
+        authUrl: "https://<ichub-idp-url>/auth/"
+        realm: "<realm>"
+        clientId: "<client-id>"
+        clientSecret: "<client-secret>"
+        # -- Retry configuration for Keycloak connection
+        retry:
+          maxRetries: 5
+          retryDelay: 10
+          # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
+          backgroundRetryInterval: 60
+    # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
+    database:
+      echo: false
+      # -- seconds to wait for the database to respond before aborting the connection attempt
+      timeout: 8
+      # -- seconds to wait between retry attempts
+      retry_interval: 5
+    # Configuration for the logger settings
+    logger:
+     # Possible values: WARNING, INFO, DEBUG
+      level: "INFO"
+    # -- Consumer configuration
+    consumer:
+      discovery:
+        discovery_finder:
+          url: "https://<discovery-finder-url>/api/v1.0/administration/connectors/discovery/search"
+        connector_discovery:
+          key: "bpn"
+        oauth:
+          url: "https://<central-idp-url>/auth/"
+          realm: "<realm>"
+          client_id: "<client-id>"
+          client_secret: "<client-secret>"
+        digitalTwinRegistry:
+          dct_type_key: "dct:type"
+          dct_type_filter:
+            operandLeft: "'http://purl.org/dc/terms/type'.'@id'"
+            operator: "="
+            operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-consumer-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<consumer-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+          catalogPath: "/catalog"
+    # -- Provider configuration
+    provider:
+      connector:
+        dataspace:
+          version: "jupiter"
+        controlplane:
+          hostname: "https://<edc-provider-control-hostname>"
+          apiKeyHeader: "X-Api-Key"
+          apiKey: "<provider-edc-api-key>"
+          managementPath: "/management"
+          protocolPath: "/api/v1/dsp"
+        dataplane:
+          hostname: "https://<edc-provider-dataplane-hostname>"
+          publicPath: "/api/public"
+      digitalTwinRegistry:
+        hostname: "https://<dtr-hostname>"
+        apiPath: "/api/v3"
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+          # existing_asset_id: <registry-asset> # -- In case an existing DTR asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "eq"
+                      rightOperand: "cx.core.digitalTwinRegistry:1"
+            prohibitions: []
+            obligations: []
+          access:
+            context:
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibitions: []
+            obligations: []
+      digitalTwinEventAPI:
+        hostname: "http://<provider-digital-twin-event-api>"
+        apiPath: /api/v3
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
+          # existing_asset_id: <event-asset> # -- In case an existing DT Event asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        lookup:
+          uri: ""
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "eq"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibitions: []
+            obligations: []
+          access:
+            context:
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  leftOperand: "Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibitions: []
+            obligations: []
+      # -- Submodel Dispatcher configuration
+      submodel_dispatcher:
+        # -- Storage mode: "filesystem" (local storage) or "http" (external service)
+        mode: "filesystem"
+        # -- Local filesystem path for submodels (used when mode=filesystem)
+        path: "/industry-core-hub/data/submodels"
+        apiPath: "/submodel-dispatcher"
+        # -- External HTTP submodel service configuration (used when mode=http)
+        http:
+          # -- Base URL of the external ICHub-compatible submodel service
+          base_url: "https://external-ichub.example.com"
+          # -- Optional API path prefix
+          api_path: ""
+          # -- Authentication configuration
+          auth:
+            # -- Enable authentication
+            enabled: false
+            # -- Authentication type: "bearer" or "apikey"
+            type: "apikey"
+            # -- Authentication token/key (can use $KUBE_ENV_VAR syntax for secrets)
+            token: ""
+            # -- Header name for API key (required when type="apikey")
+            key_name: "X-Api-Key"
+          # -- Request timeout in seconds
+          timeout: 30
+          # -- SSL certificate verification
+          verify_ssl: true
+
+  podAnnotations: {}
+
+  podLabels: {}
+
+  healthChecks:
+    startup:
+      enabled: false
+      path: "/"
+    liveness:
+      enabled: false
+      path: "/"
+    readiness:
+      enabled: false
+      path: "/"
+
+  # -- ingress declaration to expose the industry-core-hub-backend service
+  ingress:
+    enabled: false
+    className: "nginx"
+    ## Optional annotations when using the nginx ingress class
+    # annotations:
+    #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+    #   nginx.ingress.kubernetes.io/use-regex: "true"
+    #   nginx.ingress.kubernetes.io/enable-cors: "true"
+    #   # -- Provide CORS allowed origin.
+    #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
+    # -- Ingress TLS configuration
+    tls: []
+      # # -- Provide tls secret.
+      # - secretName: ""
+      #   # -- Provide host for tls secret.
+      #   hosts:
+      #     - ""
+    hosts:
+      - host: ""
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "backend"
+              port: 8000
+
+  # -- The [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod) defines privilege and access control settings for a Pod within the deployment
+  podSecurityContext:
+    seccompProfile:
+      # -- Restrict a Container's Syscalls with seccomp
+      type: RuntimeDefault
+    # -- Runs all processes within a pod with a special uid
+    runAsUser: 10000
+    # -- Processes within a pod will belong to this guid
+    runAsGroup: 10001
+    # -- The owner for volumes and any files created within volumes will belong to this guid
+    fsGroup: 10001
+
+   # The [container security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) defines privilege and access control settings for a Container within a pod
+  securityContext:
+    capabilities:
+      # -- Specifies which capabilities to drop to reduce syscall attack surface
+      drop:
+        - ALL
+      # -- Specifies which capabilities to add to issue specialized syscalls
+      add: []
+    # -- Whether the root filesystem is mounted in read-only mode
+    readOnlyRootFilesystem: true
+    # -- Controls [Privilege Escalation](https://kubernetes.io/docs/concepts/security/pod-security-policy/#privilege-escalation) enabling setuid binaries changing the effective user ID
+    allowPrivilegeEscalation: false
+    # -- Requires the container to run without root privileges
+    runAsNonRoot: true
+    # -- The container's process will run with the specified uid
+    runAsUser: 10000
+    # -- The owner for volumes and any files created within volumes will belong to this guid
+    runAsGroup: 10001
+
+  # -- specifies volume mounts for the backend deployment
+  volumeMounts:
+    - name: data-volume
+      mountPath: /industry-core-hub/data
+      subPath: data
+    - name: logs-volume
+      mountPath: /industry-core-hub/logs
+      subPath: logs
+    - name: backend-config-configmap
+      mountPath: /industry-core-hub/config
+    - name: tmpfs
+      mountPath: /industry-core-hub/tmp
+
+  # -- volume claims for the containers
+  volumes:
+    # -- persist the backend configuration
+    - name: backend-config-configmap
+      configMap:
+        name: "{{ .Release.Name }}-config"
+    # -- persist the backend data directories
+    - name: logs-volume
+      persistentVolumeClaim:
+        claimName: "{{ .Release.Name }}-pvc-logs-backend"
+    - name: data-volume
+      persistentVolumeClaim:
+        claimName: "{{ .Release.Name }}-pvc-data-backend"
+    # -- temporary file system mount
+    - name: tmpfs
+      emptyDir: {}
+  # -- Persistance configuration for the backend
+  persistence:
+    # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)
+    enabled: true
+    data:
+      # -- Enable data persistence
+      enabled: true
+      # -- Storage size for data
+      size: 1Gi
+      # -- Access mode for data volume
+      accessMode: ReadWriteOnce
+      # -- Storage class for data volume
+      storageClass: "standard"
+    logs:
+      # -- Enable logs persistence
+      enabled: true
+      # -- Storage size for logs
+      size: 1Gi
+      # -- Access mode for logs volume
+      accessMode: ReadWriteOnce
+      # -- Storage class for logs volume
+      storageClass: "standard"
+
+  # @url: https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-resource-requests-and-limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+      ephemeral-storage: "2Gi"
+    requests:
+      cpu: 250m
+      memory: 512Mi
+      ephemeral-storage: "2Gi"
+
+  # Server configuration for uvicorn workers and threads
+  server:
+    # Worker configuration
+    workers:
+      max_workers: 1                        # Single worker for optimal in-memory state
+      worker_threads: 200                   # High thread count for blocking operations
+
+    # Timeout configuration (in seconds)
+    timeouts:
+      keep_alive: 300                       # 5 minutes for DTR operations
+      graceful_shutdown: 30                 # 30 seconds for graceful shutdown
+
+  # -- Jobs configuration for background tasks
+  jobs:
+    # Asset synchronization job
+    assetSync:
+      # -- Enable asset sync job (can be deployed as Job or CronJob)
+      enabled: true
+      # -- Type of job: "job" for one-time execution, "cronjob" for scheduled execution
+      type: "cronjob"  # job or cronjob
+      # -- Cron schedule (only used when type is "cronjob")
+      # Example: "0 */6 * * *" runs every 6 hours
+      schedule: "0 2 * * *"  # Daily at 2 AM
+      # -- Deadline in seconds for starting the job if it misses scheduled time (CronJob only)
+      startingDeadlineSeconds: 200
+      # -- Restart policy for job pods
+      restartPolicy: "OnFailure"
+      # -- Number of retries before marking job as failed
+      backoffLimit: 3
+      # -- Concurrency policy for CronJob (only used when type is "cronjob")
+      # Options: Allow, Forbid, Replace
+      concurrencyPolicy: "Forbid"
+      # -- Number of successful jobs to keep in history (CronJob only)
+      successfulJobsHistoryLimit: 3
+      # -- Number of failed jobs to keep in history (CronJob only)
+      failedJobsHistoryLimit: 3
+      # -- Resource limits for the job
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+          ephemeral-storage: "128Mi"
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: "1Gi"
+
+frontend:
+  # -- Enhanced frontend configuration
+  config:
+    # Core application settings
+    environment: "development"  # development, staging, production
+    version: "1.0.0"
+
+    # API and backend configuration
+    ichubBackendUrl: "https://<backend-hostname>/v1"
+    apiTimeout: 300000
+    apiRetryAttempts: 3
+    requireHttpsUrlPattern: false
+
+    # API key configuration (optional)
+    apiKey: ""
+    apiKeyHeader: "X-API-Key"
+    enableApiKeyRotation: false
+    apiKeyExpiryWarningDays: 7
+
+    # Authentication configuration
+    authEnabled: true
+    authProvider: "keycloak"  # none, keycloak
+
+    # Keycloak configuration
+    keycloak:
+      url: "https://<keycloak-hostname>/auth"
+      realm: "ICHub"
+      clientId: "industry-core-hub-frontend"
+      onLoad: "check-sso"  # check-sso, login-required
+      checkLoginIframe: false
+      silentCheckSsoRedirectUri: ""
+      pkceMethod: "S256"
+      enableLogging: false
+      minValidity: 30
+      checkLoginIframeInterval: 5
+      flow: "standard"  # standard, implicit, hybrid
+
+    # Session management
+    authSessionTimeout: 3600000  # 1 hour in milliseconds
+    authRenewTokenMinValidity: 300  # 5 minutes in seconds
+    authLogoutRedirectUri: ""
+
+    # Participant configuration
+    bpnValidationPattern: "^BPN[LAS]\\d{10}[a-zA-Z0-9]{2}$"
+
+    # Feature flags
+    enableAdvancedLogging: false
+    enablePerformanceMonitoring: false
+    enableDevTools: false
+
+    # Notifications configuration
+    notifications:
+      pollInterval: 30000
+
+    # UI configuration
+    uiTheme: "auto"
+    uiLocale: "en"
+    uiCompactMode: false
+
+  # Legacy configuration (deprecated - use config section above)
+  env:
+    # -- industry-core-hub backend base URL
+    backendUrl: "https://<backend-hostname>/v1"
+  enabled: true
+  name: "industry-core-hub-frontend"
+  image:
+    repository: "tractusx/industry-core-hub-frontend"
+    pullPolicy: IfNotPresent
+    # -- Overrides the image tag whose default is the chart appVersion
+    tag: ""
+    # -- Existing image pull secret to use to [obtain the container image from private registries](https://kubernetes.io/docs/concepts/containers/images/#using-a-private-registry)
+    pullSecrets: []
+  service:
+    # -- [Service type](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types) to expose the running application on a set of Pods as a network service
+    type: ClusterIP
+    portService: 8080
+    portContainer: 8080
+
+  podAnnotations: {}
+
+  podLabels: {}
+
+  consumption:
+    digitalTwinRegistry:
+      # -- DTR policy configuration (Jupiter format — odrl: prefixed keys, @id wrappers)
+      # Array of policy definitions sent to the backend for DTR access negotiation.
+      # The JSON-LD @context + @id wrappers resolve the compact IRIs at runtime.
+      policies:
+        - "@context":
+            - "https://w3id.org/tractusx/policy/v1.0.0"
+            - "http://www.w3.org/ns/odrl.jsonld"
+            - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+              "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          "odrl:permission":
+            - "odrl:action":
+                "@id": "odrl:use"
+              "odrl:constraint":
+                "odrl:and":
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:FrameworkAgreement"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:Membership"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "active"
+                  - "odrl:leftOperand":
+                      "@id": "cx-policy:UsagePurpose"
+                    "odrl:operator":
+                      "@id": "odrl:eq"
+                    "odrl:rightOperand": "cx.core.digitalTwinRegistry:1"
+          "odrl:prohibition": []
+          "odrl:obligation": []
+    # -- Governance policies for consumption (Jupiter format — odrl: prefixed keys, @id wrappers)
+    # Each entry maps a semantic ID to its usage and access policies.
+    governance:
+      - semanticid: "urn:samm:io.catenax.part_type_information:1.0.0#PartTypeInformation"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
+      - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
+      - semanticid: "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.circular.dpp:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
+      - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        policies:
+          - "@context":
+              - "https://w3id.org/tractusx/policy/v1.0.0"
+              - "http://www.w3.org/ns/odrl.jsonld"
+              - tx: "https://w3id.org/tractusx/v0.0.1/ns/"
+                "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            "odrl:permission":
+              - "odrl:action":
+                  "@id": "odrl:use"
+                "odrl:constraint":
+                  "odrl:and":
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:FrameworkAgreement"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "DataExchangeGovernance:1.0"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:Membership"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "active"
+                    - "odrl:leftOperand":
+                        "@id": "cx-policy:UsagePurpose"
+                      "odrl:operator":
+                        "@id": "odrl:eq"
+                      "odrl:rightOperand": "cx.core.industrycore:1"
+            "odrl:prohibition": []
+            "odrl:obligation": []
+
+  healthChecks:
+    startup:
+      enabled: true
+      path: "/"
+    liveness:
+      enabled: true
+      path: "/"
+    readiness:
+      enabled: true
+      path: "/"
+
+  # -- ingress declaration to expose the industry-core-hub-backend service
+  ingress:
+    enabled: false
+    className: "nginx"
+    ## Optional annotations when using the nginx ingress class
+    # annotations:
+    #   nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+    #   nginx.ingress.kubernetes.io/use-regex: "true"
+    #   nginx.ingress.kubernetes.io/enable-cors: "true"
+    #   # -- Provide CORS allowed origin.
+    #   nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.example.org"
+    # -- Ingress TLS configuration
+    tls: []
+      # # -- Provide tls secret.
+      # - secretName: ""
+      #   # -- Provide host for tls secret.
+      #   hosts:
+      #     - ""
+    hosts:
+      - host: "<frontend-hostname>"
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service: "frontend"
+              port: 8080
+
+  # -- The [pod security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod) defines privilege and access control settings for a Pod within the deployment
+  podSecurityContext:
+    seccompProfile:
+      # -- Restrict a Container's Syscalls with seccomp
+      type: RuntimeDefault
+    # -- Runs all processes within a pod with a special uid
+    runAsUser: 1000
+    # -- Processes within a pod will belong to this guid
+    runAsGroup: 3000
+    # -- The owner for volumes and any files created within volumes will belong to this guid
+    fsGroup: 3000
+
+   # The [container security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container) defines privilege and access control settings for a Container within a pod
+  securityContext:
+    capabilities:
+      # -- Specifies which capabilities to drop to reduce syscall attack surface
+      drop:
+        - ALL
+      # -- Specifies which capabilities to add to issue specialized syscalls
+      add: []
+    # -- Whether the root filesystem is mounted in read-only mode
+    readOnlyRootFilesystem: true
+    # -- Controls [Privilege Escalation](https://kubernetes.io/docs/concepts/security/pod-security-policy/#privilege-escalation) enabling setuid binaries changing the effective user ID
+    allowPrivilegeEscalation: false
+    # -- Requires the container to run without root privileges
+    runAsNonRoot: true
+    # -- The container's process will run with the specified uid
+    runAsUser: 10000
+    # -- The owner for volumes and any files created within volumes will belong to this guid
+    runAsGroup: 10001
+
+  # -- specifies volume mounts for the frontend deployment
+  volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+
+  # -- additional volume claims for the containers
+  additionalVolumes: []
+
+  # @url: https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-resource-requests-and-limits
+  # -- Review the default resource limits as this should a conscious choice.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: "128Mi"
+    limits:
+      cpu: 500m
+      memory: 256Mi
+      ephemeral-storage: "1Gi"
+
+# -- PostgreSQL chart configuration (cloudpirates)
+postgresql:
+  # -- Switch to enable or disable the PostgreSQL helm chart
+  enabled: true
+  # -- String to partially override postgres.fullname
+  nameOverride: ""
+  # -- String to fully override postgres.fullname
+  fullnameOverride: ""
+  # -- PostgreSQL image configuration
+  image:
+    # -- PostgreSQL image registry
+    registry: docker.io
+    # -- PostgreSQL image repository
+    repository: postgres
+  # -- PostgreSQL Authentication (postgres admin user)
+  auth:
+    # -- Password for postgres admin user (stored in existingSecret with key 'postgres-password')
+    password: ""
+    # -- Default database to create
+    database: "ichub-postgres"
+    # -- Existing secret containing passwords
+    existingSecret: "ichub-postgres-secret"
+    # -- Username for  ichub user
+    ichubUser: "ichub"
+    # -- Password for the non-root username 'ichub'. Secret-key 'ichub-password'.
+    ichubPassword: ""
+    # -- Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. There are [six modes](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE)
+    sslMode: "prefer"
+  # -- Extra environment variables for init scripts
+  extraEnvVars:
+    - name: "DATABASE_PASSWORD"
+      valueFrom:
+        secretKeyRef:
+          name: "ichub-postgres-secret"
+          key: "ichub-password"
+  # -- Initdb configuration - runs scripts to create ichub and ichub_keycloak users
+  initdb:
+    # -- ConfigMap with scripts to be run at first boot
+    scriptsConfigMap: "{{ .Release.Name }}-cm-postgres"
+  # -- Persistence configuration
+  persistence:
+    # -- Enable persistence using Persistent Volume Claims
+    enabled: false
+    # -- Storage class for the volume claim
+    size: 10Gi
+    # -- Persistent Volume storage class
+    torageClass: ""
+
+# -- pgAdmin4 configuration
+pgadmin4:
+  enabled: false
+  env:
+    email: pgadmin4@txtest.org
+    password: tractusxpgadmin4
+  persistentVolume:
+    enabled: false
+  ingress:
+    enabled: false
+
+
+# -- External database configuration (used when postgresql.enabled is false)
+externalDatabase:
+  # -- External PostgreSQL host
+  host: ""
+  # -- External PostgreSQL port
+  port: 5432
+  # -- External PostgreSQL database name
+  database: "postgres"
+  # -- External PostgreSQL username for ichub user
+  ichubUser: "ichub"
+  # -- External PostgreSQL password for ichub user
+  ichubPassword: ""
+  # -- Existing secret containing database password
+  existingSecret: ""
+  # -- Key in the existing secret that contains database password for ichub user
+  existingIchubSecretKey: "ichub-password"
+  # -- Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. There are [six modes](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE)
+  sslMode: "prefer"
+
+# [node selector](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector) to constrain pods to nodes
+nodeSelector: {}
+
+# [tolerations](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) to configure preferred nodes
+tolerations: []
+
+# [affinity](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity) to configure which nodes the pods can be scheduled on
+affinity: {}
+
+updateStrategy:
+# -- Update strategy type,
+# rolling update configuration parameters,
+# [reference](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies).
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# -- Following Catena-X Helm Best Practices
+# [reference](https://github.com/eclipse-tractusx/portal/blob/main/charts/portal/values.yaml#L1103).
+startupProbe:
+  failureThreshold: 30
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+livenessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 10
+readinessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 1
+
+## Keycloak taken from Portal-IAM: https://github.com/eclipse-tractusx/portal-iam
+
+keycloak:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/keycloak
+    tag: 25.0.6-debian-12-r0
+  auth:
+    adminUser: admin
+    # -- Keycloak administrator password.
+    adminPassword: "keycloak-admin-password"
+    # -- Secret containing the password for admin username 'admin'.
+    existingSecret: ""
+  # -- Run Keycloak in production mode. TLS configuration is required except when using proxy=edge.
+  production: false
+  # -- Proxy mode for Keycloak when running behind a reverse proxy (edge, reencrypt, passthrough, or none)
+  # Use 'edge' when running behind a reverse proxy that terminates SSL/TLS
+  proxy: edge
+  # -- Setting the path relative to '/' for serving resources:
+  # as we're migrating from 16.1.1 version which was using the trailing 'auth', we're setting it to '/auth/'.
+  # ref: https://www.keycloak.org/migration/migrating-to-quarkus#_default_context_path_changed
+  httpRelativePath: /auth/
+  replicaCount: 1
+  # -- Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 240
+    periodSeconds: 2
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+  # -- Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 20
+    timeoutSeconds: 2
+    failureThreshold: 6
+    successThreshold: 1
+  # -- Realm import configuration
+  realmImport:
+    enabled: true
+    # -- Method: "startup" for --import-realm flag or "job" for post-install job
+    # -- "startup": Automatic import on Keycloak container startup (simpler, more reliable for ArgoCD)
+    # -- "job": Post-install Kubernetes job (allows dynamic password setting)
+    method: "job"
+    # -- keycloak-config-cli image configuration
+    image:
+      repository: "adorsys/keycloak-config-cli"
+      tag: "latest-25.0.1"
+      pullPolicy: "IfNotPresent"
+    # -- Resource limits for the realm import job
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+        ephemeral-storage: "64Mi"
+      limits:
+        cpu: 500m
+        memory: 256Mi
+        ephemeral-storage: "128Mi"
+  # -- Realm user configuration (passwords will be hashed at deployment time)
+  realm:
+    name: "ICHub"
+    users:
+      - username: "ichub-admin"
+        password: "changeme"
+        email: "ichub-admin@example.com"
+        firstName: "Industry"
+        lastName: "Admin"
+        emailVerified: true
+        enabled: true
+        attributes:
+          BPN: ["BPNL000000000000"]
+        realmRoles:
+          - "default-roles-ichub"
+          - "offline_access"
+          - "uma_authorization"
+    # -- Client redirect URIs configuration
+    clients:
+      frontend:
+        redirectUris:
+          - "http://localhost:3000/*"
+          - "http://localhost:5173/*"
+          - "http://ichub-frontend.tx.test/*"
+          - "http://industry-core-hub-frontend.tx.test/*"
+        webOrigins:
+          - "http://localhost:3000"
+          - "http://localhost:5173"
+          - "http://ichub-frontend.tx.test"
+          - "http://industry-core-hub-frontend.tx.test"
+      backend:
+        redirectUris:
+          - "http://localhost:8000/*"
+          - "http://localhost:9000/*"
+          - "http://ichub-backend.tx.test/*"
+        webOrigins:
+          - "http://localhost:8000"
+          - "http://localhost:9000"
+          - "http://ichub-backend.tx.test"
+  # -- Environment variables and command configuration
+  # -- Will be set automatically based on realmImport.method
+  extraEnvVars: []
+
+  # -- Command override for Keycloak container
+  # -- Will be set automatically when realmImport.method is "startup"
+  command: []
+  args: []
+
+  extraVolumes:
+    - name: themes
+      emptyDir: {}
+
+  extraVolumeMounts:
+    - name: themes
+      mountPath: /opt/bitnami/keycloak/themes/catenax-central
+
+  initContainers:
+    - name: import
+      image: docker.io/tractusx/portal-iam:v4.2.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+      args:
+        - -c
+        - |
+          echo "Copying themes..."
+          cp -R /import/themes/catenax-central/* /themes
+      volumeMounts:
+        - name: themes
+          mountPath: /themes
+
+  service:
+    sessionAffinity: ClientIP
+
+  ingress:
+    # -- Enable ingress record generation
+    enabled: false
+    ingressClassName: ""
+    # -- Provide default path for the ingress record.
+    hostname: "<keycloak-hostname>"
+    # -- Optional annotations when using the nginx ingress class;
+    # Enable TLS configuration for the host defined at `ingress.hostname` parameter;
+    # TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`;
+    # Provide the name of ClusterIssuer to acquire the certificate required for this Ingress.
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      # cert-manager.io/cluster-issuer: ""
+      # nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+      # nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+      # nginx.ingress.kubernetes.io/cors-allow-origin: "https://centralidp.example.org"
+      # nginx.ingress.kubernetes.io/enable-cors: "true"
+      # nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+      # nginx.ingress.kubernetes.io/proxy-buffering: "on"
+      # nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+    tls: false
+  # -- Resource configuration for Keycloak
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+      ephemeral-storage: "256Mi"
+    limits:
+      memory: "2Gi"
+      cpu: "1"
+      ephemeral-storage: "2Gi"
+  rbac:
+    create: true
+    rules:
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
+  postgresql:
+    # -- PostgreSQL chart configuration (recommended for demonstration purposes only);
+    # default configurations:
+    # host: "centralidp-postgresql",
+    # port: 5432;
+    # Switch to enable or disable the PostgreSQL helm chart.
+    enabled: false
+    # -- Setting to Postgres version 15 as that is the aligned version,
+    # https://eclipse-tractusx.github.io/docs/release/trg-5/trg-5-07/#aligning-dependency-versions).
+    # Keycloak helm-chart from Bitnami has moved on to version 16.
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: 15-debian-11
+    commonLabels:
+      app.kubernetes.io/version: "15"
+    auth:
+      # -- Non-root username.
+      username: ichub_keycloak
+      # -- Non-root user password.
+      # password: "kccentral-user-password"
+      # # -- Root user password.
+      # postgresPassword: "postgres-keycloak-admin-password"
+      # -- Database name.
+      database: ichub-postgres
+      # -- Secret containing the passwords for root usernames postgres and non-root username ichub.
+      existingSecret: "ichub-postgres-secret"
+    architecture: standalone
+  externalDatabase:
+    # -- External PostgreSQL configuration
+    # IMPORTANT: non-root db user needs needs to be created beforehand on external database.
+    host: "{{ include \"industry-core-hub.postgresql.fullname\" . }}"
+    # -- Database port number.
+    port: 5432
+    # -- Non-root username.
+    user: "ichub_keycloak"
+    # -- Database name.
+    database: "ichub-postgres"
+    # -- Password for the non-root username.
+    password: ""
+    # -- Secret containing the database credentials.
+    existingSecret: "ichub-postgres-secret"
+    existingSecretHostKey: ""
+    existingSecretPortKey: ""
+    existingSecretUserKey: ""
+    existingSecretDatabaseKey: ""
+    existingSecretPasswordKey: "ichub-password"

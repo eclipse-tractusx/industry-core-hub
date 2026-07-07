@@ -23,7 +23,6 @@
 ## Code created partially using a LLM and reviewed by a human committer
 
 import sys
-import logging
 from pathlib import Path
 
 # Add parent directory to path to import modules
@@ -38,7 +37,7 @@ logger = LoggingManager.get_logger(__name__)
 
 ConfigManager.load_config()
 
-from database import engine, wait_for_db_connection
+from database import wait_for_db_connection
 from tractusx_sdk.dataspace.services.connector import ServiceFactory
 from managers.enablement_services.provider import ConnectorProviderManager
 from jobs.asset_sync_job import AssetSyncJob
@@ -107,11 +106,33 @@ def run_asset_sync_job():
             ichub_url = ConfigManager.get_config("hostname")
             agreements = ConfigManager.get_config("agreements")
             path_submodel_dispatcher = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
-            
-            # Authorization configuration
+
+            # Authorization configuration — defaults to local backend auth
             authorization_enabled = ConfigManager.get_config("authorization.enabled", True)
             backend_api_key = ConfigManager.get_config("authorization.api_key.key", "X-Api-Key")
-            backend_api_key_value = ConfigManager.get_config("authorization.api_key.value")
+            backend_api_key_value = ConfigManager.get_config("authorization.api_key.value", "")
+
+            # When submodel_dispatcher.mode is "http", the EDC asset must point to the
+            # external submodel service (not the local backend) and carry that service's
+            # own auth credentials in the header:* data-address properties.
+            submodel_mode = ConfigManager.get_config("provider.submodel_dispatcher.mode", default="filesystem")
+            submodel_asset_headers = None  # injected into EDC data-address; None = no auth header
+            if submodel_mode == "http":
+                http_cfg = ConfigManager.get_config("provider.submodel_dispatcher.http", default={})
+                ichub_url = http_cfg.get("base_url", ichub_url)
+                path_submodel_dispatcher = http_cfg.get("api_path", path_submodel_dispatcher)
+                auth_cfg = http_cfg.get("auth", {})
+                if auth_cfg.get("enabled", False):
+                    submodel_asset_headers = {
+                        auth_cfg.get("key_name", "X-Api-Key"): auth_cfg.get("token", "")
+                    }
+            else:
+                # filesystem mode: the EDC data-plane calls the local backend, which is
+                # protected by its own API key (authorization.api_key.*).
+                if authorization_enabled and backend_api_key_value:
+                    submodel_asset_headers = {
+                        backend_api_key: backend_api_key_value
+                    }
             
             # Create the provider manager
             connector_provider_manager = ConnectorProviderManager(
@@ -121,7 +142,10 @@ def run_asset_sync_job():
                 path_submodel_dispatcher=path_submodel_dispatcher,
                 authorization=authorization_enabled,
                 backend_api_key=backend_api_key,
-                backend_api_key_value=backend_api_key_value
+                backend_api_key_value=backend_api_key_value,
+                dataspace_version=provider_dataspace_version,
+                submodel_mode=submodel_mode,
+                submodel_asset_headers=submodel_asset_headers,
             )
             logger.info(f"✓ Connector provider manager initialized: {type(connector_provider_manager).__name__}")
             

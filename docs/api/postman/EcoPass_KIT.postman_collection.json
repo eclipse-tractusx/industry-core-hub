@@ -1,0 +1,700 @@
+{
+	"info": {
+		"_postman_id": "ecopass-kit-collection-2025",
+		"name": "EcoPass KIT Microservices",
+		"description": "Collection for EcoPass KIT endpoints including DPP passports listing, consumption, sharing, and discovery operations.\n\n## Environment Variables Required:\n- `base_url`: Base URL of the Industry Core Hub (e.g., http://localhost:8080)\n- `api_key`: API Key for authentication (if enabled)\n- `dpp_id`: Digital Product Passport ID (UUID from metadata.passportId)\n- `submodel_id`: Submodel ID for retrieving DPP data\n- `business_partner_bpnl`: Business Partner BPNL number\n- `discovery_id`: Discovery ID format CX:<manufacturerPartId>:<partInstanceId>\n- `semantic_id`: Semantic ID for DPP submodel\n- `task_id`: Task ID for tracking async discovery operations\n\n## API Structure:\n- `/passports` - List all DPPs with metadata (includes issueDate and expirationDate)\n- `/discover` - Async DPP discovery using BPN Discovery and DTR (with status tracking)\n- `/provision/share` - Share DPPs with business partners\n- `/consumption/{id}` - Get full DPP data by submodel ID",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Passports",
+			"item": [
+				{
+					"name": "Get All DPPs",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}",
+								"type": "text",
+								"description": "API Key for authentication (if enabled)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/addons/ecopass-kit/passports",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"addons",
+								"ecopass-kit",
+								"passports"
+							]
+						},
+						"description": "Retrieve all Digital Product Passports (DPPs) from the system.\n\nThis endpoint fetches all twins that have DPP aspects (digital_product_passport semantic ID) and returns them with metadata including:\n- **id**: Unique identifier\n- **passportId**: UUID from metadata.passportId (USE THIS for sharing endpoint)\n- **manufacturerPartId**: Manufacturer Part ID (for BPN Discovery)\n- Name and version\n- Status (draft/active)\n- **issueDate**: Issue date from DPP metadata\n- **expirationDate**: Expiration date from DPP metadata\n- Twin association details\n- **submodelId**: Use this to get full DPP data via consumption endpoint\n- Created/Updated timestamps\n\n**Note**: Use `passportId` from this response to share the DPP."
+					},
+					"response": [
+						{
+							"name": "Success - DPP List",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/passports",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"passports"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "[\n    {\n        \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"passportId\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"manufacturerPartId\": \"MPI-7891\",\n        \"name\": \"Transmission Gear Box\",\n        \"version\": \"6.1.0\",\n        \"semanticId\": \"urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport\",\n        \"status\": \"active\",\n        \"issueDate\": \"2025-01-15T10:30:00Z\",\n        \"expirationDate\": \"2030-12-31T23:59:59Z\",\n        \"twinAssociation\": {\n            \"twinId\": \"d21de406-688e-447b-94a4-27c89c4e3abc\",\n            \"aasId\": \"aeb8b6c2-3d9c-40a4-bd48-3429aeed5f12\",\n            \"manufacturerPartId\": \"MPI-7891\",\n            \"partInstanceId\": \"SN-987654\",\n            \"twinName\": \"Transmission Gear Box\"\n        },\n        \"submodelId\": \"3c3ca64f-b1c9-486f-96cb-9547671bf8c5\",\n        \"createdAt\": \"2025-12-01T10:30:00Z\",\n        \"updatedAt\": \"2025-12-03T14:20:00Z\"\n    },\n    {\n        \"id\": \"650e8400-e29b-41d4-a716-446655440001\",\n        \"passportId\": \"650e8400-e29b-41d4-a716-446655440001\",\n        \"manufacturerPartId\": \"MPI-4567\",\n        \"name\": \"Battery Module\",\n        \"version\": \"6.1.0\",\n        \"semanticId\": \"urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport\",\n        \"status\": \"draft\",\n        \"issueDate\": \"2025-02-20T08:15:00Z\",\n        \"expirationDate\": \"2028-06-30T23:59:59Z\",\n        \"twinAssociation\": {\n            \"twinId\": \"e32ef517-799f-558c-a5b5-38d9ba5f4d23\",\n            \"aasId\": \"bfc9c7d3-4e0d-51b5-ce59-4530bffe6e23\",\n            \"manufacturerPartId\": \"MPI-4567\",\n            \"partInstanceId\": \"SN-123456\",\n            \"twinName\": \"Battery Module\"\n        },\n        \"submodelId\": \"4d4db75g-c2d0-597g-07dc-0658782cg9d6\",\n        \"createdAt\": \"2025-12-02T08:15:00Z\",\n        \"updatedAt\": \"2025-12-02T08:15:00Z\"\n    }\n]"
+						}
+					]
+				}
+			],
+			"description": "Endpoints for listing and retrieving Digital Product Passport metadata"
+		},
+		{
+			"name": "Consumption",
+			"item": [
+				{
+					"name": "Get DPP by Submodel ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}",
+								"type": "text",
+								"description": "API Key for authentication (if enabled)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/addons/ecopass-kit/consumption/{{submodel_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"addons",
+								"ecopass-kit",
+								"consumption",
+								"{{submodel_id}}"
+							]
+						},
+						"description": "Retrieve the full Digital Product Passport data using the submodel ID.\n\nThis endpoint fetches the complete DPP document from the submodel service using the submodel ID obtained from the passports endpoint.\n\n**Required Variables:**\n- `submodel_id`: The UUID of the submodel (e.g., 3c3ca64f-b1c9-486f-96cb-9547671bf8c5)"
+					},
+					"response": [
+						{
+							"name": "Success - Full DPP Data",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/consumption/3c3ca64f-b1c9-486f-96cb-9547671bf8c5",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"consumption",
+										"3c3ca64f-b1c9-486f-96cb-9547671bf8c5"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"metadata\": {\n        \"passportId\": \"550e8400-e29b-41d4-a716-446655440000\",\n        \"version\": \"6.1.0\",\n        \"status\": \"approved\",\n        \"issueDate\": \"2025-01-15T10:30:00Z\",\n        \"expirationDate\": \"2030-12-31T23:59:59Z\"\n    },\n    \"product\": {\n        \"name\": \"Transmission Gear Box\",\n        \"manufacturerPartId\": \"MPI-7891\",\n        \"serialNumber\": \"SN-987654\",\n        \"productDescription\": \"High-performance transmission gear box\"\n    },\n    \"manufacturer\": {\n        \"name\": \"AutoParts Manufacturing GmbH\",\n        \"bpnl\": \"BPNL000000000001\",\n        \"address\": {\n            \"street\": \"Industrial Street 123\",\n            \"city\": \"Stuttgart\",\n            \"postalCode\": \"70174\",\n            \"country\": \"DE\"\n        }\n    },\n    \"sustainability\": {\n        \"carbonFootprint\": {\n            \"value\": 125.5,\n            \"unit\": \"kg CO2e\"\n        },\n        \"recyclabilityRate\": 85.5,\n        \"materialComposition\": [\n            {\n                \"material\": \"Steel\",\n                \"percentage\": 70.0\n            },\n            {\n                \"material\": \"Aluminum\",\n                \"percentage\": 25.0\n            },\n            {\n                \"material\": \"Plastic\",\n                \"percentage\": 5.0\n            }\n        ]\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "Endpoints for consuming and retrieving full DPP data"
+		},
+		{
+			"name": "Discovery",
+			"item": [
+				{
+					"name": "Discover DPP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}",
+								"type": "text",
+								"description": "API Key for authentication (if enabled)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"{{discovery_id}}\",\n    \"semanticId\": \"{{semantic_id}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/addons/ecopass-kit/discover",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"addons",
+								"ecopass-kit",
+								"discover"
+							]
+						},
+						"description": "Discover a Digital Product Passport using BPN Discovery and DTR lookup.\n\nThis endpoint performs an asynchronous discovery process:\n1. Parses the ID to extract manufacturerPartId and partInstanceId\n2. Uses BPN Discovery to find the BPN owner of the manufacturerPartId\n3. Uses DTR Consumer to retrieve the digital twin shell\n4. Looks up the submodel matching the provided semanticId\n5. Consumes the submodel data\n\nThe operation runs in the background with step-by-step status tracking.\nUse the returned taskId to check progress via the status endpoint.\n\n**Required Variables:**\n- `discovery_id`: The identifier in format 'CX:<manufacturerPartId>:<partInstanceId>' (e.g., CX:MPI-7891:SN-987654)\n- `semantic_id`: The semantic ID (e.g., urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport)"
+					},
+					"response": [
+						{
+							"name": "Success - Discovery Initiated",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id\": \"CX:MPI-7891:SN-987654\",\n    \"semanticId\": \"urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover"
+									]
+								}
+							},
+							"status": "Accepted",
+							"code": 202,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"taskId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"status\": {\n        \"status\": \"in_progress\",\n        \"step\": \"parsing\",\n        \"message\": \"Discovery task started\",\n        \"progress\": 0\n    },\n    \"digitalTwin\": null,\n    \"data\": null\n}"
+						},
+						{
+							"name": "Error - Invalid ID Format",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"id\": \"INVALID-FORMAT\",\n    \"semanticId\": \"urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover"
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"ID must be in format 'CX:<manufacturerPartId>:<partInstanceId>'\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Discovery Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}",
+								"type": "text",
+								"description": "API Key for authentication (if enabled)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/addons/ecopass-kit/discover/{{task_id}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"addons",
+								"ecopass-kit",
+								"discover",
+								"{{task_id}}",
+								"status"
+							]
+						},
+						"description": "Get the current status of a discovery task.\n\nThis endpoint allows you to track the progress of an async discovery operation.\nThe response includes the current step, progress percentage, and results if completed.\n\n**Required Variables:**\n- `task_id`: The unique task identifier from the initial discovery request"
+					},
+					"response": [
+						{
+							"name": "In Progress",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover/a1b2c3d4-e5f6-7890-abcd-ef1234567890/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover",
+										"a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+										"status"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"taskId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"status\": {\n        \"status\": \"in_progress\",\n        \"step\": \"retrieving_twin\",\n        \"message\": \"Retrieving digital twin from DTR...\",\n        \"progress\": 50\n    },\n    \"digitalTwin\": null,\n    \"data\": null\n}"
+						},
+						{
+							"name": "Completed",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover/a1b2c3d4-e5f6-7890-abcd-ef1234567890/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover",
+										"a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+										"status"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"taskId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"status\": {\n        \"status\": \"completed\",\n        \"step\": \"complete\",\n        \"message\": \"Discovery completed successfully\",\n        \"progress\": 100\n    },\n    \"digitalTwin\": {\n        \"id\": \"urn:uuid:d21de406-688e-447b-94a4-27c89c4e3abc\",\n        \"idShort\": \"TransmissionGearBox_SN987654\",\n        \"specificAssetIds\": [\n            {\n                \"name\": \"manufacturerPartId\",\n                \"value\": \"MPI-7891\"\n            },\n            {\n                \"name\": \"partInstanceId\",\n                \"value\": \"SN-987654\"\n            },\n            {\n                \"name\": \"digitalTwinType\",\n                \"value\": \"PartInstance\"\n            }\n        ],\n        \"submodelDescriptors\": [\n            {\n                \"id\": \"3c3ca64f-b1c9-486f-96cb-9547671bf8c5\",\n                \"idShort\": \"digitalProductPassport\",\n                \"semanticId\": {\n                    \"keys\": [\n                        {\n                            \"type\": \"GlobalReference\",\n                            \"value\": \"urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport\"\n                        }\n                    ]\n                }\n            }\n        ]\n    },\n    \"data\": {\n        \"metadata\": {\n            \"passportId\": \"550e8400-e29b-41d4-a716-446655440000\",\n            \"version\": \"6.1.0\",\n            \"status\": \"approved\",\n            \"issueDate\": \"2025-01-15T10:30:00Z\",\n            \"expirationDate\": \"2030-12-31T23:59:59Z\"\n        },\n        \"product\": {\n            \"name\": \"Transmission Gear Box\",\n            \"manufacturerPartId\": \"MPI-7891\",\n            \"serialNumber\": \"SN-987654\"\n        },\n        \"manufacturer\": {\n            \"name\": \"AutoParts Manufacturing GmbH\",\n            \"bpnl\": \"BPNL000000000001\"\n        },\n        \"sustainability\": {\n            \"carbonFootprint\": {\n                \"value\": 125.5,\n                \"unit\": \"kg CO2e\"\n            },\n            \"recyclabilityRate\": 85.5\n        }\n    }\n}"
+						},
+						{
+							"name": "Failed",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover/a1b2c3d4-e5f6-7890-abcd-ef1234567890/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover",
+										"a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+										"status"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"taskId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n    \"status\": {\n        \"status\": \"failed\",\n        \"step\": \"error\",\n        \"message\": \"Discovery failed: No BPN found for manufacturerPartId: MPI-UNKNOWN\",\n        \"progress\": 0\n    },\n    \"digitalTwin\": null,\n    \"data\": null\n}"
+						},
+						{
+							"name": "Task Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/discover/00000000-0000-0000-0000-000000000000/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"discover",
+										"00000000-0000-0000-0000-000000000000",
+										"status"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"Discovery task not found: 00000000-0000-0000-0000-000000000000\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Endpoints for asynchronous DPP discovery using BPN Discovery and DTR"
+		},
+		{
+			"name": "Provision",
+			"item": [
+				{
+					"name": "Share DPP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}",
+								"type": "text",
+								"description": "API Key for authentication (if enabled)"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dppId\": \"{{dpp_id}}\",\n    \"businessPartnerNumber\": \"{{business_partner_bpnl}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/addons/ecopass-kit/provision/share",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"addons",
+								"ecopass-kit",
+								"provision",
+								"share"
+							]
+						},
+						"description": "Share a Digital Product Passport (serialized part twin) with a single business partner.\n\nThis endpoint performs the following operations:\n1. Validates the DPP exists and is associated with a serialized part twin\n2. Shares the twin using the existing serialized part twin sharing logic\n3. Registers the manufacturer part ID in BPN Discovery\n\n**Required Variables:**\n- `dpp_id`: The passport ID (UUID) from metadata.passportId (e.g., 550e8400-e29b-41d4-a716-446655440000)\n- `business_partner_bpnl`: The BPNL number to share with (e.g., BPNL000000000001)"
+					},
+					"response": [
+						{
+							"name": "Success - DPP Shared",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"dppId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"businessPartnerNumber\": \"BPNL000000000001\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/provision/share",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"provision",
+										"share"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"dppId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"businessPartnerNumber\": \"BPNL000000000001\",\n    \"bpnDiscoveryRegistered\": true\n}"
+						},
+						{
+							"name": "Error - DPP Not Found",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-Api-Key",
+										"value": "{{api_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"dppId\": \"00000000-0000-0000-0000-000000000000\",\n    \"businessPartnerNumber\": \"BPNL000000000001\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/addons/ecopass-kit/provision/share",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"addons",
+										"ecopass-kit",
+										"provision",
+										"share"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"detail\": \"DPP not found on serialized part twin with ID: 00000000-0000-0000-0000-000000000000\"\n}"
+						}
+					]
+				}
+			],
+			"description": "Endpoints for sharing Digital Product Passports with business partners"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "api_key",
+			"value": "your-api-key-here",
+			"type": "string"
+		},
+		{
+			"key": "dpp_id",
+			"value": "550e8400-e29b-41d4-a716-446655440000",
+			"type": "string"
+		},
+		{
+			"key": "submodel_id",
+			"value": "3c3ca64f-b1c9-486f-96cb-9547671bf8c5",
+			"type": "string"
+		},
+		{
+			"key": "business_partner_bpnl",
+			"value": "BPNL000000000001",
+			"type": "string"
+		},
+		{
+			"key": "discovery_id",
+			"value": "CX:MPI-7891:SN-987654",
+			"type": "string"
+		},
+		{
+			"key": "semantic_id",
+			"value": "urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport",
+			"type": "string"
+		},
+		{
+			"key": "task_id",
+			"value": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+			"type": "string"
+		}
+	]
+}

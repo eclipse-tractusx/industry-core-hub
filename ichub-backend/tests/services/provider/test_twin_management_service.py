@@ -320,13 +320,16 @@ class TestTwinManagementService:
         mock_repo.business_partner_repository.get_by_bpnl.return_value = mock_business_partner
         mock_repo.twin_repository.find_by_id.return_value = mock_twin
 
-        with patch.object(TwinManagementService, '_create_twin_exchange', return_value=True) as mock_create_exchange:
+        with patch.object(TwinManagementService, '_create_twin_exchange', return_value=True) as mock_create_exchange, \
+             patch.object(TwinManagementService, 'create_catalog_part_twin', return_value=Mock()) as mock_create_twin:
             # Act
             result = self.service.create_catalog_part_twin_share(share_input)
 
             # Assert
             assert result is True
             mock_create_exchange.assert_called_once()
+            # Step 6: DTR shell must be refreshed after the exchange is created
+            mock_create_twin.assert_called_once()
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     def test_create_serialized_part_twin_success(self, mock_repo_factory, mock_twin, mock_enablement_service_stack,

@@ -1,0 +1,175 @@
+{
+  "shareDialog": {
+    "title": "Share Digital Product Passport ({{name}})",
+    "shareTitle": "Share Digital Product Passport",
+    "selectPartnerDescription": "Select a partner to share the DPP with",
+    "partnerPlaceholder": "Select a partner to share the DPP with",
+    "partnerHelperText": "Select from available partners",
+    "partnerRequired": "Partner selection is required",
+    "addCustomPartId": "Add custom customer part Id",
+    "customerPartId": "Customer Part Id",
+    "customerPartIdPlaceholder": "Enter your custom part identifier",
+    "noPartnersTitle": "No Partners Available",
+    "noPartnersDescription": "No partners available. Please add partners in the Partner View to share DPPs.",
+    "addPartner": "Add a Partner",
+    "successMessage": "DPP shared successfully with {{bpnl}}"
+  },
+  "list": {
+    "title": "Digital Product Passports",
+    "subtitle": "Manage and share your product passports",
+    "createPassport": "Create Passport",
+    "searchPlaceholder": "Search by name, manufacturer part ID, or instance ID...",
+    "noPassportsFound": "No passports found",
+    "noPassportsYet": "No passports yet",
+    "adjustSearch": "Try adjusting your search criteria",
+    "createFirstPassport": "Create your first digital product passport to get started",
+    "getStarted": "Get Started",
+    "passportDiscoveryId": "Passport Discovery ID",
+    "passportId": "Passport ID",
+    "passportType": "Passport Type",
+    "expiration": "Expiration",
+    "noExpiration": "No Expiration",
+    "version": "Version {{version}}",
+    "versionLabel": "Version",
+    "seeAll": "See All ({{count}})",
+    "allPassports": "All Digital Product Passports",
+    "passportsAvailable": "{{count}} passport available",
+    "passportsAvailable_plural": "{{count}} passports available",
+    "searchDialogPlaceholder": "Search by name, ID, or discovery ID...",
+    "discoveryId": "Discovery ID",
+    "type": "Type",
+    "expires": "Expires",
+    "cardView": "Card View",
+    "tableView": "Table View"
+  },
+  "actions": {
+    "registerPassport": "Register passport",
+    "sharePassport": "Share passport",
+    "unsharePassport": "Unshare passport",
+    "processing": "Processing...",
+    "copyDiscoveryId": "Copy Discovery ID",
+    "exportPdf": "Export PDF",
+    "deletePassport": "Delete passport",
+    "register": "Register",
+    "open": "Open"
+  },
+  "status": {
+    "draft": "Draft",
+    "shared": "Shared",
+    "pending": "Pending"
+  },
+  "deleteDialog": {
+    "title": "Delete Digital Product Passport",
+    "confirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "deleting": "Deleting..."
+  },
+  "wizard": {
+    "header": {
+      "backToList": "Back to List",
+      "title": "Create Digital Product Passport",
+      "subtitle": "Follow the steps to create and provision a new DPP"
+    },
+    "steps": {
+      "selectVersion": "Select Version",
+      "twinAssociation": "Twin Association",
+      "dppData": "DPP Data",
+      "reviewCreate": "Review & Create"
+    },
+    "step1": {
+      "title": "Select DPP Version"
+    },
+    "step2": {
+      "title": "Associate with Serialized Part",
+      "infoAlert": "Select an existing serialized part, or create a new one to link with this Digital Product Passport",
+      "noPartsTitle": "No Serialized Parts Available",
+      "noPartsDescription": "You need to create a serialized part before you can provision a DPP",
+      "createSerializedPart": "Create Serialized Part",
+      "selectSerializedPart": "Select Serialized Part",
+      "chooseSerializedPart": "Choose a serialized part...",
+      "selectedPart": "Selected Part",
+      "checkingRegistration": "Checking registration status...",
+      "registrationStatus": "Registration Status",
+      "notRegistered": "Not Registered",
+      "alreadyHasDpp": "Already has DPP",
+      "noDppAssigned": "No DPP assigned",
+      "mustBeRegisteredWarning": "This serialized part must be registered as a digital twin before you can provision a DPP.",
+      "registerSerializedPart": "Register Serialized Part",
+      "registerThisPart": "Register This Part",
+      "registering": "Registering...",
+      "orCreateNewPart": "Or create a new part:",
+      "createNewSerializedPart": "Create New Serialized Part",
+      "twinRegisteredSuccess": "Twin registered successfully!",
+      "partCreatedSuccess": "Serialized part created successfully"
+    },
+    "step3": {
+      "title": "DPP Data Entry",
+      "uploadDppJson": "Upload DPP JSON file",
+      "dropJsonFile": "Drop your JSON file here, or",
+      "browseFiles": "Browse Files",
+      "dropDppHere": "Drop DPP file here",
+      "dragDropDppFile": "Drag & Drop DPP File",
+      "clickToBrowse": "or click to browse for a JSON file",
+      "supportedFormat": "Supported format: JSON",
+      "or": "OR",
+      "createDppFromForm": "Create DPP from Form",
+      "dppDataValidated": "DPP Data Validated",
+      "validationFailed": "Validation Failed",
+      "dppDataLoaded": "DPP Data Loaded",
+      "validatedDescription": "All required data has been validated. Review in the next step.",
+      "validationFailedDescription": "Validation Failed. Your DPP JSON file semantic is not matching all the mandatory fields from the \"{{semanticId}}\" semantic model. Please edit the DPP data to fix validation errors.",
+      "dataUploadedDescription": "Data uploaded successfully. Please validate before proceeding.",
+      "validateDpp": "Validate DPP",
+      "validated": "Validated ✓",
+      "validationFailedButton": "Validation Failed ✗",
+      "editDppData": "Edit DPP Data",
+      "saveSubmodel": "Save Submodel",
+      "fileLoadedSuccess": "DPP file loaded successfully! Click \"Validate\" to verify against schema.",
+      "validatedSuccess": "DPP validated successfully!",
+      "noSchemaAccepted": "No schema available. DPP accepted."
+    },
+    "step4": {
+      "title": "Review & Create",
+      "dppVersion": "DPP Version",
+      "serializedPartAssociation": "Serialized Part Association",
+      "serial": "Serial",
+      "noPartSelected": "No part selected",
+      "digitalTwinInfo": "Digital Twin Information",
+      "discoveryId": "Discovery ID",
+      "notAvailable": "Not available",
+      "previewPassport": "Preview Passport",
+      "readyToCreate": "Ready to create your Digital Product Passport"
+    },
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "createDpp": "Create DPP"
+    },
+    "errors": {
+      "selectPart": "Please select a serialized part to associate with this DPP",
+      "partMustBeRegistered": "The selected serialized part must be registered before creating a DPP. Please register it first.",
+      "provideDppData": "Please provide DPP data before proceeding. You can create it using the form or upload a JSON file.",
+      "validateFirst": "Please validate the DPP data before proceeding."
+    },
+    "publishing": {
+      "publishingDpp": "Publishing DPP...",
+      "publishedSuccessfully": "DPP Published Successfully",
+      "publishingFailed": "Publishing Failed",
+      "creatingDpp": "Creating Digital Product Passport...",
+      "pleaseWait": "Please wait while we register your DPP",
+      "successMessage": "Your Digital Product Passport has been successfully published!",
+      "currentStatus": "Current Status",
+      "sharePrompt": "Now you can share it with your partner!",
+      "errorOccurred": "An error occurred while publishing the DPP"
+    },
+    "preview": {
+      "noDataAvailable": "No data available for preview"
+    }
+  },
+  "detail": {
+    "errorLoading": "Error Loading DPP",
+    "unableToLoad": "Unable to load DPP data",
+    "goBack": "Go Back",
+    "unableToDetermineType": "Unable to Determine Passport Type",
+    "dataNotRecognized": "The passport data format is not recognized"
+  }
+}

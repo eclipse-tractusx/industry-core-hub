@@ -5,6 +5,40 @@ Further information can be found on the [README.md](README.md) file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0] - R26.03
+
+### Added
+
+- Added Part Type Information submodel viewer addon in the frontend with Digital Twin Identity, Part Information, and Production Sites cards.
+- Added Serial Part submodel viewer addon in the frontend with Digital Twin Identity, Local Identifiers, Part Information, and Manufacturing Information cards.
+- Added US Tariff Information specialized submodel viewer tab with material list analysis, tariff, compliance, and supply chain sections.
+- Added EDR stale cache detection and automatic purge from the database (`edr_connections` table) on invalidation.
+- Added negotiation retry logic after stale EDR purge: `_fetch_single_submodel_data` now performs a 2-attempt loop instead of failing immediately.
+- Added mode-aware submodel service authentication header injection for EDC asset registration in HTTP mode (`provider.submodel_dispatcher.http.auth.*`).
+- Added filesystem mode API key injection into EDC asset data-address headers using `authorization.api_key.*` configuration.
+- Added Saturn dataspace version support: updated ODRL policies, DTR access/usage policies, and connector cache management for Saturn compatibility.
+- Added governance configuration in `agreements` format with per-semantic-ID usage and access policies.
+- Added notification inbox with trash/delete functionality in the frontend.
+- Added toggle to switch between mock and API notification modes in the frontend.
+- Added multi-language translations for the notifications feature.
+- Added example configuration files (`configuration-pro.yml`, `configuration-man.yml`) with full agreements, submodel dispatcher http mode, and keycloak settings.
+
+### Changed
+
+- Updated AppVersion to `v0.5.0` in backend and Helm chart.
+- Updated ODRL policies to use `access` action and enhanced constraints for agreements.
+- Improved policy handling for Saturn consumption in dataspace discovery and error handling.
+- Refactored governance configuration from inline policies to the `agreements` format.
+- Removed mock notification service and related configurations from frontend.
+
+### Fixed
+
+- Fixed US Tariff Information type guard: now unwraps array-wrapped payloads and only requires `materialList` field, with all other top-level fields made optional.
+- Fixed US Tariff Information viewer crashing on partial data by adding conditional guards for all optional sections.
+- Fixed Digital Twin API management in provider connector.
+- Fixed submodel path in configuration (removed leading slash).
+- Fixed `counter_party_id` LIKE pattern matching in EDR purge queries.
+
 ## [0.4.0] - 2025-12-02 - R25.12
 
 * feat: nav bar tooltips implementation by @jalvaro-lks in https://github.com/eclipse-tractusx/industry-core-hub/pull/373

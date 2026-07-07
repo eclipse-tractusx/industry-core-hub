@@ -59,6 +59,74 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Pre-pull OCI dependencies
+        env:
+          REGISTRY_USER: ${{ secrets.DOCKER_HUB_USER }}
+          REGISTRY_PASS: ${{ secrets.DOCKER_HUB_TOKEN }}
+        run: |
+          export HELM_EXPERIMENTAL_OCI=1
+
+          chart="charts/industry-core-hub/Chart.yaml"
+          found_oci=0
+
+          # Initialize variables
+          oci_repo=""
+          oci_version=""
+          oci_name=""
+          
+          # Temporary variables
+          temp_repo=""
+          temp_ver=""
+          temp_name=""
+          
+          # Read file line by line
+          while IFS= read -r line; do
+            # 1. Detect start of new dependency block
+            if [[ "$line" =~ ^[[:space:]]*-[[:space:]] ]]; then
+              if [[ "$found_oci" -eq 1 ]]; then break; fi
+              temp_repo=""
+              temp_ver=""
+              temp_name=""
+            fi
+          
+            # 2. Extract values
+            if [[ "$line" =~ repository:[[:space:]]*(.*) ]]; then temp_repo="${BASH_REMATCH[1]}"; fi
+            if [[ "$line" =~ version:[[:space:]]*(.*) ]]; then temp_ver="${BASH_REMATCH[1]}"; fi
+            if [[ "$line" =~ name:[[:space:]]*(.*) ]]; then temp_name="${BASH_REMATCH[1]}"; fi
+          
+            # 3. Check for OCI
+            if [[ "$temp_repo" == oci://* ]]; then
+              found_oci=1
+              oci_repo="$temp_repo"
+              oci_version="$temp_ver"
+              oci_name="$temp_name"
+            fi
+          done < "$chart"
+          
+          # Clean up variables
+          repo=$(echo "$oci_repo" | tr -d ' "')
+          version=$(echo "$oci_version" | tr -d ' "')
+          name=$(echo "$oci_name" | tr -d ' "')
+          
+          if [[ -n "$repo" ]]; then
+            echo "Found OCI dependency: $name $version from $repo"
+            mkdir -p charts/industry-core-hub/charts
+          
+            # Login using the environment variables defined above
+            registry_domain=$(echo "$repo" | sed -E 's|oci://([^/]+).*|\1|')
+            echo "Logging into $registry_domain..."
+            
+            echo "$REGISTRY_PASS" | helm registry login "$registry_domain" --username "$REGISTRY_USER" --password-stdin
+          
+            # Pull the chart
+            helm pull "${repo}/${name}" \
+              --version "$version" \
+              --untar \
+              --untardir charts/industry-core-hub/charts
+          else
+            echo "No OCI dependencies found."
+          fi
+
       - name: Update helm dependencies
         run: |
           cd charts/industry-core-hub

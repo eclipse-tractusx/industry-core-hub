@@ -1,6 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
+* Copyright (c) 2026 LKS NEXT
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -67,6 +68,13 @@ spec:
                 secretKeyRef:
                   name: {{ include "industry-core-hub.postgresql.secretName" . }}
                   key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+          {{- if .Values.backend.configuration.provider.submodel_dispatcher.http.auth.enabled }}
+            - name: SUBMODEL_SERVICE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-submodel-auth
+                  key: {{ if eq .Values.backend.configuration.provider.submodel_dispatcher.http.auth.type "bearer" }}bearer-token{{ else }}api-key{{ end }}
+          {{- end }}
           {{- if .Values.backend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:

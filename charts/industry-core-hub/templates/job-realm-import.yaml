@@ -23,22 +23,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-realm-import-{{ now | date "20060102-150405" }}
+  name: {{ .Release.Name }}-realm-import
   namespace: {{ .Release.Namespace | default "default" | quote }}
   labels:
     {{- include "industry-core-hub.labels" . | nindent 4 }}
     app.kubernetes.io/component: keycloak-import
   annotations:
     {{- if eq .Values.deploymentMode "argocd"  }}
-    # ArgoCD annotations - runs on every sync
-      "argocd.argoproj.io/sync-wave": "3"
-      "argocd.argoproj.io/hook": Sync
-      "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+    # ArgoCD annotations - runs after every sync completes
+    "argocd.argoproj.io/hook": PostSync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
     {{- else }}
     # Helm hooks for standard Helm deployments
-      "helm.sh/hook": post-install, post-upgrade
-      "helm.sh/hook-weight": "5"
-      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     {{- end }}
 spec:
   backoffLimit: 3
@@ -69,9 +68,9 @@ spec:
           args:
             - |
               set -e
-              echo "Waiting for Keycloak at http://{{ .Release.Name }}-keycloak:80/auth/realms/master..."
+              echo "Waiting for Keycloak at http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "" | trimSuffix "/" }}/realms/master..."
               for i in $(seq 1 60); do
-                if curl -f "http://{{ .Release.Name }}-keycloak:80/auth/realms/master" >/dev/null 2>&1; then
+                if curl -f "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "" | trimSuffix "/" }}/realms/master" >/dev/null 2>&1; then
                   echo "✓ Keycloak is ready!"
                   exit 0
                 fi
@@ -86,11 +85,11 @@ spec:
           imagePullPolicy: {{ .Values.keycloak.realmImport.image.pullPolicy }}
           env:
             - name: KEYCLOAK_URL
-              value: "http://{{ .Release.Name }}-keycloak:80/auth"
+              value: "http://{{ .Release.Name }}-keycloak:{{ .Values.keycloak.service.httpPort | default 80 }}{{ .Values.keycloak.keycloak.httpRelativePath | default "/" | trimSuffix "/" }}"
             - name: KEYCLOAK_USER
-              value: "{{ .Values.keycloak.auth.adminUser }}"
+              value: "{{ .Values.keycloak.keycloak.adminUser }}"
             - name: KEYCLOAK_PASSWORD
-              value: "{{ .Values.keycloak.auth.adminPassword }}"
+              value: "{{ .Values.keycloak.keycloak.adminPassword }}"
             - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
               value: "true"
             - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
@@ -101,7 +100,7 @@ spec:
               value: "true"
             - name: IMPORT_VAR_SUBSTITUTION_ENABLED
               value: "true"
-            {{- range $user := .Values.keycloak.realm.users }}
+            {{- range $user := .Values.keycloak.ichubRealm.users }}
             - name: {{ $user.username | upper | replace "-" "_" }}_PASSWORD
               valueFrom:
                 secretKeyRef:

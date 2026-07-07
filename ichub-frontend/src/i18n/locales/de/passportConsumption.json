@@ -1,0 +1,50 @@
+{
+  "page": {
+    "title": "Digitaler Produktpass",
+    "subtitle": "Produktpässe aus dem Datenraum abrufen und visualisieren",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "Bitte geben Sie eine Discovery-ID ein",
+    "validationFormat": "Ungültiges Format. Erwartet: CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "Möchten Sie mehr erfahren? Schauen Sie sich alle unsere",
+    "ecoPassFeatures": "Eco Pass KIT Funktionen"
+  },
+  "loading": {
+    "title": "Pass wird geladen",
+    "errorTitle": "Fehler beim Laden des Passes",
+    "steps": {
+      "parsingId": "ID analysieren",
+      "parsingIdDescription": "Hersteller- und Instanzinformationen extrahieren",
+      "findingOwner": "Eigentümer suchen",
+      "findingOwnerDescription": "BPN über BPN Discovery nachschlagen",
+      "retrievingTwin": "Twin abrufen",
+      "retrievingTwinDescription": "Digitalen Zwilling vom DTR abrufen",
+      "findingSubmodel": "Submodell suchen",
+      "findingSubmodelDescription": "Passendes Submodell finden",
+      "loadingData": "Daten laden",
+      "loadingDataDescription": "Passdaten konsumieren",
+      "readyDescription": "Pass erfolgreich geladen"
+    }
+  },
+  "scanner": {
+    "title": "QR-Code scannen",
+    "subtitle": "Positionieren Sie den QR-Code im Rahmen",
+    "camera": "Kamera",
+    "cameraShort": "Kam",
+    "formatInfo": "Nur QR-Codes mit dem Format",
+    "formatInfoSuffix": "werden akzeptiert",
+    "invalidFormat": "Ungültiges Format. Nur das Format CX:<manufacturerPartId>:<partInstanceId> ist erlaubt, keine URLs.",
+    "cameraError": "Kamerazugriff fehlgeschlagen. Bitte erteilen Sie Kameraberechtigungen."
+  },
+  "visualization": {
+
+    "copiedToClipboard": "{{label}} in die Zwischenablage kopiert",
+    "copyFailed": "Kopieren fehlgeschlagen",
+    "noDataAvailable": "Keine Daten für diesen Bereich verfügbar",
+    "materials": "Materialien",
+    "unableToDetermineType": "Passtyp konnte nicht ermittelt werden. Bitte überprüfen Sie das Datenformat."
+  },
+  "errors": {
+    "noMockData": "Keine Testdaten verfügbar",
+    "loadFailed": "Pass konnte nicht geladen werden"
+  }
+}

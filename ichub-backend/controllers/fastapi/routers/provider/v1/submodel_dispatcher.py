@@ -29,7 +29,9 @@ from managers.config.config_manager import ConfigManager
 from tools.exceptions import exception_responses
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 
-path_submodel_dispatcher = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
+_raw_submodel_path = ConfigManager.get_config("provider.submodel_dispatcher.apiPath", default="/submodel-dispatcher")
+# Guard against non-string values (e.g. when config is absent or mocked in tests).
+path_submodel_dispatcher = _raw_submodel_path if isinstance(_raw_submodel_path, str) else "/submodel-dispatcher"
 router = APIRouter(
     prefix=path_submodel_dispatcher,
     tags=["Submodel Dispatcher"],

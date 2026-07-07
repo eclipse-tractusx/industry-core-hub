@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -38,13 +38,18 @@ interface ErrorPageProps {
  * Reusable error page component with professional styling
  */
 export function ErrorPage({
-  title = 'An Error Occurred',
+  title,
   message,
   causes,
   showRefreshButton = true,
   onRefresh,
-  helpText = 'If the problem persists, please contact your system administrator'
+  helpText
 }: ErrorPageProps) {
+  const { t } = useTranslation('common');
+  
+  const displayTitle = title ?? t('errors.defaultTitle');
+  const displayHelpText = helpText ?? t('auth.contactAdmin');
+
   const handleRefresh = () => {
     if (onRefresh) {
       onRefresh();
@@ -82,7 +87,7 @@ export function ErrorPage({
           textAlign: 'center'
         }}
       >
-        {title}
+        {displayTitle}
       </Typography>
       
       <Typography 
@@ -109,7 +114,7 @@ export function ErrorPage({
           }}
         >
           <Typography variant="body1" sx={{ color: '#856404', marginBottom: 1 }}>
-            <strong>Possible causes:</strong>
+            <strong>{t('errors.possibleCauses')}</strong>
           </Typography>
           {causes.map((cause, index) => (
             <Typography key={index} variant="body2" sx={{ color: '#856404', marginLeft: 2 }}>
@@ -139,7 +144,7 @@ export function ErrorPage({
             boxShadow: 3
           }}
         >
-          Retry
+          {t('errors.retry')}
         </Button>
       )}
 
@@ -152,7 +157,7 @@ export function ErrorPage({
           maxWidth: '600px'
         }}
       >
-        {helpText}
+        {displayHelpText}
       </Typography>
     </Box>
   );

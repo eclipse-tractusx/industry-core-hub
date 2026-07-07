@@ -1,0 +1,175 @@
+{
+  "shareDialog": {
+    "title": "分享数字产品护照（{{name}}）",
+    "shareTitle": "分享数字产品护照",
+    "selectPartnerDescription": "选择要与之分享DPP的合作伙伴",
+    "partnerPlaceholder": "选择要与之分享DPP的合作伙伴",
+    "partnerHelperText": "从可用合作伙伴中选择",
+    "partnerRequired": "必须选择合作伙伴",
+    "addCustomPartId": "添加自定义客户零件ID",
+    "customerPartId": "客户零件ID",
+    "customerPartIdPlaceholder": "输入您的自定义零件标识符",
+    "noPartnersTitle": "无可用合作伙伴",
+    "noPartnersDescription": "无可用合作伙伴。请在合作伙伴视图中添加合作伙伴以分享DPP。",
+    "addPartner": "添加合作伙伴",
+    "successMessage": "DPP已成功与{{bpnl}}分享"
+  },
+  "list": {
+    "title": "数字产品护照",
+    "subtitle": "管理和分享您的产品护照",
+    "createPassport": "创建护照",
+    "searchPlaceholder": "按名称、制造商零件ID或实例ID搜索...",
+    "noPassportsFound": "未找到护照",
+    "noPassportsYet": "暂无护照",
+    "adjustSearch": "尝试调整您的搜索条件",
+    "createFirstPassport": "创建您的第一个数字产品护照以开始",
+    "getStarted": "开始",
+    "passportDiscoveryId": "护照发现ID",
+    "passportId": "护照ID",
+    "passportType": "护照类型",
+    "expiration": "到期",
+    "noExpiration": "无到期日期",
+    "version": "版本{{version}}",
+    "versionLabel": "版本",
+    "seeAll": "查看全部（{{count}})",
+    "allPassports": "所有数字产品护照",
+    "passportsAvailable": "{{count}}个护照可用",
+    "passportsAvailable_plural": "{{count}}个护照可用",
+    "searchDialogPlaceholder": "按名称、ID或发现ID搜索...",
+    "discoveryId": "发现ID",
+    "type": "类型",
+    "expires": "到期",
+    "cardView": "卡片视图",
+    "tableView": "表格视图"
+  },
+  "actions": {
+    "registerPassport": "注册护照",
+    "sharePassport": "分享护照",
+    "unsharePassport": "取消分享护照",
+    "processing": "处理中...",
+    "copyDiscoveryId": "复制发现ID",
+    "exportPdf": "导出PDF",
+    "deletePassport": "删除护照",
+    "register": "注册",
+    "open": "打开"
+  },
+  "status": {
+    "draft": "草稿",
+    "shared": "已分享",
+    "pending": "待处理"
+  },
+  "deleteDialog": {
+    "title": "删除数字产品护照",
+    "confirmMessage": "您确定要删除{{name}}吗？此操作无法撤销。",
+    "deleting": "删除中..."
+  },
+  "wizard": {
+    "header": {
+      "backToList": "返回列表",
+      "title": "创建数字产品护照",
+      "subtitle": "按照步骤创建和配置新的DPP"
+    },
+    "steps": {
+      "selectVersion": "选择版本",
+      "twinAssociation": "孪生关联",
+      "dppData": "DPP数据",
+      "reviewCreate": "审核并创建"
+    },
+    "step1": {
+      "title": "选择DPP版本"
+    },
+    "step2": {
+      "title": "与序列化零件关联",
+      "infoAlert": "选择现有序列化零件，或创建新零件以与此数字产品护照链接",
+      "noPartsTitle": "无可用序列化零件",
+      "noPartsDescription": "您需要先创建序列化零件才能配置DPP",
+      "createSerializedPart": "创建序列化零件",
+      "selectSerializedPart": "选择序列化零件",
+      "chooseSerializedPart": "选择一个序列化零件...",
+      "selectedPart": "已选零件",
+      "checkingRegistration": "正在检查注册状态...",
+      "registrationStatus": "注册状态",
+      "notRegistered": "未注册",
+      "alreadyHasDpp": "已有DPP",
+      "noDppAssigned": "未分配DPP",
+      "mustBeRegisteredWarning": "此序列化零件必须先注册为数字孪生才能配置DPP。",
+      "registerSerializedPart": "注册序列化零件",
+      "registerThisPart": "注册此零件",
+      "registering": "注册中...",
+      "orCreateNewPart": "或创建新零件：",
+      "createNewSerializedPart": "创建新序列化零件",
+      "twinRegisteredSuccess": "孪生注册成功！",
+      "partCreatedSuccess": "序列化零件创建成功"
+    },
+    "step3": {
+      "title": "DPP数据录入",
+      "uploadDppJson": "上传DPP JSON文件",
+      "dropJsonFile": "将您的JSON文件拖放到此处，或",
+      "browseFiles": "浏览文件",
+      "dropDppHere": "将DPP文件拖放到此处",
+      "dragDropDppFile": "拖放DPP文件",
+      "clickToBrowse": "或点击浏览JSON文件",
+      "supportedFormat": "支持的格式：JSON",
+      "or": "或",
+      "createDppFromForm": "通过表单创建DPP",
+      "dppDataValidated": "DPP数据已验证",
+      "validationFailed": "验证失败",
+      "dppDataLoaded": "DPP数据已加载",
+      "validatedDescription": "所有必需数据已验证。在下一步中审核。",
+      "validationFailedDescription": "验证失败。您的DPP JSON文件语义与{{semanticId}}语义模型的所有必填字段不匹配。请编辑DPP数据以修复验证错误。",
+      "dataUploadedDescription": "数据上传成功。请在继续之前验证。",
+      "validateDpp": "验证DPP",
+      "validated": "已验证 ✓",
+      "validationFailedButton": "验证失败 ✗",
+      "editDppData": "编辑DPP数据",
+      "saveSubmodel": "保存子模型",
+      "fileLoadedSuccess": "DPP文件加载成功! 点击\"验证\"以针对架构进行验证。",
+      "validatedSuccess": "DPP验证成功! ",
+      "noSchemaAccepted": "无可用架构。DPP已接受。"
+    },
+    "step4": {
+      "title": "审核并创建",
+      "dppVersion": "DPP版本",
+      "serializedPartAssociation": "序列化零件关联",
+      "serial": "序列号",
+      "noPartSelected": "未选择零件",
+      "digitalTwinInfo": "数字孪生信息",
+      "discoveryId": "发现ID",
+      "notAvailable": "不可用",
+      "previewPassport": "预览护照",
+      "readyToCreate": "准备创建您的数字产品护照"
+    },
+    "buttons": {
+      "back": "返回",
+      "next": "下一步",
+      "createDpp": "创建DPP"
+    },
+    "errors": {
+      "selectPart": "请选择要与此DPP关联的序列化零件",
+      "partMustBeRegistered": "所选序列化零件必须先注册才能创建DPP。请先注册。",
+      "provideDppData": "请在继续之前提供DPP数据。您可以使用表单创建或上传JSON文件。",
+      "validateFirst": "请在继续之前验证DPP数据。"
+    },
+    "publishing": {
+      "publishingDpp": "发布DPP中...",
+      "publishedSuccessfully": "DPP发布成功",
+      "publishingFailed": "发布失败",
+      "creatingDpp": "正在创建数字产品护照...",
+      "pleaseWait": "请稍等，我们正在注册您的DPP",
+      "successMessage": "您的数字产品护照已成功发布！",
+      "currentStatus": "当前状态",
+      "sharePrompt": "现在您可以与合作伙伴分享它！",
+      "errorOccurred": "发布DPP时发生错误"
+    },
+    "preview": {
+      "noDataAvailable": "无可用预览数据"
+    }
+  },
+  "detail": {
+    "errorLoading": "加载DPP出错",
+    "unableToLoad": "无法加载DPP数据",
+    "goBack": "返回",
+    "unableToDetermineType": "无法确定护照类型",
+    "dataNotRecognized": "护照数据格式无法识别"
+  }
+}

@@ -21,6 +21,7 @@
  ********************************************************************************/
 
 import { Grid2 } from "@mui/material";
+import { useTranslation } from 'react-i18next';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
 interface ErrorNotFoundProps {
@@ -30,8 +31,10 @@ interface ErrorNotFoundProps {
 
 export const ErrorNotFound = ({
   icon = ReportProblemIcon,
-  message = "No catalog parts available, please check your ichub-backend connection/configuration.",
+  message,
 }: ErrorNotFoundProps) => {
+  const { t } = useTranslation('common');
+  const displayMessage = message ?? t('errors.notFound');
   const IconComponent = icon;
   return (
     <Grid2 container display={"flex"} flexDirection={"row"} alignContent={"center"} justifyContent={"center"}>
@@ -39,7 +42,7 @@ export const ErrorNotFound = ({
         <IconComponent className="not-found icon my-auto mr-1" />
       </Grid2>
       <Grid2 className="not-found title">
-        {message}
+        {displayMessage}
       </Grid2>
     </Grid2>
   );

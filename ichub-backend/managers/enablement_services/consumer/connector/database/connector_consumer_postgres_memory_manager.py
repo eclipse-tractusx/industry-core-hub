@@ -24,7 +24,7 @@
 import threading
 import hashlib
 import copy
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 from datetime import datetime
 from sqlmodel import select, delete, Session, SQLModel
@@ -33,6 +33,7 @@ import logging
 from ..memory import ConnectorConsumerMemoryManager
 from tractusx_sdk.dataspace.services.discovery import ConnectorDiscoveryService
 from tractusx_sdk.dataspace.services.connector import BaseConnectorConsumerService
+from tractusx_sdk.dataspace.tools import op
 from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownConnectors
@@ -253,6 +254,104 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         except SQLAlchemyError as e:
             if self.logger and self.verbose:
                 self.logger.error(f"[ConsumerConnectorPostgresMemoryManager] Error saving to db: {e}")
+
+    def get_connectors(self, bpn: str) -> List[str]:
+        """
+        Retrieve connectors for a specific BPN, preferring persistent database
+        state over an outbound BDRS discovery call.
+
+        The lookup follows three ordered steps so that connectors manually
+        inserted into ``KnownConnectors`` (or surviving from a previous
+        successful discovery) are always honoured before making any external
+        network call:
+
+        1. **In-memory cache (not expired)** – fastest path, no I/O needed.
+        2. **Database** – consulted when the in-memory entry is absent or has
+           passed its expiry timestamp.  If the database holds connectors for
+           the BPN they are restored into memory with a fresh expiry and
+           returned immediately; BDRS discovery is *skipped*.
+        3. **BDRS discovery** – only invoked when the BPN is completely unknown
+           to both the memory cache and the database.
+
+        Args:
+            bpn: Business Partner Number Legal Entity to look up.
+
+        Returns:
+            List of connector DSP URLs for the given BPN, or an empty list if
+            no source can provide them.
+        """
+        # --- 1. Fast path: valid in-memory cache ----------------------------
+        self.logger.debug(
+            f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] "
+            f"Trying to acquire lock (get_connectors check)"
+        )
+        with self._lock:
+            self.logger.debug(
+                f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] "
+                f"Acquired lock (get_connectors check)"
+            )
+            known: Dict = copy.deepcopy(self.known_connectors.get(bpn, {}))
+        self.logger.debug(
+            f"[ConsumerConnectorPostgresMemoryManager] [{threading.get_ident()}] "
+            f"Released lock (get_connectors check)"
+        )
+
+        if (
+            known
+            and self.REFRESH_INTERVAL_KEY in known
+            and self.CONNECTOR_LIST_KEY in known
+            and not op.is_interval_reached(end_timestamp=known[self.REFRESH_INTERVAL_KEY])
+        ):
+            if self.logger and self.verbose:
+                self.logger.debug(
+                    f"[ConsumerConnectorPostgresMemoryManager] [{bpn}] Returning "
+                    f"[{len(known[self.CONNECTOR_LIST_KEY])}] connector(s) from memory cache."
+                )
+            return known[self.CONNECTOR_LIST_KEY]
+
+        # --- 2. DB fallback: cache absent or expired ------------------------
+        # Prioritise existing database entries over BDRS re-discovery so that
+        # manually populated or previously discovered connector URLs are reused
+        # instead of being silently replaced by a potentially stale BDRS result.
+        if self.logger and self.verbose:
+            self.logger.info(
+                f"[ConsumerConnectorPostgresMemoryManager] [{bpn}] Memory cache absent "
+                f"or expired; checking database for known connectors."
+            )
+        try:
+            with Session(self.engine) as session:
+                row = session.exec(
+                    select(self.KnownConnectorsModel).where(self.KnownConnectorsModel.bpnl == bpn)
+                ).first()
+        except SQLAlchemyError as e:
+            if self.logger:
+                self.logger.error(
+                    f"[ConsumerConnectorPostgresMemoryManager] [{bpn}] DB lookup failed: {e}"
+                )
+            row = None
+
+        if row and row.connectors:
+            if self.logger and self.verbose:
+                self.logger.info(
+                    f"[ConsumerConnectorPostgresMemoryManager] [{bpn}] Restoring "
+                    f"[{len(row.connectors)}] connector(s) from DB; BDRS discovery skipped."
+                )
+            # Restore to in-memory cache with a fresh expiry so that subsequent
+            # calls use the fast path (step 1) until the next expiration cycle.
+            self.add_connectors(bpn=bpn, connectors=row.connectors)
+            return row.connectors
+
+        # --- 3. Last resort: BDRS discovery ---------------------------------
+        if self.logger and self.verbose:
+            self.logger.info(
+                f"[ConsumerConnectorPostgresMemoryManager] [{bpn}] No database entry "
+                f"found; falling back to BDRS discovery."
+            )
+        connectors: Optional[List[str]] = self.connector_discovery.find_connector_by_bpn(bpn=bpn)
+        if not connectors:
+            return []
+        self.add_connectors(bpn=bpn, connectors=connectors)
+        return connectors
 
     def stop(self):
         """

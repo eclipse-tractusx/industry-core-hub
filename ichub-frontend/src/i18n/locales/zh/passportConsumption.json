@@ -1,0 +1,49 @@
+{
+  "page": {
+    "title": "数字产品护照",
+    "subtitle": "从数据空间检索和可视化产品护照",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "请输入发现ID",
+    "validationFormat": "格式无效。预期格式：CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "想了解更多？查看我们所有的",
+    "ecoPassFeatures": "生态通行证KIT功能"
+  },
+  "loading": {
+    "title": "加载护照中",
+    "errorTitle": "加载护照出错",
+    "steps": {
+      "parsingId": "解析ID",
+      "parsingIdDescription": "提取制造商和实例信息",
+      "findingOwner": "查找所有者",
+      "findingOwnerDescription": "使用BPN发现查找BPN",
+      "retrievingTwin": "检索孪生",
+      "retrievingTwinDescription": "从DTR获取数字孪生",
+      "findingSubmodel": "查找子模型",
+      "findingSubmodelDescription": "定位匹配的子模型",
+      "loadingData": "加载数据",
+      "loadingDataDescription": "消费护照数据",
+      "readyDescription": "护照加载成功"
+    }
+  },
+  "scanner": {
+    "title": "扫描二维码",
+    "subtitle": "将二维码置于框架内",
+    "camera": "摄像头",
+    "cameraShort": "摄像头",
+    "formatInfo": "仅接受格式为",
+    "formatInfoSuffix": "的二维码",
+    "invalidFormat": "格式无效。只允许CX:<manufacturerPartId>:<partInstanceId>格式，不接受URL。",
+    "cameraError": "无法访问摄像头。请授予摄像头权限。"
+  },
+  "visualization": {
+    "copiedToClipboard": "{{label}}已复制到剪贴板",
+    "copyFailed": "复制失败",
+    "noDataAvailable": "此部分无可用数据",
+    "materials": "材料",
+    "unableToDetermineType": "无法确定护照类型。请检查数据格式。"
+  },
+  "errors": {
+    "noMockData": "无可用模拟数据",
+    "loadFailed": "加载护照失败"
+  }
+}

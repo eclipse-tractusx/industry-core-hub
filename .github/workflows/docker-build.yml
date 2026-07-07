@@ -43,7 +43,7 @@ jobs:
       matrix:
         include:
           - image: tractusx/industry-core-hub-backend
-            dockerfile: ./ichub-backend/Dockerfile
+            dockerfile: ./ichub-backend/runtimes/Dockerfile
             dockernotice: ./ichub-backend/docker-notice-ichub-backend.md
             context: ./ichub-backend/
     steps:
@@ -87,6 +87,8 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # https://github.com/peter-evans/dockerhub-description
       - name: Update Docker Hub description

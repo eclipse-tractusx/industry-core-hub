@@ -22,7 +22,7 @@
 openapi: 3.1.0
 info:
   title: Industry Core Hub Backend API
-  version: 0.2.0
+  version: 0.5.0
 paths:
   '/v1/part-management/catalog-part/{manufacturer_id}/{manufacturer_part_id}':
     get:
@@ -31,6 +31,9 @@ paths:
       summary: Part Management Get Catalog Part Details
       operationId: >-
         part_management_get_catalog_part_details_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: manufacturer_id
           in: path
@@ -82,7 +85,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -99,6 +104,9 @@ paths:
       summary: Part Management Update Catalog Part
       operationId: >-
         part_management_update_catalog_part_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__put
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: manufacturer_id
           in: path
@@ -175,6 +183,9 @@ paths:
       summary: Part Management Delete Catalog Part
       operationId: >-
         part_management_delete_catalog_part_v1_part_management_catalog_part__manufacturer_id___manufacturer_part_id__delete
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: manufacturer_id
           in: path
@@ -287,7 +298,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -298,6 +311,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
     post:
       tags:
         - Part Management
@@ -347,7 +363,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -358,6 +376,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/part-management/catalog-part/create-partner-mapping:
     post:
       tags:
@@ -409,7 +430,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -420,6 +443,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/part-management/serialized-part:
     get:
       tags:
@@ -427,6 +453,9 @@ paths:
       summary: Part Management Get Serialized Parts
       operationId: >-
         part_management_get_serialized_parts_v1_part_management_serialized_part_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       responses:
         '200':
           description: Successful Response
@@ -470,7 +499,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -487,6 +518,9 @@ paths:
       summary: Part Management Create Serialized Part
       operationId: >-
         part_management_create_serialized_part_v1_part_management_serialized_part_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: autoGenerateCatalogPart
           in: query
@@ -550,7 +584,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -617,7 +653,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -628,6 +666,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   '/v1/part-management/serialized-part/{partner_catalog_part_id}/{part_instance_id}':
     put:
       tags:
@@ -635,6 +676,9 @@ paths:
       summary: Part Management Update Serialized Part
       operationId: >-
         part_management_update_serialized_part_v1_part_management_serialized_part__partner_catalog_part_id___part_instance_id__put
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: partner_catalog_part_id
           in: path
@@ -711,6 +755,9 @@ paths:
       summary: Part Management Delete Serialized Part
       operationId: >-
         part_management_delete_serialized_part_v1_part_management_serialized_part__partner_catalog_part_id___part_instance_id__delete
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: partner_catalog_part_id
           in: path
@@ -824,7 +871,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -835,6 +884,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
     post:
       tags:
         - Partner Management
@@ -885,7 +937,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -896,6 +950,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   '/v1/partner-management/business-partner/{business_partner_number}':
     get:
       tags:
@@ -903,6 +960,9 @@ paths:
       summary: Partner Management Get Business Partner
       operationId: >-
         partner_management_get_business_partner_v1_partner_management_business_partner__business_partner_number__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: business_partner_number
           in: path
@@ -953,7 +1013,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -971,6 +1033,9 @@ paths:
       summary: Partner Management Get Data Exchange Agreements
       operationId: >-
         partner_management_get_data_exchange_agreements_v1_partner_management_business_partner__business_partner_number__data_exchange_agreement_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: business_partner_number
           in: path
@@ -1022,7 +1087,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1040,6 +1107,9 @@ paths:
       summary: Twin Management Get Catalog Part Twins
       operationId: >-
         twin_management_get_catalog_part_twins_v1_twin_management_catalog_part_twin_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: include_data_exchange_agreements
           in: query
@@ -1091,7 +1161,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1108,13 +1180,18 @@ paths:
       summary: Twin Management Create Catalog Part Twin
       operationId: >-
         twin_management_create_catalog_part_twin_v1_twin_management_catalog_part_twin_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: autoCreatePartTypeInformation
           in: query
           required: false
           schema:
             type: boolean
-            description: Automatically create part type information submodel if not present.
+            description: >-
+              Automatically create part type information submodel if not
+              present.
             default: true
             title: Autocreateparttypeinformation
           description: Automatically create part type information submodel if not present.
@@ -1162,7 +1239,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1180,6 +1259,9 @@ paths:
       summary: Twin Management Get Catalog Part Twin
       operationId: >-
         twin_management_get_catalog_part_twin_v1_twin_management_catalog_part_twin__global_id__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: global_id
           in: path
@@ -1231,7 +1313,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1249,6 +1333,9 @@ paths:
       summary: Twin Management Get Catalog Part Twin From Manufacturer
       operationId: >-
         twin_management_get_catalog_part_twin_from_manufacturer_v1_twin_management_catalog_part_twin__manufacturer_id___manufacturer_part_id__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: manufacturer_id
           in: path
@@ -1306,7 +1393,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1371,7 +1460,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1382,6 +1473,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/twin-management/serialized-part-twin:
     get:
       tags:
@@ -1389,6 +1483,9 @@ paths:
       summary: Twin Management Get All Serialized Part Twins
       operationId: >-
         twin_management_get_all_serialized_part_twins_v1_twin_management_serialized_part_twin_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: include_data_exchange_agreements
           in: query
@@ -1488,7 +1585,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1505,6 +1604,9 @@ paths:
       summary: Twin Management Create Serialized Part Twin
       operationId: >-
         twin_management_create_serialized_part_twin_v1_twin_management_serialized_part_twin_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: autoCreatePartTypeInformation
           in: query
@@ -1561,7 +1663,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1579,6 +1683,9 @@ paths:
       summary: Twin Management Get Serialized Part Twin
       operationId: >-
         twin_management_get_serialized_part_twin_v1_twin_management_serialized_part_twin__global_id__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: global_id
           in: path
@@ -1630,7 +1737,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1647,12 +1756,23 @@ paths:
         - Twin Management
       summary: Twin Management Create Twin Aspect
       operationId: twin_management_create_twin_aspect_v1_twin_management_twin_aspect_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: default
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: true
+            title: Default
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/TwinAspectCreate'
-        required: true
       responses:
         '200':
           description: Successful Response
@@ -1691,7 +1811,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1756,7 +1878,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1767,6 +1891,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/twin-management/serialized-part-twin/unshare:
     post:
       tags:
@@ -1834,6 +1961,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   '/v1/submodel-dispatcher/{semantic_id}/{submodel_id}':
     get:
       tags:
@@ -1841,6 +1971,9 @@ paths:
       summary: Submodel Dispatcher Get Submodel Content Submodel Value
       operationId: >-
         submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: semantic_id
           in: path
@@ -1861,8 +1994,7 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
+              - type: 'null'
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -1872,11 +2004,14 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
-            description: The contract agreement id of the consumer delivered by the EDC Data Plane
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
             title: Edc-Contract-Agreement-Id
-          description: The contract agreement id of the consumer delivered by the EDC Data Plane
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
       responses:
         '200':
           description: Successful Response
@@ -1919,7 +2054,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -1937,6 +2074,9 @@ paths:
       summary: Submodel Dispatcher Get Submodel Content Submodel Value
       operationId: >-
         submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: semantic_id
           in: path
@@ -1957,8 +2097,7 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
+              - type: 'null'
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -1968,11 +2107,14 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
-            description: The contract agreement id of the consumer delivered by the EDC Data Plane
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
             title: Edc-Contract-Agreement-Id
-          description: The contract agreement id of the consumer delivered by the EDC Data Plane
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
       responses:
         '200':
           description: Successful Response
@@ -2016,7 +2158,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -2033,6 +2177,9 @@ paths:
       summary: Submodel Dispatcher Upload Submodel
       operationId: >-
         submodel_dispatcher_upload_submodel_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: semantic_id
           in: path
@@ -2090,7 +2237,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -2107,6 +2256,9 @@ paths:
       summary: Submodel Dispatcher Delete Submodel
       operationId: >-
         submodel_dispatcher_delete_submodel_v1_submodel_dispatcher__semantic_id___submodel_id__submodel_delete
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: semantic_id
           in: path
@@ -2155,7 +2307,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -2173,6 +2327,9 @@ paths:
       summary: Submodel Dispatcher Get Submodel Content Submodel Value
       operationId: >-
         submodel_dispatcher_get_submodel_content_submodel_value_v1_submodel_dispatcher__semantic_id___submodel_id__submodel__value_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
       parameters:
         - name: semantic_id
           in: path
@@ -2193,8 +2350,7 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
+              - type: 'null'
             description: The BPN of the consumer delivered by the EDC Data Plane
             title: Edc-Bpn
           description: The BPN of the consumer delivered by the EDC Data Plane
@@ -2204,11 +2360,14 @@ paths:
           schema:
             anyOf:
               - type: string
-              - type: object
-                nullable: true
-            description: The contract agreement id of the consumer delivered by the EDC Data Plane
+              - type: 'null'
+            description: >-
+              The contract agreement id of the consumer delivered by the EDC
+              Data Plane
             title: Edc-Contract-Agreement-Id
-          description: The contract agreement id of the consumer delivered by the EDC Data Plane
+          description: >-
+            The contract agreement id of the consumer delivered by the EDC Data
+            Plane
       responses:
         '200':
           description: Successful Response
@@ -2252,7 +2411,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -2313,7 +2474,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
         '502':
-          description: Bad Gateway - The server received an invalid response from the upstream server.
+          description: >-
+            Bad Gateway - The server received an invalid response from the
+            upstream server.
           content:
             application/json:
               schema:
@@ -2324,6 +2487,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetail'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/connection/data/get:
     post:
       tags:
@@ -2348,6 +2514,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/connection/data/post:
     post:
       tags:
@@ -2372,6 +2541,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/registries:
     post:
       tags:
@@ -2396,6 +2568,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/shells:
     post:
       tags:
@@ -2437,6 +2612,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/shell:
     post:
       tags:
@@ -2478,6 +2656,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/shell/submodels:
     post:
       tags:
@@ -2577,6 +2758,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/shell/submodel:
     post:
       tags:
@@ -2643,6 +2827,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
   /v1/discover/shell/submodels/semanticId:
     post:
       tags:
@@ -2696,6 +2883,506 @@ paths:
           content:
             application/json:
               schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/digital-twin-event/connect-to-parent:
+    post:
+      tags:
+        - Digital Twin Event Management
+      summary: Connect To Parent
+      operationId: connect_to_parent_v1_digital_twin_event_connect_to_parent_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/digital-twin-event/connect-to-child:
+    post:
+      tags:
+        - Digital Twin Event Management
+      summary: Connect To Child
+      operationId: connect_to_child_v1_digital_twin_event_connect_to_child_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/digital-twin-event/submodel-update:
+    post:
+      tags:
+        - Digital Twin Event Management
+      summary: Submodel Update
+      operationId: submodel_update_v1_digital_twin_event_submodel_update_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/digital-twin-event/feedback:
+    post:
+      tags:
+        - Digital Twin Event Management
+      summary: Feedback
+      operationId: feedback_v1_digital_twin_event_feedback_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/notifications-management/notifications:
+    post:
+      tags:
+        - Notifications Management
+      summary: Get All Notifications
+      operationId: get_all_notifications_v1_notifications_management_notifications_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: bpn
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Bpn
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/NotificationStatus'
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            title: Offset
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationResponse'
+                title: >-
+                  Response Get All Notifications V1 Notifications Management
+                  Notifications Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/notifications-management/notification:
+    post:
+      tags:
+        - Notifications Management
+      summary: Create Notification
+      description: Create a new notification (OUTGOING direction).
+      operationId: create_notification_v1_notifications_management_notification_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Notification'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+        - Notifications Management
+      summary: Delete Notification
+      operationId: delete_notification_v1_notifications_management_notification_delete
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: message_id
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Message Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/notifications-management/notification/send:
+    post:
+      tags:
+        - Notifications Management
+      summary: Send Notification
+      description: Send an existing notification to the specified endpoint.
+      operationId: send_notification_v1_notifications_management_notification_send_post
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: message_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+            title: Message Id
+        - name: endpoint_path
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Endpoint Path
+        - name: provider_bpn
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Provider Bpn
+        - name: provider_dsp_url
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Provider Dsp Url
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+              title: List Policies
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/notifications-management/notification/status:
+    put:
+      tags:
+        - Notifications Management
+      summary: Update Notification Status
+      operationId: >-
+        update_notification_status_v1_notifications_management_notification_status_put
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: message_id
+          in: query
+          required: true
+          schema:
+            type: string
+            title: Message Id
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/NotificationStatus'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /v1/addons/ecopass-kit/passports:
+    get:
+      tags:
+        - Add-Ons Microservices
+        - EcoPass KIT Microservices
+      summary: Get All Passports
+      description: >-
+        Retrieve all Digital Product Passports (DPPs) from the system.
+
+
+        This endpoint fetches all twins that have DPP aspects
+        (digital_product_passport semantic ID)
+
+        and returns them in the standardized DPP format.
+
+
+        Returns:
+            List[DigitalProductPassport]: A list of all Digital Product Passports in the system
+
+        Raises:
+            HTTPException: If there's an error retrieving the passports
+      operationId: get_all_passports_v1_addons_ecopass_kit_passports_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DigitalProductPassport'
+                type: array
+                title: Response Get All Passports V1 Addons Ecopass Kit Passports Get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/addons/ecopass-kit/provision/share:
+    post:
+      tags:
+        - Add-Ons Microservices
+        - EcoPass KIT Microservices
+      summary: Share Dpp
+      description: >-
+        Share a Digital Product Passport (catalog or serialized part twin) with
+        a single business partner.
+
+
+        This endpoint:
+
+        1. Validates the DPP exists and is associated with a catalog or
+        serialized part twin
+
+        2. Shares the twin using the appropriate sharing logic
+
+        3. Registers the manufacturer part ID in BPN Discovery
+
+
+        Args:
+            request: ShareDppRequest containing DPP ID and target BPNL
+
+        Returns:
+            ShareDppResponse with sharing status
+
+        Raises:
+            HTTPException: If the DPP is not found or sharing fails
+      operationId: share_dpp_v1_addons_ecopass_kit_provision_share_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareDppRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareDppResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  /v1/addons/ecopass-kit/discover/:
+    post:
+      tags:
+        - Add-Ons Microservices
+        - EcoPass KIT Microservices
+      summary: Discover Dpp
+      description: >-
+        Discover a Digital Product Passport using BPN Discovery and DTR lookup.
+
+
+        This endpoint:
+
+        1. Parses the ID to extract manufacturerPartId and partInstanceId
+
+        2. Uses BPN Discovery to find the BPN owner of the manufacturerPartId
+
+        3. Uses DTR Consumer to retrieve the digital twin shell
+
+        4. Looks up the submodel matching the provided semanticId
+
+        5. Consumes the submodel data
+
+
+        The operation runs asynchronously with step-by-step status tracking.
+
+        Use the returned taskId to check progress via GET
+        /discover/{taskId}/status
+
+
+        Args:
+            request: DiscoverDppRequest with id and semanticId
+            background_tasks: FastAPI background tasks
+            
+        Returns:
+            DiscoverDppResponse with taskId and initial status
+            
+        Raises:
+            HTTPException: If the ID format is invalid
+      operationId: discover_dpp_v1_addons_ecopass_kit_discover__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoverDppRequest'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoverDppResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+  '/v1/addons/ecopass-kit/discover/{task_id}/status':
+    get:
+      tags:
+        - Add-Ons Microservices
+        - EcoPass KIT Microservices
+      summary: Get Discovery Status
+      description: |-
+        Get the current status of a discovery task.
+
+        Args:
+            task_id: The unique task identifier from the initial discovery request
+            
+        Returns:
+            DiscoverDppResponse with current status and results (if completed)
+            
+        Raises:
+            HTTPException: If the task ID is not found
+      operationId: get_discovery_status_v1_addons_ecopass_kit_discover__task_id__status_get
+      security:
+        - APIKeyHeader: []
+        - HTTPBearer: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            title: Task Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiscoverDppResponse'
         '422':
           description: Validation Error
           content:
@@ -2767,22 +3454,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Description
           description: The decription of the part.
         materials:
@@ -2790,8 +3474,7 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -2800,36 +3483,33 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
       type: object
       required:
@@ -2856,22 +3536,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Description
           description: The decription of the part.
         materials:
@@ -2879,8 +3556,7 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -2889,36 +3565,33 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
       type: object
       required:
@@ -2947,15 +3620,13 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
       type: object
@@ -2972,16 +3643,16 @@ components:
           anyOf:
             - type: string
               format: uuid
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Globalid
-          description: Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.
+          description: >-
+            Optionally the Catena-X ID / global ID of the digital twin to
+            create. If not specified, a new UUID will be created automatically.
         dtrAasId:
           anyOf:
             - type: string
               format: uuid
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Dtraasid
           description: >-
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
@@ -3015,28 +3686,45 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Additionalcontext
-          description: Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.
+          description: >-
+            Additional context information about the digital twin. This can
+            include various metadata or properties associated with the twin.
+            Intended for handling twins by third party apps.
         registrations:
           anyOf:
             - additionalProperties:
                 type: boolean
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Registrations
-          description: A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.
+          description: >-
+            A map of registration information for the digital twin in different
+            enablement service stacks. The key is the name of the enablement
+            service stack.
+        allAspects:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/TwinAspectRead'
+              type: array
+            - type: 'null'
+          title: Allaspects
+          description: >-
+            A complete list of all aspect information for the digital twin,
+            including multiple aspects with the same semantic ID.
         aspects:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Aspects
-          description: A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.
+          description: >-
+            A map of aspect information for the digital twin. The key is the
+            semantic ID of the aspect. The value is a TwinAspectRead object
+            containing details about the aspect. For backward compatibility,
+            only the first aspect of each semantic type is included.
         globalId:
           type: string
           format: uuid
@@ -3046,7 +3734,9 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -3062,8 +3752,7 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         manufacturerId:
@@ -3081,22 +3770,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Description
           description: The decription of the part.
         materials:
@@ -3104,8 +3790,7 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -3114,36 +3799,33 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
       type: object
       required:
@@ -3155,7 +3837,9 @@ components:
         - manufacturerPartId
         - name
       title: CatalogPartTwinDetailsRead
-      description: Represents the details of a catalog part twin within the Digital Twin Registry.
+      description: >-
+        Represents the details of a catalog part twin within the Digital Twin
+        Registry.
     CatalogPartTwinRead:
       properties:
         globalId:
@@ -3167,7 +3851,9 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -3183,8 +3869,7 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         manufacturerId:
@@ -3202,22 +3887,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Description
           description: The decription of the part.
         materials:
@@ -3225,8 +3907,7 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -3235,36 +3916,33 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
       type: object
       required:
@@ -3282,7 +3960,9 @@ components:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: The business partner number of the business partner with which the catalog part is shared.
+          description: >-
+            The business partner number of the business partner with which the
+            catalog part is shared.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -3385,7 +4065,9 @@ components:
         name:
           type: string
           title: Name
-          description: The unique name of the data exchange agreement with the given business partner.
+          description: >-
+            The unique name of the data exchange agreement with the given
+            business partner.
         contracts:
           items:
             $ref: '#/components/schemas/DataExchangeContractRead'
@@ -3408,7 +4090,9 @@ components:
         edcUsagePolicyId:
           type: string
           title: Edcusagepolicyid
-          description: The ID of the EDC usage policy for the background generated EDC contract negotion
+          description: >-
+            The ID of the EDC usage policy for the background generated EDC
+            contract negotion
       type: object
       required:
         - semanticId
@@ -3417,6 +4101,140 @@ components:
       description: >-
         Represents document type specific contract terms belonging to a data
         exchange agreement.
+    DigitalProductPassport:
+      properties:
+        id:
+          type: string
+          title: Id
+        passportId:
+          type: string
+          title: Passportid
+        manufacturerPartId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Manufacturerpartid
+        partInstanceId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Partinstanceid
+        partType:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Parttype
+        name:
+          type: string
+          title: Name
+        version:
+          type: string
+          title: Version
+        semanticId:
+          type: string
+          title: Semanticid
+        status:
+          type: string
+          title: Status
+        issueDate:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Issuedate
+        expirationDate:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Expirationdate
+        twinAssociation:
+          anyOf:
+            - $ref: '#/components/schemas/TwinAssociation'
+            - type: 'null'
+        submodelId:
+          type: string
+          title: Submodelid
+        createdAt:
+          type: string
+          title: Createdat
+        updatedAt:
+          type: string
+          title: Updatedat
+      type: object
+      required:
+        - id
+        - passportId
+        - name
+        - version
+        - semanticId
+        - status
+        - submodelId
+        - createdAt
+        - updatedAt
+      title: DigitalProductPassport
+      description: Digital Product Passport model
+    DiscoverDppRequest:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: 'The identifier in format ''CX:<manufacturerPartId>:<partInstanceId>'''
+        semanticId:
+          type: string
+          title: Semanticid
+          description: >-
+            The semantic ID of the submodel to retrieve (e.g.,
+            'urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport')
+        dtrPolicies:
+          anyOf:
+            - items:
+                additionalProperties: true
+                type: object
+              type: array
+            - type: 'null'
+          title: Dtrpolicies
+          description: Policies to apply for DTR (Digital Twin Registry) access
+        governance:
+          anyOf:
+            - additionalProperties: true
+              type: object
+            - type: 'null'
+          title: Governance
+          description: Governance policies for submodel consumption (passport data access)
+      type: object
+      required:
+        - id
+        - semanticId
+      title: DiscoverDppRequest
+      description: Request model for discovering a Digital Product Passport
+    DiscoverDppResponse:
+      properties:
+        taskId:
+          type: string
+          title: Taskid
+          description: Unique identifier for tracking this discovery task
+        status:
+          $ref: '#/components/schemas/DiscoveryStatus'
+          description: Current discovery status
+        digitalTwin:
+          anyOf:
+            - additionalProperties: true
+              type: object
+            - type: 'null'
+          title: Digitaltwin
+          description: The discovered digital twin shell descriptor
+        data:
+          anyOf:
+            - additionalProperties: true
+              type: object
+            - type: 'null'
+          title: Data
+          description: The consumed DPP data
+      type: object
+      required:
+        - taskId
+        - status
+      title: DiscoverDppResponse
+      description: Response model for DPP discovery operation
     DiscoverRegistriesRequest:
       properties:
         counterPartyId:
@@ -3618,6 +4436,34 @@ components:
         - counterPartyId
         - id
       title: DiscoverSubmodelsDataRequest
+    DiscoveryStatus:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: 'Current status: ''in_progress'', ''completed'', ''failed'''
+        step:
+          type: string
+          title: Step
+          description: >-
+            Current step: 'parsing', 'discovering_bpn', 'retrieving_twin',
+            'looking_up_submodel', 'consuming_data', 'complete'
+        message:
+          type: string
+          title: Message
+          description: Human-readable status message
+        progress:
+          type: integer
+          title: Progress
+          description: Progress percentage (0-100)
+      type: object
+      required:
+        - status
+        - step
+        - message
+        - progress
+      title: DiscoveryStatus
+      description: Status model for discovery progress
     DoGetParams:
       properties:
         counter_party_id:
@@ -3643,36 +4489,31 @@ components:
         verify:
           anyOf:
             - type: boolean
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Verify
           default: false
         headers:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Headers
           default: {}
         timeout:
           anyOf:
             - type: integer
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Timeout
         params:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Params
         allow_redirects:
           anyOf:
             - type: boolean
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Allow Redirects
           default: false
       type: object
@@ -3709,8 +4550,7 @@ components:
           anyOf:
             - items: {}
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Policies
         verify:
           type: boolean
@@ -3720,14 +4560,12 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Headers
         timeout:
           anyOf:
             - type: integer
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Timeout
         allow_redirects:
           type: boolean
@@ -3791,12 +4629,243 @@ components:
         - value
         - unit
       title: Measurement
+    Notification:
+      properties:
+        header:
+          $ref: '#/components/schemas/NotificationHeader'
+          description: Notification header with metadata based on message_header_3.0.0
+        content:
+          $ref: '#/components/schemas/NotificationContent'
+          description: Notification content/body
+      type: object
+      required:
+        - header
+      title: Notification
+      description: >-
+        Complete notification model following Industry Core Notifications
+        schema.
+
+
+        Combines header (based on io.catenax.shared.message_header_3.0.0) and
+
+        content into a single notification entity that can be sent through
+
+        the Catena-X dataspace.
+
+
+        Schema:
+        https://catenax-ev.github.io/assets/files/notification.schema.json
+
+
+        Attributes:
+            header: Notification header with metadata (required)
+            content: Notification content/body (required)
+    NotificationContent:
+      properties:
+        information:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Information
+          description: Human-readable notification message or description
+        listOfAffectedItems:
+          items:
+            type: string
+          type: array
+          title: Listofaffecteditems
+          description: List of affected part or serial numbers
+      additionalProperties: true
+      type: object
+      title: NotificationContent
+      description: |-
+        Notification content/body for Industry Core notifications.
+
+        The content structure is flexible and can contain any payload.
+        Common fields for quality notifications are provided as optional fields.
+
+        Attributes:
+            information: Human-readable description or message
+            list_of_affected_items: List of affected part/serial numbers
+    NotificationHeader:
+      properties:
+        messageId:
+          type: string
+          format: uuid
+          title: Messageid
+          description: >-
+            Unique ID identifying the message. The purpose of the ID is to
+            uniquely identify a single message, therefore it MUST not be reused.
+        context:
+          type: string
+          title: Context
+          description: >-
+            Information about the context the message should be considered in.
+            Format: <domain>-<subdomain>-<object>:<version> (e.g.,
+            IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0)
+          examples:
+            - 'IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0'
+        sentDateTime:
+          type: string
+          format: date-time
+          title: Sentdatetime
+          description: >-
+            Time zone aware timestamp holding the date and time the message was
+            sent. Formatted according to ISO 8601.
+        senderBpn:
+          type: string
+          pattern: '^BPNL[a-zA-Z0-9]{12}$'
+          title: Senderbpn
+          description: >-
+            The Business Partner Number of the sending party. Must be a valid
+            BPNL.
+        receiverBpn:
+          type: string
+          pattern: '^BPNL[a-zA-Z0-9]{12}$'
+          title: Receiverbpn
+          description: >-
+            The Business Partner Number of the receiving party. Must be a valid
+            BPNL.
+        version:
+          type: string
+          pattern: >-
+            ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(0|[1-9A-Za-z-][0-9A-Za-z-]*)(\.[0-9A-Za-z-]+)*)?([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$
+          title: Version
+          description: >-
+            The version of the message header aspect model following semantic
+            versioning.
+          default: 3.0.0
+        expectedResponseBy:
+          anyOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+          title: Expectedresponseby
+          description: >-
+            Timestamp by which the sending party expects a response. Formatted
+            according to ISO 8601.
+        relatedMessageId:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: 'null'
+          title: Relatedmessageid
+          description: Unique ID identifying a message somehow related to the current one.
+      type: object
+      required:
+        - context
+        - senderBpn
+        - receiverBpn
+      title: NotificationHeader
+      description: |-
+        Notification header based on io.catenax.shared.message_header_3.0.0.
+
+        This header follows the Industry Core Notifications schema structure
+        as defined in the Catena-X standards.
+
+        Attributes:
+            message_id: Unique ID identifying the message (required)
+            context: Information about the context (e.g., "IndustryCore-DigitalTwinEventAPI-ConnectToParent:2.0.0")
+            sent_date_time: Timestamp when the message was sent (required)
+            sender_bpn: Business Partner Number of the sender (required)
+            receiver_bpn: Business Partner Number of the receiver (required)
+            expected_response_by: Optional deadline for response
+            related_message_id: Optional reference to a related message
+            version: Header version following semantic versioning (required)
+    NotificationResponse:
+      properties:
+        id:
+          type: integer
+          title: Id
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        message_id:
+          type: string
+          format: uuid
+          title: Message Id
+        sender_bpn:
+          type: string
+          title: Sender Bpn
+        receiver_bpn:
+          type: string
+          title: Receiver Bpn
+        direction:
+          type: string
+          title: Direction
+        status:
+          type: string
+          title: Status
+        use_case:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Use Case
+        full_notification:
+          additionalProperties: true
+          type: object
+          title: Full Notification
+      type: object
+      required:
+        - id
+        - created_at
+        - message_id
+        - sender_bpn
+        - receiver_bpn
+        - direction
+        - status
+        - full_notification
+      title: NotificationResponse
+      description: >-
+        API response model for notifications.
+
+
+        This model ensures proper serialization of notification data when
+        returned
+
+        from API endpoints. It maps from the database entity to a clean,
+        serializable
+
+        format for the API consumer.
+      example:
+        created_at: '2026-02-27T15:04:07.319919Z'
+        direction: INCOMING
+        full_notification:
+          content:
+            additionalProp1: {}
+            information: Hello
+            list_of_affected_items:
+              - DTR_Update
+          header:
+            context: 'IndustryCore-DigitalTwinEventAPI-ConnectToParent:3.0.0'
+            message_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+            receiver_bpn: BPNL000000000342
+            sender_bpn: BPNL00000000024R
+            sent_date_time: '2026-02-27T11:26:21.146000Z'
+            version: 3.0.0
+        id: 1
+        message_id: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+        receiver_bpn: BPNL000000000342
+        sender_bpn: BPNL00000000024R
+        status: RECEIVED
+        use_case: Industry Core Hub
+    NotificationStatus:
+      type: string
+      enum:
+        - received
+        - read
+        - pending
+        - sent
+        - failed
+      title: NotificationStatus
     PartnerCatalogPartCreate:
       properties:
         customerPartId:
           type: string
           title: Customerpartid
-          description: The customer part ID for partner specific mapping of the catalog part.
+          description: >-
+            The customer part ID for partner specific mapping of the catalog
+            part.
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
@@ -3821,7 +4890,9 @@ components:
         customerPartId:
           type: string
           title: Customerpartid
-          description: The customer part ID for partner specific mapping of the catalog part.
+          description: >-
+            The customer part ID for partner specific mapping of the catalog
+            part.
         manufacturerId:
           type: string
           title: Manufacturerid
@@ -3837,15 +4908,13 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         businessPartner:
@@ -3895,15 +4964,13 @@ components:
         van:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
         customerPartId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartid
           description: The customer part ID of the part.
         name:
@@ -3936,43 +5003,37 @@ components:
         manufacturerId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Manufacturerid
           description: The BPNL (manufactuer ID) of the part to register.
         manufacturerPartId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Manufacturerpartid
           description: The manufacturer part ID of the part.
         businessPartnerNumber:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Businesspartnernumber
           description: The unique BPNL of the business partner.
         customerPartId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartid
           description: The customer part ID of the part.
         partInstanceId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Partinstanceid
           description: The part instance ID of the serialized part.
         van:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -3982,7 +5043,9 @@ components:
         customerPartId:
           type: string
           title: Customerpartid
-          description: The customer part ID for partner specific mapping of the catalog part.
+          description: >-
+            The customer part ID for partner specific mapping of the catalog
+            part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4005,22 +5068,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         van:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4038,16 +5098,16 @@ components:
           anyOf:
             - type: string
               format: uuid
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Globalid
-          description: Optionally the Catena-X ID / global ID of the digital twin to create. If not specified, a new UUID will be created automatically.
+          description: >-
+            Optionally the Catena-X ID / global ID of the digital twin to
+            create. If not specified, a new UUID will be created automatically.
         dtrAasId:
           anyOf:
             - type: string
               format: uuid
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Dtraasid
           description: >-
             Optionally the shell descriptor ID ('AAS ID') of the digital twin in
@@ -4086,28 +5146,45 @@ components:
           anyOf:
             - additionalProperties: true
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Additionalcontext
-          description: Additional context information about the digital twin. This can include various metadata or properties associated with the twin. Intended for handling twins by third party apps.
+          description: >-
+            Additional context information about the digital twin. This can
+            include various metadata or properties associated with the twin.
+            Intended for handling twins by third party apps.
         registrations:
           anyOf:
             - additionalProperties:
                 type: boolean
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Registrations
-          description: A map of registration information for the digital twin in different enablement service stacks. The key is the name of the enablement service stack.
+          description: >-
+            A map of registration information for the digital twin in different
+            enablement service stacks. The key is the name of the enablement
+            service stack.
+        allAspects:
+          anyOf:
+            - items:
+                $ref: '#/components/schemas/TwinAspectRead'
+              type: array
+            - type: 'null'
+          title: Allaspects
+          description: >-
+            A complete list of all aspect information for the digital twin,
+            including multiple aspects with the same semantic ID.
         aspects:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Aspects
-          description: A map of aspect information for the digital twin. The key is the semantic ID of the aspect. The value is a TwinAspectRead object containing details about the aspect.
+          description: >-
+            A map of aspect information for the digital twin. The key is the
+            semantic ID of the aspect. The value is a TwinAspectRead object
+            containing details about the aspect. For backward compatibility,
+            only the first aspect of each semantic type is included.
         globalId:
           type: string
           format: uuid
@@ -4117,7 +5194,9 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4133,14 +5212,15 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         customerPartId:
           type: string
           title: Customerpartid
-          description: The customer part ID for partner specific mapping of the catalog part.
+          description: >-
+            The customer part ID for partner specific mapping of the catalog
+            part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4163,22 +5243,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         description:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Description
           description: The decription of the part.
         materials:
@@ -4186,8 +5263,7 @@ components:
             - items:
                 $ref: '#/components/schemas/Material'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Materials
           description: >-
             List of materials, e.g. [{'name':'aluminum','share':20.5},
@@ -4196,42 +5272,38 @@ components:
         width:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The width of the part.
         height:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The height of the part.
         length:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The length of the part.
         weight:
           anyOf:
             - $ref: '#/components/schemas/Measurement'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The weight of the part.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
         van:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4247,7 +5319,9 @@ components:
         - partInstanceId
         - name
       title: SerializedPartTwinDetailsRead
-      description: Represents the details of a serialized part twin within the Digital Twin Registry.
+      description: >-
+        Represents the details of a serialized part twin within the Digital Twin
+        Registry.
     SerializedPartTwinRead:
       properties:
         globalId:
@@ -4259,7 +5333,9 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4275,14 +5351,15 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
         customerPartId:
           type: string
           title: Customerpartid
-          description: The customer part ID for partner specific mapping of the catalog part.
+          description: >-
+            The customer part ID for partner specific mapping of the catalog
+            part.
         businessPartner:
           $ref: '#/components/schemas/BusinessPartnerRead'
           description: The business partner to whom the part is being offered.
@@ -4305,22 +5382,19 @@ components:
         category:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Category
           description: The category of the part.
         bpns:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Bpns
           description: The site number (BPNS) the part is attached to.
         van:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Van
           description: The optional VAN (Vehicle Assembly Number) of the serialized part.
       type: object
@@ -4461,36 +5535,85 @@ components:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: The business partner number of the business partner with which the catalog part is shared.
+          description: >-
+            The business partner number of the business partner with which the
+            catalog part is shared.
         customerPartId:
           anyOf:
             - type: string
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartid
-          description: The customer part ID which will be mapped to the respective Business Partner
+          description: >-
+            The customer part ID which will be mapped to the respective Business
+            Partner
       type: object
       required:
         - manufacturerId
         - manufacturerPartId
         - businessPartnerNumber
       title: ShareCatalogPart
-      description: Class that stores the information required by request in the sharing functionalit, for catalog parts
+      description: >-
+        Class that stores the information required by request in the sharing
+        functionalit, for catalog parts
+    ShareDppRequest:
+      properties:
+        dppId:
+          type: string
+          title: Dppid
+          description: >-
+            The passport ID of the Digital Product Passport to share (format:
+            CX:manufacturerPartId:partInstanceId)
+        businessPartnerNumber:
+          type: string
+          title: Businesspartnernumber
+          description: The BPNL of the business partner to share the DPP with
+      type: object
+      required:
+        - dppId
+        - businessPartnerNumber
+      title: ShareDppRequest
+      description: Request model for sharing a Digital Product Passport
+    ShareDppResponse:
+      properties:
+        dppId:
+          type: string
+          title: Dppid
+          description: The passport ID of the shared DPP
+        businessPartnerNumber:
+          type: string
+          title: Businesspartnernumber
+          description: The BPNL the DPP was shared with
+        bpnDiscoveryRegistered:
+          type: boolean
+          title: Bpndiscoveryregistered
+          description: >-
+            Whether the manufacturer part ID was successfully registered in BPN
+            Discovery
+      type: object
+      required:
+        - dppId
+        - businessPartnerNumber
+        - bpnDiscoveryRegistered
+      title: ShareDppResponse
+      description: Response model for DPP sharing operation
     SharedPartBase:
       properties:
         businessPartnerNumber:
           type: string
           title: Businesspartnernumber
-          description: The business partner number of the business partner with which the catalog part is shared.
+          description: >-
+            The business partner number of the business partner with which the
+            catalog part is shared.
         customerPartIds:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/BusinessPartnerRead'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Customerpartids
-          description: The list of customer part IDs mapped to the respective Business Partners.
+          description: >-
+            The list of customer part IDs mapped to the respective Business
+            Partners.
           default: {}
         sharedAt:
           type: string
@@ -4500,8 +5623,7 @@ components:
         twin:
           anyOf:
             - $ref: '#/components/schemas/CatalogPartTwinDetailsRead'
-            - type: object
-              nullable: true
+            - type: 'null'
           description: The digital twin created for part that was shared.
       type: object
       required:
@@ -4523,24 +5645,33 @@ components:
           type: string
           format: uuid
           title: Globalid
-          description: The Catena-X ID / global ID of the digital twin to which the new aspect belongs.
+          description: >-
+            The Catena-X ID / global ID of the digital twin to which the new
+            aspect belongs.
         semanticId:
           type: string
           title: Semanticid
-          description: The semantic ID of the new aspect determining the structure of the associated payload data.
+          description: >-
+            The semantic ID of the new aspect determining the structure of the
+            associated payload data.
         submodelId:
           anyOf:
             - type: string
               format: uuid
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Submodelid
-          description: The optional ID of the submodel descriptor within the DTR shell descriptor for the associated twin. If not specified, a new UUID will be created automatically.
+          description: >-
+            The optional ID of the submodel descriptor within the DTR shell
+            descriptor for the associated twin. If not specified, a new UUID
+            will be created automatically.
         payload:
           additionalProperties: true
           type: object
           title: Payload
-          description: The payload data of the new aspect. This is a JSON object that contains the actual data of the aspect. The structure of this object is determined by the semantic ID of the aspect.
+          description: >-
+            The payload data of the new aspect. This is a JSON object that
+            contains the actual data of the aspect. The structure of this object
+            is determined by the semantic ID of the aspect.
       type: object
       required:
         - globalId
@@ -4552,21 +5683,27 @@ components:
         semanticId:
           type: string
           title: Semanticid
-          description: The semantic ID of the aspect determining the structure of the associated payload data.
+          description: >-
+            The semantic ID of the aspect determining the structure of the
+            associated payload data.
         submodelId:
           type: string
           format: uuid
           title: Submodelid
-          description: The ID of the submodel descriptor within the DTR shell descriptor for the associated twin.
+          description: >-
+            The ID of the submodel descriptor within the DTR shell descriptor
+            for the associated twin.
         registrations:
           anyOf:
             - additionalProperties:
                 $ref: '#/components/schemas/TwinAspectRegistration'
               type: object
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Registrations
-          description: A map of registration information for the aspect in different enablement service stacks. The key is the name of the enablement service stack.
+          description: >-
+            A map of registration information for the aspect in different
+            enablement service stacks. The key is the name of the enablement
+            service stack.
           default: {}
       type: object
       required:
@@ -4578,7 +5715,9 @@ components:
         enablementServiceStackName:
           type: string
           title: Enablementservicestackname
-          description: The name of the enablement service stack where the twin aspect is registered.
+          description: >-
+            The name of the enablement service stack where the twin aspect is
+            registered.
         status:
           $ref: '#/components/schemas/TwinAspectRegistrationStatus'
           description: The current status of the aspect registration process.
@@ -4603,7 +5742,9 @@ components:
         - createdDate
         - modifiedDate
       title: TwinAspectRegistration
-      description: Represents the registration of a twin aspect within an enablement service stack.
+      description: >-
+        Represents the registration of a twin aspect within an enablement
+        service stack.
     TwinAspectRegistrationStatus:
       type: integer
       enum:
@@ -4612,7 +5753,42 @@ components:
         - 2
         - 3
       title: TwinAspectRegistrationStatus
-      description: An enumeration of potential status values when a twin aspect is registered within the system
+      description: >-
+        An enumeration of potential status values when a twin aspect is
+        registered within the system
+    TwinAssociation:
+      properties:
+        twinId:
+          type: string
+          title: Twinid
+        aasId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Aasid
+        manufacturerPartId:
+          type: string
+          title: Manufacturerpartid
+        partInstanceId:
+          type: string
+          title: Partinstanceid
+        twinName:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Twinname
+        assetId:
+          anyOf:
+            - type: string
+            - type: 'null'
+          title: Assetid
+      type: object
+      required:
+        - twinId
+        - manufacturerPartId
+        - partInstanceId
+      title: TwinAssociation
+      description: Association between DPP and Digital Twin
     TwinRead:
       properties:
         globalId:
@@ -4624,7 +5800,9 @@ components:
           type: string
           format: uuid
           title: Dtraasid
-          description: The shell descriptor ID ('AAS ID') of the digital twin in the Digital Twin Registry.
+          description: >-
+            The shell descriptor ID ('AAS ID') of the digital twin in the
+            Digital Twin Registry.
         createdDate:
           type: string
           format: date-time
@@ -4640,8 +5818,7 @@ components:
             - items:
                 $ref: '#/components/schemas/DataExchangeAgreementRead'
               type: array
-            - type: object
-              nullable: true
+            - type: 'null'
           title: Shares
           description: A list of data exchange agreements the digital twin is shared via.
       type: object
@@ -4659,7 +5836,9 @@ components:
         - 1
         - 2
       title: TwinsAspectRegistrationMode
-      description: An enumeration of potential possibilities how to provide aspects as assets wihtin the Eclipse Dataspace Connector
+      description: >-
+        An enumeration of potential possibilities how to provide aspects as
+        assets wihtin the Eclipse Dataspace Connector
     Unit:
       type: string
       enum:
@@ -4690,17 +5869,34 @@ components:
         - msg
         - type
       title: ValidationError
+  securitySchemes:
+    APIKeyHeader:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    HTTPBearer:
+      type: http
+      scheme: bearer
 tags:
   - name: Part Management
-    description: Management of part metadata - including catalog parts, serialized parts, JIS parts and batches
+    description: >-
+      Management of part metadata - including catalog parts, serialized parts,
+      JIS parts and batches
   - name: Sharing Functionality
-    description: Sharing functionality for catalog part twins - including sharing of parts with business partners and automatic generation of digital twins and submodels
+    description: >-
+      Sharing functionality for catalog part twins - including sharing of parts
+      with business partners and automatic generation of digital twins and
+      submodels
   - name: Partner Management
-    description: Management of master data around business partners - including business partners, data exchange agreements and contracts
+    description: >-
+      Management of master data around business partners - including business
+      partners, data exchange agreements and contracts
   - name: Twin Management
     description: Management of how product information can be managed and shared
   - name: Submodel Dispatcher
-    description: Internal API called by EDC Data Planes or Admins in order the deliver data of of the internal used Submodel Service
+    description: >-
+      Internal API called by EDC Data Planes or Admins in order the deliver data
+      of of the internal used Submodel Service
   - name: Open Connection Management
     description: >-
       Handles the connections from the consumer modules, for specific services
@@ -4709,3 +5905,32 @@ tags:
     description: >-
       Management of the discovery of parts, searching for digital twins and
       digital twins registries
+  - name: Digital Twin Event Management
+    description: >-
+      Endpoints for receiving notifications about events related to digital
+      twins, such as updates or changes in the twin data
+  - name: Notifications Management
+    description: >-
+      Endpoints for managing notifications, such as retrieving, deleting or
+      marking notifications related to digital twins and part sharing
+  - name: Add-Ons Microservices
+    description: Auxiliary add-ons such as Eco Pass Kit
+  - name: EcoPass KIT Microservices
+    description: Provider-side EcoPass KIT endpoints
+x-tagGroups:
+  - name: Core Services
+    tags:
+      - Part Management
+      - Sharing Functionality
+      - Partner Management
+      - Twin Management
+      - Submodel Dispatcher
+      - Open Connection Management
+      - Part Discovery Management
+      - Digital Twin Event Management
+      - Notifications Management
+  - name: Add-Ons
+    tags:
+      - Add-Ons Microservices
+      - EcoPass KIT Microservices
+      - EcoPass KIT Consumer Microservices

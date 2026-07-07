@@ -21,12 +21,120 @@
  ********************************************************************************/
 
 
+/* Highlight for primitive fields - SAME pulsing style as containers */
 .field-nav-highlight {
-  /* Subtle highlight: slightly lighter background and a gentle inner line to emphasize the value area */
-  background-color: rgba(255, 255, 255, 0.06) !important;
-  box-shadow: inset 0 2px 10px rgba(255,255,255,0.10);
-  border-radius: 6px;
-  position: relative;
+  background-color: rgba(96, 165, 250, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5), inset 0 0 20px rgba(96, 165, 250, 0.08) !important;
+  border-radius: 8px;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Pulsing border for primitive fields */
+.field-nav-highlight::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 12px;
+  border: 2px solid rgba(96, 165, 250, 0.7);
+  animation: container-pulse 1s ease-in-out 3;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Highlight for array item cards */
+.field-nav-highlight-container {
+  background-color: rgba(96, 165, 250, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5), inset 0 0 20px rgba(96, 165, 250, 0.08) !important;
+  border-radius: 8px;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Pulsing effect for item cards */
+.field-nav-highlight-container::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 12px;
+  border: 2px solid rgba(96, 165, 250, 0.7);
+  animation: container-pulse 1s ease-in-out 3;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Highlight for array headers (title, info icon, badges, add button + bottom border) */
+.field-nav-highlight-array-header {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 8px !important;
+  position: relative !important;
+  /* Enhanced bottom border to make it stand out */
+  border-bottom-color: rgba(96, 165, 250, 0.8) !important;
+  border-bottom-width: 3px !important;
+}
+
+/* Glow effect for array header */
+.field-nav-highlight-array-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(96, 165, 250, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+  animation: header-glow 1.5s ease-in-out 2;
+}
+
+@keyframes header-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(96, 165, 250, 0.2), inset 0 0 8px rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(96, 165, 250, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Highlight for nested objects - EXACT COPY of container style */
+.field-nav-highlight-nested-object {
+  background-color: rgba(96, 165, 250, 0.08) !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5), inset 0 0 20px rgba(96, 165, 250, 0.08) !important;
+  border-radius: 8px;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Pulsing border for nested objects - EXACT COPY of container ::after */
+.field-nav-highlight-nested-object::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 12px;
+  border: 2px solid rgba(96, 165, 250, 0.7);
+  animation: container-pulse 1s ease-in-out 3;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes container-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+  50% {
+    opacity: 1;
+    border-color: rgba(96, 165, 250, 0.9);
+  }
 }
 
 /* Animatable wrapper controls the transitions so they apply both when class is added and removed */

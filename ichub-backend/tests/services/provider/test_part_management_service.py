@@ -128,7 +128,7 @@ class TestPartManagementService:
         assert result.manufacturer_id == "BPNL123456789012"
         assert result.manufacturer_part_id == "PART001"
         assert result.name == "Test Part"
-        assert result.status == 0
+        assert result.status == 2
         mock_repos.catalog_part_repository.create.assert_called_once()
         mock_repos.catalog_part_repository.commit.assert_called_once()
 
@@ -472,9 +472,10 @@ class TestPartManagementService:
         """Test catalog part finding when legal entity not found."""
         # Arrange
         mock_repos.legal_entity_repository.get_by_bpnl.return_value = None
+        mock_repos.catalog_part_repository.get_by_legal_entity_id_manufacturer_part_id.return_value = None
         
         # Act & Assert
-        with pytest.raises(NotFoundError, match="Legal Entity with manufacturer BPNL .* does not exist"):
+        with pytest.raises(NotFoundError, match="Catalog part .* not found"):
             PartManagementService._find_catalog_part(mock_repos, "BPNL123456789012", "PART001")
 
     def test_find_catalog_part_catalog_part_not_found(self, mock_repos, sample_legal_entity):

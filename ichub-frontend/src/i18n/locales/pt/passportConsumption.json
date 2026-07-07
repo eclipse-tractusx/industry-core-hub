@@ -1,0 +1,49 @@
+{
+  "page": {
+    "title": "Passaporte Digital de Produto",
+    "subtitle": "Obter e visualizar passaportes de produtos do espaço de dados",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "Por favor, introduza um ID de Descoberta",
+    "validationFormat": "Formato inválido. Esperado: CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "Quer saber mais? Veja todas as nossas",
+    "ecoPassFeatures": "Funcionalidades do Eco Pass KIT"
+  },
+  "loading": {
+    "title": "A Carregar Passaporte",
+    "errorTitle": "Erro ao Carregar Passaporte",
+    "steps": {
+      "parsingId": "A Analisar ID",
+      "parsingIdDescription": "A extrair informação do fabricante e instância",
+      "findingOwner": "A Encontrar Proprietário",
+      "findingOwnerDescription": "A procurar BPN usando BPN Discovery",
+      "retrievingTwin": "A Obter Gémeo",
+      "retrievingTwinDescription": "A obter gémeo digital do DTR",
+      "findingSubmodel": "A Encontrar Submodelo",
+      "findingSubmodelDescription": "A localizar submodelo correspondente",
+      "loadingData": "A Carregar Dados",
+      "loadingDataDescription": "A consumir dados do passaporte",
+      "readyDescription": "Passaporte carregado com sucesso"
+    }
+  },
+  "scanner": {
+    "title": "Digitalizar Código QR",
+    "subtitle": "Posicione o código QR dentro da moldura",
+    "camera": "Câmara",
+    "cameraShort": "Câm",
+    "formatInfo": "Apenas códigos QR com formato",
+    "formatInfoSuffix": "são aceites",
+    "invalidFormat": "Formato inválido. Apenas o formato CX:<manufacturerPartId>:<partInstanceId> é permitido, não URLs.",
+    "cameraError": "Falha ao aceder à câmara. Por favor, conceda permissões de câmara."
+  },
+  "visualization": {
+    "copiedToClipboard": "{{label}} copiado para a área de transferência",
+    "copyFailed": "Falha ao copiar",
+    "noDataAvailable": "Sem dados disponíveis para esta secção",
+    "materials": "Materiais",
+    "unableToDetermineType": "Não foi possível determinar o tipo de passaporte. Por favor, verifique o formato dos dados."
+  },
+  "errors": {
+    "noMockData": "Sem dados de simulação disponíveis",
+    "loadFailed": "Falha ao carregar passaporte"
+  }
+}

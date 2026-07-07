@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -69,6 +70,7 @@ interface ImportMetaEnv {
   // Governance and policies
   readonly VITE_GOVERNANCE_CONFIG: string
   readonly VITE_DTR_POLICIES_CONFIG: string
+  readonly VITE_PCF_EXCHANGE_POLICIES_CONFIG: string
   
   // Feature flags
   readonly VITE_ENABLE_ADVANCED_LOGGING: string
@@ -138,12 +140,16 @@ declare global {
       // Governance and policies
       GOVERNANCE_CONFIG?: string | object[];
       DTR_POLICIES_CONFIG?: string | object[];
+      PCF_EXCHANGE_POLICIES_CONFIG?: string | object[];
       GOVERNANCE_STRICT_MODE?: string;
       
       // Feature flags
       ENABLE_ADVANCED_LOGGING?: string;
       ENABLE_PERFORMANCE_MONITORING?: string;
       ENABLE_DEV_TOOLS?: string;
+      
+      // Notifications
+      NOTIFICATIONS_POLL_INTERVAL?: string;
       
       // UI configuration
       UI_THEME?: string;

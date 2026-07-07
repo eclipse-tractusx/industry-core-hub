@@ -30,6 +30,8 @@ backend:
     allow_origins:
       - "http://ichub-frontend.tx.test"
   configuration:
+    logger:
+      level: "DEBUG"
     authorization:
       enabled: true
       apiKey:
@@ -86,6 +88,19 @@ backend:
         hostname: "https://<dtr-hostname>"
         apiPath: "/api/v3"
         uri: ""
+      # -- Submodel Dispatcher configuration
+      submodel_dispatcher:
+        mode: "http" # "http" or "filesystem"
+        http:
+          base_url: "https://<submodel-service-hostname>"
+          api_path: "/v1/submodel-dispatcher"
+          auth:
+            enabled: true
+            type: "apikey"
+            token: "<submodel-service-token>"
+            key_name: "X-Api-Key"
+          timeout: 30
+          verify_ssl: true
   ingress:
     enabled: true
     hosts:
@@ -126,7 +141,7 @@ pgadmin4:
   enabled: false
 
 keycloak:
-  enabled: true
+  enabled: false
   ingress:
     enabled: true
     hostname: "ichub-keycloak.tx.test"

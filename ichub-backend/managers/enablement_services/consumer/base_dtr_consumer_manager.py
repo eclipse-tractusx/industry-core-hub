@@ -59,10 +59,42 @@ class BaseDtrConsumerManager(ABC):
         self.dct_type_key = dct_type_key
         self.operator = operator
         self.dct_type = dct_type
-        # DCAT catalog constants from EDC catalog structure
+        # DCAT catalog constants from EDC catalog structure.
+        # Kept for backwards compatibility — prefer the helper methods below,
+        # which try both Saturn (unprefixed) and Jupiter (prefixed) keys.
         self.DCAT_DATASET_KEY = "dcat:dataset"
         self.ODRL_HAS_POLICY_KEY = "odrl:hasPolicy"
         self.ID_KEY = "@id"
+        # Saturn counterparts (DSP 2025-1 / unprefixed)
+        self.SATURN_DCAT_DATASET_KEY = "dataset"
+        self.SATURN_ODRL_HAS_POLICY_KEY = "hasPolicy"
+
+    # ------------------------------------------------------------------
+    # Catalog key helpers — version-agnostic retrieval
+    # Try Saturn (unprefixed, DSP 2025-1) first; fall back to Jupiter
+    # (prefixed, legacy DSP HTTP).  Mirrors the approach used in the SDK's
+    # DspTools.filter_assets_and_policies().
+    # ------------------------------------------------------------------
+
+    def _get_catalog_datasets(self, catalog: dict) -> list:
+        """
+        Return the dataset list from a DCAT catalog, supporting both
+        Saturn (``dataset``) and Jupiter (``dcat:dataset``) key formats.
+        """
+        value = catalog.get(self.SATURN_DCAT_DATASET_KEY) or catalog.get(self.DCAT_DATASET_KEY, [])
+        if not isinstance(value, list):
+            return [value] if value else []
+        return value
+
+    def _get_dataset_policies(self, dataset: dict) -> list:
+        """
+        Return the policy list from a DCAT dataset, supporting both
+        Saturn (``hasPolicy``) and Jupiter (``odrl:hasPolicy``) key formats.
+        """
+        value = dataset.get(self.SATURN_ODRL_HAS_POLICY_KEY) or dataset.get(self.ODRL_HAS_POLICY_KEY, [])
+        if not isinstance(value, list):
+            return [value] if value else []
+        return value
 
     @abstractmethod
     def add_dtr(self, bpn: str, edc_url: str, asset_id: str, policies: List[str]) -> None:
@@ -393,6 +425,49 @@ class BaseDtrConsumerManager(ABC):
         """
         pass
     
+    def purge_edr(self, counter_party_id: str, asset_id: str) -> int:
+        """
+        Remove a stale or expired EDR for the given counter_party_id + asset_id
+        from both in-memory SDK caches and the persistent backend (if any).
+
+        This is the single reusable entry point for EDR cleanup.  Call it from
+        any layer (service, controller/API, retry logic) whenever an EDR token
+        is detected as invalid or has expired::
+
+            rows = dtr_manager.consumer.purge_edr(bpnl, asset_id)
+
+        Args:
+            counter_party_id (str): Business Partner Number of the data provider.
+            asset_id (str): EDC asset ID of the EDR to remove.
+
+        Returns:
+            int: Number of persistent records deleted (0 if no persistent backend
+                 or the EDR was not found).
+        """
+        # Default: in-memory-only implementations have no persistent layer.
+        return 0
+
+    def purge_edrs_matching(self, counter_party_id: str, asset_id_pattern: str) -> int:
+        """
+        Remove all stale EDRs whose asset ID matches a SQL LIKE pattern.
+
+        Useful when multiple EDRs share a common prefix, e.g. cleaning up all
+        DigitalTwinEventAPI EDRs for a provider before sending a notification::
+
+            rows = dtr_manager.consumer.purge_edrs_matching(
+                bpnl, "ichub:asset:digitaltwin-event:%"
+            )
+
+        Args:
+            counter_party_id (str): Business Partner Number of the data provider.
+            asset_id_pattern (str): SQL LIKE pattern (``%`` and ``_`` wildcards).
+
+        Returns:
+            int: Number of persistent records deleted (0 if no persistent backend).
+        """
+        # Default: in-memory-only implementations have no persistent layer.
+        return 0
+
     def _is_cache_expired(self, bpn: str) -> bool:
         """
         Helper method to check if cache for a specific BPN has expired.

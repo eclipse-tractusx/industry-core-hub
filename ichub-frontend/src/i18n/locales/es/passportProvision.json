@@ -1,0 +1,175 @@
+{
+  "shareDialog": {
+    "title": "Compartir Pasaporte Digital de Producto ({{name}})",
+    "shareTitle": "Compartir Pasaporte Digital de Producto",
+    "selectPartnerDescription": "Selecciona un socio para compartir el DPP",
+    "partnerPlaceholder": "Selecciona un socio para compartir el DPP",
+    "partnerHelperText": "Selecciona de los socios disponibles",
+    "partnerRequired": "La selección de socio es requerida",
+    "addCustomPartId": "Añadir ID de pieza personalizado del cliente",
+    "customerPartId": "ID de Pieza del Cliente",
+    "customerPartIdPlaceholder": "Introduce tu identificador de pieza personalizado",
+    "noPartnersTitle": "No Hay Socios Disponibles",
+    "noPartnersDescription": "No hay socios disponibles. Por favor añade socios en la Vista de Socios para compartir DPPs.",
+    "addPartner": "Añadir un Socio",
+    "successMessage": "DPP compartido exitosamente con {{bpnl}}"
+  },
+  "list": {
+    "title": "Pasaportes Digitales de Producto",
+    "subtitle": "Gestiona y comparte tus pasaportes de producto",
+    "createPassport": "Crear Pasaporte",
+    "searchPlaceholder": "Buscar por nombre, ID de pieza del fabricante o ID de instancia...",
+    "noPassportsFound": "No se encontraron pasaportes",
+    "noPassportsYet": "Aún no hay pasaportes",
+    "adjustSearch": "Intenta ajustar tus criterios de búsqueda",
+    "createFirstPassport": "Crea tu primer pasaporte digital de producto para comenzar",
+    "getStarted": "Comenzar",
+    "passportDiscoveryId": "ID de Descubrimiento del Pasaporte",
+    "passportId": "ID del Pasaporte",
+    "passportType": "Tipo de Pasaporte",
+    "expiration": "Expiración",
+    "noExpiration": "Sin Expiración",
+    "version": "Versión {{version}}",
+    "versionLabel": "Versión",
+    "seeAll": "Ver Todos ({{count}})",
+    "allPassports": "Todos los Pasaportes Digitales de Producto",
+    "passportsAvailable": "{{count}} pasaporte disponible",
+    "passportsAvailable_plural": "{{count}} pasaportes disponibles",
+    "searchDialogPlaceholder": "Buscar por nombre, ID o ID de descubrimiento...",
+    "discoveryId": "ID de Descubrimiento",
+    "type": "Tipo",
+    "expires": "Expira",
+    "cardView": "Vista de Tarjetas",
+    "tableView": "Vista de Tabla"
+  },
+  "actions": {
+    "registerPassport": "Registrar pasaporte",
+    "sharePassport": "Compartir pasaporte",
+    "unsharePassport": "Dejar de compartir pasaporte",
+    "processing": "Procesando...",
+    "copyDiscoveryId": "Copiar ID de Descubrimiento",
+    "exportPdf": "Exportar PDF",
+    "deletePassport": "Eliminar pasaporte",
+    "register": "Registrar",
+    "open": "Abrir"
+  },
+  "status": {
+    "draft": "Borrador",
+    "shared": "Compartido",
+    "pending": "Pendiente"
+  },
+  "deleteDialog": {
+    "title": "Eliminar Pasaporte Digital de Producto",
+    "confirmMessage": "¿Estás seguro de que quieres eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+    "deleting": "Eliminando..."
+  },
+  "wizard": {
+    "header": {
+      "backToList": "Volver a la Lista",
+      "title": "Crear Pasaporte Digital de Producto",
+      "subtitle": "Sigue los pasos para crear y aprovisionar un nuevo DPP"
+    },
+    "steps": {
+      "selectVersion": "Seleccionar Versión",
+      "twinAssociation": "Asociación de Gemelo",
+      "dppData": "Datos del DPP",
+      "reviewCreate": "Revisar y Crear"
+    },
+    "step1": {
+      "title": "Seleccionar Versión del DPP"
+    },
+    "step2": {
+      "title": "Asociar con Pieza Serializada",
+      "infoAlert": "Selecciona una pieza serializada existente, o crea una nueva para vincular con este Pasaporte Digital de Producto",
+      "noPartsTitle": "No Hay Piezas Serializadas Disponibles",
+      "noPartsDescription": "Necesitas crear una pieza serializada antes de poder aprovisionar un DPP",
+      "createSerializedPart": "Crear Pieza Serializada",
+      "selectSerializedPart": "Seleccionar Pieza Serializada",
+      "chooseSerializedPart": "Elige una pieza serializada...",
+      "selectedPart": "Pieza Seleccionada",
+      "checkingRegistration": "Verificando estado de registro...",
+      "registrationStatus": "Estado de Registro",
+      "notRegistered": "No Registrado",
+      "alreadyHasDpp": "Ya tiene DPP",
+      "noDppAssigned": "Sin DPP asignado",
+      "mustBeRegisteredWarning": "Esta pieza serializada debe registrarse como gemelo digital antes de poder aprovisionar un DPP.",
+      "registerSerializedPart": "Registrar Pieza Serializada",
+      "registerThisPart": "Registrar Esta Pieza",
+      "registering": "Registrando...",
+      "orCreateNewPart": "O crea una nueva pieza:",
+      "createNewSerializedPart": "Crear Nueva Pieza Serializada",
+      "twinRegisteredSuccess": "¡Gemelo registrado exitosamente!",
+      "partCreatedSuccess": "Pieza serializada creada exitosamente"
+    },
+    "step3": {
+      "title": "Entrada de Datos del DPP",
+      "uploadDppJson": "Subir archivo JSON del DPP",
+      "dropJsonFile": "Suelta tu archivo JSON aquí, o",
+      "browseFiles": "Explorar Archivos",
+      "dropDppHere": "Suelta el archivo DPP aquí",
+      "dragDropDppFile": "Arrastra y Suelta Archivo DPP",
+      "clickToBrowse": "o haz clic para buscar un archivo JSON",
+      "supportedFormat": "Formato soportado: JSON",
+      "or": "O",
+      "createDppFromForm": "Crear DPP desde Formulario",
+      "dppDataValidated": "Datos del DPP Validados",
+      "validationFailed": "Validación Fallida",
+      "dppDataLoaded": "Datos del DPP Cargados",
+      "validatedDescription": "Todos los datos requeridos han sido validados. Revisa en el siguiente paso.",
+      "validationFailedDescription": "Validación Fallida. El archivo JSON del DPP no coincide con todos los campos obligatorios del modelo semántico \"{{semanticId}}\". Por favor edita los datos del DPP para corregir los errores de validación.",
+      "dataUploadedDescription": "Datos cargados exitosamente. Por favor valida antes de continuar.",
+      "validateDpp": "Validar DPP",
+      "validated": "Validado ✓",
+      "validationFailedButton": "Validación Fallida ✗",
+      "editDppData": "Editar Datos del DPP",
+      "saveSubmodel": "Guardar Submodelo",
+      "fileLoadedSuccess": "¡Archivo DPP cargado exitosamente! Haz clic en \"Validar\" para verificar contra el esquema.",
+      "validatedSuccess": "¡DPP validado exitosamente!",
+      "noSchemaAccepted": "No hay esquema disponible. DPP aceptado."
+    },
+    "step4": {
+      "title": "Revisar y Crear",
+      "dppVersion": "Versión del DPP",
+      "serializedPartAssociation": "Asociación de Pieza Serializada",
+      "serial": "Serial",
+      "noPartSelected": "Ninguna pieza seleccionada",
+      "digitalTwinInfo": "Información del Gemelo Digital",
+      "discoveryId": "ID de Descubrimiento",
+      "notAvailable": "No disponible",
+      "previewPassport": "Previsualizar Pasaporte",
+      "readyToCreate": "Listo para crear tu Pasaporte Digital de Producto"
+    },
+    "buttons": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "createDpp": "Crear DPP"
+    },
+    "errors": {
+      "selectPart": "Por favor selecciona una pieza serializada para asociar con este DPP",
+      "partMustBeRegistered": "La pieza serializada seleccionada debe estar registrada antes de crear un DPP. Por favor regístrala primero.",
+      "provideDppData": "Por favor proporciona datos del DPP antes de continuar. Puedes crearlos usando el formulario o subir un archivo JSON.",
+      "validateFirst": "Por favor valida los datos del DPP antes de continuar."
+    },
+    "publishing": {
+      "publishingDpp": "Publicando DPP...",
+      "publishedSuccessfully": "DPP Publicado Exitosamente",
+      "publishingFailed": "Publicación Fallida",
+      "creatingDpp": "Creando Pasaporte Digital de Producto...",
+      "pleaseWait": "Por favor espera mientras registramos tu DPP",
+      "successMessage": "¡Tu Pasaporte Digital de Producto ha sido publicado exitosamente!",
+      "currentStatus": "Estado Actual",
+      "sharePrompt": "¡Ahora puedes compartirlo con tu socio!",
+      "errorOccurred": "Ocurrió un error al publicar el DPP"
+    },
+    "preview": {
+      "noDataAvailable": "No hay datos disponibles para previsualizar"
+    }
+  },
+  "detail": {
+    "errorLoading": "Error al Cargar el DPP",
+    "unableToLoad": "No se pueden cargar los datos del DPP",
+    "goBack": "Volver",
+    "unableToDetermineType": "No se Puede Determinar el Tipo de Pasaporte",
+    "dataNotRecognized": "El formato de datos del pasaporte no es reconocido"
+  }
+}

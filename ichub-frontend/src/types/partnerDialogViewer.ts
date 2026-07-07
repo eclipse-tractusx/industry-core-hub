@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
-import { PartnerInstance } from "../features/partner-management/types/types";
+import { PartnerInstance } from "../features/business-partner-kit/partner-management/types/types";
 
 export interface PartnerDialogProps {
     open: boolean;

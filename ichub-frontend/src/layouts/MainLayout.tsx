@@ -29,6 +29,7 @@ import AdditionalSidebar from '../components/general/AdditionalSidebar';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import { SidebarProvider } from '../contexts/SidebarContext';
 import { AdditionalSidebarProvider } from '../contexts/AdditionalSidebarContext';
+import { NotificationProvider, NotificationsPanel } from '../features/notifications';
 import { features } from '../features/main';
 import { isAuthEnabled } from '../services/EnvironmentService';
 
@@ -41,7 +42,7 @@ function MainLayoutContent() {
         <Header/>
       </Grid2>
       <Grid2 container direction="row" size={12}>
-        <Grid2 size={{xl: 0.5, lg: 1, md: 1, sm: 2, xs: 3}} className="sidebarArea">
+        <Grid2 sx={{ width: '72px', flexShrink: 0 }} className="sidebarArea">
           <Sidebar items={features} />
         </Grid2>
         <Grid2 size="auto" className="additionalSidebarArea">
@@ -51,6 +52,8 @@ function MainLayoutContent() {
           <Outlet />
         </Grid2>
       </Grid2>
+      {/* Notifications Panel - Floating overlay */}
+      <NotificationsPanel />
     </Grid2>
   );
 
@@ -65,7 +68,9 @@ function MainLayout() {
   return (
     <SidebarProvider>
       <AdditionalSidebarProvider>
-        <MainLayoutContent />
+        <NotificationProvider>
+          <MainLayoutContent />
+        </NotificationProvider>
       </AdditionalSidebarProvider>
     </SidebarProvider>
   );

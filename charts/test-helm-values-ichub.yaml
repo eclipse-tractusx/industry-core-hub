@@ -17,6 +17,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+# CI-specific configuration for Helm chart testing
+# This file provides minimal valid configuration to allow the backend to start
+# without requiring external services (EDC, DTR, external Keycloak, etc.)
+
 backend:
   enabled: true
   resources:
@@ -28,6 +32,23 @@ backend:
       memory: "512Mi"
       cpu: "500m"
       ephemeral-storage: "1Gi"
+  
+  # Override configuration to provide valid (but unused) URLs for CI
+  configuration:
+    # Consumer configuration - provide dummy but valid URLs
+    consumer:
+      discovery:
+        discovery_finder:
+          url: "http://localhost/api/v1.0/administration/connectors/discovery/search"
+        oauth:
+          url: "http://localhost/auth/"
+          realm: "test"
+          client_id: "test-client"
+          client_secret: "test-secret"
+      connector:
+        controlplane:
+          hostname: "http://localhost"
+          apiKey: "test-key"
 
 frontend:
   enabled: true

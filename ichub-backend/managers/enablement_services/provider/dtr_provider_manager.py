@@ -328,9 +328,23 @@ class DtrProviderManager:
                 specificAssetIds=specific_asset_ids,
             )
             logger.info(f"Creating new twin with id {aas_id.urn}!")
-            res = self.aas_service.create_asset_administration_shell_descriptor(shell_descriptor=shell)
+            try:
+                payload_json = shell.to_json_string() if hasattr(shell, "to_json_string") else str(shell)
+            except Exception:
+                payload_json = "<unserializable>"
+            logger.debug(f"[DTR] POST /shell-descriptors payload:\n{payload_json}")
+            try:
+                res = self.aas_service.create_asset_administration_shell_descriptor(shell_descriptor=shell)
+            except Exception as sdk_exc:
+                raise ExternalAPIError(
+                    f"DTR rejected POST /shell-descriptors (exception from SDK): {sdk_exc}\n"
+                    f"Payload sent:\n{payload_json}"
+                ) from sdk_exc
             if isinstance(res, Result):
-                raise ExternalAPIError("Error creating or updating shell descriptor: " + "\n" + res.to_json_string())
+                raise ExternalAPIError(
+                    f"DTR rejected POST /shell-descriptors:\n{res.to_json_string()}\n"
+                    f"Payload sent:\n{payload_json}"
+                )
             return res
         
         # If shell existed, update it in the DTR with new asset IDs and BPNs

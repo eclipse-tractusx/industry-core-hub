@@ -71,6 +71,28 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
+  
+  // Custom scrollbar styling - soft gray, squared, minimalistic
+  scrollbar-width: auto;
+  scrollbar-color: rgba(0, 187, 255, 0.3) rgba(0, 115, 255, 0.2);
+  
+  &::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 94, 255, 0.2);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 106, 255, 0.524);
+    border-radius: 0;
+    
+    &:hover {
+      background: rgba(0, 128, 255, 0.5);
+    }
+  }
 }
 
 .productWrapper {

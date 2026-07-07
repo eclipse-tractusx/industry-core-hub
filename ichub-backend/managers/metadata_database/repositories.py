@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025,2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -25,7 +25,8 @@
 
 from sqlalchemy import case
 from sqlmodel import SQLModel, Session, select, desc
-from sqlalchemy.orm import selectinload, aliased
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
 from typing import TypeVar, Type, List, Optional, Generic
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
@@ -44,7 +45,19 @@ from models.metadata_database.provider.models import (
     PartnerCatalogPart,
     DataExchangeAgreement
 )
-
+from models.metadata_database.notification.models import (
+    NotificationEntity,
+    NotificationDirection,
+    NotificationStatus
+)
+from models.metadata_database.pcf.models import (
+    PcfExchangeEntity,
+    PcfExchangeDirection,
+    PcfExchangeStatus,
+    PcfExchangeType,
+    PcfRelationshipEntity
+)
+from tractusx_sdk.industry.models.notifications import Notification
 
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
@@ -662,3 +675,392 @@ class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
         )
         self.create(twin_registration)
         return twin_registration
+
+class NotificationRepository(BaseRepository[NotificationEntity]):
+    """
+    Repository for managing Industry Core Notifications.
+    """
+    
+    def create_new(
+        self, 
+        notification: Notification, 
+        direction: NotificationDirection,
+        status: NotificationStatus = NotificationStatus.PENDING,
+        use_case: str = None,
+        location: str = ""
+    ) -> NotificationEntity:
+        """
+        Creates a new NotificationEntity from an SDK model (passed as a dict),
+        the specific flow direction, and an optional use_case/category.
+        """
+        db_notification = NotificationEntity.from_sdk(
+            notification=notification, 
+            direction=direction, 
+            status=status,
+            use_case=use_case,
+            location=location
+        )
+        self.create(db_notification)
+        # Flush so the DB assigns the auto-increment ``id`` (and any other
+        # server-side defaults) while the session is still open, then expunge
+        # the instance from the session identity-map.  This transitions it to a
+        # "detached but not expired" state: all in-memory attribute values
+        # (message_id, sender_bpn, …) are preserved and readable after the
+        # session is committed and closed by the RepositoryManager context
+        # manager.  Without expunge, SQLAlchemy would expire every attribute on
+        # commit and raise DetachedInstanceError the moment the caller probes
+        # any field after the ``with`` block exits.
+        self._session.flush()
+        self._session.expunge(db_notification)
+        return db_notification
+
+    def find_by_message_id(self, message_id: UUID) -> Optional[NotificationEntity]:
+        """Find a notification by its unique Catena-X messageId."""
+        stmt = select(NotificationEntity).where(
+            NotificationEntity.message_id == message_id
+        )
+        return self._session.scalars(stmt).first()
+
+    def find_by_bpn(
+        self, 
+        bpn: str, 
+        direction: Optional[NotificationDirection] = None,
+        status: Optional[NotificationStatus] = None,
+        use_case: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> List[NotificationEntity]:
+        """
+        Retrieves notifications related to a specific Business Partner.
+        Useful for 'Inbox' (Incoming) or 'Sent' (Outgoing) views.
+        Optionally filter by use_case/category.
+        """
+        stmt = select(NotificationEntity)
+        
+        # Filter by BPN: If incoming, we are the receiver. If outgoing, we are the sender.
+        if direction == NotificationDirection.INCOMING:
+            stmt = stmt.where(NotificationEntity.receiver_bpn == bpn)
+        elif direction == NotificationDirection.OUTGOING:
+            stmt = stmt.where(NotificationEntity.sender_bpn == bpn)
+        else:
+            # If direction isn't specified, find any interaction with this BPN
+            stmt = stmt.where(
+                (NotificationEntity.sender_bpn == bpn) | 
+                (NotificationEntity.receiver_bpn == bpn)
+            )
+
+        if status:
+            stmt = stmt.where(NotificationEntity.status == status)
+
+        if use_case:
+            stmt = stmt.where(NotificationEntity.use_case == use_case)
+
+        # Order by newest first
+        stmt = stmt.order_by(desc(NotificationEntity.created_at)).offset(offset).limit(limit)
+        
+        return list(self._session.scalars(stmt).all())
+
+    def update_status(self, message_id: UUID, new_status: NotificationStatus) -> Optional[NotificationEntity]:
+        """Update the lifecycle status of a notification."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return None
+        
+        db_obj.status = new_status
+        self._session.add(db_obj)
+        return db_obj
+
+    def delete_by_message_id(self, message_id: UUID) -> bool:
+        """Delete a notification by its messageId. Returns True if deleted, False if not found."""
+        db_obj = self.find_by_message_id(message_id)
+        if not db_obj:
+            return False
+        
+        self.delete_obj(db_obj)
+        return True
+    
+class PCFRepository(BaseRepository[PcfExchangeEntity]):
+    """
+    Repository for managing PCF (Product Carbon Footprint) exchange records.
+    """
+
+    def create_new(
+        self,
+        requesting_bpn: str,
+        direction: PcfExchangeDirection,
+        type: PcfExchangeType,
+        responding_bpn: Optional[str] = None,
+        manufacturer_part_id: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        status: PcfExchangeStatus = PcfExchangeStatus.PENDING,
+        message: Optional[str] = None,
+        pcf_location: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        request_id: Optional[UUID] = None,
+    ) -> PcfExchangeEntity:
+        """
+        Creates a new PCF exchange record.
+
+        Args:
+            requesting_bpn: BPN of the party requesting PCF data.
+            direction: Direction of exchange (incoming/outgoing).
+            responding_bpn: BPN of the data provider (optional).
+            manufacturer_part_id: Manufacturer's part identifier (optional).
+            customer_part_id: Customer's part identifier (optional).
+            status: Initial status (defaults to PENDING).
+            message: Optional message for the exchange.
+            pcf_location: URI/path where PCF payload is stored.
+            correlation_id: Optional external correlation ID.
+            request_id: Optional UUID for the request (auto-generated if not provided).
+
+        Returns:
+            The created PcfExchangeEntity.
+        """
+        now = datetime.now(timezone.utc)
+        pcf_exchange = PcfExchangeEntity(
+            request_id=request_id or uuid4(),
+            requesting_bpn=requesting_bpn,
+            responding_bpn=responding_bpn,
+            direction=direction,
+            status=status,
+            type=type,
+            manufacturer_part_id=manufacturer_part_id,
+            customer_part_id=customer_part_id,
+            message=message,
+            pcf_location=pcf_location,
+            correlation_id=correlation_id,
+            created_at=now,
+            updated_at=now,
+        )
+        self.create(pcf_exchange)
+        return pcf_exchange
+
+    def find_by_request_id(self, request_id: UUID, type: Optional[PcfExchangeType] = None) -> Optional[PcfExchangeEntity]:
+        """Find a PCF exchange by its unique request ID."""
+        stmt = select(PcfExchangeEntity).where(
+            PcfExchangeEntity.request_id == request_id
+        )
+        if type:
+            stmt = stmt.where(PcfExchangeEntity.type == type)
+        return self._session.scalars(stmt).first()
+
+    def find_by_bpn(
+        self,
+        bpn: str,
+        direction: Optional[PcfExchangeDirection] = None,
+        status: Optional[PcfExchangeStatus] = None,
+        manufacturer_part_id: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        type: Optional[PcfExchangeType] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[PcfExchangeEntity]:
+        """
+        Retrieves PCF exchanges related to a specific Business Partner.
+
+        Args:
+            bpn: Business Partner Number to filter by.
+            direction: Filter by exchange direction (optional).
+            status: Filter by exchange status (optional).
+            manufacturer_part_id: Filter by manufacturer part ID (optional).
+            customer_part_id: Filter by customer part ID (optional).
+            type: Filter by exchange type (optional).
+            limit: Maximum number of results.
+            offset: Number of results to skip.
+
+        Returns:
+            List of matching PcfExchangeEntity records.
+        """
+        stmt = select(PcfExchangeEntity)
+
+        # Filter by BPN based on direction and type
+        if direction == PcfExchangeDirection.OUTGOING:
+            if type == PcfExchangeType.RESPONSE:
+                # We are responding (provider sending a response)
+                stmt = stmt.where(PcfExchangeEntity.responding_bpn == bpn)
+            else:
+                # We are requesting (consumer sending a request)
+                stmt = stmt.where(PcfExchangeEntity.requesting_bpn == bpn)
+        elif direction == PcfExchangeDirection.INCOMING:
+            if type == PcfExchangeType.RESPONSE:
+                # We received a response (consumer received a response)
+                stmt = stmt.where(PcfExchangeEntity.requesting_bpn == bpn)
+            else:
+                # We received a request (provider received a request)
+                stmt = stmt.where(PcfExchangeEntity.responding_bpn == bpn)
+        else:
+            # Any interaction with this BPN
+            stmt = stmt.where(
+                (PcfExchangeEntity.requesting_bpn == bpn) |
+                (PcfExchangeEntity.responding_bpn == bpn)
+            )
+
+        if direction:
+            stmt = stmt.where(PcfExchangeEntity.direction == direction)
+
+        if status:
+            stmt = stmt.where(PcfExchangeEntity.status == status)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(PcfExchangeEntity.manufacturer_part_id == manufacturer_part_id)
+
+        if customer_part_id:
+            stmt = stmt.where(PcfExchangeEntity.customer_part_id == customer_part_id)
+
+        if type:
+            stmt = stmt.where(PcfExchangeEntity.type == type)
+
+        # Order by newest first
+        stmt = stmt.order_by(desc(PcfExchangeEntity.created_at)).offset(offset).limit(limit)
+
+        return list(self._session.scalars(stmt).all())
+
+    def find_by_part_id(
+        self,
+        manufacturer_part_id: Optional[str] = None,
+        customer_part_id: Optional[str] = None,
+        status: Optional[PcfExchangeStatus] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[PcfExchangeEntity]:
+        """
+        Find PCF exchanges by part identifier(s).
+
+        Args:
+            manufacturer_part_id: Filter by manufacturer part ID (optional).
+            customer_part_id: Filter by customer part ID (optional).
+            status: Filter by exchange status (optional).
+            limit: Maximum number of results.
+            offset: Number of results to skip.
+
+        Returns:
+            List of matching PcfExchangeEntity records.
+        """
+        stmt = select(PcfExchangeEntity)
+
+        if manufacturer_part_id:
+            stmt = stmt.where(PcfExchangeEntity.manufacturer_part_id == manufacturer_part_id)
+
+        if customer_part_id:
+            stmt = stmt.where(PcfExchangeEntity.customer_part_id == customer_part_id)
+
+        if status:
+            stmt = stmt.where(PcfExchangeEntity.status == status)
+
+        stmt = stmt.order_by(desc(PcfExchangeEntity.created_at)).offset(offset).limit(limit)
+
+        return list(self._session.scalars(stmt).all())
+
+    def find_by_correlation_id(self, correlation_id: str) -> Optional[PcfExchangeEntity]:
+        """Find a PCF exchange by its external correlation ID."""
+        stmt = select(PcfExchangeEntity).where(
+            PcfExchangeEntity.correlation_id == correlation_id
+        )
+        return self._session.scalars(stmt).first()
+
+    def update_status(
+        self,
+        request_id: UUID,
+        new_status: PcfExchangeStatus,
+        type: PcfExchangeType,
+        message: Optional[str] = None,
+    ) -> Optional[PcfExchangeEntity]:
+        """
+        Update the status of a PCF exchange.
+
+        Args:
+            request_id: The unique request ID.
+            new_status: The new status to set.
+            message: Optional message to update (e.g., error details).
+
+        Returns:
+            The updated PcfExchangeEntity, or None if not found.
+        """
+        db_obj = self.find_by_request_id(request_id, type=type)
+        if not db_obj:
+            return None
+
+        db_obj.status = new_status
+        db_obj.updated_at = datetime.now(timezone.utc)
+        if message is not None:
+            db_obj.message = message
+
+        self._session.add(db_obj)
+        return db_obj
+
+    def update_pcf_location(
+        self,
+        request_id: UUID,
+        type: PcfExchangeType,
+        pcf_location: str,
+    ) -> Optional[PcfExchangeEntity]:
+        """
+        Update the PCF data location for an exchange.
+
+        Args:
+            request_id: The unique request ID.
+            pcf_location: The URI/path where PCF data is stored.
+
+        Returns:
+            The updated PcfExchangeEntity, or None if not found.
+        """
+        db_obj = self.find_by_request_id(request_id, type=type)
+        if not db_obj:
+            return None
+
+        db_obj.pcf_location = pcf_location
+        db_obj.updated_at = datetime.now(timezone.utc)
+
+        self._session.add(db_obj)
+        return db_obj
+
+    def delete_by_request_id(self, request_id: UUID) -> bool:
+        """
+        Delete a PCF exchange by its request ID.
+
+        Args:
+            request_id: The unique request ID.
+
+        Returns:
+            True if deleted, False if not found.
+        """
+        db_obj = self.find_by_request_id(request_id)
+        if not db_obj:
+            return False
+
+        self.delete_obj(db_obj)
+        return True
+
+class PCFRelationshipRepository(BaseRepository[PcfRelationshipEntity]):
+    """
+    Repository for managing relationships between our PCF and other entities.
+    """
+
+    def create_new(
+        self,
+        main_manufacturer_part_id: str,
+        list_sub_manufacturer_part_ids: List[str]
+    ) -> PcfRelationshipEntity:
+        pcf_relationship = PcfRelationshipEntity(
+            main_manufacturer_part_id=main_manufacturer_part_id,
+            list_sub_manufacturer_part_id=list_sub_manufacturer_part_ids
+        )
+        self.create(pcf_relationship)
+        return pcf_relationship
+    
+    def find_by_main_manufacturer_part_id(self, main_manufacturer_part_id: str) -> Optional[PcfRelationshipEntity]:
+        stmt = select(PcfRelationshipEntity).where(
+            PcfRelationshipEntity.main_manufacturer_part_id == main_manufacturer_part_id
+        )
+        return self._session.scalars(stmt).first()
+    
+    def add_sub_manufacturer_part_id(self, main_manufacturer_part_id: str, sub_manufacturer_part_id: str) -> Optional[PcfRelationshipEntity]:
+        """Add a sub manufacturer part ID to the list for a given main manufacturer part ID."""
+        relationship = self.find_by_main_manufacturer_part_id(main_manufacturer_part_id)
+        if relationship and sub_manufacturer_part_id not in relationship.list_sub_manufacturer_part_id:
+            relationship.list_sub_manufacturer_part_id.append(sub_manufacturer_part_id)
+            # Flag the list as modified so SQLAlchemy tracks the change to the JSON column
+            flag_modified(relationship, "list_sub_manufacturer_part_id")
+            self._session.add(relationship)
+            return relationship
+        return None

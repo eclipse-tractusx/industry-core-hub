@@ -70,10 +70,19 @@ interface FieldRule {
         maxLength?: number;
         minimum?: number;
         maximum?: number;
+        minItems?: number;
+        maxItems?: number;
+        uniqueItems?: boolean;
         format?: string;
         description?: string;
         dependencies?: string[];
     };
+    /** Depth level in the hierarchy (0 = top level) */
+    depth: number;
+    /** Parent field key for context */
+    parentKey?: string;
+    /** Whether this is an array item template field */
+    isArrayItem?: boolean;
 }
 
 const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({ 
@@ -99,60 +108,133 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
     }, [initialSearchTerm]);
 
 
-    // Extract all rules from schema fields, splitting format rules
+    /**
+     * RECURSIVE function to extract rules from a field and all its nested children
+     * Handles: itemFields (arrays), objectFields (nested objects), and any combination
+     */
+    const extractFieldRulesRecursive = (
+        field: FormField,
+        depth: number = 0,
+        parentKey?: string,
+        isArrayItem: boolean = false
+    ): FieldRule[] => {
+        const results: FieldRule[] = [];
+        
+        // Build rules object for this field
+        const rules: FieldRule['rules'] = {
+            type: field.type,
+            required: field.required,
+            description: field.description
+        };
+
+        // Add enum options
+        if (field.options && field.options.length > 0) {
+            rules.enum = field.options;
+        }
+
+        // Add validation rules if they exist
+        let hasFormat = false;
+        if (field.validation) {
+            if (field.validation.pattern) {
+                rules.pattern = field.validation.pattern;
+                hasFormat = true;
+            }
+            if (field.validation.minLength !== undefined) {
+                rules.minLength = field.validation.minLength;
+                hasFormat = true;
+            }
+            if (field.validation.maxLength !== undefined) {
+                rules.maxLength = field.validation.maxLength;
+                hasFormat = true;
+            }
+            if (field.validation.format) {
+                rules.format = field.validation.format;
+                hasFormat = true;
+            }
+            if (field.validation.min !== undefined) {
+                rules.minimum = field.validation.min;
+            }
+            if (field.validation.max !== undefined) {
+                rules.maximum = field.validation.max;
+            }
+            // Array-specific validation
+            if (field.validation.minItems !== undefined) {
+                rules.minItems = field.validation.minItems;
+            }
+            if (field.validation.maxItems !== undefined) {
+                rules.maxItems = field.validation.maxItems;
+            }
+            if (field.validation.uniqueItems !== undefined) {
+                rules.uniqueItems = field.validation.uniqueItems;
+            }
+        }
+
+        // Add this field's rule
+        const fieldRule: FieldRule = { 
+            field, 
+            rules, 
+            depth, 
+            parentKey,
+            isArrayItem
+        };
+        results.push(fieldRule);
+
+        // Recursively process itemFields (for arrays with object items)
+        if (field.itemFields && field.itemFields.length > 0) {
+            field.itemFields.forEach((itemField: FormField) => {
+                const nestedRules = extractFieldRulesRecursive(
+                    itemField,
+                    depth + 1,
+                    field.key,
+                    true // Mark as array item
+                );
+                results.push(...nestedRules);
+            });
+        }
+
+        // Recursively process objectFields (for nested objects)
+        if (field.objectFields && field.objectFields.length > 0) {
+            field.objectFields.forEach((objField: FormField) => {
+                const nestedRules = extractFieldRulesRecursive(
+                    objField,
+                    depth + 1,
+                    field.key,
+                    false
+                );
+                results.push(...nestedRules);
+            });
+        }
+
+        return results;
+    };
+
+    // Extract all rules from schema fields recursively
     const extractFieldRules = () => {
         const requiredFields: FieldRule[] = [];
         const otherFields: FieldRule[] = [];
         const formatFields: FieldRule[] = [];
 
+        // Process all top-level fields recursively
         schema.formFields?.forEach((field: FormField) => {
-            const rules: FieldRule['rules'] = {
-                type: field.type,
-                required: field.required,
-                description: field.description
-            };
+            const allFieldRules = extractFieldRulesRecursive(field, 0);
+            
+            // Categorize each rule
+            allFieldRules.forEach((fieldRule) => {
+                const hasFormat = !!(
+                    fieldRule.rules.pattern ||
+                    fieldRule.rules.minLength !== undefined ||
+                    fieldRule.rules.maxLength !== undefined ||
+                    fieldRule.rules.format
+                );
 
-            // Add enum options
-            if (field.options && field.options.length > 0) {
-                rules.enum = field.options;
-            }
-
-            // Add validation rules if they exist
-            let hasFormat = false;
-            if (field.validation) {
-                if (field.validation.pattern) {
-                    rules.pattern = field.validation.pattern;
-                    hasFormat = true;
+                if (hasFormat) {
+                    formatFields.push(fieldRule);
+                } else if (fieldRule.rules.required) {
+                    requiredFields.push(fieldRule);
+                } else {
+                    otherFields.push(fieldRule);
                 }
-                if (field.validation.minLength !== undefined) {
-                    rules.minLength = field.validation.minLength;
-                    hasFormat = true;
-                }
-                if (field.validation.maxLength !== undefined) {
-                    rules.maxLength = field.validation.maxLength;
-                    hasFormat = true;
-                }
-                if (field.validation.format) {
-                    rules.format = field.validation.format;
-                    hasFormat = true;
-                }
-                if (field.validation.min !== undefined) {
-                    rules.minimum = field.validation.min;
-                }
-                if (field.validation.max !== undefined) {
-                    rules.maximum = field.validation.max;
-                }
-            }
-
-            const fieldRule: FieldRule = { field, rules };
-
-            if (hasFormat) {
-                formatFields.push(fieldRule);
-            } else if (field.required) {
-                requiredFields.push(fieldRule);
-            } else {
-                otherFields.push(fieldRule);
-            }
+            });
         });
 
         return { requiredFields, otherFields, formatFields };
@@ -215,10 +297,32 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
     const filterFields = (fields: FieldRule[]) => {
         if (!searchTerm.trim()) return fields;
         const term = searchTerm.toLowerCase();
-        return fields.filter(fieldRule =>
-            fieldRule.field.key.toLowerCase().includes(term) ||
-            fieldRule.field.label.toLowerCase().includes(term)
-        );
+        
+        // Normalize search term (replace [0], [1], etc. with [item] for consistency)
+        const normalizedTerm = term.replace(/\[\d+\]/g, '[item]');
+        
+        return fields.filter(fieldRule => {
+            const key = fieldRule.field.key.toLowerCase();
+            const label = fieldRule.field.label.toLowerCase();
+            const parentKey = (fieldRule.parentKey || '').toLowerCase();
+            
+            // Check direct matches
+            if (key.includes(normalizedTerm) || label.includes(normalizedTerm)) {
+                return true;
+            }
+            
+            // Check if searching for a parent path that contains this field
+            if (normalizedTerm && key.startsWith(normalizedTerm + '.')) {
+                return true;
+            }
+            
+            // Check parent key for nested fields
+            if (parentKey && parentKey.includes(normalizedTerm)) {
+                return true;
+            }
+            
+            return false;
+        });
     };
 
     const filteredRequiredFields = useMemo(() => filterFields(requiredFields), [requiredFields, searchTerm]);
@@ -278,20 +382,47 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
     );
 
     const renderFieldRuleCard = (fieldRule: FieldRule, showRequiredBadge: boolean = false) => {
-        const { field, rules } = fieldRule;
+        const { field, rules, depth, parentKey, isArrayItem, minItems, maxItems, uniqueItems } = fieldRule;
         const desc = rules.description || '';
         const isLong = desc.length > 120;
         const isExpanded = expandedDescriptions[field.key] || false;
+
+        // Determine if this is a nested field
+        const isNested = depth > 0;
+        
+        // Generate depth indicator colors
+        const depthColors = [
+            'rgba(96, 165, 250, 0.05)',  // depth 0 - default blue
+            'rgba(139, 92, 246, 0.08)',   // depth 1 - purple tint
+            'rgba(236, 72, 153, 0.08)',   // depth 2 - pink tint
+            'rgba(245, 158, 11, 0.08)',   // depth 3 - amber tint
+            'rgba(16, 185, 129, 0.08)',   // depth 4+ - emerald tint
+        ];
+        const bgColor = depthColors[Math.min(depth, depthColors.length - 1)];
+        
+        const borderColors = [
+            'rgba(96, 165, 250, 0.2)',   // depth 0
+            'rgba(139, 92, 246, 0.3)',    // depth 1
+            'rgba(236, 72, 153, 0.3)',    // depth 2
+            'rgba(245, 158, 11, 0.3)',    // depth 3
+            'rgba(16, 185, 129, 0.3)',    // depth 4+
+        ];
+        const borderColor = borderColors[Math.min(depth, borderColors.length - 1)];
 
         return (
             <Card
                 key={field.key}
                 sx={{
-                    backgroundColor: 'rgba(96, 165, 250, 0.05)',
-                    border: '1px solid rgba(96, 165, 250, 0.2)',
+                    backgroundColor: bgColor,
+                    border: `1px solid ${borderColor}`,
                     borderRadius: 2,
                     overflow: 'hidden',
-                    transition: 'all 0.2s ease'
+                    transition: 'all 0.2s ease',
+                    // Visual nesting indicator with left border
+                    ...(isNested && {
+                        borderLeft: `3px solid ${borderColor}`,
+                        ml: Math.min(depth, 3) * 1.5, // Indent nested fields, max 3 levels visually
+                    })
                 }}
             >
                 <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
@@ -301,7 +432,7 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                             width: 20,
                             height: 20,
                             borderRadius: '50%',
-                            backgroundColor: showRequiredBadge ? 'error.main' : 'primary.main',
+                            backgroundColor: showRequiredBadge ? 'error.main' : (isArrayItem ? 'secondary.main' : 'primary.main'),
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -309,14 +440,16 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                         }}>
                             {showRequiredBadge ? (
                                 <Typography sx={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>!</Typography>
+                            ) : isArrayItem ? (
+                                <Typography sx={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>[]</Typography>
                             ) : (
                                 <RuleIcon sx={{ fontSize: 12, color: 'white' }} />
                             )}
                         </Box>
 
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                            {/* Field name and label */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            {/* Field name and label with nesting context */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
                                 <Typography 
                                     variant="subtitle2" 
                                     sx={{ 
@@ -337,7 +470,47 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                                         }}
                                     />
                                 )}
+                                {isArrayItem && (
+                                    <Chip
+                                        label="Array Item"
+                                        size="small"
+                                        color="secondary"
+                                        variant="outlined"
+                                        sx={{
+                                            fontSize: '0.6rem',
+                                            height: '16px'
+                                        }}
+                                    />
+                                )}
+                                {depth > 0 && (
+                                    <Chip
+                                        label={`Depth ${depth}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                            fontSize: '0.6rem',
+                                            height: '16px',
+                                            color: 'text.secondary',
+                                            borderColor: 'divider'
+                                        }}
+                                    />
+                                )}
                             </Box>
+
+                            {/* Parent context for nested fields */}
+                            {parentKey && (
+                                <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                        display: 'block',
+                                        color: 'text.disabled',
+                                        fontSize: '0.65rem',
+                                        mb: 0.5
+                                    }}
+                                >
+                                    Inside: {parentKey}
+                                </Typography>
+                            )}
 
                             {/* Field path */}
                             <Typography 
@@ -423,6 +596,23 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                                 {rules.maxLength !== undefined && renderRuleChip('Max Length', rules.maxLength)}
                                 {rules.minimum !== undefined && renderRuleChip('Min', rules.minimum)}
                                 {rules.maximum !== undefined && renderRuleChip('Max', rules.maximum)}
+                                {/* Array-specific rules */}
+                                {minItems !== undefined && renderRuleChip('Min Items', minItems, 'secondary')}
+                                {maxItems !== undefined && renderRuleChip('Max Items', maxItems, 'secondary')}
+                                {uniqueItems && (
+                                    <Chip
+                                        label="Unique Items"
+                                        size="small"
+                                        color="secondary"
+                                        variant="outlined"
+                                        sx={{
+                                            fontSize: '0.7rem',
+                                            height: '22px',
+                                            mr: 0.5,
+                                            mb: 0.5
+                                        }}
+                                    />
+                                )}
                                 {rules.enum && (
                                     <Chip
                                         label={`Options: ${rules.enum.slice(0, 3).map(opt => opt.label).join(', ')}${rules.enum.length > 3 ? '...' : ''}`}

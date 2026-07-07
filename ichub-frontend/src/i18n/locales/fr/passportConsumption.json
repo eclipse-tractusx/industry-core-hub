@@ -1,0 +1,49 @@
+{
+  "page": {
+    "title": "Passeport Numérique de Produit",
+    "subtitle": "Récupérez et visualisez les passeports de produits depuis l'espace de données",
+    "searchPlaceholder": "CX:XYZ78901:BAT-XYZ789",
+    "validationRequired": "Veuillez entrer un ID de Découverte",
+    "validationFormat": "Format invalide. Attendu: CX:<manufacturerPartId>:<partInstanceId>",
+    "learnMore": "Vous voulez en savoir plus? Consultez toutes nos",
+    "ecoPassFeatures": "Fonctionnalités Eco Pass KIT"
+  },
+  "loading": {
+    "title": "Chargement du Passeport",
+    "errorTitle": "Erreur lors du Chargement du Passeport",
+    "steps": {
+      "parsingId": "Analyse de l'ID",
+      "parsingIdDescription": "Extraction des informations du fabricant et de l'instance",
+      "findingOwner": "Recherche du Propriétaire",
+      "findingOwnerDescription": "Recherche du BPN via BPN Discovery",
+      "retrievingTwin": "Récupération du Twin",
+      "retrievingTwinDescription": "Obtention du jumeau numérique depuis le DTR",
+      "findingSubmodel": "Recherche du Submodèle",
+      "findingSubmodelDescription": "Localisation du submodèle correspondant",
+      "loadingData": "Chargement des Données",
+      "loadingDataDescription": "Consommation des données du passeport",
+      "readyDescription": "Passeport chargé avec succès"
+    }
+  },
+  "scanner": {
+    "title": "Scanner le Code QR",
+    "subtitle": "Positionnez le code QR dans le cadre",
+    "camera": "Caméra",
+    "cameraShort": "Cam",
+    "formatInfo": "Seuls les codes QR avec le format",
+    "formatInfoSuffix": "sont acceptés",
+    "invalidFormat": "Format invalide. Seul le format CX:<manufacturerPartId>:<partInstanceId> est autorisé, pas les URLs.",
+    "cameraError": "Échec de l'accès à la caméra. Veuillez accorder les permissions de caméra."
+  },
+  "visualization": {
+    "copiedToClipboard": "{{label}} copié dans le presse-papiers",
+    "copyFailed": "Échec de la copie",
+    "noDataAvailable": "Aucune donnée disponible pour cette section",
+    "materials": "Matériaux",
+    "unableToDetermineType": "Impossible de déterminer le type de passeport. Veuillez vérifier le format des données."
+  },
+  "errors": {
+    "noMockData": "Aucune donnée de test disponible",
+    "loadFailed": "Échec du chargement du passeport"
+  }
+}

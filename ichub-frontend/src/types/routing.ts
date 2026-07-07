@@ -32,7 +32,7 @@ export interface FeatureRoute {
 
 export interface FeatureConfig {
   name: string;
-  icon: React.ReactElement;
+  icon?: React.ReactElement;
   navigationPath: string;
   disabled: boolean;
   routes: FeatureRoute[];

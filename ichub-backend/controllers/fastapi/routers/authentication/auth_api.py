@@ -126,7 +126,13 @@ else:
     logger.warning("[AUTH] Authorization is DISABLED - API endpoints are publicly accessible")
     logger.warning("=" * 80)
 
-api_key_header = APIKeyHeader(name=ConfigManager.get_config("authorization.api_key.key"), auto_error=False)
+_raw_api_key_name = ConfigManager.get_config("authorization.api_key.key")
+# Guard against None or non-string values (e.g. when config is absent in
+# tests or the YAML key is misconfigured) — APIKeyHeader requires a string.
+api_key_header = APIKeyHeader(
+    name=_raw_api_key_name if isinstance(_raw_api_key_name, str) and _raw_api_key_name else "X-API-Key",
+    auto_error=False
+)
 bearer_security = HTTPBearer(auto_error=False)
 
 def get_authentication_dependency():

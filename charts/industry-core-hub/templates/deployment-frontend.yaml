@@ -138,6 +138,8 @@ spec:
               value: {{ .Values.frontend.consumption.governance | toJson | quote }}
             - name: DTR_POLICIES_CONFIG
               value: {{ .Values.frontend.consumption.digitalTwinRegistry.policies | toJson | quote }}
+            - name: PCF_EXCHANGE_POLICIES_CONFIG
+              value: {{ .Values.frontend.consumption.pcfExchange.policies | toJson | quote }}
 
             # Feature flags
             - name: ENABLE_ADVANCED_LOGGING
@@ -147,6 +149,10 @@ spec:
             - name: ENABLE_DEV_TOOLS
               value: "{{ .Values.frontend.config.enableDevTools }}"
             
+            # Notifications configuration
+            - name: NOTIFICATIONS_POLL_INTERVAL
+              value: "{{ .Values.frontend.config.notifications.pollInterval }}"
+
             # UI configuration
             - name: UI_THEME
               value: "{{ .Values.frontend.config.uiTheme }}"
