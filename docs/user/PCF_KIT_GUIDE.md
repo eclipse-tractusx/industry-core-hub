@@ -21,7 +21,7 @@ Status: Draft
 Type: Documentation
 
 ## Overview
-- **Purpose:** Teach a first-time user how to use the **Product Carbon Footprint (PCF) KIT** inside the Industry Core Hub — screen by screen, click by click.
+- **Purpose:** Teach a first-time user how to use the **Product Carbon Footprint (PCF) KIT** inside the Industry Core Hub — screen by screen, click by click, in plain text with no screenshots. Everything you need to recognise on screen (button labels, dialog titles, field names, statuses, where each control sits) is written out.
 - **Audience:** Frontend users/operators who want to provide, request, receive and consume PCF data across the Catena-X dataspace. No prior experience with the interface is assumed.
 - **Outcome:** You can share a part's PCF directly (SYNC), and you can request, accept and receive a subpart's PCF (ASYNC), understanding what each action does and why.
 
@@ -32,21 +32,48 @@ A simple example runs through this whole guide: you manufacture a **wheel**. A w
 
 There are **two ways** to exchange PCF data. You will learn both:
 
-<p align="center"><img src="media/pcf-01-flows-overview.svg" alt="PCF SYNC vs ASYNC flows overview" width="92%" /></p>
-
 - **SYNC** — the provider attaches PCF data directly to a shared catalog part; the consumer discovers the part and reads the PCF immediately.
 - **ASYNC** — the consumer requests a subpart's PCF; the provider accepts the request; the consumer receives the data back.
 
-## Find the PCF KIT
-The left sidebar groups features by KIT. The **PCF** group contains the three screens you will use.
+Throughout the guide, prefix every part and ID you create with your own participant ID (e.g. `001-alice-…`) so that you can always find your own data among everyone else's in a shared test dataspace.
 
-<p align="center"><img src="media/pcf-02-navigation.svg" alt="PCF KIT location in the sidebar and the three screens" width="92%" /></p>
+---
 
-| # | Screen | Who uses it | What it does |
-|---|--------|-------------|--------------|
-| 1 | **PCF Precalculation** | Consumer | Request the PCF of subparts from your suppliers and aggregate the result. |
-| 2 | **PCF Management** | Provider | Upload and manage the PCF data of your own parts. |
-| 3 | **PCF Requests** | Provider | Review and accept incoming PCF requests. |
+## How the interface is laid out
+
+Before the flows, learn how to move around. Two things are important because they are not obvious the first time:
+
+### The left sidebar is icon-only
+The narrow bar on the far left (about 72&nbsp;px wide) shows **one icon per enabled feature** — there are **no text labels next to the icons and no "PCF" / "CCM" group headings**. To read a feature's name, **hover the mouse over its icon** and a tooltip appears. Clicking an icon opens that screen.
+
+At the **bottom** of the sidebar there are two fixed buttons:
+- a **"+" button** whose tooltip is **Add Features** — it opens the **Available Features** panel;
+- a **KIT Features** button — it opens the full **KIT Features** page (URL `/kit-features`).
+
+### PCF screens must be enabled first
+Out of the box only a few features are switched on. **Catalog Parts** and **Dataspace Discovery** are enabled by default, but the **three PCF screens are switched off** and will not appear in the sidebar until you enable them.
+
+To enable them:
+1. Click the **"+" (Add Features)** button at the bottom of the sidebar. The **Available Features** panel opens next to the sidebar (its footer reads *"Expand KITs to enable/disable features"*).
+2. Find and click **PCF KIT** to expand it (KITs behave like an accordion — opening one collapses the others).
+3. Turn **on** the toggle switch next to each PCF feature you need:
+   - **PCF Precalculation**
+   - **PCF Management**
+   - **PCF Requests**
+4. Their icons now appear in the sidebar. (Alternatively, open the **KIT Features** page from the bottom button and use the same toggles there.)
+
+### The five screens this guide uses
+Once enabled, hover the sidebar icons to find these (the name in **bold** is the exact tooltip / feature name; the arrow is the page it opens):
+
+| # | Sidebar feature name (tooltip) | Page title on screen | URL | Who uses it | What it does |
+|---|-------------------------------|----------------------|-----|-------------|--------------|
+| 1 | **Provide Catalog/Type Parts** | Catalog Parts | `/catalog` | Provider | Create, register and share catalog parts. |
+| 2 | **Consume Data via Dataspace Discovery** | Parts Discovery | `/dataspace-discovery` | Consumer | Discover shared twins and read their submodels. |
+| 3 | **PCF Precalculation** | PCF Precalculation | `/pcf/precalculation` | Consumer | Request the PCF of subparts and aggregate the result. |
+| 4 | **PCF Management** | PCF Management | `/pcf/management` | Provider | Upload and manage the PCF data of your own parts. |
+| 5 | **PCF Requests** | PCF Requests | `/pcf/requests` | Provider | Review and accept incoming PCF requests. |
+
+> Tip: to open a screen directly you can also type its URL after the app's base address.
 
 ---
 
@@ -54,214 +81,150 @@ The left sidebar groups features by KIT. The **PCF** group contains the three sc
 
 Use this when you already own the PCF data and simply want to publish it on a part so a partner can read it after discovery.
 
-> Screens with an **orange** address bar are provider actions; screens with a **green** address bar are consumer actions.
+## Step 1 — Provider: create, register and share the catalog part
 
-**1. Open Catalog Parts and click Create Catalog Part.**
+**1. Open Catalog Parts.** In the sidebar, click the **Provide Catalog/Type Parts** icon (or go to `/catalog`). The page title reads **Catalog Parts** with the subtitle *"Provide, Share and Manage Parts in Catalog / Type Level"*. Existing parts are shown as **cards**; a chip on each card shows its status (**Draft**, **Pending**, **Registered** or **Shared**).
 
-<p align="center"><img src="media/pcf-08-catalog-create.svg" alt="Catalog Parts screen with the Create Catalog Part button" width="92%" /></p>
+**2. Click Create Catalog Part** (button at the top of the page). The **Create New Catalog Part** dialog opens. A chip at the top confirms *"Your Manufacturer ID: …"*.
 
-**2. Fill in the new part's fields and click Create.**
+**3. Fill in the part and click Create.** Only the first two fields are needed to start:
+- **Manufacturer Part ID** — the unique ID of the part (e.g. `001-alice-wheel`), placeholder *"Enter unique part identifier"*. This is how the part is identified across the dataspace.
+- **Part Name** — a human-readable name (e.g. `001-alice Wheel`), placeholder *"Enter part name"*.
+- Optionally expand the **Basic Information** (Description, Category, BPNS), **Measurements** (width/height/length/weight and their units) and **Materials** (Add Material, shares that add up to 100 %) sections.
+- Click **Create** (the button shows *"Creating…"* while it saves). A *"Catalog part created successfully."* toast confirms it. The part now exists as a **Draft**.
 
-<p align="center"><img src="media/pcf-09-create-part-dialog.svg" alt="Create New Catalog Part dialog" width="66%" /></p>
+**4. Register the part.** On the part's **card** in the list, the header shows an action icon whose tooltip is **Register part** (a cloud-upload icon; available while the part is Draft/Pending). Click it. You can also open the card's **three-dots (⋮)** menu — tooltip **More options** — and choose **Register part**. A *"Part twin registered successfully!"* toast confirms it, and the status chip changes to **Registered**. Registering creates the part's Digital Twin so it can be shared and discovered.
 
-- **① Manufacturer Part ID** — the unique ID of the part (e.g. `001-alice-wheel`). *This is how the part is identified across the dataspace.*
-- **② Part Name** — a human-readable name (e.g. `001-alice Wheel`).
-- **③ Create** — creates the part; it now exists as a **draft**. You can optionally add **Category**, **BPNS**, dimensions and materials.
-
-**3. Register and share the part — there are two ways to do it.** Both do exactly the same thing; use whichever entry point you prefer.
-
-**Way 1 — the card's three-dots (⋮) menu** in the Catalog Parts list:
-
-<p align="center"><img src="media/pcf-10-register-share.svg" alt="Register and Share via the card three-dots menu" width="92%" /></p>
-
-- **① Three-dots (⋮) menu** — open it on the part's card.
-- **② Register part** — registers its Digital Twin so it can be shared and discovered.
-- **③ Share part** — opens the share dialog.
-
-**Way 2 — the buttons at the top of the part's View Details page** (open the part with **View Details** first):
-
-<p align="center"><img src="media/pcf-17-details-register-share.svg" alt="Register and Share from the View Details top buttons" width="92%" /></p>
-
-- **① Register part** and **② Share part** are also available at the top of the detail page.
-
-**4. Either way, the Share dialog opens — pick the partner and confirm.**
-
-<p align="center"><img src="media/pcf-11-share-dialog.svg" alt="Share with partner dialog" width="62%" /></p>
-
-- **① Partner** — choose the consumer's BPNL (from your Contact List). *The part becomes visible to that partner in the dataspace.*
-- **② Share** — confirms the share.
+**5. Share the part with your partner.** On the same card, click the **Share part** icon (a share icon in the card header) — or open the **⋮** menu and choose **Share part**. The **Share with partner (…)** dialog opens:
+- **Partner** — select the consumer's BPNL from the dropdown (placeholder *"Select a partner to share the part with"*). Partners come from your Contact List; if none are available the dialog shows *"No Partners Available"* and an **Add a Partner** button.
+- Optionally tick **Add custom customer part Id** to reveal a **Customer Part Id** field.
+- Click **Share** (shows *"Sharing…"* while it works). A *"Part shared successfully with …"* toast confirms it. The part is now visible to that partner in the dataspace.
 
 ## Step 2 — Provider: add the PCF submodel
-Open the part with **View Details** and scroll down to the **Submodels** section.
+**1. Open the part's detail page.** Click the **View** button on the part's card (or click the card body). The detail page opens.
 
-<p align="center"><img src="media/pcf-12-part-details-submodels.svg" alt="Submodels section with the New Submodel button and existing submodel cards" width="92%" /></p>
+**2. Go to the Submodels section.** Scroll down to the **Submodels** (a.k.a. *Digital Twin Submodels*) section. Any submodels already attached appear as cards (for example **SingleLevelBomAsPlanned**, **SingleLevelUsageAsPlanned**) — these are *not* PCF; you are adding a new one.
 
-- **① New Submodel** — the button in the header of the **Submodels** section (top-right). It opens the **schema selector**.
-- The submodels already listed appear as cards (e.g. **SingleLevelBomAsPlanned**, **SingleLevelUsageAsPlanned**) — these are **not** PCF; you are adding a new one.
+**3. Click New Submodel** (button in the top-right of the Submodels section header). The **Select Schema for New Submodel** picker opens.
 
-In the schema selector choose the **PCF** schema (v9.0.0), fill in the data and save. *A submodel is the structured data attached to the twin — here, the carbon-footprint values.*
+**4. Choose the PCF schema and fill it in.** Pick the **PCF** schema (v9.0.0). The creator screen opens with the header *"Create New Submodel - …"*. Fill in the carbon-footprint values and click **Create Submodel**. A *"Submodel created successfully with … schema!"* toast confirms it. *(A submodel is the structured data attached to the twin — here, the carbon-footprint values.)*
 
 > The submodel form itself (schema selector, dynamic fields, validation) is documented step by step in the [Submodel Creator Guide](SUBMODEL_CREATOR_GUIDE.md), which lives next to this guide in `docs/user`.
 
 ## Step 3 — Consumer: discover and read the PCF
-**1. Go to Dataspace Discovery, choose the provider and start the search.**
+**1. Open Dataspace Discovery.** Click the **Consume Data via Dataspace Discovery** icon in the sidebar (or go to `/dataspace-discovery`). The page title reads **Parts Discovery**. Make sure the search mode is **Dataspace Discovery** (not *Single Twin*).
 
-<p align="center"><img src="media/pcf-13-discovery.svg" alt="Dataspace Discovery search screen" width="92%" /></p>
+**2. Set up and start the search:**
+- In the left panel set **Digital Twin Type** to **Part Type (Catalog)** (the default) for a catalog part.
+- Optionally, to find only your piece among many, type its ID into the **Manufacturer Part ID (Optional)** filter (`001-alice-wheel`).
+- In the **Partner BPNL** field select (or type) the provider who shared the part with you.
+- Click **Start Discovery**. The search negotiates access with the provider's connector, so it can take a few seconds; you will see progress steps such as *"Discovering Partner endpoints…"* ending in *"Search Complete!"*.
 
-- **① Partner BPNL** — select the provider who shared the part with you.
-- **② Digital Twin Type** — keep **Part Type (Catalog)** for a catalog part.
-- **③ Start Discovery** — searches the dataspace (this negotiates access with the provider's connector, so it can take a few seconds).
-- *Tip:* to find only your piece among many, type its **Manufacturer Part ID** (`001-alice-wheel`) in the optional filter on the left.
+**3. Pick your part in the results.** Results appear under **Discovery Results** as **cards**, split into **Catalog Parts** / **Serialized Parts** tabs. Find the card named with your ID (`001-alice-wheel`) and click its **View** button to open the twin and list its submodels.
 
-**2. In the results, pick your part among all the discovered ones.** Results appear as **cards**.
+**4. Open the PCF submodel.** Among the twin's submodels (PartType, SingleLevel aspects, …) you will see the **PCF** submodel(s). Click **View Submodel** (or **View Details**) on the PCF one.
 
-<p align="center"><img src="media/pcf-14-discovery-results.svg" alt="Discovery results shown as cards" width="92%" /></p>
-
-- **① Find the card named with your ID** (`001-alice-wheel`) among the discovered parts.
-- **② View** — opens the twin and lists its submodels.
-
-**3. The twin's submodels appear as cards — find the PCF ones.**
-
-<p align="center"><img src="media/pcf-18-discovery-submodel.svg" alt="Discovered submodels shown as cards, including the two PCF submodels" width="92%" /></p>
-
-- **①** Among the submodels (PartType, SingleLevel aspects, …) you will see the **two PCF submodels** (v9.0.0 and v7.0.0). Click **View Details** on one.
-
-**4. Read the PCF data and confirm it matches.**
-
-<p align="center"><img src="media/pcf-23-pcf-viewer.svg" alt="PCF submodel viewer showing the data" width="92%" /></p>
-
-- **① Structured / JSON** — switch views of the data.
-- **Check:** you should see exactly the PCF data the provider created.
+**5. Read and confirm the data.** The **Submodel Viewer** opens. Use the **Structured** / **JSON** tabs to switch views. **Check:** you should see exactly the PCF data the provider created.
 
 ---
 
 # Flow B — ASYNC (request, accept, receive)
 
-Use this when you are the consumer and you need PCF data that a supplier has not published yet. You will use all three PCF screens.
+Use this when you are the consumer and you need PCF data that a supplier has not published yet. You will use all three PCF screens plus Catalog Parts.
 
 ## Step 1 — Consumer: open your part in PCF Precalculation
-1. In **Catalog Parts**, create and **register** the part you are calculating (e.g. `001-alice-wheel`), if it does not exist yet.
-2. Go to **PCF Precalculation**.
-3. Type the **Manufacturer Part ID** in the search field and click **Calculate PCF**.
-
-<p align="center"><img src="media/pcf-03-precalculation-search.svg" alt="PCF Precalculation search screen" width="92%" /></p>
-
-- **① Search field** — enter your own part's Manufacturer Part ID.
-- **② Calculate PCF** — opens the part so you can start adding its subparts. *The part must already exist and be registered.*
+1. In **Catalog Parts**, create and **register** the part you are calculating (e.g. `001-alice-wheel`) if it does not exist yet — see Flow A, Step 1.
+2. Open **PCF Precalculation** (sidebar icon **PCF Precalculation**, or `/pcf/precalculation`). The search screen shows the title **PCF Precalculation** and a card headed **Search Catalog Part** with the hint *"Enter a Manufacturer Part ID to get started"*.
+3. Type your part's **Manufacturer Part ID** into the search field (placeholder *"Enter Manufacturer Part ID…"*) and click **Calculate PCF**. *(The part must already exist and be registered; the dropdown also lets you create it if needed.)*
 
 ## Step 2 — Consumer: add a subpart relation
-When the part opens, PCF Precalculation is empty — no subparts yet. This is where you add them.
+When the part opens, PCF Precalculation is empty — no subparts yet. The empty area is headed **No Subparts Added** with the hint *"Add subpart relations to request PCF data"*.
 
-<p align="center"><img src="media/pcf-22-precalculation-empty.svg" alt="Empty PCF Precalculation screen showing where to add a subpart" width="92%" /></p>
+**1. Open the Add Subpart Relation dialog.** Click **Add Subpart** in the empty-state card, or **Add Subpart Relation** at the top-right of the page. Either one opens the same dialog.
 
-- **① Add Subpart Relation** — the button at the top-right, or **② Add Subpart** in the empty-state card. Either one opens the dialog.
+**2. Fill in the dialog** — titled **Add Subpart Relation** (subtitle *"Parent Part: …"*):
+- **Supplier BPN** (required) — the Business Partner Number of the supplier that owns the subpart (placeholder *"BPNL00000001SUPP"*, helper *"Business Partner Number (BPNL or BPNS)"*). If the contact is missing there is a *"Create it in Contact List"* link.
+- **Manufacturer Part ID** (required) — the subpart's ID as assigned by that supplier (e.g. `001-alice-rim`), helper *"The part ID as assigned by the supplier"*.
+- Click **Add Subpart Relation** (shows *"Adding…"* while it works). The subpart is added to the list with status **Pending**.
 
-A subpart relation tells the app which supplier part you want a PCF for. Fill in the dialog:
-
-<p align="center"><img src="media/pcf-04-add-subpart-dialog.svg" alt="Add Subpart Relation dialog" width="62%" /></p>
-
-- **① Supplier BPN** — the Business Partner Number of the supplier that owns the subpart (BPNL or BPNS).
-- **② Manufacturer Part ID** — the subpart's ID as assigned by that supplier (e.g. `001-alice-rim`).
-- **③ Add Subpart Relation** — confirms and adds the subpart to the list with status **Pending**.
-
-Repeat for each subpart (e.g. `rim`, `tyre`).
+Repeat for each subpart (e.g. `001-alice-rim`, `001-alice-tyre`).
 
 ## Step 3 — Consumer: request the PCF and track progress
 The part now shows its subparts and a progress panel.
 
-<p align="center"><img src="media/pcf-05-precalculation-tree.svg" alt="PCF Precalculation subpart tree and progress" width="92%" /></p>
+- **Progress cards** — **Total Subparts**, **Delivered** and **Pending** show how far the collection is; a **PCF Collection Progress** bar shows the percentage.
+- **Add more subparts** at any time with **Add Subpart Relation** (top-right) or the ghost "add" row at the bottom of the list.
+- **Request the PCF.** On a **Pending** subpart row, click the **Request PCF** action — a **send / paper-plane icon** (its tooltip is *"Request PCF"*). The status moves through *sending* (*"Sending PCF request to supplier…"*) and *awaiting response* (*"Awaiting response from supplier…"*), then to **Delivered**. If a request errors, the icon turns red and its tooltip becomes **Retry Request** — click it to try again.
+- **Expand a row.** Click a **Delivered / Received / Updated** row to reveal its **PCF Details** (Requested At, Delivered At, Carbon Footprint, Certificate Location).
+- **Download JSON.** Once every subpart is collected, click **Download JSON** (top of the page; shows *"Downloading…"* while it works) to export the aggregated PCF. It stays disabled until all subparts are collected (its tooltip then explains *"Complete all PCF requests to download"*).
 
-- **① Add Subpart Relation** — add more subparts at any time.
-- **② Request PCF (paper-plane icon)** — on a **Pending** subpart, click the paper-plane / send button to send the request to the supplier. *The status moves through sending / awaiting response, and then to **Delivered**.*
-- **③ Expand a row** — click a **Delivered / Received** row to see its PCF details (value, delivered date, certificate).
-- **④ Download JSON** — once every subpart is collected, export the aggregated PCF.
-
-The three progress cards (**Total Subparts**, **Delivered**, **Pending**) show how far the collection is.
-
-> **What "Delivered" means here:** your request reached the supplier and is being handled on their side. You will see it become **Received** once the supplier accepts and returns the data (Step 5).
+> **What "Delivered" means here:** your request reached the supplier and is being handled on their side. It becomes **Received** once the supplier accepts and returns the data (Step 5).
 
 ## Step 4 — Provider: accept the request in PCF Requests
-Switch to the provider side. Open **PCF Requests** — this is the provider's inbox.
+Switch to the provider side. Open **PCF Requests** (sidebar icon **PCF Requests**, or `/pcf/requests`) — this is the provider's inbox. The page title reads **PCF Requests**.
 
-<p align="center"><img src="media/pcf-07-requests-inbox.svg" alt="PCF Requests shown as cards" width="92%" /></p>
+- **Requests** appear as cards (or rows — toggle **Card View** / **List View**). Each shows the requester (name + BPNL), the requested part, the PCF version chip (e.g. `v9.0.0`) and a status chip. Filter with the tabs at the top: **All**, **Pending**, **Accepted**, **Delivered**, **Updated**, **Rejected**, **Failed** (each with a count).
+- **Accept** — the **Accept** button (shows *"Accepting…"* while it works) approves the request and sends the PCF back to the consumer. It is enabled only once PCF data exists for that part.
+- **Re-check** — if the PCF location is not resolved yet, a **Refresh** icon appears with the tooltip *"Re-check if PCF location is now available"*.
 
-- **① Request cards** — each incoming request is a **card** showing the requester (name + BPNL), the requested part, the PCF version and a status chip. Use the status filters (**Pending / Accepted / Delivered / …**) at the top to focus.
-- **② Refresh (⟳)** — re-checks whether the PCF location is available yet.
-- **③ Accept** — approve the request and send the PCF back to the consumer. *Enabled only once PCF data exists for that part.*
-
-**If the Accept button is disabled**, it is because no PCF data has been created for that part yet. Do this first:
+**If the Accept button is disabled**, its tooltip reads *"PCF location not yet resolved — use Refresh to check"* — it means no PCF data exists for that part yet. Do this first:
 1. In **Catalog Parts**, create a part named exactly like the requested subpart (`001-alice-rim`) and **register** it.
-2. Go to **PCF Management** and create the PCF data for that part — see [Step 5 — PCF Management](#pcf-management) below for how to use that screen and its wizard.
-3. Return to **PCF Requests**; the **Accept** button is now enabled — click it.
-
-<a id="pcf-management"></a>
+2. Go to **PCF Management** and create the PCF data for that part — see [Step 5](#step-5--provider-create-pcf-data-in-pcf-management) below.
+3. Return to **PCF Requests**, use **Refresh** if needed, and click **Accept**.
 
 ## Step 5 — Provider: create PCF data in PCF Management
-Open **PCF Management** and search your part. Depending on the part, you will see one of **three states**:
+Open **PCF Management** (sidebar icon **PCF Management**, or `/pcf/management`), type the part's Manufacturer Part ID and click **Search Part**. Depending on the part you will see one of **three states** (a 3-step stepper at the top shows *Register Catalog Part → Upload PCF Data → PCF Data*):
 
-<p align="center"><img src="media/pcf-19-management-states.svg" alt="The three states of a part in PCF Management" width="92%" /></p>
+1. **Not registered (Draft).** A **Draft Part** chip is shown, the panel is headed **Register Your Catalog Part**, and it asks you to register the part first with a **Go to Catalog Management** button. Register it in **Catalog Parts** and come back.
+2. **Registered, no PCF data.** A **Registered Part** chip is shown, the panel is headed **Upload PCF Data**. *This is most likely your case if you followed this guide.* Click the **Upload PCF Data** button (shows *"Uploading…"* while it works) to open the **Dual PCF Creation** wizard.
+3. **PCF data registered.** Two version blocks (**PCF v9.0.0** and **PCF v7.0.0**) are shown, each with an **UPLOADED** status chip and **View Details** / **Update** buttons. This is the goal state. (A version that is still missing shows *"PCF … has not been uploaded yet."* with a **Create version** button.)
 
-1. **Not registered** — the part is still a draft. The screen asks you to register it first (**Go to Catalog Management**). Register it in **Catalog Parts** and come back.
-2. **Registered, no PCF data** — the screen shows **Upload PCF Data**. *This is most likely your case if you followed this guide.*
-3. **PCF data registered** — both versions show **UPLOADED**. This is the goal state; from here you can **Update / Complete** the data.
-
-Click **Upload PCF Data** (state 2) to open the **Dual PCF Creation** wizard. It has three steps.
+### The Dual PCF Creation wizard (three steps)
+The wizard title reads **Dual PCF Creation (v9.0.0 + v7.0.0)** with the subtitle *"Create and reconcile both PCF versions before saving"*. Its stepper has three steps: **Create PCF v9.0.0**, **Create PCF v7.0.0**, **Review & Save**.
 
 **Wizard step 1 — Create PCF v9.0.0** (the canonical version):
-
-<p align="center"><img src="media/pcf-06-management-wizard.svg" alt="Dual PCF wizard, step 1 (v9.0.0)" width="92%" /></p>
-
-- **A · Import** — drag your own PCF v9.0.0 JSON into the drop zone, **or**
-- **B · Build from scratch** — click **Open v9.0.0 Form Editor** to fill it with the Submodel Creator instead of importing your own file.
-- **① Validate & Continue** — validates the data and moves on to v7.0.0.
+- **Import a file** — drag your own PCF v9.0.0 JSON into the drop zone (*"Drag & drop PCF v9.0.0 JSON"* / *"or click to browse"*), **or**
+- **Build from scratch** — click **Open v9.0.0 Form Editor** to fill it with the Submodel Creator (the button becomes **Edit v9.0.0 Data** once data exists). When you save from the editor, its button reads **Use as v9.0.0 Data**.
+- Click **Validate**. On success a *"Data validated successfully"* banner appears and the **Continue** button becomes available; on failure the button reads **Fix Errors** and lists how many errors were found.
 
 **Wizard step 2 — Create PCF v7.0.0** (pre-filled from v9.0.0):
-
-<p align="center"><img src="media/pcf-20-wizard-v7.svg" alt="Dual PCF wizard, step 2 (v7.0.0)" width="92%" /></p>
-
-- **① Pre-filled** — v7.0.0 already carries the v9.0.0 values; you only adjust what differs.
-- **② Refresh from v9.0.0** — re-copies the v9.0.0 values if you want to reset them.
-- **③ Continue** — moves on to Review & Save.
+- An info note explains *"Fields already defined in v9.0.0 will be automatically pre-filled when you open the v7.0.0 form editor."*
+- Import a v7.0.0 JSON, or click **Open v7.0.0 Form Editor** (**Edit v7.0.0 Data** once data exists) and adjust only what differs.
+- Use the **Refresh from v9.0.0** link to re-copy the v9.0.0 values if you want to reset them.
+- Click **Validate**, then **Continue**. Use **Back to v9.0.0** to go back.
 
 **Wizard step 3 — Review & Save** (reconcile the two versions):
+- If the versions match, a banner reads *"Both versions are consistent. Ready to save."*
+- If they differ, the banner reads *"N difference(s) found between v9.0.0 and v7.0.0"* with two columns headed **v9.0.0** and **v7.0.0**. For each differing field, **click the v9.0.0 or v7.0.0 value to select it**, or use **Enter custom value** to type your own (then **Apply**). Unresolved fields carry an **Unresolved** chip; this step is what keeps the two PCF versions in sync.
+- Click **Save** (labelled **Update** when a version already exists; a *"Save Both PCFs"* action stores both versions). Per-version results confirm each version was *"uploaded successfully"* / *"updated successfully"* / *"no changes — skipped"*. The part now reaches state 3 (PCF registered).
 
-<p align="center"><img src="media/pcf-21-wizard-review.svg" alt="Dual PCF wizard, step 3 (review and reconcile)" width="92%" /></p>
-
-- **① Resolve differences** — for each field that differs between v9.0.0 and v7.0.0, choose **Use v9.0.0**, **Use v7.0.0**, or type a custom value, so both versions stay consistent. This step is what keeps the two PCF versions in sync.
-- **② Save Both PCFs** — stores both versions. The part now reaches state 3 (PCF registered).
-
-> **Why two versions?** The PCF standard mandates two schema versions. The wizard lets you create both and reconcile any differences before saving.
+> **Why two versions?** The PCF standard mandates two schema versions (v9.0.0 and v7.0.0). The wizard lets you create both and reconcile any differences before saving.
 
 ## Step 6 — Consumer: receive the data
-Back in **PCF Precalculation**, the requested subpart must reach the **Received** status. Then verify the data.
-
-<p align="center"><img src="media/pcf-15-details-expanded.svg" alt="Received subpart, PCF details and the Download JSON button" width="92%" /></p>
-
-- **① Received** — the requested subpart must show the **Received** status. Expand its row to read the **PCF Details** (carbon-footprint value, delivered date, certificate location).
-- **② Download JSON** — click the download button at the top and confirm that the downloaded PCF is exactly the data the provider shared.
+Back in **PCF Precalculation**, the requested subpart must reach the **Received** status.
+- Confirm the subpart shows **Received**, then **expand its row** to read the **PCF Details** (Carbon Footprint value, Delivered At date, Certificate Location).
+- Click **Download JSON** at the top and confirm the downloaded PCF is exactly the data the provider shared.
 
 ## Extra — update and propagate a PCF
-1. **Provider:** open **PCF Management** and search the part you provided. It is now in the **PCF registered** state (state 3 above), so it shows an **Update / Complete PCF** button — click it to reopen the **Dual PCF Creation** wizard (see [Step 5](#pcf-management) for how the wizard works).
-2. In the wizard, click the **edit** button on the version step you want to change (v9.0.0 or v7.0.0), adjust the values, continue through **Review & Save**, and click **Save Both PCFs**.
-3. On save, the **Notify Participants** dialog appears:
-
-<p align="center"><img src="media/pcf-16-notify-participants.svg" alt="Notify Participants dialog" width="58%" /></p>
-
-- **① Send PCF Update** — notifies the consumers who already requested this PCF.
-
+1. **Provider:** open **PCF Management**, search the part you provided (now in the **PCF registered** state), and click **Update** on the version block (v9.0.0 or v7.0.0) you want to change. This reopens the **Dual PCF Creation** wizard.
+2. Adjust the values, continue through **Review & Save**, and click **Update** (**Save**).
+3. On save, the **Notify Participants** dialog appears (subtitle *"Select participants to notify about this PCF update"*):
+   - If nobody has requested this PCF, it says so and you can **Skip**.
+   - Otherwise it lists the interested BPNs with checkboxes (**Select All** / **Deselect All**). Choose who to notify and click **Send PCF Update** (shows *"Sending…"* while it works). A *"PCF update sent to N participant(s) successfully."* toast confirms it.
 4. **Consumer:** in **PCF Precalculation**, confirm the subpart now shows the **Updated** status with the new values.
 
 ---
 
 ## Status Reference
 - **Subpart (PCF Precalculation):** `Pending` → `Delivered` / `Received` → `Updated` (also `Rejected`, `Error`).
-- **Request (PCF Requests):** `Pending` → `Accepted` → `Delivered` (also `Rejected`, `Updated`, `Failed`).
+- **Request (PCF Requests):** `Pending` → `Accepted` → `Delivered` (also `Updated`, `Rejected`, `Failed`).
+- **Part (Catalog Parts / PCF Management):** `Draft` → `Pending` → `Registered` → `Shared`; PCF version blocks read `UPLOADED` / `NOT UPLOADED`.
 
 ## Tips & Troubleshooting
-- **The PCF group is missing from the sidebar:** enable the **PCF KIT** in **KIT Features** (bottom of the sidebar).
+- **A PCF icon is missing from the sidebar:** enable the feature — click the **"+" (Add Features)** button at the bottom of the sidebar, expand **PCF KIT** in the **Available Features** panel, and toggle on **PCF Precalculation** / **PCF Management** / **PCF Requests**.
 - **"Calculate PCF" finds nothing:** the part must exist in your **Catalog Parts** and be **registered** first.
 - **A subpart stays Pending forever:** the supplier has not accepted the request yet, or has no PCF data for that part. On the provider side, upload the PCF in **PCF Management**, then **Accept** in **PCF Requests**.
-- **"Accept" is disabled in PCF Requests:** create the requested part in **Catalog Parts** and upload its PCF in **PCF Management** first.
+- **"Accept" is disabled in PCF Requests:** its tooltip reads *"PCF location not yet resolved"* — create the requested part in **Catalog Parts**, upload its PCF in **PCF Management**, then use **Refresh** and **Accept**.
 - **Download JSON is disabled:** it only enables once every subpart has been collected (all **Delivered/Received**).
 - **Naming clash with other participants:** always prefix parts with your own ID (e.g. `001-alice-…`) so you can find your own data.
 
