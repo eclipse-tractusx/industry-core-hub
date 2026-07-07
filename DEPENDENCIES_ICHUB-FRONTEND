@@ -191,8 +191,8 @@ npm/npmjs/-/react-i18next/16.5.3, MIT, approved, clearlydefined
 npm/npmjs/-/react-is/16.13.1, MIT, approved, clearlydefined
 npm/npmjs/-/react-is/18.3.1, MIT, approved, clearlydefined
 npm/npmjs/-/react-is/19.1.1, MIT, approved, #20637
-npm/npmjs/-/react-router-dom/7.12.0, MIT, approved, clearlydefined
-npm/npmjs/-/react-router/7.12.0, MIT, approved, clearlydefined
+npm/npmjs/-/react-router-dom/7.16.0, MIT, approved, #28640
+npm/npmjs/-/react-router/7.16.0, MIT, approved, #28639
 npm/npmjs/-/react-smooth/4.0.4, MIT, approved, clearlydefined
 npm/npmjs/-/react-transition-group/4.4.5, BSD-3-Clause, approved, CQ22955
 npm/npmjs/-/react/18.3.1, MIT, approved, clearlydefined

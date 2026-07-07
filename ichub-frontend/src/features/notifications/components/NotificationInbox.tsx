@@ -2,7 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -132,8 +132,8 @@ const NotificationInbox: React.FC = () => {
   /** Returns chip background and text color for a given use case string */
   const getUseCaseChipStyle = (useCase: string) => {
     switch (useCase.toUpperCase()) {
-      case 'PCF': return { bg: 'rgba(0, 188, 212, 0.2)', color: '#00bcd4' };
-      case 'CCM': return { bg: 'rgba(255, 152, 0, 0.2)', color: '#ffa726' };
+      case 'PCF': return { bg: 'rgba(102, 187, 106, 0.2)', color: '#66bb6a' };
+      case 'CCM': return { bg: 'rgba(255, 202, 40, 0.2)', color: '#ffca28' };
       default:    return { bg: 'rgba(158, 158, 158, 0.15)', color: '#bdbdbd' };
     }
   };
@@ -261,7 +261,7 @@ const NotificationInbox: React.FC = () => {
     if (diffMins < 60) return t('time.minutesAgo', { count: diffMins });
     if (diffHours < 24) return t('time.hoursAgo', { count: diffHours });
     if (diffDays < 7) return t('time.daysAgo', { count: diffDays });
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   const getAvatarColor = (bpn: string): string => {
@@ -572,12 +572,15 @@ const NotificationInbox: React.FC = () => {
 
         {/* Content */}
         <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          {/* Name row with use case chip inline */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.25 }}>
             <Typography
               sx={{
                 color: '#ffffff',
                 fontWeight: notification.status === 'unread' ? 600 : 400,
                 fontSize: '0.8rem',
+                flex: 1,
+                minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -585,25 +588,21 @@ const NotificationInbox: React.FC = () => {
             >
               {senderName}
             </Typography>
-            {!isKnown && (
-              <AddContactIconButton
-                bpnl={senderBpn}
-                onContactAdded={handleAddContactSuccess}
-                tooltipTitle={t('inbox.addToContacts')}
-              />
-            )}
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
             {notification.useCase ? (
               <Chip
-                label={notification.useCase}
+                label={
+                  notification.type === 'pcf'
+                    ? (notification.pcfContent?.notificationType ?? notification.useCase)
+                    : notification.useCase
+                }
                 size="small"
                 sx={{
                   backgroundColor: getUseCaseChipStyle(notification.useCase).bg,
                   color: getUseCaseChipStyle(notification.useCase).color,
-                  fontSize: '0.55rem',
+                  fontSize: '0.5rem',
                   height: '14px',
                   fontWeight: 600,
+                  flexShrink: 0,
                 }}
               />
             ) : (
@@ -615,10 +614,36 @@ const NotificationInbox: React.FC = () => {
                   color: '#81c784',
                   fontSize: '0.6rem',
                   height: '16px',
+                  flexShrink: 0,
                 }}
               />
             )}
-            {deadlineInfo && (
+            {!isKnown && (
+              <AddContactIconButton
+                bpnl={senderBpn}
+                onContactAdded={handleAddContactSuccess}
+                tooltipTitle={t('inbox.addToContacts')}
+              />
+            )}
+          </Box>
+          {/* Message preview */}
+          {(notification.type === 'pcf' ? notification.pcfContent?.message : notification.content.information) && (
+            <Typography
+              sx={{
+                color: 'rgba(255, 255, 255, 0.45)',
+                fontSize: '0.72rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                mb: deadlineInfo ? 0.25 : 0,
+              }}
+            >
+              {notification.type === 'pcf' ? notification.pcfContent?.message : notification.content.information}
+            </Typography>
+          )}
+          {/* Deadline chip */}
+          {deadlineInfo && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Chip
                 icon={<Schedule sx={{ fontSize: '0.7rem !important' }} />}
                 label={deadlineInfo.label}
@@ -631,12 +656,12 @@ const NotificationInbox: React.FC = () => {
                   '& .MuiChip-icon': { color: deadlineInfo.color },
                 }}
               />
-            )}
-          </Box>
+            </Box>
+          )}
         </Box>
 
         {/* Right side: time and verification status bar */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5, ml: 1 }}>
           <Typography sx={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.65rem' }}>
             {formatDate(notification.receivedAt)}
           </Typography>

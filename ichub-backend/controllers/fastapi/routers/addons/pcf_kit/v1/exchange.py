@@ -21,7 +21,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""PCF Exchange API - EDC-level endpoints for PCF data exchange."""
+"""PCF Exchange API - EDC-level endpoints for PCF data exchange (v1.2.0).
+
+These endpoints are served behind the v1.2.0 EDC asset and always operate
+with PCF schema version v9.0.0.  The version is implicit from the asset
+negotiated — no version query parameter is exposed.
+"""
 
 from typing import Optional
 from fastapi import APIRouter, Depends, Header, Query, HTTPException, Path, Body
@@ -30,7 +35,7 @@ from fastapi.responses import JSONResponse
 from controllers.fastapi.routers.authentication.auth_api import get_authentication_dependency
 from managers.addons_service.pcf_kit.v1 import exchange_manager
 from managers.config.log_manager import LoggingManager
-from tools.exceptions import NotFoundError
+from tools.exceptions import NotFoundError, PcfVersionGateError
 from utils.log_utils import sanitize_log_value as _s
 from tools.constants import INTERNAL_SERVER_ERROR
 
@@ -45,6 +50,9 @@ router = APIRouter(
 logger.info("[PCF Exchange] Router initialized")
 
 
+# PCF schema version used by the v1.2.0 /footprintExchange endpoints
+_PCF_VERSION = "v9.0.0"
+
 EDC_BPN_DESCRIPTION = "The caller's Catena-X BusinessPartnerNumber"
 MESSAGE_DESCRIPTION = "URL encoded, max 250 chars"
 
@@ -55,7 +63,7 @@ async def put_pcf_with_path_id(
     body: dict = Body(...),
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
     message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
-    update: bool = Query(False, description="Whether this is an update to an existing request")
+    update: bool = Query(False, description="Whether this is an update to an existing request"),
 ):
     """
     PCF Response / Update endpoint.
@@ -96,7 +104,8 @@ async def put_pcf_with_path_id(
             pcf_data=body,
             edc_bpn=edc_bpn,
             is_update=update,
-            message=message
+            message=message,
+            version=_PCF_VERSION,
         )
         
         logger.info(f"[PCF Exchange PUT] Response processed successfully: request_id={_s(request_id)}")
@@ -104,6 +113,9 @@ async def put_pcf_with_path_id(
             status_code=200,
             content=result
         )
+    except PcfVersionGateError as e:
+        logger.warning(f"[PCF Exchange PUT] Version gate blocked: {_s(e)}")
+        raise HTTPException(status_code=409, detail=str(e))
     except ValueError as e:
         logger.error(f"[PCF Exchange PUT] ValueError: {_s(e)}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
@@ -120,7 +132,7 @@ async def request_pcf(
     edc_bpn: Optional[str] = Header(None, alias="edc-bpn", description=EDC_BPN_DESCRIPTION),
     manufacturer_part_id: Optional[str] = Query(None, alias="manufacturerPartId", description="Manufacturer part ID"),
     customer_part_id: Optional[str] = Query(None, alias="customerPartId", description="Customer part ID"),
-    message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION)
+    message: Optional[str] = Query(None, max_length=250, description=MESSAGE_DESCRIPTION),
 ):
     """
     PCF Request endpoint.
@@ -169,7 +181,8 @@ async def request_pcf(
             edc_bpn=edc_bpn,
             manufacturer_part_id=manufacturer_part_id,
             customer_part_id=customer_part_id,
-            message=message
+            message=message,
+            version=_PCF_VERSION,
         )
         
         logger.info(f"[PCF Exchange GET] Request processed successfully: request_id={_s(request_id)}")
