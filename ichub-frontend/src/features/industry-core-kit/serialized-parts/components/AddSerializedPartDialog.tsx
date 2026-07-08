@@ -56,7 +56,7 @@ import { fetchPartners } from '@/features/business-partner-kit/partner-managemen
 import { PartnerInstance } from '@/features/business-partner-kit/partner-management/types/types';
 import { PartnerAutocomplete } from '@/features/business-partner-kit/partner-management/components';
 import { AxiosError } from '@/types/axiosError';
-import { getBpn } from '@/services/EnvironmentService';
+import { getParticipantId } from '@/services/EnvironmentService';
 import { useEscapeDialog } from '@/hooks/useEscapeKey';
 import { fetchCatalogParts } from '@/features/industry-core-kit/catalog-management/api';
 import { ApiPartData } from '@/features/industry-core-kit/catalog-management/types/types';
@@ -67,7 +67,7 @@ interface AddSerializedPartDialogProps {
     onSuccess?: (createdPart?: SerializedPart) => void;
 }const AddSerializedPartDialog = ({ open, onClose, onSuccess }: AddSerializedPartDialogProps) => {
     const { t } = useTranslation(['serializedParts', 'common']);
-    const manufacturerId = getBpn();
+    const manufacturerId = getParticipantId();
     const navigate = useNavigate();
     
     // Step management for three-step process

@@ -295,25 +295,66 @@ class EnvironmentService {
 }
 
 /**
- * Gets BPN with priority: token -> env -> 'CX-Operator'
+ * Raw participant BPNL as configured in index.html / build env (window.ENV.PARTICIPANT_ID
+ * or VITE_PARTICIPANT_ID). Does NOT consult Keycloak. Used as the fallback source.
  */
-export const getBpn = (): string => {
+export const getConfiguredParticipantId = (): string =>
+  window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
+
+/**
+ * Whether the participant BPNL should be sourced from the authenticated Keycloak user.
+ * Controlled by the USE_KEYCLOAK_BPN flag (window.ENV / VITE_USE_KEYCLOAK_BPN).
+ */
+export const isKeycloakBpnEnabled = (): boolean => {
+  const raw = window?.ENV?.USE_KEYCLOAK_BPN ?? import.meta.env.VITE_USE_KEYCLOAK_BPN;
+  return String(raw).toLowerCase() === 'true';
+};
+
+/**
+ * Single source of truth for the participant BPNL used across the whole application
+ * (profile dropdown, manufacturer IDs, notifications, passports, …).
+ *
+ * - USE_KEYCLOAK_BPN = true:  authenticated user's BPN from the Keycloak token,
+ *   falling back to the configured PARTICIPANT_ID, then 'CX-Operator'.
+ * - USE_KEYCLOAK_BPN = false: the configured PARTICIPANT_ID (index.html), then 'CX-Operator'.
+ */
+export const getParticipantId = (): string => {
+  if (isKeycloakBpnEnabled()) {
+    try {
+      const authService = (window as any).__authService;
+      const user = authService?.getUser?.();
+      if (user?.attributes?.bpn) {
+        return user.attributes.bpn;
+      }
+    } catch (error) {
+      console.warn('Failed to retrieve BPN from Keycloak token:', error);
+    }
+  }
+
+  const configured = getConfiguredParticipantId();
+  if (configured) return configured;
+
+  return 'CX-Operator';
+};
+
+/**
+ * Gets the list of BPNS (plants/sites) assigned to the authenticated user.
+ * Returns an empty array when the user has none or is not authenticated.
+ */
+export const getBpns = (): string[] => {
   try {
     const authService = (window as any).__authService;
     if (authService) {
       const user = authService.getUser();
-      if (user?.attributes?.bpn) {
-        return user.attributes.bpn;
+      if (Array.isArray(user?.attributes?.bpns)) {
+        return user.attributes.bpns;
       }
     }
   } catch (error) {
-    console.warn('Failed to retrieve BPN from token:', error);
+    console.warn('Failed to retrieve BPNS from token:', error);
   }
 
-  const envBpn = window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID;
-  if (envBpn) return envBpn;
-
-  return 'CX-Operator';
+  return [];
 };
 
 // Legacy function exports for backward compatibility
@@ -321,7 +362,6 @@ export const isRequireHttpsUrlPattern = () =>
   import.meta.env.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
 export const getIchubBackendUrl = () => import.meta.env.VITE_ICHUB_BACKEND_URL || window?.ENV?.ICHUB_BACKEND_URL || '';
-export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
 /** Polling interval in ms for fetching notifications (default 30s) */
 export const getNotificationsPollInterval = (): number => {

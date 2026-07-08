@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { getIchubBackendUrl, getBpn } from '../services/EnvironmentService';
+import { getIchubBackendUrl, getParticipantId } from '../services/EnvironmentService';
 import { BaseConfig, ApiEndpoints } from './types';
 
 /**
@@ -28,7 +28,7 @@ import { BaseConfig, ApiEndpoints } from './types';
  */
 export const baseConfig: BaseConfig = {
   apiUrl: getIchubBackendUrl(),
-  participantId: getBpn(),
+  participantId: getParticipantId(),
 };
 
 /**

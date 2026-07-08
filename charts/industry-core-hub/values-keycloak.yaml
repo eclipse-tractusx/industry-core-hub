@@ -98,7 +98,10 @@ keycloak:
         emailVerified: true
         enabled: true
         attributes:
+          # Business Partner Number Legal (single) assigned to this user
           BPN: ["BPNL000000000000"]
+          # Business Partner Number Sites (0, 1 or many) — plants/sites this user works with
+          BPNS: ["BPNS0000000000001", "BPNS0000000000002"]
         realmRoles:
           - "default-roles-ichub"
           - "offline_access"

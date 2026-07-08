@@ -297,7 +297,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
 
     const payload = {
       ...formData,
-      manufacturerId: getBpn(),
+      manufacturerId: getParticipantId(),
       materials: namedMaterials,
     };
 

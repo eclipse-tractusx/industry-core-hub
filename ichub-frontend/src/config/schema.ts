@@ -92,7 +92,10 @@ export interface AuthUser {
   roles: string[];
   permissions: string[];
   attributes?: {
+    /** Business Partner Number Legal — single value */
     bpn?: string;
+    /** Business Partner Number Sites — plants/sites this user works with (0, 1 or many) */
+    bpns?: string[];
     [key: string]: any;
   };
 }

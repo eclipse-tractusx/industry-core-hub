@@ -132,7 +132,9 @@ spec:
             # Participant configuration
             - name: PARTICIPANT_ID
               value: "{{ .Values.participantId }}"
-            
+            - name: USE_KEYCLOAK_BPN
+              value: "{{ .Values.frontend.config.useKeycloakBpn }}"
+
             # Governance and policies configuration
             - name: GOVERNANCE_CONFIG
               value: {{ .Values.frontend.consumption.governance | toJson | quote }}

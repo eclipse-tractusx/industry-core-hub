@@ -51,6 +51,10 @@
   {{- $_ := set $attrs "bpn" (index $attrs "BPN") }}
   {{- $_ := unset $attrs "BPN" }}
 {{- end }}
+{{- if hasKey $attrs "BPNS" }}
+  {{- $_ := set $attrs "bpns" (index $attrs "BPNS") }}
+  {{- $_ := unset $attrs "BPNS" }}
+{{- end }}
 {{- $newUser := dict 
   "username" $user.username
   "enabled" (default true $user.enabled)

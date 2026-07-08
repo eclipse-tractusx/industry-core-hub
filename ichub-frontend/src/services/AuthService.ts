@@ -193,6 +193,13 @@ class AuthService {
       
       if (window.ENV && window.ENV.ENABLE_DEV_TOOLS === 'true') try { console.log('📋 Token parsed: (redacted)'); } catch(e) {}
  
+      // Normalize the multivalued `bpns` claim into a string[].
+      // Depending on Keycloak config it may arrive as an array, a single string, or be absent.
+      const rawBpns = tokenParsed.bpns ?? tokenParsed.BPNS;
+      const bpns: string[] = Array.isArray(rawBpns)
+        ? rawBpns.filter((v: unknown): v is string => typeof v === 'string' && v.length > 0)
+        : (typeof rawBpns === 'string' && rawBpns.length > 0 ? [rawBpns] : []);
+
       // Extract user info from token claims (avoid loadUserProfile which has CORS issues)
       const user: AuthUser = {
         id: tokenParsed.sub || '',
@@ -204,6 +211,7 @@ class AuthService {
         permissions: tokenParsed.resource_access?.[environmentService.getKeycloakClientId()]?.roles || [],
         attributes: {
           bpn: tokenParsed.BPN || tokenParsed.bpn, // BPN puede venir en mayúsculas o minúsculas
+          bpns, // Business Partner Number Sites (plants), 0/1/many
         }
       };
  

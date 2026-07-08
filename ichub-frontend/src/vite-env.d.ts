@@ -65,6 +65,7 @@ interface ImportMetaEnv {
   
   // Participant configuration
   readonly VITE_PARTICIPANT_ID: string
+  readonly VITE_USE_KEYCLOAK_BPN: string
   readonly VITE_BPN_VALIDATION_PATTERN: string
   
   // Governance and policies
@@ -135,6 +136,7 @@ declare global {
       
       // Participant configuration
       PARTICIPANT_ID?: string;
+      USE_KEYCLOAK_BPN?: string;
       BPN_VALIDATION_PATTERN?: string;
       
       // Governance and policies
