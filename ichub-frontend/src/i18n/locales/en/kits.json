@@ -105,6 +105,16 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "End-to-end traceability of parts, alerts and components throughout the supply chain."
+    },
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Explore and interact with Catena-X dataspace data using AI-powered tools via the Model Context Protocol (MCP). Connect your AI assistant directly to digital twins, partner networks, and supply chain data.",
+      "features": {
+        "mcpTools": {
+          "name": "MCP Tools",
+          "description": "AI-powered tools for exploring digital twins, discovering partners, and consuming dataspace data via Model Context Protocol."
+        }
+      }
     }
   }
 }
