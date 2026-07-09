@@ -228,11 +228,6 @@ class EnvironmentService {
     return this.config.api.ichubBackendUrl;
   }
 
-  /** @deprecated Use getParticipantConfig().id */
-  getParticipantId(): string {
-    return this.config.participant.id;
-  }
-
   /** Get agreements configuration (Saturn format) */
   getAgreementsConfig(): AgreementConfig[] {
     return this.config.governance.agreements;

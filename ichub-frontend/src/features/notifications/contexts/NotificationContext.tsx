@@ -38,8 +38,9 @@ import {
 } from '../types';
 import { notificationApiService } from '../services/notificationApiService';
 import { mapApiResponsesToNotifications } from '../services/notificationMapper';
-import { getNotificationsPollInterval, getParticipantId } from '@/services/EnvironmentService';
+import { getNotificationsPollInterval, getParticipantId, isKeycloakBpnEnabled } from '@/services/EnvironmentService';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
+import useAuth from '@/hooks/useAuth';
 import { PartnerInstance } from '@/features/business-partner-kit/partner-management/types/types';
 
 interface NotificationContextType {
@@ -143,6 +144,12 @@ const PAGE_SIZE = 20;
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // When the participant BPNL is sourced from Keycloak, we must wait until authentication
+  // has finished initializing before fetching — otherwise getParticipantId() would resolve
+  // to the index.html PARTICIPANT_ID fallback while the Keycloak user is still loading.
+  const { isLoading: authLoading } = useAuth();
+  const bpnReady = !isKeycloakBpnEnabled() || !authLoading;
+
   // Panel state
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [panelSize, setPanelSize] = useState<NotificationPanelSize>('normal');
@@ -210,6 +217,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Load initial data from backend API
   useEffect(() => {
+    // Hold off until the participant BPNL can be resolved from Keycloak (see bpnReady).
+    if (!bpnReady) {
+      return;
+    }
+
     refreshPartners();
     fetchNotificationsFromApi();
 
@@ -220,7 +232,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, pollInterval);
 
     return () => clearInterval(intervalId);
-  }, [refreshPartners, fetchNotificationsFromApi]);
+  }, [bpnReady, refreshPartners, fetchNotificationsFromApi]);
 
   // Panel controls
   const togglePanel = useCallback(() => {
