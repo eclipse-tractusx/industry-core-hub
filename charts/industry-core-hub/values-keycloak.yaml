@@ -1,6 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -98,7 +99,10 @@ keycloak:
         emailVerified: true
         enabled: true
         attributes:
+          # Business Partner Number Legal (single) assigned to this user
           BPN: ["BPNL000000000000"]
+          # Business Partner Number Sites (0, 1 or many) — plants/sites this user works with
+          BPNS: ["BPNS0000000000001", "BPNS0000000000002"]
         realmRoles:
           - "default-roles-ichub"
           - "offline_access"

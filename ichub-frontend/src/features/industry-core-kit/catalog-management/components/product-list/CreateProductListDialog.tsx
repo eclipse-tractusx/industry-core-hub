@@ -457,14 +457,14 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
                   backgroundColor: 'secondary.main',
                   color: 'secondary.contrastText',
                   maxWidth: '100%',
+                  height: 'auto',
                   '& .MuiChip-label': {
                     fontSize: '0.875rem',
                     px: 1,
                     fontWeight: 500,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '300px'
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere',
+                    maxWidth: '100%'
                   }
                 }}
               />

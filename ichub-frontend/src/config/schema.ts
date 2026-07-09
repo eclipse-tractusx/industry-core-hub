@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -91,6 +92,13 @@ export interface AuthUser {
   lastName?: string;
   roles: string[];
   permissions: string[];
+  attributes?: {
+    /** Business Partner Number Legal — single value */
+    bpn?: string;
+    /** Business Partner Number Sites — plants/sites this user works with (0, 1 or many) */
+    bpns?: string[];
+    [key: string]: any;
+  };
 }
 
 export interface AuthTokens {

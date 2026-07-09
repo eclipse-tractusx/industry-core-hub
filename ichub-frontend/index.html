@@ -80,6 +80,9 @@
         
         // Participant configuration
         PARTICIPANT_ID: "",
+        // When "true", the participant BPNL used across the app is taken from the
+        // authenticated user's Keycloak token; when "false", PARTICIPANT_ID above is used.
+        USE_KEYCLOAK_BPN: "true",
         BPN_VALIDATION_PATTERN: "",
         
         // Governance and policies - must be configured via GOVERNANCE_CONFIG, DTR_POLICIES_CONFIG and PCF_EXCHANGE_POLICIES_CONFIG env vars

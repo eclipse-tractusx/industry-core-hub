@@ -1,7 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
+ * Copyright (c) 2025,2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -35,9 +35,10 @@ import Policy from '@mui/icons-material/Policy';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MoreIcon from '@mui/icons-material/MoreVert';
 import LanguageIcon from '@mui/icons-material/Language';
-import { Divider, ListItemIcon, Typography, Tooltip } from '@mui/material';
-import { Logout, Settings, ContentCopy } from '@mui/icons-material';
-import { getParticipantId } from '../../services/EnvironmentService';
+import { Divider, ListItemIcon, Typography, Tooltip, Button } from '@mui/material';
+import { Logout, Settings, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { getParticipantId, getBpns } from '../../services/EnvironmentService';
+import CopyableIdChip from './CopyableIdChip';
 import useAuth from '../../hooks/useAuth';
 import { useNotifications } from '../../features/notifications';
 
@@ -57,11 +58,15 @@ export default function PrimarySearchAppBar() {
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState<null | HTMLElement>(null);
   const [languageAnchorEl, setLanguageAnchorEl] = useState<null | HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [participantId, setParticipantId] = useState<string>('CX-Operator');
-  const [copied, setCopied] = useState(false);
-  
-  // Auth hook
+  const [showAllSites, setShowAllSites] = useState(false);
+
   const { isAuthenticated, user, logout } = useAuth();
+  const bpn = getParticipantId();
+  const bpns = getBpns();
+  // Collapsed preview size for the BPNS grid (2 columns × 1 row). Beyond this a
+  // "show all / show less" toggle keeps the profile panel from growing unbounded.
+  const BPNS_COLLAPSED_LIMIT = 2;
+  const visibleBpns = showAllSites ? bpns : bpns.slice(0, BPNS_COLLAPSED_LIMIT);
   
   // Notifications hook
   const { togglePanel, unreadCount, isPanelOpen } = useNotifications();
@@ -99,16 +104,6 @@ export default function PrimarySearchAppBar() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
-  const handleCopyParticipantId = async () => {
-    try {
-      await navigator.clipboard.writeText(participantId);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  };
-
   const handleLanguageMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setLanguageAnchorEl(event.currentTarget);
   };
@@ -135,22 +130,6 @@ export default function PrimarySearchAppBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const fetchParticipantId = async () => {
-      try {
-        const id = await getParticipantId();
-        if (id) {
-          setParticipantId(id);
-        }
-      } catch (error) {
-        console.warn('Could not fetch participant ID:', error);
-        // Keep default value "CX-Operator"
-      }
-    };
-
-    fetchParticipantId();
-  }, []);
-
   const menuId = 'primary-search-account-menu';
   const renderMenu = (
     <Menu
@@ -175,23 +154,83 @@ export default function PrimarySearchAppBar() {
             {user.email}
           </Typography>
         )}
-        <Box className="company-id-box">
-          <Typography variant="caption" className="company-id-text" color="primary">
-            {t('header.companyId', { id: participantId })}
+        {/* Company ID (BPNL) — click the chip to copy */}
+        <Box sx={{ mt: 1.5 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.secondary',
+              fontWeight: 600,
+              fontSize: '0.7rem',
+              letterSpacing: '0.3px',
+              textTransform: 'uppercase',
+              display: 'block',
+              mb: 0.5,
+            }}
+          >
+            {t('header.companyIdLabel')}
           </Typography>
-          <Tooltip title={copied ? t('actions.copied') : t('header.copyId')} arrow>
-            <IconButton
-              size="small"
-              className="copy-button"
-              onClick={handleCopyParticipantId}
-              color="primary"
-            >
-              <ContentCopy />
-            </IconButton>
-          </Tooltip>
+          <CopyableIdChip value={bpn} />
         </Box>
+        {/* Plants / Sites (BPNS) — one copyable chip per site */}
+        {isAuthenticated && bpns.length > 0 && (
+          <Box sx={{ mt: 1.5 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                letterSpacing: '0.3px',
+                textTransform: 'uppercase',
+                display: 'block',
+                mb: 0.5,
+              }}
+            >
+              {t('header.sites')}
+            </Typography>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: 0.5,
+              }}
+            >
+              {visibleBpns.map((site) => (
+                <CopyableIdChip key={site} value={site} />
+              ))}
+            </Box>
+            {bpns.length > BPNS_COLLAPSED_LIMIT && (
+              <Button
+                size="small"
+                fullWidth
+                disableRipple
+                onClick={() => setShowAllSites((prev) => !prev)}
+                endIcon={showAllSites ? <ExpandLess /> : <ExpandMore />}
+                sx={{
+                  mt: 0.5,
+                  textTransform: 'none',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  transition: 'color 0.15s ease, transform 0.08s ease',
+                  // No hover/focus background — only the text turns blue on hover,
+                  // and it must not keep a "selected" highlight after the click.
+                  '&:hover': { backgroundColor: 'transparent', color: 'primary.main' },
+                  '&:focus': { backgroundColor: 'transparent' },
+                  '&:focus-visible': { backgroundColor: 'transparent' },
+                  '&.Mui-focusVisible': { backgroundColor: 'transparent' },
+                  // Subtle press feedback on the text itself.
+                  '&:active': { transform: 'scale(0.97)', color: 'primary.dark' },
+                }}
+              >
+                {showAllSites ? t('header.showLess') : t('header.showAllSites', { count: bpns.length })}
+              </Button>
+            )}
+          </Box>
+        )}
       </Box>
-      
+
       <Divider />
 
       {/* Menu Options */}

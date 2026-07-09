@@ -1093,6 +1093,9 @@ frontend:
 
     # Participant configuration
     bpnValidationPattern: "^BPN[LAS]\\d{10}[a-zA-Z0-9]{2}$"
+    # -- When true, the participant BPNL used across the app is taken from the
+    # authenticated user's Keycloak token; when false, the top-level participantId is used.
+    useKeycloakBpn: true
 
     # Feature flags
     enableAdvancedLogging: false
@@ -1731,7 +1734,10 @@ keycloak:
         emailVerified: true
         enabled: true
         attributes:
+          # -- Business Partner Number Legal (single) assigned to this user
           BPN: ["BPNL000000000000"]
+          # -- Business Partner Number Sites (0, 1 or many) — plants/sites this user works with
+          BPNS: ["BPNS0000000000001", "BPNS0000000000002"]
         realmRoles:
           - "default-roles-ichub"
           - "offline_access"
