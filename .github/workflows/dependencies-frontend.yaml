@@ -40,13 +40,13 @@ jobs:
 
     steps:
       - name: Set up JDK 17
-        uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Generate Dependencies file
         run: |
@@ -76,7 +76,7 @@ jobs:
         if: steps.dependencies-changed.outputs.changed == 'true'
 
       - name: Upload DEPENDENCIES_ICHUB-FRONTEND file
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: DEPENDENCIES_ICHUB-FRONTEND
         if: steps.dependencies-changed.outputs.changed == 'true'
