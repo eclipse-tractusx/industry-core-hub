@@ -34,6 +34,7 @@ Inbound notification endpoints for both PULL-flow and PUSH-flow:
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
+import asyncio
 
 from controllers.fastapi.routers.authentication.auth_api import (
     get_authentication_dependency,
@@ -70,9 +71,7 @@ async def certificate_request(notification: CcmRequestNotification) -> JSONRespo
     and a push delivery is initiated asynchronously.
     """
     try:
-        status_code, body = ccm_notification_service.process_certificate_request(
-            notification
-        )
+        status_code, body = await asyncio.to_thread(ccm_notification_service.process_certificate_request, notification)
         return JSONResponse(status_code=status_code, content=body)
     except Exception as e:
         logger.exception("Unhandled error in certificate_request endpoint")
@@ -90,9 +89,7 @@ async def update_certificate_status(notification: CcmStatusNotification) -> JSON
     pushed certificate (RECEIVED, ACCEPTED, or REJECTED).
     """
     try:
-        status_code, body = ccm_notification_service.update_certificate_status(
-            notification
-        )
+        status_code, body = await asyncio.to_thread(ccm_notification_service.update_certificate_status, notification)
         return JSONResponse(status_code=status_code, content=body)
     except Exception as e:
         logger.exception("Unhandled error in update_certificate_status endpoint")
@@ -110,9 +107,7 @@ async def certificate_push(notification: CcmPushNotification) -> JSONResponse:
     Base64-encoded document) via the CX-0135 PUSH mechanism.
     """
     try:
-        status_code, body = ccm_notification_service.process_certificate_push(
-            notification
-        )
+        status_code, body = await asyncio.to_thread(ccm_notification_service.process_certificate_push, notification)
         return JSONResponse(status_code=status_code, content=body)
     except Exception as e:
         logger.exception("Unhandled error in certificate_push endpoint")

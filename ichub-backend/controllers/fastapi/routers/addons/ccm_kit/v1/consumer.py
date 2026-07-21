@@ -36,6 +36,7 @@ Implements the consumer operations for the PULL flow:
 - ``GET  /consumer/requests/{id}``       — detail for one outbound request
 """
 
+import asyncio
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -82,7 +83,7 @@ async def catalog_search(request: CcmCatalogSearchRequest) -> CcmCatalogSearchRe
     CCM notification API before attempting to send a request or status.
     """
     try:
-        return ccm_consumer_service.search_catalog(request)
+        return await asyncio.to_thread(ccm_consumer_service.search_catalog, request)
     except Exception as e:
         logger.exception("Unhandled error in catalog_search endpoint")
         return CcmCatalogSearchResult(
@@ -105,9 +106,7 @@ async def send_certificate_request(payload: CcmSendRequestPayload) -> CcmSendRes
     specific certificate identified by ``certifiedBpn`` and ``certificateType``.
     """
     try:
-        result = ccm_consumer_service.send_certificate_request(
-            payload, payload.sender_bpn
-        )
+        result = await asyncio.to_thread(ccm_consumer_service.send_certificate_request, payload, payload.sender_bpn)
         return result
     except HTTPException:
         raise
@@ -130,9 +129,7 @@ async def send_certificate_status(payload: CcmSendStatusPayload) -> CcmSendResul
     provider.
     """
     try:
-        result = ccm_consumer_service.send_certificate_status(
-            payload, payload.sender_bpn
-        )
+        result = await asyncio.to_thread(ccm_consumer_service.send_certificate_status, payload, payload.sender_bpn)
         return result
     except InvalidError as e:
         raise HTTPException(status_code=409, detail=str(e))
@@ -157,7 +154,7 @@ async def pull_certificate(request: CcmPullRequest) -> CcmPullResult:
     embedded BusinessPartnerCertificate payload via the data plane.
     """
     try:
-        return ccm_consumer_service.pull_certificate(request)
+        return await asyncio.to_thread(ccm_consumer_service.pull_certificate, request)
     except Exception as e:
         logger.exception("Unhandled error in pull_certificate endpoint")
         raise HTTPException(status_code=500, detail=str(e))
