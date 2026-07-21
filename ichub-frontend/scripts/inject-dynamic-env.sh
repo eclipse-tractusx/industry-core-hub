@@ -77,6 +77,7 @@ json_vars=" \
 GOVERNANCE_CONFIG \
 DTR_POLICIES_CONFIG \
 PCF_EXCHANGE_POLICIES_CONFIG \
+CCM_POLICY_GOVERNANCE \
 "
 
 # Start by removing javascript comments from source file

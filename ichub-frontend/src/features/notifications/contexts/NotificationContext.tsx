@@ -129,6 +129,10 @@ interface NotificationContextType {
 
   // Verification state helper
   getVerificationState: (notification: InboxNotification) => NotificationVerificationState;
+
+  // CCM table refresh
+  ccmRefreshToken: number;
+  triggerCcmRefresh: () => void;
 }
 
 const defaultFilters: NotificationFilters = {
@@ -166,6 +170,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [realPartners, setRealPartners] = useState<PartnerInstance[]>([]);
   const [filters, setFilters] = useState<NotificationFilters>(defaultFilters);
 
+  // CCM table refresh token
+  const [ccmRefreshToken, setCcmRefreshToken] = useState(0);
+  const triggerCcmRefresh = useCallback(() => setCcmRefreshToken((n) => n + 1), []);
+
   // Load partners from Contact List API
   const refreshPartners = useCallback(async () => {
     try {
@@ -202,7 +210,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
       const responses = await notificationApiService.fetchNotifications(bpn);
       const mapped = mapApiResponsesToNotifications(responses);
-      setNotifications(mapped);
+      setNotifications((prev) => {
+        const prevIds = new Set(prev.map((n) => n.id));
+        const hasNewCcm = mapped.some((n) => n.type === 'ccm' && !prevIds.has(n.id));
+        if (hasNewCcm) setCcmRefreshToken((t) => t + 1);
+        return mapped;
+      });
     } catch (error) {
       console.error('Failed to fetch notifications from API:', error);
     }
@@ -900,6 +913,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     getPriority,
     getStats,
     getVerificationState,
+    ccmRefreshToken,
+    triggerCcmRefresh,
   };
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

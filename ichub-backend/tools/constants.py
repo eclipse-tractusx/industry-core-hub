@@ -62,3 +62,36 @@ CCM = "CCM"
 TRACEABILITY = "Traceability"
 INDUSTRY_CORE_HUB = "ICHUB"
 PCF = "PCF"
+
+# ==================== CCM NOTIFICATION CONTEXTS (CX-0135) =========================
+CCM_CONTEXT_REQUEST = "CompanyCertificateManagement-CCMAPI-Request:1.0.0"
+CCM_CONTEXT_STATUS = "CompanyCertificateManagement-CCMAPI-Status:1.0.0"
+CCM_CONTEXT_PUSH = "CompanyCertificateManagement-CCMAPI-Push:1.0.0"
+CCM_CONTEXT_AVAILABLE = "CompanyCertificateManagement-CCMAPI-Available:1.0.0"
+
+# DCT type category that CCM notification assets are registered under in the EDC catalog
+CCM_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CCMAPI"
+
+# DCT subject identifying the specific notification API (CX-0135)
+CCM_DCT_SUBJECT = "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+
+# Endpoint paths for CCM notification API (appended to the data-plane URL)
+CCM_ENDPOINT_REQUEST = "/companycertificate/request"
+CCM_ENDPOINT_STATUS = "/companycertificate/status"
+CCM_ENDPOINT_PUSH = "/companycertificate/push"
+CCM_ENDPOINT_AVAILABLE = "/companycertificate/available"
+
+# ==================== BPN FORMAT PATTERNS (CX-0018) =======================
+# Legal-entity BPN — exactly 12 alphanumeric chars after the BPNL prefix.
+BPNL_PATTERN = r"^BPNL[a-zA-Z0-9]{12}$"
+# Site (BPNS) or address (BPNA) BPN — same length constraint.
+BPN_SITE_PATTERN = r"^BPN[SA][a-zA-Z0-9]{12}$"
+
+# ==================== CCM PULL MECHANISM (CX-0135) =========================
+# DCT type for individual certificate assets published via the PULL mechanism
+CCM_CERTIFICATE_DCT_TYPE = "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+
+# Semantic ID referencing the SAMM BusinessPartnerCertificate v3.1.0 aspect model
+CCM_CERTIFICATE_SEMANTIC_ID = (
+    "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+)
