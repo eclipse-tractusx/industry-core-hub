@@ -40,7 +40,6 @@ import {
   Business,
   Inventory,
   CheckCircle,
-  Cancel,
   ExpandMore,
   ExpandLess,
   AccessTime,
@@ -63,7 +62,6 @@ const PCF_SECONDARY = '#059669';
 interface NotificationCardProps {
   notification: PcfNotification;
   onAccept: (notificationId: string) => Promise<void>;
-  onReject: (notificationId: string) => void;  // Opens reject dialog
   /** Called when user clicks the Refresh button on a PENDING request without a pcfLocation. */
   onRefreshPcf?: (notificationId: string) => Promise<void>;
   isProcessing?: boolean;
@@ -77,7 +75,6 @@ interface NotificationCardProps {
 const NotificationCard: React.FC<NotificationCardProps> = ({
   notification,
   onAccept,
-  onReject,
   onRefreshPcf,
   isProcessing = false,
   viewMode = 'card',
@@ -95,10 +92,32 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   const statusConfig = NOTIFICATION_STATUS_CONFIG[notification.status];
   const StatusIcon = statusConfig.icon;
 
-  // Accept is only allowed for PENDING requests that already have a resolved pcfLocation.
-  // When pcfLocation is absent, the provider needs to use the Refresh button to re-check.
+  // Small badge showing the requested PCF schema version (e.g. v7.0.0 / v9.0.0).
+  // Only rendered when the request carries a version in its body.
+  const versionChip = notification.version ? (
+    <Chip
+      label={notification.version}
+      size="small"
+      sx={{
+        height: 20,
+        fontSize: '0.65rem',
+        fontWeight: 700,
+        fontFamily: 'monospace',
+        backgroundColor: alpha(PCF_PRIMARY, 0.15),
+        color: PCF_PRIMARY,
+        border: `1px solid ${alpha(PCF_PRIMARY, 0.3)}`,
+        '& .MuiChip-label': { px: 0.75 }
+      }}
+    />
+  ) : null;
+
+  // Accept is allowed for PENDING and FAILED requests that already have a resolved
+  // pcfLocation. When pcfLocation is absent, the provider needs to use the Refresh
+  // button to re-check. FAILED requests can be re-accepted to retry the response.
   const isPending = notification.status === 'PENDING';
-  const canAccept = isPending && !!notification.pcfLocation;
+  const isFailed = notification.status === 'FAILED';
+  const canRespond = isPending || isFailed;
+  const canAccept = canRespond && !!notification.pcfLocation;
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -242,8 +261,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 pl: 0
               }}
             >
-              {/* Action Buttons for PENDING requests */}
-              {isPending && (
+              {/* Version badge */}
+              {versionChip}
+
+              {/* Action Buttons for PENDING / FAILED requests */}
+              {canRespond && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                   {/* Refresh button — shown when pcfLocation is not yet resolved */}
                   {!notification.pcfLocation && onRefreshPcf && (
@@ -299,26 +321,6 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                         </Button>
                       </span>
                     </Tooltip>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<Cancel sx={{ fontSize: 16 }} />}
-                      onClick={() => onReject(notification.id)}
-                      disabled={isProcessing || isAccepting}
-                      sx={{
-                        px: 2.5,
-                        py: 0.75,
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        borderColor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        '&:hover': { borderColor: '#ef4444', color: '#ef4444', background: alpha('#ef4444', 0.08) }
-                      }}
-                    >
-                      {t('notifications.reject')}
-                    </Button>
                   </Box>
                 </Box>
               )}
@@ -457,6 +459,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 <PriorityHigh sx={{ fontSize: 20, color: '#ef4444' }} />
               </Tooltip>
             )}
+            {versionChip}
             <Chip
               icon={<StatusIcon sx={{ fontSize: 14 }} />}
               label={t(`notifications.status${notification.status.charAt(0)}${notification.status.slice(1).toLowerCase()}`)}
@@ -568,8 +571,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
           </Box>
         )}
 
-        {/* Expandable Details (for non-pending) */}
-        {!isPending && (
+        {/* Expandable Details (for requests that can't be responded to) */}
+        {!canRespond && (
           <>
             <Box
               sx={{
@@ -624,8 +627,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
           </>
         )}
 
-        {/* Action Buttons (for pending only) - Always at bottom */}
-        {isPending && (
+        {/* Action Buttons (for pending / failed) - Always at bottom */}
+        {canRespond && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 'auto', pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
             {/* Refresh button — shown when pcfLocation is not yet resolved.
                 The user clicks this to trigger a backend re-check before accepting. */}
@@ -683,33 +686,11 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                 </Button>
               </span>
             </Tooltip>
-            <Button
-              variant="outlined"
-              startIcon={<Cancel />}
-              onClick={() => onReject(notification.id)}
-              disabled={isProcessing || isAccepting}
-              sx={{
-                flex: 1,
-                py: 1,
-                borderRadius: '10px',
-                textTransform: 'none',
-                fontWeight: 600,
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: 'rgba(255, 255, 255, 0.7)',
-                '&:hover': {
-                  borderColor: '#ef4444',
-                  backgroundColor: alpha('#ef4444', 0.08),
-                  color: '#ef4444'
-                }
-              }}
-            >
-              {t('notifications.reject')}
-            </Button>
           </Box>
         )}
 
-        {/* Spacer for non-pending cards to push content up */}
-        {!isPending && <Box sx={{ flex: 1 }} />}
+        {/* Spacer for non-actionable cards to push content up */}
+        {!canRespond && <Box sx={{ flex: 1 }} />}
       </CardContent>
     </Card>
   );

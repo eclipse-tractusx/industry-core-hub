@@ -54,8 +54,7 @@ import {
 } from '../../services/pcfApi';
 import {
   NotificationFilters,
-  NotificationCard,
-  RejectDialog
+  NotificationCard
 } from '../../pcf-exchange/components';
 import { PcfNotification, PcfNotificationStatus } from '../api/pcfExchangeApi';
 import { fetchPartners } from '@/features/business-partner-kit/partner-management/api';
@@ -82,7 +81,8 @@ function toUiNotification(model: PcfExchangeModel): PcfNotification {
     requestDate: new Date().toISOString(), // API should provide this
     status: mapStatusToUi(model.status) as PcfNotificationStatus,
     message: model.message,
-    pcfLocation: model.pcfLocation ?? null
+    pcfLocation: model.pcfLocation ?? null,
+    version: model.version
   };
 }
 
@@ -108,8 +108,6 @@ const PcfIncomingRequestsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dialog state
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [rejectingNotificationId, setRejectingNotificationId] = useState<string | null>(null);
   const [processingNotificationId, setProcessingNotificationId] = useState<string | null>(null);
 
   // Contacts state (for resolving requester names and showing Add Contact button)
@@ -194,29 +192,6 @@ const PcfIncomingRequestsPage: React.FC = () => {
     }
   };
 
-  // Handle reject notification
-  const handleOpenRejectDialog = (notificationId: string) => {
-    setRejectingNotificationId(notificationId);
-    setRejectDialogOpen(true);
-  };
-
-  const handleConfirmReject = async (reason: string) => {
-    if (!rejectingNotificationId) return;
-
-    setProcessingNotificationId(rejectingNotificationId);
-    try {
-      // TODO: Implement reject endpoint when available in backend
-      // For now, just log and close the dialog
-      console.log('Rejecting notification:', rejectingNotificationId, 'Reason:', reason);
-      setError(t('error.rejectNotImplemented'));
-      await handleRefresh();
-    } finally {
-      setProcessingNotificationId(null);
-      setRejectDialogOpen(false);
-      setRejectingNotificationId(null);
-    }
-  };
-
   // Refresh PCF location for a single pending request.
   // Calls the backend refresh-pcf endpoint, then reloads the list so the
   // updated pcfLocation (if now present) is reflected in the card.
@@ -247,9 +222,6 @@ const PcfIncomingRequestsPage: React.FC = () => {
     }
     return true;
   });
-
-  // Get rejecting notification for dialog
-  const rejectingNotification = notifications.find(n => n.id === rejectingNotificationId);
 
   if (isLoading) {
     return (
@@ -405,10 +377,13 @@ const PcfIncomingRequestsPage: React.FC = () => {
           <Alert 
             severity="error" 
             onClose={() => setError(null)}
-            sx={{ 
-              background: 'rgba(211, 47, 47, 0.1)', 
+            sx={{
+              background: 'rgba(211, 47, 47, 0.1)',
               border: '1px solid rgba(211, 47, 47, 0.3)',
-              '& .MuiAlert-icon': { color: '#ef5350' }
+              color: 'rgba(255, 255, 255, 0.9)',
+              '& .MuiAlert-icon': { color: '#ef5350' },
+              '& .MuiAlert-message': { color: 'rgba(255, 255, 255, 0.9)' },
+              '& .MuiAlert-action': { color: 'rgba(255, 255, 255, 0.7)' }
             }}
           >
             {error}
@@ -444,7 +419,6 @@ const PcfIncomingRequestsPage: React.FC = () => {
                 key={notification.id}
                 notification={notification}
                 onAccept={handleAcceptNotification}
-                onReject={handleOpenRejectDialog}
                 onRefreshPcf={handleRefreshPcf}
                 isProcessing={processingNotificationId === notification.id}
                 viewMode={viewMode}
@@ -455,16 +429,6 @@ const PcfIncomingRequestsPage: React.FC = () => {
           )}
         </Box>
       </Box>
-
-      {/* Reject Dialog */}
-      <RejectDialog
-        open={rejectDialogOpen}
-        onClose={() => { setRejectDialogOpen(false); setRejectingNotificationId(null); }}
-        onConfirm={handleConfirmReject}
-        notificationId={rejectingNotificationId || ''}
-        requesterName={rejectingNotification?.requesterName || ''}
-        partName={rejectingNotification?.partName || `${rejectingNotification?.manufacturerPartId}` || ''}
-      />
     </Box>
   );
 };

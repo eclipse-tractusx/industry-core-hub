@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -103,7 +104,7 @@ interface SingleTwinResultProps {
 }
 
 export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterPartyId, singleTwinResult }) => {
-  const { t } = useTranslation(['partDiscovery', 'common']);
+  const { t } = useTranslation(['partDiscovery', 'common', 'notifications']);
   const [dtrInfoOpen, setDtrInfoOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
@@ -1570,15 +1571,21 @@ export const SingleTwinResult: React.FC<SingleTwinResultProps> = ({ counterParty
         open={copySuccess}
         autoHideDuration={2000}
         onClose={() => setCopySuccess(false)}
-        message="ID copied to clipboard!"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{
-          '& .MuiSnackbarContent-root': {
+      >
+        <Box
+          sx={{
             backgroundColor: 'success.main',
+            color: '#fff',
+            px: 2,
+            py: 1,
+            borderRadius: 1,
             fontSize: '0.875rem'
-          }
-        }}
-      />
+          }}
+        >
+          {t('notifications:copiedToClipboard', { field: 'ID' })}
+        </Box>
+      </Snackbar>
 
       {/* Submodel Viewer Dialog */}
       {selectedSubmodel && (
