@@ -209,7 +209,7 @@ class TestUpdateAssetHeaders(unittest.TestCase):
         """When asset exists, update_asset_headers is called."""
         self.mock_connector_service.assets.get_by_id.return_value = Mock(status_code=200)
 
-        asset_id = self.manager.get_or_create_circular_submodel_asset(
+        self.manager.get_or_create_circular_submodel_asset(
             semantic_id="urn:samm:test:1.0.0#Test",
             headers={"X-Api-Key": "new-key"},
         )
