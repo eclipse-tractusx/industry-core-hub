@@ -136,6 +136,10 @@ backend:
       - "PATCH"
     allow_headers:
       - "*"
+  # -- Optional Prometheus metrics endpoint exposed via prometheus-fastapi-instrumentator.
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
   # -- Persistance configuration for the backend
   persistence:
     # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)
@@ -691,6 +695,47 @@ backend:
               - action: "access"
                 constraint:
                   leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      # -- Company Certificate Management (CX-0135) Notification API
+      ccm:
+        hostname: "https://backend-ichub.int.catena-x.net"
+        apiPath: "/v1/addons/ccm-kit"
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.ccm.base:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "Membership"
                   operator: "eq"
                   rightOperand: "active"
             prohibition: []

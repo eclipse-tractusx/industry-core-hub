@@ -34,6 +34,7 @@ Key differences from the v1.2.0 ``/footprintExchange`` endpoints:
 """
 
 from typing import Optional
+import asyncio
 from fastapi import APIRouter, Depends, Header, Query, HTTPException, Path, Body
 from fastapi.responses import JSONResponse
 
@@ -106,7 +107,8 @@ async def put_pcf_legacy(
 
     try:
         logger.debug("[PCF ProductIds PUT] Delegating to exchange_manager.submit_pcf_response()")
-        result = exchange_manager.submit_pcf_response(
+        result = await asyncio.to_thread(
+            exchange_manager.submit_pcf_response,
             request_id=request_id,
             pcf_data=body,
             edc_bpn=edc_bpn,
@@ -169,7 +171,8 @@ async def request_pcf_legacy(
 
     try:
         logger.debug("[PCF ProductIds GET] Delegating to exchange_manager.request_pcf()")
-        result = exchange_manager.request_pcf(
+        result = await asyncio.to_thread(
+            exchange_manager.request_pcf,
             request_id=request_id,
             edc_bpn=edc_bpn,
             manufacturer_part_id=product_id,

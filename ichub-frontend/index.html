@@ -2,6 +2,7 @@
   Eclipse Tractus-X - Industry Core Hub Frontend
 
   Copyright (c) 2025, 2026 LKS Next
+  Copyright (c) 2026 Technovative Solutions
   Copyright (c) 2025 Contributors to the Eclipse Foundation
 
   See the NOTICE file(s) distributed with this work for additional
@@ -40,18 +41,18 @@
       // This will be replaced by Helm chart values during deployment
       const ENV = {
         // Core application
-        APP_ENVIRONMENT: "development",
+        APP_ENVIRONMENT: "production",
         APP_VERSION: "1.0.0",
         
         // API configuration
-        ICHUB_BACKEND_URL: "http://localhost:9000/v1",
+        ICHUB_BACKEND_URL: "http://localhost:8000/v1",
         API_TIMEOUT: "30000",
         API_RETRY_ATTEMPTS: "3",
-        REQUIRE_HTTPS_URL_PATTERN: "false",
+        REQUIRE_HTTPS_URL_PATTERN: "true",
         
         // API key configuration
-        API_KEY: "",
-        API_KEY_HEADER: "X-API-Key",
+        API_KEY: "apiKey-placeholder",
+        API_KEY_HEADER: "X-Api-Key",
         ENABLE_API_KEY_ROTATION: "false",
         API_KEY_EXPIRY_WARNING_DAYS: "7",
         
@@ -78,15 +79,16 @@
         AUTH_LOGOUT_REDIRECT_URI: "",
         
         // Participant configuration
-        PARTICIPANT_ID: "",
+        PARTICIPANT_ID: "BPNL**********",
         BPN_VALIDATION_PATTERN: "",
         
-        // Governance and policies - must be configured via GOVERNANCE_CONFIG, DTR_POLICIES_CONFIG and PCF_EXCHANGE_POLICIES_CONFIG env vars
+        // Governance and policies - must be configured via GOVERNANCE_CONFIG, DTR_POLICIES_CONFIG, PCF_EXCHANGE_POLICIES_CONFIG and CCM_POLICY_GOVERNANCE env vars
         // Format: JSON array string, e.g. '[{"semanticid":"...","policies":[...]}]'
         // See Helm chart values or docker-compose for example values
         GOVERNANCE_CONFIG: "[]",
         DTR_POLICIES_CONFIG: "[]",
         PCF_EXCHANGE_POLICIES_CONFIG: "[]",
+        CCM_POLICY_GOVERNANCE: "[]",
         GOVERNANCE_STRICT_MODE: "false",
         
         // Feature flags
