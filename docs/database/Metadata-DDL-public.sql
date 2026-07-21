@@ -61,6 +61,12 @@ DROP TABLE IF EXISTS public.legal_entity;
 DROP TABLE IF EXISTS public.pcf_exchanges;
 DROP TABLE IF EXISTS public.pcf_relationships;
 DROP TABLE IF EXISTS public.notifications;
+DROP TABLE IF EXISTS public.ccm_inbound_request;
+DROP TABLE IF EXISTS public.certificate_share;
+DROP TABLE IF EXISTS public.ccm_site;
+DROP TABLE IF EXISTS public.ccm_outbound_request;
+DROP TABLE IF EXISTS public.ccm_received;
+DROP TABLE IF EXISTS public.ccm;
 DROP TABLE IF EXISTS ichub.edr_connections;
 DROP TABLE IF EXISTS ichub.known_connectors;
 DROP TABLE IF EXISTS ichub.known_dtrs;
@@ -229,7 +235,8 @@ CREATE TABLE public.pcf_exchanges (
     customer_part_id character varying,
     message character varying,
     pcf_location character varying,
-    correlation_id character varying
+    correlation_id character varying,
+    version character varying NOT NULL DEFAULT 'v9.0.0'
 );
 
 CREATE TABLE public.pcf_relationships (
@@ -267,6 +274,99 @@ CREATE TABLE public.serialized_part (
     twin_id integer
 );
 
+CREATE TABLE public.ccm (
+    id integer NOT NULL,
+    bpnl character varying NOT NULL,
+    certificate_type character varying NOT NULL,
+    issuer character varying NOT NULL,
+    valid_from date NOT NULL,
+    trust_level character varying NOT NULL,
+    certificate_name character varying,
+    registration_number character varying,
+    area_of_application character varying,
+    valid_until date,
+    certificate_version character varying,
+    validator_name character varying,
+    validator_bpn character varying,
+    issuer_bpn character varying,
+    uploader_bpnl character varying,
+    description character varying,
+    doc bytea,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    edc_asset_id character varying
+);
+
+CREATE TABLE public.ccm_site (
+    id integer NOT NULL,
+    ccm_id integer NOT NULL,
+    site_bpn character varying NOT NULL,
+    area_of_application character varying
+);
+
+CREATE TABLE public.certificate_share (
+    id integer NOT NULL,
+    certificate_id integer NOT NULL,
+    consumer_bpnl character varying NOT NULL,
+    last_shared_date timestamp without time zone NOT NULL,
+    status character varying NOT NULL,
+    rejection_reason text,
+    created_at timestamp without time zone NOT NULL
+);
+
+CREATE TABLE public.ccm_received (
+    id integer NOT NULL,
+    document_id character varying NOT NULL,
+    provider_bpn character varying NOT NULL,
+    certified_bpn character varying NOT NULL,
+    certificate_type character varying NOT NULL,
+    certificate_version character varying,
+    issuer_name character varying,
+    issuer_bpn character varying,
+    validator_name character varying,
+    valid_from date,
+    valid_until date,
+    trust_level character varying,
+    registration_number character varying,
+    area_of_application character varying,
+    uploader_bpn character varying,
+    doc bytea,
+    local_status character varying NOT NULL,
+    status_updated_at timestamp without time zone,
+    rejection_reason text,
+    notification_message_id character varying,
+    received_at timestamp without time zone NOT NULL
+);
+
+CREATE TABLE public.ccm_outbound_request (
+    id integer NOT NULL,
+    sender_bpn character varying NOT NULL,
+    provider_bpn character varying NOT NULL,
+    certified_bpn character varying NOT NULL,
+    certificate_type character varying NOT NULL,
+    location_bpns character varying,
+    governance character varying,
+    status character varying NOT NULL,
+    notification_id character varying,
+    document_id character varying,
+    requested_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
+CREATE TABLE public.ccm_inbound_request (
+    id integer NOT NULL,
+    consumer_bpn character varying NOT NULL,
+    certified_bpn character varying NOT NULL,
+    certificate_type character varying NOT NULL,
+    location_bpns character varying,
+    certificate_id integer,
+    status character varying NOT NULL,
+    notification_id character varying,
+    consumer_status character varying,
+    received_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL
+);
+
 ALTER TABLE public.notifications ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.notifications_id_seq
     START WITH 1
@@ -287,6 +387,60 @@ ALTER TABLE public.pcf_exchanges ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTIT
 
 ALTER TABLE public.pcf_relationships ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
     SEQUENCE NAME public.pcf_relationship_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.ccm ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.ccm_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.ccm_site ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.ccm_site_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.certificate_share ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.certificate_share_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.ccm_received ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.ccm_received_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.ccm_outbound_request ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.ccm_outbound_request_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+ALTER TABLE public.ccm_inbound_request ALTER COLUMN id ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public.ccm_inbound_request_id_seq
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -469,6 +623,26 @@ ALTER TABLE ONLY public.pcf_relationships
 ALTER TABLE ONLY public.pcf_relationships
     ADD CONSTRAINT uk_pcf_relationships_main_manufacturer_part_id UNIQUE (main_manufacturer_part_id);
 
+ALTER TABLE ONLY public.ccm
+    ADD CONSTRAINT pk_ccm PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.ccm_site
+    ADD CONSTRAINT pk_ccm_site PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.certificate_share
+    ADD CONSTRAINT pk_certificate_share PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.ccm_received
+    ADD CONSTRAINT pk_ccm_received PRIMARY KEY (id);
+ALTER TABLE ONLY public.ccm_received
+    ADD CONSTRAINT uq_ccm_received_doc_provider UNIQUE (document_id, provider_bpn);
+
+ALTER TABLE ONLY public.ccm_outbound_request
+    ADD CONSTRAINT pk_ccm_outbound_request PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.ccm_inbound_request
+    ADD CONSTRAINT pk_ccm_inbound_request PRIMARY KEY (id);
+
 
 ALTER TABLE ONLY public.batch
     ADD CONSTRAINT uk_batch_catalog_part_id_batch_id UNIQUE (catalog_part_id, batch_id);
@@ -568,8 +742,46 @@ CREATE INDEX idx_pcf_exchanges_requesting_bpn ON public.pcf_exchanges USING btre
 CREATE INDEX idx_pcf_exchanges_responding_bpn ON public.pcf_exchanges USING btree (responding_bpn);
 CREATE INDEX idx_pcf_exchanges_manufacturer_part_id ON public.pcf_exchanges USING btree (manufacturer_part_id);
 CREATE INDEX idx_pcf_exchanges_correlation_id ON public.pcf_exchanges USING btree (correlation_id);
+CREATE INDEX idx_pcf_exchanges_version ON public.pcf_exchanges USING btree (version);
 
 CREATE INDEX idx_pcf_relationships_main_manufacturer_part_id ON public.pcf_relationships USING btree (main_manufacturer_part_id);
+
+CREATE INDEX idx_ccm_bpnl ON public.ccm USING btree (bpnl);
+CREATE INDEX idx_ccm_certificate_type ON public.ccm USING btree (certificate_type);
+CREATE INDEX idx_ccm_issuer ON public.ccm USING btree (issuer);
+CREATE INDEX idx_ccm_valid_from ON public.ccm USING btree (valid_from);
+CREATE INDEX idx_ccm_trust_level ON public.ccm USING btree (trust_level);
+CREATE INDEX idx_ccm_bpnl_certificate_type ON public.ccm USING btree (bpnl, certificate_type);
+CREATE INDEX idx_ccm_edc_asset_id ON public.ccm USING btree (edc_asset_id);
+
+CREATE INDEX idx_ccm_site_ccm_id ON public.ccm_site USING btree (ccm_id);
+CREATE INDEX idx_ccm_site_site_bpn ON public.ccm_site USING btree (site_bpn);
+
+CREATE INDEX idx_certificate_share_certificate_id ON public.certificate_share USING btree (certificate_id);
+CREATE INDEX idx_certificate_share_consumer_bpnl ON public.certificate_share USING btree (consumer_bpnl);
+CREATE INDEX idx_certificate_share_certificate_id_consumer_bpnl ON public.certificate_share USING btree (certificate_id, consumer_bpnl);
+
+CREATE INDEX idx_ccm_received_document_id ON public.ccm_received USING btree (document_id);
+CREATE INDEX idx_ccm_received_provider_bpn ON public.ccm_received USING btree (provider_bpn);
+CREATE INDEX idx_ccm_received_certified_bpn ON public.ccm_received USING btree (certified_bpn);
+CREATE INDEX idx_ccm_received_certificate_type ON public.ccm_received USING btree (certificate_type);
+CREATE INDEX idx_ccm_received_local_status ON public.ccm_received USING btree (local_status);
+CREATE INDEX idx_ccm_received_notification_message_id ON public.ccm_received USING btree (notification_message_id);
+
+CREATE INDEX idx_ccm_outbound_request_sender_bpn ON public.ccm_outbound_request USING btree (sender_bpn);
+CREATE INDEX idx_ccm_outbound_request_provider_bpn ON public.ccm_outbound_request USING btree (provider_bpn);
+CREATE INDEX idx_ccm_outbound_request_certified_bpn ON public.ccm_outbound_request USING btree (certified_bpn);
+CREATE INDEX idx_ccm_outbound_request_status ON public.ccm_outbound_request USING btree (status);
+CREATE INDEX idx_ccm_outbound_request_notification_id ON public.ccm_outbound_request USING btree (notification_id);
+CREATE INDEX idx_ccm_outbound_request_provider_certified ON public.ccm_outbound_request USING btree (provider_bpn, certified_bpn, certificate_type);
+
+CREATE INDEX idx_ccm_inbound_request_consumer_bpn ON public.ccm_inbound_request USING btree (consumer_bpn);
+CREATE INDEX idx_ccm_inbound_request_certified_bpn ON public.ccm_inbound_request USING btree (certified_bpn);
+CREATE INDEX idx_ccm_inbound_request_certificate_type ON public.ccm_inbound_request USING btree (certificate_type);
+CREATE INDEX idx_ccm_inbound_request_certificate_id ON public.ccm_inbound_request USING btree (certificate_id);
+CREATE INDEX idx_ccm_inbound_request_status ON public.ccm_inbound_request USING btree (status);
+CREATE INDEX idx_ccm_inbound_request_notification_id ON public.ccm_inbound_request USING btree (notification_id);
+CREATE INDEX idx_ccm_inbound_request_consumer_certified ON public.ccm_inbound_request USING btree (consumer_bpn, certified_bpn, certificate_type);
 
 
 ALTER TABLE ONLY public.batch
@@ -624,6 +836,15 @@ ALTER TABLE ONLY public.twin_registration
 ALTER TABLE ONLY public.twin_registration
     ADD CONSTRAINT fk_twin_registration_enablement_service_stack_id FOREIGN KEY (enablement_service_stack_id) REFERENCES public.enablement_service_stack(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
 
+ALTER TABLE ONLY public.ccm_site
+    ADD CONSTRAINT fk_ccm_site_ccm_id FOREIGN KEY (ccm_id) REFERENCES public.ccm(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.certificate_share
+    ADD CONSTRAINT fk_certificate_share_certificate_id FOREIGN KEY (certificate_id) REFERENCES public.ccm(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
+ALTER TABLE ONLY public.ccm_inbound_request
+    ADD CONSTRAINT fk_ccm_inbound_request_certificate_id FOREIGN KEY (certificate_id) REFERENCES public.ccm(id) ON UPDATE RESTRICT ON DELETE RESTRICT;
+
 ALTER SEQUENCE public.batch_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.business_partner_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.catalog_part_id_seq RESTART WITH 1;
@@ -638,6 +859,12 @@ ALTER SEQUENCE public.twin_twin_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.notifications_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.pcf_exchange_id_seq RESTART WITH 1;
 ALTER SEQUENCE public.pcf_relationship_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.ccm_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.ccm_site_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.certificate_share_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.ccm_received_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.ccm_outbound_request_id_seq RESTART WITH 1;
+ALTER SEQUENCE public.ccm_inbound_request_id_seq RESTART WITH 1;
 
 --
 -- Name: ichub schema indexes and constraints

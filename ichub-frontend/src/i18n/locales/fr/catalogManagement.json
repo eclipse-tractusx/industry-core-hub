@@ -13,7 +13,10 @@
     "registerSuccess": "Twin de pièce enregistré avec succès !",
     "registerError": "Échec de l'enregistrement du twin de pièce !",
     "submodelCreatedSuccess": "Submodèle créé avec succès avec le schéma {{schemaName}} !",
-    "submodelCreatedError": "Échec de la création du submodèle"
+    "submodelCreatedError": "Échec de la création du submodèle",
+    "submodelUpdatedSuccess": "Submodèle mis à jour avec succès avec le schéma {{schemaName}} !",
+    "noSchemaForEdit": "Aucun schéma correspondant trouvé pour ce submodèle. Il ne peut pas être modifié dans l'éditeur de formulaire.",
+    "submodelLoadError": "Échec du chargement des données du submodèle pour la modification"
   },
   "createDialog": {
     "title": "Créer une Nouvelle Pièce de Catalogue",
@@ -308,7 +311,8 @@
       "createNewSubmodel": "Créer un nouvel aspect de sous-modèle",
       "noSubmodels": "Aucun Sous-modèle Disponible",
       "noSubmodelsDescription": "Ce jumeau numérique n'a aucun aspect de sous-modèle disponible pour l'affichage.",
-      "submodelsDisplayed": "{{count}} sous-modèle(s) de jumeau numérique affiché(s)"
+      "submodelsDisplayed": "{{count}} sous-modèle(s) de jumeau numérique affiché(s)",
+      "updateSubmodel": "Mettre à jour le sous-modèle"
     },
     "jsonViewer": {
       "title": "Visionneuse JSON",

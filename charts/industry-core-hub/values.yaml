@@ -1,7 +1,7 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
-# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025,2026 LKS Next
 # Copyright (c) 2026 Contributors to the Eclipse Foundation
 # Copyright (c) 2026 Capgemini Deutschland GmbH
 #
@@ -69,6 +69,9 @@ backend:
       - "*"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
+    # -- Hostname for the backend service. If empty, it will use the ingress URL automatically.
+    # Set this to override the hostname with a custom value (e.g., "https://my-custom-backend.example.com")
+    hostname: ""
     # -- Business Partner Number (BPN) of the operator running this instance.
     # Used by PCF Exchange and other managers to identify the local participant.
     # Defaults to the top-level participantId value if left empty.
@@ -181,6 +184,74 @@ backend:
           prohibition: []
           obligation: []
       - semanticid: "urn:samm:io.catenax.us_tariff_information:1.0.0#UsTariffInformation"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.core.industrycore:1"
+          prohibition: []
+          obligation: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "access"
+              constraint:
+                leftOperand: "Membership"
+                operator: "eq"
+                rightOperand: "active"
+          prohibition: []
+          obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
         usage:
           context:
             - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
@@ -543,6 +614,12 @@ backend:
           managementPath: "/management"
           protocolPath: "/api/v1/dsp"
           catalogPath: "/catalog"
+      # -- Consumer CCM addon configuration
+      ccm:
+        # -- Max retries when polling for EDR availability during PULL flow
+        edr_max_retries: 30
+        # -- HTTP timeout (seconds) for data-plane requests when pulling certificates
+        data_plane_timeout_sec: 60
     # -- Provider configuration
     provider:
       connector:
@@ -630,6 +707,83 @@ backend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- Unique ID Push notification endpoint configuration (CX-0126)
+      # -- hostname points to the ichub-backend itself, which serves this endpoint
+      uniqueIdPush:
+        hostname: "https://<backend-hostname>"
+        apiPath: /v1/uniqueidpush
+        sendOnShare: false
+        uri: ""
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
+          # existing_asset_id: <unique-id-push-asset> # -- In case an existing Unique ID Push asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+          consumption:
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
           access:
             context:
               - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
@@ -649,9 +803,16 @@ backend:
         enabled: false
         # -- Hostname of the PCF Exchange API
         hostname: "https://<provider-pcf-exchange-api>"
+        # -- When true, both PCF versions (v7.0.0 and v9.0.0) must be uploaded
+        # -- for a manufacturer part before it can be published or exchanged.
+        # -- Each flow type can be toggled independently.
+        requireBothVersions:
+          synchronous: false
+          asynchronous: false
         asset_config:
-          dct_type: "cx-taxo:PcfExchange"
-          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          dct_type: "cx-taxo:PCFExchange"
+          # existing_asset_id: <pcf-exchange-asset> # -- In case an existing PCF Exchange asset (v1.2.0) wants to be used specify here the id, otherwise it will be created based on the url, if it not exists it will be created
+          # existing_legacy_asset_id: <pcf-exchange-legacy-asset> # -- In case an existing PCF Exchange asset (v1.1.1 /productIds) wants to be used specify here the id
         policy:
           usage:
             context:
@@ -686,6 +847,89 @@ backend:
                   rightOperand: "active"
             prohibition: []
             obligation: []
+      ccm:
+        # -- Set to false to disable the CCM add-on (no EDC asset sync, no API routes registered)
+        enabled: true
+        hostname: "http://<ichub-backend-hostname>"
+        apiPath: "/v1/addons/ccm-kit"
+        uri: ""
+        # -- Auto-push certificate to consumers upon receiving a request notification
+        auto_push_on_request: false
+        asset_config:
+          dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+          # existing_asset_id: <ccm-asset>  # -- optional: pin to a specific asset ID
+        policy:
+          usage:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.ccm.base:1"
+            prohibition: []
+            obligation: []
+          access:
+            context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "access"
+                constraint:
+                  leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                  operator: "eq"
+                  rightOperand: "active"
+            prohibition: []
+            obligation: []
+        # -- Individual certificate asset config for PULL mechanism (CX-0135)
+        certificate_asset:
+          dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+          semantic_id: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+          policy:
+            usage:
+              context:
+                - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+                - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+                - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              permission:
+                - action: "use"
+                  constraint:
+                    and:
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/FrameworkAgreement"
+                        operator: "eq"
+                        rightOperand: "DataExchangeGovernance:1.0"
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                        operator: "eq"
+                        rightOperand: "active"
+                      - leftOperand: "https://w3id.org/catenax/2025/9/policy/UsagePurpose"
+                        operator: "isAnyOf"
+                        rightOperand: "cx.ccm.base:1"
+              prohibition: []
+              obligation: []
+            access:
+              context:
+                - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+                - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+                - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+              permission:
+                - action: "access"
+                  constraint:
+                    leftOperand: "https://w3id.org/catenax/2025/9/policy/Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+              prohibition: []
+              obligation: []
       # -- Submodel Dispatcher configuration
       submodel_dispatcher:
         # -- Storage mode: "filesystem" (local storage) or "http" (external service)
@@ -713,6 +957,21 @@ backend:
           timeout: 30
           # -- SSL certificate verification
           verify_ssl: true
+      # -- CCM cross-cutting configuration
+      ccm_settings:
+        notification:
+          # -- Enable verbose logging for CCM notification service
+          verbose: true
+        push:
+          # -- Maximum allowed size (bytes) of Base64-encoded certificate documents (~10 MB decoded = 14 MB Base64)
+          max_b64_size_bytes: 14745728
+        auto_received:
+          # -- Automatically send a RECEIVED status notification back to the push sender
+          # -- after a successful inbound push (CX-0135 §2.1.1 STATUS flow).
+          enabled: false
+          # -- Optional governance policies for the auto-RECEIVED status payload.
+          # -- Must be a list of ODRL policy objects; null means no governance block is sent.
+          governance: null
 
   podAnnotations: {}
 
@@ -1030,6 +1289,48 @@ frontend:
                       rightOperand: "cx.core.industrycore:1"
             prohibition: []
             obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_bom_as_planned:3.0.0#SingleLevelBomAsPlanned"
+        policies:
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
+      - semanticid: "urn:samm:io.catenax.single_level_usage_as_planned:3.0.0#SingleLevelUsageAsPlanned"
+        policies:
+          - context:
+              - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+              - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+              - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+            permission:
+              - action: "use"
+                constraint:
+                  and:
+                    - leftOperand: "FrameworkAgreement"
+                      operator: "eq"
+                      rightOperand: "DataExchangeGovernance:1.0"
+                    - leftOperand: "Membership"
+                      operator: "eq"
+                      rightOperand: "active"
+                    - leftOperand: "UsagePurpose"
+                      operator: "isAnyOf"
+                      rightOperand: "cx.core.industrycore:1"
+            prohibition: []
+            obligation: []
       - semanticid: "urn:samm:io.catenax.serial_part:3.0.0#SerialPart"
         policies:
           - context:
@@ -1262,6 +1563,30 @@ frontend:
                   - leftOperand: "UsagePurpose"
                     operator: "isAnyOf"
                     rightOperand: "cx.pcf.base:1"
+          prohibition: []
+          obligation: []
+    # -- CCM governance policies for consumer/provider operations (raw ODRL format)
+    # Forwarded as the `governance` field in CCM push/request/status payloads.
+    # Leave empty ([]) to let the backend use its server-side default policy.
+    ccm:
+      policies:
+        - context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permission:
+            - action: "use"
+              constraint:
+                and:
+                  - leftOperand: "FrameworkAgreement"
+                    operator: "eq"
+                    rightOperand: "DataExchangeGovernance:1.0"
+                  - leftOperand: "Membership"
+                    operator: "eq"
+                    rightOperand: "active"
+                  - leftOperand: "UsagePurpose"
+                    operator: "isAnyOf"
+                    rightOperand: "cx.ccm.base:1"
           prohibition: []
           obligation: []
 

@@ -33,6 +33,7 @@ import type {
   VerifiedItem,
   DigitalTwinType,
   PcfNotificationPayload,
+  CcmNotificationPayload,
 } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -301,6 +302,21 @@ export const parseUtcDate = (dateStr: string): Date => {
 };
 
 // ---------------------------------------------------------------------------
+// CCM content mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the typed CCM payload from the raw backend content.
+ */
+const mapCcmContent = (rawContent: Record<string, unknown>): CcmNotificationPayload => ({
+  notificationType: (rawContent.notificationType as string) ?? '',
+  timestamp: (rawContent.timestamp as string) ?? '',
+  certificateType: (rawContent.certificateType as string) ?? undefined,
+  certifiedBpn: (rawContent.certifiedBpn as string) ?? undefined,
+  documentId: (rawContent.documentId as string) ?? undefined,
+});
+
+// ---------------------------------------------------------------------------
 // Main mapper
 // ---------------------------------------------------------------------------
 
@@ -321,6 +337,12 @@ export const mapApiResponseToInboxNotification = (
   const pcfContent =
     notificationType === 'pcf'
       ? mapPcfContent(response.fullNotification.content)
+      : undefined;
+
+  // Populate typed CCM payload only for CCM notifications
+  const ccmContent =
+    notificationType === 'ccm'
+      ? mapCcmContent(response.fullNotification.content)
       : undefined;
 
   const verifiedItems: VerifiedItem[] = content.listOfItems.map((item) => ({
@@ -351,6 +373,7 @@ export const mapApiResponseToInboxNotification = (
     verificationState,
     useCase: response.useCase ?? undefined,
     pcfContent,
+    ccmContent,
   };
 };
 

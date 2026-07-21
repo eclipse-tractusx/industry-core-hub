@@ -81,6 +81,10 @@ class PcfExchangeModel(BaseModel):
         default=None,
         description="Timestamp when the PCF exchange was initiated (ISO 8601 UTC)."
     )
+    version: str = Field(
+        default="v9.0.0",
+        description="PCF schema version used for this exchange (e.g. v7.0.0, v9.0.0)."
+    )
 
     @staticmethod
     def from_entity(entity: PcfExchangeEntity) -> "PcfExchangeModel":
@@ -95,7 +99,8 @@ class PcfExchangeModel(BaseModel):
             type=entity.type.value,
             message=entity.message,
             pcfLocation=entity.pcf_location,
-            createdAt=entity.created_at.isoformat() if entity.created_at else None
+            createdAt=entity.created_at.isoformat() if entity.created_at else None,
+            version=entity.version,
         )
 
 class PcfRelationshipModel(BaseModel):

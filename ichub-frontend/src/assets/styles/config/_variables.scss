@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -31,6 +32,9 @@ $header-gradient-bg: linear-gradient(180deg, $gradient-start 0%, $header-gradien
 $opaque-gradient-start: rgb(0, 42, 126);
 $opaque-gradient-end: rgb(0, 108, 167);
 $header-opaque-gradient-bg: linear-gradient(180deg, $opaque-gradient-start 0%, $opaque-gradient-end 100%);
+
+// Light blue gradient background
+$gradient-blue-light: linear-gradient(180deg, rgba(71, 172, 255, 0.9) 0%, rgba(71, 172, 255, 0.7) 100%);
 
 // Green gradient background
 $gradient-green-start: rgba(0, 80, 40, 0.83);

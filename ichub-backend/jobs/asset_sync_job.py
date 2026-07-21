@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025,2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -71,9 +71,16 @@ class AssetSyncJob:
             # Step 3: Sync Digital Twin Event asset
             self._sync_digital_twin_event_asset()
 
-            # Step 4: Sync PCF Exchange asset if enabled
+            # Step 4: Sync Unique ID Push asset
+            self._sync_unique_id_push_asset()
+
+            # Step 5: Sync PCF Exchange asset if enabled
             if self._pcf_kit_enablement_check():
                 self._sync_pcf_exchange_asset()
+
+            # Step 5: Sync Company Certificate Management notification asset if enabled
+            if self._ccm_kit_enablement_check():
+                self._sync_ccm_asset()
             
             logger.info("[AssetSyncJob] Asset synchronization completed successfully.")
             
@@ -143,7 +150,81 @@ class AssetSyncJob:
                 
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error synchronizing DTE asset: {e}", exc_info=True)
+
+    def _sync_unique_id_push_asset(self) -> None:
+        """
+        Synchronize the Unique ID Push notification asset with the connector.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing Unique ID Push asset...")
+
+            uid_config = ConfigManager.get_config("provider.uniqueIdPush")
+            if not uid_config:
+                logger.warning("[AssetSyncJob] No Unique ID Push configuration found. Skipping sync.")
+                return
+
+            asset_config = uid_config.get("asset_config", {})
+
+            uid_asset_id, _, _, _ = self.connector_provider_manager.register_unique_id_push_offer(
+                hostname=uid_config.get("hostname"),
+                api_path=uid_config.get("apiPath", "/v1/uniqueidpush"),
+                unique_id_push_policy_config=uid_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id", None),
+                dct_type=asset_config.get(
+                    "dct_type",
+                    "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+                ),
+            )
+
+            if uid_asset_id:
+                logger.info(f"[AssetSyncJob] Unique ID Push asset synchronized: {uid_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize Unique ID Push asset.")
+
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing Unique ID Push asset: {e}", exc_info=True)
     
+    def _sync_ccm_asset(self) -> None:
+        """
+        Synchronize the Company Certificate Management (CX-0135) notification
+        asset with the connector.
+
+        Reads the ``provider.ccm`` configuration block. If the block is absent
+        the step is skipped with a warning so that deployments that do not use
+        the CCM add-on are not affected.
+        """
+        try:
+            logger.info("[AssetSyncJob] Synchronizing CCM notification asset...")
+
+            ccm_config = ConfigManager.get_config("provider.ccm")
+            if not ccm_config:
+                logger.warning(
+                    "[AssetSyncJob] No 'provider.ccm' configuration found. "
+                    "Skipping CCM asset sync."
+                )
+                return
+
+            asset_config = ccm_config.get("asset_config", {})
+
+            # Build the full notification endpoint URL from hostname + apiPath
+            hostname = ccm_config.get("hostname", "").rstrip("/")
+            api_path = ccm_config.get("apiPath", "").rstrip("/")
+            ccm_notification_url = hostname + api_path
+
+            ccm_asset_id, _, _, _ = self.connector_provider_manager.register_ccm_notification_offer(
+                ccm_notification_url=ccm_notification_url,
+                ccm_policy_config=ccm_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_asset_id"),
+            )
+
+            if ccm_asset_id:
+                logger.info(f"[AssetSyncJob] CCM notification asset synchronized: {ccm_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize CCM notification asset.")
+
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error synchronizing CCM asset: {e}", exc_info=True)
+
     def _sync_semantic_assets(self) -> None:
         """
         Synchronize all semantic assets (PartTypeInformation, SerialPart, etc.) from agreements configuration.
@@ -191,10 +272,16 @@ class AssetSyncJob:
 
     def _sync_pcf_exchange_asset(self) -> None:
         """
-        Synchronize the PCF Exchange asset with the connector.
+        Synchronize both PCF Exchange assets with the connector.
+
+        CX-0136 §6 requires two EDC assets with the same ``dct:type``
+        (``PCFExchange``) but different ``cx-common:version``:
+
+        * **v1.2.0** → ``/footprintExchange`` endpoints (PCF v9.0.0)
+        * **v1.1.1** → ``/productIds`` endpoints      (PCF v7.0.0)
         """
         try:
-            logger.info("[AssetSyncJob] Synchronizing PCF Exchange asset...")
+            logger.info("[AssetSyncJob] Synchronizing PCF Exchange assets...")
             
             # Get PCF Exchange configuration
             pcf_config = ConfigManager.get_config("provider.pcfExchange")
@@ -204,20 +291,36 @@ class AssetSyncJob:
             
             asset_config = pcf_config.get("asset_config", {})
             
-            # Register PCF Exchange asset
+            # --- v1.2.0 asset (/footprintExchange → PCF v9.0.0) ---
             pcf_asset_id, _, _, _ = self.connector_provider_manager.register_pcf_exchange_offer(
                 base_url=pcf_config.get("hostname"),
+                api_path="/v1/addons/pcf-kit/footprintExchange",
                 pcf_exchange_policy_config=pcf_config.get("policy"),
-                existing_asset_id=asset_config.get("existing_asset_id", None)
+                existing_asset_id=asset_config.get("existing_asset_id", None),
+                version="1.2.0",
             )
             
             if pcf_asset_id:
-                logger.info(f"[AssetSyncJob] PCF Exchange asset synchronized: {pcf_asset_id}")
+                logger.info(f"[AssetSyncJob] PCF Exchange v1.2.0 asset synchronized: {pcf_asset_id}")
             else:
-                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange asset.")
+                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange v1.2.0 asset.")
+
+            # --- v1.1.1 asset (/productIds → PCF v7.0.0) ---
+            legacy_asset_id, _, _, _ = self.connector_provider_manager.register_pcf_exchange_offer(
+                base_url=pcf_config.get("hostname"),
+                api_path="/v1/addons/pcf-kit/productIds",
+                pcf_exchange_policy_config=pcf_config.get("policy"),
+                existing_asset_id=asset_config.get("existing_legacy_asset_id", None),
+                version="1.1.1",
+            )
+
+            if legacy_asset_id:
+                logger.info(f"[AssetSyncJob] PCF Exchange v1.1.1 (legacy) asset synchronized: {legacy_asset_id}")
+            else:
+                logger.error("[AssetSyncJob] Failed to synchronize PCF Exchange v1.1.1 (legacy) asset.")
                 
         except Exception as e:
-            logger.error(f"[AssetSyncJob] Error synchronizing PCF Exchange asset: {e}", exc_info=True)
+            logger.error(f"[AssetSyncJob] Error synchronizing PCF Exchange assets: {e}", exc_info=True)
 
     def _pcf_kit_enablement_check(self) -> bool:
         """
@@ -232,3 +335,17 @@ class AssetSyncJob:
         except Exception as e:
             logger.error(f"[AssetSyncJob] Error checking PCF Kit enablement: {e}", exc_info=True)
             return False
+
+    def _ccm_kit_enablement_check(self) -> bool:
+        """
+        Check if the CCM Kit enablement is active in the configuration.
+
+        Returns:
+            bool: True if CCM Kit is enabled (default), False otherwise.
+        """
+        try:
+            ccm_config = ConfigManager.get_config("provider.ccm", {})
+            return ccm_config.get("enabled", True)
+        except Exception as e:
+            logger.error(f"[AssetSyncJob] Error checking CCM Kit enablement: {e}", exc_info=True)
+            return True

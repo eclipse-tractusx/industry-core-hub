@@ -21,16 +21,18 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from tractusx_sdk.dataspace.services.connector import BaseConnectorProviderService
 from tractusx_sdk.dataspace.models.connector import ModelFactory
 from tractusx_sdk.industry.services.notifications import NotificationService
 from managers.config.log_manager import LoggingManager
+from managers.config.config_manager import ConfigManager
 from tools.exceptions import NotFoundError
 from tools.constants import (
     ODRL_CONTEXT, CX_POLICY_CONTEXT, TYPE,
     SATURN_ODRL_CONTEXT_URL, SATURN_CX_CONTEXT_URL, EDC_VOCAB_NS,
     DATASPACE_VERSION_JUPITER, DATASPACE_VERSION_SATURN,
+    CCM_DCT_TYPE, CCM_DCT_SUBJECT, CCM_CERTIFICATE_DCT_TYPE, CCM_CERTIFICATE_SEMANTIC_ID,
 )
 import json
 
@@ -568,11 +570,290 @@ class ConnectorProviderManager:
             headers=headers
         )
 
+    def register_unique_id_push_offer(
+        self,
+        hostname: str,
+        api_path: str = "/v1/uniqueidpush",
+        unique_id_push_policy_config: dict = None,
+        existing_asset_id: str = None,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ) -> tuple[str, str, str, str]:
+        """
+        Register a Unique ID Push notification asset, create policies and contract for it.
+
+        Returns a tuple: (asset_id, usage_policy_id, access_policy_id, contract_id)
+        """
+        unique_id_push_url = urljoin(
+            hostname.rstrip("/") + "/", api_path.lstrip("/")
+        )
+
+        if self.authorization:
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
+        # Step 1: Create or get the Unique ID Push asset
+        asset_id = self.get_or_create_unique_id_push_asset(
+            unique_id_push_url=unique_id_push_url,
+            existing_asset_id=existing_asset_id,
+            dct_type=dct_type,
+            version=version,
+            headers=headers,
+        )
+
+        # Step 2: Create or get policies and contract
+        policy_config = unique_id_push_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=policy_config,
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+
+    def get_or_create_unique_id_push_asset(
+        self,
+        unique_id_push_url: str,
+        existing_asset_id: str = None,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ) -> str:
+        """Get or create the Unique ID Push notification asset in the connector."""
+        if not existing_asset_id:
+            existing_asset_id = self.generate_unique_id_push_asset_id(unique_id_push_url)
+
+        # Check if the asset already exists
+        existing_asset = self.connector_service.assets.get_by_id(oid=existing_asset_id)
+        if existing_asset.status_code == 200:
+            logger.debug(f"[UniqueIdPush] Asset with ID {existing_asset_id} already exists.")
+            return existing_asset_id
+
+        # Create the asset
+        logger.info(f"[UniqueIdPush] Creating new asset with ID {existing_asset_id}.")
+        try:
+            asset = self.create_unique_id_push_asset(
+                asset_id=existing_asset_id,
+                notification_endpoint_url=unique_id_push_url,
+                dct_type=dct_type,
+                version=version,
+                headers=headers,
+            )
+        except ValueError as e:
+            logger.error(
+                f"[UniqueIdPush] Failed to register asset with ID {existing_asset_id} "
+                f"for URL '{unique_id_push_url}'. Error: {e}"
+            )
+            raise
+        logger.info(f"[UniqueIdPush] Successfully registered asset with ID {existing_asset_id}.")
+        return asset.get("@id", existing_asset_id)
+
+    def generate_unique_id_push_asset_id(self, unique_id_push_url: str) -> str:
+        """Generate a unique asset ID for the Unique ID Push asset."""
+        return "ichub:asset:uniqueidpush:" + blake2b_128bit(unique_id_push_url)
+
+    def create_unique_id_push_asset(
+        self,
+        asset_id: str,
+        notification_endpoint_url: str,
+        dct_type: str = "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification",
+        version: str = "2.0",
+        headers: dict = None,
+    ):
+        """
+        Create the Unique ID Push asset directly via the connector provider service.
+
+        Uses the generic create_asset method with the appropriate dct:type for
+        UniqueIdPushConnectToParentNotification.
+        """
+        proxy_params = {
+            "proxyQueryParams": "false",
+            "proxyPath": "true",
+            "proxyMethod": "true",
+            "proxyBody": "true",
+        }
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=notification_endpoint_url,
+            dct_type=dct_type,
+            version=version,
+            proxy_params=proxy_params,
+            headers=headers,
+        )
+
+    def generate_ccm_notification_asset_id(self, ccm_url: str) -> str:
+        """
+        Generate a stable, deterministic asset ID for the CCM notification endpoint.
+
+        The ID is derived from the URL so that the same configuration always
+        produces the same ID, enabling safe idempotent re-runs.
+        """
+        return "ichub:asset:ccm-notification:" + blake2b_128bit(ccm_url)
+
+    def create_ccm_notification_asset(
+        self,
+        asset_id: str,
+        notification_endpoint_url: str,
+        version: str = "3.0",
+        headers: dict = None
+    ):
+        """
+        Create the CCM notification asset directly via the connector service.
+
+        We intentionally bypass ``NotificationService.ensure_notification_asset_exists``
+        because that method hardcodes ``dct_type=cx-taxo:DigitalTwinEventAPI`` with no
+        override parameter.  Instead we call ``connector_service.create_asset()`` directly,
+        using the CX-0135-mandated type and the same proxy settings required by any
+        notification / push-style endpoint.
+        """
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=notification_endpoint_url,
+            dct_type=CCM_DCT_TYPE,
+            dct_subject=CCM_DCT_SUBJECT,
+            version=version,
+            headers=headers,
+            proxy_params={
+                "proxyQueryParams": "false",
+                "proxyPath": "true",
+                "proxyMethod": "true",
+                "proxyBody": "true",
+            },
+        )
+
+    def get_or_create_ccm_notification_asset(
+        self,
+        ccm_url: str,
+        existing_asset_id: str = None,
+        version: str = "3.0",
+        headers: dict = None
+    ) -> str:
+        """
+        Return the CCM notification asset ID, creating it in the EDC if it does
+        not yet exist.
+
+        Args:
+            ccm_url: Full URL of the CCM notification endpoint on the ichub-backend.
+            existing_asset_id: Override the generated asset ID (e.g. from config).
+            version: Asset version string forwarded to the EDC.
+            headers: Optional auth headers injected into the EDC data-address.
+
+        Returns:
+            The asset ID (either pre-existing or newly created).
+        """
+        asset_id = existing_asset_id or self.generate_ccm_notification_asset_id(ccm_url)
+
+        # Clean up any stale CCM notification assets whose ID no longer matches
+        # the current URL hash (e.g. left over from a previous deploy where
+        # apiPath was misconfigured).  We do this by querying all assets whose
+        # @id starts with the CCM notification prefix and deleting every one
+        # that is not the current target ID.
+        CCM_ASSET_PREFIX = "ichub:asset:ccm-notification:"
+        try:
+            query_response = self.connector_service.assets.query(
+                obj=None, verify=self.connector_service.verify_ssl
+            )
+            if query_response.status_code == 200:
+                all_assets = query_response.json() if callable(query_response.json) else []
+                for a in all_assets:
+                    stale_id = a.get("@id", "")
+                    if stale_id.startswith(CCM_ASSET_PREFIX) and stale_id != asset_id:
+                        logger.warning(
+                            f"[CCM] Removing stale CCM notification asset {stale_id!r} "
+                            f"(current target is {asset_id!r})."
+                        )
+                        try:
+                            self.connector_service.assets.delete(
+                                oid=stale_id, verify=self.connector_service.verify_ssl
+                            )
+                        except Exception as del_exc:
+                            logger.warning(
+                                f"[CCM] Could not delete stale asset {stale_id!r}: {del_exc}"
+                            )
+        except Exception as query_exc:
+            # Non-fatal: stale cleanup is best-effort
+            logger.warning(f"[CCM] Stale asset cleanup query failed: {query_exc}")
+
+        existing_asset = self.connector_service.assets.get_by_id(oid=asset_id)
+        if existing_asset.status_code == 200:
+            logger.debug(f"[CCM] Asset with ID {asset_id} already exists.")
+            return asset_id
+
+        logger.info(f"[CCM] Creating new asset with ID {asset_id}.")
+        try:
+            asset = self.create_ccm_notification_asset(
+                asset_id=asset_id,
+                notification_endpoint_url=ccm_url,
+                version=version,
+                headers=headers
+            )
+        except ValueError as e:
+            logger.error(
+                f"[CCM] Failed to register asset with ID {asset_id} "
+                f"for URL '{ccm_url}'. Error: {e}"
+            )
+            raise
+        logger.info(f"[CCM] Successfully registered asset with ID {asset_id}.")
+        return asset.get("@id", asset_id)
+
+    def register_ccm_notification_offer(
+        self,
+        ccm_notification_url: str,
+        ccm_policy_config: dict = None,
+        existing_asset_id: str = None,
+        version: str = "3.0",
+        headers: dict = None
+    ) -> tuple[str, str, str, str]:
+        """
+        Register the single Company Certificate Management notification asset in
+        the EDC, together with its usage/access policies and contract definition.
+
+        This method is idempotent: calling it multiple times with the same
+        configuration yields the same IDs without duplicating EDC resources.
+
+        Args:
+            ccm_notification_url: Full URL of the CCM endpoint (ichub-backend
+                hostname + apiPath, e.g. ``http://ichub/addons/ccm-kit``).
+            ccm_policy_config: ODRL policy dict with ``usage`` and ``access``
+                sub-keys. Falls back to the version-appropriate empty policy.
+            existing_asset_id: Optional fixed asset ID to use instead of a
+                generated one (set via ``asset_config.existing_asset_id`` in YAML).
+            version: Asset version string.
+            headers: Optional auth headers for the EDC data-address.
+
+        Returns:
+            Tuple of ``(asset_id, usage_policy_id, access_policy_id, contract_id)``.
+        """
+        # In case the authorization is enabled, we need to add the backend API key to the headers
+        if self.authorization:
+            headers = {
+                self.backend_api_key: self.backend_api_key_value
+            }
+
+        # Step 1: ensure the EDC asset exists
+        asset_id = self.get_or_create_ccm_notification_asset(
+            ccm_url=ccm_notification_url,
+            existing_asset_id=existing_asset_id,
+            version=version,
+            headers=headers
+        )
+
+        # Step 2: create usage + access policies and link them via a contract
+        policy_config = ccm_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = self.get_or_create_contract_with_policies(
+            asset_id=asset_id,
+            policy_config=policy_config,
+            qualifier="ccm"
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+
     def register_pcf_exchange_offer(self,
                            base_url:str=None,
                            api_path:str = "/v1/addons/pcf-kit/footprintExchange", 
                            pcf_exchange_policy_config=dict, 
-                           dct_type:str="cx-taxo:PcfExchange", 
+                           dct_type:str="cx-taxo:PCFExchange", 
                            existing_asset_id:str=None,
                            version="1.2.0",
                            headers:dict=None) -> tuple[str, str, str, str]:
@@ -641,3 +922,132 @@ class ConnectorProviderManager:
             #context=context,
             private_properties=private_properties
         )
+
+    def build_ccm_certificate_payload_url(self, certificate_id: int) -> str:
+        """
+        Return the URL that the EDC data plane will fetch when a consumer
+        pulls a CCM certificate asset.
+
+        The URL points to the ``GET /provider/certificates/{id}/payload``
+        endpoint on this ichub-backend instance.
+
+        Uses ``provider.ccm.hostname`` when available (the clean base URL
+        without any path prefix), falling back to the global ``ichub_url``
+        with trailing ``/v1`` stripped to avoid double-prefix issues.
+
+        Args:
+            certificate_id: Primary key of the certificate in the local DB.
+
+        Returns:
+            Full URL string, e.g.
+            ``https://ichub-backend/v1/addons/ccm-kit/provider/certificates/42/payload``.
+        """
+        ccm_hostname = ConfigManager.get_config("provider.ccm.hostname", default=None)
+        if ccm_hostname:
+            base = ccm_hostname.rstrip("/")
+        else:
+            base = self.ichub_url.rstrip("/")
+            # Fallback normalisation: strip trailing /v1 added by some hostname configs
+            if base.endswith("/v1"):
+                base = base[:-3]
+        return f"{base}/v1/addons/ccm-kit/provider/certificates/{certificate_id}/payload"
+
+    def create_ccm_certificate_asset(
+        self,
+        asset_id: str,
+        base_url: str,
+        version: str = "3.0",
+    ) -> dict:
+        """
+        Create an individual CCM certificate EDC asset with an HttpData
+        DataAddress pointing to the provider's payload endpoint.
+
+        The EDC data plane fetches the ``BusinessPartnerCertificate`` JSON
+        from ``base_url`` live every time a consumer pulls the asset.
+
+        Args:
+            asset_id: Unique EDC asset identifier (e.g. ``ichub:asset:ccm-cert:<uuid>``).
+            base_url: URL of the backend endpoint that serves the certificate JSON
+                (typically ``{ichub_url}/v1/addons/ccm-kit/provider/certificates/{id}/payload``).
+            version: Asset version string forwarded to the EDC.
+
+        Returns:
+            The created asset response dict from the EDC Management API.
+        """
+        headers = None
+        if self.authorization:
+            headers = {self.backend_api_key: self.backend_api_key_value}
+
+        return self.connector_service.create_asset(
+            asset_id=asset_id,
+            base_url=base_url,
+            dct_type=CCM_CERTIFICATE_DCT_TYPE,
+            version=version,
+            semantic_id=CCM_CERTIFICATE_SEMANTIC_ID,
+            headers=headers,
+        )
+
+    def register_ccm_certificate_offer(
+        self,
+        asset_id: str,
+        base_url: str,
+        ccm_policy_config: dict = None,
+        version: str = "3.0",
+    ) -> tuple[str, str, str, str]:
+        """
+        Publish a single certificate as an EDC HttpData asset, create the
+        usage/access policies and contract definition.
+
+        Args:
+            asset_id: Unique EDC asset identifier for the certificate.
+            base_url: URL of the backend endpoint that serves the certificate JSON.
+            ccm_policy_config: ODRL policy dict with ``usage``/``access``
+                sub-keys.  Falls back to the version-appropriate empty policy.
+            version: Asset version string.
+
+        Returns:
+            Tuple of ``(asset_id, usage_policy_id, access_policy_id, contract_id)``.
+        """
+        self.create_ccm_certificate_asset(
+            asset_id=asset_id,
+            base_url=base_url,
+            version=version,
+        )
+
+        policy_config = ccm_policy_config or self.empty_policy
+        usage_policy_id, access_policy_id, contract_id = (
+            self.get_or_create_contract_with_policies(
+                asset_id=asset_id,
+                policy_config=policy_config,
+                qualifier="ccm-cert",
+            )
+        )
+
+        return asset_id, usage_policy_id, access_policy_id, contract_id
+
+    def delete_ccm_certificate_offer(self, asset_id: str) -> None:
+        """
+        Remove a published CCM certificate asset and its contract definition
+        from the EDC.
+
+        Args:
+            asset_id: The EDC asset ID of the certificate to unpublish.
+        """
+        # Delete the contract definition first (requires the asset to exist)
+        contract_id = f"ichub:contract:ccm-cert:{blake2b_128bit(asset_id)}"
+        try:
+            self.connector_service.contract_definitions.delete(
+                oid=contract_id, verify=self.connector_service.verify_ssl
+            )
+            logger.info(f"[CCM PULL] Deleted contract {contract_id}.")
+        except Exception as exc:
+            logger.warning(f"[CCM PULL] Could not delete contract {contract_id}: {exc}")
+
+        # Delete the asset
+        try:
+            self.connector_service.assets.delete(
+                oid=asset_id, verify=self.connector_service.verify_ssl
+            )
+            logger.info(f"[CCM PULL] Deleted asset {asset_id}.")
+        except Exception as exc:
+            logger.warning(f"[CCM PULL] Could not delete asset {asset_id}: {exc}")

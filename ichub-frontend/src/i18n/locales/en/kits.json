@@ -105,6 +105,24 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "End-to-end traceability of parts, alerts and components throughout the supply chain."
+    },
+    "ccm": {
+      "name": "CCM KIT",
+      "description": "Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.",
+      "features": {
+        "certificateManagement": {
+          "name": "Certificate Management",
+          "description": "Upload, manage and maintain your own compliance certificates."
+        },
+        "provisionManagement": {
+          "name": "CCM Provision Management",
+          "description": "Handle incoming certificate requests and provide certificates to consumers (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "CCM Consumption",
+          "description": "Request, track, download and review compliance certificates from your partners."
+        }
+      }
     }
   }
 }
