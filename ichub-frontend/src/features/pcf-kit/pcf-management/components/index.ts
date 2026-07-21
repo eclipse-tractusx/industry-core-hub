@@ -22,3 +22,6 @@
  ********************************************************************************/
 
 export { default as ParticipantSelectionDialog } from './ParticipantSelectionDialog';
+export { default as PcfOverviewPanel } from './PcfOverviewPanel';
+export { default as PcfVersionBlock } from './PcfVersionBlock';
+export type { PcfVersionKey } from './PcfVersionBlock';

@@ -1,7 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
+ * Copyright (c) 2025,2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -109,6 +109,7 @@ export interface ValidationErrorResult {
 const ERROR_PATH_PATTERNS: RegExp[] = [
   // Full path patterns (with potential array indices)
   /^([\w.\[\]]+)\s+is required/i,
+  /^([\w.\[\]]+)\s+is not allowed/i,
   /^([\w.\[\]]+)\s+must be at least/i,
   /^([\w.\[\]]+)\s+must be at most/i,
   /^([\w.\[\]]+)\s+must be greater than/i,
