@@ -139,6 +139,19 @@ const inboundStatusSx = (status: InboundRequestStatus) => {
   }
 };
 
+const consumerStatusSx = (status?: string | null) => {
+  switch (status) {
+    case 'ACCEPTED':
+      return { backgroundColor: 'rgba(76,175,80,0.15)', color: '#81c784', border: '1px solid rgba(76,175,80,0.3)' };
+    case 'RECEIVED':
+      return { backgroundColor: 'rgba(157,111,212,0.15)', color: '#B399D3', border: '1px solid rgba(157,111,212,0.3)' };
+    case 'REJECTED':
+      return { backgroundColor: 'rgba(244,67,54,0.15)', color: '#e57373', border: '1px solid rgba(244,67,54,0.3)' };
+    default:
+      return { backgroundColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' };
+  }
+};
+
 const shareStatusSx = (status: ShareStatus) => {
   switch (status) {
     case 'Active':
@@ -511,9 +524,15 @@ const ProvisionManagement = () => {
                             <Chip label={req.status} size="small" sx={{ fontWeight: 600, fontSize: '0.7rem', ...inboundStatusSx(req.status) }} />
                           </CcmBodyCell>
                           <CcmBodyCell>
-                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                              {req.consumerStatus ?? '—'}
-                            </Typography>
+                            {req.consumerStatus ? (
+                              <Chip
+                                label={req.consumerStatus}
+                                size="small"
+                                sx={{ fontWeight: 600, fontSize: '0.7rem', ...consumerStatusSx(req.consumerStatus) }}
+                              />
+                            ) : (
+                              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>—</Typography>
+                            )}
                           </CcmBodyCell>
                           <CcmBodyCell>
                             <RelativeDate value={req.updatedAt} />
@@ -570,6 +589,7 @@ const ProvisionManagement = () => {
                         t('provisionPage.sharesColumns.type'),
                         t('provisionPage.sharesColumns.consumer'),
                         t('provisionPage.sharesColumns.status'),
+                        t('provisionPage.sharesColumns.consumerStatus'),
                         t('provisionPage.sharesColumns.lastShared'),
                       ]).map((h) => (
                         <CcmHeaderCell key={h}>{h}</CcmHeaderCell>
@@ -600,6 +620,17 @@ const ProvisionManagement = () => {
                               </Tooltip>
                             )}
                           </Box>
+                        </CcmBodyCell>
+                        <CcmBodyCell>
+                          {share.consumerStatus ? (
+                            <Chip
+                              label={share.consumerStatus}
+                              size="small"
+                              sx={{ fontWeight: 600, fontSize: '0.7rem', ...consumerStatusSx(share.consumerStatus) }}
+                            />
+                          ) : (
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.4)' }}>—</Typography>
+                          )}
                         </CcmBodyCell>
                         <CcmBodyCell>
                           <RelativeDate value={share.lastSharedDate} />
