@@ -456,6 +456,11 @@ database:
   timeout: 8
   retry_interval: 5
  
+# When enabled, the application publishes an OpenMetrics endpoint (default: /metrics)
+metrics:
+  enabled: true
+  endpoint: "/metrics"
+
 cors:
   enabled: true
   allow_origins:
