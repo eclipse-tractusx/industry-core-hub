@@ -39,7 +39,7 @@ type SidebarItem = {
 
 const Sidebar = ({ items: _items }: { items: SidebarItem[] }) => {
   const { t } = useTranslation('common');
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [, setActiveIndex] = useState(0);
   const [showFeaturesPanel, setShowFeaturesPanel] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();

@@ -34,7 +34,7 @@ const SidebarTooltip: React.FC<SidebarTooltipProps> = ({ title, children, disabl
   const [position, setPosition] = useState({ top: 0 });
   const childRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
+  const handleMouseEnter = (_e: React.MouseEvent) => {
     if (disabled) return;
     
     if (childRef.current) {

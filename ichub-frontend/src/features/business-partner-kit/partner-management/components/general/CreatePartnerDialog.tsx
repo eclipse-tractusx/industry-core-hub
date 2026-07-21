@@ -176,9 +176,9 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData, initialBpnl }
       PaperProps={{
         sx: {
           backgroundColor: 'background.paper',
-          width: '60vw',
+          width: '80vw',
           height: 'auto',
-          maxWidth: '60vw',
+          maxWidth: '80vw',
           maxHeight: '90vh',
           '& .MuiDialogContent-root': {
             backgroundColor: 'background.paper',
@@ -189,37 +189,46 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData, initialBpnl }
       <DialogTitle 
         sx={{ 
           m: 0, 
-          p: 3,
+          p: { sm: 1.5, md: 3 },
           backgroundColor: 'primary.main',
           color: 'primary.contrastText',
-          fontSize: '1.25rem',
-          fontWeight: 600
+          fontSize: { sm: '1rem', md: '1.25rem' },
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
         }}
       >
         {partnerData ? t('dialog.editTitle') : t('dialog.createTitle')}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={(theme) => ({
+            color: theme.palette.primary.contrastText,
+            flexShrink: 0,
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            }
+          })}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={onClose}
-        sx={(theme) => ({
-          position: 'absolute',
-          right: 21,
-          top: 21,
-          color: theme.palette.primary.contrastText,
-          zIndex: 1,
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          }
-        })}
-      >
-        <CloseIcon />
-      </IconButton>
       <DialogContent sx={{ 
-        p: 3, 
+        p: { sm: 1.5, md: 3 }, 
         backgroundColor: 'background.paper',
         overflow: 'auto',
         '& .MuiTextField-root': {
           backgroundColor: 'background.default',
+          '& .MuiInputBase-input': {
+            fontSize: { xs: '0.8125rem', md: '1rem' },
+            padding: { xs: '8px 10px', md: '16.5px 14px' },
+          },
+          '& .MuiInputLabel-root:not(.MuiInputLabel-shrink)': {
+            // Realign label with the reduced padding on small screens
+            transform: { xs: 'translate(10px, 8px) scale(1)', md: 'translate(14px, 16.5px) scale(1)' },
+          },
           '& .MuiOutlinedInput-root': {
             backgroundColor: 'background.default',
             '& fieldset': {
@@ -237,6 +246,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData, initialBpnl }
         <Grid2 container spacing={3}>
           <Grid2 size={12}>
             <Typography variant="h6" gutterBottom sx={{ 
+              mt: 2,
               mb: 2, 
               color: 'text.primary',
               fontSize: '1.1rem',
@@ -244,12 +254,12 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData, initialBpnl }
             }}>
               {t('dialog.partnerInfo')}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body2" color="text.secondary">
               {t('dialog.partnerInfoDescription')}
             </Typography>
           </Grid2>
           
-          <Grid2 size={{xs: 12, sm: 6}}>
+          <Grid2 size={{sm: 12, md: 6}}>
             <TextField
               label={t('fields.partnerName')}
               variant="outlined"
@@ -262,7 +272,7 @@ const CreatePartnerDialog = ({ open, onClose, onSave, partnerData, initialBpnl }
             />
           </Grid2>
           
-          <Grid2 size={{xs: 12, sm: 6}}>
+          <Grid2 size={{sm: 12, md: 6}}>
             <TextField
               label={t('fields.partnerBpnl')}
               variant="outlined"

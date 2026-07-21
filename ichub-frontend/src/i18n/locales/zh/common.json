@@ -158,7 +158,9 @@
     "defaultTitle": "发生错误",
     "possibleCauses": "可能的原因：",
     "retry": "重试",
-    "notFound": "无可用目录零件，请检查ichub-backend连接/配置。"
+    "notFound": "无可用目录零件，请检查ichub-backend连接/配置。",
+    "fileReadError": "无法读取文件：{{message}}",
+    "invalidJson": "无效的JSON格式"
   },
   "header": {
     "profile": "个人资料",

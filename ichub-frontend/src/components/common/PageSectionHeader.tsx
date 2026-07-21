@@ -59,62 +59,89 @@ export default function PageSectionHeader({
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'flex-start', md: 'center' },
         gap: 2,
-        flexWrap: { xs: 'wrap', sm: 'nowrap' },
       }}
     >
-      {/* Themed icon badge */}
+      {/* Icon + Title row — always side-by-side */}
       <Box
         sx={{
-          flexShrink: 0,
-          width: { xs: 48, sm: 56 },
-          height: { xs: 48, sm: 56 },
-          borderRadius: '12px',
-          background: `linear-gradient(135deg, ${kitTheme.gradientStart} 0%, ${kitTheme.gradientEnd} 100%)`,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: `0 4px 16px ${kitTheme.shadowColor}`,
-          '& .MuiSvgIcon-root': {
-            fontSize: { xs: 28, sm: 32 },
-            color: '#fff',
-          },
+          gap: 2,
+          flex: 1,
+          minWidth: 0,
+          width: { xs: '100%', md: 'auto' },
         }}
       >
-        {icon}
-      </Box>
-
-      {/* Title + subtitle */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          variant="h4"
+        {/* Themed icon badge — hidden on xs */}
+        <Box
           sx={{
-            color: '#fff',
-            fontWeight: 700,
-            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
-            lineHeight: 1.2,
+            flexShrink: 0,
+            // 900px === MUI 'md' breakpoint — hide icon on smaller screens
+            display: { xs: 'none', md: 'flex' },
+            width: 56,
+            height: 56,
+            borderRadius: '12px',
+            background: `linear-gradient(135deg, ${kitTheme.gradientStart} 0%, ${kitTheme.gradientEnd} 100%)`,
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 4px 16px ${kitTheme.shadowColor}`,
+            '& .MuiSvgIcon-root': {
+              fontSize: 32,
+              color: 'common.white',
+            },
           }}
         >
-          {title}
-        </Typography>
-        {subtitle && (
+          {icon}
+        </Box>
+
+        {/* Title + subtitle */}
+        <Box sx={{ minWidth: 0 }}>
           <Typography
-            variant="body1"
+            variant="h4"
             sx={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              mt: 0.25,
+              color: 'common.white',
+              fontWeight: 700,
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
+              lineHeight: 1.2,
             }}
           >
-            {subtitle}
+            {title}
           </Typography>
-        )}
+          {subtitle && (
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'common.whiteMuted',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                mt: 0.25,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
+        </Box>
       </Box>
 
-      {/* Free-form actions slot */}
+      {/* Free-form actions slot — stacks below on mobile */}
       {actions && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            flexShrink: 0,
+            width: { xs: '100%', md: 'auto' },
+            '& .MuiButton-root': {
+              width: { xs: '100%', md: 'auto' },
+              fontSize: { xs: '0.8rem', md: '0.875rem' },
+              px: { xs: 2, md: 3 },
+              py: { xs: 0.75, md: 1.5 },
+            },
+          }}
+        >
           {actions}
         </Box>
       )}
