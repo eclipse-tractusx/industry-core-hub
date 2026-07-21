@@ -21,8 +21,6 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import { FieldIdentifier } from '../utils/field-identifier';
-
 /**
  * Node type according to schema structure
  */

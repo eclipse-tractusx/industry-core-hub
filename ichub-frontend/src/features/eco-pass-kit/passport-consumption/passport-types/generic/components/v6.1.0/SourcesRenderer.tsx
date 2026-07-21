@@ -20,9 +20,9 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState } from 'react';
-import { Box, Typography, Grid2, Paper, Chip, IconButton, Link, Tooltip, ClickAwayListener } from '@mui/material';
-import { Description, Category, Link as LinkIcon, OpenInNew, InfoOutlined } from '@mui/icons-material';
+import React from 'react';
+import { Box, Typography, Grid2, Paper, Chip, Link } from '@mui/material';
+import { Description, Category, Link as LinkIcon, OpenInNew } from '@mui/icons-material';
 
 interface SourceItem {
   header?: string;
@@ -66,8 +66,6 @@ export const SourcesRenderer: React.FC<SourcesRendererProps> = ({ rawData }) => 
  * Component for rendering individual source items
  */
 const SourceItemRenderer: React.FC<{ source: SourceItem; index: number }> = ({ source, index }) => {
-  const [tooltipOpen, setTooltipOpen] = useState(false);
-
   const isUrl = source.type?.toUpperCase() === 'URL';
   const hasContent = source.content && source.content.trim().length > 0;
 

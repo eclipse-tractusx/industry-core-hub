@@ -443,7 +443,7 @@ function processProperties(
     const isRequired = contextualRequiredMapping.get(fullKey) || false;
     
     // Resolve all possible references and compositions
-    let resolvedProperty = resolveSchemaProperty(property, schema);
+    const resolvedProperty = resolveSchemaProperty(property, schema);
     
     // Determine section - use dynamic section detection from schema structure
     const section = parentKey ? parentSection : getSectionName(key, resolvedProperty, parentKey, schema);
@@ -812,7 +812,8 @@ export function interpretJSONSchemaTree(schema: JSONSchema, options?: any): {
   // Dynamically import to avoid circular dependencies
   const { buildSchemaTree } = require('./json-schema-tree-builder');
   const { validateSchemaTree } = require('./schema-tree-validator');
-  const { SchemaTreeUtils } = require('../models/schema-node');
+  // SchemaTreeUtils imported for potential future use
+  require('../models/schema-node');
 
   // Build the tree
   const schemaTree = buildSchemaTree(schema, options);
@@ -1178,7 +1179,7 @@ export function interpretJSONSchema(schema: JSONSchema): {
   };
   
   // Enhanced default values function
-  const createDefault = (params?: any): any => {
+  const createDefault = (_params?: any): any => {
     const defaultData: any = {};
     
     for (const field of formFields) {
