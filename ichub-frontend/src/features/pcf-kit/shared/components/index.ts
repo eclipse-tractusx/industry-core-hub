@@ -28,3 +28,5 @@ export { PartInfoHeader } from './PartInfoHeader';
 export type { PartInfoHeaderProps } from './PartInfoHeader';
 export { PcfDataEditor } from './PcfDataEditor';
 export type { PcfDataEditorProps } from './PcfDataEditor';
+export { DualPcfCreationWizard } from './DualPcfCreationWizard';
+export type { DualPcfCreationWizardProps } from './DualPcfCreationWizard';

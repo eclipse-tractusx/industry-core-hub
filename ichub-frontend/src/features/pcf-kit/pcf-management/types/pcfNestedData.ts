@@ -256,3 +256,77 @@ export interface PcfNestedData {
 }
 
 // ---------------------------------------------------------------------------
+// PCF v7.0.0 — FLAT structure
+// ---------------------------------------------------------------------------
+
+/**
+ * CarbonFootprint nested object within PCF v7 flat data.
+ * Corresponds to the `pcf` property in the v7 root object.
+ */
+export interface PcfCarbonFootprintV7 {
+  declaredUnit: string;
+  unitaryProductAmount: number;
+  productMassPerDeclaredUnit?: number;
+  exemptedEmissionsPercent: number;
+  exemptedEmissionsDescription?: string;
+  pcfExcludingBiogenic: number;
+  pcfIncludingBiogenic: number;
+  fossilGhgEmissions?: number;
+  fossilCarbonContent?: number;
+  biogenicCarbonContentInProduct?: number;
+  biogenicCarbonContentInPackaging?: number;
+  characterizationFactors: string;
+  crossSectoralStandardsUsed: Array<{ crossSectoralStandard: string }>;
+  productOrSectorSpecificRules?: Array<{
+    extWBCSD_operator: string;
+    productOrSectorSpecificRules: Array<{ ruleName: string }>;
+    extWBCSD_otherOperatorName?: string;
+  }>;
+  boundaryProcessesDescription?: string;
+  referencePeriodStart: string;
+  referencePeriodEnd: string;
+  geographyCountrySubdivision?: string;
+  geographyCountry?: string;
+  geographyRegionOrSubregion?: string;
+  secondaryEmissionFactorSources?: Array<{ secondaryEmissionFactorSource: string }>;
+  primaryDataShare?: number;
+  dqiLegalStatement?: string;
+  biogenicAccountingMethodology?: string;
+  allocationRulesDescription?: string;
+  allocationWasteIncineration?: string;
+  pcfLegalStatement?: string;
+  distributionStageGhgEmissions?: number;
+  distributionStagePcfIncludingBiogenic?: number;
+  distributionStagePcfExcludingBiogenic?: number;
+  carbonContentTotal?: number;
+}
+
+/**
+ * Root structure of a PCF v7.0.0 as a flat object.
+ * All fields are at the root level — no nested collection arrays.
+ */
+export interface PcfFlatDataV7 {
+  id: string;
+  specVersion: string;
+  partialFullPcf: 'Cradle-to-gate' | 'Cradle-to-grave';
+  precedingPfIds?: Array<{ id: string }>;
+  version: number;
+  created: string;
+  extWBCSD_pfStatus: 'Active' | 'Deprecated';
+  validityPeriodStart?: string;
+  validityPeriodEnd?: string;
+  comment?: string;
+  companyName: string;
+  companyIds: string[];
+  productDescription?: string;
+  productIds: string[];
+  extWBCSD_productCodeCpc?: string;
+  productName: string;
+  pcf: PcfCarbonFootprintV7;
+  pcfLegalStatement?: string;
+}
+
+/** Union type for any supported PCF data format */
+export type PcfAnyVersion = PcfNestedData | PcfFlatDataV7;
+
+// ---------------------------------------------------------------------------

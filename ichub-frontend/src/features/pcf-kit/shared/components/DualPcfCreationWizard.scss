@@ -1,0 +1,177 @@
+/********************************************************************************
+ * Eclipse Tractus-X - Industry Core Hub Frontend
+ *
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 LKS Next
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+$pcf-primary: #10b981;
+$pcf-secondary: #059669;
+$wizard-bg: #0e0e0e;
+$panel-bg: rgba(20, 20, 20, 0.92);
+$border-soft: rgba(255, 255, 255, 0.07);
+$border-mid: rgba(255, 255, 255, 0.13);
+
+.dual-pcf-wizard {
+  // ── Sticky stepper bar ──────────────────────────────────────────────────
+  &__stepper-bar {
+    flex-shrink: 0;
+    background-color: $wizard-bg;
+    border-bottom: 1px solid $border-soft;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // ── Scrollable body ─────────────────────────────────────────────────────
+  &__body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: $wizard-bg;
+
+    // Dark, minimal scrollbar
+    &::-webkit-scrollbar {
+      width: 7px;
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.13);
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.22);
+      }
+    }
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.13) rgba(255, 255, 255, 0.02);
+  }
+
+  // ── Sticky footer (Step 3 only) ─────────────────────────────────────────
+  &__sticky-footer {
+    flex-shrink: 0;
+    background: linear-gradient(0deg, $wizard-bg 70%, rgba(14, 14, 14, 0) 100%);
+    border-top: 1px solid $border-soft;
+    padding: 16px 0;
+    backdrop-filter: blur(8px);
+  }
+
+  // ── Step card ────────────────────────────────────────────────────────────
+  &__step-card {
+    background: $panel-bg;
+    backdrop-filter: blur(20px);
+    border: 1px solid $border-mid;
+    border-radius: 20px;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      0 1px 0 rgba(255, 255, 255, 0.06) inset;
+  }
+
+  // ── Captured banner ──────────────────────────────────────────────────────
+  &__captured {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    background: rgba($pcf-primary, 0.09);
+    border: 1px solid rgba($pcf-primary, 0.26);
+  }
+
+  // ── File drop zone ───────────────────────────────────────────────────────
+  &__dropzone {
+    border: 2px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.018);
+    padding: 36px 20px;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+    user-select: none;
+
+    &:hover {
+      border-color: rgba($pcf-primary, 0.48);
+      background: rgba($pcf-primary, 0.04);
+      box-shadow: 0 0 22px rgba($pcf-primary, 0.08);
+    }
+
+    &--dragging {
+      border-color: $pcf-primary;
+      background: rgba($pcf-primary, 0.08);
+      box-shadow: 0 0 30px rgba($pcf-primary, 0.18);
+    }
+
+    &--loaded {
+      border-color: rgba($pcf-primary, 0.38);
+      background: rgba($pcf-primary, 0.045);
+
+      &:hover {
+        border-color: rgba($pcf-primary, 0.65);
+        background: rgba($pcf-primary, 0.08);
+      }
+    }
+  }
+
+  // ── Step footer row ──────────────────────────────────────────────────────
+  &__step-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__nav {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  // ── Reconciliation diff card ─────────────────────────────────────────────
+  &__diff-card {
+    background: rgba(18, 18, 18, 0.9);
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    border-radius: 14px;
+    padding: 18px 20px;
+    transition: border-color 0.22s ease, background 0.22s ease;
+
+    &--resolved {
+      border-color: rgba($pcf-primary, 0.24);
+      background: rgba($pcf-primary, 0.03);
+    }
+  }
+
+  // ── Clickable value columns ───────────────────────────────────────────────
+  &__value-col {
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.025);
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+      border-color: rgba($pcf-primary, 0.42);
+      background: rgba($pcf-primary, 0.055);
+      box-shadow: 0 0 14px rgba($pcf-primary, 0.1);
+    }
+
+    &--selected {
+      border-color: $pcf-primary !important;
+      background: rgba($pcf-primary, 0.09) !important;
+      box-shadow: 0 0 18px rgba($pcf-primary, 0.17) !important;
+    }
+  }
+
+  &__diff-value {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    word-break: break-word;
+  }
+}

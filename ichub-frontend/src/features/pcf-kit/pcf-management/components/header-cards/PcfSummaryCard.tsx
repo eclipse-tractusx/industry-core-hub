@@ -27,6 +27,7 @@ import { Box, Card, Chip, Typography } from '@mui/material';
 import { Co2 } from '@mui/icons-material';
 import { HeaderCardProps } from '@/features/eco-pass-kit/passport-consumption/passport-types/base/BasePassportVisualization';
 import { PcfNestedData } from '../../types/pcfNestedData';
+import { normalizePcfData } from '../../utils/pcfNormalizer';
 import './PcfSummaryCard.scss';
 
 const PCF_PRIMARY = '#10b981';
@@ -39,7 +40,9 @@ const PCF_SECONDARY = '#059669';
  */
 export const PcfSummaryCard: React.FC<HeaderCardProps> = ({ data }) => {
   const { t } = useTranslation('pcf');
-  const pcf = data as unknown as PcfNestedData;
+  // Normalize first so the card works for both the canonical v9 nested shape
+  // (pass-through) and the flat v7 shape (mapped to v9).
+  const pcf = normalizePcfData(data) as unknown as PcfNestedData;
   const productionStage = pcf.productLifeCycleStagesAndEmissions?.[0]?.productionStage?.[0];
   const scope = pcf.scopeOfPcfForm?.[0];
 

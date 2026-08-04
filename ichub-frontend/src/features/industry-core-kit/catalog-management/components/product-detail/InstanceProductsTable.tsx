@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -68,6 +69,7 @@ interface InstanceProductsTableProps {
 export default function InstanceProductsTable({ part, onAddClick }: Readonly<InstanceProductsTableProps>) {
   const { t } = useTranslation('catalogManagement');
   const { t: tCommon } = useTranslation('common');
+  const { t: tNotifications } = useTranslation('notifications');
   // Ref to prevent duplicate API calls in React StrictMode
   const dataLoadedRef = useRef(false);
   
@@ -98,20 +100,20 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
   const handleCopyWithFeedback = async (text: string, label: string, animationKey: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      
+
       // Trigger animation
       setCopyAnimations(prev => ({ ...prev, [animationKey]: true }));
-      
+
       // Show success notification
-      showSuccess(`${label} copied to clipboard!`);
-      
+      showSuccess(tNotifications('copiedToClipboard', { field: label }));
+
       // Reset animation after 600ms
       setTimeout(() => {
         setCopyAnimations(prev => ({ ...prev, [animationKey]: false }));
       }, 600);
     } catch (err) {
       console.error(`Failed to copy ${label}:`, err);
-      showError(`Failed to copy ${label}`);
+      showError(tNotifications('failedToCopy', { field: label }));
     }
   };
 

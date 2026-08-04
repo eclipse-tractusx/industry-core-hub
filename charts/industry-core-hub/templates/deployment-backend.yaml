@@ -117,6 +117,16 @@ spec:
           {{- end }}
           volumeMounts:
             {{- toYaml .Values.backend.volumeMounts | nindent 12 }}
+            - name: logs-volume
+              mountPath: /industry-core-hub/logs
+              {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.logs.enabled }}
+              subPath: logs
+              {{- end }}
+            - name: data-volume
+              mountPath: /industry-core-hub/data
+              {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
+              subPath: data
+              {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -131,4 +141,18 @@ spec:
       {{- end }}
       volumes:
         {{- tpl (toYaml .Values.backend.volumes | nindent 12) . }}
+            - name: logs-volume
+              {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.logs.enabled }}
+              persistentVolumeClaim:
+                claimName: "{{ .Release.Name }}-pvc-logs-backend"
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+            - name: data-volume
+              {{- if and .Values.backend.persistence.enabled .Values.backend.persistence.data.enabled }}
+              persistentVolumeClaim:
+                claimName: "{{ .Release.Name }}-pvc-data-backend"
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
 {{- end }}

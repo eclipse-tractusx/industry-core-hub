@@ -1054,12 +1054,6 @@ backend:
 
   # -- specifies volume mounts for the backend deployment
   volumeMounts:
-    - name: data-volume
-      mountPath: /industry-core-hub/data
-      subPath: data
-    - name: logs-volume
-      mountPath: /industry-core-hub/logs
-      subPath: logs
     - name: backend-config-configmap
       mountPath: /industry-core-hub/config
     - name: tmpfs
@@ -1071,13 +1065,6 @@ backend:
     - name: backend-config-configmap
       configMap:
         name: "{{ .Release.Name }}-config"
-    # -- persist the backend data directories
-    - name: logs-volume
-      persistentVolumeClaim:
-        claimName: "{{ .Release.Name }}-pvc-logs-backend"
-    - name: data-volume
-      persistentVolumeClaim:
-        claimName: "{{ .Release.Name }}-pvc-data-backend"
     # -- temporary file system mount
     - name: tmpfs
       emptyDir: {}
