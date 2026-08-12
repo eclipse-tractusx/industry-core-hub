@@ -615,6 +615,7 @@
         "description" : "Collection of Mass Balancing Information properties.",
         "x-samm-aspect-model-urn" : "urn:samm:io.catenax.pcf:9.0.0#MassBalancingInformationCollection",
         "type" : "array",
+        "minItems" : 1,
         "items" : {
           "$ref" : "#/components/schemas/MassBalancingInformationEntity"
         }

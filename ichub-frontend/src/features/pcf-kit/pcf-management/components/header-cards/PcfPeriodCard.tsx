@@ -27,6 +27,7 @@ import { Box, Card, Chip, Typography } from '@mui/material';
 import { CalendarMonth } from '@mui/icons-material';
 import { HeaderCardProps } from '@/features/eco-pass-kit/passport-consumption/passport-types/base/BasePassportVisualization';
 import { PcfNestedData } from '../../types/pcfNestedData';
+import { normalizePcfData } from '../../utils/pcfNormalizer';
 import './PcfPeriodCard.scss';
 
 /**
@@ -35,7 +36,7 @@ import './PcfPeriodCard.scss';
  */
 export const PcfPeriodCard: React.FC<HeaderCardProps> = ({ data }) => {
   const { t } = useTranslation('pcf');
-  const pcf = data as unknown as PcfNestedData;
+  const pcf = normalizePcfData(data) as unknown as PcfNestedData;
   const time =
     pcf.pcfAssessmentAndMethodology?.[0]?.pcfAssessmentInformation?.[0]?.time?.[0];
   const scope = pcf.scopeOfPcfForm?.[0];

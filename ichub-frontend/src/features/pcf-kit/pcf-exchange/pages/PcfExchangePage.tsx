@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -78,7 +78,15 @@ import {
   PcfNotification,
   PcfNotificationStatus
 } from '../api/pcfExchangeApi';
-import { refreshPcfForRequest } from '../../services/pcfApi';
+import {
+  refreshPcfForRequest,
+  updatePcfAndGetParticipants,
+  notifyParticipants,
+  DEFAULT_PCF_POLICIES,
+} from '../../services/pcfApi';
+import { ParticipantSelectionDialog } from '../../pcf-management/components';
+import { getPcfExchangePoliciesConfig } from '@/services/EnvironmentService';
+import { generatePoliciesFromDefinition } from '@/features/industry-core-kit/part-discovery/utils/governancePolicyUtils';
 
 // PCF Green Theme
 const PCF_PRIMARY = '#10b981';
@@ -162,6 +170,20 @@ const PcfExchangePage: React.FC = () => {
   // PCF loading state
   const [isPcfLoading, setIsPcfLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Participant selection dialog state
+  const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
+  const [availableParticipants, setAvailableParticipants] = useState<string[]>([]);
+
+  // Governance policies for PCF exchange notifications
+  const governancePolicies = useMemo(() => {
+    const configured = getPcfExchangePoliciesConfig();
+    if (configured.length > 0) {
+      return configured.flatMap(def => generatePoliciesFromDefinition(def));
+    }
+    return DEFAULT_PCF_POLICIES;
+  }, []);
 
   // Parse part ID from URL
   const partIdFromUrl = params?.partId;
@@ -408,6 +430,51 @@ const PcfExchangePage: React.FC = () => {
 
   // Get rejecting notification for dialog
   const rejectingNotification = notifications.find(n => n.id === rejectingNotificationId);
+
+  // Handle saving edited PCF and opening participant notification dialog
+  const handleEditSave = async (data: Record<string, unknown>) => {
+    if (!managedPart) return;
+
+    setIsUpdating(true);
+    try {
+      const participants = await updatePcfAndGetParticipants(
+        managedPart.manufacturerPartId,
+        data
+      );
+      setPcfEditDialogOpen(false);
+      setAvailableParticipants(participants);
+      setParticipantDialogOpen(true);
+    } catch (err) {
+      console.error('Failed to update PCF:', err);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Handle notifying selected participants after a PCF update
+  const handleNotifyParticipants = async (selectedParticipants: string[]) => {
+    if (!managedPart) return;
+
+    setIsUpdating(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await notifyParticipants(managedPart.manufacturerPartId, selectedParticipants, governancePolicies as any);
+      // Refresh PCF data after notification
+      const [pcf, partNotifications, counts] = await Promise.all([
+        getPcfData(managedPart.catenaXId),
+        getNotificationsForPart(managedPart.catenaXId),
+        getNotificationCounts()
+      ]);
+      setPcfData(pcf);
+      setNotifications(partNotifications);
+      setNotificationCounts(counts);
+    } catch (err) {
+      console.error('Failed to notify participants:', err);
+      throw err;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   // Render loading state
   const renderLoading = () => (
@@ -761,7 +828,6 @@ const PcfExchangePage: React.FC = () => {
                     key={notification.id}
                     notification={notification}
                     onAccept={handleAcceptNotification}
-                    onReject={handleOpenRejectDialog}
                     onRefreshPcf={handleRefreshPcf}
                     isProcessing={processingNotificationId === notification.id}
                     viewMode={viewMode}
@@ -794,13 +860,19 @@ const PcfExchangePage: React.FC = () => {
         <PcfEditDialog
           open={pcfEditDialogOpen}
           onClose={() => setPcfEditDialogOpen(false)}
-          onSave={async (data) => {
-            console.log('Saving PCF data:', data);
-            // Here would be the API call to update PCF
-            // For now just close the dialog
-          }}
+          onSave={handleEditSave}
           pcfData={pcfData}
           part={managedPart}
+        />
+
+        {/* Participant Selection Dialog - notify parties about PCF updates */}
+        <ParticipantSelectionDialog
+          open={participantDialogOpen}
+          onClose={() => setParticipantDialogOpen(false)}
+          onConfirm={handleNotifyParticipants}
+          participants={availableParticipants}
+          manufacturerPartId={managedPart?.manufacturerPartId || ''}
+          isLoading={isUpdating}
         />
       </Box>
     );

@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -41,18 +41,17 @@ import {
   Code as CodeIcon,
   Warning
 } from '@mui/icons-material';
-import { getSchemaByNamespaceAndVersion } from '@/schemas';
+import { getSchemaByNamespaceAndVersion, getSchemaVersionsByNamespace } from '@/schemas';
 import { createSchemaKey } from '@/schemas/schemaLoader';
+import { detectPcfVersion } from '../../pcf-management/utils/pcfVersionDetector';
 import SubmodelCreator from '@/components/submodel-creation/SubmodelCreator';
 
 // PCF Green Theme
 const PCF_PRIMARY = '#10b981';
 const PCF_SECONDARY = '#059669';
 
-// PCF Schema semantic ID
+// PCF Schema namespace — version is resolved dynamically from the schema registry
 const PCF_NAMESPACE = 'io.catenax.pcf';
-const PCF_VERSION = '9.0.0';
-const PCF_SEMANTIC_ID = `urn:samm:${PCF_NAMESPACE}:${PCF_VERSION}#Pcf`;
 
 export interface PcfDataEditorProps {
   /**
@@ -107,12 +106,35 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
   const [validationStatus, setValidationStatus] = useState<ValidationStatus>('idle');
   const [isValidating, setIsValidating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Version tracking: auto-detected from dropped file; user-selected for form builder
+  const [detectedVersion, setDetectedVersion] = useState<string | null>(null);
+  const [selectedFormVersion, setSelectedFormVersion] = useState<string>('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation('pcf');
 
-  // Get PCF schema
-  const pcfSchema = getSchemaByNamespaceAndVersion(PCF_NAMESPACE, PCF_VERSION);
+  // Discover all PCF schema versions from registry, sorted latest-first
+  const pcfSchemaVersions = useMemo(
+    () =>
+      getSchemaVersionsByNamespace(PCF_NAMESPACE).sort((a, b) =>
+        b.metadata.version.localeCompare(a.metadata.version, undefined, { numeric: true }),
+      ),
+    [],
+  );
+  const defaultVersion = pcfSchemaVersions[0]?.metadata.version ?? '9.0.0';
+  const effectiveFormVersion = selectedFormVersion || defaultVersion;
+
+  // Schema used for validating uploaded files (auto-detected version)
+  const uploadSchema = useMemo(
+    () => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, detectedVersion ?? defaultVersion),
+    [detectedVersion, defaultVersion],
+  );
+
+  // Schema used for the form builder (user-selected version)
+  const formSchema = useMemo(
+    () => getSchemaByNamespaceAndVersion(PCF_NAMESPACE, effectiveFormVersion),
+    [effectiveFormVersion],
+  );
 
   // Handle drag events
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -179,6 +201,10 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
           return;
         }
 
+        // Auto-detect PCF version from file structure
+        const version = detectPcfVersion(jsonData);
+        setDetectedVersion(version);
+
         // Set the PCF data without validating yet
         setPcfData(jsonData);
         setValidationStatus('idle');
@@ -209,8 +235,8 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
     setUploadError(null);
     
     try {
-      if (pcfSchema?.validate) {
-        const validation = pcfSchema.validate(pcfData);
+      if (uploadSchema?.validate) {
+        const validation = uploadSchema.validate(pcfData);
         if (!validation.isValid) {
           const errorMessages = validation.errors.join('; ');
           const errorCount = validation.errors.length;
@@ -257,11 +283,13 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
     setValidationStatus('idle');
     setUploadError(null);
     setSuccessMessage(null);
+    setDetectedVersion(null);
   };
 
   // Handle SubmodelCreator form save — load the JSON into the editor pre-validated
   const handleSubmodelCreatorSave = async (submodelData: Record<string, unknown>) => {
     setPcfData(submodelData);
+    setDetectedVersion(effectiveFormVersion);
     setValidationStatus('success');
     setSuccessMessage(t('editor.formBuilderSuccess'));
     setShowSubmodelCreator(false);
@@ -325,18 +353,27 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
               <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
                 or click to browse files
               </Typography>
-              <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', mb: 1 }}>
+              <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.875rem', mb: 2 }}>
                 Supported format: JSON (.json)
               </Typography>
-              <Typography 
-                sx={{ 
-                  color: 'rgba(255,255,255,0.3)', 
-                  fontSize: '0.75rem', 
-                  fontFamily: 'monospace' 
-                }}
-              >
-                Semantic ID: {PCF_SEMANTIC_ID}
-              </Typography>
+              {/* Supported version chips */}
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {pcfSchemaVersions.map((s) => (
+                  <Chip
+                    key={s.metadata.version}
+                    label={`PCF v${s.metadata.version}`}
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      color: 'rgba(255,255,255,0.45)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      fontSize: '0.7rem',
+                      fontFamily: 'monospace',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                ))}
+              </Box>
             </CardContent>
             <input
               ref={fileInputRef}
@@ -385,6 +422,43 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
             <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem' }}>{t('editor.or')}</Typography>
             <Divider sx={{ flex: 1, borderColor: 'rgba(255,255,255,0.1)' }} />
           </Box>
+
+          {/* Form Builder version selector */}
+          <Box>
+            <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', mb: 1 }}>
+              Schema version for form builder:
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {pcfSchemaVersions.map((s) => {
+                const isSelected = effectiveFormVersion === s.metadata.version;
+                const isLatest = s.metadata.version === pcfSchemaVersions[0]?.metadata.version;
+                return (
+                  <Chip
+                    key={s.metadata.version}
+                    label={`PCF v${s.metadata.version}${isLatest ? ' — Latest' : ''}`}
+                    size="small"
+                    onClick={(e) => { e.stopPropagation(); setSelectedFormVersion(s.metadata.version); }}
+                    sx={{
+                      cursor: 'pointer',
+                      backgroundColor: isSelected ? alpha(PCF_PRIMARY, 0.2) : 'rgba(255,255,255,0.06)',
+                      color: isSelected ? PCF_PRIMARY : 'rgba(255,255,255,0.5)',
+                      border: `1px solid ${isSelected ? alpha(PCF_PRIMARY, 0.5) : 'rgba(255,255,255,0.12)'}`,
+                      fontFamily: 'monospace',
+                      fontSize: '0.75rem',
+                      fontWeight: isSelected ? 600 : 400,
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: alpha(PCF_PRIMARY, 0.12),
+                        borderColor: alpha(PCF_PRIMARY, 0.4),
+                        color: PCF_PRIMARY,
+                      },
+                    }}
+                  />
+                );
+              })}
+            </Box>
+          </Box>
+
           <Button
             variant="contained"
             onClick={() => setShowSubmodelCreator(true)}
@@ -422,7 +496,7 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
         >
           <CardContent sx={{ p: 3 }}>
             {/* Status Header */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexWrap: 'wrap' }}>
               {validationStatus === 'success' ? (
                 <CheckCircle sx={{ color: PCF_PRIMARY, fontSize: 32 }} />
               ) : validationStatus === 'error' ? (
@@ -430,13 +504,27 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
               ) : (
                 <CodeIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
               )}
-              <Typography variant="h6" sx={{ color: '#fff' }}>
+              <Typography variant="h6" sx={{ color: '#fff', flex: 1 }}>
                 {validationStatus === 'success' 
                   ? t('editor.validatedTitle') 
                   : validationStatus === 'error' 
                   ? t('editor.validationFailedTitle') 
                   : t('editor.loadedTitle')}
               </Typography>
+              {detectedVersion && (
+                <Chip
+                  label={`PCF v${detectedVersion}`}
+                  size="small"
+                  sx={{
+                    backgroundColor: alpha(PCF_PRIMARY, 0.15),
+                    color: PCF_PRIMARY,
+                    border: `1px solid ${alpha(PCF_PRIMARY, 0.3)}`,
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                  }}
+                />
+              )}
             </Box>
 
             <Typography sx={{ color: 'rgba(255,255,255,0.6)', mb: 2 }}>
@@ -581,14 +669,14 @@ export const PcfDataEditor: React.FC<PcfDataEditorProps> = ({
         </Card>
       )}
       {/* SubmodelCreator dialog — Form-based PCF creation */}
-      {pcfSchema && (
+      {formSchema && (
         <SubmodelCreator
           open={showSubmodelCreator}
           onClose={() => setShowSubmodelCreator(false)}
           onBack={() => setShowSubmodelCreator(false)}
           onCreateSubmodel={handleSubmodelCreatorSave}
-          selectedSchema={pcfSchema}
-          schemaKey={createSchemaKey(pcfSchema.metadata.semanticId)}
+          selectedSchema={formSchema}
+          schemaKey={createSchemaKey(formSchema.metadata.semanticId)}
           manufacturerPartId={manufacturerPartId}
           saveButtonLabel={t('editor.useAsPcfData')}
         />

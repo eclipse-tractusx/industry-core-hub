@@ -77,6 +77,7 @@ interface ImportMetaEnv {
   readonly VITE_ENABLE_ADVANCED_LOGGING: string
   readonly VITE_ENABLE_PERFORMANCE_MONITORING: string
   readonly VITE_ENABLE_DEV_TOOLS: string
+  readonly VITE_PCF_BACKWARD_COMPATIBILITY_SATURN: string
   
   // UI configuration
   readonly VITE_UI_THEME: 'light' | 'dark' | 'auto'
@@ -149,6 +150,7 @@ declare global {
       ENABLE_ADVANCED_LOGGING?: string;
       ENABLE_PERFORMANCE_MONITORING?: string;
       ENABLE_DEV_TOOLS?: string;
+      PCF_BACKWARD_COMPATIBILITY_SATURN?: string;
       
       // Notifications
       NOTIFICATIONS_POLL_INTERVAL?: string;
