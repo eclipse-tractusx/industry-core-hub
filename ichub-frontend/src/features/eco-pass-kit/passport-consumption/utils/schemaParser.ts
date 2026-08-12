@@ -22,7 +22,6 @@
  ********************************************************************************/
 
 import { JsonSchema, JsonSchemaProperty, ParsedProperty, TabDefinition } from '../types';
-import { getIconForProperty } from './iconMapper';
 import { toTitleCase } from './dataFormatter';
 
 /**
@@ -65,7 +64,7 @@ export class SchemaParser {
   /**
    * Generate human-readable label from property key and description
    */
-  private generateLabel(key: string, property: JsonSchemaProperty): string {
+  private generateLabel(key: string): string {
     // Always use the key/field name converted to Title Case
     // The description can be read separately for full context
     return toTitleCase(key);
@@ -81,7 +80,7 @@ export class SchemaParser {
     required: string[] = []
   ): ParsedProperty {
     const type = this.getPropertyType(property);
-    const label = this.generateLabel(key, property);
+    const label = this.generateLabel(key);
     
     // Extract the actual property name (without prefix) for required check
     const actualKey = key.includes(' ') ? key.split(' ').pop() || key : key;
@@ -279,7 +278,7 @@ export class SchemaParser {
         // Array of primitives (strings, numbers, booleans)
         // Create child properties for each item
         if (value.length > 0) {
-          parsed.children = value.map((item, index) => ({
+          parsed.children = value.map((item, _index) => ({
             key: String(item),
             label: String(item),
             type: typeof item === 'number' ? 'number' : typeof item === 'boolean' ? 'boolean' : 'string',
@@ -327,9 +326,6 @@ export class SchemaParser {
       if (!prop.children || prop.children.length === 0) return true;
       
       // Check if this is a wrapper pattern: has 'applicable' field and all other data is in 'content'
-      const hasApplicable = prop.children.some(c => c.key === 'applicable');
-      const contentChild = prop.children.find(c => c.key === 'content');
-      
       // If it's a wrapper with content array, we already promoted content children in parseProperty
       // So we can keep this property as-is (it now has the content array items as direct children)
       return true;
@@ -361,7 +357,7 @@ export class SchemaParser {
     if (!this.schema.properties) return [];
 
     return Object.entries(this.schema.properties).map(([key, property]) => {
-      const label = this.generateLabel(key, property);
+      const label = this.generateLabel(key);
       const value = data[key];
 
       const resolvedProp = property.$ref ? this.resolveRef(property.$ref) : property;

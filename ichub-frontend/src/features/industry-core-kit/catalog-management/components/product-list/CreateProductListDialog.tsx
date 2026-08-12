@@ -357,39 +357,43 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
       <DialogTitle 
         sx={{ 
           m: 0, 
-          p: 3,
+          p: { sm: 1.5, md: 3 },
           backgroundColor: 'primary.main',
           color: 'primary.contrastText',
-          fontSize: '1.25rem',
+          fontSize: { sm: '1rem', md: '1.25rem' },
           fontWeight: 600,
-          position: 'relative'
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 1,
         }}
       >
         {t('createDialog.title')}
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={(theme) => ({
+            color: theme.palette.primary.contrastText,
+            flexShrink: 0,
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            }
+          })}
+        >
+          <CloseIcon />
+        </IconButton>
       </DialogTitle>
-      <IconButton
-        aria-label="close"
-        onClick={onClose}
-        sx={(theme) => ({
-          position: 'absolute',
-          right: 21,
-          top: 21,
-          color: theme.palette.primary.contrastText,
-          zIndex: 1,
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          }
-        })}
-      >
-        <CloseIcon />
-      </IconButton>
       
       <DialogContent ref={contentRef} sx={{ 
-        p: 3, 
+        p: { sm: 1.5, md: 3 }, 
         backgroundColor: 'background.paper',
         overflow: 'auto',
         '& .MuiTextField-root': {
           backgroundColor: 'background.default',
+          '& .MuiInputBase-input': {
+            fontSize: { xs: '0.8125rem', md: '1rem' },
+            padding: { xs: '8px 10px', md: '16.5px 14px' },
+          },
           '& .MuiOutlinedInput-root': {
             backgroundColor: 'background.default',
             '& fieldset': {
@@ -438,7 +442,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
           </Alert>
         )}
 
-        <Grid2 container spacing={4}>
+        <Grid2 container spacing={{ xs: 2, md: 4 }}>
           {/* Manufacturer Info as Chips */}
           <Grid2 size={12}>
             <Box sx={{ 
@@ -473,7 +477,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
 
           {/* Basic Information */}
           <Grid2 size={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DescriptionIcon color="primary" />
               <Typography variant="h6" sx={{ 
                 color: 'text.primary',
@@ -488,7 +492,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             </Box>
           </Grid2>
 
-          <Grid2 size={{ xs: 12, sm: 6 }}>
+          <Grid2 size={{ sm: 12, md: 6 }}>
             <FieldLabelWithTooltip 
               label={`${t('createDialog.fields.manufacturerPartId.label')} *`} 
               tooltip={fieldDescriptions.manufacturerPartId} 
@@ -511,7 +515,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             />
           </Grid2>
           
-          <Grid2 size={{ xs: 12, sm: 6 }}>
+          <Grid2 size={{ sm: 12, md: 6 }}>
             <FieldLabelWithTooltip 
               label={`${t('createDialog.fields.name.label')} *`} 
               tooltip={fieldDescriptions.name} 
@@ -558,7 +562,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '& textarea': {
-                    padding: '16px 14px',
+                    padding: { xs: '8px 10px', md: '16px 14px' },
                     lineHeight: 1.5,
                   }
                 }
@@ -566,7 +570,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             />
           </Grid2>
 
-          <Grid2 size={{ xs: 12, sm: 6 }}>
+          <Grid2 size={{ sm: 12, md: 6 }}>
             <FieldLabelWithTooltip 
               label={t('createDialog.fields.category.label')} 
               tooltip={fieldDescriptions.category} 
@@ -613,7 +617,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             />
           </Grid2>
 
-          <Grid2 size={{ xs: 12, sm: 6 }}>
+          <Grid2 size={{ sm: 12, md: 6 }}>
             <FieldLabelWithTooltip 
               label={t('createDialog.fields.bpns.label')} 
               tooltip={fieldDescriptions.bpns} 
@@ -663,7 +667,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             </Box>
           </Grid2>
 
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               label={t('createDialog.measurements.width')}
               type="number"
@@ -682,7 +686,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               }}
             />
           </Grid2>
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               select
               label={t('createDialog.measurements.widthUnit')}
@@ -700,7 +704,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             </TextField>
           </Grid2>
 
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               label={t('createDialog.measurements.height')}
               type="number"
@@ -719,7 +723,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               }}
             />
           </Grid2>
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               select
               label={t('createDialog.measurements.heightUnit')}
@@ -737,7 +741,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             </TextField>
           </Grid2>
 
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               label={t('createDialog.measurements.length')}
               type="number"
@@ -756,7 +760,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               }}
             />
           </Grid2>
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               select
               label={t('createDialog.measurements.lengthUnit')}
@@ -774,7 +778,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             </TextField>
           </Grid2>
 
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               label={t('createDialog.measurements.weight')}
               type="number"
@@ -793,7 +797,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               }}
             />
           </Grid2>
-          <Grid2 size={{ xs: 6, sm: 3 }}>
+          <Grid2 size={{ sm: 6, md: 3 }}>
             <TextField
               select
               label={t('createDialog.measurements.weightUnit')}
@@ -833,7 +837,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             {formData.materials.map((material, index) => (
               <Box key={index} sx={{ mb: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Grid2 container spacing={2} alignItems="center">
-                  <Grid2 size={{ xs: 12, sm: 5 }}>
+                  <Grid2 size={{ xs: 12, md: 5 }}>
                     <FieldLabelWithTooltip 
                       label={`${t('createDialog.materials.materialName.label')} *`}
                       tooltip={fieldDescriptions.materialName} 
@@ -855,7 +859,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
                   </Grid2>
                   
                   {/* Slider next to material name */}
-                  <Grid2 size={{ xs: 8, sm: 5 }}>
+                  <Grid2 size={{ xs: 12, md: 5 }}>
                     <Box sx={{ px: 1 }}>
                       <Typography variant="body2" color="text.secondary" gutterBottom>
                         {t('createDialog.materials.share.label')}: {material.share.toFixed(1)}%
@@ -887,7 +891,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
                   </Grid2>
 
                   {/* Action buttons */}
-                  <Grid2 size={{ xs: 4, sm: 2 }}>
+                  <Grid2 size={{ xs: 12, md: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <IconButton
                         onClick={() => setExpandedMaterial(expandedMaterial === index ? null : index)}
@@ -996,7 +1000,7 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
               backgroundColor: 'background.default',
               borderRadius: 2,
               height: 'fit-content',
-              minHeight: '300px',
+              minHeight: '240px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -1028,15 +1032,22 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
                         })),
                     },
                   ]}
-                  width={280}
-                  height={250}
+                  width={220}
+                  height={240}
+                  margin={{ bottom: 60 }}
+                  slotProps={{
+                    legend: {
+                      direction: 'horizontal',
+                      position: { vertical: 'bottom', horizontal: 'center' },
+                    },
+                  }}
                 />
               ) : (
                 <Box sx={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  height: 250,
+                  height: 200,
                   color: 'text.secondary',
                   textAlign: 'center'
                 }}>

@@ -178,7 +178,7 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
                         // Use helper to reset scroll position without animation
                         scrollToElement({ element: el as HTMLElement, container: el as HTMLElement, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
                     }
-                } catch (err) {
+                } catch {
                     // ignore in non-browser environments
                 }
             }

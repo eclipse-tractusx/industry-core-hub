@@ -26,6 +26,34 @@ import {typographyDefinitions} from './typography'
 
 declare module '@mui/material/styles' {
   
+  interface CommonColors {
+    whiteMuted: string;
+    white02: string;
+    white05: string;
+    white08: string;
+    white10: string;
+    white12: string;
+    white15: string;
+    white20: string;
+    white25: string;
+    white30: string;
+    white40: string;
+    white50: string;
+    black30: string;
+    black40: string;
+    black70: string;
+    accent: string;
+    accent10: string;
+    accent20: string;
+    accent30: string;
+    accent50: string;
+    darkOverlay: string;
+    deepOverlay95: string;
+    deepOverlay98: string;
+    warning10: string;
+    warning30: string;
+  }
+
   interface TypeBackground {
     background01: string;
     background02: string;

@@ -42,14 +42,14 @@ function MainLayoutContent() {
       <Grid2 size={12} className="headerArea">
         <Header/>
       </Grid2>
-      <Grid2 container direction="row" size={12}>
+      <Grid2 container direction="row" size={12} sx={{ flexWrap: 'nowrap' }}>
         <Grid2 sx={{ width: '72px', flexShrink: 0 }} className="sidebarArea">
           <Sidebar items={features} />
         </Grid2>
         <Grid2 size="auto" className="additionalSidebarArea">
           <AdditionalSidebar />
         </Grid2>
-        <Grid2 size="auto" className="contentArea" padding={0} sx={{ flex: 1 }}>
+        <Grid2 size="auto" className="contentArea" padding={0} sx={{ flex: 1, minWidth: 0 }}>
           <Outlet />
         </Grid2>
       </Grid2>

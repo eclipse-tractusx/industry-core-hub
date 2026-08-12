@@ -25,7 +25,6 @@ import React, { useState, useMemo } from 'react';
 import {
     Box,
     Typography,
-    Alert,
     Chip,
     Paper,
     IconButton,
@@ -37,11 +36,9 @@ import {
 import {
     Error as ErrorIcon,
     ErrorOutline as ErrorOutlineIcon,
-    CheckCircle as CheckCircleIcon,
     Code as CodeIcon,
     NavigateNext as NavigateNextIcon,
     ExpandMore as ExpandMoreIcon,
-    Link as LinkIcon,
     ContentCopy as ContentCopyIcon,
     Check as CheckIcon,
     Download as DownloadIcon
@@ -53,12 +50,11 @@ interface JsonPreviewProps {
     data: any;
     errors?: string[];
     onNavigateToField?: (fieldKey: string) => void;
-    interactive?: boolean; // Si true, activa interactividad (hover en keys)
 }
 
 
 
-const JsonPreview: React.FC<JsonPreviewProps> = ({ data, errors = [], onNavigateToField, interactive = false }) => {
+const JsonPreview: React.FC<JsonPreviewProps> = ({ data, errors = [], onNavigateToField }) => {
     // Clean the data for preview - removes empty values, null, empty objects/arrays
     const cleanedData = useMemo(() => cleanJsonForPreview(data), [data]);
     
@@ -78,8 +74,6 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data, errors = [], onNavigate
     const [errorsExpanded, setErrorsExpanded] = useState(false);
     const [hoveredLine, setHoveredLine] = useState<number | null>(null);
     const [copySuccess, setCopySuccess] = useState(false);
-    const [clickedLine, setClickedLine] = useState<number | null>(null);
-    const [clickedAddress, setClickedAddress] = useState<string>('');
 
     // Lógica de generación dinámica de preview JSON
     // Now uses cleanedData which only contains non-empty values
@@ -87,79 +81,6 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data, errors = [], onNavigate
     // Utility to escape special characters in JSON strings
     function escapeJsonString(str: string) {
         return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
-    }
-
-    // Formats a value as JSON (string, number, boolean, null, object, array)
-    function formatJsonValue(value: any, indent: number): string[] {
-        const pad = (n: number) => '  '.repeat(n);
-        if (value === null) return ['null'];
-        if (typeof value === 'string') return ['"' + escapeJsonString(value) + '"'];
-        if (typeof value === 'number' || typeof value === 'boolean') return [String(value)];
-        if (Array.isArray(value)) {
-            if (value.length === 0) return ['[]'];
-            const lines: string[] = ['['];
-            value.forEach((item, idx) => {
-                const itemLines = formatJsonValue(item, indent + 1);
-                itemLines[0] = pad(indent + 1) + itemLines[0];
-                lines.push(...itemLines.map((l, i) => (i === 0 ? l : pad(indent + 1) + l)));
-                if (idx < value.length - 1) lines[lines.length - 1] += ',';
-            });
-            lines.push(pad(indent) + ']');
-            return lines;
-        }
-        if (typeof value === 'object') {
-            const keys = Object.keys(value);
-            if (keys.length === 0) return ['{}'];
-            const lines: string[] = ['{'];
-            keys.forEach((key, idx) => {
-                const valLines = formatJsonValue(value[key], indent + 1);
-                let firstLine = pad(indent + 1) + '"' + escapeJsonString(key) + '": ' + valLines[0];
-                lines.push(firstLine);
-                for (let i = 1; i < valLines.length; i++) {
-                    lines.push(pad(indent + 2) + valLines[i]);
-                }
-                if (idx < keys.length - 1) lines[lines.length - 1] += ',';
-            });
-            // Change: closing brace should be aligned with the object opening (indent + 1 if nested object, indent if root)
-            lines.push(pad(indent) + '}');
-            return lines;
-        }
-        return [String(value)];
-    }
-
-    // Builds preview lines, one per section (top-level key)
-    function buildJsonPreviewLines(data: any): { section: string, lines: string[], path: string }[] {
-        if (!data || typeof data !== 'object') return [];
-        const keys = Object.keys(data);
-        if (keys.length === 0) return [];
-        return keys.map(section => {
-            const value = data[section];
-            let lines: string[];
-            if (value === undefined || value === null || (typeof value === 'object' && Object.keys(value).length === 0 && !Array.isArray(value))) {
-                lines = [section + ': {}'];
-            } else {
-                const valueLines = formatJsonValue(value, 0);
-                if (valueLines.length === 1 && valueLines[0] === '{}') {
-                    lines = [section + ': {}'];
-                } else if (valueLines.length === 1 && valueLines[0] === '[]') {
-                    lines = [section + ': []'];
-                } else {
-                    // First line: section: {
-                    lines = [section + ': ' + valueLines[0]];
-                    // Rest of lines (if any)
-                    for (let i = 1; i < valueLines.length; i++) {
-                        // For closing brace/bracket, if it's the last line and is '}' or ']', remove extra indent
-                        if ((i === valueLines.length - 1) && (/^\s*[}\]]$/.test(valueLines[i]))) {
-                            // Section label has no indentation, so closing brace shouldn't either
-                            lines.push(valueLines[i].replace(/^\s+/, ''));
-                        } else {
-                            lines.push(valueLines[i]);
-                        }
-                    }
-                }
-            }
-            return { section, lines, path: section };
-        });
     }
 
     // Build preview lines with paths for attribute navigation
@@ -217,7 +138,7 @@ const JsonPreview: React.FC<JsonPreviewProps> = ({ data, errors = [], onNavigate
                 const valPath = path + '.' + key;
                 const valLines = formatJsonValueWithPath(val, indent + 1, valPath);
                 // The opening line of the child object/array is also navigable
-                let firstLine = { line: pad(indent + 1) + '"' + escapeJsonString(key) + '": ' + valLines[0].line, address: valPath };
+                const firstLine = { line: pad(indent + 1) + '"' + escapeJsonString(key) + '": ' + valLines[0].line, address: valPath };
                 lines.push(firstLine);
                 for (let i = 1; i < valLines.length; i++) {
                     lines.push({ line: pad(indent + 2) + valLines[i].line, address: valLines[i].address });

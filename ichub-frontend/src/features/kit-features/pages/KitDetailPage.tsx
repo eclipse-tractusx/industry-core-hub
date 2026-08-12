@@ -121,11 +121,11 @@ const KitDetailPage: React.FC = () => {
     <Box sx={{ height: { xs: 'auto', md: '100vh' }, minHeight: { xs: '100vh', md: 'auto' }, width: '100%', overflow: { xs: 'auto', md: 'hidden' } }}>
       <Grid2 container sx={{ height: '100%', width: '100%', maxWidth: '100%' }}>
         {/* Left Side: KIT Information */}
-        <Grid2 size={{ xs: 12, md: 4, lg: 3 }} sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'auto', md: '100%' } }}>
+        <Grid2 size={{ xs: 12, md: 5, lg: 3 }} sx={{ display: 'flex', flexDirection: 'column', height: { xs: 'auto', md: '100%' } }}>
           <Box
             sx={{
               height: { xs: 'auto', md: '100%' },
-              p: 3,
+              p: { sm: 1, md: 3 },
               borderRight: { xs: 'none', md: '1px solid rgba(255, 255, 255, 0.1)' },
               borderBottom: { xs: '1px solid rgba(255, 255, 255, 0.1)', md: 'none' },
               background: 'linear-gradient(135deg, rgb(20, 20, 20) 0%, rgb(30, 30, 30) 100%)',
@@ -143,6 +143,7 @@ const KitDetailPage: React.FC = () => {
                   color: 'rgba(255, 255, 255, 0.7)',
                   justifyContent: 'flex-start',
                   borderRadius: 1,
+                  fontSize: { xs: '0.875rem', md: '1rem' },
                   '&:hover': {
                     color: '#ffffff',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
@@ -361,11 +362,11 @@ const KitDetailPage: React.FC = () => {
         </Grid2>
 
         {/* Right Side: Features Grid */}
-        <Grid2 size={{ xs: 12, md: 8, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '100%', height: { xs: 'auto', md: '100%' } }}>
+        <Grid2 size={{ xs: 12, md: 7, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', maxWidth: '100%', height: { xs: 'auto', md: '100%' } }}>
           <Box sx={{ p: 3, width: '100%', maxWidth: '100%', height: '100%', overflowY: 'auto', overflowX: 'hidden' }}>
               <Grid2 container spacing={3} sx={{ width: '100%', maxWidth: '100%', margin: 0 }}>
                 {kit.features.map((feature) => (
-                  <Grid2 size={{ xs: 12, sm: 6, lg: 4 }} key={feature.id} sx={{ maxWidth: '100%' }}>
+                  <Grid2 size={{ xs: 12, lg: 4 }} key={feature.id} sx={{ maxWidth: '100%' }}>
                     <FeatureCard feature={feature} onToggle={handleFeatureToggle} />
                   </Grid2>
                 ))}

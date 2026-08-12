@@ -329,7 +329,7 @@ function validateStringRules(
           value
         ));
       }
-    } catch (e) {
+    } catch {
       console.error(`Invalid regex pattern for ${fieldId}: ${rules.pattern}`);
     }
   }

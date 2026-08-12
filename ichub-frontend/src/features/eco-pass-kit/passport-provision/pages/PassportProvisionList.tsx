@@ -27,12 +27,8 @@ import {
   Box,
   Typography,
   Button,
-  Card,
-  CardContent,
-  CardActions,
   Chip,
   IconButton,
-  Grid2,
   TextField,
   InputAdornment,
   CircularProgress,
@@ -41,7 +37,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Badge as MuiBadge,
   Tooltip,
   Menu,
   MenuItem
@@ -49,7 +44,6 @@ import {
 import {
   Add as AddIcon,
   Search as SearchIcon,
-  Visibility as VisibilityIcon,
   LinkOff as LinkOffIcon,
   PictureAsPdf as PictureAsPdfIcon,
   Delete as DeleteIcon,
@@ -70,12 +64,12 @@ import {
   TableRows as TableRowsIcon
 } from '@mui/icons-material';
 import { DPPListItem } from '../types';
-import { fetchUserDPPs, deleteDPP, getDPPById, fetchSubmodelData } from '../api/provisionApi';
+import { fetchUserDPPs, deleteDPP, fetchSubmodelData } from '../api/provisionApi';
 import DppShareDialog from '../components/DppShareDialog';
 import { darkCardStyles } from '../styles/cardStyles';
 import PageSectionHeader from '@/components/common/PageSectionHeader';
 import { kitThemes } from '@/theme/colors';
-import { formatShortDate, generateCXId } from '../utils/formatters';
+import { formatShortDate } from '../utils/formatters';
 import { CardChip } from '../components/CardChip';
 import { getParticipantId } from '@/services/EnvironmentService';
 import { exportPassportToPDF } from '../../utils/pdfExport';
@@ -146,10 +140,8 @@ const PassportProvisionList: React.FC = () => {
   const [showCarouselControls, setShowCarouselControls] = useState(false);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(0);
-  const [sharedDpps, setSharedDpps] = useState<Set<string>>(new Set());
   const [sharingInProgress, setSharingInProgress] = useState<Set<string>>(new Set());
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [dppToShare, setDppToShare] = useState<DPPListItem | null>(null);
@@ -165,7 +157,6 @@ const PassportProvisionList: React.FC = () => {
       // Calculate active card index based on scroll position
       const cardWidth = 352; // 320px card + 32px gap
       const currentIndex = Math.round(scrollLeft / cardWidth);
-      setActiveCardIndex(currentIndex);
       
       // Calculate total pages based on how many cards fit in viewport
       const cardsPerPage = Math.floor(clientWidth / cardWidth);
@@ -205,13 +196,7 @@ const PassportProvisionList: React.FC = () => {
       const data = await fetchUserDPPs();
       setDpps(data);
       setFilteredDpps(data);
-      
-      // Initialize sharedDpps Set with DPPs that have 'shared' status
-      const initialSharedDpps = new Set<string>(
-        data.filter(dpp => dpp.status === 'shared').map(dpp => dpp.id)
-      );
-      setSharedDpps(initialSharedDpps);
-    } catch (err) {
+    } catch {
       setError('Failed to load digital product passports');
     } finally {
       setIsLoading(false);
@@ -383,7 +368,7 @@ const PassportProvisionList: React.FC = () => {
       setDpps(prev => prev.filter(d => d.id !== dppToDelete.id));
       setDeleteDialogOpen(false);
       setDppToDelete(null);
-    } catch (err) {
+    } catch {
       setError('Failed to delete passport');
     } finally {
       setIsDeleting(false);

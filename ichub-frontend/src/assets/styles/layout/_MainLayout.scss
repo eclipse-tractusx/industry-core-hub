@@ -67,6 +67,7 @@
 /* Content area styling */
 .contentArea {
   padding: 0; // Remove default padding as components handle their own
+  min-width: 0; // Allow flex shrinking on small screens
   height: calc(100vh - 68.8px); /* Fixed height minus header */
   overflow: auto;
   display: flex;

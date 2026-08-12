@@ -177,7 +177,7 @@ function buildNode(
   // Process according to node type
   switch (nodeType) {
     case NodeType.PRIMITIVE:
-      return buildPrimitiveNode(builder, property, context);
+      return buildPrimitiveNode(builder, property);
 
     case NodeType.OBJECT:
       return buildObjectNode(builder, property, schema, context);
@@ -194,8 +194,7 @@ function buildNode(
  */
 function buildPrimitiveNode(
   builder: SchemaNodeBuilder,
-  property: JSONSchemaProperty,
-  context: NodeBuildContext
+  property: JSONSchemaProperty
 ): SchemaNode {
   const primitiveType = determinePrimitiveType(property);
   builder.primitiveType(primitiveType);

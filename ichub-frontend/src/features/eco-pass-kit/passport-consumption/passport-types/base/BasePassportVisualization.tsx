@@ -228,7 +228,7 @@ export const BasePassportVisualization: React.FC<PassportVisualizationProps & {
       
       setSnackbarMessage('PDF exported successfully');
       setSnackbarOpen(true);
-    } catch (error) {
+    } catch {
       setSnackbarMessage('Failed to export PDF');
       setSnackbarOpen(true);
     }

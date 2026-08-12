@@ -108,22 +108,22 @@ export interface ValidationErrorResult {
  */
 const ERROR_PATH_PATTERNS: RegExp[] = [
   // Full path patterns (with potential array indices)
-  /^([\w.\[\]]+)\s+is required/i,
-  /^([\w.\[\]]+)\s+must be at least/i,
-  /^([\w.\[\]]+)\s+must be at most/i,
-  /^([\w.\[\]]+)\s+must be greater than/i,
-  /^([\w.\[\]]+)\s+must be less than/i,
-  /^([\w.\[\]]+)\s+must be a multiple of/i,
-  /^([\w.\[\]]+)\s+must be one of:/i,
-  /^([\w.\[\]]+)\s+must be exactly:/i,
-  /^([\w.\[\]]+)\s+must be a valid/i,
-  /^([\w.\[\]]+)\s+must be an array/i,
-  /^([\w.\[\]]+)\s+must be an object/i,
-  /^([\w.\[\]]+)\s+must have at least/i,
-  /^([\w.\[\]]+)\s+must have at most/i,
-  /^([\w.\[\]]+)\s+items must be unique/i,
-  /^([\w.\[\]]+)\s+format is invalid/i,
-  /^([\w.\[\]]+)\s+must be in/i,
+  /^([\w.[\]]+)\s+is required/i,
+  /^([\w.[\]]+)\s+must be at least/i,
+  /^([\w.[\]]+)\s+must be at most/i,
+  /^([\w.[\]]+)\s+must be greater than/i,
+  /^([\w.[\]]+)\s+must be less than/i,
+  /^([\w.[\]]+)\s+must be a multiple of/i,
+  /^([\w.[\]]+)\s+must be one of:/i,
+  /^([\w.[\]]+)\s+must be exactly:/i,
+  /^([\w.[\]]+)\s+must be a valid/i,
+  /^([\w.[\]]+)\s+must be an array/i,
+  /^([\w.[\]]+)\s+must be an object/i,
+  /^([\w.[\]]+)\s+must have at least/i,
+  /^([\w.[\]]+)\s+must have at most/i,
+  /^([\w.[\]]+)\s+items must be unique/i,
+  /^([\w.[\]]+)\s+format is invalid/i,
+  /^([\w.[\]]+)\s+must be in/i,
   // Legacy quoted patterns
   /Field '([^']+)'/i,
   /Field "([^"]+)"/i,
@@ -356,7 +356,7 @@ function createDisplayMessage(
   let displayMessage = originalMessage;
   
   // Extract the path from the message
-  const pathMatch = originalMessage.match(/^([\w.\[\]]+)\s+/);
+  const pathMatch = originalMessage.match(/^([\w.[\]]+)\s+/);
   if (pathMatch) {
     displayMessage = originalMessage.replace(pathMatch[1], fieldLabel);
   }
@@ -530,94 +530,4 @@ export function processValidationErrors(
     totalErrors: errors.length,
     isValid: errors.length === 0,
   };
-}
-
-/**
- * Check if a field path has any errors
- * Handles matching with or without array indices
- */
-export function hasErrorForPath(
-  result: ValidationErrorResult,
-  path: string
-): boolean {
-  const normalized = normalizePath(path);
-  return result.pathsWithErrors.has(path) ||
-         result.pathsWithErrors.has(normalized) ||
-         result.normalizedPathsWithErrors.has(normalized);
-}
-
-/**
- * Get all errors for a specific path
- */
-export function getErrorsForPath(
-  result: ValidationErrorResult,
-  path: string
-): StructuredValidationError[] {
-  const errors: StructuredValidationError[] = [];
-  const normalized = normalizePath(path);
-  
-  // Check exact path
-  const exactMatch = result.errorsByPath.get(path);
-  if (exactMatch) {
-    errors.push(...exactMatch);
-  }
-  
-  // Check normalized path
-  const normalizedMatch = result.errorsByNormalizedPath.get(normalized);
-  if (normalizedMatch) {
-    for (const err of normalizedMatch) {
-      if (!errors.includes(err)) {
-        errors.push(err);
-      }
-    }
-  }
-  
-  return errors;
-}
-
-/**
- * Get section order from schema for sorting errors
- */
-export function getSectionOrder(schema: SchemaDefinition | null): string[] {
-  if (!schema) return [];
-  
-  // Use explicit config if available
-  if (schema.sectionConfig?.order) {
-    return schema.sectionConfig.order;
-  }
-  
-  // Extract from form fields in order
-  const sections: string[] = [];
-  const seen = new Set<string>();
-  
-  for (const field of schema.formFields || []) {
-    if (!seen.has(field.section)) {
-      seen.add(field.section);
-      sections.push(field.section);
-    }
-  }
-  
-  return sections;
-}
-
-/**
- * Sort errors by section order
- */
-export function sortErrorsBySection(
-  errorsBySection: Map<string, StructuredValidationError[]>,
-  sectionOrder: string[]
-): [string, StructuredValidationError[]][] {
-  const entries = Array.from(errorsBySection.entries());
-  
-  return entries.sort(([sectionA], [sectionB]) => {
-    const indexA = sectionOrder.indexOf(sectionA);
-    const indexB = sectionOrder.indexOf(sectionB);
-    
-    if (indexA !== -1 && indexB !== -1) {
-      return indexA - indexB;
-    }
-    if (indexA !== -1) return -1;
-    if (indexB !== -1) return 1;
-    return sectionA.localeCompare(sectionB);
-  });
 }
