@@ -124,35 +124,7 @@ const ComplexFieldPanel: React.FC<ComplexFieldPanelProps> = ({
         return path.replace(/\[\d+\]/g, '').replace(/\[item\]/g, '');
     };
 
-    /**
-     * Build the schema path for the info icon click (Schema Rules navigation)
-     * This converts actual paths with numeric indices to schema format with [item]
-     * e.g., "sustainability.productFootprint.environmental[0]" -> "sustainability.productFootprint.environmental[item]"
-     */
-    const buildSchemaPath = (): string => {
-        // If no parent path, use the field key directly (it already has [item] format)
-        if (!parentPath) {
-            return field.key;
-        }
-        
-        // Convert parentPath indices [0], [1], etc. to [item] for schema matching
-        const parentPathWithItemPlaceholder = parentPath.replace(/\[\d+\]/g, '[item]');
-        
-        // Extract the simple key (last segment) from the field.key
-        // field.key might be "parent[item].child" or "parent[item].nested[item].child"
-        const keyWithoutPlaceholders = field.key.replace(/\[item\]/g, '');
-        const segments = keyWithoutPlaceholders.split('.');
-        const simpleKey = segments[segments.length - 1];
-        
-        // Check if the field itself is an array (has [item] at the end of its key)
-        const fieldIsArray = field.key.endsWith('[item]') || field.type === 'array';
-        
-        const result = fieldIsArray 
-            ? `${parentPathWithItemPlaceholder}.${simpleKey}[item]`
-            : `${parentPathWithItemPlaceholder}.${simpleKey}`;
-        
-        return result;
-    };
+
 
     /**
      * Build the actual field path considering parent context

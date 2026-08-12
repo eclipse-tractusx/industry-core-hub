@@ -33,7 +33,7 @@ export class ConfigFactory {
     this.instance = null;
     try {
       localStorage.removeItem(this.CACHE_KEY);
-    } catch (e) {
+    } catch {
       // Ignore localStorage errors
     }
     

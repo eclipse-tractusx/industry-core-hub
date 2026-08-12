@@ -178,9 +178,7 @@ const SerializedParts = () => {
         {!isLoading && !error && (
           <SerializedPartsTable 
             parts={serializedParts} 
-            onView={(part) => {
-              
-            }}
+            onView={() => {}}
             onRefresh={handleRefresh}
             isAddDialogOpen={isAddDialogOpen}
             onAddDialogClose={() => setIsAddDialogOpen(false)}

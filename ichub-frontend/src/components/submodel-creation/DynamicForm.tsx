@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useRef, useImperativeHandle, forwardRef, useState, useMemo, useEffect } from 'react';
+import React, { useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import {
     Box,
     Typography,
@@ -36,7 +36,6 @@ import {
     AccordionDetails,
     Chip,
     Switch,
-    FormControlLabel,
     Button,
     IconButton,
     Card,
@@ -53,7 +52,6 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     DragIndicator as DragIndicatorIcon,
-    Fingerprint as FingerprintIcon,
     KeyboardReturn as KeyboardReturnIcon,
     Clear as ClearIcon,
     KeyboardArrowUp as KeyboardArrowUpIcon,
@@ -100,7 +98,6 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
     onChange,
     errors,
     fieldErrors = new Set(),
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     directFieldErrors = new Set(),
     focusedField = null,
     onFieldFocus,
@@ -244,7 +241,7 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
         console.log('[findElementByFieldKey] Searching for:', fieldKey, '-> normalized:', normalizedKey);
         
         // Try exact match first
-        let element = container.querySelector(`[data-field-key="${fieldKey}"]`) as HTMLElement | null;
+        const element = container.querySelector(`[data-field-key="${fieldKey}"]`) as HTMLElement | null;
         if (element) {
             console.log('[findElementByFieldKey] Found exact match');
             return element;
@@ -649,7 +646,7 @@ const DynamicForm = forwardRef<DynamicFormRef, DynamicFormProps>(({
     };
 
     // Helper: Get field styles based on state
-    const getFieldStyles = (required: boolean, isEmpty: boolean = false, hasError: boolean = false) => ({
+    const getFieldStyles = (_required: boolean, _isEmpty: boolean = false, hasError: boolean = false) => ({
         '& .MuiOutlinedInput-root, & .MuiInputBase-root, & .MuiSelect-root': {
             backgroundColor: 'rgba(19, 19, 19, 0.02)',
             '&:hover fieldset, &:hover .MuiOutlinedInput-notchedOutline': {

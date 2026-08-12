@@ -72,9 +72,6 @@ export const JsonViewer: React.FC<JsonViewerProps> = ({
         const totalLines = lines.length;
         const lineNumberWidth = Math.max(50, (totalLines.toString().length * 8) + 16); // 8px per digit + 16px padding
         
-                const handleDownloadJson = () => {
-                    downloadJson(data, filename);
-                };
         return lines.map((line, index) => {
             const lineNumber = index + 1;
             return (

@@ -148,12 +148,6 @@ const PartnersList = () => {
     }
   }, [location, navigate]);
 
-  const handleButtonClick = (partnerBPNL: string) => {
-    
-    // For now we will just log the partnerBPNL
-    //navigate(`/partner/${partnerBPNL}`);  // Navigate to the details page
-  };
-
   const handleEdit = (bpnlToEdit: string) => {
     const partnerToEdit = partnerList.find(p => p.bpnl === bpnlToEdit);
     if (partnerToEdit) {
@@ -252,7 +246,7 @@ const PartnersList = () => {
           <>
             <Grid2 className="flex flex-content-center" size={12}>
               <PartnerCard
-                onClick={handleButtonClick}
+                onClick={() => {}}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
                 items={visibleRows.map((partner) => ({
