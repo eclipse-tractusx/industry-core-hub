@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -232,10 +233,25 @@ export class SchemaParser {
               return itemProperties;
             }
             
-            // For multiple items or items with recursive children, wrap each in a numbered container
-            // Use the item's 'label' field if available, otherwise default to 'Item N'
+            // For multiple items or items with recursive children, wrap each in a numbered container.
+            // Try a prioritised list of candidate fields for a meaningful display label.
             const itemData = item as Record<string, unknown>;
-            const itemLabel = itemData.label ? String(itemData.label) : `Item ${index + 1}`;
+            const _labelCandidates = [
+              'label', 'name',
+              // PCF-specific meaningful fields (ordered by display priority)
+              'partialFullPcf', 'attestationType', 'providerName',
+              'companyName', 'productNameCompany',
+              'status', 'retroOrProspectivePcfType',
+              'geographyRegionOrSubregion', 'geographyCountry',
+              'ipccCharacterizationFactors', 'allocationWasteIncineration',
+              'id', 'type', 'title', 'specVersion',
+            ];
+            let itemLabel = '';
+            for (const field of _labelCandidates) {
+              const v = itemData[field];
+              if (v && typeof v === 'string') { itemLabel = v; break; }
+            }
+            if (!itemLabel) itemLabel = `Entry ${index + 1}`;
             
             // Merge children from the recursive property with the other properties
             // This ensures both the 'data' field AND the nested 'children' are displayed
@@ -334,7 +350,12 @@ export class SchemaParser {
   }
 
   /**
-   * Generate tab definitions from top-level properties
+   * Generate tab definitions from top-level properties.
+   *
+   * Handles both object-type and array-type (Collection) top-level properties.
+   * The PCF standard uses Collections (arrays) for all top-level properties, so
+   * we must delegate those to parseProperty() rather than trying to read .properties
+   * on an array schema (which has no .properties).
    */
   public generateTabs(data: Record<string, unknown>): TabDefinition[] {
     if (!this.schema.properties) return [];
@@ -343,18 +364,26 @@ export class SchemaParser {
       const label = this.generateLabel(key, property);
       const value = data[key];
 
-      // Parse nested properties using schema when possible
       const resolvedProp = property.$ref ? this.resolveRef(property.$ref) : property;
-      let properties = resolvedProp?.properties
-        ? this.parseProperties(
-            resolvedProp.properties,
-            (value as Record<string, unknown>) || {},
-            resolvedProp.required || []
-          )
-        : [];
+      const resolvedType = resolvedProp?.type || this.getPropertyType(property);
 
-      // If schema parsing produced no properties but the payload contains data,
-      // auto-generate properties from the payload so the tab still shows.
+      let properties: ParsedProperty[] = [];
+
+      if (resolvedType === 'array' && Array.isArray(value)) {
+        // ── Array-type Collection property (PCF schema uses arrays everywhere) ──
+        // parseProperty() already handles array → per-item wrapping with proper labels.
+        const parsed = this.parseProperty(key, property, value, this.schema.required || []);
+        properties = parsed.children || [];
+      } else if (resolvedProp?.properties) {
+        // ── Object-type top-level property ──
+        properties = this.parseProperties(
+          resolvedProp.properties,
+          (value as Record<string, unknown>) || {},
+          resolvedProp.required || []
+        );
+      }
+
+      // Fallback: schema gave nothing but payload has data — auto-generate from payload
       if ((properties.length === 0 || properties.every(p => p.value === undefined)) && value && typeof value === 'object') {
         properties = Object.entries(value as Record<string, unknown>).map(([k, v]) => ({
           key: k,
@@ -365,7 +394,7 @@ export class SchemaParser {
         } as ParsedProperty));
       }
 
-      // If value is primitive, create a single property to display it
+      // Fallback for primitive top-level values
       if ((properties.length === 0 || properties.every(p => p.value === undefined)) && value !== undefined && value !== null && typeof value !== 'object') {
         properties = [{
           key: key,

@@ -13,7 +13,10 @@
     "registerSuccess": "Teil-Twin erfolgreich registriert!",
     "registerError": "Fehler beim Registrieren des Teil-Twins!",
     "submodelCreatedSuccess": "Submodell erfolgreich mit {{schemaName}}-Schema erstellt!",
-    "submodelCreatedError": "Fehler beim Erstellen des Submodells"
+    "submodelCreatedError": "Fehler beim Erstellen des Submodells",
+    "submodelUpdatedSuccess": "Submodell erfolgreich mit {{schemaName}}-Schema aktualisiert!",
+    "noSchemaForEdit": "Kein passendes Schema für dieses Submodell gefunden. Es kann nicht im Formular-Editor bearbeitet werden.",
+    "submodelLoadError": "Fehler beim Laden der Submodell-Daten zur Bearbeitung"
   },
   "createDialog": {
     "title": "Neues Katalogteil erstellen",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "Neuen Submodell-Aspekt erstellen",
       "noSubmodels": "Keine Submodelle Verfügbar",
       "noSubmodelsDescription": "Dieser digitale Zwilling hat keine Submodell-Aspekte zur Ansicht verfügbar.",
-      "submodelsDisplayed": "{{count}} digitale Zwilling Submodell(e) angezeigt"
+      "submodelsDisplayed": "{{count}} digitale Zwilling Submodell(e) angezeigt",
+      "updateSubmodel": "Submodell aktualisieren"
     },
     "jsonViewer": {
       "title": "JSON-Viewer",

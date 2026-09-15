@@ -9,6 +9,7 @@ In future versions this user will be the ICH frontend or any component of a use 
 | Actor         | 	Description                                                                                              | Examples                                                                 |
 |---------------|------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------|
 | User          | The user is any actor that interacts with the ICH through the FastAPI offered by the ICH backend component.| The ICH Frontend or any application consuming the FastAPI.               |
+| AI Client (MCP) | An LLM-based client that invokes IC-Hub tools via the Model Context Protocol.                            | Claude Desktop, Microsoft Copilot Studio, custom LLM agents.            |
 
 
 The interactions are shown in the diagrams below.
@@ -52,6 +53,94 @@ The following figure presents the process followed at ICH Frontend level. The fo
 
 ### Frontend-Backend Integration diagrams
 TBC
+
+### MCP Addon Interaction Diagrams
+
+The MCP Addon introduces new runtime flows for AI clients interacting with the dataspace via natural language. The following diagrams describe the key interaction patterns. The flows are represented as sequence diagrams below.
+
+#### MCP Read Flow (e.g. `list_known_partners`)
+
+```mermaid
+sequenceDiagram
+    participant C as MCP Client (Claude Desktop)
+    box IC-Hub
+        participant M as MCP Addon (/addons/mcp-addon/mcp)
+        participant S as PartnerManagementService
+    end
+
+    C->>M: MCP call: list_known_partners
+    M->>M: auth.py: validate bearer token (Keycloak JWT or API key)
+    M->>M: session.py: resolve or create MCP session
+    M->>S: adapter (industry_core.py): call PartnerManagementService
+    S-->>M: partner list
+    M->>M: formatters.py: flatten result to LLM-friendly shape
+    M->>M: session.py: store returned BPNLs in session
+    M->>M: audit.py: log tool call with user identity
+    M-->>C: partner list response
+```
+
+#### MCP Consumer Read Flow (e.g. `list_partner_twins` → `fetch_submodel`)
+
+```mermaid
+sequenceDiagram
+    participant C as MCP Client
+    box IC-Hub
+        participant M as MCP Addon
+        participant CC as ConsumerConnectorManager
+        participant DC as DtrConsumerManager
+        participant SC as SubmodelConsumer
+    end
+    participant D as Dataspace (EDC/DTR)
+
+    C->>M: list_partner_twins(bpnl=…)
+    M->>M: auth + session resolution
+    M->>CC: adapter (discovery.py): discover twins
+    CC->>D: EDC catalog + negotiation
+    D-->>CC: EDR token
+    CC->>DC: DTR lookup
+    DC->>D: fetch shell descriptors
+    D-->>DC: shell descriptors
+    DC-->>CC: shell descriptors
+    CC-->>M: shell descriptors
+    M->>M: formatters.py: flatten shell descriptors
+    M->>M: session.py: store twin IDs
+    M-->>C: twin list response
+
+    C->>M: fetch_submodel(twin_id=…)
+    M->>M: adapter reuses EDR token from SDK cache
+    M->>SC: fetch submodel payload
+    SC->>D: SubmodelConsumer: fetch submodel payload
+    D-->>SC: submodel payload
+    SC-->>M: submodel payload
+    M-->>C: submodel payload
+```
+
+#### MCP Write Flow with Confirmation (e.g. `share_catalog_part`)
+
+```mermaid
+sequenceDiagram
+    participant C as MCP Client
+    box IC-Hub
+        participant M as MCP Addon
+        participant SS as SharingService
+    end
+
+    C->>M: share_catalog_part(part_id=…, partner_bpn=…)
+    M->>M: auth + session resolution
+    M->>M: confirmation.py: no staged action found
+    M->>M: build preview, stage {tool, args} in session
+    M-->>C: preview response
+
+    C->>C: user confirms via chat
+
+    C->>M: share_catalog_part(same args)
+    M->>M: confirmation.py: matching staged action → clear stage
+    M->>SS: adapter (industry_core.py): call SharingService
+    SS->>SS: submodel store + DTR shell + EDC asset + policy + contract
+    SS-->>M: sharing result
+    M->>M: audit.py: log with downstream IDs
+    M-->>C: success response
+```
   
 ### NOTICE
 

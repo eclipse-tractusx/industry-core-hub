@@ -1,0 +1,234 @@
+{
+  "common": {
+    "address": "地址",
+    "website": "网站",
+    "email": "电子邮件",
+    "company": "公司",
+    "contact": "联系方式",
+    "country": "国家"
+  },
+  "digitalNameplate": {
+    "title": "电池护照 — 数字铭牌",
+    "sections": {
+      "productIdentification": "产品标识",
+      "lifecycleStatus": "生命周期状态",
+      "manufacturingDetails": "制造详情",
+      "manufacturerInformation": "制造商信息",
+      "address": "地址",
+      "contact": "联系方式",
+      "ipCommunicationChannels": "IP通信渠道",
+      "markingsAndCertifications": "标志与认证",
+      "complianceDocuments": "合规文件"
+    },
+    "fields": {
+      "batteryPassportUri": "电池护照URI",
+      "serialNumber": "序列号",
+      "manufacturerIdentifier": "制造商标识符",
+      "operatorIdentifier": "运营商标识符",
+      "manufacturerName": "制造商名称",
+      "company": "公司",
+      "department": "部门",
+      "contactRole": "联系角色",
+      "contactPerson": "联系人",
+      "street": "街道",
+      "cityTown": "城市/城镇",
+      "zipCode": "邮政编码",
+      "stateCounty": "州/县",
+      "country": "国家",
+      "timeZone": "时区",
+      "poBox": "邮政信箱",
+      "website": "网站",
+      "email": "电子邮件",
+      "phone": "电话",
+      "fax": "传真",
+      "document": "文件",
+      "dateOfManufacture": "制造日期",
+      "dateOfPuttingIntoService": "投入使用日期",
+      "uniqueFacilityIdentifier": "唯一设施标识符",
+      "issueDate": "签发日期",
+      "expiryDate": "到期日期",
+      "additionalInfo": "附加信息",
+      "euDeclarationOfConformity": "欧盟符合性声明",
+      "resultsOfTestReportsProvingCompliance": "证明合规性的测试报告结果"
+    },
+    "lifecycle": {
+      "original": "电池是全新的，从未被重新用途或再制造。",
+      "repurposed": "电池已被重新用途于不同应用。",
+      "re-used": "电池已在相同或类似应用中被重新使用。",
+      "remanufactured": "电池已被再制造以恢复其性能。",
+      "waste": "电池已达到使用寿命终点，被归类为废物。"
+    }
+  },
+  "technicalData": {
+    "title": "电池护照 — 技术数据",
+    "sections": {
+      "generalInformation": "一般信息",
+      "capacityEnergyVoltage": "容量、能量和电压",
+      "roundTripEnergyEfficiency": "往返能量效率",
+      "internalResistance": "内阻",
+      "powerCapability": "功率能力",
+      "powerCapabilityAtSoC": "充电状态下的功率能力",
+      "temperatureRange": "温度范围（空闲）",
+      "lifetime": "使用寿命",
+      "referenceTestDocuments": "参考测试文件"
+    },
+    "fields": {
+      "manufacturer": "制造商",
+      "productDesignation": "产品名称",
+      "articleNumber": "文章编号",
+      "orderCode": "订单代码",
+      "manufacturerIdentifier": "制造商标识符",
+      "warrantyPeriod": "保修期",
+      "batteryMass": "电池质量",
+      "batteryCategory": "电池类别",
+      "nominalVoltage": "额定电压",
+      "minimumVoltage": "最低电压",
+      "maximumVoltage": "最高电压",
+      "ratedCapacity": "额定容量",
+      "capacityFade": "容量衰减",
+      "certifiedUsableBatteryEnergy": "经认证的可用电池能量",
+      "initialEfficiency": "初始效率",
+      "efficiencyAt50PercentCycleLife": "50%循环寿命时的效率",
+      "efficiencyFade": "效率衰减",
+      "initialSelfDischargingRate": "初始自放电率",
+      "cellLevelInitial": "单体级别（初始）",
+      "packLevelInitial": "电池包级别（初始）",
+      "moduleLevelInitial": "模块级别（初始）",
+      "packLevelIncrease": "电池包级别（增加）",
+      "cellLevelIncrease": "单体级别（增加）",
+      "moduleLevelIncrease": "模块级别（增加）",
+      "maximumPermittedPower": "最大允许功率",
+      "powerFade": "功率衰减",
+      "powerToEnergyRatio": "功率能量比",
+      "lowerBoundary": "下限",
+      "upperBoundary": "上限",
+      "expectedLifetime": "预期使用寿命",
+      "expectedCycles": "预期循环次数",
+      "capacityThresholdForExhaustion": "耗尽容量阈值",
+      "cRateCycleLifeTest": "C率（循环寿命测试）"
+    },
+    "categories": {
+      "lmt": "轻型交通工具（LMT）",
+      "ev": "电动车（EV）",
+      "industrial": "工业",
+      "stationary": "固定储能"
+    }
+  },
+  "circularity": {
+    "title": "电池护照 — 循环性",
+    "sections": {
+      "renewableContent": "可再生成分",
+      "recycledContent": "再生成分",
+      "dismantling": "拆卸和拆除信息",
+      "sparePartSources": "备件来源",
+      "safetyMeasures": "安全措施",
+      "endOfLife": "寿命终止信息"
+    },
+    "fields": {
+      "preConsumerShare": "消费前比例",
+      "postConsumerShare": "消费后比例",
+      "address": "地址",
+      "email": "电子邮件",
+      "website": "网站",
+      "components": "组件",
+      "safetyInstructions": "安全说明",
+      "extinguishingAgents": "灭火剂",
+      "wastePrevention": "废物预防",
+      "separateCollection": "分类收集",
+      "informationOnCollection": "收集信息"
+    }
+  },
+  "productCondition": {
+    "title": "电池护照 — 产品状况",
+    "sections": {
+      "currentState": "当前状态",
+      "energyAndCapacity": "能量和容量",
+      "efficiencyAndSelfDischarge": "效率和自放电",
+      "temperatureHistory": "温度历史",
+      "negativeEvents": "负面事件",
+      "informationOnAccidents": "事故信息"
+    },
+    "fields": {
+      "stateOfCharge": "充电状态",
+      "numberOfFullCycles": "完整循环次数",
+      "energyThroughput": "能量吞吐量",
+      "capacityThroughput": "容量吞吐量",
+      "remainingEnergy": "剩余能量",
+      "remainingCapacity": "剩余容量",
+      "stateOfCertifiedEnergy": "认证能量状态",
+      "remainingRoundTripEnergyEfficiency": "剩余往返能量效率",
+      "currentSelfDischargingRate": "当前自放电率",
+      "evolutionOfSelfDischarge": "自放电演变",
+      "timeAtExtremeHighTemperature": "极高温度时间",
+      "timeAtExtremeLowTemperature": "极低温度时间",
+      "timeAtExtremeHighTempCharging": "充电时极高温度时间",
+      "timeAtExtremeLowTempCharging": "充电时极低温度时间",
+      "updated": "更新于：{{date}}"
+    },
+    "accidentReports_one": "记录了{{count}}份事故报告文件",
+    "accidentReports_other": "记录了{{count}}份事故报告文件"
+  },
+  "carbonFootprint": {
+    "title": "电池护照 — 碳足迹",
+    "empty": "没有可用的碳足迹数据。",
+    "entry": "碳足迹条目 {{index}}",
+    "single": "产品碳足迹",
+    "fields": {
+      "co2Equivalent": "CO₂当量",
+      "performanceClass": "性能等级"
+    },
+    "sections": {
+      "calculationMethods": "计算方法",
+      "lifeCyclePhases": "生命周期阶段",
+      "publicStudies": "公开碳足迹研究"
+    }
+  },
+  "materialComposition": {
+    "title": "电池护照 — 材料组成",
+    "sections": {
+      "batteryChemistry": "电池化学",
+      "batteryMaterials": "电池材料",
+      "hazardousSubstances": "危险物质"
+    },
+    "table": {
+      "material": "材料",
+      "identifier": "标识符",
+      "mass": "质量（千克）",
+      "location": "位置",
+      "critical": "关键",
+      "criticalChip": "关键",
+      "standardChip": "标准"
+    },
+    "fields": {
+      "identifier": "标识符",
+      "concentration": "浓度",
+      "location": "位置",
+      "impact": "影响"
+    },
+    "hazardousClass": {
+      "AcuteToxicity": "急性毒性",
+      "SkinCorrosionOrIrritation": "皮肤腐蚀/刺激",
+      "EyeDamageOrIrritation": "眼睛损伤/刺激"
+    },
+    "criticalCount_one": "已识别{{count}}种关键原材料",
+    "criticalCount_other": "已识别{{count}}种关键原材料",
+    "hazardousCount_one": "本电池中申报了{{count}}种危险物质",
+    "hazardousCount_other": "本电池中申报了{{count}}种危险物质"
+  },
+  "handover": {
+    "title": "电池护照 — 移交文档",
+    "sections": {
+      "documentIdentifiers": "文档标识符",
+      "classifications": "分类",
+      "versions": "版本",
+      "digitalFiles": "数字文件"
+    },
+    "fields": {
+      "domain": "域：{{id}}",
+      "primary": "主要"
+    },
+    "documentIndex": "文档 {{index}}",
+    "available_one": "{{count}}份文档可供移交",
+    "available_other": "{{count}}份文档可供移交"
+  }
+}

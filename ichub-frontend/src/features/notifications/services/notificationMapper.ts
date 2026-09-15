@@ -2,7 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -32,6 +32,8 @@ import type {
   ConnectToParentItem,
   VerifiedItem,
   DigitalTwinType,
+  PcfNotificationPayload,
+  CcmNotificationPayload,
 } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -49,6 +51,14 @@ import type {
  */
 const parseNotificationType = (context: string): NotificationType => {
   const normalized = context.toLowerCase();
+
+  // Use-case-specific types detected before DT types (context format differs)
+  if (normalized.includes('pcf')) {
+    return 'pcf';
+  }
+  if (normalized.includes('ccm')) {
+    return 'ccm';
+  }
 
   if (normalized.includes('connecttoparent') || normalized.includes('connect-to-parent') || normalized.includes('connect_to_parent')) {
     return 'connect-to-parent';
@@ -235,7 +245,9 @@ const extractDigitalTwinType = (rawContent: Record<string, unknown>): DigitalTwi
 const mapContent = (rawContent: Record<string, unknown>): ConnectToParentPayload => {
   const listOfItems = mapContentItems(rawContent);
   const digitalTwinType = extractDigitalTwinType(rawContent);
-  const information = (rawContent.information as string) ?? undefined;
+  // For DT notifications 'information' is the main text. For PCF/CCM the text lives in 'message'.
+  const information =
+    (rawContent.information as string) ?? (rawContent.message as string) ?? undefined;
 
   return {
     digitalTwinType,
@@ -243,6 +255,66 @@ const mapContent = (rawContent: Record<string, unknown>): ConnectToParentPayload
     listOfItems,
   };
 };
+
+// ---------------------------------------------------------------------------
+// PCF content mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the typed PCF payload from the raw backend content.
+ * Handles both camelCase and snake_case field names.
+ */
+const mapPcfContent = (rawContent: Record<string, unknown>): PcfNotificationPayload => ({
+  notificationType:
+    (rawContent.notificationType as string) ?? (rawContent.notification_type as string) ?? '',
+  requestId: (rawContent.requestId as string) ?? (rawContent.request_id as string) ?? '',
+  message: (rawContent.message as string) ?? undefined,
+  timestamp: (rawContent.timestamp as string) ?? '',
+  manufacturerPartId:
+    (rawContent.manufacturerPartId as string) ?? (rawContent.manufacturer_part_id as string) ?? undefined,
+  customerPartId:
+    (rawContent.customerPartId as string) ?? (rawContent.customer_part_id as string) ?? undefined,
+  requestingBpn:
+    (rawContent.requestingBpn as string) ?? (rawContent.requesting_bpn as string) ?? undefined,
+  respondingBpn:
+    (rawContent.respondingBpn as string) ?? (rawContent.responding_bpn as string) ?? undefined,
+  targetBpn: (rawContent.targetBpn as string) ?? (rawContent.target_bpn as string) ?? undefined,
+  isUpdate: (rawContent.isUpdate as boolean) ?? (rawContent.is_update as boolean) ?? false,
+});
+
+// ---------------------------------------------------------------------------
+// Date utilities
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses a UTC datetime string returned by the backend, which may lack a
+ * timezone designator (e.g. "2026-05-22T08:37:28.350003" instead of
+ * "2026-05-22T08:37:28.350003Z"). Without the "Z", JavaScript's Date
+ * constructor treats the value as local time, causing incorrect relative-time
+ * calculations for users outside UTC.
+ *
+ * This helper appends "Z" when no timezone designator is present so the
+ * timestamp is always interpreted as UTC, matching the backend's intent.
+ */
+export const parseUtcDate = (dateStr: string): Date => {
+  const hasTimezone = dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr);
+  return new Date(hasTimezone ? dateStr : `${dateStr}Z`);
+};
+
+// ---------------------------------------------------------------------------
+// CCM content mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the typed CCM payload from the raw backend content.
+ */
+const mapCcmContent = (rawContent: Record<string, unknown>): CcmNotificationPayload => ({
+  notificationType: (rawContent.notificationType as string) ?? '',
+  timestamp: (rawContent.timestamp as string) ?? '',
+  certificateType: (rawContent.certificateType as string) ?? undefined,
+  certifiedBpn: (rawContent.certifiedBpn as string) ?? undefined,
+  documentId: (rawContent.documentId as string) ?? undefined,
+});
 
 // ---------------------------------------------------------------------------
 // Main mapper
@@ -261,13 +333,25 @@ export const mapApiResponseToInboxNotification = (
   const status = mapStatus(response.status);
   const verificationState = mapVerificationState(response.status);
 
+  // Populate typed PCF payload only for PCF notifications
+  const pcfContent =
+    notificationType === 'pcf'
+      ? mapPcfContent(response.fullNotification.content)
+      : undefined;
+
+  // Populate typed CCM payload only for CCM notifications
+  const ccmContent =
+    notificationType === 'ccm'
+      ? mapCcmContent(response.fullNotification.content)
+      : undefined;
+
   const verifiedItems: VerifiedItem[] = content.listOfItems.map((item) => ({
     item,
     verificationStatus: verificationState === 'feedback-sent' ? 'accessible' : 'not-verified',
-    verifiedAt: verificationState === 'feedback-sent' ? new Date(response.createdAt) : undefined,
+    verifiedAt: verificationState === 'feedback-sent' ? parseUtcDate(response.createdAt) : undefined,
   }));
 
-  const receivedAt = new Date(response.createdAt);
+  const receivedAt = parseUtcDate(response.createdAt);
   const isFeedbackSent = status === 'feedback-sent';
 
   return {
@@ -287,6 +371,9 @@ export const mapApiResponseToInboxNotification = (
     isArchived: false,
     isTrashed: false,
     verificationState,
+    useCase: response.useCase ?? undefined,
+    pcfContent,
+    ccmContent,
   };
 };
 

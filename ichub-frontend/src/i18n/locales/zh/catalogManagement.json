@@ -13,7 +13,10 @@
     "registerSuccess": "零件孪生注册成功！",
     "registerError": "注册零件孪生失败！",
     "submodelCreatedSuccess": "子模型已使用{{schemaName}}架构成功创建！",
-    "submodelCreatedError": "创建子模型失败"
+    "submodelCreatedError": "创建子模型失败",
+    "submodelUpdatedSuccess": "子模型已使用{{schemaName}}架构成功更新！",
+    "noSchemaForEdit": "未找到此子模型的匹配架构。无法在表单编辑器中编辑。",
+    "submodelLoadError": "加载子模型数据以进行编辑失败"
   },
   "createDialog": {
     "title": "创建新目录零件",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "创建新的子模型方面",
       "noSubmodels": "无可用子模型",
       "noSubmodelsDescription": "此数字孪生没有任何可供查看的子模型方面。",
-      "submodelsDisplayed": "显示{{count}}个数字孪生子模型"
+      "submodelsDisplayed": "显示{{count}}个数字孪生子模型",
+      "updateSubmodel": "更新子模型"
     },
     "jsonViewer": {
       "title": "JSON查看器",

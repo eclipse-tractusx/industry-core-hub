@@ -88,6 +88,17 @@ class AlreadyExistsError(BaseError):
     def __init__(self, message: str):
         super().__init__(status_code=409, message=message)
 
+class PcfVersionGateError(BaseError):
+    """
+    Exception raised when a PCF operation is blocked because not all required
+    schema versions have been uploaded for the manufacturer part.
+
+    Returns HTTP 409 Conflict: the request conflicts with the current state
+    of the resource (missing PCF version uploads).
+    """
+    def __init__(self, message: str):
+        super().__init__(status_code=409, message=message)
+
 class ValidationError(BaseError):
     """
     Exception raised when validation fails.

@@ -13,7 +13,10 @@
     "registerSuccess": "Part twin registered successfully!",
     "registerError": "Failed to register part twin!",
     "submodelCreatedSuccess": "Submodel created successfully with {{schemaName}} schema!",
-    "submodelCreatedError": "Failed to create submodel"
+    "submodelCreatedError": "Failed to create submodel",
+    "submodelUpdatedSuccess": "Submodel updated successfully with {{schemaName}} schema!",
+    "noSchemaForEdit": "No matching schema found for this submodel. It cannot be edited in the form editor.",
+    "submodelLoadError": "Failed to load submodel data for editing"
   },
   "createDialog": {
     "title": "Create New Catalog Part",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "Create a new submodel aspect",
       "noSubmodels": "No Submodels Available",
       "noSubmodelsDescription": "This digital twin doesn't have any submodel aspects available for viewing.",
-      "submodelsDisplayed": "{{count}} digital twin submodel(s) displayed"
+      "submodelsDisplayed": "{{count}} digital twin submodel(s) displayed",
+      "updateSubmodel": "Update Submodel"
     },
     "jsonViewer": {
       "title": "JSON Viewer",

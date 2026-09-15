@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -82,9 +83,12 @@ const ExpandableProperty: React.FC<{
             alignItems: 'center',
             justifyContent: 'space-between',
             cursor: 'pointer',
-            transition: 'background 0.2s',
+            userSelect: 'none',
+            transition: 'background 0.18s, border-color 0.18s',
+            borderLeft: '3px solid transparent',
             '&:hover': {
-              background: 'rgba(255, 255, 255, 0.03)'
+              background: 'rgba(102, 126, 234, 0.07)',
+              borderLeftColor: 'rgba(102, 126, 234, 0.5)',
             }
           }}
           onClick={() => setExpanded(!expanded)}
@@ -115,6 +119,8 @@ const ExpandableProperty: React.FC<{
                 >
                   {property.label}
                 </Typography>
+                {/* Only show the key chip for real schema field names, not auto-generated indices */}
+                {!/^(item-\d+|\d+)$/.test(property.key) && (
                 <Chip
                   label={property.key}
                   size="small"
@@ -127,6 +133,7 @@ const ExpandableProperty: React.FC<{
                     '& .MuiChip-label': { px: 1, py: 0 }
                   }}
                 />
+                )}
                 {property.description && (
                   <ClickAwayListener onClickAway={() => setTooltipOpen(false)}>
                     <Tooltip
@@ -187,7 +194,19 @@ const ExpandableProperty: React.FC<{
                   mt: 0.5
                 }}
               >
-                {hasOnlyPrimitives ? `${itemCount} field${itemCount !== 1 ? 's' : ''}` : `${itemCount} item${itemCount !== 1 ? 's' : ''}`}
+                {(() => {
+                  const base = hasOnlyPrimitives
+                    ? `${itemCount} field${itemCount !== 1 ? 's' : ''}`
+                    : `${itemCount} item${itemCount !== 1 ? 's' : ''}`;
+                  // Show first primitive value as a hint so the block is informative even when collapsed
+                  const firstPrimitive = property.children?.find(
+                    c => c.value !== undefined && c.value !== null && c.value !== '' && (!c.children || c.children.length === 0)
+                  );
+                  const hint = firstPrimitive
+                    ? ` · ${String(firstPrimitive.value).slice(0, 40)}`
+                    : '';
+                  return `${base}${hint}`;
+                })()}
               </Typography>
               {property.semanticId && (
                 <Typography
@@ -224,8 +243,8 @@ const ExpandableProperty: React.FC<{
               color: 'rgba(255, 255, 255, 0.5)',
               ml: { xs: 0.5, sm: 1 },
               p: { xs: 0.5, sm: 1 },
-              transform: expanded ? 'rotate(0deg)' : 'rotate(0deg)',
-              transition: 'transform 0.3s'
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.25s ease'
             }}
           >
             {expanded ? <ExpandLess sx={{ fontSize: { xs: 20, sm: 24 } }} /> : <ExpandMore sx={{ fontSize: { xs: 20, sm: 24 } }} />}

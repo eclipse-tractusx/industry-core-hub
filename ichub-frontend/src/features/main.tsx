@@ -1,6 +1,8 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -21,7 +23,7 @@
 ********************************************************************************/
 
 import i18n from '@/i18n';
-import { 
+import {
   Assignment,
   Hub,
   Recycling,
@@ -36,8 +38,14 @@ import {
   GroupAdd,
   Badge,
   Policy,
-  PostAdd
+  PostAdd,
+  WorkspacePremium,
+  Calculate,
+  CloudUpload,
+  Inbox,
+  ShoppingCart
 } from '@mui/icons-material';
+import McpIcon from './mcp-addon/McpIcon';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
 import { KitFeature } from './kit-features/types';
@@ -51,6 +59,8 @@ import PcfKitImage from '@/features/kit-features/assets/kit-images/pcf-kit.svg';
 import DataChainKitImage from '@/features/kit-features/assets/kit-images/data-chain-kit.svg';
 import DcmKitImage from '@/features/kit-features/assets/kit-images/dcm-kit.svg';
 import TraceabilityKitImage from '@/features/kit-features/assets/kit-images/traceability-kit.svg';
+import McpAddonImage from '@/features/kit-features/assets/kit-images/mcp-addon.svg';
+import CcmKitImage from '@/features/kit-features/assets/kit-images/certificate-management-kit.svg';
 
 // Import feature modules
 import { catalogManagementFeature } from './industry-core-kit/catalog-management/routes';
@@ -59,6 +69,13 @@ import { partnerManagementFeature } from './business-partner-kit/partner-managem
 import { serializedPartsFeature } from './industry-core-kit/serialized-parts/routes';
 import { passportConsumptionFeature } from './eco-pass-kit/passport-consumption/routes';
 import { passportProvisionFeature } from './eco-pass-kit/passport-provision/routes';
+import { certificateManagementFeature } from './ccm-kit/certificate-management/routes';
+import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
+import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
+import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
+import { mcpAddonFeature } from './mcp-addon/routes';
+import { provisionManagementFeature } from './ccm-kit/provision-management/routes';
+import { ccmConsumptionFeature } from './ccm-kit/consumption/routes';
 
 // KIT configurations with feature toggles
 export const kits: KitFeature[] = [
@@ -161,6 +178,48 @@ export const kits: KitFeature[] = [
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/eco-pass-kit/adoption-view'
   },
   {
+    id: 'pcf',
+    name: i18n.t('pcf.name', { ns: 'kits' }),
+    description: i18n.t('pcf.description', { ns: 'kits' }),
+    status: 'available',
+    icon: <EnergySavingsLeaf />,
+    image: PcfKitImage,
+    features: [
+      {
+        module: pcfRequestFeature,
+        id: 'pcf-precalculation',
+        name: i18n.t('pcf.features.pcfPrecalculation.name', { ns: 'kits', defaultValue: 'PCF Precalculation' }),
+        description: i18n.t('pcf.features.pcfPrecalculation.description', { ns: 'kits', defaultValue: 'Calculate product carbon footprint from subpart PCF data' }),
+        icon: <Calculate />,
+        enabled: false,
+        default: false
+      },
+      {
+        module: pcfManagementFeature,
+        id: 'pcf-management',
+        name: i18n.t('pcf.features.pcfManagement.name', { ns: 'kits', defaultValue: 'PCF Management' }),
+        description: i18n.t('pcf.features.pcfManagement.description', { ns: 'kits', defaultValue: 'Manage and upload PCF data for your catalog parts' }),
+        icon: <CloudUpload />,
+        enabled: false,
+        default: false
+      },
+      {
+        module: pcfExchangeFeature,
+        id: 'pcf-requests',
+        name: i18n.t('pcf.features.pcfRequests.name', { ns: 'kits', defaultValue: 'PCF Requests' }),
+        description: i18n.t('pcf.features.pcfRequests.description', { ns: 'kits', defaultValue: 'View and respond to incoming PCF requests' }),
+        icon: <Inbox />,
+        enabled: false,
+        default: false
+      }
+    ],
+    domain: 'sustainability',
+    version: '1.0.0',
+    createdAt: '2026-03-06',
+    lastUpdated: '2026-03-06',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
+  },
+  {
     id: 'data-governance',
     name: i18n.t('dataGovernance.name', { ns: 'kits' }),
     description: i18n.t('dataGovernance.description', { ns: 'kits' }),
@@ -171,18 +230,6 @@ export const kits: KitFeature[] = [
     domain: 'dataspace-foundation',
     version: '0.0.0',
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/data-governance-kit/adoption-view'
-  },
-  {
-    id: 'pcf',
-    name: i18n.t('pcf.name', { ns: 'kits' }),
-    description: i18n.t('pcf.description', { ns: 'kits' }),
-    status: 'coming-soon',
-    icon: <EnergySavingsLeaf />,
-    image: PcfKitImage,
-    features: [],
-    domain: 'sustainability',
-    version: '0.0.0',
-    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/product-carbon-footprint-exchange-kit/adoption-view'
   },
   {
     id: 'data-chain',
@@ -219,6 +266,72 @@ export const kits: KitFeature[] = [
     version: '0.0.0',
     domain: 'industry-core',
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/Traceability%20Kit/Adoption%20View%20Traceability%20Kit'
+  },
+  {
+   id: 'ccm',
+    name: 'CCM KIT',
+    description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
+    status: 'available',
+    icon: <WorkspacePremium />,
+    image: CcmKitImage,
+    features: [
+      // --- Provider role ---
+      {
+        module: certificateManagementFeature,
+        id: 'certificate-management',
+        name: 'Certificate Management',
+        description: 'Upload, manage and maintain your own compliance certificates.',
+        icon: <WorkspacePremium />,
+        enabled: true,
+        default: false
+      },
+      {
+        module: provisionManagementFeature,
+        id: 'ccm-provision-management',
+        name: 'CCM Provision Management',
+        description: 'Handle incoming certificate requests and provide certificates to consumers (AVAILABLE / PUSH).',
+        icon: <Inbox />,
+        enabled: true,
+        default: false
+      },
+      // --- Consumer role ---
+      {
+        module: ccmConsumptionFeature,
+        id: 'ccm-consumption',
+        name: 'CCM Consumption',
+        description: 'Request, track, download and review compliance certificates from your partners.',
+        icon: <ShoppingCart />,        
+        enabled: false,
+        default: false
+      }
+      ],
+      version: '1.0.0',
+      domain: 'compliance',
+      documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/certificate-management-kit/adoption-view' 
+  },
+  {
+    id: 'mcp',
+    name: i18n.t('mcp.name', { ns: 'kits' }),
+    description: i18n.t('mcp.description', { ns: 'kits' }),
+    status: 'available',
+    icon: <McpIcon />,
+    image: McpAddonImage,
+    features: [
+      {
+        module: mcpAddonFeature,
+        id: 'mcp-tools',
+        name: i18n.t('mcp.features.mcpTools.name', { ns: 'kits' }),
+        description: i18n.t('mcp.features.mcpTools.description', { ns: 'kits' }),
+        icon: <McpIcon />,
+        enabled: false,
+        default: false
+      }
+    ],
+    domain: 'dataspace-foundation',
+    version: '0.0.1',
+    createdAt: '2026-05-19',
+    lastUpdated: '2026-05-19',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits'
   }
 ];
 

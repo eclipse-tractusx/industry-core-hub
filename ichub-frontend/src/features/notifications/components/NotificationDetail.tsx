@@ -2,7 +2,7 @@
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
  * Copyright (c) 2026 LKS Next
- * Copyright (c) 2025 Contributors to the Eclipse Foundation
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -22,6 +22,7 @@
  ********************************************************************************/
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box,
@@ -60,6 +61,7 @@ import {
   PriorityHigh,
   Search,
   HourglassEmpty,
+  Launch,
 } from '@mui/icons-material';
 import { useNotifications } from '../contexts/NotificationContext';
 import {
@@ -80,6 +82,8 @@ import { SingleTwinResult } from '@/features/industry-core-kit/part-discovery/co
  * Supports responsive design and hides technical details behind info icon
  */
 const NotificationDetail: React.FC = () => {
+  const navigate = useNavigate();
+
   const {
     panelSize,
     selectedNotification,
@@ -90,6 +94,8 @@ const NotificationDetail: React.FC = () => {
     refreshPartners,
     verifyDigitalTwin,
     verifyAllDigitalTwins,
+    closePanel,
+    triggerCcmRefresh,
   } = useNotifications();
 
   const { t } = useTranslation('notifications');
@@ -114,6 +120,33 @@ const NotificationDetail: React.FC = () => {
   // Determine layout mode
   const isCompact = panelSize === 'normal';
 
+  // Maps PCF notification type to navigation target
+  const getPcfNavigationTarget = (notificationType: string): { path: string; labelKey: string } | null => {
+    const requestId = selectedNotification?.pcfContent?.requestId;
+    switch (notificationType) {
+      case 'PCF_REQUEST_RECEIVED':
+        return { 
+          path: '/pcf/requests', 
+          labelKey: 'detail.viewIncomingPcfRequests' };
+      case 'PCF_RESPONSE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
+        return {
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.goPcfPrecalculation',
+        };
+      case 'PCF_DATA_UPDATE_RECEIVED':
+        // Omit query param if requestId is empty
+        if (!requestId) return null;
+        return {
+          path: `/pcf/precalculation?requestId=${encodeURIComponent(requestId)}`,
+          labelKey: 'detail.viewUpdatedPcfData',
+        };
+      default:
+        return null;
+    }
+  };
+
   // Ref for scrollable content container (auto-scroll on expand)
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +162,11 @@ const NotificationDetail: React.FC = () => {
   if (!selectedNotification) return null;
 
   const { header, content, verifiedItems, status, feedbackResponse } = selectedNotification;
+
+  // Digital-twin notification types that use the DT verification/feedback workflow
+  const isDtNotification = ['connect-to-parent', 'connect-to-child', 'submodel-update', 'feedback'].includes(
+    selectedNotification.type
+  );
 
   const senderName = getContactName(header.senderBpn);
   const isKnown = isKnownContact(header.senderBpn);
@@ -374,12 +412,12 @@ const NotificationDetail: React.FC = () => {
                     itemFeedback.status === 'OK'
                       ? 'rgba(76, 175, 80, 0.2)'
                       : itemFeedback.status === 'PENDING'
-                        ? 'rgba(255, 167, 38, 0.2)'
+                        ? 'rgba(157, 111, 212, 0.2)'
                         : 'rgba(244, 67, 54, 0.2)',
                   color: itemFeedback.status === 'OK' 
                     ? '#81c784' 
                     : itemFeedback.status === 'PENDING'
-                      ? '#ffa726'
+                      ? '#9D6FD4'
                       : '#ef5350',
                   fontSize: '0.55rem',
                   height: '16px',
@@ -716,11 +754,11 @@ const NotificationDetail: React.FC = () => {
                   onClick={() => setShowAddContactDialog(true)}
                   sx={{
                     padding: '4px',
-                    color: '#ffb74d',
-                    backgroundColor: 'rgba(255, 183, 77, 0.1)',
+                    color: '#9D6FD4',
+                    backgroundColor: 'rgba(157, 111, 212, 0.1)',
                     '&:hover': { 
-                      backgroundColor: 'rgba(255, 183, 77, 0.25)',
-                      color: '#ffa726',
+                      backgroundColor: 'rgba(157, 111, 212, 0.25)',
+                      color: '#9D6FD4',
                     },
                   }}
                 >
@@ -770,6 +808,28 @@ const NotificationDetail: React.FC = () => {
               }}
             />
           )}
+          {selectedNotification.useCase && (
+            <Chip
+              label={selectedNotification.useCase}
+              size="small"
+              sx={{
+                backgroundColor:
+                  selectedNotification.useCase.toUpperCase() === 'PCF'
+                    ? 'rgba(0, 188, 212, 0.2)'
+                    : selectedNotification.useCase.toUpperCase() === 'CCM'
+                    ? 'rgba(157, 111, 212, 0.2)'
+                    : 'rgba(158, 158, 158, 0.15)',
+                color:
+                  selectedNotification.useCase.toUpperCase() === 'PCF'
+                    ? '#00bcd4'
+                    : selectedNotification.useCase.toUpperCase() === 'CCM'
+                    ? '#9D6FD4'
+                    : '#bdbdbd',
+                fontSize: '0.65rem',
+                fontWeight: 600,
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -814,129 +874,435 @@ const NotificationDetail: React.FC = () => {
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-            <Chip
-              label={content.digitalTwinType}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                color: '#64b5f6',
-                fontSize: '0.65rem',
-                height: '22px',
-              }}
-            />
-            <Chip
-              icon={<DeviceHub sx={{ fontSize: '0.75rem !important' }} />}
-              label={`${content.listOfItems.length} DT${content.listOfItems.length > 1 ? 's' : ''}`}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                color: '#81c784',
-                fontSize: '0.65rem',
-                height: '22px',
-                '& .MuiChip-icon': { color: '#81c784' },
-              }}
-            />
+            {isDtNotification ? (
+              <>
+                <Chip
+                  label={content.digitalTwinType}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                    color: '#64b5f6',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                  }}
+                />
+                <Chip
+                  icon={<DeviceHub sx={{ fontSize: '0.75rem !important' }} />}
+                  label={`${content.listOfItems.length} DT${content.listOfItems.length > 1 ? 's' : ''}`}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    color: '#81c784',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                    '& .MuiChip-icon': { color: '#81c784' },
+                  }}
+                />
+              </>
+            ) : (
+              // Non-DT: show the notificationType as a chip (works for PCF, CCM, future use cases)
+              selectedNotification.pcfContent?.notificationType && (
+                <Chip
+                  label={selectedNotification.pcfContent.notificationType.replace(/_/g, ' ')}
+                  size="small"
+                  sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    fontSize: '0.65rem',
+                    height: '22px',
+                    fontWeight: 500,
+                  }}
+                />
+              )
+            )}
             {header.expectedResponseBy && getPriorityDisplay()}
           </Box>
         </Box>
 
-        {/* Digital Twins Section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography
+        {/* PCF content section — shown for PCF-type notifications */}
+        {selectedNotification.type === 'pcf' && selectedNotification.pcfContent && (
+          <>
+          <Box
             sx={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              textTransform: 'uppercase',
+              padding: isCompact ? '10px' : '14px',
+              backgroundColor: 'rgba(0, 188, 212, 0.08)',
+              border: '1px solid rgba(0, 188, 212, 0.2)',
+              borderRadius: '8px',
+              mb: 2,
             }}
           >
-            {t('detail.digitalTwinsCount', { count: content.listOfItems.length })}
-          </Typography>
-
-          {!allVerified && !anyVerifying && (
-            <Button
-              size="small"
-              startIcon={<Refresh sx={{ fontSize: '0.85rem' }} />}
-              onClick={() => verifyAllDigitalTwins(selectedNotification.id)}
+            <Typography
               sx={{
-                color: '#64b5f6',
-                fontSize: '0.65rem',
-                padding: '2px 8px',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(100, 181, 246, 0.2)',
-                  color: '#90caf9',
-                  transform: 'translateY(-1px)',
-                },
+                color: '#00bcd4',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+                mb: 1.5,
               }}
             >
-              {t('detail.verifyAll')}
-            </Button>
-          )}
-        </Box>
-
-        {verifiedItems.map((vi, index) => renderDigitalTwinItem(vi, index))}
-
-        {/* Feedback Section */}
-        {status !== 'feedback-sent' && (
-          <Box sx={{ mt: 2 }}>
-            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
-
-            {!showFeedbackForm ? (
-              <Tooltip 
-                title={!allVerified ? t('detail.verifyAllTooltip') : ""}
-                arrow
-                placement="top"
-              >
-                <span>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    startIcon={<Send sx={{ fontSize: '1rem' }} />}
-                    onClick={() => {
-                      setShowFeedbackForm(true);
-                      // Scroll to bottom so the feedback form is visible
-                      setTimeout(() => {
-                        scrollContainerRef.current?.scrollTo({
-                          top: scrollContainerRef.current.scrollHeight,
-                          behavior: 'smooth',
-                        });
-                      }, 350);
-                    }}
-                    disabled={!allVerified}
-                    sx={{
-                      backgroundColor: allVerified ? '#1976d2' : 'rgba(255, 255, 255, 0.1)',
-                      color: '#ffffff',
-                      fontSize: '0.8rem',
-                      padding: '8px 16px',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        backgroundColor: allVerified ? '#1565c0' : 'rgba(255, 255, 255, 0.15)',
-                        transform: allVerified ? 'translateY(-1px)' : 'none',
-                        boxShadow: allVerified ? '0 4px 12px rgba(25, 118, 210, 0.4)' : 'none',
-                      },
-                      '&.Mui-disabled': {
-                        color: 'rgba(255, 255, 255, 0.4)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                      },
-                    }}
-                  >
-                    {allVerified ? t('detail.sendFeedback') : t('detail.pendingVerification')}
-                  </Button>
-                </span>
-              </Tooltip>
-            ) : (
-              <FeedbackForm
-                notification={selectedNotification}
-                onCancel={() => setShowFeedbackForm(false)}
+              PCF Details
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: isCompact ? '1fr' : '1fr 1fr', gap: 1, rowGap: 1.5 }}>
+              <DetailRow label="Notification Type" value={selectedNotification.pcfContent.notificationType} compact={isCompact} t={t} />
+              {selectedNotification.pcfContent.manufacturerPartId && (
+                <DetailRow
+                  label="Manufacturer Part ID"
+                  value={selectedNotification.pcfContent.manufacturerPartId}
+                  copyable
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              {selectedNotification.pcfContent.customerPartId && (
+                <DetailRow
+                  label="Customer Part ID"
+                  value={selectedNotification.pcfContent.customerPartId}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              <DetailRow
+                label="Request ID"
+                value={selectedNotification.pcfContent.requestId}
+                copyable
+                compact={isCompact}
+                t={t}
+              />
+              {selectedNotification.pcfContent.requestingBpn && (
+                <DetailRow
+                  label="Requesting BPN"
+                  value={selectedNotification.pcfContent.requestingBpn}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+              {selectedNotification.pcfContent.respondingBpn && (
+                <DetailRow
+                  label="Responding BPN"
+                  value={selectedNotification.pcfContent.respondingBpn}
+                  compact={isCompact}
+                  t={t}
+                />
+              )}
+            </Box>
+            {selectedNotification.pcfContent.isUpdate && (
+              <Chip
+                label="Update"
+                size="small"
+                sx={{
+                  mt: 1.5,
+                  backgroundColor: 'rgba(157, 111, 212, 0.2)',
+                  color: '#9D6FD4',
+                  fontSize: '0.65rem',
+                  fontWeight: 600,
+                }}
               />
             )}
+            {(() => {
+              const navTarget = getPcfNavigationTarget(selectedNotification.pcfContent.notificationType);
+              return navTarget ? (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Launch sx={{ fontSize: '0.9rem !important' }} />}
+                  onClick={() => {
+                    closePanel();
+                    navigate(navTarget.path);
+                  }}
+                  sx={{
+                    mt: 1.5,
+                    borderColor: 'rgba(0, 188, 212, 0.5)',
+                    color: '#00bcd4',
+                    fontSize: '0.72rem',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: '#00bcd4',
+                      backgroundColor: 'rgba(0, 188, 212, 0.08)',
+                    },
+                  }}
+                >
+                  {t(navTarget.labelKey, { defaultValue: navTarget.defaultLabel })}
+                </Button>
+              ) : null;
+            })()}
+          </Box>
+
+          <Button
+            variant="outlined"
+            fullWidth
+            size="small"
+            onClick={() => {
+              closePanel();
+              navigate('/pcf/requests');
+            }}
+            sx={{
+              mb: 2,
+              color: '#00bcd4',
+              borderColor: 'rgba(0, 188, 212, 0.4)',
+              fontSize: '0.8rem',
+              textTransform: 'none',
+              fontWeight: 600,
+              borderRadius: '8px',
+              padding: '8px 16px',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                color: '#00bcd4',
+                borderColor: '#00bcd4',
+                backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(0, 188, 212, 0.2)',
+              },
+            }}
+          >
+            {t('pcf.viewInRequests')}
+          </Button>
+          </>
+        )}
+
+        {/* Generic non-DT content section — for non-PCF, non-CCM use cases */}
+        {!isDtNotification && selectedNotification.type !== 'pcf' && selectedNotification.type !== 'ccm' && content.information && (
+          <Box
+            sx={{
+              padding: isCompact ? '10px' : '14px',
+              backgroundColor: 'rgba(158, 158, 158, 0.08)',
+              border: '1px solid rgba(158, 158, 158, 0.2)',
+              borderRadius: '8px',
+              mb: 2,
+            }}
+          >
+            <Typography sx={{ color: '#bdbdbd', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', mb: 1 }}>
+              {selectedNotification.useCase ?? 'Notification'} Details
+            </Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+              {content.information}
+            </Typography>
           </Box>
         )}
 
-        {/* Feedback Response if already sent */}
-        {feedbackResponse && (
-          <FeedbackSentPanel feedbackResponse={feedbackResponse} t={t} />
+        {/* CCM content section — shown for CCM-type notifications */}
+        {selectedNotification.type === 'ccm' && selectedNotification.ccmContent && (() => {
+          const ccm = selectedNotification.ccmContent;
+          const notifType = ccm.notificationType;
+
+          const navMap: Record<string, { target: string; label: string }> = {
+            CCM_REQUEST_RECEIVED:  { target: '/ccm-provision?tab=inbound', label: t('ccm.viewInboundRequests') },
+            CCM_REQUEST_NOT_FOUND: { target: '/ccm-provision?tab=inbound', label: t('ccm.viewInboundRequests') },
+            CCM_STATUS_RECEIVED:   { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+            CCM_PUSH_RECEIVED:     { target: '/ccm-consumption',            label: t('ccm.viewInConsumption') },
+            CCM_AVAILABLE_RECEIVED:{ target: '/ccm-consumption',            label: t('ccm.viewInConsumption') },
+            CCM_AVAILABLE_SENT:    { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+            CCM_PUSH_SENT:         { target: '/ccm-provision?tab=shares',  label: t('ccm.viewInProvision') },
+          };
+          const nav = navMap[notifType] ?? { target: '/ccm-consumption', label: t('ccm.viewInConsumption') };
+
+          const descriptionKey = `ccm.description.${notifType}`;
+          const descriptionText = t(descriptionKey, {
+            senderName: getContactName(selectedNotification.header.senderBpn),
+            certificateType: ccm.certificateType ?? '—',
+            documentId: ccm.documentId ?? '—',
+          });
+          const hasDescription = descriptionText !== descriptionKey;
+
+          return (
+            <>
+              {hasDescription && (
+                <Box
+                  sx={{
+                    padding: isCompact ? '10px' : '14px',
+                    backgroundColor: 'rgba(157, 111, 212, 0.05)',
+                    border: '1px solid rgba(157, 111, 212, 0.15)',
+                    borderRadius: '8px',
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      color: '#9D6FD4',
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      mb: 1,
+                    }}
+                  >
+                    {t('ccm.descriptionTitle')}
+                  </Typography>
+                  <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+                    {descriptionText}
+                  </Typography>
+                </Box>
+              )}
+
+              <Box
+                sx={{
+                  padding: isCompact ? '10px' : '14px',
+                  backgroundColor: 'rgba(157, 111, 212, 0.08)',
+                  border: '1px solid rgba(157, 111, 212, 0.2)',
+                  borderRadius: '8px',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: '#9D6FD4',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    mb: 1.5,
+                  }}
+                >
+                  {t('ccm.details')}
+                </Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: isCompact ? '1fr' : '1fr 1fr', gap: 1, rowGap: 1.5 }}>
+                  <DetailRow label={t('ccm.notificationType')} value={notifType} compact={isCompact} t={t} />
+                  {ccm.certificateType && (
+                    <DetailRow label={t('ccm.certificateType')} value={ccm.certificateType} compact={isCompact} t={t} />
+                  )}
+                  {ccm.certifiedBpn && (
+                    <DetailRow label={t('ccm.certifiedBpn')} value={ccm.certifiedBpn} copyable compact={isCompact} t={t} />
+                  )}
+                  {ccm.documentId && (
+                    <DetailRow label={t('ccm.documentId')} value={ccm.documentId} copyable compact={isCompact} t={t} />
+                  )}
+                </Box>
+              </Box>
+
+              <Button
+                variant="outlined"
+                fullWidth
+                size="small"
+                onClick={() => {
+                  triggerCcmRefresh();
+                  closePanel();
+                  navigate(nav.target);
+                }}
+                sx={{
+                  mb: 2,
+                  color: '#9D6FD4',
+                  borderColor: 'rgba(157, 111, 212, 0.4)',
+                  fontSize: '0.8rem',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    color: '#9D6FD4',
+                    borderColor: '#9D6FD4',
+                    backgroundColor: 'rgba(157, 111, 212, 0.1)',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(157, 111, 212, 0.2)',
+                  },
+                }}
+              >
+                {nav.label}
+              </Button>
+            </>
+          );
+        })()}
+
+        {/* Digital Twins Section — only for DT notification types */}
+        {isDtNotification && (
+          <>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '0.7rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {t('detail.digitalTwinsCount', { count: content.listOfItems.length })}
+              </Typography>
+
+              {!allVerified && !anyVerifying && (
+                <Button
+                  size="small"
+                  startIcon={<Refresh sx={{ fontSize: '0.85rem' }} />}
+                  onClick={() => verifyAllDigitalTwins(selectedNotification.id)}
+                  sx={{
+                    color: '#64b5f6',
+                    fontSize: '0.65rem',
+                    padding: '2px 8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      backgroundColor: 'rgba(100, 181, 246, 0.2)',
+                      color: '#90caf9',
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  {t('detail.verifyAll')}
+                </Button>
+              )}
+            </Box>
+
+            {verifiedItems.map((vi, index) => renderDigitalTwinItem(vi, index))}
+
+            {/* Feedback Section */}
+            {status !== 'feedback-sent' && (
+              <Box sx={{ mt: 2 }}>
+                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
+
+                {!showFeedbackForm ? (
+                  <Tooltip
+                    title={!allVerified ? t('detail.verifyAllTooltip') : ""}
+                    arrow
+                    placement="top"
+                  >
+                    <span>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<Send sx={{ fontSize: '1rem' }} />}
+                        onClick={() => {
+                          setShowFeedbackForm(true);
+                          setTimeout(() => {
+                            scrollContainerRef.current?.scrollTo({
+                              top: scrollContainerRef.current.scrollHeight,
+                              behavior: 'smooth',
+                            });
+                          }, 350);
+                        }}
+                        disabled={!allVerified}
+                        sx={{
+                          backgroundColor: allVerified ? '#1976d2' : 'rgba(255, 255, 255, 0.1)',
+                          color: '#ffffff',
+                          fontSize: '0.8rem',
+                          padding: '8px 16px',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            backgroundColor: allVerified ? '#1565c0' : 'rgba(255, 255, 255, 0.15)',
+                            transform: allVerified ? 'translateY(-1px)' : 'none',
+                            boxShadow: allVerified ? '0 4px 12px rgba(25, 118, 210, 0.4)' : 'none',
+                          },
+                          '&.Mui-disabled': {
+                            color: 'rgba(255, 255, 255, 0.4)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                          },
+                        }}
+                      >
+                        {allVerified ? t('detail.sendFeedback') : t('detail.pendingVerification')}
+                      </Button>
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <FeedbackForm
+                    notification={selectedNotification}
+                    onCancel={() => setShowFeedbackForm(false)}
+                  />
+                )}
+              </Box>
+            )}
+
+            {/* Feedback Response if already sent */}
+            {feedbackResponse && (
+              <FeedbackSentPanel feedbackResponse={feedbackResponse} t={t} />
+            )}
+          </>
         )}
       </Box>
 
@@ -1202,7 +1568,7 @@ const DetailRow: React.FC<{ label: string; value: string; copyable?: boolean; co
 const getFeedbackStatusColor = (status: string): string => {
   switch (status) {
     case 'OK': return '#81c784';
-    case 'PENDING': return '#ffa726';
+    case 'PENDING': return '#9D6FD4';
     default: return '#ef5350';
   }
 };
@@ -1210,7 +1576,7 @@ const getFeedbackStatusColor = (status: string): string => {
 const getFeedbackStatusBg = (status: string): string => {
   switch (status) {
     case 'OK': return 'rgba(76, 175, 80, 0.1)';
-    case 'PENDING': return 'rgba(255, 167, 38, 0.1)';
+    case 'PENDING': return 'rgba(157, 111, 212, 0.1)';
     default: return 'rgba(244, 67, 54, 0.1)';
   }
 };
@@ -1226,7 +1592,7 @@ const getFeedbackStatusHoverBg = (status: string): string => {
 const getFeedbackStatusIcon = (status: string, fontSize: string = '1rem') => {
   switch (status) {
     case 'OK': return <CheckCircle sx={{ color: '#81c784', fontSize }} />;
-    case 'PENDING': return <HourglassEmpty sx={{ color: '#ffa726', fontSize }} />;
+    case 'PENDING': return <HourglassEmpty sx={{ color: '#9D6FD4', fontSize }} />;
     default: return <Error sx={{ color: '#ef5350', fontSize }} />;
   }
 };

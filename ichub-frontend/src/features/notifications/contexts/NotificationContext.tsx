@@ -93,6 +93,8 @@ interface NotificationContextType {
   filters: NotificationFilters;
   setFilters: (filters: NotificationFilters) => void;
   clearFilters: () => void;
+  /** Convenience setter that updates only the useCase filter dimension */
+  setUseCaseFilter: (useCase: string | undefined) => void;
 
   // Actions
   markAsRead: (notificationId: string) => void;
@@ -127,6 +129,10 @@ interface NotificationContextType {
 
   // Verification state helper
   getVerificationState: (notification: InboxNotification) => NotificationVerificationState;
+
+  // CCM table refresh
+  ccmRefreshToken: number;
+  triggerCcmRefresh: () => void;
 }
 
 const defaultFilters: NotificationFilters = {
@@ -164,6 +170,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [realPartners, setRealPartners] = useState<PartnerInstance[]>([]);
   const [filters, setFilters] = useState<NotificationFilters>(defaultFilters);
 
+  // CCM table refresh token
+  const [ccmRefreshToken, setCcmRefreshToken] = useState(0);
+  const triggerCcmRefresh = useCallback(() => setCcmRefreshToken((n) => n + 1), []);
+
   // Load partners from Contact List API
   const refreshPartners = useCallback(async () => {
     try {
@@ -200,7 +210,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
       const responses = await notificationApiService.fetchNotifications(bpn);
       const mapped = mapApiResponsesToNotifications(responses);
-      setNotifications(mapped);
+      setNotifications((prev) => {
+        const prevIds = new Set(prev.map((n) => n.id));
+        const hasNewCcm = mapped.some((n) => n.type === 'ccm' && !prevIds.has(n.id));
+        if (hasNewCcm) setCcmRefreshToken((t) => t + 1);
+        return mapped;
+      });
     } catch (error) {
       console.error('Failed to fetch notifications from API:', error);
     }
@@ -349,6 +364,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           notification.content.information?.toLowerCase().includes(searchLower) ||
           // Search by digital twin type
           notification.content.digitalTwinType?.toLowerCase().includes(searchLower) ||
+          // Search by use case
+          notification.useCase?.toLowerCase().includes(searchLower) ||
+          // Search by PCF-specific fields
+          notification.pcfContent?.notificationType?.toLowerCase().includes(searchLower) ||
+          notification.pcfContent?.manufacturerPartId?.toLowerCase().includes(searchLower) ||
+          notification.pcfContent?.requestId?.toLowerCase().includes(searchLower) ||
           // Search by items (catenaXId, manufacturerPartId, customerPartId)
           notification.content.listOfItems.some(
             (item) =>
@@ -372,6 +393,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       // Sender filter
       if (filters.senderBpn && notification.header.senderBpn !== filters.senderBpn) {
+        return false;
+      }
+
+      // Use case filter
+      if (filters.useCase && notification.useCase !== filters.useCase) {
         return false;
       }
 
@@ -484,6 +510,13 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Statistics
   const stats = React.useMemo((): NotificationStats => {
     const nonArchivedNonTrashed = notifications.filter((n) => !n.isArchived && !n.isTrashed);
+    // Count per use case for the quick-filter chips in the panel header
+    const perUseCase: Record<string, number> = {};
+    nonArchivedNonTrashed.forEach((n) => {
+      if (n.useCase) {
+        perUseCase[n.useCase] = (perUseCase[n.useCase] ?? 0) + 1;
+      }
+    });
     return {
       total: nonArchivedNonTrashed.length,
       unread: nonArchivedNonTrashed.filter((n) => n.status === 'unread').length,
@@ -492,6 +525,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       feedbackSent: nonArchivedNonTrashed.filter((n) => getVerificationState(n) === 'feedback-sent').length,
       archived: notifications.filter((n) => n.isArchived && !n.isTrashed).length,
       trash: notifications.filter((n) => n.isTrashed).length,
+      perUseCase,
     };
   }, [notifications, getVerificationState]);
 
@@ -791,6 +825,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setFilters(defaultFilters);
   }, []);
 
+  // Convenience setter for the useCase filter dimension
+  const setUseCaseFilter = useCallback((useCase: string | undefined) => {
+    setFilters((prev) => ({ ...prev, useCase }));
+  }, []);
+
   // Get contact name (checks real partners first)
   const getContactName = useCallback(
     (bpnl: string): string => {
@@ -849,6 +888,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     filters,
     setFilters,
     clearFilters,
+    setUseCaseFilter,
     markAsRead,
     markAsUnread,
     markSelectedAsRead,
@@ -873,6 +913,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     getPriority,
     getStats,
     getVerificationState,
+    ccmRefreshToken,
+    triggerCcmRefresh,
   };
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

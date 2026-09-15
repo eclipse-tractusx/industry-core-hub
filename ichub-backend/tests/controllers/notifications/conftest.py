@@ -78,6 +78,15 @@ def app_client():
     """
     _restore_real_modules()
 
+    _PCF_SDK_SUBMODULES = [
+        'tractusx_sdk.dataspace.tools.validate_submodels',
+        'tractusx_sdk.extensions',
+        'tractusx_sdk.extensions.notification_api',
+        'tractusx_sdk.extensions.notification_api.models',
+    ]
+    for _mod in _PCF_SDK_SUBMODULES:
+        sys.modules.setdefault(_mod, MagicMock())
+
     with patch("services.notifications.notifications_management_service.connector_manager") as mock_conn, \
          patch("services.notifications.notifications_management_service.dtr_manager") as mock_dtr, \
          patch("controllers.fastapi.routers.authentication.auth_api.api_key_manager", None), \

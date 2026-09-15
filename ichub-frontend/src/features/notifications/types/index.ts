@@ -139,14 +139,54 @@ export interface FeedbackNotification {
   content: FeedbackPayload;
 }
 
+/**
+ * PCF (Product Carbon Footprint) notification content payload.
+ * Received when a PCF data request or response is communicated via EDC.
+ * Context format: "IndustryCore-PCF-{notificationType}:1.0.0"
+ */
+export interface PcfNotificationPayload {
+  notificationType: string; // e.g. PCF_REQUEST_RECEIVED, PCF_RESPONSE_RECEIVED
+  requestId: string;
+  message?: string;
+  timestamp: string;
+  manufacturerPartId?: string;
+  customerPartId?: string;
+  requestingBpn?: string;
+  respondingBpn?: string;
+  targetBpn?: string;
+  isUpdate?: boolean;
+}
+
+/**
+ * CCM (Conformance Credential Management) notification content payload.
+ * Context format: "IndustryCore-CCM-{notificationType}:1.0.0"
+ *
+ * notificationType values:
+ *   CCM_REQUEST_SENT       — Consumer sent a certificate request
+ *   CCM_REQUEST_NOT_FOUND  — Provider could not find the requested certificate
+ *   CCM_AVAILABLE_SENT     — Provider notified consumer that certificate is available
+ *   CCM_AVAILABLE_RECEIVED — Consumer received an availability notification
+ *   CCM_PUSH_SENT          — Provider proactively pushed a certificate
+ *   CCM_PUSH_RECEIVED      — Consumer received a pushed certificate
+ *   CCM_STATUS_SENT        — Consumer sent a status acknowledgment
+ */
+export interface CcmNotificationPayload {
+  notificationType: string;
+  timestamp: string;
+  certificateType?: string;
+  certifiedBpn?: string;
+  documentId?: string;
+}
+
 // ============================================================================
 // Internal Application Types
 // ============================================================================
 
 /**
- * Notification Type based on API operations
+ * Notification Type based on API operations.
+ * 'pcf' and 'ccm' handle use-case-specific notification types.
  */
-export type NotificationType = 'connect-to-parent' | 'connect-to-child' | 'submodel-update' | 'feedback';
+export type NotificationType = 'connect-to-parent' | 'connect-to-child' | 'submodel-update' | 'feedback' | 'pcf' | 'ccm';
 
 /**
  * Notification Status for inbox (read/unread state)
@@ -200,6 +240,12 @@ export interface InboxNotification {
   isArchived: boolean;
   isTrashed: boolean;
   verificationState: NotificationVerificationState;
+  // Use-case categorisation (e.g. 'PCF', 'CCM') from the backend useCase field
+  useCase?: string;
+  // Typed PCF payload — only populated when type === 'pcf'
+  pcfContent?: PcfNotificationPayload;
+  // Typed CCM payload — only populated when type === 'ccm'
+  ccmContent?: CcmNotificationPayload;
 }
 
 /**
@@ -249,6 +295,8 @@ export interface NotificationFilters {
     to: Date;
   };
   senderBpn?: string;
+  /** Filter by use case category (e.g. 'PCF', 'CCM'). Undefined means show all. */
+  useCase?: string;
 }
 
 /**
@@ -271,6 +319,8 @@ export interface NotificationStats {
   feedbackSent: number;
   archived: number;
   trash: number;
+  /** Notification counts grouped by useCase (e.g. { PCF: 3, CCM: 1 }) */
+  perUseCase: Record<string, number>;
 }
 
 /**

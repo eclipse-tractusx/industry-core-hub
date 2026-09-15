@@ -13,7 +13,10 @@
     "registerSuccess": "Gémeo da peça registado com sucesso!",
     "registerError": "Falha ao registar o gémeo da peça!",
     "submodelCreatedSuccess": "Submodelo criado com sucesso com o esquema {{schemaName}}!",
-    "submodelCreatedError": "Falha ao criar submodelo"
+    "submodelCreatedError": "Falha ao criar submodelo",
+    "submodelUpdatedSuccess": "Submodelo atualizado com sucesso com o esquema {{schemaName}}!",
+    "noSchemaForEdit": "Nenhum esquema correspondente encontrado para este submodelo. Não pode ser editado no editor de formulários.",
+    "submodelLoadError": "Falha ao carregar os dados do submodelo para edição"
   },
   "createDialog": {
     "title": "Criar Nova Peça de Catálogo",
@@ -271,7 +274,8 @@
       "createNewSubmodel": "Criar um novo aspeto de submodelo",
       "noSubmodels": "Nenhum Submodelo Disponível",
       "noSubmodelsDescription": "Este gémeo digital não tem nenhum aspeto de submodelo disponível para visualização.",
-      "submodelsDisplayed": "{{count}} submodelo(s) do gémeo digital exibido(s)"
+      "submodelsDisplayed": "{{count}} submodelo(s) do gémeo digital exibido(s)",
+      "updateSubmodel": "Atualizar Submodelo"
     },
     "jsonViewer": {
       "title": "Visualizador JSON",

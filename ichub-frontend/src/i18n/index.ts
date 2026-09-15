@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -20,6 +21,10 @@
  * SPDX-License-Identifier: Apache-2.0
 ********************************************************************************/
 
+// NOTE: All translations have been generated via Artificial Intelligence.
+// We kindly ask you to review and report any feedback regarding text accuracy
+// and contextual correctness throughout the application interface.
+
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -33,7 +38,10 @@ import enPassportConsumption from './locales/en/passportConsumption.json';
 import enPassportProvision from './locales/en/passportProvision.json';
 import enPartDiscovery from './locales/en/partDiscovery.json';
 import enSerializedParts from './locales/en/serializedParts.json';
+import enPcf from './locales/en/pcf.json';
 import enNotifications from './locales/en/notifications.json';
+import enBatteryPass from './locales/en/batteryPass.json';
+import enCertificateManagement from './locales/en/certificateManagement.json';
 
 // Spanish
 import esCommon from './locales/es/common.json';
@@ -44,7 +52,10 @@ import esPassportConsumption from './locales/es/passportConsumption.json';
 import esPassportProvision from './locales/es/passportProvision.json';
 import esPartDiscovery from './locales/es/partDiscovery.json';
 import esSerializedParts from './locales/es/serializedParts.json';
+import esPcf from './locales/es/pcf.json';
 import esNotifications from './locales/es/notifications.json';
+import esBatteryPass from './locales/es/batteryPass.json';
+import esCertificateManagement from './locales/es/certificateManagement.json';
 
 // German
 import deCommon from './locales/de/common.json';
@@ -55,7 +66,10 @@ import dePassportConsumption from './locales/de/passportConsumption.json';
 import dePassportProvision from './locales/de/passportProvision.json';
 import dePartDiscovery from './locales/de/partDiscovery.json';
 import deSerializedParts from './locales/de/serializedParts.json';
+import dePcf from './locales/de/pcf.json';
 import deNotifications from './locales/de/notifications.json';
+import deBatteryPass from './locales/de/batteryPass.json';
+import deCertificateManagement from './locales/de/certificateManagement.json';
 
 // French
 import frCommon from './locales/fr/common.json';
@@ -66,7 +80,10 @@ import frPassportConsumption from './locales/fr/passportConsumption.json';
 import frPassportProvision from './locales/fr/passportProvision.json';
 import frPartDiscovery from './locales/fr/partDiscovery.json';
 import frSerializedParts from './locales/fr/serializedParts.json';
+import frPcf from './locales/fr/pcf.json';
 import frNotifications from './locales/fr/notifications.json';
+import frBatteryPass from './locales/fr/batteryPass.json';
+import frCertificateManagement from './locales/fr/certificateManagement.json';
 
 // Chinese (Simplified)
 import zhCommon from './locales/zh/common.json';
@@ -77,7 +94,10 @@ import zhPassportConsumption from './locales/zh/passportConsumption.json';
 import zhPassportProvision from './locales/zh/passportProvision.json';
 import zhPartDiscovery from './locales/zh/partDiscovery.json';
 import zhSerializedParts from './locales/zh/serializedParts.json';
+import zhPcf from './locales/zh/pcf.json';
 import zhNotifications from './locales/zh/notifications.json';
+import zhBatteryPass from './locales/zh/batteryPass.json';
+import zhCertificateManagement from './locales/zh/certificateManagement.json';
 
 // Japanese
 import jaCommon from './locales/ja/common.json';
@@ -88,7 +108,10 @@ import jaPassportConsumption from './locales/ja/passportConsumption.json';
 import jaPassportProvision from './locales/ja/passportProvision.json';
 import jaPartDiscovery from './locales/ja/partDiscovery.json';
 import jaSerializedParts from './locales/ja/serializedParts.json';
+import jaPcf from './locales/ja/pcf.json';
 import jaNotifications from './locales/ja/notifications.json';
+import jaBatteryPass from './locales/ja/batteryPass.json';
+import jaCertificateManagement from './locales/ja/certificateManagement.json';
 
 // Portuguese
 import ptCommon from './locales/pt/common.json';
@@ -99,7 +122,10 @@ import ptPassportConsumption from './locales/pt/passportConsumption.json';
 import ptPassportProvision from './locales/pt/passportProvision.json';
 import ptPartDiscovery from './locales/pt/partDiscovery.json';
 import ptSerializedParts from './locales/pt/serializedParts.json';
+import ptPcf from './locales/pt/pcf.json';
 import ptNotifications from './locales/pt/notifications.json';
+import ptBatteryPass from './locales/pt/batteryPass.json';
+import ptCertificateManagement from './locales/pt/certificateManagement.json';
 
 export const defaultNS = 'common';
 export const resources = {
@@ -112,7 +138,10 @@ export const resources = {
     passportProvision: enPassportProvision,
     partDiscovery: enPartDiscovery,
     serializedParts: enSerializedParts,
-    notifications: enNotifications
+    pcf: enPcf,
+    notifications: enNotifications,
+    batteryPass: enBatteryPass,
+    certificateManagement: enCertificateManagement
   },
   es: {
     common: esCommon,
@@ -123,7 +152,10 @@ export const resources = {
     passportProvision: esPassportProvision,
     partDiscovery: esPartDiscovery,
     serializedParts: esSerializedParts,
-    notifications: esNotifications
+    pcf: esPcf,
+    notifications: esNotifications,
+    batteryPass: esBatteryPass,
+    certificateManagement: esCertificateManagement
   },
   de: {
     common: deCommon,
@@ -134,7 +166,10 @@ export const resources = {
     passportProvision: dePassportProvision,
     partDiscovery: dePartDiscovery,
     serializedParts: deSerializedParts,
-    notifications: deNotifications
+    pcf: dePcf,
+    notifications: deNotifications,
+    batteryPass: deBatteryPass,
+    certificateManagement: deCertificateManagement
   },
   fr: {
     common: frCommon,
@@ -145,7 +180,10 @@ export const resources = {
     passportProvision: frPassportProvision,
     partDiscovery: frPartDiscovery,
     serializedParts: frSerializedParts,
-    notifications: frNotifications
+    pcf: frPcf,
+    notifications: frNotifications,
+    batteryPass: frBatteryPass,
+    certificateManagement: frCertificateManagement
   },
   zh: {
     common: zhCommon,
@@ -156,7 +194,10 @@ export const resources = {
     passportProvision: zhPassportProvision,
     partDiscovery: zhPartDiscovery,
     serializedParts: zhSerializedParts,
-    notifications: zhNotifications
+    pcf: zhPcf,
+    notifications: zhNotifications,
+    batteryPass: zhBatteryPass,
+    certificateManagement: zhCertificateManagement
   },
   ja: {
     common: jaCommon,
@@ -167,7 +208,10 @@ export const resources = {
     passportProvision: jaPassportProvision,
     partDiscovery: jaPartDiscovery,
     serializedParts: jaSerializedParts,
-    notifications: jaNotifications
+    pcf: jaPcf,
+    notifications: jaNotifications,
+    batteryPass: jaBatteryPass,
+    certificateManagement: jaCertificateManagement
   },
   pt: {
     common: ptCommon,
@@ -178,7 +222,10 @@ export const resources = {
     passportProvision: ptPassportProvision,
     partDiscovery: ptPartDiscovery,
     serializedParts: ptSerializedParts,
-    notifications: ptNotifications
+    pcf: ptPcf,
+    notifications: ptNotifications,
+    batteryPass: ptBatteryPass,
+    certificateManagement: ptCertificateManagement
   }
 } as const;
 
@@ -196,7 +243,7 @@ i18n
     fallbackLng: 'en',
     supportedLngs: supportedLanguages,
     defaultNS,
-    ns: ['common', 'kits', 'catalogManagement', 'partnerManagement', 'passportConsumption', 'passportProvision', 'partDiscovery', 'notifications'],
+    ns: ['common', 'batteryPass', 'kits', 'catalogManagement', 'partnerManagement', 'passportConsumption', 'passportProvision', 'partDiscovery', 'serializedParts', 'pcf', 'notifications'],
     interpolation: {
       escapeValue: false // React already escapes values
     },

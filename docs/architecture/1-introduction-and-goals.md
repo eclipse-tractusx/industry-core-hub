@@ -68,7 +68,7 @@ An EDC and DTR service should be part of the application, but it should also be 
 - Allow new applications to build on stable dataspace foundation
 - Create technical foundation for enablement services
 - Establish industry core stack
-- Enable compatible KIT add-ons that extend functionality  
+- Enable compatible KIT add-ons that extend functionality (EcoPass KIT for Digital Product Passports, MCP Addon for AI-driven dataspace interaction)
  
 ### Standards Implementation
 
@@ -83,12 +83,12 @@ An EDC and DTR service should be part of the application, but it should also be 
 
 ### Technology Stack
 
-| Component     | Technology                                             | 
-|---------------|--------------------------------------------------------|
-| Backend       | Python, FAST API                                       | 
-| Frontend      | React.js, Material UI, Portal Shared Components        | 
-| Database      | PostgreSQL                                             | 
-| Deployment      | Helm Charts, Docker containers                       | 
+| Component  | Technology                                      | 
+|------------|-------------------------------------------------|
+| Backend    | Python, FAST API, FastMCP                       | 
+| Frontend   | React.js, Material UI, Portal Shared Components | 
+| Database   | PostgreSQL                                      | 
+| Deployment | Helm Charts, Docker containers                  | 
 
 ### Stakeholders
 

@@ -1,6 +1,8 @@
 ###############################################################
 # Eclipse Tractus-X - Industry Core Hub
 #
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Technovative Solutions
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -62,8 +64,11 @@ services:
     container_name: local_keycloak_init
     environment:
       ICHUB_ADMIN_PASSWORD: ${ICHUB_ADMIN_PASSWORD:-changeme}
+      REALM_TEMPLATE_FILE: /realm-template.json
+      KEYCLOAK_VALUES_FILE: /keycloak-values.yaml
     volumes:
       - ../../../charts/industry-core-hub/files/realm-export.json:/realm-template.json:ro
+      - ../../../charts/industry-core-hub/values-keycloak.yaml:/keycloak-values.yaml:ro
       - keycloak_import:/output
       - ./prepare-realm.sh:/prepare-realm.sh:ro
     command: /bin/sh /prepare-realm.sh

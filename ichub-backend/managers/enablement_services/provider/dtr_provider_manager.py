@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -385,11 +386,24 @@ class DtrProviderManager:
         submodel_id: UUID|str,
         semantic_id: str,
         connector_asset_id: str,
+        id_short_override: str | None = None,
+        interface: str = "SUBMODEL-3.0",
     ) -> SubModelDescriptor:
         """
         Creates a submodel descriptor in the DTR.
+
+        Args:
+            aas_id: AAS identifier.
+            submodel_id: Submodel identifier.
+            semantic_id: Semantic ID URN for the submodel.
+            connector_asset_id: Connector asset ID for the subprotocolBody.
+            id_short_override: If provided, use this as ``idShort`` instead of
+                deriving it from the semantic ID. Required for PCF submodels
+                where CX-0136 mandates specific idShort values.
+            interface: Endpoint interface value (default ``"SUBMODEL-3.0"``).
+                PCF async endpoints use ``"PCF-1.1"``.
         """
-        aspect_id_name = extract_aspect_id_name_from_urn_camelcase(semantic_id)
+        aspect_id_name = id_short_override or extract_aspect_id_name_from_urn_camelcase(semantic_id)
 
         # semantic_id must be added to the submodel descriptor (CX-00002)
         semantic_id_reference = Reference(
@@ -424,7 +438,7 @@ class DtrProviderManager:
         subprotocol_body_str = f"id={connector_asset_id};dspEndpoint={dsp_endpoint_url}"
 
         endpoint = Endpoint(
-            interface="SUBMODEL-3.0",
+            interface=interface,
             protocolInformation=ProtocolInformation(
                 href=href_url,
                 endpointProtocol="HTTP",

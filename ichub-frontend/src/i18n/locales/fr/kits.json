@@ -70,7 +70,21 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Calcul de l'empreinte carbone du produit et outils d'évaluation du cycle de vie."
+      "description": "Calcul de l'empreinte carbone du produit et outils d'évaluation du cycle de vie.",
+      "features": {
+        "pcfPrecalculation": {
+          "name": "Précalcul PCF",
+          "description": "Calculer l'empreinte carbone du produit à partir des données PCF des sous-pièces"
+        },
+        "pcfManagement": {
+          "name": "Gestion PCF",
+          "description": "Gérer et télécharger les données PCF pour vos pièces de catalogue"
+        },
+        "pcfRequests": {
+          "name": "Demandes PCF",
+          "description": "Voir et répondre aux demandes PCF entrantes"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",
@@ -83,6 +97,35 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "Traçabilité de bout en bout des pièces, alertes et composants tout au long de la chaîne d'approvisionnement."
+    },
+
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Explorez et interagissez avec les données du dataspace Catena-X via le Protocole de Contexte de Modèle (MCP). Connectez votre assistant IA directement aux jumeaux numériques, réseaux de partenaires et données de chaîne d'approvisionnement.",
+      "features": {
+        "mcpTools": {
+          "name": "Outils MCP",
+          "description": "Outils propulsés par IA pour explorer les jumeaux numériques, découvrir des partenaires et consommer des données du dataspace via le Protocole de Contexte de Modèle."
+          }
+        }
+     }, 
+    "ccm": {
+      "name": "CCM KIT",
+      "description": "Gérez, partagez et consommez des certificats de conformité via EDC et les notifications avec les partenaires du dataspace.",
+      "features": {
+        "certificateManagement": {
+          "name": "Gestion des Certificats",
+          "description": "Téléchargez, gérez et maintenez vos propres certificats de conformité."
+        },
+        "provisionManagement": {
+          "name": "Gestion de Provision CCM",
+          "description": "Traitez les demandes de certificats entrantes et fournissez des certificats aux consommateurs (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "Consommation CCM",
+          "description": "Demandez, suivez, téléchargez et examinez les certificats de conformité de vos partenaires."
+        }
+      }
     }
   }
 }

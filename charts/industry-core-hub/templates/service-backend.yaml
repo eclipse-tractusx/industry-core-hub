@@ -1,6 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
+* Copyright (c) 2026 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -25,6 +26,12 @@ kind: Service
 metadata:
   name: {{ include "industry-core-hub.fullname.backend" . }}
   labels: {{ include "industry-core-hub.backend.labels" . | nindent 4 }}
+  {{- if .Values.backend.metrics.enabled }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/path: {{ .Values.backend.metrics.endpoint | quote }}
+    prometheus.io/port: {{ .Values.backend.service.portService | quote }}
+  {{- end }}
 spec:
   type: {{ .Values.backend.service.type }}
   ports:

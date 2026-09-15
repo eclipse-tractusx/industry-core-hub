@@ -1,0 +1,47 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.0#ProductCondition",
+  "description" : "Covers all battery lifetime relevant properties.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "TimestampedValue" : {
+        "type" : "object",
+        "properties" : {
+          "LastUpdate" : { "type" : "string" }
+        },
+        "required" : [ "LastUpdate" ]
+      },
+      "NegativeEvent" : {
+        "type" : "object",
+        "properties" : {
+          "NegativeEventValue" : { "type" : "string" },
+          "LastUpdate" : { "type" : "string" }
+        },
+        "required" : [ "NegativeEventValue", "LastUpdate" ]
+      },
+      "DocumentIdentifierSet" : {
+        "type" : "array",
+        "items" : { "type" : "string", "minLength" : 1 },
+        "uniqueItems" : true
+      }
+    }
+  },
+  "properties" : {
+    "EnergyThroughput" : { "type" : "object", "properties" : { "EnergyThroughputValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "EnergyThroughputValue", "LastUpdate" ] },
+    "CapacityThroughput" : { "type" : "object", "properties" : { "CapacityThroughputValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "CapacityThroughputValue", "LastUpdate" ] },
+    "NumberOfFullCycles" : { "type" : "object", "properties" : { "NumberOfFullCyclesValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "NumberOfFullCyclesValue", "LastUpdate" ] },
+    "StateOfCertifiedEnergy" : { "type" : "object", "properties" : { "StateOfCertifiedEnergyValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "StateOfCertifiedEnergyValue", "LastUpdate" ] },
+    "RemainingEnergy" : { "type" : "object", "properties" : { "RemainingEnergyValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "RemainingEnergyValue", "LastUpdate" ] },
+    "RemainingCapacity" : { "type" : "object", "properties" : { "RemainingCapacityValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "RemainingCapacityValue", "LastUpdate" ] },
+    "NegativeEvents" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/NegativeEvent" } },
+    "InformationOnAccidents" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+    "TemperatureInformation" : { "type" : "object", "properties" : { "TimeExtremeHighTemp" : { "type" : "number" }, "TimeExtremeLowTemp" : { "type" : "number" }, "TimeExtremeHighTempCharging" : { "type" : "number" }, "TimeExtremeLowTempCharging" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "LastUpdate" ] },
+    "RemainingPowerCapability" : { "type" : "object", "properties" : { "RemainingPowerCapabilityValue" : { "type" : "object" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "RemainingPowerCapabilityValue", "LastUpdate" ] },
+    "EvolutionOfSelfDischarge" : { "type" : "object", "properties" : { "EvolutionOfSelfDischargeValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "EvolutionOfSelfDischargeValue", "LastUpdate" ] },
+    "CurrentSelfDischargingRate" : { "type" : "object", "properties" : { "CurrentSelfDischargingRateValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "CurrentSelfDischargingRateValue", "LastUpdate" ] },
+    "RemainingRoundTripEnergyEfficiency" : { "type" : "object", "properties" : { "RemainingRoundTripEnergyEfficiencyValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "RemainingRoundTripEnergyEfficiencyValue", "LastUpdate" ] },
+    "StateOfCharge" : { "type" : "object", "properties" : { "StateOfChargeValue" : { "type" : "number" }, "LastUpdate" : { "type" : "string" } }, "required" : [ "StateOfChargeValue", "LastUpdate" ] }
+  },
+  "required" : [ "NumberOfFullCycles", "InformationOnAccidents", "TemperatureInformation", "StateOfCharge" ]
+}

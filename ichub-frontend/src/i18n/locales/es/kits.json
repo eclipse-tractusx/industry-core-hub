@@ -70,7 +70,29 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Cálculo de la Huella de Carbono del Producto y herramientas de evaluación del ciclo de vida."
+      "description": "Cálculo de la Huella de Carbono del Producto y herramientas de evaluación del ciclo de vida.",
+      "features": {
+        "pcfProvision": {
+          "name": "Provisión y Gestión de PCF",
+          "description": "Crear, gestionar y compartir declaraciones de Huella de Carbono del Producto con socios del dataspace."
+        },
+        "pcfConsumption": {
+          "name": "Consumo y Visualización de PCF",
+          "description": "Recuperar y visualizar datos de PCF de socios del dataspace, agregar datos de huella y generar informes."
+        },
+        "pcfPrecalculation": {
+          "name": "Precálculo de PCF",
+          "description": "Calcular la huella de carbono del producto a partir de datos PCF de subcomponentes"
+        },
+        "pcfManagement": {
+          "name": "Gestión de PCF",
+          "description": "Gestionar y subir datos PCF para tus piezas del catálogo"
+        },
+        "pcfRequests": {
+          "name": "Solicitudes PCF",
+          "description": "Ver y responder solicitudes PCF entrantes"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",
@@ -83,6 +105,34 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "Trazabilidad de extremo a extremo de piezas, alertas y componentes a lo largo de la cadena de suministro."
+    },
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Explora e interactúa con los datos del dataspace de Catena-X usando herramientas impulsadas por IA a través del Model Context Protocol (MCP). Conecta tu asistente de IA directamente con gemelos digitales, redes de socios y datos de la cadena de suministro.",
+      "features": {
+        "mcpTools": {
+          "name": "Herramientas MCP",
+          "description": "Herramientas impulsadas por IA para explorar gemelos digitales, descubrir socios y consumir datos del dataspace a través del Model Context Protocol."
+          }
+        }
+     }, 
+    "ccm": {
+      "name": "CCM KIT",
+      "description": "Gestiona, comparte y consume certificados de cumplimiento a través de EDC y notificaciones con socios del dataspace.",
+      "features": {
+        "certificateManagement": {
+          "name": "Gestión de Certificados",
+          "description": "Sube, gestiona y mantén tus propios certificados de cumplimiento."
+        },
+        "provisionManagement": {
+          "name": "Gestión de Provisión CCM",
+          "description": "Gestiona las solicitudes entrantes de certificados y provee certificados a los consumidores (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "Consumo CCM",
+          "description": "Solicita, sigue, descarga y revisa certificados de cumplimiento de tus socios."
+        }
+      }
     }
   }
 }

@@ -1,9 +1,11 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2026 Capgemini Deutschland GmbH
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -29,60 +31,52 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 import os
-import logging
-
-from tools.exceptions import BaseError, ValidationError
+from tools.exceptions import BaseError
 from tools.constants import API_V1
 from managers.config.config_manager import ConfigManager
+from managers.config.log_manager import LoggingManager
 
-startup_logger = logging.getLogger("app.startup")
-
+logger = LoggingManager.get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Run startup tasks before serving requests."""
-    _sync_digital_twin_event_asset_on_startup()
-    yield
+    """Application lifespan handler. Asset registration is handled by the Kubernetes asset-sync Job."""
 
+    if ConfigManager.get_config("addons.mcp_addon.enabled", True):
+        import asyncio
+        from contextlib import AsyncExitStack
+        from managers.addons_service.mcp_addon.v1.server import mcp_http_app
+        from managers.addons_service.mcp_addon.v1.session import session_store
 
-def _sync_digital_twin_event_asset_on_startup() -> None:
-    """
-    Register the Digital Twin Event asset in the EDC on every backend startup.
-    This ensures the notification endpoint is always advertised in the connector
-    catalog, even if the Kubernetes sync Job has not run yet.
-    Failures are logged but do not prevent the backend from starting.
-    """
-    try:
-        # Import here to avoid circular imports at module load time.
-        from connector import connector_provider_manager, connector_start_up_error
-
-        if connector_start_up_error or connector_provider_manager is None:
-            startup_logger.warning(
-                "[Startup] Connector is not available. Skipping Digital Twin Event asset sync."
-            )
-            return
-
-        dte_config = ConfigManager.get_config("provider.digitalTwinEventAPI")
-        if not dte_config:
-            startup_logger.warning(
-                "[Startup] No 'provider.digitalTwinEventAPI' config found. "
-                "Skipping Digital Twin Event asset sync."
-            )
-            return
-
-        asset_config = dte_config.get("asset_config", {})
-        dte_asset_id, _, _, _ = connector_provider_manager.register_digital_twin_event_offer(
-            digital_twin_event_url=dte_config.get("hostname"),
-            digital_twin_event_policy_config=dte_config.get("policy"),
-            existing_asset_id=asset_config.get("existing_asset_id"),
+        eviction_interval: int = ConfigManager.get_config(
+            "addons.mcp_addon.session_eviction_interval_seconds", 300
         )
-        startup_logger.info(
-            f"[Startup] Digital Twin Event asset synced successfully: {dte_asset_id}"
-        )
-    except Exception as e:
-        startup_logger.error(
-            f"[Startup] Failed to sync Digital Twin Event asset: {e}", exc_info=True
-        )
+
+        async def _eviction_loop() -> None:
+            while True:
+                await asyncio.sleep(eviction_interval)
+                try:
+                    n = session_store.evict_expired()
+                    if n:
+                        logger.debug("MCP session eviction: removed %d expired session(s).", n)
+                except Exception:
+                    logger.exception("Unexpected error during MCP session eviction sweep.")
+
+        async with AsyncExitStack() as stack:
+            await stack.enter_async_context(mcp_http_app.lifespan(mcp_http_app))
+            eviction_task = asyncio.create_task(_eviction_loop(), name="mcp-session-eviction")
+            try:
+                yield
+            finally:
+                eviction_task.cancel()
+                try:
+                    await eviction_task
+                except asyncio.CancelledError:
+                    # Expected: cancelling the task above raises CancelledError
+                    # when we await it. Nothing to clean up, so swallow it.
+                    pass
+    else:
+        yield
 
 from tractusx_sdk.dataspace.tools import op
 
@@ -99,7 +93,8 @@ from .routers.consumer.v1 import (
 )
 from .routers.notifications.v1 import (
     digital_twin_event_api,
-    notifications_management
+    notifications_management,
+    unique_id_push_api
 )
 from .routers.addons import addons
 
@@ -141,12 +136,24 @@ tags_metadata = [
         "description": "Endpoints for managing notifications, such as retrieving, deleting or marking notifications related to digital twins and part sharing"
     },
     {
+        "name": "Unique ID Push Notifications",
+        "description": "Endpoints for receiving Unique ID Push notifications (CX-0126) to link child digital twins to their parents"
+    },
+    {
         "name": "Add-Ons Microservices",
         "description": "Auxiliary add-ons such as Eco Pass Kit"
     },
     {
         "name": "EcoPass KIT Microservices",
         "description": "Provider-side EcoPass KIT endpoints"
+    },
+    {
+        "name": "PCF KIT Microservices",
+        "description": "Provider-side PCF KIT endpoints"
+    },
+    {
+        "name": "MCP Addon Microservices",
+        "description": "MCP Addon endpoints — AI tool surface over Model Context Protocol (enabled by default; disable via addons.mcp_addon.enabled)"
     }
 ]
 
@@ -223,11 +230,65 @@ v1_router.include_router(connection_management.router)
 v1_router.include_router(discovery_management.router)
 v1_router.include_router(digital_twin_event_api.router)
 v1_router.include_router(notifications_management.router)
+v1_router.include_router(unique_id_push_api.router)
 v1_router.include_router(addons.router)
 
 # Include the API version 1 router into the main app
 app.include_router(v1_router)
 
+# Mount the MCP Addon ASGI sub-application when the add-on is enabled.
+# The REST router (health, audit) is included via addons.py above.
+# The FastMCP streamable-HTTP transport needs a top-level mount so that
+# MCP clients (Claude Desktop, Copilot) can reach it without the /api/v1 prefix.
+if ConfigManager.get_config("addons.mcp_addon.enabled", True):
+    from starlette.routing import Route
+    from managers.addons_service.mcp_addon.v1.server import (
+        mcp_http_app, _auth_provider, mcp_well_known_routes, mcp_mount_parent_path,
+    )
+    # Mount the sub-app at the PARENT of the configured endpoint (e.g.
+    # "/addons/mcp-addon"), not at the endpoint itself. The streamable-HTTP route
+    # is registered inside the sub-app as the leaf (e.g. "/mcp"), so the full
+    # endpoint resolves as an exact route match and clients can connect with or
+    # without a trailing slash. Mounting at the leaf would make it a mount root,
+    # which Starlette only matches WITH the slash (307-redirecting otherwise and
+    # breaking the POST-based MCP handshake).
+    _mcp_mount_path = mcp_mount_parent_path
+    if ConfigManager.get_config("authorization.enabled", False) and _auth_provider is None:
+        import logging as _logging
+        _logging.getLogger(__name__).error(
+            "[MCP Addon] Authorization is enabled but no auth provider could be built. "
+            "The MCP endpoint will NOT be mounted to prevent unauthenticated access."
+        )
+    else:
+        app.mount(_mcp_mount_path, mcp_http_app)
+        # RFC 9728: serve OAuth protected-resource metadata at the host root so
+        # MCP clients (Claude Desktop, Copilot) can discover the authorization
+        # server. FastMCP registers these routes inside the mounted sub-app,
+        # where the doubly-prefixed path is unreachable by clients, so we
+        # re-register them on the parent app at the correct root-level path.
+        for _wk_route in mcp_well_known_routes:
+            app.router.routes.append(_wk_route)
+            # Also answer the no-trailing-slash variant for clients that strip it.
+            if _wk_route.path.endswith("/"):
+                app.router.routes.append(
+                    Route(
+                        _wk_route.path.rstrip("/"),
+                        endpoint=_wk_route.endpoint,
+                        methods=_wk_route.methods,
+                    )
+                )
+
+
+metrics_enabled = ConfigManager.get_config("metrics.enabled", False)
+if metrics_enabled:
+    from prometheus_fastapi_instrumentator import Instrumentator
+
+    metrics_endpoint = ConfigManager.get_config("metrics.endpoint", "/metrics")
+    Instrumentator().instrument(app).expose(
+        app,
+        endpoint=metrics_endpoint,
+        include_in_schema=False,
+    )
 
 def custom_openapi():
     """
@@ -256,7 +317,8 @@ def custom_openapi():
                 "Open Connection Management",
                 "Part Discovery Management",
                 "Digital Twin Event Management",
-                "Notifications Management"
+                "Notifications Management",
+                "Unique ID Push Notifications"
             ],
         },
         {
@@ -265,6 +327,8 @@ def custom_openapi():
                 "Add-Ons Microservices",
                 "EcoPass KIT Microservices",
                 "EcoPass KIT Consumer Microservices",
+                "PCF KIT Microservices",
+                "MCP Addon Microservices"
             ],
         },
     ]

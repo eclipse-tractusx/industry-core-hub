@@ -1,0 +1,27 @@
+{
+  "BatteryChemistry" : {
+    "ShortName" : "NMC",
+    "ClearName" : "Lithium nickel manganese cobalt oxides"
+  },
+  "BatteryMaterials" : [ {
+    "BatteryMaterialLocation" : {
+      "ComponentName" : "Anode",
+      "ComponentId" : "PBL2dRYxE"
+    },
+    "BatteryMaterialIdentifier" : "7439-93-2",
+    "BatteryMaterialName" : "Lithium",
+    "BatteryMaterialMass" : -7283.6,
+    "IsCriticalRawMaterial" : true
+  } ],
+  "HazardousSubstances" : [ {
+    "HazardousSubstanceClass" : "AcuteToxicity",
+    "HazardousSubstanceName" : "9wEngW0",
+    "HazardousSubstanceConcentration" : -60720.2,
+    "HazardousSubstanceImpact" : [ "cP" ],
+    "HazardousSubstanceLocation": {
+      "ComponentName": "Anode",
+      "ComponentId": "anode-123"
+    },
+    "HazardousSubstanceIdentifier" : "4138218-54-3"
+  } ]
+}

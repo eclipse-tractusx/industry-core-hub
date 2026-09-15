@@ -33,10 +33,21 @@ on:
       - DEPENDENCIES_ICHUB-FRONTEND
       - .github/workflows/dependencies-frontend.yaml
   workflow_dispatch:
+    inputs:
+      use_ip_check:
+        description: 'Submit IP check requests to Eclipse DASH (requires ECLIPSE_DASH_TOKEN secret)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   check-dependencies:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Set up JDK 17
@@ -49,21 +60,44 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Generate Dependencies file
+        env:
+          ECLIPSE_DASH_TOKEN: ${{ secrets.ECLIPSE_DASH_TOKEN }}
         run: |
           curl -L --output ./dash.jar 'https://repo.eclipse.org/service/rest/v1/search/assets/download?repository=dash-maven2-releases&maven.groupId=org.eclipse.dash&maven.artifactId=org.eclipse.dash.licenses&maven.baseVersion=1.1.0&maven.extension=jar'
 
-          java -jar ./dash.jar ichub-frontend/package-lock.json -project automotive.tractusx -summary DEPENDENCIES_ICHUB-FRONTEND || true
+          DASH_ARGS="ichub-frontend/package-lock.json -project automotive.tractusx -summary DEPENDENCIES_ICHUB-FRONTEND"
+          if [[ -n "$ECLIPSE_DASH_TOKEN" ]]; then
+            DASH_ARGS="$DASH_ARGS -token $ECLIPSE_DASH_TOKEN"
+          elif [[ "${{ inputs.use_ip_check }}" == "true" ]]; then
+            echo "IP check requested via workflow_dispatch but ECLIPSE_DASH_TOKEN is not set"
+          fi
 
-      - name: Check if dependencies were changed
-        id: dependencies-changed
+          java -jar ./dash.jar $DASH_ARGS || true
+
+      - name: Commit updated DEPENDENCIES_ICHUB-FRONTEND
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         run: |
-          changed=$(git diff DEPENDENCIES_ICHUB-FRONTEND)
-          if [[ -n "$changed" ]]; then
-            echo "dependencies changed"
-            echo "changed=true" >> $GITHUB_OUTPUT
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add DEPENDENCIES_ICHUB-FRONTEND
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
           else
-            echo "dependencies not changed"
-            echo "changed=false" >> $GITHUB_OUTPUT
+            git commit -m "chore(deps): update DEPENDENCIES_ICHUB-FRONTEND [skip ci]"
+            git push
+          fi
+
+      - name: Commit updated DEPENDENCIES_ICHUB-FRONTEND to PR branch
+        if: github.event_name == 'pull_request'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add DEPENDENCIES_ICHUB-FRONTEND
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(deps): update DEPENDENCIES_ICHUB-FRONTEND [skip ci]"
+            git push --force-with-lease origin HEAD:${{ github.head_ref }}
           fi
 
       - name: Check for restricted dependencies
@@ -73,16 +107,3 @@ jobs:
             echo "The following dependencies are restricted: $restricted"
             exit 1
           fi
-        if: steps.dependencies-changed.outputs.changed == 'true'
-
-      - name: Upload DEPENDENCIES_ICHUB-FRONTEND file
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
-        with:
-          path: DEPENDENCIES_ICHUB-FRONTEND
-        if: steps.dependencies-changed.outputs.changed == 'true'
-
-      - name: Signal need to update DEPENDENCIES_ICHUB
-        run: |
-          echo "Dependencies need to be updated (updated DEPENDENCIES_ICHUB file has been uploaded to workflow run)"
-          exit 1
-        if: steps.dependencies-changed.outputs.changed == 'true'

@@ -77,7 +77,7 @@ const getStatusColor = (status: FeedbackStatus): string => {
   switch (status) {
     case 'OK': return '#81c784';
     case 'ERROR': return '#ef5350';
-    case 'PENDING': return '#ffa726';
+    case 'PENDING': return '#9D6FD4';
   }
 };
 
@@ -110,7 +110,7 @@ const getStatusIcon = (status: FeedbackStatus, fontSize: string = '1.1rem') => {
   switch (status) {
     case 'OK': return <CheckCircle sx={{ color: '#81c784', fontSize }} />;
     case 'ERROR': return <Error sx={{ color: '#ef5350', fontSize }} />;
-    case 'PENDING': return <HourglassEmpty sx={{ color: '#ffa726', fontSize }} />;
+    case 'PENDING': return <HourglassEmpty sx={{ color: '#9D6FD4', fontSize }} />;
   }
 };
 
@@ -366,7 +366,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ notification, onCancel }) =
                 </MenuItem>
                 <MenuItem value="PENDING">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <HourglassEmpty sx={{ color: '#ffa726', fontSize: '1.1rem' }} />
+                    <HourglassEmpty sx={{ color: '#9D6FD4', fontSize: '1.1rem' }} />
                     <span style={{ fontWeight: 600 }}>PENDING</span>
                   </Box>
                 </MenuItem>
@@ -438,13 +438,13 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ notification, onCancel }) =
               label={`${pendingCount} Pending`}
               size="small"
               sx={{
-                backgroundColor: 'rgba(255, 167, 38, 0.15)',
-                color: '#ffa726',
+                backgroundColor: 'rgba(157, 111, 212, 0.15)',
+                color: '#9D6FD4',
                 fontSize: '0.75rem',
                 fontWeight: 600,
                 height: '26px',
                 borderRadius: '13px',
-                '& .MuiChip-icon': { color: '#ffa726' },
+                '& .MuiChip-icon': { color: '#9D6FD4' },
               }}
             />
           )}
@@ -618,7 +618,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ notification, onCancel }) =
                               </MenuItem>
                               <MenuItem value="PENDING">
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <HourglassEmpty sx={{ color: '#ffa726', fontSize: '1rem' }} />
+                                  <HourglassEmpty sx={{ color: '#9D6FD4', fontSize: '1rem' }} />
                                   <span style={{ fontWeight: 600 }}>{t('feedback.pending')}</span>
                                 </Box>
                               </MenuItem>

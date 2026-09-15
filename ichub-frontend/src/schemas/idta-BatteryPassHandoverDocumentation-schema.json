@@ -1,0 +1,71 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.handover_documentation:1.0.0#HandoverDocumentation",
+  "description" : "Handover Documentation defines a set of meta data for the handover of documentation from the operator to the users of the Battery Passport.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "DocumentId" : {
+        "type" : "object",
+        "properties" : {
+          "DocumentDomainId" : { "type" : "string" },
+          "DocumentIdentifier" : { "type" : "string" },
+          "DocumentIsPrimary" : { "type" : "boolean" }
+        },
+        "required" : [ "DocumentDomainId", "DocumentIdentifier" ]
+      },
+      "MultiLanguageTexts" : {
+        "type" : "array",
+        "items" : { "type" : "object" },
+        "uniqueItems" : true
+      },
+      "DocumentClassification" : {
+        "type" : "object",
+        "properties" : {
+          "ClassId" : { "type" : "string" },
+          "ClassName" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "ClassificationSystem" : { "type" : "string" }
+        },
+        "required" : [ "ClassId", "ClassName", "ClassificationSystem" ]
+      },
+      "FileWithContentType" : {
+        "type" : "object",
+        "properties" : {
+          "value" : { "type" : "string", "format" : "uri" },
+          "contentType" : { "type" : "string" }
+        },
+        "required" : [ "value", "contentType" ]
+      },
+      "DocumentVersion" : {
+        "type" : "object",
+        "properties" : {
+          "Language" : { "type" : "array", "items" : { "type" : "string" } },
+          "Version" : { "type" : "string" },
+          "Title" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "Subtitle" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "Description" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "DigitalFiles" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/FileWithContentType" } }
+        },
+        "required" : [ "Language", "Title", "DigitalFiles" ]
+      },
+      "Document" : {
+        "type" : "object",
+        "properties" : {
+          "DocumentIds" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/DocumentId" } },
+          "DocumentClassifications" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/DocumentClassification" } },
+          "DocumentVersions" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/DocumentVersion" } }
+        },
+        "required" : [ "DocumentIds", "DocumentClassifications", "DocumentVersions" ]
+      }
+    }
+  },
+  "properties" : {
+    "Documents" : {
+      "description" : "A set of relevant documents to hand over to customers for documentation purposes.",
+      "type" : "array",
+      "items" : { "$ref" : "#/components/schemas/Document" },
+      "uniqueItems" : true
+    }
+  },
+  "required" : [ "Documents" ]
+}

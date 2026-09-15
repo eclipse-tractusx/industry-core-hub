@@ -70,7 +70,29 @@
     },
     "pcf": {
       "name": "PCF KIT",
-      "description": "Product Carbon Footprint calculation and lifecycle assessment tools."
+      "description": "Product Carbon Footprint calculation and lifecycle assessment tools.",
+      "features": {
+        "pcfProvision": {
+          "name": "PCF Provision & Management",
+          "description": "Create, manage, and share Product Carbon Footprint declarations with dataspace partners."
+        },
+        "pcfConsumption": {
+          "name": "PCF Consumption & Visualization",
+          "description": "Retrieve and visualize PCF data from dataspace partners, aggregate footprint data, and generate reports."
+        },
+        "pcfPrecalculation": {
+          "name": "PCF Precalculation",
+          "description": "Calculate product carbon footprint from subpart PCF data"
+        },
+        "pcfManagement": {
+          "name": "PCF Management",
+          "description": "Manage and upload PCF data for your catalog parts"
+        },
+        "pcfRequests": {
+          "name": "PCF Requests",
+          "description": "View and respond to incoming PCF requests"
+        }
+      }
     },
     "dataChain": {
       "name": "Data Chain KIT",
@@ -83,6 +105,35 @@
     "traceability": {
       "name": "Traceability KIT",
       "description": "End-to-end traceability of parts, alerts and components throughout the supply chain."
+    },
+
+    "mcp": {
+      "name": "MCP Addon",
+      "description": "Explore and interact with Catena-X dataspace data using AI-powered tools via the Model Context Protocol (MCP). Connect your AI assistant directly to digital twins, partner networks, and supply chain data.",
+      "features": {
+        "mcpTools": {
+          "name": "MCP Tools",
+          "description": "AI-powered tools for exploring digital twins, discovering partners, and consuming dataspace data via Model Context Protocol."
+          }
+        }
+     }, 
+    "ccm": {
+      "name": "CCM KIT",
+      "description": "Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.",
+      "features": {
+        "certificateManagement": {
+          "name": "Certificate Management",
+          "description": "Upload, manage and maintain your own compliance certificates."
+        },
+        "provisionManagement": {
+          "name": "CCM Provision Management",
+          "description": "Handle incoming certificate requests and provide certificates to consumers (AVAILABLE / PUSH)."
+        },
+        "consumption": {
+          "name": "CCM Consumption",
+          "description": "Request, track, download and review compliance certificates from your partners."
+        }
+      }
     }
   }
 }

@@ -48,3 +48,14 @@ def pytest_configure(config):
     sys.modules['database'].get_session = MagicMock(return_value=MagicMock())
 
 
+
+@pytest.fixture(scope="session", autouse=True)
+def disable_mcp_oauth():
+    """Disable MCP OAuth support during tests as Keycloak is not available."""
+    with patch(
+            "managers.addons_service.mcp_addon.v1.auth.ConfigManager.get_config",
+            side_effect=lambda key=None, default=None: (
+                    False if key == "addons.mcp_addon.oauth_enabled" else default
+            ),
+    ):
+        yield

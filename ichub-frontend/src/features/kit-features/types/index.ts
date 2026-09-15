@@ -1,7 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
- * Copyright (c) 2025 LKS Next
+ * Copyright (c) 2025,2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -39,7 +39,7 @@ export interface KitFeature {
   icon: React.ReactElement;
   image?: string;
   features: KitFeatureItem[];
-  domain: 'core' | 'sustainability' | 'supply-chain' | 'participant-management' | 'industry-core' | 'dataspace-foundation';
+  domain: 'core' | 'sustainability' | 'supply-chain' | 'participant-management' | 'industry-core' | 'dataspace-foundation' | 'compliance';
   version?: string;
   createdAt?: string;
   lastUpdated?: string;

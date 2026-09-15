@@ -2,7 +2,8 @@
 
 Eclipse Tractus-X - Industry Core Hub Hub
 
-Copyright (c) 2025 Contributors to the Eclipse Foundation
+Copyright (c) 2026 Capgemini Deutschland GmbH
+Copyright (c) 2026 Contributors to the Eclipse Foundation
 
 See the NOTICE file(s) distributed with this work for additional
 information regarding copyright ownership.
@@ -36,6 +37,13 @@ SPDX-License-Identifier: CC-BY-4.0
 | --------------------- | ------- | ------------------------------------------ | --------------------------------------- |
 | Mathias Brunkow Moser | Catena-X e.V. | [@matbmoser](https://github.com/matbmoser) | Chief Software Architect & Eclipse Tractus-X Project Lead |
 
+---
+
+> **📘 Getting Started**  
+> New to Industry Core Hub? Try our **[Quickstart Guide](../QUICKSTART.md)** to get hands-on experience before diving into the architecture details.
+
+---
+
 # Index
 
 - [Metadata](#metadata)
@@ -61,6 +69,7 @@ SPDX-License-Identifier: CC-BY-4.0
   - [Process View](#process-view)
   - [Development View](#development-view)
   - [Interfaces](#interfaces)
+  - [MCP Addon](#mcp-addon)
   - [NOTICE](#notice)
 
 
@@ -78,6 +87,7 @@ SPDX-License-Identifier: CC-BY-4.0
 - EDC Policy Acceptance
 - Notification Send
 - Notification Receive
+- MCP Tool Surface for AI Clients (via MCP Addon)
 
 # Requirements
 
@@ -163,6 +173,10 @@ Following the structure that will be defined for the KITs a layered Architecture
 ## Interfaces
 
 ![Interfaces](./media/Interfaces.drawio.svg)
+
+## MCP Addon
+
+The MCP Addon is a Layer 4 add-on that exposes IC-Hub's dataspace capabilities as MCP tools for AI clients. It is mounted as a FastMCP ASGI sub-application at `/addons/mcp-addon/mcp` and authenticates via OAuth 2.0 or API-key Bearer token. For full architectural details, see [ADR 0005 — MCP Addon](./decision-records/0005-mcp-addon.md). For configuration, client setup, and the tool reference, see the [MCP Addon Guide](../developer/MCP-ADDON-GUIDE.md).
 
 ## NOTICE
 

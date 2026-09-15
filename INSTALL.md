@@ -2,6 +2,9 @@
 
 Deploy Industry Core Hub either in a Kubernetes cluster (via Helm) or locally.
 
+> **💡 New to Industry Core Hub?**  
+> If this is your first time setting up the application, we recommend starting with our **[Quickstart Guide](./docs/QUICKSTART.md)**, which provides a step-by-step walkthrough including a complete data provision and consumption example.
+
 ### 1. Kubernetes Deployment with Helm
 
 #### Prerequisites
@@ -64,7 +67,44 @@ For all chart options, see the [Helm chart README](./charts/industry-core-hub/RE
 
 Use kubectl port-forward for localhost access, or set up an Ingress resource (with a controller) in the `values.yaml` to expose your services over HTTP(S).
 
-#### 1.2 Install the Chart
+#### 1.2 Build and Load Docker Images (Optional for Local Development)
+
+If you're developing locally and want to use custom images instead of the published ones, build and load them into Minikube:
+
+##### Build Backend Image
+
+```sh
+cd ichub-backend/
+docker build -t <your-registry>/ichub-backend:<tag> .
+```
+
+##### Build Frontend Image
+
+```sh
+cd ichub-frontend/
+docker build -t <your-registry>/ichub-frontend:<tag> .
+```
+
+##### Load Images into Minikube
+
+```sh
+minikube image load <your-registry>/ichub-backend:<tag>
+minikube image load <your-registry>/ichub-frontend:<tag>
+```
+
+> **Note:** Update your `values.yaml` to reference these custom image tags:
+> ```yaml
+> backend:
+>   image:
+>     repository: <your-registry>/ichub-backend
+>     tag: <tag>
+> frontend:
+>   image:
+>     repository: <your-registry>/ichub-frontend
+>     tag: <tag>
+> ```
+
+#### 1.3 Install the Chart
 
 ```sh
 helm repo add tractusx-dev https://eclipse-tractusx.github.io/
@@ -81,7 +121,7 @@ dependencies:
     version: 0.1.x
 ```
 
-#### 1.3 Uninstall
+#### 1.4 Uninstall
 
 ```sh
 helm uninstall ichub
@@ -153,5 +193,6 @@ Visit [http://localhost:5173](http://localhost:5173).
 This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
 - SPDX-License-Identifier: CC-BY-4.0
+- SPDX-FileCopyrightText: 2026 LKS Next
 - SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
 - Source URL: https://github.com/eclipse-tractusx/industry-core-hub

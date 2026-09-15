@@ -1,0 +1,91 @@
+{
+  "$schema" : "http://json-schema.org/draft-04/schema",
+  "x-samm-aspect-model-urn" : "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity",
+  "description" : "Dismantling information, spare part sources, recycled content, safety measures, end-of-life information and renewable content.",
+  "type" : "object",
+  "components" : {
+    "schemas" : {
+      "DocumentIdentifierSet" : {
+        "type" : "array",
+        "items" : { "type" : "string", "minLength" : 1 },
+        "uniqueItems" : true
+      },
+      "MultiLanguageTexts" : {
+        "type" : "array",
+        "items" : { "type" : "object" },
+        "uniqueItems" : true
+      },
+      "PostalAddress" : {
+        "type" : "object",
+        "properties" : {
+          "NationalCode" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "PostalCode" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "Street" : { "$ref" : "#/components/schemas/MultiLanguageTexts" }
+        },
+        "required" : [ "NationalCode", "PostalCode", "Street" ]
+      },
+      "EmailEntity" : {
+        "type" : "object",
+        "properties" : {
+          "EmailAddress" : { "type" : "string" },
+          "TypeOfEmailAddress" : { "type" : "string" }
+        },
+        "required" : [ "EmailAddress" ]
+      },
+      "Component" : {
+        "type" : "object",
+        "properties" : {
+          "PartName" : { "type" : "string" },
+          "PartNumber" : { "type" : "string" }
+        },
+        "required" : [ "PartName", "PartNumber" ]
+      },
+      "SparePartSupplier" : {
+        "type" : "object",
+        "properties" : {
+          "NameOfSupplier" : { "$ref" : "#/components/schemas/MultiLanguageTexts" },
+          "AddressOfSupplier" : { "$ref" : "#/components/schemas/PostalAddress" },
+          "EmailAddressOfSupplier" : { "$ref" : "#/components/schemas/EmailEntity" },
+          "SupplierWebAddress" : { "type" : "string" },
+          "Components" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/Component" } }
+        },
+        "required" : [ "NameOfSupplier", "AddressOfSupplier", "EmailAddressOfSupplier", "SupplierWebAddress", "Components" ]
+      },
+      "RecycledContent" : {
+        "type" : "object",
+        "properties" : {
+          "PreConsumerShare" : { "type" : "number" },
+          "RecycledMaterial" : { "type" : "string" },
+          "PostConsumerShare" : { "type" : "number" }
+        },
+        "required" : [ "PreConsumerShare", "RecycledMaterial", "PostConsumerShare" ]
+      },
+      "SafetyMeasuresEntity" : {
+        "type" : "object",
+        "properties" : {
+          "SafetyInstructions" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+          "ExtinguishingAgents" : { "type" : "array", "items" : { "type" : "string" } }
+        },
+        "required" : [ "SafetyInstructions", "ExtinguishingAgents" ]
+      },
+      "EndOfLifeInformationEntity" : {
+        "type" : "object",
+        "properties" : {
+          "WastePrevention" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+          "SeparateCollection" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+          "InformationOnCollection" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" }
+        },
+        "required" : [ "WastePrevention", "SeparateCollection", "InformationOnCollection" ]
+      }
+    }
+  },
+  "properties" : {
+    "DismantlingAndRemovalInformation" : { "$ref" : "#/components/schemas/DocumentIdentifierSet" },
+    "SparePartSources" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/SparePartSupplier" } },
+    "RecycledContentInformation" : { "type" : "array", "items" : { "$ref" : "#/components/schemas/RecycledContent" } },
+    "SafetyMeasures" : { "$ref" : "#/components/schemas/SafetyMeasuresEntity" },
+    "EndOfLifeInformation" : { "$ref" : "#/components/schemas/EndOfLifeInformationEntity" },
+    "RenewableContent" : { "type" : "number" }
+  },
+  "required" : [ "DismantlingAndRemovalInformation", "SparePartSources", "RecycledContentInformation", "SafetyMeasures", "EndOfLifeInformation", "RenewableContent" ]
+}

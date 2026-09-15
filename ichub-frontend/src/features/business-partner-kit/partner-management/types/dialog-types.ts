@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -27,4 +28,6 @@ export interface PartnerDialogProps {
     onClose: () => void;
     onSave?: (partner: { name: string; bpnl: string }) => void;
     partnerData?: PartnerInstance;
+    /** Pre-fill the BPNL field in create mode (does NOT activate edit mode) */
+    initialBpnl?: string;
 }

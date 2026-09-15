@@ -1,7 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 LKS Next
+# Copyright (c) 2025,2026 LKS Next
 # Copyright (c) 2025 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
@@ -30,7 +30,13 @@ from datetime import datetime, timezone
 from connector import connector_manager
 from dtr import dtr_provider_manager
 
-from managers.submodels.submodel_document_generator import SubmodelDocumentGenerator, SEM_ID_PART_TYPE_INFORMATION_V1, SEM_ID_SERIAL_PART_V3
+from managers.submodels.submodel_document_generator import (
+    SubmodelDocumentGenerator,
+    SEM_ID_PART_TYPE_INFORMATION_V1,
+    SEM_ID_SERIAL_PART_V3,
+    SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+    SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+)
 from managers.config.config_manager import ConfigManager
 from managers.metadata_database.manager import RepositoryManagerFactory, RepositoryManager
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
@@ -55,6 +61,7 @@ from models.services.provider.twin_management import (
 )
 from models.metadata_database.provider.models import CatalogPart, EnablementServiceStack, Twin, BusinessPartner, TwinAspect, TwinAspectRegistration
 from tools.exceptions import NotFoundError, NotAvailableError
+from utils.pcf_utils import get_pcf_submodel_overrides
 
 from managers.config.log_manager import LoggingManager
 
@@ -198,6 +205,30 @@ class TwinManagementService:
                         semanticId= SEM_ID_PART_TYPE_INFORMATION_V1,
                         payload= part_type_info_doc
                     )                    
+                )
+
+                ## Create SingleLevelBomAsPlanned submodel (default empty)
+                bom_doc = self.submodel_document_generator.generate_single_level_bom_as_planned_v3(
+                    global_id=db_twin.global_id,
+                )
+                self.create_twin_aspect(
+                    TwinAspectCreate(
+                        globalId=db_twin.global_id,
+                        semanticId=SEM_ID_SINGLE_LEVEL_BOM_AS_PLANNED_V3,
+                        payload=bom_doc
+                    )
+                )
+
+                ## Create SingleLevelUsageAsPlanned submodel (default empty)
+                usage_doc = self.submodel_document_generator.generate_single_level_usage_as_planned_v3(
+                    global_id=db_twin.global_id,
+                )
+                self.create_twin_aspect(
+                    TwinAspectCreate(
+                        globalId=db_twin.global_id,
+                        semanticId=SEM_ID_SINGLE_LEVEL_USAGE_AS_PLANNED_V3,
+                        payload=usage_doc
+                    )
                 )
             
             return TwinRead(
@@ -599,11 +630,11 @@ class TwinManagementService:
                 else:
                     # Update existing twin aspect
                     self._handle_submodel_service_update(
-                        repo, db_twin_aspect.registrations[0], db_enablement_service_stack, db_twin_aspect, twin_aspect_create
+                        repo, db_twin_aspect.twin_aspect_registrations[0], db_enablement_service_stack, db_twin_aspect, twin_aspect_create
                     )
                     repo.commit()
                     repo.refresh(db_twin_aspect)
-                    return self._create_twin_aspect_read_response(db_twin_aspect, db_enablement_service_stack, db_twin_aspect.registrations[0])
+                    return self._create_twin_aspect_read_response(db_twin_aspect, db_enablement_service_stack, db_twin_aspect.twin_aspect_registrations[0])
             
 
             # Step 4: Check if there is already a registration for the given enablement service stack and create it if not
@@ -685,7 +716,7 @@ class TwinManagementService:
         """
         Handle the update of the twin aspect payload to the submodel service.
         """
-        if db_twin_aspect_registration.status == TwinAspectRegistrationStatus.STORED.value:
+        if db_twin_aspect_registration.status >= TwinAspectRegistrationStatus.STORED.value:
             submodel_service_manager = _create_submodel_service_manager(db_enablement_service_stack.connection_settings)
             
             # Update the payload to the submodel service
@@ -723,11 +754,15 @@ class TwinManagementService:
         if db_twin_aspect_registration.status < TwinAspectRegistrationStatus.DTR_REGISTERED.value:               
             # Register the submodel in the DTR (if necessary)
             try:
+                # PCF submodels require CX-0136 mandated idShort + interface
+                pcf_overrides = get_pcf_submodel_overrides(db_twin_aspect.semantic_id) or {}
+
                 dtr_provider_manager.create_submodel_descriptor(
                     aas_id=db_twin.aas_id,
                     submodel_id=db_twin_aspect.submodel_id,
                     semantic_id=db_twin_aspect.semantic_id,
-                    connector_asset_id=asset_id
+                    connector_asset_id=asset_id,
+                    **pcf_overrides,
                 )
                 # Update the registration status to DTR_REGISTERED only on success
                 db_twin_aspect_registration.status = TwinAspectRegistrationStatus.DTR_REGISTERED.value

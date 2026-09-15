@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
  *
+ * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
@@ -55,6 +56,7 @@ interface SubmodelsGridDialogProps {
     twinDetails: CatalogPartTwinDetailsRead | null;
     partName?: string;
     onCreateSubmodel?: () => void;
+    onEditSubmodel?: (semanticId: string, submodelId: string) => void;
 }
 
 // Dark theme for the dialog - matching application patterns
@@ -102,7 +104,8 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
     onClose,
     twinDetails,
     partName,
-    onCreateSubmodel
+    onCreateSubmodel,
+    onEditSubmodel
 }) => {
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
@@ -310,6 +313,7 @@ const SubmodelsGridDialog: React.FC<SubmodelsGridDialogProps> = ({
                                             aspect={aspect}
                                             assetId={twinDetails.globalId}
                                             onViewDetails={handleViewSubmodelDetails}
+                                            onEdit={onEditSubmodel}
                                         />
                                     </Grid2>
                                 ))}

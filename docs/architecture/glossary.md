@@ -1,15 +1,17 @@
 ## Glossary
 
-| Term          | Description                                                                                                    |
-|---------------|----------------------------------------------------------------------------------------------------------------|
-| EDC           | Eclipse Data Space Connector                                                                                   |
-| DTR           | Digital Twin Registry - the phone book to register and to search for endpoints for Digital Twins               |
-| Data Provider | deploys a own Digital Twin Registry and provides the data for his digital twins                                |
-| Data Consumer | uses the Digital Twin Registry to search for digital twins                                                     |
-| ICH           | Industry Core Hub                                                                                              |
-| AAS           | Asset Administration Shell                                                                                     |
-| SDK           | Software Development Kit                                                                                       |
-| API           | Application Programming Interface                                                                              |
+| Term          | Description                                                                                                |
+|---------------|------------------------------------------------------------------------------------------------------------|
+| EDC           | Eclipse Data Space Connector                                                                               |
+| DTR           | Digital Twin Registry - the phone book to register and to search for endpoints for Digital Twins           |
+| Data Provider | deploys a own Digital Twin Registry and provides the data for his digital twins                            |
+| Data Consumer | uses the Digital Twin Registry to search for digital twins                                                 |
+| ICH           | Industry Core Hub                                                                                          |
+| AAS           | Asset Administration Shell                                                                                 |
+| SDK           | Software Development Kit                                                                                   |
+| API           | Application Programming Interface                                                                          |
+| MCP           | Model Context Protocol — an open standard that lets language models call typed tools exposed by a server   |
+| FastMCP       | Python framework for building MCP servers, used by the MCP Addon                                      |
 
 ### NOTICE
 

@@ -1,0 +1,234 @@
+{
+  "common": {
+    "address": "Dirección",
+    "website": "Sitio web",
+    "email": "Correo electrónico",
+    "company": "Empresa",
+    "contact": "Contacto",
+    "country": "País"
+  },
+  "digitalNameplate": {
+    "title": "Pasaporte de batería — Placa digital",
+    "sections": {
+      "productIdentification": "Identificación del producto",
+      "lifecycleStatus": "Estado del ciclo de vida",
+      "manufacturingDetails": "Detalles de fabricación",
+      "manufacturerInformation": "Información del fabricante",
+      "address": "Dirección",
+      "contact": "Contacto",
+      "ipCommunicationChannels": "Canales de comunicación IP",
+      "markingsAndCertifications": "Marcas y certificaciones",
+      "complianceDocuments": "Documentos de conformidad"
+    },
+    "fields": {
+      "batteryPassportUri": "URI del pasaporte de batería",
+      "serialNumber": "Número de serie",
+      "manufacturerIdentifier": "Identificador del fabricante",
+      "operatorIdentifier": "Identificador del operador",
+      "manufacturerName": "Nombre del fabricante",
+      "company": "Empresa",
+      "department": "Departamento",
+      "contactRole": "Rol de contacto",
+      "contactPerson": "Persona de contacto",
+      "street": "Calle",
+      "cityTown": "Ciudad / Municipio",
+      "zipCode": "Código postal",
+      "stateCounty": "Estado / Condado",
+      "country": "País",
+      "timeZone": "Zona horaria",
+      "poBox": "Apartado postal",
+      "website": "Sitio web",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "fax": "Fax",
+      "document": "Documento",
+      "dateOfManufacture": "Fecha de fabricación",
+      "dateOfPuttingIntoService": "Fecha de puesta en servicio",
+      "uniqueFacilityIdentifier": "Identificador único de instalación",
+      "issueDate": "Fecha de emisión",
+      "expiryDate": "Fecha de vencimiento",
+      "additionalInfo": "Información adicional",
+      "euDeclarationOfConformity": "Declaración UE de conformidad",
+      "resultsOfTestReportsProvingCompliance": "Resultados de informes de prueba que prueban la conformidad"
+    },
+    "lifecycle": {
+      "original": "La batería es nueva y nunca ha sido reacondicionada ni remanufacturada.",
+      "repurposed": "La batería ha sido reacondicionada para una aplicación diferente.",
+      "re-used": "La batería ha sido reutilizada en la misma o similar aplicación.",
+      "remanufactured": "La batería ha sido remanufacturada para restaurar su rendimiento.",
+      "waste": "La batería ha alcanzado el final de su vida útil y se clasifica como residuo."
+    }
+  },
+  "technicalData": {
+    "title": "Pasaporte de batería — Datos técnicos",
+    "sections": {
+      "generalInformation": "Información general",
+      "capacityEnergyVoltage": "Capacidad, energía y voltaje",
+      "roundTripEnergyEfficiency": "Eficiencia de energía de ida y vuelta",
+      "internalResistance": "Resistencia interna",
+      "powerCapability": "Capacidad de potencia",
+      "powerCapabilityAtSoC": "Capacidad de potencia en estado de carga",
+      "temperatureRange": "Rango de temperatura (reposo)",
+      "lifetime": "Vida útil",
+      "referenceTestDocuments": "Documentos de prueba de referencia"
+    },
+    "fields": {
+      "manufacturer": "Fabricante",
+      "productDesignation": "Designación del producto",
+      "articleNumber": "Número de artículo",
+      "orderCode": "Código de pedido",
+      "manufacturerIdentifier": "Identificador del fabricante",
+      "warrantyPeriod": "Período de garantía",
+      "batteryMass": "Masa de la batería",
+      "batteryCategory": "Categoría de batería",
+      "nominalVoltage": "Tensión nominal",
+      "minimumVoltage": "Tensión mínima",
+      "maximumVoltage": "Tensión máxima",
+      "ratedCapacity": "Capacidad nominal",
+      "capacityFade": "Degradación de capacidad",
+      "certifiedUsableBatteryEnergy": "Energía de batería utilizable certificada",
+      "initialEfficiency": "Eficiencia inicial",
+      "efficiencyAt50PercentCycleLife": "Eficiencia al 50% de vida de ciclo",
+      "efficiencyFade": "Degradación de eficiencia",
+      "initialSelfDischargingRate": "Tasa de autodescarga inicial",
+      "cellLevelInitial": "Nivel de celda (inicial)",
+      "packLevelInitial": "Nivel de paquete (inicial)",
+      "moduleLevelInitial": "Nivel de módulo (inicial)",
+      "packLevelIncrease": "Nivel de paquete (aumento)",
+      "cellLevelIncrease": "Nivel de celda (aumento)",
+      "moduleLevelIncrease": "Nivel de módulo (aumento)",
+      "maximumPermittedPower": "Potencia máxima permitida",
+      "powerFade": "Degradación de potencia",
+      "powerToEnergyRatio": "Relación potencia-energía",
+      "lowerBoundary": "Límite inferior",
+      "upperBoundary": "Límite superior",
+      "expectedLifetime": "Vida útil esperada",
+      "expectedCycles": "Ciclos esperados",
+      "capacityThresholdForExhaustion": "Umbral de capacidad para agotamiento",
+      "cRateCycleLifeTest": "Tasa C (prueba de vida de ciclo)"
+    },
+    "categories": {
+      "lmt": "Medios de transporte ligero (LMT)",
+      "ev": "Vehículo eléctrico (EV)",
+      "industrial": "Industrial",
+      "stationary": "Almacenamiento de energía estacionario"
+    }
+  },
+  "circularity": {
+    "title": "Pasaporte de batería — Circularidad",
+    "sections": {
+      "renewableContent": "Contenido renovable",
+      "recycledContent": "Contenido reciclado",
+      "dismantling": "Información de desmontaje y extracción",
+      "sparePartSources": "Fuentes de repuestos",
+      "safetyMeasures": "Medidas de seguridad",
+      "endOfLife": "Información de fin de vida"
+    },
+    "fields": {
+      "preConsumerShare": "Proporción pre-consumidor",
+      "postConsumerShare": "Proporción post-consumidor",
+      "address": "Dirección",
+      "email": "Correo electrónico",
+      "website": "Sitio web",
+      "components": "Componentes",
+      "safetyInstructions": "Instrucciones de seguridad",
+      "extinguishingAgents": "Agentes extintores",
+      "wastePrevention": "Prevención de residuos",
+      "separateCollection": "Recogida selectiva",
+      "informationOnCollection": "Información sobre la recogida"
+    }
+  },
+  "productCondition": {
+    "title": "Pasaporte de batería — Condición del producto",
+    "sections": {
+      "currentState": "Estado actual",
+      "energyAndCapacity": "Energía y capacidad",
+      "efficiencyAndSelfDischarge": "Eficiencia y autodescarga",
+      "temperatureHistory": "Historial de temperatura",
+      "negativeEvents": "Eventos negativos",
+      "informationOnAccidents": "Información sobre accidentes"
+    },
+    "fields": {
+      "stateOfCharge": "Estado de carga",
+      "numberOfFullCycles": "Número de ciclos completos",
+      "energyThroughput": "Rendimiento energético",
+      "capacityThroughput": "Rendimiento de capacidad",
+      "remainingEnergy": "Energía restante",
+      "remainingCapacity": "Capacidad restante",
+      "stateOfCertifiedEnergy": "Estado de energía certificada",
+      "remainingRoundTripEnergyEfficiency": "Eficiencia de energía de ida y vuelta restante",
+      "currentSelfDischargingRate": "Tasa de autodescarga actual",
+      "evolutionOfSelfDischarge": "Evolución de la autodescarga",
+      "timeAtExtremeHighTemperature": "Tiempo a temperatura extrema alta",
+      "timeAtExtremeLowTemperature": "Tiempo a temperatura extrema baja",
+      "timeAtExtremeHighTempCharging": "Tiempo a temperatura extrema alta (carga)",
+      "timeAtExtremeLowTempCharging": "Tiempo a temperatura extrema baja (carga)",
+      "updated": "Actualizado: {{date}}"
+    },
+    "accidentReports_one": "{{count}} documento de informe de accidente registrado",
+    "accidentReports_other": "{{count}} documentos de informe de accidente registrados"
+  },
+  "carbonFootprint": {
+    "title": "Pasaporte de batería — Huella de carbono",
+    "empty": "No hay datos de huella de carbono disponibles.",
+    "entry": "Entrada de huella de carbono {{index}}",
+    "single": "Huella de carbono del producto",
+    "fields": {
+      "co2Equivalent": "Equivalente de CO₂",
+      "performanceClass": "Clase de rendimiento"
+    },
+    "sections": {
+      "calculationMethods": "Métodos de cálculo",
+      "lifeCyclePhases": "Fases del ciclo de vida",
+      "publicStudies": "Estudios públicos de huella de carbono"
+    }
+  },
+  "materialComposition": {
+    "title": "Pasaporte de batería — Composición de materiales",
+    "sections": {
+      "batteryChemistry": "Química de la batería",
+      "batteryMaterials": "Materiales de la batería",
+      "hazardousSubstances": "Sustancias peligrosas"
+    },
+    "table": {
+      "material": "Material",
+      "identifier": "Identificador",
+      "mass": "Masa (kg)",
+      "location": "Ubicación",
+      "critical": "Crítico",
+      "criticalChip": "Crítico",
+      "standardChip": "Estándar"
+    },
+    "fields": {
+      "identifier": "Identificador",
+      "concentration": "Concentración",
+      "location": "Ubicación",
+      "impact": "Impacto"
+    },
+    "hazardousClass": {
+      "AcuteToxicity": "Toxicidad aguda",
+      "SkinCorrosionOrIrritation": "Corrosión / irritación de la piel",
+      "EyeDamageOrIrritation": "Daño / irritación ocular"
+    },
+    "criticalCount_one": "{{count}} materia prima crítica identificada",
+    "criticalCount_other": "{{count}} materias primas críticas identificadas",
+    "hazardousCount_one": "{{count}} sustancia peligrosa declarada en esta batería",
+    "hazardousCount_other": "{{count}} sustancias peligrosas declaradas en esta batería"
+  },
+  "handover": {
+    "title": "Pasaporte de batería — Documentación de entrega",
+    "sections": {
+      "documentIdentifiers": "Identificadores de documentos",
+      "classifications": "Clasificaciones",
+      "versions": "Versiones",
+      "digitalFiles": "Archivos digitales"
+    },
+    "fields": {
+      "domain": "Dominio: {{id}}",
+      "primary": "Primario"
+    },
+    "documentIndex": "Documento {{index}}",
+    "available_one": "{{count}} documento disponible para entrega",
+    "available_other": "{{count}} documentos disponibles para entrega"
+  }
+}
