@@ -38,9 +38,12 @@ Test Data Setup:
   * Is available as a fixture parameter in all test methods
 
 Prerequisites:
-- SeaweedFS must be running on http://localhost:8333 with S3 API enabled
+- An S3-compatible endpoint (e.g. SeaweedFS) must be running and reachable at S3_ENDPOINT_URL
 - boto3 must be installed
-- Bucket "ichub-submodels" will be created automatically if missing
+- The configured bucket (S3_BUCKET_NAME) will be created automatically if missing
+
+Connection details are read from environment variables (S3_ENDPOINT_URL, S3_REGION,
+S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME) - see _s3_test_helpers.py for defaults.
 
 To run these tests:
     pytest tests/managers/enablement_services/test_seaweedfs_integration.py -v -s
@@ -68,15 +71,21 @@ from typing import Dict, Any
 # Make boto3 import optional - skip entire module if not installed
 boto3 = pytest.importorskip("boto3")
 
+from tests.managers.enablement_services._s3_test_helpers import (
+    S3_ENDPOINT_URL,
+    S3_REGION,
+    S3_ACCESS_KEY,
+    S3_SECRET_KEY,
+    S3_BUCKET_NAME,
+    create_s3_client,
+    cleanup_bucket,
+)
+
 # ============================================================================
 # Test Configuration Constants
 # ============================================================================
 
-SEAWEEDFS_ENDPOINT = "http://localhost:8333"
-S3_BUCKET_NAME = "ichub-submodels"
-S3_REGION = "us-east-1"
-S3_ACCESS_KEY = "admin"
-S3_SECRET_KEY = "secret"
+SEAWEEDFS_ENDPOINT = S3_ENDPOINT_URL
 KEY_PATTERN = "{semantic_id}/{submodel_id}.json"
 PRESERVE_BUCKET_FOR_INSPECTION = True
 
@@ -86,14 +95,8 @@ PRESERVE_BUCKET_FOR_INSPECTION = True
 # ============================================================================
 
 def _create_s3_client():
-    """Create and return boto3 S3 client for SeaweedFS."""
-    return boto3.client(
-        "s3",
-        endpoint_url=SEAWEEDFS_ENDPOINT,
-        aws_access_key_id=S3_ACCESS_KEY,
-        aws_secret_access_key=S3_SECRET_KEY,
-        region_name=S3_REGION,
-    )
+    """Create and return a boto3 S3 client for the configured S3-compatible endpoint."""
+    return create_s3_client(SEAWEEDFS_ENDPOINT)
 
 
 def _create_s3_bucket(s3_client, bucket_name: str = S3_BUCKET_NAME):
@@ -112,16 +115,9 @@ def _create_s3_bucket(s3_client, bucket_name: str = S3_BUCKET_NAME):
 
 
 def _cleanup_s3_bucket(s3_client, bucket_name: str = S3_BUCKET_NAME):
-    """Delete all objects and the bucket."""
-    try:
-        response = s3_client.list_objects_v2(Bucket=bucket_name)
-        for obj in response.get("Contents", []):
-            s3_client.delete_object(Bucket=bucket_name, Key=obj["Key"])
-            print(f"  Deleted: {obj['Key']}")
-        s3_client.delete_bucket(Bucket=bucket_name)
-        print(f"✓ Deleted bucket: {bucket_name}")
-    except Exception as e:
-        print(f"⚠ Error cleaning up bucket {bucket_name}: {e}")
+    """Delete all objects (paginated) and the bucket, ignoring already-missing resources."""
+    cleanup_bucket(s3_client, bucket_name)
+    print(f"✓ Cleaned up bucket: {bucket_name}")
 
 
 def _get_test_submodels() -> list:
@@ -1101,8 +1097,8 @@ class TestConfigManagerWithSeaweedFS:
         )
         
         assert s3_config is not None, "S3 config should not be None"
-        assert s3_config["bucket_name"] == "ichub-submodels", f"Expected bucket 'ichub-submodels', got {s3_config.get('bucket_name')}"
-        assert s3_config["endpoint_url"] == "http://localhost:8333", f"Expected endpoint 'http://localhost:8333', got {s3_config.get('endpoint_url')}"
+        assert s3_config["bucket_name"] == S3_BUCKET_NAME, f"Expected bucket '{S3_BUCKET_NAME}', got {s3_config.get('bucket_name')}"
+        assert s3_config["endpoint_url"] == SEAWEEDFS_ENDPOINT, f"Expected endpoint '{SEAWEEDFS_ENDPOINT}', got {s3_config.get('endpoint_url')}"
         assert "key_pattern" in s3_config, "key_pattern should be in config"
         print(f"✓ S3 configuration loaded correctly from YAML")
     
@@ -1123,8 +1119,8 @@ class TestConfigManagerWithSeaweedFS:
         )
         
         assert mode == "s3", f"Expected mode 's3', got {mode}"
-        assert config["bucket_name"] == "ichub-submodels"
-        assert config["endpoint_url"] == "http://localhost:8333"
+        assert config["bucket_name"] == S3_BUCKET_NAME
+        assert config["endpoint_url"] == SEAWEEDFS_ENDPOINT
         assert "key_pattern" in config
         print(f"✓ Adapter mode and config retrieved successfully")
 

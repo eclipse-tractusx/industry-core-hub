@@ -92,6 +92,18 @@ data:
             key_name: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.auth.key_name | quote }}
           timeout: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.timeout }}
           verify_ssl: {{ .Values.backend.configuration.provider.submodel_dispatcher.http.verify_ssl }}
+      {{- else if eq .Values.backend.configuration.provider.submodel_dispatcher.mode "s3" }}
+        mode: {{ .Values.backend.configuration.provider.submodel_dispatcher.mode | quote }}
+        s3:
+          bucket_name: {{ .Values.backend.configuration.provider.submodel_dispatcher.s3.bucket_name | quote }}
+          region_name: {{ .Values.backend.configuration.provider.submodel_dispatcher.s3.region_name | quote }}
+          key_pattern: {{ .Values.backend.configuration.provider.submodel_dispatcher.s3.key_pattern | quote }}
+          {{- if .Values.backend.configuration.provider.submodel_dispatcher.s3.endpoint_url }}
+          endpoint_url: {{ .Values.backend.configuration.provider.submodel_dispatcher.s3.endpoint_url | quote }}
+          {{- end }}
+          {{- /* Credentials are intentionally omitted here: when auth is enabled, AWS_ACCESS_KEY_ID and
+               AWS_SECRET_ACCESS_KEY are injected as container env vars (see deployment-backend.yaml) and
+               picked up automatically by boto3's standard credential chain. */}}
       {{- else }}
       {{- /* Filesystem mode - use standard toYaml */}}
       {{ .Values.backend.configuration.provider.submodel_dispatcher | toYaml | nindent 6 }}

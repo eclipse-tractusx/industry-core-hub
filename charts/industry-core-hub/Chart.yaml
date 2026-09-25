@@ -42,3 +42,9 @@ dependencies:
     name: keycloak
     repository: oci://registry-1.docker.io/cloudpirates
     version: 0.13.6
+  # -- Optional S3-compatible object storage for local/Minikube development (submodel_dispatcher mode "s3").
+  # Disabled by default; enabled only through values-local-deployment.yaml or a Minikube-specific values file.
+  - condition: seaweedfs.enabled
+    name: seaweedfs
+    repository: https://seaweedfs.github.io/seaweedfs/helm
+    version: 4.44.0

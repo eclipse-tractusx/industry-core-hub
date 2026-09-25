@@ -28,17 +28,27 @@ use real boto3 without any mocking to connect to actual SeaweedFS instances.
 
 These tests are automatically skipped if:
 - boto3 is not installed
-- SeaweedFS is not reachable at http://localhost:8333
+- SeaweedFS (or whatever S3-compatible endpoint is configured via S3_ENDPOINT_URL) is unreachable
+
+Connection details are read from environment variables (S3_ENDPOINT_URL, S3_REGION,
+S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME) - see _s3_test_helpers.py for defaults.
+Unit tests elsewhere in the suite do not depend on any of this and are never skipped by it.
 """
 
 import pytest
 import logging
 import socket
+from urllib.parse import urlparse
+
+from tests.managers.enablement_services._s3_test_helpers import (
+    S3_ENDPOINT_URL,
+    build_s3_client_kwargs,
+)
 from botocore.config import Config
 
 
 def _is_seaweedfs_available() -> bool:
-    """Check if boto3 is available and SeaweedFS is reachable."""
+    """Check if boto3 is available and the configured S3 endpoint is reachable."""
     # Suppress boto3 debug logging during availability check
     logging.getLogger("botocore").setLevel(logging.CRITICAL)
     logging.getLogger("urllib3").setLevel(logging.CRITICAL)
@@ -47,30 +57,35 @@ def _is_seaweedfs_available() -> bool:
         import boto3
     except ImportError:
         return False
-    
+
+    if not S3_ENDPOINT_URL:
+        # No local/custom endpoint configured - these tests target a local S3-compatible
+        # store (e.g. SeaweedFS), not real AWS S3, so there is nothing to probe here.
+        return False
+
     try:
+        parsed = urlparse(S3_ENDPOINT_URL)
+        host = parsed.hostname or "localhost"
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
         # Quick socket check first - fail fast if port is closed
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1)  # 1 second timeout
-        result = sock.connect_ex(("localhost", 8333))
+        result = sock.connect_ex((host, port))
         sock.close()
         if result != 0:
             return False
         
         # If socket check passes, verify with S3 client (with minimal retries)
-        s3_config = Config(
+        client_kwargs = build_s3_client_kwargs(S3_ENDPOINT_URL)
+        client_kwargs["config"] = Config(
+            signature_version=client_kwargs["config"].signature_version,
+            s3=client_kwargs["config"].s3,
             connect_timeout=2,
             read_timeout=2,
             retries={"max_attempts": 0},  # Disable retries
         )
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url="http://localhost:8333",
-            aws_access_key_id="admin",
-            aws_secret_access_key="secret",
-            region_name="us-east-1",
-            config=s3_config,
-        )
+        s3_client = boto3.client("s3", **client_kwargs)
         s3_client.list_buckets()
         return True
     except Exception:
@@ -98,6 +113,9 @@ def pytest_collection_modifyitems(config, items):
             if not seaweedfs_available:
                 item.add_marker(
                     pytest.mark.skip(
-                        reason="SeaweedFS not available at http://localhost:8333 or boto3 not installed"
+                        reason=(
+                            f"S3-compatible endpoint not available at {S3_ENDPOINT_URL or '(unset)'} "
+                            "or boto3 not installed"
+                        )
                     )
                 )

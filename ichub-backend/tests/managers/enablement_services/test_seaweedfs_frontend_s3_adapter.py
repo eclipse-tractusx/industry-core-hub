@@ -35,8 +35,11 @@ The resulting adapter is exercised end-to-end through the manager API
 with a raw boto3 client.
 
 Prerequisites:
-- SeaweedFS running with the S3 API on http://localhost:8333
+- An S3-compatible endpoint (e.g. SeaweedFS) running with the S3 API reachable at S3_ENDPOINT_URL
 - boto3 installed
+
+Connection details are read from environment variables (S3_ENDPOINT_URL, S3_REGION,
+S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME) - see _s3_test_helpers.py for defaults.
 
 Run with:
     pytest tests/managers/enablement_services/test_seaweedfs_frontend_s3_adapter.py -v -s
@@ -63,10 +66,19 @@ from managers.enablement_services.adapters.adapter_config_manager import (
     get_all_available_adapter_types,
 )
 from tools.exceptions import NotFoundError
+from tests.managers.enablement_services._s3_test_helpers import (
+    S3_ENDPOINT_URL,
+    S3_REGION,
+    S3_ACCESS_KEY,
+    S3_SECRET_KEY,
+    S3_BUCKET_NAME,
+    create_s3_client,
+    cleanup_bucket,
+)
 
 
-SEAWEEDFS_ENDPOINT = "http://localhost:8333"
-BUCKET_NAME = "ichub-submodels"
+SEAWEEDFS_ENDPOINT = S3_ENDPOINT_URL
+BUCKET_NAME = S3_BUCKET_NAME
 KEY_PATTERN = "{semantic_id}/{submodel_id}.json"
 
 # Keep the bucket and its objects after the run so results can be inspected in SeaweedFS.
@@ -88,17 +100,11 @@ class FrontendS3Adapter(S3Adapter):
 @pytest.fixture(scope="module")
 def s3_client():
     """Raw boto3 client used to verify what the manager wrote/deleted."""
-    client = boto3.client(
-        "s3",
-        endpoint_url=SEAWEEDFS_ENDPOINT,
-        aws_access_key_id="admin",
-        aws_secret_access_key="secret",
-        region_name="us-east-1",
-    )
+    client = create_s3_client(SEAWEEDFS_ENDPOINT)
     try:
         client.list_buckets()
     except Exception as e:
-        pytest.skip(f"SeaweedFS not reachable at {SEAWEEDFS_ENDPOINT}: {e}")
+        pytest.skip(f"S3-compatible endpoint not reachable at {SEAWEEDFS_ENDPOINT}: {e}")
     return client
 
 
@@ -106,13 +112,7 @@ def s3_client():
 def s3_bucket(s3_client):
     """Provide the test bucket, keeping written objects for inspection by default."""
     def purge_bucket() -> None:
-        try:
-            response = s3_client.list_objects_v2(Bucket=BUCKET_NAME)
-            for obj in response.get("Contents", []):
-                s3_client.delete_object(Bucket=BUCKET_NAME, Key=obj["Key"])
-            s3_client.delete_bucket(Bucket=BUCKET_NAME)
-        except Exception:
-            pass
+        cleanup_bucket(s3_client, BUCKET_NAME)
 
     if not PRESERVE_BUCKET_FOR_INSPECTION:
         purge_bucket()
@@ -122,7 +122,7 @@ def s3_bucket(s3_client):
     except Exception as e:
         # SeaweedFS returns an error when the bucket already exists from a previous run.
         if not PRESERVE_BUCKET_FOR_INSPECTION:
-            pytest.fail(f"Cannot create S3 bucket '{BUCKET_NAME}' in SeaweedFS: {e}")
+            pytest.fail(f"Cannot create S3 bucket '{BUCKET_NAME}' at {SEAWEEDFS_ENDPOINT}: {e}")
 
     yield BUCKET_NAME
 
@@ -144,11 +144,11 @@ def frontend_s3_config(s3_bucket) -> dict:
     """Adapter configuration as a frontend request would deliver it."""
     return {
         "bucket_name": s3_bucket,
-        "region_name": "us-east-1",
+        "region_name": S3_REGION,
         "endpoint_url": SEAWEEDFS_ENDPOINT,
         "key_pattern": KEY_PATTERN,
-        "aws_access_key_id": "admin",
-        "aws_secret_access_key": "secret",
+        "aws_access_key_id": S3_ACCESS_KEY,
+        "aws_secret_access_key": S3_SECRET_KEY,
     }
 
 
