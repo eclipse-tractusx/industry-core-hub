@@ -42,6 +42,9 @@ class SubmodelAdapterProvider:
         both must be supplied together (e.g. from a frontend request or a database
         row) and are used as-is, bypassing YAML entirely. Either way the caller does
         not need to know which source was used.
+        
+        ARCHITECTURAL IMPROVEMENT: Dual-mode design enables runtime config override (frontend/DB),
+        simplifies testing (no YAML needed), and keeps implementation agnostic to config source.
         """
         if adapter_type is None and adapter_config is None:
             adapter_type, adapter_config = ConfigManager.get_adapter_mode_and_config(
@@ -83,6 +86,9 @@ class AdapterConfigurationInterface:
 
     The interface methods follow the pattern:
         raw_config (from YAML) → transform_config() → transformed_config (for adapter)
+    
+    ARCHITECTURAL IMPROVEMENT: Generic pass-through design decouples our code from SDK adapter schemas,
+    making it extensible for new adapter types without backend code changes.
     """
 
     @staticmethod
@@ -115,3 +121,13 @@ class AdapterConfigurationInterface:
             raise ValueError("Adapter type must be a non-empty string")
 
         return {key: value for key, value in raw_config.items()}
+
+
+def get_all_available_adapter_types() -> set[str]:
+    """
+    Get all available adapter types, including built-in and externally registered ones.
+
+    Returns:
+        Set of adapter type names (normalized to lowercase with underscores)
+    """
+    return SubmodelAdapterFactory.get_available_adapter_types()
