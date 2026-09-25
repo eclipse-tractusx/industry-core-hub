@@ -69,15 +69,27 @@ def _restore_real_modules() -> None:
 
 
 @pytest.fixture(scope="session")
-def app_client():
+def app_client(ensure_config_loaded):
     """
     Session-scoped TestClient.
+
+    ConfigManager is automatically initialized by the autouse session fixture
+    ensure_config_loaded from the root conftest.py before this fixture runs.
 
     Pre-imports the app so all modules are in sys.modules before patch()
     tries to resolve them. controllers/fastapi/__init__.py eagerly imports
     the full app, which would cause a chicken-and-egg problem otherwise.
     """
     _restore_real_modules()
+
+    # After _restore_real_modules(), ConfigManager may have been re-imported,
+    # resetting _raw_config to None. Explicitly reload config before app import.
+    from pathlib import Path
+    from managers.config.config_manager import ConfigManager
+    test_dir = Path(__file__).parent.parent.parent  # tests/ directory
+    config_path = test_dir / "config" / "configuration.yml"
+    if config_path.exists():
+        ConfigManager.load_config(str(config_path))
 
     import controllers.fastapi.app  # noqa: F401 - pre-warm sys.modules
 
