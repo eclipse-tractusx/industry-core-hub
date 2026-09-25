@@ -324,7 +324,7 @@ class TestFrontendExternalAdapterRegistration:
             )
 
     def test_unregister_unknown_or_built_in_adapter_is_rejected(self):
-        with pytest.raises(ValueError, match="Cannot unregister built-in adapter"):
+        with pytest.raises(ValueError, match="not registered"):
             SubmodelServiceManager.unregister_external_adapter("s3")
 
         with pytest.raises(ValueError, match="not registered"):

@@ -20,245 +20,84 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
+"""
+Pytest configuration for enablement_services tests.
+
+SeaweedFS integration tests (test_seaweedfs_integration.py and test_seaweedfs_frontend_s3_adapter.py)
+use real boto3 without any mocking to connect to actual SeaweedFS instances.
+
+These tests are automatically skipped if:
+- boto3 is not installed
+- SeaweedFS is not reachable at http://localhost:8333
+"""
+
 import pytest
-import yaml
-import sys
-from pathlib import Path
-from typing import Dict, Any
-from unittest.mock import patch, MagicMock
-
-@pytest.fixture(scope="session")
-def config_path() -> Path:
-    """
-    Provide path test configuration file.
-    
-    Returns:
-        Path object pointing to configuration.yml
-    """
-    test_dir = Path(__file__).parent
-    config_path = test_dir / "config" / "configuration.yml"
-    if not config_path.exists():
-        pytest.skip(f"Config file not found at {config_path}")
-    return config_path
+import logging
+import socket
+from botocore.config import Config
 
 
-@pytest.fixture(scope="session")
-def filesystem_config_path() -> Path:
-    """
-    Provide path to FileSystem test configuration file.
+def _is_seaweedfs_available() -> bool:
+    """Check if boto3 is available and SeaweedFS is reachable."""
+    # Suppress boto3 debug logging during availability check
+    logging.getLogger("botocore").setLevel(logging.CRITICAL)
+    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
     
-    Returns:
-        Path object pointing to configuration-filesystem.yml
-    """
-    test_dir = Path(__file__).parent
-    config_path = test_dir / "config" / "configuration-filesystem.yml"
-    if not config_path.exists():
-        pytest.skip(f"Config file not found at {config_path}")
-    return config_path
+    try:
+        import boto3
+    except ImportError:
+        return False
+    
+    try:
+        # Quick socket check first - fail fast if port is closed
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)  # 1 second timeout
+        result = sock.connect_ex(("localhost", 8333))
+        sock.close()
+        if result != 0:
+            return False
+        
+        # If socket check passes, verify with S3 client (with minimal retries)
+        s3_config = Config(
+            connect_timeout=2,
+            read_timeout=2,
+            retries={"max_attempts": 0},  # Disable retries
+        )
+        s3_client = boto3.client(
+            "s3",
+            endpoint_url="http://localhost:8333",
+            aws_access_key_id="admin",
+            aws_secret_access_key="secret",
+            region_name="us-east-1",
+            config=s3_config,
+        )
+        s3_client.list_buckets()
+        return True
+    except Exception:
+        return False
 
 
-@pytest.fixture(scope="session")
-def http_submodel_config_path() -> Path:
+def pytest_collection_modifyitems(config, items):
     """
-    Provide path to HTTP Submodel test configuration file.
+    Mark all SeaweedFS tests as integration tests and skip if SeaweedFS unavailable.
     
-    Returns:
-        Path object pointing to configuration-http-submodel.yml
+    This applies to:
+    - test_seaweedfs_integration.py
+    - test_seaweedfs_frontend_s3_adapter.py
+    
+    Tests can be run with: pytest -m seaweedfs
+    Tests will be skipped if SeaweedFS is not available.
     """
-    test_dir = Path(__file__).parent
-    config_path = test_dir / "config" / "configuration-http-submodel.yml"
-    if not config_path.exists():
-        pytest.skip(f"Config file not found at {config_path}")
-    return config_path
-
-
-@pytest.fixture(scope="session")
-def s3_config_path() -> Path:
-    """
-    Provide path to S3 test configuration file.
+    seaweedfs_available = _is_seaweedfs_available()
     
-    Returns:
-        Path object pointing to configuration-s3.yml
-    """
-    test_dir = Path(__file__).parent
-    config_path = test_dir / "config" / "configuration-s3.yml"
-    if not config_path.exists():
-        pytest.skip(f"Config file not found at {config_path}")
-    return config_path
-
-
-@pytest.fixture(scope="session")
-def test_config(config_path: Path) -> Dict[str, Any]:
-    """
-    Load test configuration from YAML file.
-    
-    Yields:
-        Dictionary containing test configuration
-    """
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-
-@pytest.fixture(scope="function")
-def config_manager_with_seaweedfs(test_config):
-    """
-    Provide ConfigManager with test configuration loaded.
-    
-    This fixture:
-    1. Mocks ConfigManager._raw_config with test config
-    2. Allows testing dynamic config retrieval without file I/O
-    
-    Yields:
-        ConfigManager class ready for testing
-    """
-    from managers.config.config_manager import ConfigManager
-    
-    # Store original value
-    original_config = ConfigManager._raw_config
-    
-    # Set test config
-    ConfigManager._raw_config = test_config
-    
-    yield ConfigManager
-    
-    # Restore original config
-    ConfigManager._raw_config = original_config
-
-
-@pytest.fixture(scope="function")
-def config_manager_with_unit_test(test_config):
-    """
-    Provide ConfigManager with unit test configuration loaded.
-    
-    Alias for config_manager_with_seaweedfs for test compatibility.
-    This fixture injects test configuration into ConfigManager without file I/O.
-    
-    The global SDK mock is disabled by the disable_global_sdk_mock fixture,
-    so SubmodelAdapterFactory works with the real SDK implementation.
-    
-    Yields:
-        ConfigManager class ready for testing
-    """
-    from managers.config.config_manager import ConfigManager
-    
-    # Store original value
-    original_config = ConfigManager._raw_config
-    
-    # Set test config
-    ConfigManager._raw_config = test_config
-    
-    yield ConfigManager
-    
-    # Restore original config
-    ConfigManager._raw_config = original_config
-
-
-@pytest.fixture(scope="function")
-def filesystem_test_config(filesystem_config_path: Path) -> Dict[str, Any]:
-    """
-    Load FileSystem adapter test configuration from YAML file.
-    
-    Args:
-        filesystem_config_path: Path to configuration-filesystem.yml
-    
-    Returns:
-        Dictionary containing FileSystem adapter configuration
-    """
-    with open(filesystem_config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-@pytest.fixture(scope="function")
-def http_submodel_test_config(http_submodel_config_path: Path) -> Dict[str, Any]:
-    """
-    Load HTTP Submodel adapter test configuration from YAML file.
-    
-    Args:
-        http_submodel_config_path: Path to configuration-http-submodel.yml
-    
-    Returns:
-        Dictionary containing HTTP Submodel adapter configuration
-    """
-    with open(http_submodel_config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-@pytest.fixture(scope="function")
-def s3_test_config(s3_config_path: Path) -> Dict[str, Any]:
-    """
-    Load S3 adapter test configuration from YAML file.
-    
-    Args:
-        s3_config_path: Path to configuration-s3.yml
-    
-    Returns:
-        Dictionary containing S3 adapter configuration
-    """
-    with open(s3_config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    return config
-
-
-@pytest.fixture(scope="function")
-def config_manager_with_filesystem(filesystem_test_config) -> Any:
-    """
-    Provide ConfigManager with filesystem test configuration loaded.
-    
-    Args:
-        filesystem_test_config: FileSystem test configuration fixture
-    
-    Yields:
-        ConfigManager class with filesystem configuration
-    """
-    from managers.config.config_manager import ConfigManager
-    
-    original_config = ConfigManager._raw_config
-    ConfigManager._raw_config = filesystem_test_config
-    
-    yield ConfigManager
-    
-    ConfigManager._raw_config = original_config
-
-
-@pytest.fixture(scope="function")
-def config_manager_with_http_submodel(http_submodel_test_config) -> Any:
-    """
-    Provide ConfigManager with HTTP submodel test configuration loaded.
-    
-    Args:
-        http_submodel_test_config: HTTP Submodel test configuration fixture
-    
-    Yields:
-        ConfigManager class with HTTP submodel configuration
-    """
-    from managers.config.config_manager import ConfigManager
-    
-    original_config = ConfigManager._raw_config
-    ConfigManager._raw_config = http_submodel_test_config
-    
-    yield ConfigManager
-    
-    ConfigManager._raw_config = original_config
-
-
-@pytest.fixture(scope="function")
-def config_manager_with_s3(s3_test_config) -> Any:
-    """
-    Provide ConfigManager with S3 test configuration loaded.
-    
-    Args:
-        s3_test_config: S3 test configuration fixture
-    
-    Yields:
-        ConfigManager class with S3 configuration
-    """
-    from managers.config.config_manager import ConfigManager
-    
-    original_config = ConfigManager._raw_config
-    ConfigManager._raw_config = s3_test_config
-    
-    yield ConfigManager
+    for item in items:
+        fspath_str = str(item.fspath)
+        if 'test_seaweedfs_integration' in fspath_str or 'test_seaweedfs_frontend_s3_adapter' in fspath_str:
+            item.add_marker(pytest.mark.seaweedfs)
+            
+            if not seaweedfs_available:
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason="SeaweedFS not available at http://localhost:8333 or boto3 not installed"
+                    )
+                )

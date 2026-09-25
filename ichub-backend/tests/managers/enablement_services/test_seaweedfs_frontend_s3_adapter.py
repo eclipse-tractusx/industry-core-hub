@@ -59,11 +59,14 @@ from tractusx_sdk.industry.adapters.submodel_adapter_factory import SubmodelAdap
 from tractusx_sdk.industry.adapters.submodel_adapters import S3Adapter
 
 from managers.enablement_services.submodel_service_manager import SubmodelServiceManager
+from managers.enablement_services.adapters.adapter_config_manager import (
+    get_all_available_adapter_types,
+)
 from tools.exceptions import NotFoundError
 
 
 SEAWEEDFS_ENDPOINT = "http://localhost:8333"
-BUCKET_NAME = "submodels-frontend-tests"
+BUCKET_NAME = "ichub-submodels"
 KEY_PATTERN = "{semantic_id}/{submodel_id}.json"
 
 # Keep the bucket and its objects after the run so results can be inspected in SeaweedFS.
@@ -214,7 +217,7 @@ class TestFrontendS3AdapterRegistration:
 
     def test_adapter_type_is_registered(self, registered_frontend_s3_adapter):
         assert FRONTEND_S3_ADAPTER_TYPE in SubmodelServiceManager.get_registered_adapters()
-        assert FRONTEND_S3_ADAPTER_TYPE in SubmodelAdapterFactory.get_available_adapter_types()
+        assert FRONTEND_S3_ADAPTER_TYPE in get_all_available_adapter_types()
 
     def test_manager_builds_registered_s3_adapter(self, manager, frontend_s3_config):
         assert manager.adapter_mode == FRONTEND_S3_ADAPTER_TYPE
