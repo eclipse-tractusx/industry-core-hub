@@ -21,64 +21,49 @@
 #################################################################################
 
 """
-Shared helpers for the SeaweedFS S3 integration tests.
+Shared helpers for S3 integration tests using moto mock.
 
-All SeaweedFS/S3-compatible connection details are read from environment variables so the
-same test suite can run against a local docker/Minikube SeaweedFS instance or any other
-S3-compatible endpoint (e.g. in CI) without editing test code. Sensible defaults match the
-values used by the local development docker-compose / Minikube setup.
+Uses moto to mock S3 operations without requiring a real S3/SeaweedFS endpoint.
+This approach eliminates external dependencies and makes tests fast and deterministic.
 
-Environment variables:
-    S3_ENDPOINT_URL - Custom S3 endpoint (e.g. SeaweedFS gateway). Empty/unset means "real AWS S3".
-    S3_REGION       - Region name reported to the S3 client (default: "us-east-1").
+Moto mocks AWS S3 service calls in-memory, so all tests are isolated and can run
+in parallel without side effects.
+
+Environment variables (used for configuration compatibility, but not needed for mocking):
+    S3_ENDPOINT_URL - Ignored when using moto (kept for config compatibility)
+    S3_REGION       - Region name for moto S3 client (default: "us-east-1").
     S3_ACCESS_KEY   - Access key id (default: "admin").
     S3_SECRET_KEY   - Secret access key (default: "secret").
-    S3_BUCKET_NAME  - Bucket used for the integration tests (default: "ichub-submodels").
+    S3_BUCKET_NAME  - Bucket used for tests (default: "ichub-submodels").
 """
 
 import os
 
-from botocore.config import Config
-
-S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "http://localhost:8333")
+S3_ENDPOINT_URL = os.getenv("S3_ENDPOINT_URL", "http://localhost:8333") 
 S3_REGION = os.getenv("S3_REGION", "us-east-1")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "admin")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "secret")
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME", "ichub-submodels")
 
 
-def build_s3_client_kwargs(endpoint_url: str | None = S3_ENDPOINT_URL) -> dict:
+def build_s3_client_kwargs(endpoint_url: str | None = None) -> dict:
     """
-    Build boto3 ``client("s3", **kwargs)`` keyword arguments for the given endpoint.
+    Build boto3 ``client("s3", **kwargs)`` keyword arguments for moto mock.
 
-    When a custom endpoint is configured (e.g. SeaweedFS or any other S3-compatible store),
-    Signature Version 4 and path-style addressing are enforced via a ``botocore.config.Config``,
-    since most non-AWS S3 implementations do not support virtual-hosted-style addressing.
-
-    When no custom endpoint is configured, no extra ``Config`` is added so the client falls back
-    to boto3's default (virtual-hosted-style, region-based) behavior against real AWS S3.
+    Uses moto's in-memory S3 mock, so endpoint_url is ignored.
+    Moto automatically intercepts all boto3 S3 calls without needing explicit endpoints.
     """
-    kwargs: dict = {
+    return {
         "region_name": S3_REGION,
         "aws_access_key_id": S3_ACCESS_KEY,
         "aws_secret_access_key": S3_SECRET_KEY,
     }
 
-    if endpoint_url:
-        kwargs["endpoint_url"] = endpoint_url
-        kwargs["config"] = Config(
-            signature_version="s3v4",
-            s3={"addressing_style": "path"},
-        )
 
-    return kwargs
-
-
-def create_s3_client(endpoint_url: str | None = S3_ENDPOINT_URL):
-    """Create a boto3 S3 client configured for ``endpoint_url`` (or real AWS S3 if empty)."""
+def create_s3_client(endpoint_url: str | None = None):
+    """Create a boto3 S3 client for moto mock (endpoint_url parameter ignored)."""
     import boto3
-
-    return boto3.client("s3", **build_s3_client_kwargs(endpoint_url))
+    return boto3.client("s3", **build_s3_client_kwargs())
 
 
 def cleanup_bucket(s3_client, bucket_name: str = S3_BUCKET_NAME) -> None:

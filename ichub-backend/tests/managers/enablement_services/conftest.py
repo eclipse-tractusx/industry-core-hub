@@ -23,99 +23,53 @@
 """
 Pytest configuration for enablement_services tests.
 
-SeaweedFS integration tests (test_seaweedfs_integration.py and test_seaweedfs_frontend_s3_adapter.py)
-use real boto3 without any mocking to connect to actual SeaweedFS instances.
+S3 integration tests (test_seaweedfs_integration.py and test_seaweedfs_frontend_s3_adapter.py)
+use moto to mock S3 operations in-memory without requiring external services.
 
-These tests are automatically skipped if:
-- boto3 is not installed
-- SeaweedFS (or whatever S3-compatible endpoint is configured via S3_ENDPOINT_URL) is unreachable
+Moto provides a complete mock of AWS S3 service, so tests:
+- Do not require SeaweedFS or any S3-compatible endpoint
+- Run in isolation without side effects
+- Execute quickly and deterministically
+- Can be run in parallel
 
-Connection details are read from environment variables (S3_ENDPOINT_URL, S3_REGION,
-S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME) - see _s3_test_helpers.py for defaults.
-Unit tests elsewhere in the suite do not depend on any of this and are never skipped by it.
+Connection details (S3_REGION, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME) are read from
+environment variables - see _s3_test_helpers.py for defaults.
 """
 
 import pytest
-import logging
-import socket
-from urllib.parse import urlparse
-
-from tests.managers.enablement_services._s3_test_helpers import (
-    S3_ENDPOINT_URL,
-    build_s3_client_kwargs,
-)
-from botocore.config import Config
 
 
-def _is_seaweedfs_available() -> bool:
-    """Check if boto3 is available and the configured S3 endpoint is reachable."""
-    # Suppress boto3 debug logging during availability check
-    logging.getLogger("botocore").setLevel(logging.CRITICAL)
-    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-    
+def _is_s3_mocking_available() -> bool:
+    """Check if boto3 and moto are available for S3 mocking."""
     try:
         import boto3
-    except ImportError:
-        return False
-
-    if not S3_ENDPOINT_URL:
-        # No local/custom endpoint configured - these tests target a local S3-compatible
-        # store (e.g. SeaweedFS), not real AWS S3, so there is nothing to probe here.
-        return False
-
-    try:
-        parsed = urlparse(S3_ENDPOINT_URL)
-        host = parsed.hostname or "localhost"
-        port = parsed.port or (443 if parsed.scheme == "https" else 80)
-
-        # Quick socket check first - fail fast if port is closed
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)  # 1 second timeout
-        result = sock.connect_ex((host, port))
-        sock.close()
-        if result != 0:
-            return False
-        
-        # If socket check passes, verify with S3 client (with minimal retries)
-        client_kwargs = build_s3_client_kwargs(S3_ENDPOINT_URL)
-        client_kwargs["config"] = Config(
-            signature_version=client_kwargs["config"].signature_version,
-            s3=client_kwargs["config"].s3,
-            connect_timeout=2,
-            read_timeout=2,
-            retries={"max_attempts": 0},  # Disable retries
-        )
-        s3_client = boto3.client("s3", **client_kwargs)
-        s3_client.list_buckets()
+        import moto
         return True
-    except Exception:
+    except ImportError:
         return False
 
 
 def pytest_collection_modifyitems(config, items):
     """
-    Mark all SeaweedFS tests as integration tests and skip if SeaweedFS unavailable.
+    Mark all S3 tests as integration tests and skip if moto unavailable.
     
     This applies to:
     - test_seaweedfs_integration.py
     - test_seaweedfs_frontend_s3_adapter.py
     
     Tests can be run with: pytest -m seaweedfs
-    Tests will be skipped if SeaweedFS is not available.
+    Tests use moto for S3 mocking, so they don't require external services.
     """
-    seaweedfs_available = _is_seaweedfs_available()
+    s3_mocking_available = _is_s3_mocking_available()
     
     for item in items:
         fspath_str = str(item.fspath)
         if 'test_seaweedfs_integration' in fspath_str or 'test_seaweedfs_frontend_s3_adapter' in fspath_str:
             item.add_marker(pytest.mark.seaweedfs)
             
-            if not seaweedfs_available:
+            if not s3_mocking_available:
                 item.add_marker(
                     pytest.mark.skip(
-                        reason=(
-                            f"S3-compatible endpoint not available at {S3_ENDPOINT_URL or '(unset)'} "
-                            "or boto3 not installed"
-                        )
+                        reason="boto3 or moto not installed"
                     )
                 )
