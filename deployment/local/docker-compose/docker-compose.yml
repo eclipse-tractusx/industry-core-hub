@@ -3,7 +3,7 @@
 #
 # Copyright (c) 2026 LKS Next
 # Copyright (c) 2026 Technovative Solutions
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2025,2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -42,6 +42,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - local-network
+
+  migrations:
+    build:
+      context: ../../../ichub-backend
+      dockerfile: runtimes/Dockerfile
+    container_name: local_migrations
+    restart: "no"
+    command:
+      - sh
+      - -c
+      - >-
+        sed -i 's#@localhost#@postgres#' /industry-core-hub/config/configuration.yml
+        && python3 migrate.py upgrade head
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - local-network
 

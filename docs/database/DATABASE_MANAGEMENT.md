@@ -21,6 +21,7 @@ Operational guide for Industry Core Hub PostgreSQL database management.
 
 **Database:** PostgreSQL 15.4+  
 **ORM:** SQLModel (SQLAlchemy-based)  
+**Migrations:** Alembic 1.16.5
 **Deployment:** Kubernetes with Helm charts
 
 ## Quick Reference
@@ -40,9 +41,9 @@ Operational guide for Industry Core Hub PostgreSQL database management.
 
 Three schemas manage different aspects:
 
-- **`public`** - Application data (19 core tables: batch, twin, catalog_part, etc.)
-- **`ichub`** - EDC connector cache (edr_connections, known_connectors, known_dtrs)
-- **`ichub_keycloak`** - Keycloak authentication (managed by Keycloak)
+- **`public`** - Application data. The 25 SQLModel application tables are owned by Alembic.
+- **`cache`** - Runtime connector and DTR cache tables, created by their managers and not managed by Alembic.
+- **`ichub_keycloak`** - Keycloak authentication, managed by Keycloak and excluded from Alembic.
 
 See [Schema Documentation](./SCHEMA_DOCUMENTATION.md) and [DDL](./Metadata-DDL-public.sql).
 
@@ -82,27 +83,54 @@ postgresql:
 
 ---
 
-## Setup
+## Migrations
 
-### Manual Schema Creation
+Alembic is the authority for application schema changes. The PostgreSQL init script only
+creates users, schemas, and grants; do not add application `CREATE TABLE` statements there.
 
-Use the provided DDL script to initialize the public schema:
+### Local Docker Compose
+
+The `migrations` service waits for PostgreSQL and applies the latest revision:
 
 ```bash
-psql -h postgres -U ichub -d ichub < Metadata-DDL-public.sql
+docker compose -f deployment/local/docker-compose/docker-compose.yml up migrations
 ```
 
-### Kubernetes Automatic Initialization
+### Manual execution
 
-The database initializes automatically during Helm deployment via:
-- `configmap-backend-postgres-init.yaml` - Runs DDL scripts
-- `secret-backend-postgres.yaml` - Sets credentials
+Run from `ichub-backend` with the same configuration used by the backend:
+
+```bash
+python migrate.py current
+python migrate.py upgrade head
+```
+
+`upgrade head` is idempotent. New application schema changes must be represented by a new
+Alembic revision and deployed using a fix-forward migration. Existing databases are not
+automatically adopted or stamped by this workflow.
+
+For an isolated disposable database, a revision can be reverted with:
+
+```bash
+python migrate.py downgrade base
+```
+
+Do not use downgrade as a production rollback strategy; restore a verified backup or apply a
+forward-compatible fix instead.
+
+### Kubernetes automatic execution
+
+Helm runs `migrate.py upgrade head` in a post-install/post-upgrade Job after PostgreSQL is
+reachable. The Job must complete successfully before the deployment is considered healthy.
 
 Deploy via:
 ```bash
 helm install industry-core-hub ./charts/industry-core-hub \
   -f values.yaml
 ```
+
+The `ichub` and `ichub_keycloak` users, schemas, and permissions continue to be bootstrapped
+by `configmap-backend-postgres-init.yaml` and `secret-backend-postgres.yaml`.
 
 ---
 
@@ -134,7 +162,8 @@ pg_restore -d ichub ichub_20260212_120000.dump
 
 ---
 
-See the [Database DDL](./Metadata-DDL-public.sql) for schema definition and [Data Seeding Guide](./DATA_SEEDING_GUIDE.md) for test data setup.
+See the [Data Seeding Guide](./DATA_SEEDING_GUIDE.md) for test data setup. The historical DDL
+file is reference material only; do not use it as the deployment mechanism for application tables.
 
 ## NOTICE
 
