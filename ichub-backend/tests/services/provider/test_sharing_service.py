@@ -2,6 +2,8 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2025 LKS NEXT
+# Copyright (c) 2026 DRÄXLMAIER Group
+# (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -73,7 +75,9 @@ class TestSharingService:
             manufacturerId="BPNL123456789012",
             manufacturerPartId="PART001",
             businessPartnerNumber="BPNL987654321098",
-            customerPartId="CUST001"
+            customerPartId="CUST001",
+            twinRegistryName="TestRegistry",
+            connectorControlPlaneName="TestControlPlane"
         )
 
     @pytest.fixture
@@ -176,7 +180,6 @@ class TestSharingService:
         mock_create_part_type_info.return_value = {"test": "document"}
         
         # Mock twin management service methods
-        self.service.twin_management_service.get_or_create_enablement_stack = Mock()
         self.service.twin_management_service.create_twin_aspect = Mock()
         self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
         
@@ -397,7 +400,7 @@ class TestSharingService:
         mock_repo.twin_repository.find_by_global_id.return_value = sample_twin_db
         
         # Act
-        result = self.service._create_and_get_twin(mock_repo, sample_share_catalog_part)
+        result = self.service._create_and_get_twin(mock_repo, sample_share_catalog_part, 1)
         
         # Assert
         assert result == sample_twin_db
@@ -495,7 +498,6 @@ class TestSharingService:
             mock_create_part_type_info.return_value = {"test": "document"}
             
             # Mock twin management service
-            self.service.twin_management_service.get_or_create_enablement_stack = Mock()
             self.service.twin_management_service.create_twin_aspect = Mock()
             self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
             
@@ -518,7 +520,9 @@ class TestSharingService:
                 manufacturerId="BPNL123456789012",
                 manufacturerPartId="PART001",
                 businessPartnerNumber="BPNL987654321098",
-                customerPartId="CUST001"
+                customerPartId="CUST001",
+                twinRegistryName="TestRegistry",
+                connectorControlPlaneName="TestControlPlane"
             )
             
             # Act
@@ -563,7 +567,6 @@ class TestSharingService:
             # Mock part type info document
             mock_create_part_type_info.return_value = {"test": "document"}
 
-            self.service.twin_management_service.get_or_create_enablement_stack = Mock()
             self.service.twin_management_service.create_twin_aspect = Mock()
             self.service.twin_management_service.get_catalog_part_twin_details_id = Mock()
             
@@ -584,7 +587,9 @@ class TestSharingService:
                 manufacturerId="BPNL123456789012",
                 manufacturerPartId="PART001",
                 businessPartnerNumber="BPNL987654321098",
-                customerPartId="CUST001"
+                customerPartId="CUST001",
+                twinRegistryName="TestRegistry",
+                connectorControlPlaneName="TestControlPlane"
             )
             
             # Act

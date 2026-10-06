@@ -2,7 +2,7 @@
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
 # Copyright (c) 2025,2026 LKS Next
-# Copyright (c) 2025 DRÄXLMAIER Group
+# Copyright (c) 2025,2026 DRÄXLMAIER Group
 # (represented by Lisa Dräxlmaier GmbH)
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
@@ -31,8 +31,9 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 
 from models.metadata_database.provider.models import (
+    ConnectorControlPlane,
     BusinessPartner,
-    EnablementServiceStack,
+    TwinRegistry,
     LegalEntity,
     Twin,
     TwinAspect,
@@ -253,22 +254,6 @@ class PartnerCatalogPartRepository(BaseRepository[PartnerCatalogPart]):
             self._session.refresh(existing)
         return existing
     
-class EnablementServiceStackRepository(BaseRepository[EnablementServiceStack]):
-    def get_by_name(self, name: str, join_legal_entity: bool = False) -> Optional[EnablementServiceStack]:
-        stmt = select(EnablementServiceStack).where(
-            EnablementServiceStack.name == name)  # type: ignore
-        
-        if join_legal_entity:
-            stmt = stmt.join(LegalEntity, LegalEntity.id == EnablementServiceStack.legal_entity_id)
-
-        return self._session.scalars(stmt).first()
-    
-    def find_by_legal_entity_bpnl(self, legal_entity_bpnl: str) -> List[EnablementServiceStack]:
-        stmt = select(EnablementServiceStack).join(
-            LegalEntity, LegalEntity.id == EnablementServiceStack.legal_entity_id).where(
-            LegalEntity.bpnl == legal_entity_bpnl)
-        return self._session.scalars(stmt).all()
-
 class SerializedPartRepository(BaseRepository[SerializedPart]):
     def get_by_partner_catalog_part_id_part_instance_id(self, partner_catalog_part_id: int, part_instance_id: str) -> Optional[SerializedPart]:
         stmt = select(SerializedPart).where(
@@ -420,9 +405,13 @@ class TwinRepository(BaseRepository[Twin]):
         
         return twin
     
-    def find_by_global_id(self, global_id: UUID) -> Optional[Twin]:
+    def find_by_global_id(self, global_id: UUID, include_registrations: bool = False) -> Optional[Twin]:
         stmt = select(Twin).where(
             Twin.global_id == global_id)
+        
+        if include_registrations:
+            stmt = stmt.options(selectinload(Twin.twin_registrations))
+        
         return self._session.scalars(stmt).first()
     
     def find_by_aas_id(self, aas_id: UUID) -> Optional[Twin]:
@@ -464,7 +453,6 @@ class TwinRepository(BaseRepository[Twin]):
             van: Optional[str] = None,
             business_partner_number: Optional[str] = None,
             global_id: Optional[UUID] = None,
-            enablement_service_stack_id: Optional[int] = None,
             min_incl_created_date: Optional[datetime] = None,
             max_excl_created_date: Optional[datetime] = None,
             limit: int = 50,
@@ -500,13 +488,6 @@ class TwinRepository(BaseRepository[Twin]):
 
         if global_id:
             stmt = stmt.where(Twin.global_id == global_id)
-
-        if enablement_service_stack_id:
-            stmt = stmt.join(
-                TwinRegistration, TwinRegistration.twin_id == Twin.id
-            ).where(
-                TwinRegistration.enablement_service_stack_id == enablement_service_stack_id
-            )
 
         if business_partner_number:
             stmt = stmt.join(BusinessPartner, BusinessPartner.id == PartnerCatalogPart.business_partner_id
@@ -585,39 +566,39 @@ class TwinAspectRepository(BaseRepository[TwinAspect]):
             submodel_id=submodel_id,
             semantic_id=semantic_id,
             twin_id=twin_id,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
         )
         self.create(twin_aspect)
         return twin_aspect
 
 
 class TwinAspectRegistrationRepository(BaseRepository[TwinAspectRegistration]):
-    def get_by_twin_aspect_id_enablement_service_stack_id(
-        self, twin_aspect_id: int, enablement_service_stack_id: int
+    def get_by_twin_aspect_id_twin_registry_id(
+        self, twin_aspect_id: int, twin_registry_id: int
     ) -> Optional[TwinAspectRegistration]:
-        """Retrieve a TwinAspectRegistration by twin_aspect_id and enablement_service_stack_id."""
+        """Retrieve a TwinAspectRegistration by twin_aspect_id and twin_registry_id."""
         stmt = select(TwinAspectRegistration).where(
             TwinAspectRegistration.twin_aspect_id == twin_aspect_id
         ).where(
-            TwinAspectRegistration.enablement_service_stack_id == enablement_service_stack_id
+            TwinAspectRegistration.twin_registry_id == twin_registry_id
         )
         return self._session.scalars(stmt).first()
 
     def create_new(
         self,
         twin_aspect_id: int,
-        enablement_service_stack_id: int,
+        twin_registry_id: int,
+        connector_control_plane_id: int,
         status: int = 0,
         registration_mode: int = 0,
     ) -> TwinAspectRegistration:
         """Create a new TwinAspectRegistration instance."""
         twin_aspect_registration = TwinAspectRegistration(
             twin_aspect_id=twin_aspect_id,
-            enablement_service_stack_id=enablement_service_stack_id,
+            twin_registry_id=twin_registry_id,
+            connector_control_plane_id=connector_control_plane_id,
             status=status,
             registration_mode=registration_mode,
-            created_at=datetime.now(timezone.utc),
+            created_date=datetime.now(timezone.utc),
             modified_date=datetime.now(timezone.utc),
         )
         self.create(twin_aspect_registration)
@@ -653,20 +634,49 @@ class TwinExchangeRepository(BaseRepository[TwinExchange]):
         return self._session.scalars(stmt).first()  
 
 class TwinRegistrationRepository(BaseRepository[TwinRegistration]):
-    def get_by_twin_id_enablement_service_stack_id(self, twin_id: int, enablement_service_stack_id: int) -> Optional[TwinRegistration]:
+    def get_by_twin_id_twin_registry_id(self, twin_id: int, twin_registry_id: int) -> Optional[TwinRegistration]:
         stmt = select(TwinRegistration).where(
             TwinRegistration.twin_id == twin_id).where(
-            TwinRegistration.enablement_service_stack_id == enablement_service_stack_id)
+            TwinRegistration.twin_registry_id == twin_registry_id)
         return self._session.scalars(stmt).first()
-    
-    def create_new(self, twin_id: int, enablement_service_stack_id: int, dtr_registered: bool = False) -> TwinRegistration:
+
+    def create_new(self, twin_id: int, twin_registry_id: int, dtr_registered: bool = False) -> TwinRegistration:
         twin_registration = TwinRegistration(
             twin_id=twin_id,
-            enablement_service_stack_id=enablement_service_stack_id,
+            twin_registry_id=twin_registry_id,
             dtr_registered=dtr_registered
         )
         self.create(twin_registration)
         return twin_registration
+
+class ConnectorControlPlaneRepository(BaseRepository[ConnectorControlPlane]):
+    def get_by_id(self, id: int, join_legal_entity: bool = False) -> Optional[ConnectorControlPlane]:
+        stmt = select(ConnectorControlPlane).where(ConnectorControlPlane.id == id)
+        if join_legal_entity:   
+            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id)
+        return self._session.scalars(stmt).first()
+
+    def get_by_name(self, name: str, join_legal_entity: bool = False) -> Optional[ConnectorControlPlane]:
+        stmt = select(ConnectorControlPlane).where(ConnectorControlPlane.name == name)
+        if join_legal_entity:   
+            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id)
+        return self._session.scalars(stmt).first()
+    
+    def get_default(self, join_legal_entity: bool = False) -> Optional[ConnectorControlPlane]:
+        stmt = select(ConnectorControlPlane).where(ConnectorControlPlane.is_default == True)
+        if join_legal_entity:   
+            stmt = stmt.join(LegalEntity, LegalEntity.id == ConnectorControlPlane.legal_entity_id)
+        return self._session.scalars(stmt).first()
+
+
+class TwinRegistryRepository(BaseRepository[TwinRegistry]):
+    def get_by_name(self, name: str) -> Optional[TwinRegistry]:
+        stmt = select(TwinRegistry).where(TwinRegistry.name == name)
+        return self._session.scalars(stmt).first()
+    
+    def get_default(self) -> Optional[TwinRegistry]:
+        stmt = select(TwinRegistry).where(TwinRegistry.is_default == True)
+        return self._session.scalars(stmt).first()
 
 class NotificationRepository(BaseRepository[NotificationEntity]):
     """
