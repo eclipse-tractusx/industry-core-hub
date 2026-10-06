@@ -117,7 +117,7 @@ const PcfConsumption: React.FC = () => {
   const fetchMockPCFData = async (id: string): Promise<PCFData> => {
     await new Promise(resolve => setTimeout(resolve, 500));
     
-    const [_, manufacturerPartId, partInstanceId] = id.split(':');
+    const [, manufacturerPartId, partInstanceId] = id.split(':');
     
     return {
       id: `pcf-${Date.now()}`,

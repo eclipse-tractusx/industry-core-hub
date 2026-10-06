@@ -23,8 +23,7 @@
 
 import CopyableUrnChip from './CopyableUrnChip';
 import React, { useState, useRef } from 'react';
-import { Box, Typography, Chip, Popper, Paper, ClickAwayListener, Snackbar, Alert } from '@mui/material';
-import FingerprintIcon from '@mui/icons-material/Fingerprint';
+import { Typography, Popper, Paper, ClickAwayListener, Snackbar, Alert } from '@mui/material';
 
 interface CustomTooltipProps {
   title?: string;

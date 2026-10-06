@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Chip } from '@mui/material';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 
@@ -32,17 +32,15 @@ interface CopyableUrnChipProps {
 
 
 const CopyableUrnChip: React.FC<CopyableUrnChipProps> = ({ urn, onCopySuccess }) => {
-  const [copied, setCopied] = useState(false);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(urn);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1200);
       if (onCopySuccess) {
         onCopySuccess(urn);
       }
-    } catch {}
+    } catch {
+      // Clipboard write failed - fail silently
+    }
   };
 
   return (

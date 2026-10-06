@@ -352,7 +352,6 @@ export class FieldIdentifier {
     const parsed = this.parse(identifier);
     
     // Search for the index of arrayPath in segments
-    const arraySegments = arrayPath.split('.');
     let matchIndex = -1;
     
     for (let i = 0; i < parsed.segments.length; i++) {
@@ -390,7 +389,6 @@ export class FieldIdentifier {
     const parsed = this.parse(identifier);
     
     // Find the segment corresponding to arrayPath
-    const arraySegments = arrayPath.split('.');
     let matchIndex = -1;
     
     for (let i = 0; i < parsed.segments.length; i++) {

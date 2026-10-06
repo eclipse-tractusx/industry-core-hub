@@ -158,7 +158,9 @@
     "defaultTitle": "Ha Ocurrido un Error",
     "possibleCauses": "Posibles causas:",
     "retry": "Reintentar",
-    "notFound": "No hay piezas de catálogo disponibles, por favor verifica la conexión/configuración de ichub-backend."
+    "notFound": "No hay piezas de catálogo disponibles, por favor verifica la conexión/configuración de ichub-backend.",
+    "fileReadError": "No se pudo leer el archivo{{message, : }}",
+    "invalidJson": "Formato JSON inválido"
   },
   "header": {
     "profile": "Perfil",

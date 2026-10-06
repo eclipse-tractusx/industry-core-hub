@@ -160,6 +160,10 @@ backend:
       - "PATCH"
     allow_headers:
       - "*"
+  # -- Optional Prometheus metrics endpoint exposed via prometheus-fastapi-instrumentator.
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
   # -- Persistance configuration for the backend
   persistence:
     # -- Create a PVC to persist storage (if disabled, data and logs will not be persisted)

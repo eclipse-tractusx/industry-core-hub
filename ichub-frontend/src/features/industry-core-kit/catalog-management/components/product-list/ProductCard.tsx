@@ -112,8 +112,8 @@ export const ProductCard = ({
           if (details && details.dtrAasId) {
             updates[key] = details.dtrAasId;
           }
-        } catch (err) {
-          // Optionally log error
+        } catch {
+          // Failed to fetch details - fail silently
         }
       }));
       setAasIds(updates);
@@ -138,7 +138,9 @@ export const ProductCard = ({
           setAnchorEl(null);
           setSelectedProductId(null);
         }, 1700);
-      } catch {}
+      } catch {
+        // Clipboard write failed - fail silently
+      }
     }
   };
 
@@ -151,7 +153,6 @@ export const ProductCard = ({
       {items.map((item) => {
         const name = item.name ?? "";
         const productId = item.manufacturerId + "/" + item.manufacturerPartId;
-        const aasId = aasIds[productId];
         return (
           <Box key={productId} className="custom-card-box">
             <Box

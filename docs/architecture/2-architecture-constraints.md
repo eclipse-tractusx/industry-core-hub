@@ -72,7 +72,34 @@ The backend exposes a RESTful API with endpoints organized by service domain:
 | Partner Management  | /partner-management/*  | Endpoints for managing business partners and data exchange agreements                                      |
 | Twin Management     | /twin-management/*     | Endpoints for managing digital twins                                                                       |
 | Submodel Dispatcher | /submodel-dispatcher/* | Internal API called by EDC Data Planes in order the deliver data of of the internall used Submodel Service |
+| MCP Addon             | /addons/mcp-addon/*      | MCP tool surface for AI clients, health, and audit endpoints                                               |
 
+
+### Add-on KITs (Layer 4)
+
+The ICH backend supports use-case-specific add-ons at Layer 4, mounted as sub-applications under `controllers/fastapi/routers/addons/`. Each add-on follows a consistent structure: a versioned router, a manager package under `managers/addons_service/`, and DTOs under `models/addons/` (or `models/services/addons/`).
+
+#### EcoPass KIT
+
+The EcoPass KIT provides Digital Product Passport (DPP) provision and consumption capabilities. It was the first add-on shipped with the ICH.
+
+#### MCP Addon
+
+The MCP Addon surfaces IC-Hub's dataspace capabilities as high-level, use-case-oriented tools for AI clients (Claude Desktop, Microsoft Copilot Studio, custom agents) via the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). It is implemented as an in-process [FastMCP](https://gofastmcp.com/) ASGI sub-application mounted at `/addons/mcp-addon/mcp`.
+
+**Registered tools (18 total — 9 read-only, 9 write):**
+- **Discovery & consumption (read):** `list_known_partners`, `list_partner_twins`, `get_twin_details`, `list_twin_submodels`, `fetch_submodel`, `list_my_catalog_parts`
+- **EcoPass / DPP:** `fetch_partner_dpp` (read), `fetch_dpp` (read), `share_dpp` (write)
+- **Provision (write):** `create_catalog_part`, `update_catalog_part`, `create_serialized_part`, `share_catalog_part`, `register_business_partner`, `create_catalog_part_twin`, `create_serialized_part_twin`, `attach_twin_aspect`
+- **Session/meta (read):** `get_session_summary`
+
+Write tools are gated by a preview/confirm step (`require_confirmation_for_writes`, default `true`). For the full tool reference and how to connect a client, see the [MCP Addon Guide](../developer/MCP-ADDON-GUIDE.md).
+
+**Auth model:** MCP clients authenticate via OAuth 2.0 or API-key Bearer token. Auth is enforced inside FastMCP via the `auth=` parameter, independent of the router dependency-injection guard used by the REST API. End-user identity is recorded in IC-Hub's audit log but is not impersonated into the dataspace.
+
+**Session state:** Per-MCP-session state is held in-memory. No new Postgres tables or Alembic migrations are introduced.
+
+**`SharingService` deviation:** The `share_catalog_part` tool calls `SharingService` directly rather than going through a manager, because the atomic "submodel + DTR shell + EDC asset + policy + contract" flow exists only in that service. This is a deliberate, narrow exception documented in [ADR 0005](./decision-records/0005-mcp-addon.md).
 
 ### ICH Frontend Component
 
@@ -155,6 +182,7 @@ The database tables are documented in models.py [(ichub-backend/models/metadata_
 - each Data partner needs to run its own ICH in his environment. The ICH is not a central component.
 - Data Provider must register its parts in the ICH and provide/register its twins and assets through the ICH Backend.
 - To make requests to the ICH there is an API and also can be consume through the interface provided by the Frontend.
+- MCP clients authenticate via the existing Keycloak realm; end-user identity is recorded in audit logs but not impersonated into the dataspace.
 
 ### Architecture Constraints
 - Developed under an open-source license and all used frameworks and

@@ -446,6 +446,8 @@
     "outOfV9Range": "⚠ v9.0.0範囲外",
     "saveBoth": "両方のPCFを保存",
     "saving": "保存中…",
+    "update": "更新",
+    "updating": "更新中…",
     "empty": "（空）",
     "useAsV9": "v9.0.0データとして使用",
     "useAsV7": "v7.0.0データとして使用",

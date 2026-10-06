@@ -66,6 +66,10 @@ backend:
       - "PATCH"
     allow_headers:
       - "*"
+  # -- Optional Prometheus metrics endpoint exposed via prometheus-fastapi-instrumentator.
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     # -- Agreements define the ODRL policies for each semantic model.

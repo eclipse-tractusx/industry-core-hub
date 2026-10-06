@@ -1,6 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
+# Copyright (c) 2026 Capgemini Deutschland GmbH
 # Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
@@ -41,3 +42,7 @@ if _ccm_provider_config.get("enabled", True):
     router.include_router(ccm_kit.router)
 
 router.include_router(pcf_kit.router)
+
+if ConfigManager.get_config("addons.mcp_addon.enabled", True):
+    from .mcp_addon import mcp_addon
+    router.include_router(mcp_addon.router)

@@ -446,6 +446,8 @@
     "outOfV9Range": "⚠ 超出 v9.0.0 范围",
     "saveBoth": "保存两个 PCF",
     "saving": "保存中…",
+    "update": "更新",
+    "updating": "更新中…",
     "empty": "（空）",
     "useAsV9": "用作 v9.0.0 数据",
     "useAsV7": "用作 v7.0.0 数据",

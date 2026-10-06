@@ -67,6 +67,12 @@ backend:
       - "PATCH"
     allow_headers:
       - "*"
+  # When enabled, the backend publishes an OpenMetrics endpoint (default: /metrics)
+  metrics:
+    # -- Enable or disable the /metrics endpoint
+    enabled: true
+    # -- Path where the metrics are exposed
+    endpoint: "/metrics"
   # -- Backend configuration, changes to these values will be reflected in the configuration.yml file.
   configuration:
     # -- Hostname for the backend service. If empty, it will use the ingress URL automatically.

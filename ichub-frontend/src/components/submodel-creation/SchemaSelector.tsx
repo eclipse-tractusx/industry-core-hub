@@ -281,7 +281,22 @@ const SchemaSelector: React.FC<SchemaSelectorProps> = ({
 
     const toggleExpanded = (namespace: string, event?: React.MouseEvent) => {
         if (event) event.stopPropagation();
-        setExpandedMap(prev => ({ ...prev, [namespace]: !prev[namespace] }));
+        setExpandedMap(prev => {
+            const next = { ...prev, [schemaKey]: !prev[schemaKey] };
+            // If collapsing (was expanded and now will be false), reset scroll of the description
+            if (prev[schemaKey]) {
+                try {
+                    const el = typeof document !== 'undefined' ? document.getElementById(`desc-${schemaKey}`) : null;
+                    if (el) {
+                        // Use helper to reset scroll position without animation
+                        scrollToElement({ element: el as HTMLElement, container: el as HTMLElement, focus: false, highlightClass: '', durationMs: 0, block: 'start' });
+                    }
+                } catch {
+                    // ignore in non-browser environments
+                }
+            }
+            return next;
+        });
     };
 
     return (

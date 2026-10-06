@@ -199,7 +199,7 @@ export const deleteSerializedPart = async (
   
   
   try {
-  const response = await httpClient.delete(url);
+    await httpClient.delete(url);
     
   } catch (error) {
     console.error("Delete API error:", error);

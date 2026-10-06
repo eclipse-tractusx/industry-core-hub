@@ -23,6 +23,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 interface JsonImportDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ interface JsonImportDialogProps {
 }
 
 const JsonImportDialog: React.FC<JsonImportDialogProps> = ({ open, onClose, onImport, error }) => {
+  const { t } = useTranslation('common');
   const [rawJson, setRawJson] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
 
@@ -49,12 +51,11 @@ const JsonImportDialog: React.FC<JsonImportDialogProps> = ({ open, onClose, onIm
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (event) => {
-      try {
-        setRawJson(event.target?.result as string || '');
-        setFileError(null);
-      } catch (err) {
-        setFileError('Could not read file');
-      }
+      setRawJson(event.target?.result as string || '');
+      setFileError(null);
+    };
+    reader.onerror = () => {
+      setFileError(t('errors.fileReadError', { message: reader.error?.message }));
     };
     reader.readAsText(file);
   };
@@ -66,8 +67,8 @@ const JsonImportDialog: React.FC<JsonImportDialogProps> = ({ open, onClose, onIm
       // Clear the content after successful import
       setRawJson('');
       setFileError(null);
-    } catch (err) {
-      setFileError('Invalid JSON');
+    } catch {
+      setFileError(t('errors.invalidJson'));
     }
   };
 

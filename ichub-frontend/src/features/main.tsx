@@ -1,6 +1,7 @@
 /********************************************************************************
  * Eclipse Tractus-X - Industry Core Hub Frontend
- * 
+ *
+ * Copyright (c) 2026 Capgemini Deutschland GmbH
  * Copyright (c) 2026 LKS Next
  * Copyright (c) 2025 Contributors to the Eclipse Foundation
  *
@@ -44,6 +45,7 @@ import {
   Inbox,
   ShoppingCart
 } from '@mui/icons-material';
+import McpIcon from './mcp-addon/McpIcon';
 import { kitFeaturesFeature } from './kit-features/routes';
 import { FeatureConfig, NavigationItem } from '@/types/routing';
 import { KitFeature } from './kit-features/types';
@@ -57,6 +59,7 @@ import PcfKitImage from '@/features/kit-features/assets/kit-images/pcf-kit.svg';
 import DataChainKitImage from '@/features/kit-features/assets/kit-images/data-chain-kit.svg';
 import DcmKitImage from '@/features/kit-features/assets/kit-images/dcm-kit.svg';
 import TraceabilityKitImage from '@/features/kit-features/assets/kit-images/traceability-kit.svg';
+import McpAddonImage from '@/features/kit-features/assets/kit-images/mcp-addon.svg';
 import CcmKitImage from '@/features/kit-features/assets/kit-images/certificate-management-kit.svg';
 
 // Import feature modules
@@ -70,6 +73,7 @@ import { certificateManagementFeature } from './ccm-kit/certificate-management/r
 import { pcfRequestFeature } from './pcf-kit/pcf-request/routes';
 import { pcfExchangeFeature } from './pcf-kit/pcf-exchange/routes';
 import { pcfManagementFeature } from './pcf-kit/pcf-management/routes';
+import { mcpAddonFeature } from './mcp-addon/routes';
 import { provisionManagementFeature } from './ccm-kit/provision-management/routes';
 import { ccmConsumptionFeature } from './ccm-kit/consumption/routes';
 
@@ -264,7 +268,7 @@ export const kits: KitFeature[] = [
     documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/Traceability%20Kit/Adoption%20View%20Traceability%20Kit'
   },
   {
-    id: 'ccm',
+   id: 'ccm',
     name: 'CCM KIT',
     description: 'Manage, share and consume compliance certificates via EDC and notifications with dataspace partners.',
     status: 'available',
@@ -296,14 +300,38 @@ export const kits: KitFeature[] = [
         id: 'ccm-consumption',
         name: 'CCM Consumption',
         description: 'Request, track, download and review compliance certificates from your partners.',
-        icon: <ShoppingCart />,
+        icon: <ShoppingCart />,        
+        enabled: false,
+        default: false
+      }
+      ],
+      version: '1.0.0',
+      domain: 'compliance',
+      documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/certificate-management-kit/adoption-view' 
+  },
+  {
+    id: 'mcp',
+    name: i18n.t('mcp.name', { ns: 'kits' }),
+    description: i18n.t('mcp.description', { ns: 'kits' }),
+    status: 'available',
+    icon: <McpIcon />,
+    image: McpAddonImage,
+    features: [
+      {
+        module: mcpAddonFeature,
+        id: 'mcp-tools',
+        name: i18n.t('mcp.features.mcpTools.name', { ns: 'kits' }),
+        description: i18n.t('mcp.features.mcpTools.description', { ns: 'kits' }),
+        icon: <McpIcon />,
         enabled: false,
         default: false
       }
     ],
-    version: '1.0.0',
-    domain: 'compliance',
-    documentation: 'https://eclipse-tractusx.github.io/docs-kits/kits/certificate-management-kit/adoption-view'
+    domain: 'dataspace-foundation',
+    version: '0.0.1',
+    createdAt: '2026-05-19',
+    lastUpdated: '2026-05-19',
+    documentation: 'https://eclipse-tractusx.github.io/docs-kits'
   }
 ];
 

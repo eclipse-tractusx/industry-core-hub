@@ -140,6 +140,12 @@ export interface DualPcfCreationWizardProps {
    * submodel individually and then reconcile shared data with the other version.
    */
   focusVersion?: DualPcfVersionKey;
+  /**
+   * When true, the wizard is in update mode: the final step button shows
+   * "Update" instead of "Save". Set this when at least one PCF version already
+   * exists on the backend (PCF_BACKWARD_COMPATIBILITY_SATURN = true update flow).
+   */
+  isUpdate?: boolean;
 }
 
 type WizardStep = 0 | 1 | 2;
@@ -324,6 +330,7 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
   versionStatus,
   initialData,
   focusVersion,
+  isUpdate = false,
 }) => {
   const { t } = useTranslation('pcf');
 
@@ -1373,7 +1380,9 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                         disabled={!canSave}
                         onClick={handleSave}
                         sx={{ ...primarySx, minHeight: '40px' }}>
-                        {isSaving ? t('dualWizard.saving') : t('dualWizard.save')}
+                        {isSaving
+                          ? t(isUpdate ? 'dualWizard.updating' : 'dualWizard.saving')
+                          : t(isUpdate ? 'dualWizard.update' : 'dualWizard.save')}
                       </Button>
                     </span>
                   ) : (

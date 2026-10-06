@@ -426,6 +426,8 @@
     "validate": "Validate",
     "continueBtn": "Continue",
     "save": "Save",
+    "update": "Update",
+    "updating": "Updating…",
     "fillFromV9": "Refresh from v9.0.0",
     "backToV9": "Back to v9.0.0",
     "backToV7": "Back to v7.0.0",

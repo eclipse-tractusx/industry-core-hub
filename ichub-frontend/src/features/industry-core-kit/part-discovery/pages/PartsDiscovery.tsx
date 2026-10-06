@@ -1147,11 +1147,6 @@ const PartsDiscovery = () => {
     }
   };
 
-  const handleRegisterClick = (manufacturerId: string, manufacturerPartId: string) => {
-    
-    // Implement registration functionality
-  };
-
   return (
     <Box sx={{ 
       height: '100%', // Use full available height from parent
@@ -2437,7 +2432,7 @@ const PartsDiscovery = () => {
                         {partTypeCards.length > 0 ? (
                           <CatalogPartsDiscovery
                             onClick={handleCardClick}
-                            onRegisterClick={handleRegisterClick}
+                            onRegisterClick={() => {}} // Implement if needed
                             items={partTypeCards.map(card => ({
                               id: card.id,
                               manufacturerId: card.manufacturerId,

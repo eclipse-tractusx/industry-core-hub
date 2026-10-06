@@ -439,6 +439,10 @@ const PcfManagementPage: React.FC = () => {
         'v7.0.0': { status: 'skipped' } as PcfVersionSaveResult,
       } as DualSaveOutcome;
 
+      // Accumulate participants across all updated versions so we can notify
+      // them all at once after the wizard closes successfully.
+      let collectedParticipants: string[] = [];
+
       for (const version of PCF_VERSIONS) {
         const payload = payloads[version];
         if (!payload) continue; // version not part of this save
@@ -448,7 +452,9 @@ const PcfManagementPage: React.FC = () => {
             await uploadPcf(partId, payload, version);
             outcome[version] = { status: 'uploaded' };
           } else if (!deepEqualData(existing, payload)) {
-            await updatePcfAndGetParticipants(partId, payload, version);
+            const participants = await updatePcfAndGetParticipants(partId, payload, version);
+            // Merge participants, keeping unique BPNLs across versions
+            collectedParticipants = [...new Set([...collectedParticipants, ...participants])];
             outcome[version] = { status: 'updated' };
           } else {
             outcome[version] = { status: 'skipped' };
@@ -490,6 +496,14 @@ const PcfManagementPage: React.FC = () => {
           await loadPartData(manufacturerId, partId);
         }
         setPcfCreateDialogOpen(false);
+        // If any version was updated (not just created for the first time),
+        // open the Notify Participants dialog so the user can inform requestors.
+        if (collectedParticipants.length > 0 ||
+            outcome['v9.0.0'].status === 'updated' ||
+            outcome['v7.0.0'].status === 'updated') {
+          setAvailableParticipants(collectedParticipants);
+          setParticipantDialogOpen(true);
+        }
       }
       return outcome;
     } finally {
@@ -1072,6 +1086,7 @@ const PcfManagementPage: React.FC = () => {
           isSaving={isUploading}
           versionStatus={versionStatus ?? undefined}
           initialData={dualInitialData}
+          isUpdate={!!(remotePcfByVersion?.['v9.0.0'] || remotePcfByVersion?.['v7.0.0'])}
         />
       </Box>
     );
