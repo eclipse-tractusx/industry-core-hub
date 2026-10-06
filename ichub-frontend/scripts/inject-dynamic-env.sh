@@ -32,6 +32,7 @@ target_file=${target_file:-/tmp/index.html}
 string_vars=" \
 ICHUB_BACKEND_URL \
 PARTICIPANT_ID \
+USE_KEYCLOAK_BPN \
 REQUIRE_HTTPS_URL_PATTERN \
 APP_ENVIRONMENT \
 APP_VERSION \

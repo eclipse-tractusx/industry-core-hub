@@ -79,6 +79,9 @@
         AUTH_LOGOUT_REDIRECT_URI: "",
         
         // Participant configuration
+        // When "true", the participant BPNL used across the app is taken from the
+        // authenticated user's Keycloak token; when "false", PARTICIPANT_ID above is used.
+        USE_KEYCLOAK_BPN: "true",
         PARTICIPANT_ID: "BPNL**********",
         BPN_VALIDATION_PATTERN: "",
         
