@@ -136,11 +136,25 @@ jobs:
             echo "=== Migration pod status ==="
             kubectl get pods -l job-name="$migration_job" -o wide || true
 
-            echo "=== Migration container logs ==="
-            kubectl logs "job/$migration_job" -c migrations || true
+            migration_pod=$(kubectl get pods \
+              -l job-name="$migration_job" \
+              -o jsonpath='{.items[0].metadata.name}' || true)
 
-            echo "=== PostgreSQL readiness logs ==="
-            kubectl logs "job/$migration_job" -c wait-for-postgresql || true
+            if [ -n "$migration_pod" ]; then
+              echo "=== Migration pod: $migration_pod ==="
+              kubectl describe pod "$migration_pod" || true
+
+              echo "=== Previous migration container logs ==="
+              kubectl logs "$migration_pod" -c migrations --previous --timestamps || true
+
+              echo "=== Current migration container logs ==="
+              kubectl logs "$migration_pod" -c migrations --timestamps || true
+
+              echo "=== PostgreSQL readiness logs ==="
+              kubectl logs "$migration_pod" -c wait-for-postgresql --timestamps || true
+            else
+              echo "Migration pod was not found"
+            fi
 
             echo "=== Migration pod description ==="
             kubectl describe pods -l job-name="$migration_job" || true
