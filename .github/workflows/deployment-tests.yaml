@@ -100,10 +100,7 @@ jobs:
            --dependency-update \
            --wait --timeout=600s
 
-          # Helm runs the Alembic migration Job as a post-install hook.
-          kubectl wait --for=condition=complete \
-            job/tx-ichub-industry-core-hub-migrations --timeout=300s
-          test "$(kubectl get job tx-ichub-industry-core-hub-migrations -o jsonpath='{.status.failed}' 2>/dev/null || true)" != "1"
+          # Helm waits for the pre-install migration hook to complete.
           
           # Debug: Show all resources created
           echo "=== All resources created ==="

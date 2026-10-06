@@ -64,7 +64,6 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
         self.dtrs_key = dtrs_key
         self._save_thread = None
         self._last_saved_hash = None
-        SQLModel.metadata.create_all(engine)
         class DynamicKnownDtrs(KnownDtrs, table=True):
             __tablename__ = table_name
             __table_args__ = {"extend_existing": True}

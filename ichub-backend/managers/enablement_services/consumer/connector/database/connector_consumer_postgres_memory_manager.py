@@ -83,7 +83,6 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         self.connectors_key = connectors_key
         self._save_thread = None
         self._last_saved_hash = None
-        SQLModel.metadata.create_all(engine)
         class DynamicKnownConnectors(KnownConnectors, table=True):
             __tablename__ = table_name
             __table_args__ = {"extend_existing": True}

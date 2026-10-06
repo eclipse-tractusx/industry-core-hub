@@ -21,8 +21,6 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################
 
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16
@@ -44,13 +42,14 @@ services:
       retries: 5
     networks:
       - local-network
-
   migrations:
     build:
       context: ../../../ichub-backend
       dockerfile: runtimes/Dockerfile
     container_name: local_migrations
     restart: "no"
+    environment:
+      DATABASE_PASSWORD: password
     command:
       - sh
       - -c

@@ -99,6 +99,7 @@ jobs:
     - name: Run database migrations
       run: |
         cd ichub-backend
+        export DATABASE_PASSWORD=password
         python migrate.py current
         python migrate.py upgrade head
         python migrate.py current
