@@ -524,6 +524,7 @@
       "type": "Type",
       "consumer": "Consommateur",
       "status": "Statut",
+      "consumerStatus": "Statut consommateur",
       "lastShared": "Dernier partage"
     },
     "locations": "{{count}} site(s)",
