@@ -1,8 +1,7 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2026 LKS Next
-# Copyright (c) 2026 Contributors to the Eclipse Foundation
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -21,8 +20,41 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Configuration management for submodel adapters in Industry Core Hub."""
+version: 1
+disable_existing_loggers: False
 
-from .adapter_config_manager import AdapterConfigurationInterface
+formatters:
+  default:
+    format: '%(asctime)s [%(levelname)-8s] [%(name)-15s] %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
 
-__all__ = ["AdapterConfigurationInterface"]
+handlers:
+  console:
+    class : logging.StreamHandler
+    formatter: default
+    level   : DEBUG
+    stream  : ext://sys.stdout
+  file:
+    class : logging.handlers.RotatingFileHandler
+    formatter: default
+    mode: a
+
+loggers:
+    development:
+        level: DEBUG
+        handlers: [console, file]
+        propagate: no
+
+    staging:
+        level: DEBUG
+        handlers: [console, file]
+        propagate: no
+
+    production:
+        level: DEBUG
+        handlers: [file]
+        propagate: no
+
+root:
+    level: DEBUG
+    handlers: [console, file]

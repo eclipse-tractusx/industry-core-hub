@@ -938,7 +938,7 @@ backend:
               obligation: []
       # -- Submodel Dispatcher configuration
       submodel_dispatcher:
-        # -- Storage mode: "filesystem" (local storage) or "http" (external service)
+        # -- Storage mode: "filesystem" (local storage), "http" (external service) or "s3" (S3-compatible object storage, e.g. SeaweedFS)
         mode: "filesystem"
         # -- Local filesystem path for submodels (used when mode=filesystem)
         path: "/industry-core-hub/data/submodels"
@@ -963,6 +963,26 @@ backend:
           timeout: 30
           # -- SSL certificate verification
           verify_ssl: true
+        # -- S3-compatible object storage configuration (used when mode=s3, e.g. the bundled SeaweedFS dependency)
+        s3:
+          # -- S3 bucket name for submodel storage
+          bucket_name: "ichub-submodels"
+          # -- Region reported to the S3 client (SeaweedFS accepts any value)
+          region_name: "us-east-1"
+          # -- Key pattern for submodel storage (use {semantic_id} and {submodel_id} as placeholders)
+          key_pattern: "{semantic_id}/{submodel_id}.json"
+          # -- Custom S3 endpoint URL (e.g. the internal SeaweedFS S3 gateway service). Leave empty for real AWS S3.
+          endpoint_url: ""
+          # -- Authentication configuration. When enabled, credentials are injected as the standard
+          # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY environment variables (read automatically by boto3),
+          # sourced from a Kubernetes Secret rather than being embedded in the rendered configuration.
+          auth:
+            # -- Enable authentication (creates a Secret and injects AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY)
+            enabled: false
+            # -- AWS/S3 access key ID
+            aws_access_key_id: ""
+            # -- AWS/S3 secret access key
+            aws_secret_access_key: ""
       # -- CCM cross-cutting configuration
       ccm_settings:
         notification:
@@ -1743,6 +1763,15 @@ pgadmin4:
     enabled: false
   ingress:
     enabled: false
+
+# -- SeaweedFS configuration (optional dependency, pinned via Chart.yaml).
+# Disabled by default; only enabled through values-local-deployment.yaml or a Minikube-specific
+# values file to back backend.configuration.provider.submodel_dispatcher mode "s3" for local development.
+# See https://github.com/seaweedfs/seaweedfs/tree/master/k8s/charts/seaweedfs for the full set of
+# upstream values this subchart accepts.
+seaweedfs:
+  # -- Switch to enable or disable the SeaweedFS helm dependency
+  enabled: false
 
 
 # -- External database configuration (used when postgresql.enabled is false)

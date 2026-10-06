@@ -1631,13 +1631,13 @@ class TestConsumerDirectPushOutboundTracking:
 
 
 _NT_PATCH = (
-    "services.addons.ccm_kit.v1.ccm_notification_service.ccm_notification_manager"
+    "services.addons.ccm_kit.v1.ccm_notification_service.get_ccm_notification_manager"
 )
 
 
 class TestCcmAutoNotificationsWiring:
     """
-    Verify that the ccm_notification_manager singleton is called at the
+    Verify that the get_ccm_notification_manager function is called at the
     correct inbound entry points in CcmNotificationService.
     """
 
@@ -1667,18 +1667,21 @@ class TestCcmAutoNotificationsWiring:
         ".RepositoryManagerFactory.create"
     )
     def test_push_received_notification_created(
-        self, mock_factory, mock_config, mock_nt_mgr, mock_repos
+        self, mock_factory, mock_config, mock_get_nt_mgr, mock_repos
     ):
         """
         GIVEN a valid push notification arrives
         WHEN process_certificate_push succeeds
-        THEN ccm_notification_manager.create_ccm_notification is called with
+        THEN create_ccm_notification is called with
              notification_type=CCM_NT_PUSH_RECEIVED and correct fields.
         """
         from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_PUSH_RECEIVED
 
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_config.get_config.side_effect = lambda key, **kw: kw.get("default")
+
+        mock_nt_mgr = Mock()
+        mock_get_nt_mgr.return_value = mock_nt_mgr
 
         notification = _make_notification(
             sender_bpn="BPNL000000000099",
@@ -1708,12 +1711,12 @@ class TestCcmAutoNotificationsWiring:
         ".RepositoryManagerFactory.create"
     )
     def test_request_not_found_notification_created(
-        self, mock_factory, mock_nt_mgr, mock_repos
+        self, mock_factory, mock_get_nt_mgr, mock_repos
     ):
         """
         GIVEN the provider has no matching certificate (REJECTED path)
         WHEN process_certificate_request returns 200 REJECTED
-        THEN ccm_notification_manager is called with CCM_NT_REQUEST_NOT_FOUND.
+        THEN create_ccm_notification is called with CCM_NT_REQUEST_NOT_FOUND.
         """
         from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_REQUEST_NOT_FOUND
 
@@ -1721,6 +1724,8 @@ class TestCcmAutoNotificationsWiring:
         mock_repos.ccm_repository = Mock()
         mock_repos.ccm_repository.find_by_bpnl_type_and_sites.return_value = None
         mock_repos.ccm_inbound_request_repository = Mock()
+        mock_nt_mgr = Mock()
+        mock_get_nt_mgr.return_value = mock_nt_mgr
 
         notification = _make_notification(
             sender_bpn="BPNL000000000099",
@@ -1750,12 +1755,12 @@ class TestCcmAutoNotificationsWiring:
         ".RepositoryManagerFactory.create"
     )
     def test_request_in_progress_notification_created(
-        self, mock_factory, mock_config, mock_nt_mgr, mock_repos
+        self, mock_factory, mock_config, mock_get_nt_mgr, mock_repos
     ):
         """
         GIVEN the certificate exists but is not yet published (IN_PROGRESS path)
         WHEN process_certificate_request returns 202
-        THEN ccm_notification_manager is called with CCM_NT_REQUEST_RECEIVED.
+        THEN create_ccm_notification is called with CCM_NT_REQUEST_RECEIVED.
         """
         from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_REQUEST_RECEIVED
 
@@ -1770,6 +1775,8 @@ class TestCcmAutoNotificationsWiring:
         mock_repos.certificate_share_repository = Mock()
         mock_repos.certificate_share_repository.find_by_certificate_and_consumer.return_value = None
         mock_repos.ccm_inbound_request_repository = Mock()
+        mock_nt_mgr = Mock()
+        mock_get_nt_mgr.return_value = mock_nt_mgr
 
         notification = _make_notification(
             sender_bpn="BPNL000000000099",
@@ -1797,11 +1804,11 @@ class TestCcmAutoNotificationsWiring:
         "services.addons.ccm_kit.v1.ccm_notification_service"
         ".RepositoryManagerFactory.create"
     )
-    def test_available_notification_created(self, mock_factory, mock_nt_mgr, mock_repos):
+    def test_available_notification_created(self, mock_factory, mock_get_nt_mgr, mock_repos):
         """
         GIVEN a valid available notification arrives
         WHEN process_certificate_available succeeds
-        THEN ccm_notification_manager is called with CCM_NT_AVAILABLE_RECEIVED.
+        THEN create_ccm_notification is called with CCM_NT_AVAILABLE_RECEIVED.
         """
         from managers.addons_service.ccm_kit.v1.notifications import CCM_NT_AVAILABLE_RECEIVED
 
@@ -1809,6 +1816,8 @@ class TestCcmAutoNotificationsWiring:
         mock_factory.return_value.__enter__.return_value = mock_repos
         mock_repos.ccm_outbound_request_repository = Mock()
         mock_repos.ccm_outbound_request_repository.find_active_by_provider_and_type.return_value = []
+        mock_nt_mgr = Mock()
+        mock_get_nt_mgr.return_value = mock_nt_mgr
 
         notification = _make_notification(
             sender_bpn="BPNL000000000099",

@@ -1,0 +1,136 @@
+###############################################################
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+# Minikube-specific overrides for local development.
+#
+# Enables a lightweight, single-node SeaweedFS deployment (master + volume + filer + S3 gateway)
+# and wires the backend submodel_dispatcher to use it as an S3-compatible object store.
+#
+# Usage (see docs/developer/seaweedfs-minikube.md for the full walkthrough):
+#   helm dependency update charts/industry-core-hub
+#   helm install ichub charts/industry-core-hub \
+#     -f charts/industry-core-hub/values-local-deployment.yaml \
+#     -f charts/industry-core-hub/values-minikube.yaml \
+#     --namespace ichub --create-namespace
+#
+# NOTE: The SeaweedFS S3 service DNS name below assumes the release is installed as "ichub".
+# If you use a different release name, the internal service becomes
+# "<release-name>-seaweedfs-s3.<namespace>.svc.cluster.local" (dependency chart name "seaweedfs"
+# is appended to the release name unless the release name already contains it) - update
+# backend.configuration.provider.submodel_dispatcher.s3.endpoint_url accordingly.
+
+backend:
+  configuration:
+    provider:
+      submodel_dispatcher:
+        mode: "s3"
+        s3:
+          bucket_name: "ichub-submodels"
+          region_name: "us-east-1"
+          key_pattern: "{semantic_id}/{submodel_id}.json"
+          # -- Internal Kubernetes service DNS name of the bundled SeaweedFS S3 gateway
+          endpoint_url: "http://ichub-seaweedfs-s3.ichub.svc.cluster.local:8333"
+          auth:
+            enabled: true
+            # -- Local-development-only credentials, provisioned via a Kubernetes Secret (see secret-seaweedfs-s3.yaml).
+            # Not intended for production use - override for any shared/long-lived environment.
+            aws_access_key_id: "ichub-admin"
+            aws_secret_access_key: "ichub-local-dev-secret"
+
+# -- Single-node SeaweedFS deployment for Minikube: one master, one volume server, one filer,
+# with the S3 gateway enabled and authenticated. Anti-affinity is disabled since there is only
+# one Kubernetes node available in Minikube.
+seaweedfs:
+  enabled: true
+
+  master:
+    replicas: 1
+    # -- Disable pod anti-affinity: Minikube only has a single node to schedule on
+    affinity: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    data:
+      type: "persistentVolumeClaim"
+      size: "1Gi"
+      storageClass: ""
+    logs:
+      type: "persistentVolumeClaim"
+      size: "512Mi"
+      storageClass: ""
+
+  volume:
+    replicas: 1
+    affinity: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    dataDirs:
+      - name: data1
+        type: "persistentVolumeClaim"
+        storageClass: ""
+        size: "2Gi"
+        maxVolumes: 0
+
+  filer:
+    replicas: 1
+    affinity: ""
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    data:
+      type: "persistentVolumeClaim"
+      size: "1Gi"
+      storageClass: ""
+    logs:
+      type: "persistentVolumeClaim"
+      size: "512Mi"
+      storageClass: ""
+
+  s3:
+    enabled: true
+    port: 8333
+    enableAuth: true
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    # -- Explicit local-development credentials for the S3 gateway. Must match
+    # backend.configuration.provider.submodel_dispatcher.s3.auth above so the backend can authenticate.
+    credentials:
+      admin:
+        accessKey: "ichub-admin"
+        secretKey: "ichub-local-dev-secret"

@@ -75,6 +75,18 @@ spec:
                   name: {{ .Release.Name }}-submodel-auth
                   key: {{ if eq .Values.backend.configuration.provider.submodel_dispatcher.http.auth.type "bearer" }}bearer-token{{ else }}api-key{{ end }}
           {{- end }}
+          {{- if and (eq .Values.backend.configuration.provider.submodel_dispatcher.mode "s3") .Values.backend.configuration.provider.submodel_dispatcher.s3.auth.enabled }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-seaweedfs-s3-credentials
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-seaweedfs-s3-credentials
+                  key: secret-access-key
+          {{- end }}
           {{- if .Values.backend.healthChecks.startup.enabled }}
           startupProbe:
             httpGet:

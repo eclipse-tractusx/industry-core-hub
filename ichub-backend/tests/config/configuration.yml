@@ -1,0 +1,385 @@
+#################################################################################
+# Eclipse Tractus-X - Industry Core Hub Backend
+# Test Configuration
+#
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# SPDX-License-Identifier: Apache-2.0
+#################################################################################
+
+# Test configuration for validating dynamic configuration loading with unit tests
+# This configuration mirrors the production structure with minimal but complete settings
+
+# -- Application hostname
+hostname: "http://localhost:9000"
+
+# -- Business Partner Number (for testing purposes)
+bpn: "BPNL0000000000TEST"
+
+# -- Agreements configuration - matches production for policy structure
+agreements:
+  - semanticid: urn:samm:io.catenax.generic.digital_product_passport:6.1.0#DigitalProductPassport
+    usage:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: "use"
+          constraint:
+            and:
+              - leftOperand: "FrameworkAgreement"
+                operator: "eq"
+                rightOperand: "DataExchangeGovernance:1.0"
+      prohibitions: []
+      obligations: []
+    access:
+      context:
+        - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+        - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+        - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+      permissions:
+        - action: access
+          constraint:
+            leftOperand: "Membership"
+            operator: "eq"
+            rightOperand: "active"
+      prohibitions: []
+      obligations: []
+
+# -- Authorization configuration
+authorization:
+  enabled: false  # Disabled for unit tests (no Keycloak available)
+  api_key:
+    key: "X-Api-Key"
+    value: "test-api-key"
+  keycloak:
+    enabled: false
+    auth_url: "http://localhost:8080"
+    realm: "ICHub"
+    client_id: "industry-core-hub-api"
+    client_secret: "test-secret"
+    retry:
+      max_retries: 3
+      retry_delay: 2
+      background_retry_interval: 60
+
+# -- Database configuration (mocked in conftest, but needed for module-level access)
+database:
+  connection_string: "postgresql://testuser:testpass@localhost:5432/ichub_test"
+  echo: false
+  timeout: 5
+  retry_interval: 2
+
+# -- CORS configuration
+cors:
+  enabled: true
+  allow_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+  allow_credentials: true
+  allow_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+    - "PATCH"
+  allow_headers:
+    - "*"
+
+# -- Metrics configuration
+metrics:
+  enabled: false  # Disabled for unit tests
+  endpoint: "/metrics"
+
+# -- Server configuration
+server:
+  workers:
+    max_workers: 1
+    worker_threads: 50
+  timeouts:
+    keep_alive: 300
+    graceful_shutdown: 30
+
+# -- Consumer configuration (for data consumer role)
+consumer:
+  discovery:
+    discovery_finder:
+      url: "http://localhost:8080/discovery"
+    connector_discovery:
+      key: "bpn"
+    bpn_discovery:
+      type: "manufacturerPartId"
+    digitalTwinRegistry:
+      dct_type_key: "dct:type"
+      dct_type_filter:
+        operandLeft: "'http://purl.org/dc/terms/type'.'@id'"
+        operator: "eq"
+        operandRight: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+    oauth:
+      url: "http://localhost:8080/auth"
+      realm: "test-realm"
+      client_id: "test-client"
+      client_secret: "test-secret"
+  connector:
+    dataspace:
+      version: "saturn"
+    controlplane:
+      hostname: "http://localhost:8080"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "test-consumer-api-key"
+      managementPath: "/management"
+      protocolPath: "/api/v1/dsp"
+    dataplane:
+      hostname: "http://localhost:8081"
+      publicPath: "/api/public"
+  ccm:
+    edr_max_retries: 30
+    data_plane_timeout_sec: 60
+
+# -- Provider configuration
+provider:
+  # -- Connector configuration (EDC endpoints)
+  connector:
+    dataspace:
+      version: "saturn"
+    controlplane:
+      hostname: "http://localhost:8080"
+      apiKeyHeader: "X-Api-Key"
+      apiKey: "test-api-key"
+      managementPath: "/management"
+      protocolPath: "/api/v1/dsp"
+    dataplane:
+      hostname: "http://localhost:8081"
+      publicPath: "/api/public"
+  
+  # -- Digital Twin Registry configuration
+  digitalTwinRegistry:
+    hostname: "http://localhost:8080"
+    apiPath: "/api/v3"
+    uri: ""
+    lookupUri: ""
+    asset_config:
+      dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinRegistry"
+    lookup:
+      uri: ""
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "use"
+            constraint:
+              and: []
+        prohibitions: []
+        obligations: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "access"
+            constraint:
+              leftOperand: "Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
+
+  # -- Submodel Dispatcher configuration (S3-compatible for tests)
+  submodel_dispatcher:
+    # -- Storage mode: "s3"
+    mode: "s3"
+    
+    # -- S3 configuration
+    s3:
+      # -- S3 bucket name (will be created automatically by moto during tests)
+      bucket_name: "ichub-submodels"
+      # -- AWS region (can be any value; "us-east-1" is default)
+      region_name: "us-east-1"
+      # -- Key pattern for submodel storage (use {semantic_id} and {submodel_id} as placeholders)
+      key_pattern: "{semantic_id}/{submodel_id}.json"
+      # -- Custom endpoint URL S3 gateway (running locally during tests)
+      endpoint_url: "http://localhost:8333"
+      # -- Authentication configuration
+      aws_access_key_id: "admin"
+      aws_secret_access_key: "secret"
+    
+    # -- Optional: File system adapter configuration (alternative to S3)
+    file_system:
+      path: "/tmp/ichub-submodels"
+      path_pattern: "{base_path}/{semantic_id}/{submodel_id}.json"
+  
+  # -- CCM (Certificate Management) configuration
+  ccm:
+    hostname: "http://localhost:9000"
+    apiPath: "/v1/addons/ccm-kit"
+    uri: ""
+    auto_push_on_request: false
+    enabled: true
+    asset_config:
+      dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificateManagementNotificationApi"
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "use"
+            constraint:
+              and: []
+        prohibitions: []
+        obligations: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "access"
+            constraint:
+              leftOperand: "Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
+    certificate_asset:
+      dct_type: "https://w3id.org/catenax/taxonomy#CompanyCertificate"
+      semantic_id: "urn:samm:io.catenax.business_partner_certificate:3.1.0#BusinessPartnerCertificate"
+      policy:
+        usage:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permissions:
+            - action: "use"
+          prohibitions: []
+          obligations: []
+        access:
+          context:
+            - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+            - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+            - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+          permissions:
+            - action: "access"
+          prohibitions: []
+          obligations: []
+  
+  # -- Digital Twin Event API configuration
+  digitalTwinEventAPI:
+    hostname: "http://localhost:9000"
+    apiPath: "/api/v3"
+    uri: ""
+    asset_config:
+      dct_type: "https://w3id.org/catenax/taxonomy#DigitalTwinEventAPI"
+    lookup:
+      uri: ""
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "use"
+            constraint:
+              and: []
+        prohibitions: []
+        obligations: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "access"
+            constraint:
+              leftOperand: "Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
+  
+  # -- Unique ID Push configuration
+  uniqueIdPush:
+    hostname: "http://localhost:9000"
+    apiPath: "/v1/uniqueidpush"
+    uri: ""
+    sendOnShare: false
+    asset_config:
+      dct_type: "https://w3id.org/catenax/taxonomy#UniqueIdPushConnectToParentNotification"
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "use"
+            constraint:
+              and: []
+        prohibitions: []
+        obligations: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permissions:
+          - action: "access"
+            constraint:
+              leftOperand: "Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
+  
+  # -- PCF Exchange configuration
+  pcfExchange:
+    enabled: false
+    hostname: "http://localhost:9000"
+    requireBothVersions:
+      synchronous: false
+      asynchronous: false
+    asset_config:
+      dct_type: "cx-taxo:PCFExchange"
+    policy:
+      usage:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permission:
+          - action: use
+            constraint:
+              and: []
+        prohibition: []
+        obligation: []
+      access:
+        context:
+          - "https://w3id.org/catenax/2025/9/policy/odrl.jsonld"
+          - "https://w3id.org/catenax/2025/9/policy/context.jsonld"
+          - "@vocab": "https://w3id.org/edc/v0.0.1/ns/"
+        permission:
+          - action: "access"
+            constraint:
+              leftOperand: "Membership"
+              operator: "eq"
+              rightOperand: "active"
+        prohibitions: []
+        obligations: []
+
+# -- Addon services configuration
+addons:
+  mcp_addon:
+    enabled: false  # Disabled by default for unit tests
+    oauth_enabled: false
+    audit:
+      expose_admin_endpoint: true
+      buffer_size: 500
+    max_pending_confirmations: 50
