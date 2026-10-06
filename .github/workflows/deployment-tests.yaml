@@ -100,7 +100,7 @@ jobs:
            --dependency-update \
            --wait --timeout=600s
 
-          # Helm waits for the pre-install migration hook to complete.
+          # Helm waits for the post-install migration hook to complete.
           
           # Debug: Show all resources created
           echo "=== All resources created ==="
@@ -118,3 +118,35 @@ jobs:
             echo "Checking rollout status for $deployment"
             kubectl rollout status "$deployment" --timeout=300s
           done
+
+      - name: Debug failed Helm installation
+        if: failure()
+        run: |
+          echo "=== Jobs ==="
+          kubectl get jobs -l app.kubernetes.io/instance=tx-ichub -o wide || true
+
+          migration_job=$(kubectl get jobs \
+            -l app.kubernetes.io/instance=tx-ichub,app.kubernetes.io/component=migrations \
+            -o jsonpath='{.items[0].metadata.name}')
+
+          if [ -n "$migration_job" ]; then
+            echo "=== Migration job description ==="
+            kubectl describe job "$migration_job" || true
+
+            echo "=== Migration pod status ==="
+            kubectl get pods -l job-name="$migration_job" -o wide || true
+
+            echo "=== Migration container logs ==="
+            kubectl logs "job/$migration_job" -c migrations || true
+
+            echo "=== PostgreSQL readiness logs ==="
+            kubectl logs "job/$migration_job" -c wait-for-postgresql || true
+
+            echo "=== Migration pod description ==="
+            kubectl describe pods -l job-name="$migration_job" || true
+          else
+            echo "Migration job was not found"
+          fi
+
+          echo "=== Kubernetes events ==="
+          kubectl get events --sort-by=.lastTimestamp || true
