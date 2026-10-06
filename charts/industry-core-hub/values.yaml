@@ -1132,7 +1132,7 @@ backend:
     # Database migrations run after PostgreSQL is reachable.
     migrations:
       enabled: true
-      restartPolicy: "OnFailure"
+      restartPolicy: "Never"
       backoffLimit: 3
       postgresClientImage:
         registry: docker.io

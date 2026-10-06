@@ -52,6 +52,48 @@ spec:
       securityContext:
         {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
       automountServiceAccountToken: false
+      {{- if .Values.backend.jobs.migrations.enabled }}
+      initContainers:
+        - name: wait-for-migrations
+          image: "{{ .Values.backend.jobs.migrations.postgresClientImage.registry }}/{{ .Values.backend.jobs.migrations.postgresClientImage.repository }}:{{ .Values.backend.jobs.migrations.postgresClientImage.tag }}"
+          imagePullPolicy: {{ .Values.backend.jobs.migrations.postgresClientImage.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              attempts=0
+              until PGPASSWORD="$PGPASSWORD" psql --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" --dbname="$PGDATABASE" --command="SELECT 1 FROM alembic_version WHERE version_num = '0001_initial_schema'" 2>/dev/null | grep -q 1; do
+                attempts=$((attempts + 1))
+                if [ "$attempts" -ge "$PGWAIT_ATTEMPTS" ]; then
+                  echo "Alembic migrations were not complete after $PGWAIT_ATTEMPTS attempts"
+                  exit 1
+                fi
+                echo "Waiting for Alembic migrations ($attempts/$PGWAIT_ATTEMPTS)"
+                sleep "$PGWAIT_DELAY"
+              done
+              echo "Alembic migrations are complete"
+          env:
+            - name: PGHOST
+              value: {{ include "industry-core-hub.postgresql.host" . | quote }}
+            - name: PGPORT
+              value: {{ include "industry-core-hub.postgresql.port" . | quote }}
+            - name: PGDATABASE
+              value: {{ include "industry-core-hub.postgresql.databaseName" . | quote }}
+            - name: PGUSER
+              value: {{ include "industry-core-hub.postgresql.ichubUser" . | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "industry-core-hub.postgresql.secretName" . }}
+                  key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+            - name: PGSSLMODE
+              value: {{ include "industry-core-hub.postgresql.sslMode" . | quote }}
+            - name: PGCONNECT_TIMEOUT
+              value: "2"
+            - name: PGWAIT_ATTEMPTS
+              value: {{ .Values.backend.jobs.migrations.readiness.attempts | quote }}
+            - name: PGWAIT_DELAY
+              value: {{ .Values.backend.jobs.migrations.readiness.delaySeconds | quote }}
+      {{- end }}
       containers:
         - name: {{ include "industry-core-hub.fullname.backend" . }}
           securityContext:

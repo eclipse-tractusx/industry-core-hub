@@ -27,7 +27,6 @@ from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from managers.config.config_manager import ConfigManager
-from models.metadata_database import all_models  # noqa: F401
 from tools import env_tools
 
 config = context.config

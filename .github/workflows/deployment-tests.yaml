@@ -98,9 +98,9 @@ jobs:
            --set frontend.image.tag=test \
            --set frontend.image.pullPolicy=IfNotPresent \
            --dependency-update \
-           --wait --timeout=600s
+           --timeout=600s
 
-          # Helm waits for the post-install migration hook to complete.
+          # The backend waits for the post-install migration hook to complete.
           
           # Debug: Show all resources created
           echo "=== All resources created ==="
