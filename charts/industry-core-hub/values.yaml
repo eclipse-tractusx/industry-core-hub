@@ -1129,6 +1129,29 @@ backend:
 
   # -- Jobs configuration for background tasks
   jobs:
+    # Database migrations run after PostgreSQL is reachable.
+    migrations:
+      enabled: true
+      restartPolicy: "OnFailure"
+      backoffLimit: 3
+      postgresClientImage:
+        registry: docker.io
+        repository: postgres
+        tag: "16-alpine"
+        pullPolicy: IfNotPresent
+      readiness:
+        attempts: 60
+        delaySeconds: 2
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+          ephemeral-storage: "128Mi"
+        limits:
+          cpu: 500m
+          memory: 512Mi
+          ephemeral-storage: "1Gi"
+
     # Asset synchronization job
     assetSync:
       # -- Enable asset sync job (can be deployed as Job or CronJob)
