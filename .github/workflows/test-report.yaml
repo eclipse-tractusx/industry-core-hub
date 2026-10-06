@@ -1,6 +1,8 @@
 ###############################################################
-# Copyright (c) 2025 LKS NEXT
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Eclipse Tractus-X - Industry Core Hub
+#
+# Copyright (c) 2025,2026 LKS Next
+# Copyright (c) 2025,2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -43,6 +45,20 @@ jobs:
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: ichub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user -d ichub"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     
     steps:
     - name: Checkout repository
@@ -79,6 +95,14 @@ jobs:
       run: |
         cd ichub-backend
         python -m py_compile **/*.py || true
+
+    - name: Run database migrations
+      run: |
+        cd ichub-backend
+        python migrate.py current
+        python migrate.py upgrade head
+        python migrate.py current
+        python migrate.py upgrade head
         
     - name: Lint Python code
       run: |
