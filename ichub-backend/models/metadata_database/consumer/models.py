@@ -26,7 +26,7 @@ from sqlmodel import Column
 from datetime import datetime
 from typing import List
 
-class KnownConnectors(SQLModel):
+class KnownConnectors(SQLModel, table=True):
     """
     Represents cached connector information for a specific Business Partner Number Legal Entity (BPNL).
     
@@ -38,10 +38,11 @@ class KnownConnectors(SQLModel):
     connectors: List[str] = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
+    __tablename__ = "known_connectors"
     __table_args__ = {"schema": "cache"}
 
 
-class KnownDtrs(SQLModel):
+class KnownDtrs(SQLModel, table=True):
     """
     Represents cached DTR information for a specific Business Partner Number Legal Entity (BPNL).
     
@@ -55,5 +56,6 @@ class KnownDtrs(SQLModel):
     policies: List[str] = Field(sa_column=Column(JSON), description="List of policies for this DTR")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
+    __tablename__ = "known_dtrs"
     __table_args__ = {"schema": "cache"}
 
