@@ -52,7 +52,10 @@ def verify_head() -> None:
     engine = create_engine(str(connection_string), connect_args={"connect_timeout": 8})
 
     with engine.connect() as connection:
-        current_heads = MigrationContext.configure(connection).get_current_heads()
+        current_heads = MigrationContext.configure(
+            connection,
+            opts={"version_table_schema": "public"},
+        ).get_current_heads()
 
     expected_heads = tuple(script.get_heads())
     if current_heads != expected_heads:
