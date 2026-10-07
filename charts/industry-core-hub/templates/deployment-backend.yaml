@@ -55,6 +55,8 @@ spec:
       {{- if .Values.backend.jobs.migrations.enabled }}
       initContainers:
         - name: wait-for-migrations
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           command: ["sh", "-c"]

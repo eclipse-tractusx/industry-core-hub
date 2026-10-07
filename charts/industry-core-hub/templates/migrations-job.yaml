@@ -50,6 +50,8 @@ spec:
         {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
       initContainers:
         - name: wait-for-postgresql
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
           image: "{{ .Values.backend.jobs.migrations.postgresClientImage.registry }}/{{ .Values.backend.jobs.migrations.postgresClientImage.repository }}:{{ .Values.backend.jobs.migrations.postgresClientImage.tag }}"
           imagePullPolicy: {{ .Values.backend.jobs.migrations.postgresClientImage.pullPolicy }}
           command: ["sh", "-c"]
