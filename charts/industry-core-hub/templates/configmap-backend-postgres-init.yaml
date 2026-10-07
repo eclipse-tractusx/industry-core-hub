@@ -45,6 +45,9 @@ data:
     postgresql_create_ichub_user
     postgresql_create_ichub_keycloak_user
   02-init-db.sql: |
+    CREATE SCHEMA IF NOT EXISTS cache;
+    ALTER SCHEMA cache OWNER TO ichub;
+    GRANT USAGE, CREATE ON SCHEMA cache TO ichub;
     CREATE SCHEMA IF NOT EXISTS ichub_keycloak;
     ALTER SCHEMA ichub_keycloak OWNER TO ichub_keycloak;
     GRANT CREATE ON SCHEMA public TO ichub_keycloak;

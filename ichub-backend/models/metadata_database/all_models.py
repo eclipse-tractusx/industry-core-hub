@@ -30,7 +30,6 @@ from .addons.ccm_kit.v1.models import (
     CcmSite,
     CertificateShare,
 )
-from .consumer.models import KnownConnectors, KnownDtrs
 from .notification.models import NotificationEntity
 from .pcf.models import PcfExchangeEntity, PcfRelationshipEntity
 from .provider.models import (
@@ -67,8 +66,6 @@ __all__ = [
     "DataExchangeContract",
     "EnablementServiceStack",
     "JISPart",
-    "KnownConnectors",
-    "KnownDtrs",
     "LegalEntity",
     "NotificationEntity",
     "PartnerCatalogPart",

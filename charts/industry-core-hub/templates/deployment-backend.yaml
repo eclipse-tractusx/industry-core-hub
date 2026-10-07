@@ -61,7 +61,7 @@ spec:
           args:
             - |
               attempts=0
-              until PGPASSWORD="$PGPASSWORD" psql --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" --dbname="$PGDATABASE" --command="SELECT 1 FROM alembic_version WHERE version_num = '0001_initial_schema'" 2>/dev/null | grep -q 1; do
+              until PGPASSWORD="$PGPASSWORD" psql --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" --dbname="$PGDATABASE" --command="SELECT 1 FROM public.alembic_version WHERE version_num = '{{ .Values.backend.jobs.migrations.expectedRevision }}'" 2>/dev/null | grep -q 1; do
                 attempts=$((attempts + 1))
                 if [ "$attempts" -ge "$PGWAIT_ATTEMPTS" ]; then
                   echo "Alembic migrations were not complete after $PGWAIT_ATTEMPTS attempts"

@@ -38,6 +38,8 @@ class KnownConnectors(SQLModel):
     connectors: List[str] = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
+    __table_args__ = {"schema": "cache"}
+
 
 class KnownDtrs(SQLModel):
     """
@@ -52,4 +54,6 @@ class KnownDtrs(SQLModel):
     asset_id: str = Field(description="Asset ID of the DTR")
     policies: List[str] = Field(sa_column=Column(JSON), description="List of policies for this DTR")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
+
+    __table_args__ = {"schema": "cache"}
 

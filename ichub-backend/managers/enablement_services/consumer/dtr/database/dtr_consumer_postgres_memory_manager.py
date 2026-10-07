@@ -66,10 +66,9 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
         self._last_saved_hash = None
         class DynamicKnownDtrs(KnownDtrs, table=True):
             __tablename__ = table_name
-            __table_args__ = {"extend_existing": True}
+            __table_args__ = {"schema": "cache", "extend_existing": True}
 
         self.KnownDtrsModel = DynamicKnownDtrs
-        DynamicKnownDtrs.metadata.create_all(engine)
         self._load_from_db()
 
     def add_dtr(self, bpn: str, connector_url: str, asset_id: str, policies: List[str]) -> None:

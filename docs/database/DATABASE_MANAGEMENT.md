@@ -42,8 +42,14 @@ Operational guide for Industry Core Hub PostgreSQL database management.
 Three schemas manage different aspects:
 
 - **`public`** - Application data. The 25 SQLModel application tables are owned by Alembic.
-- **`cache`** - Runtime connector and DTR cache tables, created by their managers and not managed by Alembic.
+- **`cache`** - Connector and DTR cache tables owned by Alembic in the explicit `cache` schema.
 - **`ichub_keycloak`** - Keycloak authentication, managed by Keycloak and excluded from Alembic.
+
+Alembic migrations run before the backend starts. New installations are supported
+by default; an existing database with public tables but no Alembic revision is
+rejected rather than automatically stamped or adopted. Schema changes must be
+introduced as new revisions and the chart's migration readiness revision must be
+updated with the new head.
 
 See [Schema Documentation](./SCHEMA_DOCUMENTATION.md) and [DDL](./Metadata-DDL-public.sql).
 

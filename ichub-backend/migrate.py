@@ -27,6 +27,10 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import create_engine, text
+
+from managers.config.config_manager import ConfigManager
+from tools import env_tools
 
 
 def build_config() -> Config:
@@ -35,6 +39,43 @@ def build_config() -> Config:
     config = Config(str(config_path))
     config.set_main_option("script_location", str(config_path.parent / "alembic"))
     return config
+
+
+def ensure_supported_database() -> None:
+    """Reject unversioned databases that already contain application tables."""
+    base_dsn = ConfigManager.get_config("database.connection_string", default="")
+    connection_string = env_tools.substitute_env_vars(string=base_dsn)
+    engine = create_engine(str(connection_string), connect_args={"connect_timeout": 8})
+
+    with engine.connect() as connection:
+        has_version_table = connection.execute(
+            text("SELECT to_regclass('public.alembic_version') IS NOT NULL")
+        ).scalar_one()
+        if has_version_table and connection.execute(
+            text("SELECT count(*) FROM public.alembic_version")
+        ).scalar_one() > 0:
+            return
+
+        existing_tables = connection.execute(
+            text(
+                """
+                SELECT tablename
+                FROM pg_catalog.pg_tables
+                WHERE schemaname = 'public'
+                                    AND tablename <> 'alembic_version'
+                ORDER BY tablename
+                """
+            )
+        ).scalars().all()
+
+    if existing_tables:
+        table_list = ", ".join(existing_tables)
+        raise RuntimeError(
+            "The database contains unversioned public tables "
+            f"({table_list}). This release supports new databases only; "
+            "back up and adopt the database through a validated migration "
+            "before running Alembic."
+        )
 
 
 def main() -> None:
@@ -51,6 +92,7 @@ def main() -> None:
     config = build_config()
 
     if args.command == "upgrade":
+        ensure_supported_database()
         command.upgrade(config, args.revision)
     elif args.command == "downgrade":
         command.downgrade(config, args.revision)
