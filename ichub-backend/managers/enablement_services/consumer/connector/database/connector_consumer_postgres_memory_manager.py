@@ -91,11 +91,7 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         self.connectors_key = connectors_key
         self._save_thread = None
         self._last_saved_hash = None
-        class DynamicKnownConnectors(KnownConnectors, table=True):
-            __tablename__ = table_name
-            __table_args__ = {"schema": "cache", "extend_existing": True}
-
-        self.KnownConnectorsModel = DynamicKnownConnectors
+        self.KnownConnectorsModel = KnownConnectors
         self._load_from_db()
 
     def add_connectors(self, bpn: str, connectors: List[str]) -> None:

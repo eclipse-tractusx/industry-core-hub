@@ -24,7 +24,7 @@ from sqlmodel import SQLModel, Field
 from sqlalchemy import JSON
 from sqlmodel import Column
 from datetime import datetime
-from typing import List
+from typing import Any
 
 class KnownConnectors(SQLModel, table=True):
     """
@@ -35,7 +35,7 @@ class KnownConnectors(SQLModel, table=True):
     """
 
     bpnl: str = Field(primary_key=True, index=True, description="Business Partner Number Legal Entity")
-    connectors: List[str] = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
+    connectors: Any = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
     __tablename__ = "known_connectors"
@@ -53,7 +53,7 @@ class KnownDtrs(SQLModel, table=True):
     bpnl: str = Field(primary_key=True, index=True, description="Business Partner Number Legal Entity")
     edc_url: str = Field(description="URL of the EDC where the DTR is stored")
     asset_id: str = Field(primary_key=True, description="Asset ID of the DTR")
-    policies: List[str] = Field(sa_column=Column(JSON), description="List of policies for this DTR")
+    policies: Any = Field(sa_column=Column(JSON), description="List of policies for this DTR")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
     __tablename__ = "known_dtrs"
