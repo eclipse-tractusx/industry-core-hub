@@ -96,6 +96,12 @@ jobs:
         cd ichub-backend
         python -m py_compile **/*.py || true
 
+    - name: Provision cache schema
+      run: |
+        PGPASSWORD=password psql -h localhost -p 5432 -U user -d ichub \
+          -v ON_ERROR_STOP=1 \
+          -c 'CREATE SCHEMA IF NOT EXISTS cache; ALTER SCHEMA cache OWNER TO "user"; GRANT USAGE, CREATE ON SCHEMA cache TO "user";'
+
     - name: Run database migrations
       run: |
         cd ichub-backend

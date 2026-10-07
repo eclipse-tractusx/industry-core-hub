@@ -55,45 +55,37 @@ spec:
       {{- if .Values.backend.jobs.migrations.enabled }}
       initContainers:
         - name: wait-for-migrations
-          image: "{{ .Values.backend.jobs.migrations.postgresClientImage.registry }}/{{ .Values.backend.jobs.migrations.postgresClientImage.repository }}:{{ .Values.backend.jobs.migrations.postgresClientImage.tag }}"
-          imagePullPolicy: {{ .Values.backend.jobs.migrations.postgresClientImage.pullPolicy }}
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           command: ["sh", "-c"]
           args:
             - |
               attempts=0
-              until PGPASSWORD="$PGPASSWORD" psql --host="$PGHOST" --port="$PGPORT" --username="$PGUSER" --dbname="$PGDATABASE" --command="SELECT 1 FROM public.alembic_version WHERE version_num = '{{ .Values.backend.jobs.migrations.expectedRevision }}'" 2>/dev/null | grep -q 1; do
+              until python migrate.py verify-head; do
                 attempts=$((attempts + 1))
                 if [ "$attempts" -ge "$PGWAIT_ATTEMPTS" ]; then
-                  echo "Alembic migrations were not complete after $PGWAIT_ATTEMPTS attempts"
+                  echo "Alembic migrations were not at the application head after $PGWAIT_ATTEMPTS attempts"
                   exit 1
                 fi
                 echo "Waiting for Alembic migrations ($attempts/$PGWAIT_ATTEMPTS)"
                 sleep "$PGWAIT_DELAY"
               done
-              echo "Alembic migrations are complete"
+              echo "Alembic migrations are at the application head"
           env:
-            - name: PGHOST
-              value: {{ include "industry-core-hub.postgresql.host" . | quote }}
-            - name: PGPORT
-              value: {{ include "industry-core-hub.postgresql.port" . | quote }}
-            - name: PGDATABASE
-              value: {{ include "industry-core-hub.postgresql.databaseName" . | quote }}
-            - name: PGUSER
-              value: {{ include "industry-core-hub.postgresql.ichubUser" . | quote }}
-            - name: PGPASSWORD
+            - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "industry-core-hub.postgresql.secretName" . }}
                   key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
-            - name: PGSSLMODE
-              value: {{ include "industry-core-hub.postgresql.sslMode" . | quote }}
-            - name: PGCONNECT_TIMEOUT
-              value: "2"
             - name: PGWAIT_ATTEMPTS
               value: {{ .Values.backend.jobs.migrations.readiness.attempts | quote }}
             - name: PGWAIT_DELAY
               value: {{ .Values.backend.jobs.migrations.readiness.delaySeconds | quote }}
-      {{- end }}
+          volumeMounts:
+            - name: backend-config-configmap
+              mountPath: /industry-core-hub/config
+              readOnly: true
+      {{ end }}
       containers:
         - name: {{ include "industry-core-hub.fullname.backend" . }}
           securityContext:

@@ -1132,8 +1132,6 @@ backend:
     # Database migrations run after PostgreSQL is reachable.
     migrations:
       enabled: true
-      # Revision that must be present before backend pods start.
-      expectedRevision: "0001_initial_schema"
       restartPolicy: "Never"
       backoffLimit: 3
       postgresClientImage:

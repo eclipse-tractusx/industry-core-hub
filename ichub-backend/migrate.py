@@ -27,7 +27,9 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, text
+from alembic.runtime.migration import MigrationContext
+from alembic.script import ScriptDirectory
+from sqlalchemy import create_engine
 
 from managers.config.config_manager import ConfigManager
 from tools import env_tools
@@ -41,41 +43,25 @@ def build_config() -> Config:
     return config
 
 
-def ensure_supported_database() -> None:
-    """Reject unversioned databases that already contain application tables."""
+def verify_head() -> None:
+    """Fail unless the database is at the current Alembic head."""
+    config = build_config()
+    script = ScriptDirectory.from_config(config)
     base_dsn = ConfigManager.get_config("database.connection_string", default="")
     connection_string = env_tools.substitute_env_vars(string=base_dsn)
     engine = create_engine(str(connection_string), connect_args={"connect_timeout": 8})
 
     with engine.connect() as connection:
-        has_version_table = connection.execute(
-            text("SELECT to_regclass('public.alembic_version') IS NOT NULL")
-        ).scalar_one()
-        if has_version_table and connection.execute(
-            text("SELECT count(*) FROM public.alembic_version")
-        ).scalar_one() > 0:
-            return
+        current_heads = MigrationContext.configure(connection).get_current_heads()
 
-        existing_tables = connection.execute(
-            text(
-                """
-                SELECT tablename
-                FROM pg_catalog.pg_tables
-                WHERE schemaname = 'public'
-                                    AND tablename <> 'alembic_version'
-                ORDER BY tablename
-                """
-            )
-        ).scalars().all()
-
-    if existing_tables:
-        table_list = ", ".join(existing_tables)
+    expected_heads = tuple(script.get_heads())
+    if current_heads != expected_heads:
         raise RuntimeError(
-            "The database contains unversioned public tables "
-            f"({table_list}). This release supports new databases only; "
-            "back up and adopt the database through a validated migration "
-            "before running Alembic."
+            "Database Alembic heads do not match the application heads: "
+            f"database={current_heads or '<none>'}, "
+            f"application={expected_heads or '<none>'}."
         )
+    print(f"Alembic heads verified: {', '.join(expected_heads)}")
 
 
 def main() -> None:
@@ -87,13 +73,15 @@ def main() -> None:
     downgrade_parser = subparsers.add_parser("downgrade", help="Revert migrations")
     downgrade_parser.add_argument("revision", nargs="?", default="-1")
     subparsers.add_parser("current", help="Show the current database revision")
+    subparsers.add_parser("verify-head", help="Verify the database is at Alembic head")
 
     args = parser.parse_args()
     config = build_config()
 
     if args.command == "upgrade":
-        ensure_supported_database()
         command.upgrade(config, args.revision)
+    elif args.command == "verify-head":
+        verify_head()
     elif args.command == "downgrade":
         command.downgrade(config, args.revision)
     else:

@@ -45,11 +45,10 @@ Three schemas manage different aspects:
 - **`cache`** - Connector and DTR cache tables owned by Alembic in the explicit `cache` schema.
 - **`ichub_keycloak`** - Keycloak authentication, managed by Keycloak and excluded from Alembic.
 
-Alembic migrations run before the backend starts. New installations are supported
-by default; an existing database with public tables but no Alembic revision is
-rejected rather than automatically stamped or adopted. Schema changes must be
-introduced as new revisions and the chart's migration readiness revision must be
-updated with the new head.
+Alembic migrations run before the backend starts. The supported deployment path
+uses a new database initialized by Alembic. Schema changes must be introduced as
+new revisions; the chart verifies that the database reaches the current Alembic
+head before the backend starts.
 
 See [Schema Documentation](./SCHEMA_DOCUMENTATION.md) and [DDL](./Metadata-DDL-public.sql).
 
@@ -111,9 +110,8 @@ python migrate.py current
 python migrate.py upgrade head
 ```
 
-`upgrade head` is idempotent. New application schema changes must be represented by a new
-Alembic revision and deployed using a fix-forward migration. Existing databases are not
-automatically adopted or stamped by this workflow.
+`upgrade head` is idempotent on databases managed by Alembic. New application schema changes
+must be represented by a new Alembic revision and deployed using a fix-forward migration.
 
 For an isolated disposable database, a revision can be reverted with:
 
@@ -136,7 +134,8 @@ helm install industry-core-hub ./charts/industry-core-hub \
 ```
 
 The `ichub` and `ichub_keycloak` users, schemas, and permissions continue to be bootstrapped
-by `configmap-backend-postgres-init.yaml` and `secret-backend-postgres.yaml`.
+by `configmap-backend-postgres-init.yaml` and `secret-backend-postgres.yaml`. The bootstrap
+creates the `cache` schema and its permissions; Alembic creates the cache tables.
 
 ---
 

@@ -27,6 +27,7 @@ from sqlalchemy import engine_from_config, pool, text
 from sqlmodel import SQLModel
 
 from managers.config.config_manager import ConfigManager
+from models.metadata_database import all_models  # noqa: F401
 from tools import env_tools
 
 config = context.config
@@ -36,7 +37,7 @@ if config.config_file_name is not None:
 
 base_dsn = ConfigManager.get_config("database.connection_string", default="")
 connection_string = env_tools.substitute_env_vars(string=base_dsn)
-config.set_main_option("sqlalchemy.url", str(connection_string))
+config.set_main_option("sqlalchemy.url", str(connection_string).replace("%", "%%"))
 
 target_metadata = SQLModel.metadata
 
