@@ -53,7 +53,7 @@ def upgrade() -> None:
     sa.Column('asset_id', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.Column('policies', sa.JSON(), nullable=True),
     sa.Column('expires_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('bpnl'),
+    sa.PrimaryKeyConstraint('bpnl', 'asset_id'),
     schema='cache'
     )
     op.create_index(op.f('ix_known_dtrs_bpnl'), 'known_dtrs', ['bpnl'], unique=False, schema='cache')
