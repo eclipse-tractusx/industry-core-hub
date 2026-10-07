@@ -38,7 +38,7 @@ services:
       - ./init-cache-schema.sql:/docker-entrypoint-initdb.d/02-init-cache-schema.sql:ro
       - ./init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      test: ["CMD-SHELL", "pg_isready -U user -d ichub"]
       interval: 10s
       timeout: 5s
       retries: 5
