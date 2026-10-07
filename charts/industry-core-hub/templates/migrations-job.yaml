@@ -24,7 +24,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "industry-core-hub.fullname" . }}-migrations
+  name: {{ include "industry-core-hub.fullname" . }}-migrations-{{ .Release.Revision }}
   labels:
     {{- include "industry-core-hub.backend.labels" . | nindent 4 }}
     app.kubernetes.io/component: migrations
