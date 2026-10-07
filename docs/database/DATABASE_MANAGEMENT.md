@@ -106,6 +106,7 @@ docker compose -f deployment/local/docker-compose/docker-compose.yml up migratio
 Run from `ichub-backend` with the same configuration used by the backend:
 
 ```bash
+export DATABASE_PASSWORD="your_local_password"
 python migrate.py current
 python migrate.py upgrade head
 ```
