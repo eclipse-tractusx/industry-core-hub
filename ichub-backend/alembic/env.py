@@ -45,10 +45,10 @@ target_metadata = SQLModel.metadata
 def include_name(name: str | None, type_: str, parent_names: dict[str, str]) -> bool:
     """Keep Alembic focused on application-owned schemas."""
     if type_ == "schema":
-        return name in {None, "public"}
+        return name in {None, "public", "cache"}
     if type_ == "table":
         schema = parent_names.get("schema_name")
-        return schema in {None, "public"}
+        return schema in {None, "public", "cache"}
     return True
 
 
