@@ -41,6 +41,7 @@ spec:
       {{- end }}
       labels:
         {{- include "industry-core-hub.backend.labels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
         {{- with .Values.backend.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -52,6 +53,42 @@ spec:
       securityContext:
         {{- toYaml .Values.backend.podSecurityContext | nindent 8 }}
       automountServiceAccountToken: false
+      {{- if .Values.backend.jobs.migrations.enabled }}
+      initContainers:
+        - name: wait-for-migrations
+          securityContext:
+            {{- toYaml .Values.backend.securityContext | nindent 12 }}
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              attempts=0
+              until python migrate.py verify-head; do
+                attempts=$((attempts + 1))
+                if [ "$attempts" -ge "$PGWAIT_ATTEMPTS" ]; then
+                  echo "Alembic migrations were not at the application head after $PGWAIT_ATTEMPTS attempts"
+                  exit 1
+                fi
+                echo "Waiting for Alembic migrations ($attempts/$PGWAIT_ATTEMPTS)"
+                sleep "$PGWAIT_DELAY"
+              done
+              echo "Alembic migrations are at the application head"
+          env:
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "industry-core-hub.postgresql.secretName" . }}
+                  key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+            - name: PGWAIT_ATTEMPTS
+              value: {{ .Values.backend.jobs.migrations.readiness.attempts | quote }}
+            - name: PGWAIT_DELAY
+              value: {{ .Values.backend.jobs.migrations.readiness.delaySeconds | quote }}
+          volumeMounts:
+            - name: backend-config-configmap
+              mountPath: /industry-core-hub/config
+              readOnly: true
+      {{ end }}
       containers:
         - name: {{ include "industry-core-hub.fullname.backend" . }}
           securityContext:

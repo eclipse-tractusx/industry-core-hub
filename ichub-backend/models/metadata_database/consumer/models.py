@@ -24,9 +24,9 @@ from sqlmodel import SQLModel, Field
 from sqlalchemy import JSON
 from sqlmodel import Column
 from datetime import datetime
-from typing import List
+from typing import Any
 
-class KnownConnectors(SQLModel):
+class KnownConnectors(SQLModel, table=True):
     """
     Represents cached connector information for a specific Business Partner Number Legal Entity (BPNL).
     
@@ -35,11 +35,14 @@ class KnownConnectors(SQLModel):
     """
 
     bpnl: str = Field(primary_key=True, index=True, description="Business Partner Number Legal Entity")
-    connectors: List[str] = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
+    connectors: Any = Field(sa_column=Column(JSON), description="List of connector URLs for this BPNL")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
 
+    __tablename__ = "known_connectors"
+    __table_args__ = {"schema": "cache"}
 
-class KnownDtrs(SQLModel):
+
+class KnownDtrs(SQLModel, table=True):
     """
     Represents cached DTR information for a specific Business Partner Number Legal Entity (BPNL).
     
@@ -49,7 +52,10 @@ class KnownDtrs(SQLModel):
 
     bpnl: str = Field(primary_key=True, index=True, description="Business Partner Number Legal Entity")
     edc_url: str = Field(description="URL of the EDC where the DTR is stored")
-    asset_id: str = Field(description="Asset ID of the DTR")
-    policies: List[str] = Field(sa_column=Column(JSON), description="List of policies for this DTR")
+    asset_id: str = Field(primary_key=True, description="Asset ID of the DTR")
+    policies: Any = Field(sa_column=Column(JSON), description="List of policies for this DTR")
     expires_at: datetime = Field(index=True, description="When this cache entry expires")
+
+    __tablename__ = "known_dtrs"
+    __table_args__ = {"schema": "cache"}
 
