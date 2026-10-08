@@ -30,6 +30,7 @@ metadata:
     app.kubernetes.io/component: migrations
 spec:
   backoffLimit: {{ .Values.backend.jobs.migrations.backoffLimit }}
+  ttlSecondsAfterFinished: 120
   template:
     metadata:
       labels:

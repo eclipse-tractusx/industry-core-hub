@@ -23,7 +23,7 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool, text
+from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from managers.config.config_manager import ConfigManager
@@ -44,6 +44,8 @@ target_metadata = SQLModel.metadata
 
 def include_name(name: str | None, type_: str, parent_names: dict[str, str]) -> bool:
     """Keep Alembic focused on application-owned schemas."""
+    if type_ == "table" and name == "alembic_version":
+        return False
     if type_ == "schema":
         return name in {None, "public", "cache"}
     if type_ == "table":
@@ -73,10 +75,10 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={"options": "-c search_path=public,cache"},
     )
 
-    with connectable.begin() as connection:
-        connection.execute(text("SET search_path TO public"))
+    with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -85,7 +87,8 @@ def run_migrations_online() -> None:
             version_table_schema="public",
         )
 
-        context.run_migrations()
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():

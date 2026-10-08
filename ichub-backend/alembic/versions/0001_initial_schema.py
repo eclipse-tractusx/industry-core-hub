@@ -198,6 +198,7 @@ def upgrade() -> None:
     sa.Column('correlation_id', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
     sa.Column('version', sqlmodel.sql.sqltypes.AutoString(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('request_id', 'type', name='uk_pcf_exchanges_request_id'),
     schema='public'
     )
     op.create_index(op.f('ix_public_pcf_exchanges_correlation_id'), 'pcf_exchanges', ['correlation_id'], unique=False, schema='public')

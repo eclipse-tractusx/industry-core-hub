@@ -39,5 +39,7 @@ spec:
       targetPort: {{ .Values.backend.service.portContainer }}
       protocol: TCP
       name: http
-  selector: {{ include "industry-core-hub.backend.selectorLabels" . | nindent 4 }}
+  selector:
+    {{- include "industry-core-hub.backend.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
 {{- end }}
