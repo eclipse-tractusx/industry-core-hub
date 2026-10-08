@@ -67,7 +67,7 @@ pypi/pypi/-/packaging/24.2, (Apache-2.0 OR BSD-2-Clause) AND MIT, approved, #198
 pypi/pypi/-/pathable/0.6.0, Apache-2.0, approved, #29436
 pypi/pypi/-/pendulum/3.2.0, MIT, approved, #28391
 pypi/pypi/-/pip/25.0.1, MIT AND ISC AND Apache-2.0 AND (BSD-2-Clause OR Apache-2.0) AND BSD-2-Clause AND BSD-3-Clause AND Python-2.0 AND MPL-2.0, approved, #20397
-pypi/pypi/-/platformdirs/4.12.3, , restricted, clearlydefined
+pypi/pypi/-/platformdirs/4.12.4, , restricted, clearlydefined
 pypi/pypi/-/pluggy/1.5.0, MIT, approved, clearlydefined
 pypi/pypi/-/prometheus-fastapi-instrumentator/7.1.0, BSD-2-Clause AND BSD-3-Clause AND ISC, approved, clearlydefined
 pypi/pypi/-/prometheus_client/0.26.0, Apache-2.0 AND BSD-2-Clause, restricted, clearlydefined
