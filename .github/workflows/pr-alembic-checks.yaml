@@ -72,6 +72,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create cache schema (Infrastructure Provisioning)
+        env:
+          PGPASSWORD: password
+        run: |
+          psql -h localhost -U user -d ichub -c "CREATE SCHEMA IF NOT EXISTS cache;"
+
       - name: Apply Alembic migrations
         working-directory: ichub-backend
         run: alembic upgrade head
