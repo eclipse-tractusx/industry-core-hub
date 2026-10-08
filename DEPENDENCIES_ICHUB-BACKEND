@@ -1,6 +1,6 @@
 pypi/pypi/-/Authlib/1.8.0, , restricted, clearlydefined
 pypi/pypi/-/Jinja2/3.1.6, BSD-3-Clause, approved, #7978
-pypi/pypi/-/Mako/1.4.3, , restricted, clearlydefined
+pypi/pypi/-/Mako/1.3.10, MIT AND BSD-2-Clause AND BSD-3-Clause AND BSD-2-Clause AND (MIT AND Python-2.0.1), approved, #21110
 pypi/pypi/-/MarkupSafe/3.0.2, BSD-3-Clause, approved, #25777
 pypi/pypi/-/PyJWT/2.15.1, , restricted, clearlydefined
 pypi/pypi/-/PyYAML/6.0.2, MIT, approved, #25755
@@ -8,7 +8,7 @@ pypi/pypi/-/Pygments/2.20.0, BSD-2-Clause AND LicenseRef-Public-domain AND Apach
 pypi/pypi/-/SQLAlchemy/2.0.40, MIT AND LGPL-2.0-only AND BSD-3-Clause AND LGPL-2.0-or-later, approved, #19392
 pypi/pypi/-/SecretStorage/3.5.0, BSD-3-Clause, approved, #29427
 pypi/pypi/-/aiofile/3.12.3, Apache-2.0, restricted, clearlydefined
-pypi/pypi/-/alembic/1.16.5, MIT, restricted, clearlydefined
+pypi/pypi/-/alembic/1.15.2, MIT AND BSD-3-Clause AND (CC-BY-4.0 AND MIT AND OFL-1.1) AND (CC-BY-4.0 AND CC0-1.0 AND MIT AND OFL-1.1) AND CC0-1.0, approved, #21111
 pypi/pypi/-/annotated-doc/0.0.5, MIT, approved, #24552
 pypi/pypi/-/annotated-types/0.7.0, MIT, approved, clearlydefined
 pypi/pypi/-/anyio/4.9.0, MIT, approved, #20553
