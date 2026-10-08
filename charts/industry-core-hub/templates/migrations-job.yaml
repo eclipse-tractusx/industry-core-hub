@@ -30,7 +30,7 @@ metadata:
     app.kubernetes.io/component: migrations
 spec:
   backoffLimit: {{ .Values.backend.jobs.migrations.backoffLimit }}
-  ttlSecondsAfterFinished: 120
+  ttlSecondsAfterFinished: 600
   template:
     metadata:
       labels:
@@ -94,11 +94,28 @@ spec:
           command: ["python"]
           args: ["migrate.py", "upgrade", "head"]
           env:
+            - name: PGHOST
+              value: {{ include "industry-core-hub.postgresql.host" . | quote }}
+            - name: PGPORT
+              value: {{ include "industry-core-hub.postgresql.port" . | quote }}
+            - name: PGDATABASE
+              value: {{ include "industry-core-hub.postgresql.databaseName" . | quote }}
+            - name: PGUSER
+              value: {{ include "industry-core-hub.postgresql.ichubUser" . | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "industry-core-hub.postgresql.secretName" . }}
+                  key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
             - name: DATABASE_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "industry-core-hub.postgresql.secretName" . }}
                   key: {{ include "industry-core-hub.postgresql.ichub.secretKey" . }}
+            - name: PGSSLMODE
+              value: {{ include "industry-core-hub.postgresql.sslMode" . | quote }}
+            - name: PGCONNECT_TIMEOUT
+              value: "2"
             {{- range $key, $value := .Values.backend.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
