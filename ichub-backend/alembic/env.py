@@ -75,7 +75,7 @@ def run_migrations_online() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={"options": "-c search_path=public,cache"},
+        connect_args={"options": "-c search_path=public"},
     )
 
     with connectable.connect() as connection:
