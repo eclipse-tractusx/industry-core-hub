@@ -85,6 +85,7 @@ class TestPartManagementService:
         catalog_part.id = 1
         catalog_part.manufacturer_part_id = "PART001"
         catalog_part.name = "Test Part"
+        catalog_part.extra_metadata = {}
         catalog_part.category = "Electronics"
         catalog_part.bpns = "BPNS123456789012"
         catalog_part.materials = []

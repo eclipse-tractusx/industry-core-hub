@@ -167,6 +167,7 @@ class TestTwinManagementService:
         catalog_part.twin_id = None
         catalog_part.manufacturer_part_id = "PART001"
         catalog_part.name = "Test Part"
+        catalog_part.extra_metadata = {}
         catalog_part.category = "product"
         catalog_part.bpns = "BPNS123456789012"
         catalog_part.description = "Test description"
