@@ -353,6 +353,7 @@ class TestTwinManagementService:
         mock_catalog_part = Mock()
         mock_catalog_part.category = "product"
         mock_catalog_part.name = "Test Part"
+        mock_catalog_part.extra_metadata = {}
         mock_catalog_part.description = "Test Description"
         
         # Create mock business partner
@@ -394,6 +395,7 @@ class TestTwinManagementService:
         mock_serialized_part.partner_catalog_part.catalog_part.legal_entity = Mock(bpnl="BPNL123456789012")
         mock_serialized_part.partner_catalog_part.catalog_part.manufacturer_part_id = "PART001"
         mock_serialized_part.partner_catalog_part.catalog_part.name = "Test Part"
+        mock_serialized_part.partner_catalog_part.catalog_part.extra_metadata = {}
         mock_serialized_part.partner_catalog_part.catalog_part.category = "product"
         mock_serialized_part.partner_catalog_part.catalog_part.bpns = "BPNS123456789012"
         mock_serialized_part.partner_catalog_part.customer_part_id = "CUST001"

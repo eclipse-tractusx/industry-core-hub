@@ -321,6 +321,7 @@ class TestPartManagementService:
         catalog_part = Mock()
         catalog_part.manufacturer_part_id = "PART001"
         catalog_part.name = "Test Part"
+        catalog_part.extra_metadata = {}
         catalog_part.category = "Electronics"
         catalog_part.bpns = "BPNS123456789012"
         partner_catalog_part.catalog_part = catalog_part
