@@ -280,7 +280,7 @@ class PartManagementService():
 
             # Validate materials share if materials are being updated
             if catalog_part_update.materials:
-                self._manage_share_error(catalog_part_update)
+                self._validate_material_distribution(catalog_part_update)
 
             # Update the catalog part fields directly on the database object
             update_data = catalog_part_update.model_dump(exclude_unset=True, by_alias=False)

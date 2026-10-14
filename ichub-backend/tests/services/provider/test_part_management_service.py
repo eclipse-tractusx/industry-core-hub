@@ -160,7 +160,7 @@ class TestPartManagementService:
         with pytest.raises(AlreadyExistsError, match="Catalog part already exists"):
             self.service.create_catalog_part(sample_catalog_part_create)
 
-    def test_manage_share_error_valid_share(self):
+    def test_validate_material_distribution_valid_share(self):
         """Test material share validation with valid total share."""
         # Arrange
         catalog_part = Mock()
@@ -171,9 +171,9 @@ class TestPartManagementService:
         ]
         
         # Act & Assert - should not raise exception
-        PartManagementService._manage_share_error(catalog_part)
+        PartManagementService._validate_material_distribution(catalog_part)
 
-    def test_manage_share_error_invalid_share_over_100(self):
+    def test_validate_material_distribution_invalid_share_over_100(self):
         """Test material share validation with total share over 100%."""
         # Arrange
         catalog_part = Mock()
@@ -184,9 +184,9 @@ class TestPartManagementService:
         
         # Act & Assert
         with pytest.raises(InvalidError, match="The share of materials \\(110%\\) is invalid"):
-            PartManagementService._manage_share_error(catalog_part)
+            PartManagementService._validate_material_distribution(catalog_part)
 
-    def test_manage_share_error_negative_total_share(self):
+    def test_validate_material_distribution_negative_total_share(self):
         """Test material share validation with negative total share."""
         # Arrange
         catalog_part = Mock()
@@ -197,7 +197,7 @@ class TestPartManagementService:
         
         # Act & Assert
         with pytest.raises(InvalidError, match="The share of materials \\(-110%\\) is invalid"):
-            PartManagementService._manage_share_error(catalog_part)
+            PartManagementService._validate_material_distribution(catalog_part)
 
     @patch('services.provider.part_management_service.RepositoryManagerFactory.create')
     def test_get_catalog_parts_success(self, mock_repo_factory, mock_repos, sample_catalog_part):
