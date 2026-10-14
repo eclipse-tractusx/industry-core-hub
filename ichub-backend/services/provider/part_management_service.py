@@ -292,6 +292,10 @@ class PartManagementService():
             for field, value in filtered_update_data.items():
                 if hasattr(db_catalog_part, field):
                     setattr(db_catalog_part, field, value)
+
+            # TODO: remove later
+            # Sync deprecated metadata fields from the catalog part update to the database object
+            self._sync_deprecated_metadata_fields(catalog_part_update, db_catalog_part.extra_metadata)
             
             repos.catalog_part_repository.commit()
 
