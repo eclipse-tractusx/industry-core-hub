@@ -619,6 +619,8 @@ class PartManagementService():
                     db_serialized_part.partner_catalog_part.catalog_part.extra_metadata,
                     part
                 )
+
+                result.append(part)
             return result
 
     def create_jis_part(self, jis_part_create: JISPartCreate) -> JISPartRead:
