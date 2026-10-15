@@ -855,6 +855,8 @@ class TwinManagementService:
             TwinManagementService._fill_registrations(db_twin, twin_result)
             TwinManagementService._fill_aspects(db_twin, twin_result)
 
+            twin_result.extra_metadata = db_catalog_part.extra_metadata
+
             # TODO: Deprecated fields - remove later
             PartManagementService.fill_deprected_metadata_fields_base(db_catalog_part.extra_metadata, twin_result)
 
