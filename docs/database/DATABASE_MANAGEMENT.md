@@ -182,6 +182,7 @@ Older versions of the application did not use a dedicated `cache` schema. Connec
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS cache;
+ALTER SCHEMA cache OWNER TO ichub;
 ```
 
 ### Step 2: Stamp the initial revision
