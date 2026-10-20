@@ -21,8 +21,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #################################################################################
 
-"""Custom submodel adapters for Industry Core Hub."""
+"""Configuration management for submodel adapters in Industry Core Hub."""
 
-from .http_submodel_adapter import HttpSubmodelAdapter
+from .adapter_config_manager import AdapterConfigurationInterface
 
-__all__ = ["HttpSubmodelAdapter"]
+__all__ = ["AdapterConfigurationInterface"]

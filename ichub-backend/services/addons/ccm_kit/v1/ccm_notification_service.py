@@ -49,7 +49,7 @@ from services.addons.ccm_kit.v1.ccm_consumer_service import (
 )
 from services.addons.ccm_kit.v1.ccm_base_service import CcmBaseService
 from managers.addons_service.ccm_kit.v1.notifications import (
-    ccm_notification_manager,
+    get_ccm_notification_manager,
     CCM_NT_REQUEST_RECEIVED,
     CCM_NT_REQUEST_NOT_FOUND,
     CCM_NT_PUSH_RECEIVED,
@@ -64,6 +64,16 @@ from tools.constants import (
 )
 
 logger = LoggingManager.get_logger(__name__)
+
+# Re-export for tests and backward compatibility
+# Tests may patch services.addons.ccm_kit.v1.ccm_notification_service.ccm_notification_manager
+# ARCHITECTURAL IMPROVEMENT: __getattr__ enables lazy singleton pattern; tests can mock the getter
+# without initializing full NotificationsManagementService, improving test isolation.
+def __getattr__(name: str):
+    """Support patching ccm_notification_manager via module-level __getattr__."""
+    if name == "ccm_notification_manager":
+        return get_ccm_notification_manager()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # ---------------------------------------------------------------------------
 # Status mapping: CX-0135 consumer status → internal ShareStatus
@@ -188,7 +198,7 @@ class CcmNotificationService:
                     notification_id=str(notification.header.message_id),
                 )
                 repo.commit()
-                ccm_notification_manager.create_ccm_notification(
+                get_ccm_notification_manager().create_ccm_notification(
                     sender_bpn=sender_bpn,
                     receiver_bpn=notification.header.receiver_bpn,
                     notification_type=CCM_NT_REQUEST_NOT_FOUND,
@@ -259,7 +269,7 @@ class CcmNotificationService:
                 f"Certificate {ccm_id} is published (asset {_s(ccm_edc_asset_id)}). "
                 f"Responding COMPLETED with documentId."
             )
-            ccm_notification_manager.create_ccm_notification(
+            get_ccm_notification_manager().create_ccm_notification(
                 sender_bpn=sender_bpn,
                 receiver_bpn=notification.header.receiver_bpn,
                 notification_type=CCM_NT_REQUEST_RECEIVED,
@@ -293,7 +303,7 @@ class CcmNotificationService:
             )
 
         # --- 6. Certificate found but not yet published → 202 IN_PROGRESS (CX-0135 §3.4) ---
-        ccm_notification_manager.create_ccm_notification(
+        get_ccm_notification_manager().create_ccm_notification(
             sender_bpn=sender_bpn,
             receiver_bpn=notification.header.receiver_bpn,
             notification_type=CCM_NT_REQUEST_RECEIVED,
@@ -507,7 +517,7 @@ class CcmNotificationService:
             f"(consumer {_s(sender_bpn)}, document {_s(content.document_id)})"
         )
 
-        ccm_notification_manager.create_ccm_notification(
+        get_ccm_notification_manager().create_ccm_notification(
             sender_bpn=sender_bpn,
             receiver_bpn=notification.header.receiver_bpn,
             notification_type=CCM_NT_STATUS_RECEIVED,
@@ -696,7 +706,7 @@ class CcmNotificationService:
                         _s(content.document.document_id),
                     )
                 repo.commit()
-                ccm_notification_manager.create_ccm_notification(
+                get_ccm_notification_manager().create_ccm_notification(
                     sender_bpn=sender_bpn,
                     receiver_bpn=notification.header.receiver_bpn,
                     notification_type=CCM_NT_PUSH_RECEIVED,
@@ -774,7 +784,7 @@ class CcmNotificationService:
                 )
             repo.commit()
 
-        ccm_notification_manager.create_ccm_notification(
+        get_ccm_notification_manager().create_ccm_notification(
             sender_bpn=sender_bpn,
             receiver_bpn=notification.header.receiver_bpn,
             notification_type=CCM_NT_PUSH_RECEIVED,
@@ -880,7 +890,7 @@ class CcmNotificationService:
                 related_message_id=str(_related_msg_id) if _related_msg_id else None,
             )
 
-        ccm_notification_manager.create_ccm_notification(
+        get_ccm_notification_manager().create_ccm_notification(
             sender_bpn=sender_bpn,
             receiver_bpn=notification.header.receiver_bpn,
             notification_type=CCM_NT_AVAILABLE_RECEIVED,

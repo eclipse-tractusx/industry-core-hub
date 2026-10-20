@@ -55,9 +55,12 @@ def _restore_real_modules() -> dict:
 
 
 @pytest.fixture(scope="session")
-def app_client():
+def app_client(ensure_config_loaded):
     """
     Session-scoped TestClient for the FastAPI app.
+
+    ConfigManager is automatically initialized by the autouse session fixture
+    ensure_config_loaded from the root conftest.py before this fixture runs.
 
     Some test files permanently replace ``managers.config.config_manager`` (and
     other modules) in ``sys.modules`` at collection time via module-level
@@ -77,6 +80,15 @@ def app_client():
     is imported.
     """
     _restore_real_modules()
+
+    # After _restore_real_modules(), ConfigManager may have been re-imported,
+    # resetting _raw_config to None. Explicitly reload config before app import.
+    from pathlib import Path
+    from managers.config.config_manager import ConfigManager
+    test_dir = Path(__file__).parent.parent.parent  # tests/ directory
+    config_path = test_dir / "config" / "configuration.yml"
+    if config_path.exists():
+        ConfigManager.load_config(str(config_path))
 
     _PCF_SDK_SUBMODULES = [
         'tractusx_sdk.dataspace.tools.validate_submodels',

@@ -1,0 +1,143 @@
+###############################################################
+# Copyright (c) 2026 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+name: S3 Extension Tests
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ichub-backend/managers/enablement_services/**"
+      - "ichub-backend/managers/config/**"
+      - "ichub-backend/tests/managers/enablement_services/**"
+      - "ichub-backend/requirements.txt"
+      - ".github/workflows/s3-extension-tests.yaml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "ichub-backend/managers/enablement_services/**"
+      - "ichub-backend/managers/config/**"
+      - "ichub-backend/tests/managers/enablement_services/**"
+      - "ichub-backend/requirements.txt"
+      - ".github/workflows/s3-extension-tests.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  SEAWEEDFS_IMAGE: "chrislusf/seaweedfs:latest" # pin to a concrete tag matching the seaweedfs chart appVersion
+  S3_ENDPOINT_URL: "http://localhost:8333"
+  S3_REGION: "us-east-1"
+  S3_ACCESS_KEY: "admin"
+  S3_SECRET_KEY: "secret"
+  S3_BUCKET_NAME: "ichub-submodels"
+  ICHUB_TEST_PRESERVE_BUCKET: "0"
+
+jobs:
+  s3-tests:
+    name: S3 Submodel Adapter Tests (SeaweedFS)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: ichub-backend/requirements.txt
+
+      - name: Install Python dependencies
+        working-directory: ichub-backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # boto3/moto are not in requirements.txt; without them the S3 tests are silently skipped
+          pip install boto3 "moto[s3]" pytest-cov
+
+      - name: Start SeaweedFS (S3 gateway on :8333)
+        run: |
+          docker run -d --name seaweedfs -p 8333:8333 \
+            "${SEAWEEDFS_IMAGE}" server -s3 -s3.port=8333 -dir=/data
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null "${S3_ENDPOINT_URL}"; then
+              echo "SeaweedFS S3 gateway is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "SeaweedFS did not become ready" >&2
+          docker logs seaweedfs
+          exit 1
+
+      - name: S3 smoke test (aws cli)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.S3_REGION }}
+        run: |
+          B="${S3_BUCKET_NAME}-smoke"
+          aws --endpoint-url "$S3_ENDPOINT_URL" s3 mb "s3://$B"
+          echo -n "ichub" > /tmp/up.txt
+          aws --endpoint-url "$S3_ENDPOINT_URL" s3 cp /tmp/up.txt "s3://$B/obj.txt"
+          aws --endpoint-url "$S3_ENDPOINT_URL" s3 cp "s3://$B/obj.txt" /tmp/down.txt
+          diff -q /tmp/up.txt /tmp/down.txt
+          aws --endpoint-url "$S3_ENDPOINT_URL" s3 rb "s3://$B" --force
+
+      - name: Run S3 / adapter tests
+        working-directory: ichub-backend
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.S3_REGION }}
+        run: |
+          PYTHONPATH=. python -m pytest tests/managers/enablement_services/ \
+            -v -rs --tb=short \
+            --cov=managers/enablement_services --cov-report=xml \
+            --junit-xml=s3-test-results.xml
+
+      - name: Fail if S3 tests were skipped
+        if: success()
+        working-directory: ichub-backend
+        run: |
+          SKIPPED=$(grep -o 'skipped="[0-9]*"' s3-test-results.xml | head -1 | grep -o '[0-9]*')
+          echo "Skipped tests: ${SKIPPED:-0}"
+          if [ "${SKIPPED:-0}" != "0" ]; then
+            echo "::warning::${SKIPPED} S3 tests were skipped (endpoint unreachable or deps missing)"
+          fi
+
+      - name: SeaweedFS logs
+        if: failure()
+        run: docker logs seaweedfs || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: s3-extension-test-results
+          path: |
+            ichub-backend/s3-test-results.xml
+            ichub-backend/coverage.xml

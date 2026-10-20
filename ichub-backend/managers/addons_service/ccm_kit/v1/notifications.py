@@ -157,4 +157,23 @@ class CcmNotificationManager:
 
 
 # Module-level singleton consumed by CCM services.
-ccm_notification_manager = CcmNotificationManager()
+# Lazily initialized to defer NotificationsManagementService creation until first use,
+# avoiding import-time errors when connector_manager is not yet initialized.
+# ARCHITECTURAL IMPROVEMENT: Lazy init prevents startup crashes and allows tests to mock without full service setup.
+_ccm_notification_manager: Optional[CcmNotificationManager] = None
+
+
+def get_ccm_notification_manager() -> CcmNotificationManager:
+    """Get the CCM notification manager singleton, lazily initializing if needed."""
+    global _ccm_notification_manager
+    if _ccm_notification_manager is None:
+        _ccm_notification_manager = CcmNotificationManager()
+    return _ccm_notification_manager
+
+
+# Re-export for tests that may patch this module-level reference
+def __getattr__(name: str):
+    """Support patching ccm_notification_manager via module-level __getattr__."""
+    if name == "ccm_notification_manager":
+        return get_ccm_notification_manager()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
