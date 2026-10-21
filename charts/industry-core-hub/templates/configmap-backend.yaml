@@ -46,6 +46,9 @@ data:
           max_retries: {{ .Values.backend.configuration.authorization.keycloak.retry.maxRetries }}
           retry_delay: {{ .Values.backend.configuration.authorization.keycloak.retry.retryDelay }}
           background_retry_interval: {{ .Values.backend.configuration.authorization.keycloak.retry.backgroundRetryInterval }}
+    addons:
+      mcp_addon:
+        enabled: {{ .Values.backend.configuration.addons.mcp_addon.enabled }}
     agreements: {{ .Values.backend.configuration.agreements | toYaml | nindent 6 }}
     database:
       connection_string: {{ include "industry-core-hub.postgresql.dsn" . | quote }}
