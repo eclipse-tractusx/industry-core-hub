@@ -5,6 +5,7 @@
     "loadingParts": "正在加载目录零件...",
     "noMatchingParts": "未找到匹配的零件",
     "defaultPlaceholder": "输入制造商零件ID...",
+    "toggleOptions": "显示或隐藏零件选项",
     "defaultButtonText": "搜索零件",
     "createNew": "创建新目录零件",
     "createWithId": "创建 '{{id}}'"
@@ -73,6 +74,7 @@
     "noSubpartsAdded": "未添加子零件",
     "addSubpartsHint": "添加子零件关系以请求PCF数据",
     "addSubpart": "添加子零件",
+    "request": "请求",
     "requestPcf": "请求PCF",
     "retryRequest": "重试请求",
     "downloadPcf": "下载PCF",
@@ -493,6 +495,7 @@
     "save": "保存",
     "tooltipValidate": "根据架构验证数据",
     "tooltipRevalidate": "根据架构重新验证数据",
+    "revalidate": "重新验证",
     "tooltipValidateBoth": "根据各自的架构验证两个PCF版本",
     "tooltipContinue": "继续到下一步",
     "tooltipContinueDisabled": "请先验证数据以继续",

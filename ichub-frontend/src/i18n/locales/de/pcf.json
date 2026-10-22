@@ -5,6 +5,7 @@
     "loadingParts": "Katalogteile werden geladen...",
     "noMatchingParts": "Keine passenden Teile gefunden",
     "defaultPlaceholder": "Hersteller-Teile-ID eingeben...",
+    "toggleOptions": "Verfügbare Teileoptionen ein- oder ausblenden",
     "defaultButtonText": "Teil suchen",
     "createNew": "Neues Katalogteil erstellen",
     "createWithId": "'{{id}}' erstellen"
@@ -73,6 +74,7 @@
     "noSubpartsAdded": "Keine Unterteile hinzugefügt",
     "addSubpartsHint": "Fügen Sie Unterteil-Beziehungen hinzu, um PCF-Daten anzufordern",
     "addSubpart": "Unterteil hinzufügen",
+    "request": "Anfordern",
     "requestPcf": "PCF anfordern",
     "retryRequest": "Anfrage wiederholen",
     "downloadPcf": "PCF herunterladen",
@@ -493,6 +495,7 @@
     "updating": "Aktualisierung…",
     "tooltipValidate": "Daten gegen das Schema validieren",
     "tooltipRevalidate": "Daten erneut gegen das Schema validieren",
+    "revalidate": "Erneut validieren",
     "tooltipValidateBoth": "Beide PCF-Versionen gegen ihre Schemas validieren",
     "tooltipContinue": "Zum nächsten Schritt weiter",
     "tooltipContinueDisabled": "Daten zuerst validieren, um fortzufahren",

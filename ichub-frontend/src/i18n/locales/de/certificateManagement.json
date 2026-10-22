@@ -414,6 +414,8 @@
     "subtitle": "Bitten Sie einen Anbieter, ein Compliance-Zertifikat mit Ihnen zu teilen",
     "providerBpn": "Anbieter-BPN",
     "providerPlaceholder": "BPNL des Anbieters auswählen oder eingeben",
+    "ccmSupport": "CCM-Unterstützung",
+    "ccmSupportDescription": "Prüfen Sie, ob dieser Anbieter CCM unterstützt.",
     "verifyCcm": "CCM-Unterstützung prüfen",
     "ccmSupported": "CCM unterstützt",
     "certifiedBpn": "Zertifiziertes BPN",

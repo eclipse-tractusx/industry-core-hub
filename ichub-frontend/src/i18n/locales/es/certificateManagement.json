@@ -414,6 +414,8 @@
     "subtitle": "Solicite a un proveedor que comparta un certificado de cumplimiento con usted",
     "providerBpn": "BPN del Proveedor",
     "providerPlaceholder": "Seleccione o escriba el BPNL del proveedor",
+    "ccmSupport": "Soporte CCM",
+    "ccmSupportDescription": "Compruebe si este proveedor ofrece soporte CCM.",
     "verifyCcm": "Verificar compatibilidad CCM",
     "ccmSupported": "CCM compatible",
     "certifiedBpn": "BPN Certificado",

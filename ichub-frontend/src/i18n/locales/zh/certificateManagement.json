@@ -414,6 +414,8 @@
     "subtitle": "请求提供方与您共享合规证书",
     "providerBpn": "提供方 BPN",
     "providerPlaceholder": "选择或输入提供方的 BPNL",
+    "ccmSupport": "CCM 支持",
+    "ccmSupportDescription": "检查此提供方是否支持 CCM。",
     "verifyCcm": "验证 CCM 支持",
     "ccmSupported": "支持 CCM",
     "certifiedBpn": "认证 BPN",

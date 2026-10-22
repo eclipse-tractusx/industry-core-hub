@@ -42,6 +42,7 @@ import {
 } from '@mui/material';
 import {
   Search,
+  KeyboardArrowDown,
   Close as CloseIcon,
   Category,
   DraftsOutlined,
@@ -161,6 +162,14 @@ export const CatalogPartSearch: React.FC<CatalogPartSearchProps> = ({
     setFilteredResults(searchTerm.trim() ? filteredResults : allParts);
   };
 
+  const handleDropdownToggle = () => {
+    if (showDropdown) {
+      setShowDropdown(false);
+      return;
+    }
+    void handleFocus();
+  };
+
   // Handle selecting a search result
   const handleSelectPart = (part: CatalogPartSearchResult) => {
     setShowDropdown(false);
@@ -264,13 +273,25 @@ export const CatalogPartSearch: React.FC<CatalogPartSearchProps> = ({
                   inputProps={{ autoComplete: 'off' }}
                   InputProps={{
                     startAdornment: <InputAdornment position="start"><Search sx={{ color: 'rgba(255, 255, 255, 0.4)' }} /></InputAdornment>,
-                    endAdornment: (searchTerm || isInitialLoading) && (
-                      <InputAdornment position="end">
+                    endAdornment: (
+                      <InputAdornment position="end" sx={{ gap: 0.5 }}>
                         {isInitialLoading ? <CircularProgress size={20} sx={{ color: PCF_PRIMARY }} /> : (
-                          <IconButton size="small" onClick={() => setSearchTerm('')} sx={{ color: 'rgba(255, 255, 255, 0.4)' }}>
-                            <CloseIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
+                          searchTerm && (
+                            <IconButton size="small" onClick={() => setSearchTerm('')} sx={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                              <CloseIcon sx={{ fontSize: 18 }} />
+                            </IconButton>
+                          )
                         )}
+                        <IconButton
+                          size="small"
+                          aria-label={t('search.toggleOptions')}
+                          aria-expanded={showDropdown}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={handleDropdownToggle}
+                          sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                        >
+                          <KeyboardArrowDown sx={{ transition: 'transform 150ms ease', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+                        </IconButton>
                       </InputAdornment>
                     )
                   }}

@@ -1019,17 +1019,39 @@ const PcfRequestPage: React.FC = () => {
                                 {/* Request button for pending status */}
                                 {subpart.pcfStatus === 'pending' && (
                                   <Tooltip title={t('precalculation.requestPcf')}>
-                                    <IconButton
+                                    <Button
                                       size="small"
+                                      variant="contained"
+                                      disableElevation
                                       onClick={() => handleRequestPcf(subpart.id)}
+                                      aria-label={t('precalculation.requestPcf')}
+                                      startIcon={<Send sx={{ fontSize: 16 }} />}
                                       sx={{
-                                        color: '#fff',
-                                        background: alpha(PCF_PRIMARY, 0.2),
-                                        '&:hover': { background: alpha(PCF_PRIMARY, 0.4) }
+                                        minWidth: 0,
+                                        px: 1.5,
+                                        borderRadius: 1.5,
+                                        color: '#0b2319',
+                                        backgroundColor: PCF_PRIMARY,
+                                        fontWeight: 700,
+                                        textTransform: 'none',
+                                        boxShadow: 'none',
+                                        '&:hover': {
+                                          backgroundColor: PCF_SECONDARY,
+                                          boxShadow: 'none',
+                                        },
+                                        '&:active': {
+                                          backgroundColor: '#047857',
+                                          boxShadow: 'none',
+                                          transform: 'translateY(1px)',
+                                        },
+                                        '&:focus-visible': {
+                                          outline: '2px solid #fff',
+                                          outlineOffset: 2,
+                                        },
                                       }}
                                     >
-                                      <Send sx={{ fontSize: 16 }} />
-                                    </IconButton>
+                                      {t('precalculation.request')}
+                                    </Button>
                                   </Tooltip>
                                 )}
                                 {/* Retry button for error status */}

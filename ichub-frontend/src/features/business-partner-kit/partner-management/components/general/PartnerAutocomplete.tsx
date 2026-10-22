@@ -240,6 +240,8 @@ const PartnerAutocomplete: React.FC<PartnerAutocompleteProps> = ({
       
       <Autocomplete
         freeSolo
+        forcePopupIcon={safePartners.length > 0}
+        disableClearable={!value.trim()}
         options={safePartners}
         getOptionLabel={getOptionLabel}
         value={value}

@@ -318,6 +318,8 @@ export const UploadCertificateDialog = ({
                 freeSolo
                 autoSelect
                 fullWidth
+                forcePopupIcon={CERTIFICATE_TYPES.length > 0}
+                disableClearable={!formData.certificateType}
                 options={CERTIFICATE_TYPES}
                 value={
                   CERTIFICATE_TYPES.find((t) => t.value === formData.certificateType) ??

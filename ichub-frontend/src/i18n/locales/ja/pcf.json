@@ -5,6 +5,7 @@
     "loadingParts": "カタログ部品を読み込み中...",
     "noMatchingParts": "一致する部品が見つかりません",
     "defaultPlaceholder": "メーカー部品IDを入力...",
+    "toggleOptions": "部品オプションの表示と非表示を切り替え",
     "defaultButtonText": "部品を検索",
     "createNew": "新しいカタログ部品を作成",
     "createWithId": "'{{id}}' を作成"
@@ -73,6 +74,7 @@
     "noSubpartsAdded": "サブパーツ未追加",
     "addSubpartsHint": "サブパーツ関係を追加してPCFデータをリクエスト",
     "addSubpart": "サブパーツを追加",
+    "request": "リクエスト",
     "requestPcf": "PCFをリクエスト",
     "retryRequest": "リクエストを再試行",
     "downloadPcf": "PCFをダウンロード",
@@ -493,6 +495,7 @@
     "save": "保存",
     "tooltipValidate": "スキーマに対してデータを検証する",
     "tooltipRevalidate": "スキーマに対してデータを再検証する",
+    "revalidate": "再検証",
     "tooltipValidateBoth": "両方のPCFバージョンをスキーマに対して検証する",
     "tooltipContinue": "次のステップに進む",
     "tooltipContinueDisabled": "続行するにはまずデータを検証してください",

@@ -674,6 +674,7 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                 {/* Search Field with Hierarchical Autocomplete */}
                 <Autocomplete
                     freeSolo
+                    forcePopupIcon={!!searchTerm && hierarchicalOptions.length > 0}
                     options={hierarchicalOptions}
                     inputValue={searchTerm}
                     open={autocompleteOpen && !!searchTerm && hierarchicalOptions.length > 0}
@@ -707,19 +708,25 @@ const SchemaRulesViewer: React.FC<SchemaRulesViewerProps> = ({
                                         <SearchIcon sx={{ color: 'primary.main', fontSize: 20 }} />
                                     </InputAdornment>
                                 ),
-                                endAdornment: searchTerm && (
-                                    <InputAdornment position="end" sx={{ mr: -1.5 }}>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => {
-                                                setSearchTerm('');
-                                                onSearchTermChange?.('');
-                                            }}
-                                            sx={{ padding: 0.5 }}
-                                        >
-                                            <ClearIcon sx={{ fontSize: 18 }} />
-                                        </IconButton>
-                                    </InputAdornment>
+                                endAdornment: (
+                                    <>
+                                        {searchTerm && (
+                                            <InputAdornment position="end" sx={{ mr: -1.5 }}>
+                                                <IconButton
+                                                    size="small"
+                                                    aria-label="Clear search"
+                                                    onClick={() => {
+                                                        setSearchTerm('');
+                                                        onSearchTermChange?.('');
+                                                    }}
+                                                    sx={{ padding: 0.5 }}
+                                                >
+                                                    <ClearIcon sx={{ fontSize: 18 }} />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        )}
+                                        {params.InputProps.endAdornment}
+                                    </>
                                 )
                             }}
                             sx={{

@@ -71,7 +71,7 @@
       "title": "Materialien",
       "description": "Materialzusammensetzung des Teils mit prozentualer Aufschlüsselung. Diese Informationen sind wichtig für Recycling, Kompatibilität und Compliance.",
       "addMaterial": "Material hinzufügen",
-      "autoAdjust": "Automatisch auf 100% anpassen",
+      "autoAdjust": "auf 100% verteilen",
       "total": "Gesamt: {{total}}%",
       "perfectTotal": "Perfekt! Materialanteile ergeben 100%",
       "adjustWarning": "Legen Sie die gewünschten Prozentsätze frei fest. Gesamt muss 100% betragen um das Teil zu erstellen (derzeit {{total}}%)",

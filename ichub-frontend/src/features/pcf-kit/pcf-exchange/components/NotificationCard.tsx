@@ -30,7 +30,6 @@ import {
   Typography,
   Button,
   Chip,
-  Collapse,
   Tooltip,
   alpha,
   IconButton,
@@ -40,12 +39,9 @@ import {
   Business,
   Inventory,
   CheckCircle,
-  ExpandMore,
-  ExpandLess,
   AccessTime,
   Message,
   PriorityHigh,
-  LocalShipping,
   Info,
   Refresh,
   Link as LinkIcon
@@ -82,7 +78,6 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
   onContactAdded
 }) => {
   const { t } = useTranslation('pcf');
-  const [expanded, setExpanded] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRefreshingPcf, setIsRefreshingPcf] = useState(false);
 
@@ -571,60 +566,32 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
           </Box>
         )}
 
-        {/* Expandable Details (for requests that can't be responded to) */}
-        {!canRespond && (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer',
-                color: 'rgba(255, 255, 255, 0.5)',
-                '&:hover': { color: 'rgba(255, 255, 255, 0.7)' }
-              }}
-              onClick={() => setExpanded(!expanded)}
-            >
-              <Typography variant="caption">
-                {expanded ? t('notifications.hideDetails') : t('notifications.showDetails')}
-              </Typography>
-              {expanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-            </Box>
-
-            <Collapse in={expanded}>
-              <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                {notification.responseDate && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                    <CheckCircle sx={{ fontSize: 14, color: statusConfig.color }} />
-                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      {t('notifications.respondedOn', { date: new Date(notification.responseDate).toLocaleDateString([], {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }) })}
-                    </Typography>
-                  </Box>
-                )}
-                {notification.rejectReason && (
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                    <Info sx={{ fontSize: 14, color: '#9ca3af', mt: 0.25 }} />
-                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
-                      {t('notifications.reason')}: {notification.rejectReason}
-                    </Typography>
-                  </Box>
-                )}
-                {notification.status === 'DELIVERED' && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LocalShipping sx={{ fontSize: 14, color: PCF_PRIMARY }} />
-                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                      {t('notifications.pcfDelivered')}
-                    </Typography>
-                  </Box>
-                )}
+        {/* Response details stay visible for requests that can no longer be actioned. */}
+        {!canRespond && (notification.responseDate || notification.rejectReason) && (
+          <Box sx={{ mt: 'auto', pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+            {notification.responseDate && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: notification.rejectReason ? 1 : 0 }}>
+                <CheckCircle sx={{ fontSize: 14, color: statusConfig.color }} />
+                <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                  {t('notifications.respondedOn', { date: new Date(notification.responseDate).toLocaleDateString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) })}
+                </Typography>
               </Box>
-            </Collapse>
-          </>
+            )}
+            {notification.rejectReason && (
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <Info sx={{ fontSize: 14, color: '#9ca3af', mt: 0.25 }} />
+                <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                  {t('notifications.reason')}: {notification.rejectReason}
+                </Typography>
+              </Box>
+            )}
+          </Box>
         )}
 
         {/* Action Buttons (for pending / failed) - Always at bottom */}

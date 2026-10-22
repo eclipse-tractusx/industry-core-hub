@@ -577,6 +577,8 @@ const CreateProductListDialog = ({ open, onClose, onSave, initialManufacturerPar
             />
             <Autocomplete
               options={categoryOptions}
+              forcePopupIcon={categoryOptions.length > 0}
+              disableClearable={!formData.category}
               value={formData.category}
               onChange={(_, newValue) => handleChange("category", newValue || "")}
               freeSolo

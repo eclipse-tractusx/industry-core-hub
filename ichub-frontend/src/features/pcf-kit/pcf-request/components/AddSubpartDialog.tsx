@@ -226,7 +226,8 @@ const AddSubpartDialog: React.FC<AddSubpartDialogProps> = ({
               </Typography>
               <Autocomplete<PartnerInstance, false, boolean, true>
                 freeSolo
-                disableClearable={!supplierBpn}
+                forcePopupIcon={partners.length > 0}
+                disableClearable={!supplierBpn.trim()}
                 options={partners}
                 loading={isLoadingPartners}
                 getOptionLabel={(option) =>

@@ -414,6 +414,8 @@
     "subtitle": "Ask a provider to share a compliance certificate with you",
     "providerBpn": "Provider BPN",
     "providerPlaceholder": "Select or type the provider's BPNL",
+    "ccmSupport": "CCM support",
+    "ccmSupportDescription": "Check whether this provider supports CCM.",
     "verifyCcm": "Verify CCM support",
     "ccmSupported": "CCM supported",
     "certifiedBpn": "Certified BPN",

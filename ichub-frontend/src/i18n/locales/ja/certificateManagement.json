@@ -414,6 +414,8 @@
     "subtitle": "プロバイダーにコンプライアンス証明書の共有を依頼します",
     "providerBpn": "プロバイダーBPN",
     "providerPlaceholder": "プロバイダーのBPNLを選択または入力してください",
+    "ccmSupport": "CCMサポート",
+    "ccmSupportDescription": "このプロバイダーがCCMをサポートしているか確認します。",
     "verifyCcm": "CCMサポートを確認",
     "ccmSupported": "CCMサポート済み",
     "certifiedBpn": "認定BPN",

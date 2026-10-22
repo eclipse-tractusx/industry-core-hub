@@ -423,6 +423,8 @@ interface AddSerializedPartDialogProps {
                         <Grid item xs={12}>
                             <Autocomplete
                                 options={manufacturerPartIdOptions}
+                                forcePopupIcon={manufacturerPartIdOptions.length > 0}
+                                disableClearable={!formData.manufacturerPartId}
                                 value={formData.manufacturerPartId}
                                 onChange={(_, newValue) => setFormData({ ...formData, manufacturerPartId: newValue || '' })}
                                 onInputChange={(_, newInputValue) => setFormData({ ...formData, manufacturerPartId: newInputValue || '' })}

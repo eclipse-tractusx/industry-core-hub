@@ -1361,8 +1361,8 @@ export const DualPcfCreationWizard: React.FC<DualPcfCreationWizardProps> = ({
                 <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
                   {step3Validated ? (
                     <Tooltip title={t('dualWizard.tooltipRevalidate')} placement="top" arrow>
-                      <Button variant="contained" onClick={validateBoth} sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
-                        <ReplayIcon fontSize="small" />
+                      <Button variant="contained" startIcon={<ReplayIcon fontSize="small" />} onClick={validateBoth} sx={{ ...primarySx, minWidth: 0, px: 1.5, minHeight: '40px' }}>
+                        {t('dualWizard.revalidate')}
                       </Button>
                     </Tooltip>
                   ) : (

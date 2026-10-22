@@ -5,6 +5,7 @@
     "loadingParts": "Carregando peças do catálogo...",
     "noMatchingParts": "Nenhuma peça correspondente encontrada",
     "defaultPlaceholder": "Insira ID da peça do fabricante...",
+    "toggleOptions": "Mostrar ou ocultar opções de peças",
     "defaultButtonText": "Pesquisar Peça",
     "createNew": "Criar nova Catalog Part",
     "createWithId": "Criar '{{id}}'"
@@ -73,6 +74,7 @@
     "noSubpartsAdded": "Nenhum Subcomponente Adicionado",
     "addSubpartsHint": "Adicione relações de subcomponentes para solicitar dados PCF",
     "addSubpart": "Adicionar Subcomponente",
+    "request": "Solicitar",
     "requestPcf": "Solicitar PCF",
     "retryRequest": "Tentar Novamente",
     "downloadPcf": "Baixar PCF",
@@ -493,6 +495,7 @@
     "save": "Guardar",
     "tooltipValidate": "Validar dados em relação ao esquema",
     "tooltipRevalidate": "Revalidar dados em relação ao esquema",
+    "revalidate": "Revalidar",
     "tooltipValidateBoth": "Validar ambas as versões PCF em relação aos seus esquemas",
     "tooltipContinue": "Continuar para o próximo passo",
     "tooltipContinueDisabled": "Valide os dados primeiro para continuar",

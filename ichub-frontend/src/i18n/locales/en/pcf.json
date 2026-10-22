@@ -5,6 +5,7 @@
     "loadingParts": "Loading catalog parts...",
     "noMatchingParts": "No matching parts found",
     "defaultPlaceholder": "Enter Manufacturer Part ID...",
+    "toggleOptions": "Toggle available part options",
     "defaultButtonText": "Search Part",
     "createNew": "Create New Catalog Part",
     "createWithId": "Create '{{id}}'"
@@ -73,6 +74,7 @@
     "noSubpartsAdded": "No Subparts Added",
     "addSubpartsHint": "Add subpart relations to request PCF data",
     "addSubpart": "Add Subpart",
+    "request": "Request",
     "requestPcf": "Request PCF",
     "retryRequest": "Retry Request",
     "downloadPcf": "Download PCF",
@@ -481,6 +483,7 @@
     "tooltipValidateContinue": "Validate v7.0.0 data against the schema and proceed to the reconciliation review",
     "tooltipValidate": "Validate data against the schema",
     "tooltipRevalidate": "Revalidate data against the schema",
+    "revalidate": "Revalidate",
     "tooltipValidateBoth": "Validate both PCF versions against their schemas",
     "tooltipContinue": "Continue to the next step",
     "tooltipContinueDisabled": "Validate the data first to continue",

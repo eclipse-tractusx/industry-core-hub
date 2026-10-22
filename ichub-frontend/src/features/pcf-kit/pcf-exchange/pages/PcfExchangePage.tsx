@@ -43,6 +43,7 @@ import {
 import {
   CloudUpload as CloudUploadIcon,
   Search,
+  KeyboardArrowDown,
   CheckCircle,
   RadioButtonUnchecked,
   Downloading,
@@ -934,11 +935,23 @@ const PcfExchangePage: React.FC = () => {
                 onFocus={() => searchResults.length > 0 && setShowDropdown(true)}
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><Search sx={{ color: 'rgba(255, 255, 255, 0.4)' }} /></InputAdornment>,
-                  endAdornment: searchTerm && (
+                  endAdornment: (searchTerm || searchResults.length > 0) && (
                     <InputAdornment position="end">
-                      {isSearching ? <CircularProgress size={20} sx={{ color: PCF_PRIMARY }} /> : (
+                      {searchTerm && (isSearching ? <CircularProgress size={20} sx={{ color: PCF_PRIMARY }} /> : (
                         <IconButton size="small" onClick={() => setSearchTerm('')} sx={{ color: 'rgba(255, 255, 255, 0.4)' }}>
                           <CloseIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      ))}
+                      {searchResults.length > 0 && (
+                        <IconButton
+                          size="small"
+                          aria-label={t('search.toggleOptions')}
+                          aria-expanded={showDropdown}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => setShowDropdown((open) => !open)}
+                          sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                        >
+                          <KeyboardArrowDown sx={{ transition: 'transform 150ms ease', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                         </IconButton>
                       )}
                     </InputAdornment>
