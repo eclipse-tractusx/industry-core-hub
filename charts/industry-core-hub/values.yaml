@@ -581,6 +581,11 @@ backend:
           retryDelay: 10
           # -- Background retry interval (in seconds) for continuous reconnection attempts after initial failure
           backgroundRetryInterval: 60
+    # -- Add-on KIT configuration
+    addons:
+      # -- Disable the MCP Addon in the generated backend configuration.
+      mcp_addon:
+        enabled: false
     # -- Database connection config; database connection settings are inferred from postgresql or externalDatabase sections.
     database:
       echo: false
