@@ -8,7 +8,7 @@ Eclipse Tractus-X product(s) installed within the image:
 
 - GitHub: https://github.com/eclipse-tractusx/industry-core-hub
 - Project home: https://projects.eclipse.org/projects/automotive.tractusx
-- Dockerfile: https://github.com/eclipse-tractusx/industry-core-hub/blob/main/ichub-backend/Dockerfile
+- Dockerfile: https://github.com/eclipse-tractusx/industry-core-hub/blob/main/ichub-backend/runtimes/Dockerfile
 - Project license: [Apache License, Version 2.0](https://github.com/eclipse-tractusx/industry-core-hub/blob/main/LICENSE)
 
 **Used base images**
