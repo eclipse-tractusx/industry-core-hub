@@ -171,31 +171,16 @@ pg_restore -d ichub ichub_20260212_120000.dump
 See the [Data Seeding Guide](./DATA_SEEDING_GUIDE.md) for test data setup. The historical DDL
 file is reference material only; do not use it as the deployment mechanism for application tables.
 
-## Migrating from Legacy Databases (Pre-Alembic)
+## Fresh Install
 
-Starting with this release, the database schema is strictly managed by Alembic. If you are upgrading an existing installation that already has data, the automatic migration will fail on startup because Alembic will try to create tables that already exist.
+Alembic revision `0001_initial_schema` is the baseline schema of Industry Core Hub. Every
+database must be created from this revision.
 
-We do not perform automatic legacy adoption to prevent accidental data corruption. To retain your existing data, you must manually align your database with the new Alembic baseline **before** deploying the new version.
-
-### Step 1: Create the new cache schema
-Older versions of the application did not use a dedicated `cache` schema. Connect to your PostgreSQL database (using `psql` or your preferred client) and execute:
-
-```sql
-CREATE SCHEMA IF NOT EXISTS cache;
-ALTER SCHEMA cache OWNER TO ichub;
-```
-
-### Step 2: Stamp the initial revision
-You need to tell Alembic to assume the database is already at the baseline revision, skipping the initial table creation.
-
-From the backend environment (or your local environment where alembic is installed), export your credentials and run the stamp command:
-
-```bash
-export DATABASE_PASSWORD="your_database_password"
-alembic stamp 0001_initial_schema
-```
-
-Once the database is stamped and the `alembic_version` table is created, you can deploy the new backend version. All future schema migrations will be handled automatically.
+There is **no migration path** from the legacy SQL scripts or from databases created before
+Alembic was introduced. Existing databases are not adopted or stamped. Developers and
+operators must drop and recreate their databases from scratch (for local Docker Compose, remove
+the PostgreSQL volume) and let Alembic create the schema with `python migrate.py upgrade head`.
+This fresh-install-only policy is documented in [ADR 0006](../architecture/decision-records/0006-fresh-install-database-baseline.md).
 
 ## NOTICE
 
