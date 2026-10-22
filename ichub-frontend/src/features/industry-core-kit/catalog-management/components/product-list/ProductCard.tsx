@@ -27,7 +27,7 @@ import MoreVert from "@mui/icons-material/MoreVert";
 import Launch from "@mui/icons-material/Launch";
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { Box, Typography, IconButton, Button, Tooltip } from "@mui/material";
+import { Box, Typography, IconButton, Button, Tooltip, CircularProgress } from "@mui/material";
 import Menu from '@mui/material/Menu';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { useTranslation } from 'react-i18next';
@@ -54,6 +54,7 @@ export interface CardDecisionProps {
   onShare: (manufacturerId: string, manufacturerPartId: string) => void;
   onMore: (manufacturerId: string, manufacturerPartId: string) => void;
   onRegisterClick: (manufacturerId: string, manufacturerPartId: string) => void;
+  registeringPartIds: Set<string>;
   items: AppContent[];
   isLoading: boolean
 }
@@ -70,6 +71,7 @@ export const ProductCard = ({
   onMore,
   onClick,
   onRegisterClick, 
+  registeringPartIds,
   isLoading,
 }: CardDecisionProps) => {
   const { t } = useTranslation('catalogManagement');
@@ -144,6 +146,10 @@ export const ProductCard = ({
     }
   };
 
+  const selectedProduct = items.find(
+    (item) => `${item.manufacturerId}/${item.manufacturerPartId}` === selectedProductId
+  );
+
   return (
     <Box className="custom-cards-list">
       {isLoading && <LoadingSpinner />}
@@ -153,6 +159,7 @@ export const ProductCard = ({
       {items.map((item) => {
         const name = item.name ?? "";
         const productId = item.manufacturerId + "/" + item.manufacturerPartId;
+        const isRegistering = registeringPartIds.has(productId);
         return (
           <Box key={productId} className="custom-card-box">
             <Box
@@ -168,11 +175,19 @@ export const ProductCard = ({
                       <Tooltip title={t('productCard.registerPart')} arrow>
                         <span> 
                           <IconButton
+                            aria-label={t('productCard.registerPart')}
+                            disabled={isRegistering}
                             onClick={(e) => {
                               handleDecision(e, item.manufacturerId, item.manufacturerPartId, ButtonEvents.REGISTER);
                             }}
                           >
-                            {item.status === StatusVariants.draft ? (
+                            {isRegistering ? (
+                              <CircularProgress
+                                size={20}
+                                aria-label={t('productCard.registerPart')}
+                                sx={{ color: '#fff' }}
+                              />
+                            ) : item.status === StatusVariants.draft ? (
                               <CloudUploadIcon className="register-btn"/>
                             ) : (
                               <CloudQueueIcon sx={{ color: "rgba(255, 255, 255, 0.5)" }} />
@@ -181,7 +196,7 @@ export const ProductCard = ({
                         </span>
                       </Tooltip>
                     )}
-                    {item.status !== StatusVariants.draft && item.status !== StatusVariants.pending && (
+                    {(item.status === StatusVariants.registered || item.status === StatusVariants.shared) && (
                       <Tooltip title={t('productCard.sharePart')} arrow>
                         <IconButton
                           onClick={(e) => {
@@ -331,8 +346,9 @@ export const ProductCard = ({
         {selectedProductId && (
           <>
             {/* Register option (only for draft/pending) */}
-            {(items.find(i => (i.manufacturerId + '/' + i.manufacturerPartId) === selectedProductId)?.status === StatusVariants.draft ||
-              items.find(i => (i.manufacturerId + '/' + i.manufacturerPartId) === selectedProductId)?.status === StatusVariants.pending) && (
+            {selectedProduct &&
+              !registeringPartIds.has(selectedProductId) &&
+              (selectedProduct.status === StatusVariants.draft || selectedProduct.status === StatusVariants.pending) && (
               <Box
                 onClick={() => {
                   const item = items.find(i => (i.manufacturerId + '/' + i.manufacturerPartId) === selectedProductId);
@@ -359,7 +375,9 @@ export const ProductCard = ({
                 <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>{t('productCard.registerPart')}</Box>
               </Box>
             )}
-            {/* Share option (always) */}
+            {/* Share option (only after registration is confirmed) */}
+            {selectedProduct &&
+              (selectedProduct.status === StatusVariants.registered || selectedProduct.status === StatusVariants.shared) && (
             <Box
               onClick={() => {
                 const item = items.find(i => (i.manufacturerId + '/' + i.manufacturerPartId) === selectedProductId);
@@ -385,6 +403,7 @@ export const ProductCard = ({
               <IosShare fontSize="small" sx={{ marginRight: 1, color: '#000000 !important', fill: '#000000 !important' }} />
               <Box component="span" sx={{ fontSize: '0.875rem', color: 'black' }}>{t('productCard.sharePart')}</Box>
             </Box>
+            )}
             {/* Copy AAS ID option (if available) */}
             {aasIds[selectedProductId] && (
               <Box

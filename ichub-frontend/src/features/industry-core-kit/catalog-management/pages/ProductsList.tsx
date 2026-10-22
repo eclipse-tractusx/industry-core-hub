@@ -24,7 +24,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ProductCard } from "@/features/industry-core-kit/catalog-management/components/product-list/ProductCard";
-import { PartType, ApiPartData } from "@/features/industry-core-kit/catalog-management/types/types";
+import { PartType, ApiPartData, StatusVariants } from "@/features/industry-core-kit/catalog-management/types/types";
 import TablePagination from "@mui/material/TablePagination";
 import { Grid2, Box } from "@mui/material"; // Removed Paper
 import { Button } from "@mui/material";
@@ -53,6 +53,7 @@ const ProductsList = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error' >('success');
   const [isLoading, setIsLoading] = useState(true);
+  const [registeringPartIds, setRegisteringPartIds] = useState<Set<string>>(new Set());
 
   const handleChangePage = (
     _event: React.MouseEvent<HTMLButtonElement> | null,
@@ -61,8 +62,8 @@ const ProductsList = () => {
     setPage(newPage);
   };
 
-  const fetchData = async () => {
-    setIsLoading(true);
+  const fetchData = async (showLoading = true): Promise<PartType[] | null> => {
+    if (showLoading) setIsLoading(true);
     try {
       const apiData: ApiPartData[] = await fetchCatalogParts();
 
@@ -75,10 +76,12 @@ const ProductsList = () => {
 
       setCarParts(mappedCarParts);
       setInitialCarParts(mappedCarParts);
+      return mappedCarParts;
     } catch (error) {
       console.error("Error fetching data:", error);
+      return null;
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   };
 
@@ -116,21 +119,39 @@ const ProductsList = () => {
   };
 
   const handleRegisterPart = async (manufacturerId: string, manufacturerPartId: string) => {
+    const partId = `${manufacturerId}/${manufacturerPartId}`;
+    if (registeringPartIds.has(partId)) return;
+
+    setRegisteringPartIds((current) => new Set(current).add(partId));
     try {
       const twinToCreate: CatalogPartTwinCreateType = {
         manufacturerId,
         manufacturerPartId,
       };
       await registerCatalogPartTwin(twinToCreate);
+
+      const refreshedParts = await fetchData(false);
+      const registeredPart = refreshedParts?.find(
+        (part) => part.manufacturerId === manufacturerId && part.manufacturerPartId === manufacturerPartId
+      );
+      if (registeredPart?.status !== StatusVariants.registered && registeredPart?.status !== StatusVariants.shared) {
+        throw new Error("Catalog did not confirm the registered part status");
+      }
+
       setSnackbarMessage(t('messages.registerSuccess'));
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
-      fetchData();
     } catch (error) {
       console.error("Error registering part twin:", error);
       setSnackbarMessage(t('messages.registerError'));
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
+    } finally {
+      setRegisteringPartIds((current) => {
+        const updated = new Set(current);
+        updated.delete(partId);
+        return updated;
+      });
     }
   };
 
@@ -203,6 +224,7 @@ const ProductsList = () => {
               onShare={handleShareDialog}
               onMore={() => {}} // Implement if needed
               onRegisterClick={handleRegisterPart}
+              registeringPartIds={registeringPartIds}
               items={visibleRows.map((part) => ({
                 manufacturerId: part.manufacturerId,
                 manufacturerPartId: part.manufacturerPartId,
