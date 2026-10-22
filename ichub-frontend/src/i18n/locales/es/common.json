@@ -57,6 +57,7 @@
   "status": {
     "available": "Disponible",
     "notAvailable": "No disponible",
+    "notDefined": "No definido",
     "comingSoon": "Próximamente",
     "beta": "Beta",
     "enabled": "Habilitado",

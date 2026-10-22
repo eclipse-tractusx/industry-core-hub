@@ -57,6 +57,7 @@
   "status": {
     "available": "利用可能",
     "notAvailable": "利用不可",
+    "notDefined": "未定義",
     "comingSoon": "近日公開",
     "beta": "ベータ版",
     "enabled": "有効",

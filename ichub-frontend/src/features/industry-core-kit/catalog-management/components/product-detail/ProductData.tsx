@@ -28,9 +28,6 @@ import { Typography } from '@mui/material';
 import { PartType, StatusVariants } from '@/features/industry-core-kit/catalog-management/types/types';
 import { PieChart } from '@mui/x-charts/PieChart';
 import WifiTetheringErrorIcon from '@mui/icons-material/WifiTetheringError';
-import BusinessIcon from '@mui/icons-material/Business';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -39,11 +36,12 @@ import ShareIcon from '@mui/icons-material/Share';
 import InfoIcon from '@mui/icons-material/Info';
 import WarningIcon from '@mui/icons-material/Warning';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { SharedPartner } from '@/features/industry-core-kit/catalog-management/types/types';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SharedTable from './SharedTable';
 import SubmodelViewer from './SubmodelViewer';
 import DarkSubmodelViewer from './DarkSubmodelViewer';
+import ProductActionRail from './ProductActionRail';
 import { SchemaSelector, SubmodelCreator } from '@/components/submodel-creation';
 import { SchemaDefinition } from '@/schemas';
 import { useEffect, useState } from 'react';
@@ -56,9 +54,10 @@ interface ProductDataProps {
     sharedParts: SharedPartner[];
     twinDetails?: CatalogPartTwinDetailsRead | null;
     onPartUpdated?: () => void; // Callback to refresh part data after twin registration
+    onShare: () => void;
 }
 
-const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUpdated }: ProductDataProps) => {
+const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUpdated, onShare }: ProductDataProps) => {
     const { palette: { common } } = useTheme();
     const [twinDetails, setTwinDetails] = useState<CatalogPartTwinDetailsRead | null>(propTwinDetails || null);
     const [isLoadingTwin, setIsLoadingTwin] = useState(false);
@@ -67,6 +66,12 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
     const { t } = useTranslation('catalogManagement');
     const { t: tCommon } = useTranslation('common');
     const { t: tNotifications } = useTranslation('notifications');
+    const globalAssetId = twinDetails?.globalId
+        ? twinDetails.globalId.startsWith('urn:uuid:') ? twinDetails.globalId : `urn:uuid:${twinDetails.globalId}`
+        : undefined;
+    const aasId = twinDetails?.dtrAasId
+        ? twinDetails.dtrAasId.startsWith('urn:uuid:') ? twinDetails.dtrAasId : `urn:uuid:${twinDetails.dtrAasId}`
+        : undefined;
     
     // Submodel viewer dialog state
     const [submodelViewerOpen, setSubmodelViewerOpen] = useState(false);
@@ -170,6 +175,28 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
             console.error('Failed to copy:', error);
             setCopySnackbar({ open: true, message: tNotifications('failedToCopy', { field: fieldName }), severity: 'error' });
         }
+    };
+
+    const renderPartField = (label: string, value?: string, tooltip?: string, wide = false) => {
+        const fieldValue = value?.trim();
+
+        return (
+            <Box className={`product-attribute${wide ? ' product-attribute-wide' : ''}`}>
+                <Typography className="product-attribute-label">{label}</Typography>
+                <Box className={`product-attribute-value${fieldValue && tooltip ? ' is-copyable' : ''}`}>
+                    <Typography component="span" className="product-attribute-text">
+                        {fieldValue || tCommon('status.notDefined')}
+                    </Typography>
+                    {fieldValue && tooltip && (
+                        <Tooltip title={tooltip} arrow>
+                            <IconButton size="small" aria-label={tooltip} onClick={() => handleCopy(fieldValue, label)}>
+                                <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                </Box>
+            </Box>
+        );
     };
 
     const handleCloseSnackbar = () => {
@@ -357,17 +384,14 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                     p: { xs: 2, sm: 3, md: 4 },
                     '&:last-child': { paddingBottom: { xs: 2, sm: 3, md: 4 } }
                 }}>
-                    {/* Responsive flex row: on md+ chips sit right; on xs they stack above the title */}
-                    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, minWidth: 0 }}>
-
-                        {/* Left: name + category + manufacturer info */}
-                        <Box sx={{ flex: 1, minWidth: 0, overflow: 'hidden', order: { xs: 1, md: 0 } }}>
+                    <Box className="product-data-header">
+                        <Box className="product-data-main">
                             <Tooltip title={part.name} arrow placement="top">
                                 <Typography variant="h3" sx={{ 
                                     color: 'common.white',
                                     mb: 2,
                                     fontWeight: 700,
-                                    fontSize: { xs: '1.4rem', sm: '1.8rem', md: '2.5rem' },
+                                    fontSize: { xs: '1.4rem', sm: '1.8rem', md: '1.6rem' },
                                     letterSpacing: '-0.02em',
                                     textShadow: `0 2px 4px ${common.black30}`,
                                     whiteSpace: { xs: 'normal', md: 'nowrap' },
@@ -379,170 +403,69 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                                     {part.name}
                                 </Typography>
                             </Tooltip>
-                            {part.category && part.category.trim() && (
-                                <Chip
-                                    label={part.category}
-                                    variant="filled"
-                                    size="medium"
-                                    sx={{
-                                        mb: 2,
-                                        background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                                        height: 28,
-                                        borderRadius: 2,
-                                        boxShadow: `0 2px 8px ${common.accent30}`,
-                                        '& .MuiChip-label': { color: 'common.white', fontSize: '13px', fontWeight: 500 },
-                                    }}
-                                />
-                            )}
-                            {/* Manufacturer chips — row+wrap on desktop, each chip truncates via maxWidth */}
-                            <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 1 }}>
-                                <Tooltip title={t('common:tooltips.copyManufacturerId')}>
-                                    <Chip
-                                        icon={<BusinessIcon />}
-                                        label={`${t('common:fields.manufacturerId')}: ${part.manufacturerId}`}
-                                        variant="outlined"
-                                        size="small"
-                                        clickable
-                                        onClick={() => handleCopy(part.manufacturerId, t('common:fields.manufacturerId'))}
-                                        sx={{
-                                            maxWidth: '100%',
-                                            backgroundColor: common.white05,
-                                            borderColor: common.white20,
-                                            fontFamily: 'monospace',
-                                            '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
-                                            '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
-                                            '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
-                                        }}
-                                    />
-                                </Tooltip>
-                                <Tooltip title={t('common:tooltips.copyManufacturerPartId')}>
-                                    <Chip
-                                        icon={<InventoryIcon />}
-                                        label={`${t('common:fields.manufacturerPartId')}: ${part.manufacturerPartId}`}
-                                        variant="outlined"
-                                        size="small"
-                                        clickable
-                                        onClick={() => handleCopy(part.manufacturerPartId, t('common:fields.manufacturerPartId'))}
-                                        sx={{
-                                            maxWidth: '100%',
-                                            backgroundColor: common.white05,
-                                            borderColor: common.white20,
-                                            fontFamily: 'monospace',
-                                            '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
-                                            '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
-                                            '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
-                                        }}
-                                    />
-                                </Tooltip>
-                                {part.bpns && (
-                                    <Tooltip title={t('productDetail.productData.tooltips.clickToCopySiteOfOrigin')}>
-                                        <Chip
-                                            icon={<LocationOnIcon />}
-                                            label={`${t('productDetail.productData.labels.siteOfOrigin')}: ${part.bpns}`}
-                                            variant="outlined"
-                                            size="small"
-                                            clickable
-                                            onClick={() => handleCopy(part.bpns || '', t('productDetail.productData.labels.siteOfOrigin'))}
-                                            sx={{
-                                                maxWidth: '100%',
-                                                backgroundColor: common.white05,
-                                                borderColor: common.white20,
-                                                fontFamily: 'monospace',
-                                                '&:hover': { backgroundColor: common.white10, borderColor: common.white40 },
-                                                '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
-                                                '& .MuiChip-label': { color: 'common.white', fontSize: '12px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
-                                            }}
-                                        />
-                                    </Tooltip>
+                            <Box className="product-attributes">
+                                {renderPartField(
+                                    tCommon('fields.manufacturerId'),
+                                    part.manufacturerId,
+                                    tCommon('tooltips.copyManufacturerId')
+                                )}
+                                {renderPartField(
+                                    tCommon('fields.manufacturerPartId'),
+                                    part.manufacturerPartId,
+                                    tCommon('tooltips.copyManufacturerPartId')
+                                )}
+                                <Divider className="product-attributes-divider" />
+                                {renderPartField(tCommon('fields.category'), part.category)}
+                                {renderPartField(
+                                    tCommon('fields.bpns'),
+                                    part.bpns,
+                                    part.bpns ? t('productDetail.productData.tooltips.clickToCopySiteOfOrigin') : undefined
                                 )}
                             </Box>
+                            <Box className="product-twin-identifiers">
+                                <Box className="product-twin-id">
+                                    <Box className="product-twin-id-heading">
+                                        <AccountTreeIcon aria-hidden="true" />
+                                        <Typography className="product-attribute-label">{tCommon('fields.globalAssetId')}</Typography>
+                                        {globalAssetId && (
+                                            <Tooltip title={tCommon('tooltips.copyGlobalAssetId')} arrow>
+                                                <IconButton size="small" aria-label={tCommon('tooltips.copyGlobalAssetId')} onClick={() => handleCopy(globalAssetId, tCommon('fields.globalAssetId'))}>
+                                                    <ContentCopyIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Box>
+                                    <Typography className="product-twin-id-value">
+                                        {isLoadingTwin ? t('productDetail.productData.loadingTwinId') : globalAssetId || t('productDetail.productData.noTwinIds')}
+                                    </Typography>
+                                </Box>
+                                <Box className="product-twin-id">
+                                    <Box className="product-twin-id-heading">
+                                        <FingerprintIcon aria-hidden="true" />
+                                        <Typography className="product-attribute-label">{tCommon('fields.aasId')}</Typography>
+                                        {aasId && (
+                                            <Tooltip title={tCommon('tooltips.copyAasId')} arrow>
+                                                <IconButton size="small" aria-label={tCommon('tooltips.copyAasId')} onClick={() => handleCopy(aasId, tCommon('fields.aasId'))}>
+                                                    <ContentCopyIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        )}
+                                    </Box>
+                                    <Typography className="product-twin-id-value">
+                                        {isLoadingTwin ? t('productDetail.productData.loadingTwinId') : aasId || t('productDetail.productData.noTwinIds')}
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </Box>
-
-                        {/* Right: register button + twin ID chips */}
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 1,
-                            alignItems: { xs: 'flex-start', md: 'flex-end' },
-                            width: { xs: '100%', md: 'auto' },
-                            overflow: 'hidden',
-                            order: { xs: 0, md: 1 },
-                            flexShrink: 0,
-                            maxWidth: { md: '45%' },
-                        }}>
-                            {(part.status === StatusVariants.draft || part.status === StatusVariants.pending) && (
-                                <Tooltip title={t('productDetail.productData.registerPartTwin')} arrow>
-                                    <IconButton
-                                        onClick={handleRegisterTwin}
-                                        sx={{
-                                            backgroundColor: common.accent10,
-                                            color: 'primary.main',
-                                            border: `1px solid ${common.accent30}`,
-                                            '&:hover': { backgroundColor: common.accent20, borderColor: common.accent50 },
-                                        }}
-                                    >
-                                        <CloudUploadIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
-                            {isLoadingTwin ? (
-                                <>
-                                    <Chip label={t('productDetail.productData.loadingAasId')} variant="outlined" size="small" disabled sx={{ '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
-                                    <Chip label={t('productDetail.productData.loadingTwinId')} variant="outlined" size="small" disabled sx={{ '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
-                                </>
-                            ) : twinDetails ? (
-                                <>
-                                    {twinDetails.globalId && (
-                                        <Tooltip title={t('common:tooltips.copyGlobalAssetId')}>
-                                            <Chip
-                                                icon={<AccountTreeIcon />}
-                                                label={twinDetails.globalId.startsWith('urn:uuid:') ? twinDetails.globalId : `urn:uuid:${twinDetails.globalId}`}
-                                                variant="outlined"
-                                                size="small"
-                                                clickable
-                                                onClick={() => handleCopy(twinDetails.globalId.startsWith('urn:uuid:') ? twinDetails.globalId : `urn:uuid:${twinDetails.globalId}`, 'Global Asset ID')}
-                                                sx={{
-                                                    maxWidth: '100%',
-                                                    backgroundColor: common.white05,
-                                                    borderColor: common.white30,
-                                                    fontFamily: 'monospace',
-                                                    '&:hover': { backgroundColor: common.white10, borderColor: common.white50 },
-                                                    '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
-                                                    '& .MuiChip-label': { color: 'common.white', fontSize: '11px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
-                                                }}
-                                            />
-                                        </Tooltip>
-                                    )}
-                                    {twinDetails.dtrAasId && (
-                                        <Tooltip title={t('common:tooltips.copyAasId')}>
-                                            <Chip
-                                                icon={<FingerprintIcon />}
-                                                label={twinDetails.dtrAasId.startsWith('urn:uuid:') ? twinDetails.dtrAasId : `urn:uuid:${twinDetails.dtrAasId}`}
-                                                variant="outlined"
-                                                size="small"
-                                                clickable
-                                                onClick={() => handleCopy(twinDetails.dtrAasId.startsWith('urn:uuid:') ? twinDetails.dtrAasId : `urn:uuid:${twinDetails.dtrAasId}`, 'AAS ID')}
-                                                sx={{
-                                                    maxWidth: '100%',
-                                                    backgroundColor: common.white05,
-                                                    borderColor: common.white30,
-                                                    fontFamily: 'monospace',
-                                                    '&:hover': { backgroundColor: common.white10, borderColor: common.white50 },
-                                                    '& .MuiChip-icon': { color: 'common.white', flexShrink: 0 },
-                                                    '& .MuiChip-label': { color: 'common.white', fontSize: '11px', fontWeight: 500, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' },
-                                                }}
-                                            />
-                                        </Tooltip>
-                                    )}
-                                    {!twinDetails.dtrAasId && !twinDetails.globalId && (
-                                        <Chip label={t('productDetail.productData.noTwinIds')} variant="outlined" size="small" sx={{ color: 'common.white', borderColor: 'common.white', '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
-                                    )}
-                                </>
-                            ) : (
-                                <Chip label={t('productDetail.productData.twinDataUnavailable')} variant="outlined" size="small" sx={{ color: 'common.white', borderColor: 'common.white', '& .MuiChip-label': { color: '#ffffff !important', fontSize: '12px' } }} />
-                            )}
-                        </Box>
-
+                        <ProductActionRail
+                            part={part}
+                            twinDetails={twinDetails}
+                            isLoadingTwin={isLoadingTwin}
+                            isRegistering={isUpdatingParent}
+                            onRegister={handleRegisterTwin}
+                            onShare={onShare}
+                            onCopy={handleCopy}
+                        />
                     </Box>
                 </CardContent>
             </Card>
