@@ -1,7 +1,7 @@
 {{- /*
 * Eclipse Tractus-X - Industry Core Hub
 *
-* Copyright (c) 2025 LKS Next
+* Copyright (c) 2025,2026 LKS Next
 * Copyright (c) 2025 Contributors to the Eclipse Foundation
 *
 * See the NOTICE file(s) distributed with this work for additional
@@ -46,6 +46,15 @@
 {{- range $user := .Values.keycloak.ichubRealm.users }}
 {{- $passwordVar := printf "$(%s_PASSWORD)" ($user.username | upper | replace "-" "_") }}
 {{- $credentials := list (dict "type" "password" "value" $passwordVar "temporary" false) }}
+{{- $attrs := default dict $user.attributes }}
+{{- if hasKey $attrs "BPN" }}
+  {{- $_ := set $attrs "bpn" (index $attrs "BPN") }}
+  {{- $_ := unset $attrs "BPN" }}
+{{- end }}
+{{- if hasKey $attrs "BPNS" }}
+  {{- $_ := set $attrs "bpns" (index $attrs "BPNS") }}
+  {{- $_ := unset $attrs "BPNS" }}
+{{- end }}
 {{- $newUser := dict 
   "username" $user.username
   "enabled" (default true $user.enabled)
@@ -54,7 +63,7 @@
   "firstName" (default "" $user.firstName)
   "lastName" (default "" $user.lastName)
   "email" $user.email
-  "attributes" (default dict $user.attributes)
+  "attributes" $attrs
   "credentials" $credentials
   "disableableCredentialTypes" list
   "requiredActions" list

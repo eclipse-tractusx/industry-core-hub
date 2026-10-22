@@ -3,6 +3,7 @@
 # Eclipse Tractus-X - Industry Core Hub
 #
 # Copyright (c) 2026 Technovative Solutions
+# Copyright (c) 2026 LKS Next
 # Copyright (c) 2025 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
@@ -73,6 +74,21 @@ try:
         credential_data = json.dumps({"hashIterations": 210000, "algorithm": "pbkdf2-sha512", "additionalParameters": {}})
         return {"type": "password", "secretData": secret_data, "credentialData": credential_data}
 
+    # Keycloak protocol mappers read lowercase attribute keys (bpn, bpns), but the
+    # values file uses uppercase (BPN, BPNS). Normalize here so the claims are populated.
+    # This mirrors the Helm configmap-realm-data.yaml rename logic.
+    ATTRIBUTE_KEY_MAP = {"BPN": "bpn", "BPNS": "bpns"}
+
+    def normalize_attributes(attrs):
+        if not attrs:
+            return {}
+        normalized = {}
+        for key, value in attrs.items():
+            normalized_key = ATTRIBUTE_KEY_MAP.get(key, key)
+            # Keycloak stores every user attribute as a list of strings
+            normalized[normalized_key] = value if isinstance(value, list) else [value]
+        return normalized
+
     kc_users = []
     for user in yaml_users:
         password = user.get('password', 'changeme')
@@ -88,7 +104,7 @@ try:
             "requiredActions": [],
             "notBefore": 0,
             "realmRoles": user.get("realmRoles", []),
-            "attributes": user.get("attributes", {})
+            "attributes": normalize_attributes(user.get("attributes", {}))
         })
         print(f"Prepared user: {user['username']}")
 
