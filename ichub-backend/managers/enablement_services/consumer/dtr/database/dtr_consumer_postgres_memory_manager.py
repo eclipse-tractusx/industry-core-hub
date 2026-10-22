@@ -34,6 +34,8 @@ from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownDtrs
 
+SUPPORTED_TABLE_NAME = "known_dtrs"
+
 if TYPE_CHECKING:
     from managers.enablement_services.connector_manager import BaseConnectorConsumerManager
 
@@ -55,6 +57,12 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
             logger: Optional logger instance for debug output.
             verbose: Flag for enabling verbose logging.
         """
+        if table_name != SUPPORTED_TABLE_NAME:
+            raise ValueError(
+                f"Unsupported DTR cache table name: {table_name!r}. "
+                f"Use {SUPPORTED_TABLE_NAME!r}."
+            )
+
         # Initialize base memory DTR manager and configure database.
         # Dynamically define the SQLModel table for DTR data.
         # Load existing data from the database into memory.
@@ -64,13 +72,7 @@ class DtrConsumerPostgresMemoryManager(DtrConsumerMemoryManager):
         self.dtrs_key = dtrs_key
         self._save_thread = None
         self._last_saved_hash = None
-        SQLModel.metadata.create_all(engine)
-        class DynamicKnownDtrs(KnownDtrs, table=True):
-            __tablename__ = table_name
-            __table_args__ = {"extend_existing": True}
-
-        self.KnownDtrsModel = DynamicKnownDtrs
-        DynamicKnownDtrs.metadata.create_all(engine)
+        self.KnownDtrsModel = KnownDtrs
         self._load_from_db()
 
     def add_dtr(self, bpn: str, connector_url: str, asset_id: str, policies: List[str]) -> None:

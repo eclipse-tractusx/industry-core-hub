@@ -451,7 +451,7 @@ agreements:
       prohibitions: []
       obligations: []
 database:
-  connection_string: "postgresql://user:password@localhost:5432/ichub"
+  connection_string: "postgresql://user:$DATABASE_PASSWORD@localhost:5432/ichub"
   echo: false
   timeout: 8
   retry_interval: 5
