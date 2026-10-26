@@ -1,5 +1,8 @@
 # Instructions for Local Postgres Deployment
 
+This Compose setup is for local development and testing only. The example
+credentials must not be reused in shared or production environments.
+
 
 # Instructions for Local Postgres Deployment
 

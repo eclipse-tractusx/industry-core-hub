@@ -109,8 +109,8 @@ jobs:
             --set frontend.image.repository=kind-registry:5000/ichub-frontend \
             --set frontend.image.tag=ci \
             --set frontend.image.pullPolicy=IfNotPresent \
-            --timeout 900s \
-            --wait
+            --wait \
+            --timeout 5m
 
       - name: Helm uninstall
         if: always()
@@ -123,7 +123,7 @@ jobs:
          helm repo add bitnami-full-index https://raw.githubusercontent.com/bitnami/charts/archive-full-index/bitnami
          helm repo add runix https://helm.runix.net
          helm repo add tractusx-dev https://eclipse-tractusx.github.io/charts/dev
-         helm install industry-core-hub tractusx-dev/industry-core-hub --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }} --values charts/test-helm-values-ichub.yaml --timeout 600s --wait
+         helm install industry-core-hub tractusx-dev/industry-core-hub --version ${{ github.event.inputs.upgrade_from || 'x.x.x' }} --values charts/test-helm-values-ichub.yaml --wait --timeout 5m
          helm dependency update charts/industry-core-hub
          helm upgrade industry-core-hub charts/industry-core-hub \
            --values charts/test-helm-values-ichub.yaml \
@@ -133,5 +133,6 @@ jobs:
            --set frontend.image.repository=kind-registry:5000/ichub-frontend \
            --set frontend.image.tag=ci \
            --set frontend.image.pullPolicy=IfNotPresent \
-           --timeout 900s --wait --atomic
+           --wait \
+           --timeout 5m
         if: github.event_name != 'pull_request'

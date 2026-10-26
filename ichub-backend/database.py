@@ -1,7 +1,8 @@
 #################################################################################
 # Eclipse Tractus-X - Industry Core Hub Backend
 #
-# Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Copyright (c) 2026 LKS Next
+# Copyright (c) 2025,2026 Contributors to the Eclipse Foundation
 #
 # See the NOTICE file(s) distributed with this work for additional
 # information regarding copyright ownership.
@@ -22,7 +23,7 @@
 
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
-from sqlmodel import SQLModel, create_engine, text
+from sqlmodel import create_engine, text
 from tools import env_tools
 import time
 
@@ -39,9 +40,6 @@ logger.info("Attempting database connection... with timeout %s seconds", db_time
 engine = create_engine(str(connection_string), echo=db_echo, connect_args={"connect_timeout": db_timeout})
 
 database_error:bool = False
-
-def create_db_and_tables() -> None:
-    SQLModel.metadata.create_all(engine)
 
 def connect_and_test():
     global database_error, db_timeout
