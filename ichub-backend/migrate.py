@@ -45,6 +45,7 @@ def build_config() -> Config:
 
 def verify_head() -> None:
     """Fail unless the database is at the current Alembic head."""
+    ConfigManager.load_config()
     config = build_config()
     script = ScriptDirectory.from_config(config)
     base_dsn = ConfigManager.get_config("database.connection_string", default="")
