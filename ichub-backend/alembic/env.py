@@ -35,6 +35,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+ConfigManager.load_config()
 base_dsn = ConfigManager.get_config("database.connection_string", default="")
 connection_string = env_tools.substitute_env_vars(string=base_dsn)
 config.set_main_option("sqlalchemy.url", str(connection_string).replace("%", "%%"))
