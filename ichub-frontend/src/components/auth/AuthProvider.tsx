@@ -25,7 +25,7 @@ import React, { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import authService from '../../services/AuthService';
-import environmentService from '../../services/EnvironmentService';
+import environmentService, { isKeycloakBpnEnabled } from '../../services/EnvironmentService';
 import ErrorPage from '../common/ErrorPage';
  
 interface AuthProviderProps {
@@ -37,8 +37,11 @@ interface AuthProviderProps {
 */
 export function AuthProvider({ children }: AuthProviderProps) {
   const { t } = useTranslation('common');
-  // Check if we have a stored auth state to skip the loading screen
-  const hasStoredAuth = sessionStorage.getItem('keycloak_authenticated') === 'true';
+  // Skip the loading screen when a stored auth state exists, except when the participant BPNL
+  // comes from the Keycloak token: the app must not render before authentication finishes,
+  // otherwise early requests would use the PARTICIPANT_ID fallback.
+  const hasStoredAuth =
+    sessionStorage.getItem('keycloak_authenticated') === 'true' && !isKeycloakBpnEnabled();
   const [isInitialized, setIsInitialized] = useState(hasStoredAuth);
   const [initError, setInitError] = useState<string | null>(null);
  

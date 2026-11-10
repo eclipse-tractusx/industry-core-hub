@@ -248,37 +248,6 @@ header.ichub-header {
     }
   }
 
-  .company-id-box {
-    margin-top: 8px;
-    padding: 6px 12px;
-    background-color: $hover-primary-light;
-    border-radius: 4px;
-    border: 1px solid $hover-primary;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-
-    .company-id-text {
-      font-weight: 600;
-      font-size: 0.75rem;
-      letter-spacing: 0.3px;
-      flex: 1;
-    }
-
-    .copy-button {
-      padding: 4px;
-
-      &:hover {
-        background-color: $hover-primary;
-      }
-
-      .MuiSvgIcon-root {
-        font-size: 0.875rem;
-      }
-    }
-  }
-
   .menu-item {
     padding: 10px 16px;
 

@@ -41,7 +41,7 @@ export type {
   GovernanceConstraint,
 } from '../config/schema';
 
-import type { AgreementConfig, DtrPolicyConfig, CcmPolicyConfig } from '../config/schema';
+import type { AgreementConfig, DtrPolicyConfig, CcmPolicyConfig, AuthUser } from '../config/schema';
 
 // =================================================================
 // REUSABLE CONFIGURATION UTILITIES
@@ -230,11 +230,6 @@ class EnvironmentService {
     return this.config.api.ichubBackendUrl;
   }
 
-  /** @deprecated Use getParticipantConfig().id */
-  getParticipantId(): string {
-    return this.config.participant.id;
-  }
-
   /** Get agreements configuration (Saturn format) */
   getAgreementsConfig(): AgreementConfig[] {
     return this.config.governance.agreements;
@@ -301,12 +296,83 @@ class EnvironmentService {
   }
 }
 
+/**
+ * Raw participant BPNL as configured in index.html / build env (window.ENV.PARTICIPANT_ID
+ * or VITE_PARTICIPANT_ID). Does NOT consult Keycloak. Used as the fallback source.
+ */
+export const getConfiguredParticipantId = (): string =>
+  window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
+
+/**
+ * Whether the participant BPNL should be sourced from the authenticated Keycloak user.
+ * Controlled by the USE_KEYCLOAK_BPN flag (window.ENV / VITE_USE_KEYCLOAK_BPN).
+ */
+export const isKeycloakBpnEnabled = (): boolean => {
+  // Without authentication there is no Keycloak token to read the BPN from.
+  if (!environmentService.isAuthEnabled()) return false;
+  const raw = window?.ENV?.USE_KEYCLOAK_BPN ?? import.meta.env.VITE_USE_KEYCLOAK_BPN;
+  return String(raw).toLowerCase() === 'true';
+};
+
+type AuthUserProvider = () => AuthUser | null;
+let authUserProvider: AuthUserProvider | null = null;
+
+/**
+ * Registers the function used to read the authenticated user. Called by AuthService on
+ * creation so this module does not need to import it (AuthService already imports this one).
+ */
+export const registerAuthUserProvider = (provider: AuthUserProvider): void => {
+  authUserProvider = provider;
+};
+
+/**
+ * Single source of truth for the participant BPNL used across the whole application
+ * (profile dropdown, manufacturer IDs, notifications, passports, …).
+ *
+ * - USE_KEYCLOAK_BPN = true:  authenticated user's BPN from the Keycloak token,
+ *   falling back to the configured PARTICIPANT_ID, then 'CX-Operator'.
+ * - USE_KEYCLOAK_BPN = false: the configured PARTICIPANT_ID (index.html), then 'CX-Operator'.
+ */
+export const getParticipantId = (): string => {
+  if (isKeycloakBpnEnabled()) {
+    try {
+      const bpn = authUserProvider?.()?.attributes?.bpn;
+      if (bpn) {
+        return bpn;
+      }
+    } catch (error) {
+      console.warn('Failed to retrieve BPN from Keycloak token:', error);
+    }
+  }
+
+  const configured = getConfiguredParticipantId();
+  if (configured) return configured;
+
+  return 'CX-Operator';
+};
+
+/**
+ * Gets the list of BPNS (plants/sites) assigned to the authenticated user.
+ * Returns an empty array when the user has none or is not authenticated.
+ */
+export const getBpns = (): string[] => {
+  try {
+    const bpns = authUserProvider?.()?.attributes?.bpns;
+    if (Array.isArray(bpns)) {
+      return bpns;
+    }
+  } catch (error) {
+    console.warn('Failed to retrieve BPNS from token:', error);
+  }
+
+  return [];
+};
+
 // Legacy function exports for backward compatibility
 export const isRequireHttpsUrlPattern = () =>
   import.meta.env.VITE_REQUIRE_HTTPS_URL_PATTERN !== 'false';
 
 export const getIchubBackendUrl = () => import.meta.env.VITE_ICHUB_BACKEND_URL || window?.ENV?.ICHUB_BACKEND_URL || '';
-export const getParticipantId = () => window?.ENV?.PARTICIPANT_ID ?? import.meta.env.VITE_PARTICIPANT_ID ?? '';
 
 /** Polling interval in ms for fetching notifications (default 30s) */
 export const getNotificationsPollInterval = (): number => {
