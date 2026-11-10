@@ -74,5 +74,5 @@ rpds-py==0.30.0
 rsa==4.9.1
 six==1.17.0
 typing-inspection==0.4.2
-fastmcp==3.2.4
+fastmcp==3.4.10
 tzdata==2026.2
