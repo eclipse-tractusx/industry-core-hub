@@ -102,14 +102,6 @@
         }
     }
   
-    button.update-button {
-        background-color: $brand-gray;
-        height: 32px;
-        box-sizing: border-box;
-        border-radius: 6px;
-        font-size: 0.8125rem;
-    }
-  
     .title-subtitle {
         padding: 10px 0px 40px 0px;
     }
@@ -159,20 +151,233 @@ div[role="presentation"] {
     }
 }
 
-.share-dropdown-btn {
-    border-radius: 0 !important;
-    @include mixins.dark-bg-white-text;
+.product-data-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 235px;
+    gap: 22px;
+    min-width: 0;
+}
+
+.product-data-main {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.product-attributes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 0;
+    margin-top: 20px;
+    padding: 15px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.product-attributes-divider {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin: 0 !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.product-attribute {
+    min-width: 0;
+}
+
+.product-attribute:nth-of-type(odd) {
+    padding-right: 18px;
+    border-right: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.product-attribute:nth-of-type(even) {
+    padding-left: 18px;
+}
+
+.product-attribute-label {
+    display: block;
+    color: rgba(255, 255, 255, 0.58) !important;
+    font-size: 0.65rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.product-attribute-value {
+    width: 100%;
+    min-width: 0;
     display: flex;
     align-items: center;
     justify-content: flex-start;
-  
-    &:hover {
-        background: $blue-gradient-bg;
+    gap: 8px;
+    margin-top: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: $brand-text;
+    text-align: left;
+    cursor: default;
+
+    &.is-copyable .MuiIconButton-root {
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        margin-left: 3px;
+        padding: 4px;
+        color: rgba(255, 255, 255, 0.58);
+    }
+
+    &.is-copyable .MuiIconButton-root:hover {
+        color: $brand-light-blue;
     }
 }
 
-.update-button-content{
-    font-size: 15px;
+.product-attribute-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: $brand-text !important;
+    font-family: monospace;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+}
+
+.product-twin-identifiers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    margin-top: 13px;
+}
+
+.product-twin-id {
+    min-width: 0;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.product-twin-id-heading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    > svg {
+        width: 17px;
+        height: 17px;
+        flex: 0 0 auto;
+        color: $brand-light-blue;
+    }
+
+    .product-attribute-label {
+        flex: 1;
+    }
+
+    .MuiIconButton-root {
+        width: 26px;
+        height: 26px;
+        padding: 4px;
+        color: rgba(255, 255, 255, 0.65);
+    }
+}
+
+.product-twin-id-value {
+    display: block;
+    margin-top: 6px !important;
+    color: $brand-text !important;
+    font-family: monospace;
+    font-size: 0.65rem !important;
+    overflow-wrap: anywhere;
+}
+
+.product-action-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-width: 0;
+    padding: 0 0 0 18px;
+    border-left: 1px solid rgba(255, 255, 255, 0.14);
+
+    .product-action-rail-label {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .product-action-rail-status.MuiChip-root {
+        width: 100%;
+        height: 48px !important;
+        justify-content: center;
+        border-radius: 4px;
+
+        .MuiChip-label {
+            padding: 0 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-align: center;
+        }
+    }
+
+    .product-action-primary {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .product-action-rail-actions {
+        display: grid;
+        gap: 6px;
+    }
+
+    button.product-action-secondary {
+        justify-content: flex-start;
+        border-color: rgba(255, 255, 255, 0.18);
+        color: $brand-text;
+        text-align: left;
+        text-transform: none;
+
+        &:hover {
+            border-color: $brand-blue;
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+    }
+}
+
+@media (max-width: 900px) {
+    .product-data-header {
+        grid-template-columns: minmax(0, 1fr) 215px;
+        gap: 14px;
+    }
+}
+
+@media (max-width: 700px) {
+    .product-data-header {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .product-action-rail {
+        padding: 16px 0 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        border-left: 0;
+    }
+}
+
+@media (max-width: 520px) {
+    .product-attributes,
+    .product-twin-identifiers {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .product-attribute:nth-of-type(odd) {
+        padding-right: 0;
+        border-right: 0;
+    }
+
+    .product-attribute:nth-of-type(even) {
+        padding-left: 0;
+    }
+
 }
 
 .submodel-button-content{
@@ -266,76 +471,5 @@ button.actions-button {
     .MuiButton-endIcon .MuiSvgIcon-root {
         color: $brand-text !important;
         fill: $brand-text !important;
-    }
-}
-
-// Actions dropdown menu styling
-.MuiPaper-root {
-    &.actions-dropdown-menu {
-        background-color: white !important;
-        border: 1px solid rgba($brand-light-blue, 0.3) !important;
-        border-radius: 8px !important;
-        box-shadow: 0px 4px 20px rgba($brand-primary, 0.1) !important;
-        min-width: 200px !important;
-        margin-top: 4px !important;
-
-        .MuiMenuItem-root {
-            color: $brand-dark !important;
-            font-size: 14px !important;
-            min-height: 36px !important;
-            padding: 8px 16px !important;
-
-            &:hover {
-                background-color: rgba($brand-light-blue, 0.08) !important;
-            }
-
-            .MuiListItemIcon-root {
-                color: $brand-dark !important;
-                min-width: 36px !important;
-
-                .MuiSvgIcon-root,
-                svg {
-                    font-size: 1.125rem !important;
-                    color: $brand-dark !important;
-                    fill: $brand-dark !important;
-                }
-            }
-
-            .MuiListItemText-root {
-                .MuiListItemText-primary {
-                    font-size: 14px !important;
-                    color: $brand-dark !important;
-                    font-weight: 400 !important;
-                }
-            }
-
-            // Danger/delete styling
-            &.danger-item {
-                color: #d32f2f !important;
-
-                &:hover {
-                    background-color: rgba(211, 47, 47, 0.04) !important;
-                }
-
-                .MuiListItemIcon-root {
-                    color: #d32f2f !important;
-
-                    .MuiSvgIcon-root,
-                    svg {
-                        color: #d32f2f !important;
-                        fill: #d32f2f !important;
-                    }
-                }
-
-                .MuiListItemText-primary {
-                    color: #d32f2f !important;
-                }
-            }
-        }
-
-        .MuiDivider-root {
-            border-color: rgba($brand-light-blue, 0.2) !important;
-            margin: 4px 0 !important;
-        }
     }
 }
