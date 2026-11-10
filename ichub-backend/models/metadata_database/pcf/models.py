@@ -33,7 +33,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, UniqueConstraint
 from sqlalchemy import Enum as SAEnum
 from sqlmodel import SQLModel, Field
 
@@ -84,7 +84,12 @@ class PcfExchangeEntity(SQLModel, table=True):
         version: PCF schema version (e.g. "v7.0.0", "v9.0.0").
     """
     __tablename__ = "pcf_exchanges"
-    __table_args__ = {"schema": "public"}
+    __table_args__ = (
+        UniqueConstraint(
+            "request_id", "type", name="uk_pcf_exchanges_request_id"
+        ),
+        {"schema": "public"},
+    )
 
     id: Optional[int] = Field(default=None, primary_key=True)
     request_id: UUID = Field(

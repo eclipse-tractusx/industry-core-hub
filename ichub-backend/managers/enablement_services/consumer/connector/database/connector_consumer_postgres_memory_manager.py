@@ -38,6 +38,8 @@ from sqlalchemy.engine import Engine as E
 from sqlalchemy.orm import Session as S
 from models.metadata_database.consumer.models import KnownConnectors
 
+SUPPORTED_TABLE_NAME = "known_connectors"
+
 class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
     """
     Connection manager for storing and synchronizing EDR connections between memory and a Postgres database.
@@ -66,6 +68,12 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
             logger: Optional logger instance for debug output.
             verbose: Flag for enabling verbose logging.
         """
+        if table_name != SUPPORTED_TABLE_NAME:
+            raise ValueError(
+                f"Unsupported connector cache table name: {table_name!r}. "
+                f"Use {SUPPORTED_TABLE_NAME!r}."
+            )
+
         # Initialize base memory connection manager and configure database.
         # Dynamically define the SQLModel table for EDR connections.
         # Load existing data from the database into memory.
@@ -83,13 +91,7 @@ class ConsumerConnectorPostgresMemoryManager(ConnectorConsumerMemoryManager):
         self.connectors_key = connectors_key
         self._save_thread = None
         self._last_saved_hash = None
-        SQLModel.metadata.create_all(engine)
-        class DynamicKnownConnectors(KnownConnectors, table=True):
-            __tablename__ = table_name
-            __table_args__ = {"extend_existing": True}
-
-        self.KnownConnectorsModel = DynamicKnownConnectors
-        DynamicKnownConnectors.metadata.create_all(engine)
+        self.KnownConnectorsModel = KnownConnectors
         self._load_from_db()
 
     def add_connectors(self, bpn: str, connectors: List[str]) -> None:

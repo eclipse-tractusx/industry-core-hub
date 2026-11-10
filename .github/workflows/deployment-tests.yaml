@@ -1,5 +1,8 @@
 #################################################################################
-#  Copyright (c) 2025 Contributors to the Eclipse Foundation
+# Eclipse Tractus-X - Industry Core Hub
+#
+#  Copyright (c) 2026 LKS Next
+#  Copyright (c) 2025,2026 Contributors to the Eclipse Foundation
 #
 #  See the NOTICE file(s) distributed with this work for additional
 #  information regarding copyright ownership.
@@ -95,7 +98,9 @@ jobs:
            --set frontend.image.tag=test \
            --set frontend.image.pullPolicy=IfNotPresent \
            --dependency-update \
-           --wait --timeout=600s
+           --timeout=600s
+
+          # The backend waits for the post-install migration hook to complete.
           
           # Debug: Show all resources created
           echo "=== All resources created ==="
@@ -113,3 +118,49 @@ jobs:
             echo "Checking rollout status for $deployment"
             kubectl rollout status "$deployment" --timeout=300s
           done
+
+      - name: Debug failed Helm installation
+        if: failure()
+        run: |
+          echo "=== Jobs ==="
+          kubectl get jobs -l app.kubernetes.io/instance=tx-ichub -o wide || true
+
+          migration_job=$(kubectl get jobs \
+            -l app.kubernetes.io/instance=tx-ichub,app.kubernetes.io/component=migrations \
+            -o jsonpath='{.items[0].metadata.name}')
+
+          if [ -n "$migration_job" ]; then
+            echo "=== Migration job description ==="
+            kubectl describe job "$migration_job" || true
+
+            echo "=== Migration pod status ==="
+            kubectl get pods -l job-name="$migration_job" -o wide || true
+
+            migration_pod=$(kubectl get pods \
+              -l job-name="$migration_job" \
+              -o jsonpath='{.items[0].metadata.name}' || true)
+
+            if [ -n "$migration_pod" ]; then
+              echo "=== Migration pod: $migration_pod ==="
+              kubectl describe pod "$migration_pod" || true
+
+              echo "=== Previous migration container logs ==="
+              kubectl logs "$migration_pod" -c migrations --previous --timestamps || true
+
+              echo "=== Current migration container logs ==="
+              kubectl logs "$migration_pod" -c migrations --timestamps || true
+
+              echo "=== PostgreSQL readiness logs ==="
+              kubectl logs "$migration_pod" -c wait-for-postgresql --timestamps || true
+            else
+              echo "Migration pod was not found"
+            fi
+
+            echo "=== Migration pod description ==="
+            kubectl describe pods -l job-name="$migration_job" || true
+          else
+            echo "Migration job was not found"
+          fi
+
+          echo "=== Kubernetes events ==="
+          kubectl get events --sort-by=.lastTimestamp || true
