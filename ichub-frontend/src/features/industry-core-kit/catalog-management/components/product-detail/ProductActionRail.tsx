@@ -22,7 +22,6 @@
 
 import { Box, Button, Divider, Typography } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import { useTranslation } from 'react-i18next';
@@ -33,34 +32,22 @@ import { CatalogPartTwinDetailsRead } from '@/features/industry-core-kit/catalog
 interface ProductActionRailProps {
   part: PartType;
   twinDetails: CatalogPartTwinDetailsRead | null;
-  isLoadingTwin: boolean;
   isRegistering: boolean;
   onRegister: () => void;
   onShare: () => void;
-  onCopy: (text: string, fieldName: string) => void;
 }
-
-const formatUrn = (id?: string) => {
-  if (!id) return undefined;
-  return id.startsWith('urn:uuid:') ? id : `urn:uuid:${id}`;
-};
 
 const ProductActionRail = ({
   part,
   twinDetails,
-  isLoadingTwin,
   isRegistering,
   onRegister,
   onShare,
-  onCopy,
 }: ProductActionRailProps) => {
   const { t } = useTranslation('catalogManagement');
   const { t: tCommon } = useTranslation('common');
   const status = part.status ?? StatusVariants.draft;
   const isRegisterable = status === StatusVariants.draft || status === StatusVariants.pending;
-  const globalAssetId = formatUrn(twinDetails?.globalId);
-  const aasId = formatUrn(twinDetails?.dtrAasId);
-  const uniqueId = globalAssetId || `${part.manufacturerId}#${part.manufacturerPartId}`;
 
   const handleDownload = () => {
     const dataToDownload = {
@@ -126,12 +113,6 @@ const ProductActionRail = ({
       <Box className="product-action-rail-actions">
         <Button size="small" variant="outlined" className="product-action-secondary" startIcon={<FileDownloadIcon />} onClick={handleDownload}>
           {t('productDetail.shareDropdown.options.download')}
-        </Button>
-        <Button size="small" variant="outlined" className="product-action-secondary" startIcon={<ContentCopyIcon />} onClick={() => onCopy(uniqueId, globalAssetId ? tCommon('fields.globalAssetId') : tCommon('fields.partId').replace(/:$/, ''))}>
-          {t('productDetail.shareDropdown.options.copy')}
-        </Button>
-        <Button size="small" variant="outlined" className="product-action-secondary" startIcon={<ContentCopyIcon />} disabled={!aasId || isLoadingTwin} onClick={() => aasId && onCopy(aasId, tCommon('fields.aasId'))}>
-          {t('productDetail.shareDropdown.options.copyAasId')}
         </Button>
       </Box>
     </Box>

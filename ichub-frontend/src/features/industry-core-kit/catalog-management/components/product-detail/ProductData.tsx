@@ -460,11 +460,9 @@ const ProductData = ({ part, sharedParts, twinDetails: propTwinDetails, onPartUp
                         <ProductActionRail
                             part={part}
                             twinDetails={twinDetails}
-                            isLoadingTwin={isLoadingTwin}
                             isRegistering={isUpdatingParent}
                             onRegister={handleRegisterTwin}
                             onShare={onShare}
-                            onCopy={handleCopy}
                         />
                     </Box>
                 </CardContent>
