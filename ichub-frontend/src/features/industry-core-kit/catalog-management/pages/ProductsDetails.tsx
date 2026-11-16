@@ -25,17 +25,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button, Snackbar, Alert } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VerticalBackStrip from '@/components/common/VerticalBackStrip';
-import { CardChip } from "@/features/industry-core-kit/catalog-management/components/product-list/CardChip";
-import { StatusVariants } from "@/features/industry-core-kit/catalog-management/types/types";
 import HelpOutlineIcon from '@mui/icons-material/Help';
 import Grid2 from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
 
 import InstanceProductsTable from "@/features/industry-core-kit/catalog-management/components/product-detail/InstanceProductsTable";
-import ShareDropdown from "@/features/industry-core-kit/catalog-management/components/product-detail/ShareDropdown";
 // Removed unused ProductButton import
 import ProductData from "@/features/industry-core-kit/catalog-management/components/product-detail/ProductData";
 import JsonViewerDialog from "@/features/industry-core-kit/catalog-management/components/product-detail/JsonViewerDialog";
@@ -49,7 +45,6 @@ import { SchemaSelector, SubmodelCreator } from '@/components/submodel-creation'
 import { SchemaDefinition, getSchemaBySemanticId } from '@/schemas';
 
 import { PartType } from "@/features/industry-core-kit/catalog-management/types/types";
-import { PRODUCT_STATUS } from "@/features/industry-core-kit/catalog-management/types/shared";
 import { CatalogPartTwinDetailsRead } from "@/features/industry-core-kit/catalog-management/types/twin-types";
 
 import { SharedPartner } from "@/features/industry-core-kit/catalog-management/types/types"
@@ -60,7 +55,6 @@ import { useEscapeNavigation } from '@/hooks/useEscapeKey';
 
 const ProductsDetails = () => {
   const { t } = useTranslation('catalogManagement');
-  const { t: tCommon } = useTranslation('common');
   const navigate = useNavigate();
 
   const { manufacturerId, manufacturerPartId } = useParams<{
@@ -329,36 +323,6 @@ const ProductsDetails = () => {
     setNotification(null);
   };
 
-  const getStatusTag = (status: string) => {
-    let statusVariant: StatusVariants;
-    
-    switch (status.toLowerCase()) {
-      case PRODUCT_STATUS.REGISTERED:
-        statusVariant = StatusVariants.registered;
-        break;
-      case PRODUCT_STATUS.DRAFT:
-        statusVariant = StatusVariants.draft;
-        break;
-      case PRODUCT_STATUS.PENDING:
-        statusVariant = StatusVariants.pending;
-        break;
-      case PRODUCT_STATUS.SHARED:
-        statusVariant = StatusVariants.shared;
-        break;
-      default:
-        statusVariant = StatusVariants.draft;
-        break;
-    }
-
-    // Note: No optimistic fallback here. The chip reflects exactly the backend-provided status.
-    
-    return <CardChip 
-      status={statusVariant} 
-      statusText={tCommon(`status.${statusVariant.toLowerCase()}`)} 
-      className={(statusVariant === StatusVariants.shared) || (statusVariant === StatusVariants.pending) ? 'black-status-chip' : undefined}
-    />;
-  };
-
   return (
     <Box sx={{ 
       width: "100%", 
@@ -368,26 +332,13 @@ const ProductsDetails = () => {
       overflow: "auto" // Enable scrolling when content overflows
     }}>
       <Grid2 container className="productDetail" sx={{ flexGrow: 1 }}>
-        <Grid2 size={{ lg: 4, md: 12, sm: 12 }} display="flex" alignItems="center"
-          sx={{ justifyContent: { xs: 'center', lg: 'flex-start' }, mb: { xs: 2, lg: 0 } }}>
-          {getStatusTag(partType?.status ?? PRODUCT_STATUS.DRAFT)}
-        </Grid2>
-        <Grid2 size={{ lg: 4, md: 12, sm: 6 }} display="flex" justifyContent="center" alignItems="center">
-          <Button size="small" className="update-button" endIcon={<EditIcon />}>            
-              <span className="update-button-content">{t('details.update')}</span>            
-          </Button>
-        </Grid2>
-        <Grid2 size={{ lg: 4, md: 12, sm: 6 }} display="flex" justifyContent="end" alignItems="center">
-          <ShareDropdown 
-            partData={partType} 
-            twinDetails={twinDetails} 
-            handleShare={handleOpenShareDialog}
-            onNotification={setNotification}
-            onRefresh={fetchData}
-          />
-        </Grid2>
-
-        <ProductData part={partType} sharedParts={sharedPartners} twinDetails={twinDetails} onPartUpdated={fetchData} />
+        <ProductData
+          part={partType}
+          sharedParts={sharedPartners}
+          twinDetails={twinDetails}
+          onPartUpdated={fetchData}
+          onShare={handleOpenShareDialog}
+        />
         
         <Grid2 container size={12} spacing={2}className="add-on-buttons">
           <Grid2 size={{ sm: 12 }}>

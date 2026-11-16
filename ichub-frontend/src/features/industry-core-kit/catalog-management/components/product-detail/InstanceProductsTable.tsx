@@ -972,8 +972,14 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
         boxShadow: `0 8px 32px ${common.black40}`,
         backdropFilter: 'blur(10px)',
       }}>
-        {/* Row 1: icon + title + subtitle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'space-between',
+          gap: 2,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
           <Box sx={{
             width: 40,
             height: 40,
@@ -1008,15 +1014,14 @@ export default function InstanceProductsTable({ part, onAddClick }: Readonly<Ins
               {t('productDetail.instanceProductsTable.subtitle')}
             </Typography>
           </Box>
-        </Box>
-
-        {/* Row 2: add button */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          </Box>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddClick}
             sx={{ 
+              alignSelf: { xs: 'flex-end', sm: 'auto' },
+              flexShrink: 0,
               backgroundColor: common.accent,
               borderRadius: '10px',
               textTransform: 'none',
