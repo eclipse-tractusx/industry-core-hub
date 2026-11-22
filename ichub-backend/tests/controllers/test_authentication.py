@@ -247,3 +247,59 @@ class TestAuthenticationConfiguration:
         
         # When disabled, auth_manager should be None
         assert auth_manager is None
+
+
+class TestMultiApiKeyAuthManager:
+    """Test MultiApiKeyAuthManager supporting both string and list apiKey values."""
+
+    def test_string_api_key_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key="<example>",
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {"X-Api-Key": "<example>"}
+        assert manager.is_authenticated(mock_request) is True
+
+    def test_list_single_api_key_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["<example>"],
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {"X-Api-Key": "<example>"}
+        assert manager.is_authenticated(mock_request) is True
+
+    def test_list_multiple_api_keys_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["key1", "key2"],
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request_1 = Mock(spec=Request)
+        mock_request_1.headers = {"X-Api-Key": "key1"}
+        assert manager.is_authenticated(mock_request_1) is True
+
+        mock_request_2 = Mock(spec=Request)
+        mock_request_2.headers = {"X-Api-Key": "key2"}
+        assert manager.is_authenticated(mock_request_2) is True
+
+        mock_request_invalid = Mock(spec=Request)
+        mock_request_invalid.headers = {"X-Api-Key": "wrong-key"}
+        assert manager.is_authenticated(mock_request_invalid) is False
+
+    def test_auth_disabled_returns_true(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["key1"],
+            api_key_header="X-Api-Key",
+            auth_enabled=False
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {}
+        assert manager.is_authenticated(mock_request) is True

@@ -78,6 +78,8 @@ try:
     authorization_enabled = ConfigManager.get_config("authorization.enabled", False)
     backend_api_key = ConfigManager.get_config("authorization.api_key.key", "X-Api-Key")
     backend_api_key_value = ConfigManager.get_config("authorization.api_key.value", "")
+    if isinstance(backend_api_key_value, list):
+        backend_api_key_value = backend_api_key_value[0] if backend_api_key_value else ""
 
     # When submodel_dispatcher.mode is "http", the EDC asset must point to the
     # external submodel service (not the local backend) and carry that service's
