@@ -671,17 +671,6 @@ class TwinExchangeRepository(BaseRepository[TwinExchange]):
             Twin.global_id == global_id,
             BusinessPartner.bpnl == business_partner_number
         )
-        return self._session.scalars(stmt).first()
-
-    def find_by_twin_id_and_business_partner_number(self, twin_id: int, business_partner_number: str) -> Optional[TwinExchange]:
-        stmt = select(TwinExchange).join(
-            DataExchangeAgreement, TwinExchange.data_exchange_agreement_id == DataExchangeAgreement.id
-        ).join(
-            BusinessPartner, BusinessPartner.id == DataExchangeAgreement.business_partner_id
-        ).where(
-            TwinExchange.twin_id == twin_id,
-            BusinessPartner.bpnl == business_partner_number
-        )
         return self._session.scalars(stmt).first()  
 
 class TwinRegistrationRepository(BaseRepository[TwinRegistration]):

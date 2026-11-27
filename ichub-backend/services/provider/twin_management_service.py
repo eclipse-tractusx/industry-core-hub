@@ -563,10 +563,8 @@ class TwinManagementService:
         )
 
         with RepositoryManagerFactory.create() as repo:
-            # Step 1: Retrieve the twin by aas_id (fallback to global_id)
+            # Step 1: Retrieve the twin by aas_id
             db_twin = repo.twin_repository.find_by_aas_id(serialized_part_twin_unshare.aas_id)
-            if not db_twin:
-                db_twin = repo.twin_repository.find_by_global_id(serialized_part_twin_unshare.aas_id)
             if not db_twin:
                 raise NotFoundError(f"Twin for AAS ID '{serialized_part_twin_unshare.aas_id}' not found.")
 
@@ -588,13 +586,10 @@ class TwinManagementService:
                 return False
 
             for db_exchange in exchanges_to_delete:
-                repo.twin_exchange_repository.delete(db_exchange.id)
+                repo.twin_exchange_repository.delete_obj(db_exchange)
             repo.commit()
             logger.info(f"[UNSHARE] Successfully deleted {len(exchanges_to_delete)} twin exchange(s) for twin aas_id={db_twin.aas_id}")
             return True
-
-    # Convenience alias for router compatibility
-    unshare_serialized_part_twin = part_twin_unshare
 
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
         """
