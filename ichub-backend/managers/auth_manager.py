@@ -20,9 +20,23 @@
 # SPDX-License-Identifier: Apache-2.0
 ###############################################################################
 
+import hmac
 from typing import Any
 from fastapi import Request
 from tractusx_sdk.dataspace.managers import AuthManager
+from managers.config.log_manager import LoggingManager
+
+logger = LoggingManager.get_logger('staging')
+
+PLACEHOLDER_API_KEYS = frozenset({"<example>", "<<example>>"})
+
+
+def normalize_api_keys(raw: Any) -> list[str]:
+    """Return the configured API keys as non-empty strings (scalar or list)."""
+    if raw is None:
+        return []
+    items = raw if isinstance(raw, (list, tuple, set)) else [raw]
+    return [str(k) for k in items if k is not None and str(k) != ""]
 
 
 class MultiApiKeyAuthManager(AuthManager):
@@ -39,20 +53,12 @@ class MultiApiKeyAuthManager(AuthManager):
         api_key_header: str = "X-Api-Key",
         auth_enabled: bool = False
     ):
-        if isinstance(configured_api_key, (list, tuple, set)):
-            self.configured_api_keys = [
-                str(k) for k in configured_api_key if k
-            ]
-            first_key = (
-                self.configured_api_keys[0]
-                if self.configured_api_keys else ""
-            )
-        elif isinstance(configured_api_key, str) and configured_api_key:
-            self.configured_api_keys = [configured_api_key]
-            first_key = configured_api_key
-        else:
-            self.configured_api_keys = []
-            first_key = ""
+        self.configured_api_keys = normalize_api_keys(configured_api_key)
+        if auth_enabled and not self.configured_api_keys:
+            logger.warning("[API Key Manager] authorization.api_key.value is empty; every API-key request will be rejected")
+        if auth_enabled and PLACEHOLDER_API_KEYS.intersection(self.configured_api_keys):
+            logger.warning("[API Key Manager] authorization.api_key.value still holds the chart placeholder; set a real key before exposing the backend")
+        first_key = self.configured_api_keys[0] if self.configured_api_keys else ""
 
         super().__init__(
             configured_api_key=first_key,
@@ -64,6 +70,10 @@ class MultiApiKeyAuthManager(AuthManager):
         if not self.auth_enabled:
             return True
         api_key_from_header = request.headers.get(self.api_key_header, None)
-        if api_key_from_header is None:
+        if not api_key_from_header:
             return False
-        return api_key_from_header in self.configured_api_keys
+        presented = api_key_from_header.encode()
+        matched = False
+        for key in self.configured_api_keys:
+            matched |= hmac.compare_digest(presented, key.encode())
+        return matched

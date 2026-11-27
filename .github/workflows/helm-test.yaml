@@ -76,7 +76,7 @@ jobs:
 
       - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
-          python-version: "3.12"
+          python-version: "3.9"
           check-latest: true
       - name: Helm lint
         run: helm lint charts/industry-core-hub -f charts/industry-core-hub/values.yaml
