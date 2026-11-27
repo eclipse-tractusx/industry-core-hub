@@ -66,6 +66,7 @@ from models.services.provider.twin_management import (
     CatalogPartTwinShareCreate,
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
+    SerializedPartTwinUnshareCreate,
     TwinRead,
     TwinAspectCreate,
     TwinAspectRead,
@@ -329,6 +330,147 @@ class TestTwinManagementService:
             mock_create_exchange.assert_called_once()
             # Step 6: DTR shell must be refreshed after the exchange is created
             mock_create_twin.assert_called_once()
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_success(self, mock_repo_factory, mock_twin, sample_manufacturer_id):
+        """Test successful unsharing of serialized part twin."""
+        from models.metadata_database.provider.models import TwinExchange
+        mock_repo = Mock()
+        mock_repo_factory.return_value.__enter__.return_value = mock_repo
+        mock_repo.twin_repository.find_by_aas_id.return_value = mock_twin
+
+        mock_exchange_target = Mock(spec_set=TwinExchange)
+        mock_exchange_target.data_exchange_agreement.business_partner.bpnl = "BPNL000000000001"
+
+        mock_exchange_other = Mock(spec_set=TwinExchange)
+        mock_exchange_other.data_exchange_agreement.business_partner.bpnl = "BPNL000000000002"
+
+        mock_twin.twin_exchanges = [mock_exchange_target, mock_exchange_other]
+
+        unshare_input = SerializedPartTwinUnshareCreate(
+            aasId="123e4567-e89b-12d3-a456-426614174000",
+            businessPartnerNumberToUnshare=["BPNL000000000001"],
+            manufacturerId=sample_manufacturer_id
+        )
+
+        result = self.service.part_twin_unshare(unshare_input)
+
+        assert result is True
+        mock_repo.twin_exchange_repository.delete_obj.assert_called_once_with(mock_exchange_target)
+        mock_repo.commit.assert_called_once()
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_already_unshared(self, mock_repo_factory, mock_twin, sample_manufacturer_id):
+        """Test unshare returns False when no twin exchange matches the partner."""
+        mock_repo = Mock()
+        mock_repo_factory.return_value.__enter__.return_value = mock_repo
+        mock_repo.twin_repository.find_by_aas_id.return_value = mock_twin
+        mock_twin.twin_exchanges = []
+
+        unshare_input = SerializedPartTwinUnshareCreate(
+            aasId="123e4567-e89b-12d3-a456-426614174000",
+            businessPartnerNumberToUnshare=["BPNL000000000001"],
+            manufacturerId=sample_manufacturer_id
+        )
+
+        result = self.service.part_twin_unshare(unshare_input)
+
+        assert result is False
+        mock_repo.twin_exchange_repository.delete_obj.assert_not_called()
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_twin_not_found(self, mock_repo_factory, sample_manufacturer_id):
+        """Test unshare raises NotFoundError when twin is not found."""
+        from tools.exceptions import NotFoundError as ServiceNotFoundError
+        mock_repo = Mock()
+        mock_repo_factory.return_value.__enter__.return_value = mock_repo
+        mock_repo.twin_repository.find_by_aas_id.return_value = None
+
+        unshare_input = SerializedPartTwinUnshareCreate(
+            aasId="123e4567-e89b-12d3-a456-426614174000",
+            businessPartnerNumberToUnshare=["BPNL000000000001"],
+            manufacturerId=sample_manufacturer_id
+        )
+
+        with pytest.raises(ServiceNotFoundError):
+            self.service.part_twin_unshare(unshare_input)
+
+    @staticmethod
+    def _unshare_exchange(bpnl):
+        from models.metadata_database.provider.models import TwinExchange
+        exchange = Mock(spec_set=TwinExchange)
+        exchange.data_exchange_agreement.business_partner.bpnl = bpnl
+        return exchange
+
+    @staticmethod
+    def _unshare_repo(mock_repo_factory, twin, exchanges):
+        mock_repo = Mock()
+        mock_repo_factory.return_value.__enter__.return_value = mock_repo
+        twin.twin_exchanges = exchanges
+        mock_repo.twin_repository.find_by_aas_id.return_value = twin
+        return mock_repo
+
+    @staticmethod
+    def _unshare_input(bpns, manufacturer_id):
+        return SerializedPartTwinUnshareCreate(
+            aasId="123e4567-e89b-12d3-a456-426614174000",
+            businessPartnerNumberToUnshare=bpns,
+            manufacturerId=manufacturer_id
+        )
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_deletes_only_matching_partners(self, mock_repo_factory, mock_twin, sample_manufacturer_id):
+        """Only exchanges of the listed partners are deleted, each once, with one commit."""
+        first = self._unshare_exchange("BPNL000000000001")
+        other = self._unshare_exchange("BPNL000000000002")
+        third = self._unshare_exchange("BPNL000000000003")
+        mock_repo = self._unshare_repo(mock_repo_factory, mock_twin, [first, other, third])
+
+        result = self.service.part_twin_unshare(self._unshare_input(
+            ["BPNL000000000001", "BPNL000000000003", "BPNL000000000001"], sample_manufacturer_id))
+
+        assert result is True
+        deleted = [c.args[0] for c in mock_repo.twin_exchange_repository.delete_obj.call_args_list]
+        assert deleted == [first, third]
+        mock_repo.commit.assert_called_once()
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_skips_exchange_without_agreement_or_partner(self, mock_repo_factory, mock_twin, sample_manufacturer_id):
+        """Exchanges without agreement or partner are skipped instead of failing."""
+        no_agreement = self._unshare_exchange("unused")
+        no_agreement.data_exchange_agreement = None
+        no_partner = self._unshare_exchange("unused")
+        no_partner.data_exchange_agreement.business_partner = None
+        target = self._unshare_exchange("BPNL000000000001")
+        mock_repo = self._unshare_repo(mock_repo_factory, mock_twin, [no_agreement, no_partner, target])
+
+        assert self.service.part_twin_unshare(self._unshare_input(["BPNL000000000001"], sample_manufacturer_id)) is True
+        mock_repo.twin_exchange_repository.delete_obj.assert_called_once_with(target)
+
+    @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
+    def test_part_twin_unshare_empty_partner_list(self, mock_repo_factory, mock_twin, sample_manufacturer_id):
+        """An empty partner list changes nothing."""
+        mock_repo = self._unshare_repo(mock_repo_factory, mock_twin, [self._unshare_exchange("BPNL000000000001")])
+
+        assert self.service.part_twin_unshare(self._unshare_input([], sample_manufacturer_id)) is False
+        mock_repo.twin_exchange_repository.delete_obj.assert_not_called()
+        mock_repo.commit.assert_not_called()
+
+    def test_router_calls_only_existing_service_methods(self):
+        """Every twin_management_service.<method> used by the router exists on the service."""
+        import ast
+        from pathlib import Path
+
+        router = Path(__file__).resolve().parents[3] / "controllers/fastapi/routers/provider/v1/twin_management.py"
+        called = {
+            node.attr
+            for node in ast.walk(ast.parse(router.read_text()))
+            if isinstance(node, ast.Attribute)
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "twin_management_service"
+        }
+        assert called
+        assert sorted(name for name in called if not hasattr(TwinManagementService, name)) == []
 
     @patch('services.provider.twin_management_service.RepositoryManagerFactory.create')
     def test_create_serialized_part_twin_success(self, mock_repo_factory, mock_twin, mock_enablement_service_stack,

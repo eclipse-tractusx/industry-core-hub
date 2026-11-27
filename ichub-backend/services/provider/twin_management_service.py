@@ -50,6 +50,7 @@ from models.services.provider.twin_management import (
     SerializedPartTwinCreate,
     SerializedPartTwinRead,
     SerializedPartTwinShareCreate,
+    SerializedPartTwinUnshareCreate,
     SerializedPartTwinDetailsRead,
     TwinRead,
     TwinAspectCreate,
@@ -542,6 +543,53 @@ class TwinManagementService:
         )
 
         return result
+
+    def part_twin_unshare(self, serialized_part_twin_unshare: SerializedPartTwinUnshareCreate) -> bool:
+        """
+        Unshare a serialized part twin with specified business partners by removing the twin exchange associations.
+
+        Args:
+            serialized_part_twin_unshare: Model containing aas_id, business_partner_number_to_unshare, and manufacturer_id.
+
+        Returns:
+            bool: True if one or more twin exchanges were removed, False if already unshared.
+
+        Raises:
+            NotFoundError: If the twin is not found.
+        """
+        logger.info(
+            f"[UNSHARE] part_twin_unshare called for aas_id={serialized_part_twin_unshare.aas_id}, "
+            f"bpns={serialized_part_twin_unshare.business_partner_number_to_unshare}"
+        )
+
+        with RepositoryManagerFactory.create() as repo:
+            # Step 1: Retrieve the twin by aas_id
+            db_twin = repo.twin_repository.find_by_aas_id(serialized_part_twin_unshare.aas_id)
+            if not db_twin:
+                raise NotFoundError(f"Twin for AAS ID '{serialized_part_twin_unshare.aas_id}' not found.")
+
+            target_bpns = set(serialized_part_twin_unshare.business_partner_number_to_unshare or [])
+            if not target_bpns:
+                return False
+
+            exchanges_to_delete = []
+            for db_exchange in db_twin.twin_exchanges:
+                if (
+                    db_exchange.data_exchange_agreement
+                    and db_exchange.data_exchange_agreement.business_partner
+                    and db_exchange.data_exchange_agreement.business_partner.bpnl in target_bpns
+                ):
+                    exchanges_to_delete.append(db_exchange)
+
+            if not exchanges_to_delete:
+                logger.info(f"[UNSHARE] No matching twin exchanges found for twin aas_id={db_twin.aas_id} and bpns={target_bpns}")
+                return False
+
+            for db_exchange in exchanges_to_delete:
+                repo.twin_exchange_repository.delete_obj(db_exchange)
+            repo.commit()
+            logger.info(f"[UNSHARE] Successfully deleted {len(exchanges_to_delete)} twin exchange(s) for twin aas_id={db_twin.aas_id}")
+            return True
 
     def create_twin_aspect(self, twin_aspect_create: TwinAspectCreate) -> TwinAspectRead:
         """
