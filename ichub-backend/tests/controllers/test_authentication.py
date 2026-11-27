@@ -247,3 +247,130 @@ class TestAuthenticationConfiguration:
         
         # When disabled, auth_manager should be None
         assert auth_manager is None
+
+
+@pytest.fixture(autouse=True)
+def _real_auth_modules(monkeypatch):
+    """Import the real auth manager even if other test modules mocked its dependencies.
+
+    test_twin_management_service.py puts MagicMock objects for tractusx_sdk.* and
+    managers.* into sys.modules at collection time, so in a full run
+    MultiApiKeyAuthManager would subclass a mocked AuthManager.
+    monkeypatch restores the entries after each test.
+    """
+    import sys
+    for name, module in list(sys.modules.items()):
+        if isinstance(module, MagicMock) and name.startswith(("tractusx_sdk", "managers")):
+            monkeypatch.delitem(sys.modules, name)
+    monkeypatch.delitem(sys.modules, "managers.auth_manager", raising=False)
+
+
+class TestMultiApiKeyAuthManager:
+    """Test MultiApiKeyAuthManager supporting both string and list apiKey values."""
+
+    def test_string_api_key_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key="<example>",
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {"X-Api-Key": "<example>"}
+        assert manager.is_authenticated(mock_request) is True
+
+    def test_list_single_api_key_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["<example>"],
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {"X-Api-Key": "<example>"}
+        assert manager.is_authenticated(mock_request) is True
+
+    def test_list_multiple_api_keys_authenticated(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["key1", "key2"],
+            api_key_header="X-Api-Key",
+            auth_enabled=True
+        )
+        mock_request_1 = Mock(spec=Request)
+        mock_request_1.headers = {"X-Api-Key": "key1"}
+        assert manager.is_authenticated(mock_request_1) is True
+
+        mock_request_2 = Mock(spec=Request)
+        mock_request_2.headers = {"X-Api-Key": "key2"}
+        assert manager.is_authenticated(mock_request_2) is True
+
+        mock_request_invalid = Mock(spec=Request)
+        mock_request_invalid.headers = {"X-Api-Key": "wrong-key"}
+        assert manager.is_authenticated(mock_request_invalid) is False
+
+    def test_auth_disabled_returns_true(self):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        manager = MultiApiKeyAuthManager(
+            configured_api_key=["key1"],
+            api_key_header="X-Api-Key",
+            auth_enabled=False
+        )
+        mock_request = Mock(spec=Request)
+        mock_request.headers = {}
+        assert manager.is_authenticated(mock_request) is True
+
+
+def _request(headers: dict) -> Request:
+    return Request({
+        "type": "http",
+        "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()],
+    })
+
+
+class TestMultiApiKeyAuthManagerEdgeCases:
+
+    def _manager(self, configured):
+        from managers.auth_manager import MultiApiKeyAuthManager
+        return MultiApiKeyAuthManager(
+            configured_api_key=configured, api_key_header="X-Api-Key", auth_enabled=True
+        )
+
+    def test_missing_header_rejected(self):
+        assert self._manager("k1").is_authenticated(_request({})) is False
+
+    def test_header_lookup_is_case_insensitive(self):
+        assert self._manager("k1").is_authenticated(_request({"x-api-key": "k1"})) is True
+
+    @pytest.mark.parametrize("configured", [None, "", [], [None], [""]])
+    def test_empty_config_fails_closed(self, configured):
+        manager = self._manager(configured)
+        assert manager.is_authenticated(_request({"X-Api-Key": "anything"})) is False
+        assert manager.is_authenticated(_request({"X-Api-Key": ""})) is False
+
+    def test_list_skips_empty_entries(self):
+        manager = self._manager(["", "k2"])
+        assert manager.is_authenticated(_request({"X-Api-Key": "k2"})) is True
+        assert manager.is_authenticated(_request({"X-Api-Key": ""})) is False
+
+    def test_numeric_scalar_key_accepted(self):
+        # helm --set ...apiKey.value=12345678 renders an int via toJson
+        assert self._manager(12345678).is_authenticated(_request({"X-Api-Key": "12345678"})) is True
+
+    def test_add_auth_header_uses_first_key(self):
+        assert self._manager(["k1", "k2"]).add_auth_header({}) == {"X-Api-Key": "k1"}
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("k", ["k"]),
+    (["k1", "k2"], ["k1", "k2"]),
+    (["", "k2"], ["k2"]),
+    ([None, "k2"], ["k2"]),
+    (12345678, ["12345678"]),
+    (None, []),
+    ([], []),
+])
+def test_normalize_api_keys(raw, expected):
+    # also covers the connector.py / run_asset_sync.py key extraction
+    from managers.auth_manager import normalize_api_keys
+    assert normalize_api_keys(raw) == expected

@@ -110,7 +110,9 @@ def run_asset_sync_job():
             # Authorization configuration — defaults to local backend auth
             authorization_enabled = ConfigManager.get_config("authorization.enabled", True)
             backend_api_key = ConfigManager.get_config("authorization.api_key.key", "X-Api-Key")
-            backend_api_key_value = ConfigManager.get_config("authorization.api_key.value", "")
+            from managers.auth_manager import normalize_api_keys
+            backend_api_keys = normalize_api_keys(ConfigManager.get_config("authorization.api_key.value", ""))
+            backend_api_key_value = backend_api_keys[0] if backend_api_keys else ""
 
             # When submodel_dispatcher.mode is "http", the EDC asset must point to the
             # external submodel service (not the local backend) and carry that service's

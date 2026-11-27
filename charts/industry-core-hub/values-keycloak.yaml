@@ -67,7 +67,7 @@ backend:
       enabled: true
       apiKey:
         key: "X-Api-Key"
-        value: ["<example>"]  # Fallback API key
+        value: "<example>"  # Fallback API key
       keycloak:
         enabled: true  # Enable Keycloak authentication
         authUrl: "https://<keycloak-hostname>/auth/"

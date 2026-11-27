@@ -24,6 +24,7 @@
 from tractusx_sdk.dataspace.managers import AuthManager, OAuth2Manager
 from managers.config.config_manager import ConfigManager
 from managers.config.log_manager import LoggingManager
+from managers.auth_manager import MultiApiKeyAuthManager
 from fastapi.security import APIKeyHeader, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import HTTPException, Request, status, Depends
 import time
@@ -39,9 +40,10 @@ if ConfigManager.get_config("authorization.enabled"):
     # Always initialize API Key authentication
     logger.info("[API Key Manager] Initializing API Key authentication")
     logger.info(f"[API Key Manager] API Key header: {ConfigManager.get_config('authorization.api_key.key')}")
-    api_key_manager = AuthManager(
+    raw_api_key_val = ConfigManager.get_config("authorization.api_key.value")
+    api_key_manager = MultiApiKeyAuthManager(
         api_key_header=ConfigManager.get_config("authorization.api_key.key"),
-        configured_api_key=ConfigManager.get_config("authorization.api_key.value"),
+        configured_api_key=raw_api_key_val,
         auth_enabled=ConfigManager.get_config("authorization.enabled")
     )
     
